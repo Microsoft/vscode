@@ -10,12 +10,341 @@ import { Position } from 'vs/editor/common/core/position';
 import { Handler } from 'vs/editor/common/editorCommon';
 import { ITextModel } from 'vs/editor/common/model';
 import { withTestCodeEditor } from 'vs/editor/test/browser/testCodeEditor';
-import { DeleteAllLeftAction, JoinLinesAction, TransposeAction, UpperCaseAction, LowerCaseAction, DeleteAllRightAction, InsertLineBeforeAction, InsertLineAfterAction, IndentLinesAction, SortLinesAscendingAction, SortLinesDescendingAction } from 'vs/editor/contrib/linesOperations/linesOperations';
+import { DeleteAllLeftAction, JoinLinesAction, TransposeAction, UpperCaseAction, LowerCaseAction, DeleteAllRightAction, InsertLineBeforeAction, InsertLineAfterAction, IndentLinesAction, SortLinesAscendingAction, SortLinesDescendingAction, MoveLinesUpAction, MoveLinesDownAction } from 'vs/editor/contrib/linesOperations/linesOperations';
 import { Cursor } from 'vs/editor/common/controller/cursor';
 import { CoreEditingCommands } from 'vs/editor/browser/controller/coreCommands';
 import { createTextModel } from 'vs/editor/test/common/editorTestUtils';
 
+
 suite('Editor Contrib - Line Operations', () => {
+	suite('AbstractMoveLinesAction', () => {
+		test('should move multiple cursors up', function () {
+			withTestCodeEditor(
+				[
+					'1111111',
+					'2222222',
+					'3333333',
+					'4444444',
+					'5555555'
+				], {}, (editor, cursor) => {
+					let model = editor.getModel();
+					let moveLinesUpAction = new MoveLinesUpAction();
+
+					let multiSelect = [new Selection(3, 6, 3, 6), new Selection(4, 6, 4, 6)];
+					editor.setSelections(multiSelect);
+					moveLinesUpAction.run(null, editor);
+					assert.deepEqual(model.getLinesContent(), [
+						'1111111',
+						'3333333',
+						'4444444',
+						'2222222',
+						'5555555'
+					]);
+				});
+		});
+
+		test('should move multiple cursors down', function () {
+			withTestCodeEditor(
+				[
+					'1111111',
+					'2222222',
+					'3333333',
+					'4444444',
+					'5555555'
+				], {}, (editor, cursor) => {
+					let model = editor.getModel();
+					let moveLinesDownAction = new MoveLinesDownAction();
+
+					let multiSelect = [new Selection(2, 6, 2, 6), new Selection(3, 6, 3, 6)];
+					editor.setSelections(multiSelect);
+					moveLinesDownAction.run(null, editor);
+					assert.deepEqual(model.getLinesContent(), [
+						'1111111',
+						'4444444',
+						'2222222',
+						'3333333',
+						'5555555'
+					]);
+				});
+		});
+
+		test('should not move multiple cursor up at line 1', function () {
+			withTestCodeEditor(
+				[
+					'1111111',
+					'2222222',
+					'3333333',
+					'4444444',
+					'5555555'
+				], {}, (editor, cursor) => {
+					let model = editor.getModel();
+					let moveLinesUpAction = new MoveLinesUpAction();
+
+					let multiSelect = [new Selection(1, 6, 1, 6), new Selection(2, 6, 2, 6)];
+					editor.setSelections(multiSelect);
+					moveLinesUpAction.run(null, editor);
+					assert.deepEqual(model.getLinesContent(), [
+						'1111111',
+						'2222222',
+						'3333333',
+						'4444444',
+						'5555555'
+					]);
+				});
+		});
+
+		test('should move multiple cursor down at line 1', function () {
+			withTestCodeEditor(
+				[
+					'1111111',
+					'2222222',
+					'3333333',
+					'4444444',
+					'5555555'
+				], {}, (editor, cursor) => {
+					let model = editor.getModel();
+					let moveLinesDownAction = new MoveLinesDownAction();
+
+					let multiSelect = [new Selection(1, 6, 1, 6), new Selection(2, 6, 2, 6)];
+					editor.setSelections(multiSelect);
+					moveLinesDownAction.run(null, editor);
+					assert.deepEqual(model.getLinesContent(), [
+						'3333333',
+						'1111111',
+						'2222222',
+						'4444444',
+						'5555555'
+					]);
+				});
+		});
+
+		test('should move multiple cursor up at last line', function () {
+			withTestCodeEditor(
+				[
+					'1111111',
+					'2222222',
+					'3333333',
+					'4444444',
+					'5555555'
+				], {}, (editor, cursor) => {
+					let model = editor.getModel();
+					let moveLinesUpAction = new MoveLinesUpAction();
+
+					let multiSelect = [new Selection(4, 6, 4, 6), new Selection(5, 6, 5, 6)];
+					editor.setSelections(multiSelect);
+					moveLinesUpAction.run(null, editor);
+					assert.deepEqual(model.getLinesContent(), [
+						'1111111',
+						'2222222',
+						'4444444',
+						'5555555',
+						'3333333'
+					]);
+				});
+		});
+
+		test('should not move multiple cursor down at last line', function () {
+			withTestCodeEditor(
+				[
+					'1111111',
+					'2222222',
+					'3333333',
+					'4444444',
+					'5555555'
+				], {}, (editor, cursor) => {
+					let model = editor.getModel();
+					let moveLinesDownAction = new MoveLinesDownAction();
+
+					let multiSelect = [new Selection(5, 6, 5, 6), new Selection(6, 6, 6, 6)];
+					editor.setSelections(multiSelect);
+					moveLinesDownAction.run(null, editor);
+					assert.deepEqual(model.getLinesContent(), [
+						'1111111',
+						'2222222',
+						'3333333',
+						'4444444',
+						'5555555'
+					]);
+				});
+		});
+
+		test('should move single cursor up at 2nd line', function () {
+			withTestCodeEditor(
+				[
+					'1111111',
+					'2222222',
+					'3333333',
+					'4444444',
+					'5555555'
+				], {}, (editor, cursor) => {
+					let model = editor.getModel();
+					let moveLinesUpAction = new MoveLinesUpAction();
+
+					let multiSelect = [new Selection(2, 6, 2, 6)];
+					editor.setSelections(multiSelect);
+					moveLinesUpAction.run(null, editor);
+					assert.deepEqual(model.getLinesContent(), [
+						'2222222',
+						'1111111',
+						'3333333',
+						'4444444',
+						'5555555'
+					]);
+				});
+		});
+
+		test('should move single cursor down', function () {
+			withTestCodeEditor(
+				[
+					'1111111',
+					'2222222',
+					'3333333',
+					'4444444',
+					'5555555'
+				], {}, (editor, cursor) => {
+					let model = editor.getModel();
+					let moveLinesDownAction = new MoveLinesDownAction();
+
+					let multiSelect = [new Selection(2, 6, 2, 6)];
+					editor.setSelections(multiSelect);
+					moveLinesDownAction.run(null, editor);
+					assert.deepEqual(model.getLinesContent(), [
+						'1111111',
+						'3333333',
+						'2222222',
+						'4444444',
+						'5555555'
+					]);
+				});
+		});
+
+		test('should not move single cursor up at line 1', function () {
+			withTestCodeEditor(
+				[
+					'1111111',
+					'2222222',
+					'3333333',
+					'4444444',
+					'5555555'
+				], {}, (editor, cursor) => {
+					let model = editor.getModel();
+					let moveLinesUpAction = new MoveLinesUpAction();
+
+					let multiSelect = [new Selection(1, 6, 1, 6)];
+					editor.setSelections(multiSelect);
+					moveLinesUpAction.run(null, editor);
+					assert.deepEqual(model.getLinesContent(), [
+						'1111111',
+						'2222222',
+						'3333333',
+						'4444444',
+						'5555555'
+					]);
+				});
+		});
+
+		test('should move single cursor down at line 1', function () {
+			withTestCodeEditor(
+				[
+					'1111111',
+					'2222222',
+					'3333333',
+					'4444444',
+					'5555555'
+				], {}, (editor, cursor) => {
+					let model = editor.getModel();
+					let moveLinesDownAction = new MoveLinesDownAction();
+
+					let multiSelect = [new Selection(1, 6, 1, 6)];
+					editor.setSelections(multiSelect);
+					moveLinesDownAction.run(null, editor);
+					assert.deepEqual(model.getLinesContent(), [
+						'2222222',
+						'1111111',
+						'3333333',
+						'4444444',
+						'5555555'
+					]);
+				});
+		});
+
+		test('should move single cursor up at last line', function () {
+			withTestCodeEditor(
+				[
+					'1111111',
+					'2222222',
+					'3333333',
+					'4444444',
+					'5555555'
+				], {}, (editor, cursor) => {
+					let model = editor.getModel();
+					let moveLinesUpAction = new MoveLinesUpAction();
+
+					let multiSelect = [new Selection(5, 6, 5, 6)];
+					editor.setSelections(multiSelect);
+					moveLinesUpAction.run(null, editor);
+					assert.deepEqual(model.getLinesContent(), [
+						'1111111',
+						'2222222',
+						'3333333',
+						'5555555',
+						'4444444'
+					]);
+				});
+		});
+
+		test('should not move single cursor down at last line', function () {
+			withTestCodeEditor(
+				[
+					'1111111',
+					'2222222',
+					'3333333',
+					'4444444',
+					'5555555'
+				], {}, (editor, cursor) => {
+					let model = editor.getModel();
+					let moveLinesDownAction = new MoveLinesDownAction();
+
+					let multiSelect = [new Selection(5, 6, 5, 6)];
+					editor.setSelections(multiSelect);
+					moveLinesDownAction.run(null, editor);
+					assert.deepEqual(model.getLinesContent(), [
+						'1111111',
+						'2222222',
+						'3333333',
+						'4444444',
+						'5555555'
+					]);
+				});
+		});
+
+		test('move line should still work as before if there is no indentation rules', function () {
+			withTestCodeEditor(
+				[
+					'if (true) {',
+					'    var task = new Task(() => {',
+					'        var work = 1234;',
+					'    });',
+					'}'
+				], {}, (editor, cursor) => {
+					let model = editor.getModel();
+					let moveLinesDownAction = new MoveLinesDownAction();
+
+					let multiSelect = [new Selection(2, 1, 2, 1)];
+					editor.setSelections(multiSelect);
+					moveLinesDownAction.run(null, editor);
+					assert.deepEqual(model.getLinesContent(), [
+						'if (true) {',
+						'        var work = 1234;',
+						'    var task = new Task(() => {',
+						'    });',
+						'}'
+					]);
+				});
+		});
+
+	});
+
 	suite('SortLinesAscendingAction', () => {
 		test('should sort selected lines in ascending order', function () {
 			withTestCodeEditor(

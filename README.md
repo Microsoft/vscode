@@ -18,7 +18,7 @@ The [`vscode`](https://github.com/microsoft/vscode) repository is where we do de
 
 * [Submit bugs and feature requests](https://github.com/microsoft/vscode/issues) and help us verify as they are checked in
 * Review [source code changes](https://github.com/microsoft/vscode/pulls)
-* Review the [documentation](https://github.com/microsoft/vscode-docs) and make pull requests for anything from typos to new content
+* Review the [documentation](https://github.com/microsoft/vscode-docs) / [中文文档](https://github.com/jeasonstudio/CN-VScode-Docs) and make pull requests for anything from typos to new content
 
 ## Contributing
 

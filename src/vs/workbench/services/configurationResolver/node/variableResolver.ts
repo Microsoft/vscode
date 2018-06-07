@@ -64,6 +64,10 @@ export class VariableResolver {
 
 		return value.replace(VariableResolver.VARIABLE_REGEXP, (match: string, variable: string) => {
 
+			const replaceInResolvedVariable: boolean = variable.split('/').length === 3;
+			if (replaceInResolvedVariable) {
+				return this.findReplaceInVariable(folderUri, variable);
+			}
 			let argument: string;
 			const parts = variable.split(':');
 			if (parts && parts.length > 1) {
@@ -215,5 +219,11 @@ export class VariableResolver {
 				}
 			}
 		});
+	}
+
+	private findReplaceInVariable(folderUri: uri, variable: string): string {
+		const parts = variable.split('/');
+		const resolvedVariable = this.resolveAny(folderUri, `\${${parts[0]}}`);
+		return resolvedVariable.replace(parts[1], parts[2]);
 	}
 }

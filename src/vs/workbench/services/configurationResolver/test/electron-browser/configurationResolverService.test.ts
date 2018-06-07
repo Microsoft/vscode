@@ -308,6 +308,21 @@ suite('Configuration Resolver Service', () => {
 			assert.equal(2, mockCommandService.callCount);
 		});
 	});
+
+	test('replacing resolved variables', () => {
+		assert.equal(configurationResolverService.resolve(workspace, '${workspaceRootFolderName/workspace/replaced}'), 'replacedLocation');
+		assert.strictEqual(configurationResolverService.resolve(workspace, '${env:key1/key1/replacedKey}'), 'Value for replacedKey');
+
+		let configurationService: IConfigurationService;
+		configurationService = new MockConfigurationService({
+			editor: {
+				fontFamily: 'foobar'
+			}
+		});
+
+		let service = new ConfigurationResolverService(envVariables, new TestEditorService(), TestEnvironmentService, configurationService, mockCommandService, new TestContextService());
+		assert.strictEqual(service.resolve(workspace, '${config:editor.fontFamily/foo/bar}'), 'barbar');
+	});
 });
 
 

@@ -406,6 +406,11 @@ export interface ConfigurationProperties {
 	isBackground?: boolean;
 
 	/**
+	 * Defines if the application can have only 1 active instance at a time
+	 */
+	instanceLimit?: boolean;
+
+	/**
 	 * Whether the task should prompt on close for confirmation if running.
 	 */
 	promptOnClose?: boolean;

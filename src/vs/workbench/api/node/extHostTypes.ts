@@ -1602,6 +1602,7 @@ export class Task implements vscode.Task {
 	private _problemMatchers: string[];
 	private _hasDefinedMatchers: boolean;
 	private _isBackground: boolean;
+	private _instanceLimit: boolean;
 	private _source: string;
 	private _group: TaskGroup;
 	private _presentationOptions: vscode.TaskPresentationOptions;
@@ -1640,6 +1641,7 @@ export class Task implements vscode.Task {
 			this._hasDefinedMatchers = false;
 		}
 		this._isBackground = false;
+		this._instanceLimit = false;
 	}
 
 	get _id(): string {
@@ -1738,12 +1740,23 @@ export class Task implements vscode.Task {
 		return this._isBackground;
 	}
 
+	get instanceLimit(): boolean {
+		return this._instanceLimit;
+	}
+
 	set isBackground(value: boolean) {
 		if (value !== true && value !== false) {
 			value = false;
 		}
 		this.clear();
 		this._isBackground = value;
+	}
+
+	set instanceLimit(value: boolean) {
+		if (value !== true && value !== false) {
+			value = false;
+		}
+		this._instanceLimit = value;
 	}
 
 	get source(): string {

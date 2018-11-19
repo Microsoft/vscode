@@ -1231,7 +1231,10 @@ class TaskService extends Disposable implements ITaskService {
 					let active = executeResult.active;
 					if (active.same) {
 						let message;
-						if (active.background) {
+						if (task.instanceLimit) {
+							this.restart(task);
+							message = nls.localize('TaskSystem.instanceLimit', 'Restarting \'{0}\'.', Task.getQualifiedLabel(task));
+						} else if (active.background) {
 							message = nls.localize('TaskSystem.activeSame.background', 'The task \'{0}\' is already active and in background mode.', Task.getQualifiedLabel(task));
 						} else {
 							message = nls.localize('TaskSystem.activeSame.noBackground', 'The task \'{0}\' is already active.', Task.getQualifiedLabel(task));

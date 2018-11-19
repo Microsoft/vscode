@@ -190,6 +190,7 @@ class CustomTaskBuilder {
 			name: name,
 			command: this.commandBuilder.result,
 			isBackground: false,
+			instanceLimit: false,
 			promptOnClose: true,
 			problemMatchers: [],
 			hasDefinedMatchers: false
@@ -214,6 +215,11 @@ class CustomTaskBuilder {
 
 	public isBackground(value: boolean): CustomTaskBuilder {
 		this.result.isBackground = value;
+		return this;
+	}
+
+	public instanceLimit(value: boolean): CustomTaskBuilder {
+		this.result.instanceLimit = value;
 		return this;
 	}
 

@@ -5063,6 +5063,11 @@ declare module 'vscode' {
 		isBackground: boolean;
 
 		/**
+		 * Defines if the application can have only 1 active instance at a time
+		 */
+		instanceLimit?: boolean;
+
+		/**
 		 * A human-readable string describing the source of this
 		 * shell task, e.g. 'gulp' or 'npm'.
 		 */

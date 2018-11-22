@@ -178,6 +178,7 @@ export class AbstractVariableResolverService implements IConfigurationResolverSe
 						case 'file':
 						case 'relativeFile':
 						case 'fileDirname':
+						case 'fileDirbasename':
 						case 'fileExtname':
 						case 'fileBasename':
 						case 'fileBasenameNoExtension':
@@ -226,6 +227,9 @@ export class AbstractVariableResolverService implements IConfigurationResolverSe
 
 						case 'fileDirname':
 							return paths.dirname(filePath);
+							
+						case 'fileDirbasename':
+							return paths.basename(paths.dirname(filePath));
 
 						case 'fileExtname':
 							return paths.extname(filePath);

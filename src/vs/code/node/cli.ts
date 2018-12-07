@@ -24,6 +24,7 @@ import { createWaitMarkerFile } from 'vs/code/node/wait';
 function shouldSpawnCliProcess(argv: ParsedArgs): boolean {
 	return !!argv['install-source']
 		|| !!argv['list-extensions']
+		|| !!argv['search-extensions']
 		|| !!argv['install-extension']
 		|| !!argv['uninstall-extension'];
 }

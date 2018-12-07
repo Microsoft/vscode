@@ -24,6 +24,7 @@ const options: minimist.Opts = {
 		'extensionDevelopmentPath',
 		'extensionTestsPath',
 		'install-extension',
+		'search-extension',
 		'disable-extension',
 		'uninstall-extension',
 		'debugId',
@@ -165,6 +166,7 @@ const optionsHelp: { [name: string]: string; } = {
 const extensionsHelp: { [name: string]: string; } = {
 	'--extensions-dir <dir>': localize('extensionHomePath', "Set the root path for extensions."),
 	'--list-extensions': localize('listExtensions', "List the installed extensions."),
+	'--search-extensions (<extension-name>)': localize('searchExtensions', "Search within the installed extensions."),
 	'--show-versions': localize('showVersions', "Show versions of installed extensions, when using --list-extension."),
 	'--uninstall-extension (<extension-id> | <extension-vsix-path>)': localize('uninstallExtension', "Uninstalls an extension."),
 	'--install-extension (<extension-id> | <extension-vsix-path>)': localize('installExtension', "Installs or updates the extension. Use `--force` argument to avoid prompts."),

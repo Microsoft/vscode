@@ -81,6 +81,10 @@ class Main {
 			returnPromise = this.setInstallSource(argv['install-source']);
 		} else if (argv['list-extensions']) {
 			returnPromise = this.listExtensions(argv['show-versions']);
+		}
+		else if (argv['search-extensions']) {
+			const arg = argv['search-extensions'];
+			returnPromise = this.searchExtensions(arg);
 		} else if (argv['install-extension']) {
 			const arg = argv['install-extension'];
 			const args: string[] = typeof arg === 'string' ? [arg] : arg;
@@ -100,6 +104,23 @@ class Main {
 	private listExtensions(showVersions: boolean): TPromise<any> {
 		return this.extensionManagementService.getInstalled(LocalExtensionType.User).then(extensions => {
 			extensions.forEach(e => console.log(getId(e.manifest, showVersions)));
+		});
+	}
+
+	private searchExtensions(searchString: string): TPromise<any> {
+		return this.extensionManagementService.getInstalled(LocalExtensionType.User).then(extensions => {
+			var result = extensions.filter((e) => {
+				var manifest = e.manifest;
+				if (manifest && ((manifest.name && manifest.name.indexOf(searchString) > -1) ||
+					(manifest.displayName && manifest.displayName.indexOf(searchString) > -1))) {
+					console.log(getId(e.manifest, false));
+					return true;
+				}
+				return false;
+			});
+			if (result.length === 0) {
+				console.log(localize('noResultsFoundInExtensionSearch', "No Results Found."));
+			}
 		});
 	}
 

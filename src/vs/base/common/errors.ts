@@ -48,6 +48,9 @@ function promiseErrorHandler(e: IPromiseError): void {
 				if (error.exception) {
 					console.log(error.exception.stack);
 				}
+				if (error.error) {
+					console.log(error.error);
+				}
 			});
 		}, 0);
 	}

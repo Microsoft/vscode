@@ -579,10 +579,7 @@ export class KeybindingsEditor extends BaseEditor implements IKeybindingsEditor 
 		if (!element) {
 			return;
 		}
-		if (element.templateId === KEYBINDING_HEADER_TEMPLATE_ID) {
-			this.keybindingsList.focusNext();
-			return;
-		}
+
 		if (element.templateId === KEYBINDING_ENTRY_TEMPLATE_ID) {
 			this.keybindingFocusContextKey.set(true);
 		}

@@ -14,6 +14,8 @@
 
 .extension-editor > .header {
 	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
 	padding-top: 20px;
 	padding-bottom: 14px;
 	padding-left: 20px;
@@ -23,13 +25,18 @@
 }
 
 .extension-editor > .header > .icon {
-	height: 128px;
+	height: 100%;
+	max-width: 30%;
 	width: 128px;
 	object-fit: contain;
+	margin-right: 20px;
+	margin-bottom: 10px;
 }
 
 .extension-editor > .header > .details {
-	padding-left: 20px;
+	flex: 1;
+	min-width: 20em;
+	min-height: 138px;
 	overflow: hidden;
 	user-select: text;
 }
@@ -37,18 +44,23 @@
 .extension-editor > .header > .details > .title {
 	display: flex;
 	align-items: center;
+	flex-wrap: wrap;
 }
 
 .extension-editor > .header > .details > .title > .name {
-	flex: 0;
+	max-width: 100%;
+	margin-right: 10px;
+	margin-bottom: 3px;
 	font-size: 26px;
 	line-height: 30px;
 	font-weight: 600;
+	text-overflow: ellipsis;
 	white-space: nowrap;
+	overflow: hidden;
 }
 
 .extension-editor > .header > .details > .title > .identifier {
-	margin-left: 10px;
+	margin-bottom: 3px;
 	font-size: 14px;
 	opacity: 0.6;
 	background: rgba(173, 173, 173, 0.31);
@@ -62,10 +74,12 @@
 	font-size: 10px;
 	font-style: italic;
 	margin-left: 10px;
+	margin-bottom: 3px;
 }
 
 .vs .extension-editor > .header > .details > .title > .preview {
 	color: white;
+	margin-bottom: 3px;
 }
 
 .extension-editor > .header > .details > .title > .preview {
@@ -79,9 +93,10 @@
 }
 
 .extension-editor > .header > .details > .subtitle {
-	padding-top: 6px;
+	display: flex;
+	flex-wrap: wrap;
+	padding-top: 3px;
 	white-space: nowrap;
-	height: 20px;
 	line-height: 20px;
 }
 
@@ -93,15 +108,17 @@
 	margin-left: 6px;
 }
 
-.extension-editor > .header > .details > .subtitle > span:not(:first-child):not(:empty),
-.extension-editor > .header > .details > .subtitle > a:not(:first-child):not(:empty) {
+.extension-editor > .header > .details > .subtitle > span:not(:empty),
+.extension-editor > .header > .details > .subtitle > a:not(:empty) {
 	border-left: 1px solid rgba(128, 128, 128, 0.7);
-	margin-left: 14px;
 	padding-left: 14px;
+	margin-left: -14px;
+	margin-right: 28px;
+	margin-bottom: 5px;
 }
 
 .extension-editor > .header > .details > .description {
-	margin-top: 10px;
+	margin-top: 5px;
 	white-space: nowrap;
 	text-overflow: ellipsis;
 	overflow: hidden;
@@ -117,6 +134,8 @@
 
 .extension-editor > .header > .details > .actions > .monaco-action-bar > .actions-container {
 	justify-content: flex-start;
+	display: flex;
+	flex-wrap: wrap;
 }
 
 .extension-editor > .header > .details > .actions > .monaco-action-bar > .actions-container > .action-item > .action-label {

@@ -387,8 +387,8 @@ export function prepareCommand(args: DebugProtocol.RunInTerminalRequestArguments
 		case ShellType.bash:
 
 			quote = (s: string) => {
-				s = s.replace(/\"/g, '\\"');
-				return (s.indexOf(' ') >= 0 || s.indexOf('\\') >= 0) ? `"${s}"` : s;
+				s = s.replace(/'/g, '\'\\\'\'');
+				return `'${s}'`;
 			};
 
 			if (args.cwd) {
@@ -399,9 +399,9 @@ export function prepareCommand(args: DebugProtocol.RunInTerminalRequestArguments
 				for (let key in args.env) {
 					const value = args.env[key];
 					if (value === null) {
-						command += ` -u "${key}"`;
+						command += ` -u ${quote(key)}`;
 					} else {
-						command += ` "${key}=${value}"`;
+						command += ` ${quote(`${key}=${value}`)}`;
 					}
 				}
 				command += ' ';

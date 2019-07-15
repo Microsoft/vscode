@@ -696,11 +696,15 @@ export class ExtensionEditor extends BaseEditor {
 					$('th', undefined, localize('description', "Description")),
 					$('th', undefined, localize('default', "Default"))
 				),
-				...contrib.map(key => $('tr', undefined,
-					$('td', undefined, $('code', undefined, key)),
-					$('td', undefined, properties[key].description),
-					$('td', undefined, $('code', undefined, `${isUndefined(properties[key].default) ? getDefaultValue(properties[key].type) : properties[key].default}`))
-				))
+				...contrib.map(key => {
+					const defaultValue = isUndefined(properties[key].default) ? getDefaultValue(properties[key].type) : properties[key].default;
+					const defaultValueString = JSON.stringify(defaultValue, null, 2);
+					return $('tr', undefined,
+						$('td', undefined, $('code', undefined, key)),
+						$('td', undefined, properties[key].description),
+						$('td', undefined, $('code', undefined, defaultValueString))
+					);
+				})
 			)
 		);
 

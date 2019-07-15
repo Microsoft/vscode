@@ -454,6 +454,7 @@ export class UninstallAction extends ExtensionAction {
 			return;
 		}
 
+		this.tooltip = UninstallAction.UninstallLabel;
 		this.label = UninstallAction.UninstallLabel;
 		this.class = UninstallAction.UninstallClass;
 		this.tooltip = UninstallAction.UninstallLabel;

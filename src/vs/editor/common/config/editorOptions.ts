@@ -96,6 +96,10 @@ export interface IEditorFindOptions {
 	 * Controls if the Find Widget should read or modify the shared find clipboard on macOS
 	 */
 	globalFindClipboard: boolean;
+	/*
+	 * Controls whether the Find Widget should always use the max width.
+	 */
+	alwaysUseMaxWidth?: boolean;
 }
 
 /**
@@ -923,6 +927,7 @@ export interface InternalEditorFindOptions {
 	readonly seedSearchStringFromSelection: boolean;
 	readonly autoFindInSelection: boolean;
 	readonly addExtraSpaceOnTop: boolean;
+	readonly alwaysUseMaxWidth: boolean;
 	/**
 	 * @internal
 	 */
@@ -1362,6 +1367,7 @@ export class InternalEditorOptions {
 			&& a.autoFindInSelection === b.autoFindInSelection
 			&& a.globalFindClipboard === b.globalFindClipboard
 			&& a.addExtraSpaceOnTop === b.addExtraSpaceOnTop
+			&& a.alwaysUseMaxWidth === b.alwaysUseMaxWidth
 		);
 	}
 
@@ -1904,7 +1910,8 @@ export class EditorOptionsValidator {
 			seedSearchStringFromSelection: _boolean(opts.seedSearchStringFromSelection, defaults.seedSearchStringFromSelection),
 			autoFindInSelection: _boolean(opts.autoFindInSelection, defaults.autoFindInSelection),
 			globalFindClipboard: _boolean(opts.globalFindClipboard, defaults.globalFindClipboard),
-			addExtraSpaceOnTop: _boolean(opts.addExtraSpaceOnTop, defaults.addExtraSpaceOnTop)
+			addExtraSpaceOnTop: _boolean(opts.addExtraSpaceOnTop, defaults.addExtraSpaceOnTop),
+			alwaysUseMaxWidth: _boolean(opts.alwaysUseMaxWidth, defaults.alwaysUseMaxWidth)
 		};
 	}
 
@@ -2733,7 +2740,8 @@ export const EDITOR_DEFAULTS: IValidatedEditorOptions = {
 			seedSearchStringFromSelection: true,
 			autoFindInSelection: false,
 			globalFindClipboard: false,
-			addExtraSpaceOnTop: true
+			addExtraSpaceOnTop: true,
+			alwaysUseMaxWidth: false
 		},
 		colorDecorators: true,
 		lightbulbEnabled: true,

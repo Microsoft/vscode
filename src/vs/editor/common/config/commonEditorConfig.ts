@@ -399,6 +399,11 @@ const editorConfiguration: IConfigurationNode = {
 			'default': true,
 			'description': nls.localize('find.addExtraSpaceOnTop', "Controls whether the Find Widget should add extra lines on top of the editor. When true, you can scroll beyond the first line when the Find Widget is visible.")
 		},
+		'editor.find.alwaysUseMaxWidth': {
+			'type': 'boolean',
+			'default': false,
+			'description': nls.localize('find.alwaysUseMaxWidth', "Controls whether the Find Widget should always be the maximum width.")
+		},
 		'editor.wordWrap': {
 			'type': 'string',
 			'enum': ['off', 'on', 'wordWrapColumn', 'bounded'],

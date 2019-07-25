@@ -155,7 +155,7 @@ export class FindWidget extends Widget implements IOverlayWidget, IHorizontalSas
 				}
 				this._updateButtons();
 			}
-			if (e.layoutInfo) {
+			if (e.layoutInfo || e.contribInfo) {
 				this._tryUpdateWidgetWidth();
 			}
 
@@ -596,8 +596,20 @@ export class FindWidget extends Widget implements IOverlayWidget, IHorizontalSas
 		if (!this._isVisible) {
 			return;
 		}
+
+		let configMaxWidth = this._codeEditor.getConfiguration().contribInfo.find.alwaysUseMaxWidth;
 		let editorWidth = this._codeEditor.getConfiguration().layoutInfo.width;
 		let minimapWidth = this._codeEditor.getConfiguration().layoutInfo.minimapWidth;
+		let maxWidthVal = `${editorWidth - 28 - minimapWidth - 15}px`;
+
+		if (configMaxWidth) {
+			// Use min width so that if the user toggles the option off while the widget is open, it remembers its width
+			this._domNode.style.minWidth = maxWidthVal;
+			// Hide the drag-scroll widget
+			(this._domNode.getElementsByClassName('monaco-sash')[0] as HTMLElement).style.display = 'none';
+			return;
+		}
+
 		let collapsedFindWidget = false;
 		let reducedFindWidget = false;
 		let narrowFindWidget = false;
@@ -607,7 +619,7 @@ export class FindWidget extends Widget implements IOverlayWidget, IHorizontalSas
 
 			if (widgetWidth > FIND_WIDGET_INITIAL_WIDTH) {
 				// as the widget is resized by users, we may need to change the max width of the widget as the editor width changes.
-				this._domNode.style.maxWidth = `${editorWidth - 28 - minimapWidth - 15}px`;
+				this._domNode.style.maxWidth = maxWidthVal;
 				this._replaceInputBox.inputElement.style.width = `${dom.getTotalWidth(this._findInput.inputBox.inputElement)}px`;
 				return;
 			}
@@ -637,6 +649,9 @@ export class FindWidget extends Widget implements IOverlayWidget, IHorizontalSas
 				this._replaceInputBox.inputElement.style.width = `${findInputWidth}px`;
 			}
 		}
+
+		(this._domNode.getElementsByClassName('monaco-sash')[0] as HTMLElement).style.display = '';
+		this._domNode.style.minWidth = '';
 	}
 
 	// ----- Public

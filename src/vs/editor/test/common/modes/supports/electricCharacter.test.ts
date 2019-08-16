@@ -21,9 +21,9 @@ suite('Editor Modes - Auto Indentation', () => {
 		assert.deepEqual(actual, null);
 	}
 
-	function testAppends(electricCharacterSupport: BracketElectricCharacterSupport, line: TokenText[], character: string, offset: number, appendText: string): void {
+	function testAppendsAfterOpen(electricCharacterSupport: BracketElectricCharacterSupport, line: TokenText[], character: string, offset: number, appendText: string, matchOpenText: string): void {
 		let actual = _testOnElectricCharacter(electricCharacterSupport, line, character, offset);
-		assert.deepEqual(actual, { appendText: appendText });
+		assert.deepEqual(actual, { appendText: appendText, matchOpenText: matchOpenText });
 	}
 
 	function testMatchBracket(electricCharacterSupport: BracketElectricCharacterSupport, line: TokenText[], character: string, offset: number, matchOpenBracket: string): void {
@@ -34,9 +34,9 @@ suite('Editor Modes - Auto Indentation', () => {
 	test('Doc comments', () => {
 		let brackets = new BracketElectricCharacterSupport(null, [{ open: '/**', close: ' */' }], null);
 
-		testAppends(brackets, [
+		testAppendsAfterOpen(brackets, [
 			{ text: '/*', type: StandardTokenType.Other },
-		], '*', 3, ' */');
+		], '*', 3, ' */', '/**');
 
 		testDoesNothing(brackets, [
 			{ text: '/*', type: StandardTokenType.Other },
@@ -85,7 +85,7 @@ suite('Editor Modes - Auto Indentation', () => {
 		testDoesNothing(sup, [{ text: 'bgin', type: StandardTokenType.Other }], 'e', 2);
 		testDoesNothing(sup, [{ text: 'bein', type: StandardTokenType.Other }], 'g', 3);
 		testDoesNothing(sup, [{ text: 'begn', type: StandardTokenType.Other }], 'i', 4);
-		testAppends(sup, [{ text: 'begi', type: StandardTokenType.Other }], 'n', 5, 'end');
+		testAppendsAfterOpen(sup, [{ text: 'begi', type: StandardTokenType.Other }], 'n', 5, 'end', 'begin');
 
 		testDoesNothing(sup, [{ text: '3gin', type: StandardTokenType.Other }], 'b', 1);
 		testDoesNothing(sup, [{ text: 'bgin', type: StandardTokenType.Other }], '3', 2);
@@ -95,10 +95,10 @@ suite('Editor Modes - Auto Indentation', () => {
 
 		testDoesNothing(sup, [{ text: 'begi', type: StandardTokenType.String }], 'n', 5);
 
-		testAppends(sup, [{ text: '"', type: StandardTokenType.String }, { text: 'begi', type: StandardTokenType.Other }], 'n', 6, 'end');
+		testAppendsAfterOpen(sup, [{ text: '"', type: StandardTokenType.String }, { text: 'begi', type: StandardTokenType.Other }], 'n', 6, 'end', 'begin');
 		testDoesNothing(sup, [{ text: '"', type: StandardTokenType.String }, { text: 'begi', type: StandardTokenType.String }], 'n', 6);
 
-		testAppends(sup, [{ text: '/*', type: StandardTokenType.String }], '*', 3, ' */');
+		testAppendsAfterOpen(sup, [{ text: '/*', type: StandardTokenType.String }], '*', 3, ' */', '/**');
 
 		testDoesNothing(sup, [{ text: 'begi', type: StandardTokenType.Other }, { text: 'end', type: StandardTokenType.Other }], 'n', 5);
 	});

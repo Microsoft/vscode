@@ -16,7 +16,7 @@ import { ITextModel, TextModelResolvedOptions } from 'vs/editor/common/model';
 import { TextModel } from 'vs/editor/common/model/textModel';
 import { LanguageIdentifier } from 'vs/editor/common/modes';
 import { IAutoClosingPair } from 'vs/editor/common/modes/languageConfiguration';
-import { LanguageConfigurationRegistry } from 'vs/editor/common/modes/languageConfigurationRegistry';
+import { LanguageConfigurationRegistry, ICommentsConfiguration } from 'vs/editor/common/modes/languageConfigurationRegistry';
 import { VerticalRevealType } from 'vs/editor/common/view/viewEvents';
 import { IViewModel } from 'vs/editor/common/viewModel/viewModel';
 
@@ -87,13 +87,16 @@ export class CursorConfiguration {
 	public readonly copyWithSyntaxHighlighting: boolean;
 	public readonly multiCursorMergeOverlapping: boolean;
 	public readonly autoClosingBrackets: EditorAutoClosingStrategy;
+	public readonly autoClosingComments: EditorAutoClosingStrategy;
 	public readonly autoClosingQuotes: EditorAutoClosingStrategy;
 	public readonly autoSurround: EditorAutoSurroundStrategy;
 	public readonly autoIndent: boolean;
 	public readonly autoClosingPairsOpen: CharacterMap;
 	public readonly autoClosingPairsClose: CharacterMap;
 	public readonly surroundingPairs: CharacterMap;
-	public readonly shouldAutoCloseBefore: { quote: (ch: string) => boolean, bracket: (ch: string) => boolean };
+	public readonly blockCommentPairsOpen: CharacterMap;
+	public readonly blockCommentPairsClose: CharacterMap;
+	public readonly shouldAutoCloseBefore: { quote: (ch: string) => boolean, bracket: (ch: string) => boolean, comment: (ch: string) => boolean };
 
 	private readonly _languageIdentifier: LanguageIdentifier;
 	private _electricChars: { [key: string]: boolean; } | null;
@@ -105,6 +108,7 @@ export class CursorConfiguration {
 			|| e.emptySelectionClipboard
 			|| e.multiCursorMergeOverlapping
 			|| e.autoClosingBrackets
+			|| e.autoClosingComments
 			|| e.autoClosingQuotes
 			|| e.autoSurround
 			|| e.useTabStops
@@ -134,6 +138,7 @@ export class CursorConfiguration {
 		this.copyWithSyntaxHighlighting = c.copyWithSyntaxHighlighting;
 		this.multiCursorMergeOverlapping = c.multiCursorMergeOverlapping;
 		this.autoClosingBrackets = c.autoClosingBrackets;
+		this.autoClosingComments = c.autoClosingComments;
 		this.autoClosingQuotes = c.autoClosingQuotes;
 		this.autoSurround = c.autoSurround;
 		this.autoIndent = c.autoIndent;
@@ -141,10 +146,13 @@ export class CursorConfiguration {
 		this.autoClosingPairsOpen = {};
 		this.autoClosingPairsClose = {};
 		this.surroundingPairs = {};
+		this.blockCommentPairsOpen = {};
+		this.blockCommentPairsClose = {};
 		this._electricChars = null;
 
 		this.shouldAutoCloseBefore = {
 			quote: CursorConfiguration._getShouldAutoClose(languageIdentifier, this.autoClosingQuotes),
+			comment: CursorConfiguration._getShouldAutoClose(languageIdentifier, this.autoClosingComments),
 			bracket: CursorConfiguration._getShouldAutoClose(languageIdentifier, this.autoClosingBrackets)
 		};
 
@@ -160,6 +168,14 @@ export class CursorConfiguration {
 		if (surroundingPairs) {
 			for (const pair of surroundingPairs) {
 				this.surroundingPairs[pair.open] = pair.close;
+			}
+		}
+
+		let commentsConfiguration = CursorConfiguration._getCommentsConfiguration(languageIdentifier);
+		if (commentsConfiguration) {
+			if (commentsConfiguration.blockCommentEndToken && commentsConfiguration.blockCommentStartToken) {
+				this.blockCommentPairsOpen[commentsConfiguration.blockCommentEndToken] = commentsConfiguration.blockCommentStartToken;
+				this.blockCommentPairsClose[commentsConfiguration.blockCommentStartToken] = commentsConfiguration.blockCommentEndToken;
 			}
 		}
 	}
@@ -225,6 +241,15 @@ export class CursorConfiguration {
 	private static _getSurroundingPairs(languageIdentifier: LanguageIdentifier): IAutoClosingPair[] | null {
 		try {
 			return LanguageConfigurationRegistry.getSurroundingPairs(languageIdentifier.id);
+		} catch (e) {
+			onUnexpectedError(e);
+			return null;
+		}
+	}
+
+	private static _getCommentsConfiguration(languageIdentifier: LanguageIdentifier): ICommentsConfiguration | null {
+		try {
+			return LanguageConfigurationRegistry.getComments(languageIdentifier.id);
 		} catch (e) {
 			onUnexpectedError(e);
 			return null;

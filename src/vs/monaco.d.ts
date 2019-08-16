@@ -2918,6 +2918,11 @@ declare namespace monaco.editor {
 		 */
 		autoClosingBrackets?: EditorAutoClosingStrategy;
 		/**
+		 * Options for auto closing comments.
+		 * Defaults to language defined behavior.
+		 */
+		autoClosingComments?: EditorAutoClosingStrategy;
+		/**
 		 * Options for auto closing quotes.
 		 * Defaults to language defined behavior.
 		 */
@@ -3384,6 +3389,7 @@ declare namespace monaco.editor {
 		readonly showUnused: boolean;
 		readonly wordSeparators: string;
 		readonly autoClosingBrackets: EditorAutoClosingStrategy;
+		readonly autoClosingComments: EditorAutoClosingStrategy;
 		readonly autoClosingQuotes: EditorAutoClosingStrategy;
 		readonly autoSurround: EditorAutoSurroundStrategy;
 		readonly autoIndent: boolean;
@@ -3525,6 +3531,7 @@ declare namespace monaco.editor {
 		readonly multiCursorMergeOverlapping: boolean;
 		readonly wordSeparators: boolean;
 		readonly autoClosingBrackets: boolean;
+		readonly autoClosingComments: boolean;
 		readonly autoClosingQuotes: boolean;
 		readonly autoSurround: boolean;
 		readonly autoIndent: boolean;

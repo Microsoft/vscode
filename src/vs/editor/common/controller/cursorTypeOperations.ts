@@ -658,6 +658,34 @@ export class TypeOperations {
 		return false;
 	}
 
+	private static _isIgnorableAutoCloseCommentElectricAction(config: CursorConfiguration, model: ITextModel, selection: Selection, electricAction: IElectricAction) {
+		// Check whether this is an action which geenrates auto-closing text.
+		if (!electricAction.appendText || !electricAction.matchOpenText) {
+			return false;
+		}
+		// Check if it is a block comment which is being closed.
+		if (!config.blockCommentPairsClose.hasOwnProperty(electricAction.matchOpenText)) {
+			return false;
+		}
+		// TODO: Verify that appending text is the closing comment block.
+		if (config.autoClosingComments === 'never') {
+			return true;
+		}
+		const position = selection.getPosition();
+		const lineText = model.getLineContent(position.lineNumber);
+		const characterAfter = lineText.charAt(position.column - 1);
+		if (characterAfter) {
+			if (!config.shouldAutoCloseBefore.comment(characterAfter)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static _isIgnorableElectricAction(config: CursorConfiguration, model: ITextModel, selection: Selection, electricAction: IElectricAction) {
+		return this._isIgnorableAutoCloseCommentElectricAction(config, model, selection, electricAction);
+	}
+
 	private static _typeInterceptorElectricChar(prevEditOperationType: EditOperationType, config: CursorConfiguration, model: ITextModel, selection: Selection, ch: string): EditOperationResult | null {
 		if (!config.electricChars.hasOwnProperty(ch) || !selection.isEmpty()) {
 			return null;
@@ -676,6 +704,10 @@ export class TypeOperations {
 		}
 
 		if (!electricAction) {
+			return null;
+		}
+
+		if (this._isIgnorableElectricAction(config, model, selection, electricAction)) {
 			return null;
 		}
 

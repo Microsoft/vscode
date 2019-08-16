@@ -20,6 +20,10 @@ export interface IElectricAction {
 
 	// The text will be appended after the electric character.
 	appendText?: string;
+
+	// If the appendText is created as an auto-close text this field
+	// contains opening part of auto-close pair.
+	matchOpenText?: string;
 }
 
 export class BracketElectricCharacterSupport {
@@ -138,7 +142,10 @@ export class BracketElectricCharacterSupport {
 				continue;
 			}
 
-			return { appendText: pair.close };
+			return {
+				matchOpenText: pair.open,
+				appendText: pair.close
+			};
 		}
 
 		return null;

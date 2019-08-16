@@ -546,6 +546,19 @@ const editorConfiguration: IConfigurationNode = {
 			'default': EDITOR_DEFAULTS.autoClosingBrackets,
 			'description': nls.localize('autoClosingBrackets', "Controls whether the editor should automatically close brackets after the user adds an opening bracket.")
 		},
+		'editor.autoClosingComments': {
+			type: 'string',
+			enum: ['always', 'languageDefined', 'beforeWhitespace', 'never'],
+			enumDescriptions: [
+				'',
+				nls.localize('editor.autoClosingComments.languageDefined', "Use language configurations to determine when to autoclose comments."),
+				nls.localize('editor.autoClosingComments.beforeWhitespace', "Autoclose comments only when the cursor is to the left of whitespace."),
+				'',
+
+			],
+			'default': EDITOR_DEFAULTS.autoClosingComments,
+			'description': nls.localize('autoClosingComments', "Controls whether the editor should automatically close comment after the user adds an opening comment.")
+		},
 		'editor.autoClosingQuotes': {
 			type: 'string',
 			enum: ['always', 'languageDefined', 'beforeWhitespace', 'never'],

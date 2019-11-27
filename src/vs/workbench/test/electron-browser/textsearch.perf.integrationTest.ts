@@ -113,9 +113,9 @@ suite.skip('TextSearch performance (integration)', () => {
 				error = _error;
 
 				// Don't wait on this promise, we're waiting on the event fired above
-				searchModel.search(query).then(
+				query.then(q => searchModel.search(q).then(
 					null,
-					_error);
+					_error));
 			});
 		}
 

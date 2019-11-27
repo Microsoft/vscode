@@ -12,6 +12,7 @@ import { LifecyclePhase } from 'vs/platform/lifecycle/common/lifecycle';
 import { JSONValidationExtensionPoint } from 'vs/workbench/api/common/jsonValidationExtensionPoint';
 import { ColorExtensionPoint } from 'vs/workbench/services/themes/common/colorExtensionPoint';
 import { LanguageConfigurationFileHandler } from 'vs/workbench/contrib/codeEditor/browser/languageConfigurationExtensionPoint';
+import { SearchTokenExtensionPoint } from 'vs/workbench/api/common/searchTokenExtensionPoint';
 
 // --- mainThread participants
 import './mainThreadCodeInsets';
@@ -67,6 +68,7 @@ export class ExtensionPoints implements IWorkbenchContribution {
 		this.instantiationService.createInstance(JSONValidationExtensionPoint);
 		this.instantiationService.createInstance(ColorExtensionPoint);
 		this.instantiationService.createInstance(LanguageConfigurationFileHandler);
+		this.instantiationService.createInstance(SearchTokenExtensionPoint);
 	}
 }
 

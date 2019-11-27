@@ -19,6 +19,8 @@ import { IEnvironmentService } from 'vs/platform/environment/common/environment'
 import { IWorkspaceContextService, WorkbenchState } from 'vs/platform/workspace/common/workspace';
 import { getExcludes, ICommonQueryProps, IFileQuery, IFolderQuery, IPatternInfo, ISearchConfiguration, ITextQuery, ITextSearchPreviewOptions, pathIncludedInQuery, QueryType } from 'vs/workbench/services/search/common/search';
 import { Schemas } from 'vs/base/common/network';
+import { QueryExpansion } from 'vs/workbench/contrib/search/common/queryExpansion';
+import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 
 /**
  * One folder to search and a glob expression that should be applied.
@@ -78,14 +80,17 @@ export interface ITextQueryBuilderOptions extends ICommonQueryBuilderOptions {
 }
 
 export class QueryBuilder {
+	private readonly queryExpansion: QueryExpansion;
 
 	constructor(
 		@IConfigurationService private readonly configurationService: IConfigurationService,
 		@IWorkspaceContextService private readonly workspaceContextService: IWorkspaceContextService,
-		@IEnvironmentService private readonly environmentService: IEnvironmentService
-	) { }
+		@IEnvironmentService private readonly environmentService: IEnvironmentService,
+		@IInstantiationService instantiationService: IInstantiationService) {
+		this.queryExpansion = instantiationService.createInstance(QueryExpansion);
+	}
 
-	text(contentPattern: IPatternInfo, folderResources?: uri[], options: ITextQueryBuilderOptions = {}): ITextQuery {
+	text(contentPattern: IPatternInfo, folderResources?: uri[], options: ITextQueryBuilderOptions = {}): Promise<ITextQuery> {
 		contentPattern = this.getContentPattern(contentPattern, options);
 		const searchConfig = this.configurationService.getValue<ISearchConfiguration>();
 
@@ -95,8 +100,8 @@ export class QueryBuilder {
 		});
 
 		const commonQuery = this.commonQuery(folderResources, options);
-		return <ITextQuery>{
-			...commonQuery,
+		return commonQuery.then(q => <ITextQuery>{
+			...q,
 			type: QueryType.Text,
 			contentPattern,
 			previewOptions: options.previewOptions,
@@ -105,7 +110,7 @@ export class QueryBuilder {
 			beforeContext: options.beforeContext,
 			afterContext: options.afterContext,
 			userDisabledExcludesAndIgnoreFiles: options.disregardExcludeSettings && options.disregardIgnoreFiles
-		};
+		});
 	}
 
 	/**
@@ -135,7 +140,7 @@ export class QueryBuilder {
 	}
 
 	file(folderResources: uri[] | undefined, options: IFileQueryBuilderOptions = {}): IFileQuery {
-		const commonQuery = this.commonQuery(folderResources, options);
+		const commonQuery = this.commonQueryNoTokenExpansion(folderResources, options);
 		return <IFileQuery>{
 			...commonQuery,
 			type: QueryType.File,
@@ -148,21 +153,57 @@ export class QueryBuilder {
 		};
 	}
 
-	private commonQuery(folderResources: uri[] = [], options: ICommonQueryBuilderOptions = {}): ICommonQueryProps<uri> {
+	private commonQuery(folderResources: uri[] = [], options: ICommonQueryBuilderOptions = {}): Promise<ICommonQueryProps<uri>> {
+		let includeSearchPathsInfoPromise: Promise<ISearchPathsInfo> = Promise.resolve({});
+		if (options.includePattern) {
+			if (options.expandPatterns) {
+				includeSearchPathsInfoPromise = this.parseSearchPaths(options.includePattern);
+			} else {
+				const patternExpression = this.queryExpansion.expandQuerySegments(splitGlobPattern(options.includePattern))
+					.then(patterns => patternListToIExpression(...patterns));
+				includeSearchPathsInfoPromise = patternExpression.then(e => { return { pattern: e }; });
+
+			}
+		}
+
+		let excludeSearchPathsInfoPromise: Promise<ISearchPathsInfo> = Promise.resolve({});
+		if (options.excludePattern) {
+			if (options.expandPatterns) {
+				excludeSearchPathsInfoPromise = this.parseSearchPaths(options.excludePattern);
+			} else {
+				const patternExpression = this.queryExpansion.expandQuerySegments(splitGlobPattern(options.excludePattern))
+					.then(patterns => patternListToIExpression(...patterns));
+				excludeSearchPathsInfoPromise = patternExpression.then(e => { return { pattern: e }; });
+			}
+		}
+
+		return Promise.all([includeSearchPathsInfoPromise, excludeSearchPathsInfoPromise])
+			.then(([includeInfo, excludeInfo]) => this.buildFolderQueries(includeInfo, excludeInfo, folderResources, options));
+	}
+
+	private commonQueryNoTokenExpansion(folderResources: uri[] = [], options: ICommonQueryBuilderOptions = {}): ICommonQueryProps<uri> {
 		let includeSearchPathsInfo: ISearchPathsInfo = {};
 		if (options.includePattern) {
 			includeSearchPathsInfo = options.expandPatterns ?
-				this.parseSearchPaths(options.includePattern) :
+				this.parseSearchPathsNoTokenExpansion(options.includePattern) :
 				{ pattern: patternListToIExpression(options.includePattern) };
 		}
 
 		let excludeSearchPathsInfo: ISearchPathsInfo = {};
 		if (options.excludePattern) {
 			excludeSearchPathsInfo = options.expandPatterns ?
-				this.parseSearchPaths(options.excludePattern) :
+				this.parseSearchPathsNoTokenExpansion(options.excludePattern) :
 				{ pattern: patternListToIExpression(options.excludePattern) };
 		}
 
+		return this.buildFolderQueries(includeSearchPathsInfo, excludeSearchPathsInfo, folderResources, options);
+	}
+
+	private buildFolderQueries(
+		includeSearchPathsInfo: ISearchPathsInfo,
+		excludeSearchPathsInfo: ISearchPathsInfo,
+		folderResources: uri[],
+		options: ICommonQueryBuilderOptions): ICommonQueryProps<uri> {
 		// Build folderQueries from searchPaths, if given, otherwise folderResources
 		const folderQueries = (includeSearchPathsInfo.searchPaths && includeSearchPathsInfo.searchPaths.length ?
 			includeSearchPathsInfo.searchPaths.map(searchPath => this.getFolderQueryForSearchPath(searchPath, options, excludeSearchPathsInfo)) :
@@ -227,14 +268,22 @@ export class QueryBuilder {
 	 *
 	 * Public for test.
 	 */
-	parseSearchPaths(pattern: string): ISearchPathsInfo {
-		const isSearchPath = (segment: string) => {
+	parseSearchPaths(pattern: string): Promise<ISearchPathsInfo> {
+		return this.queryExpansion.expandQuerySegments(splitGlobPattern(pattern))
+			.then(patterns => this.parseSearchPatterns(patterns));
+	}
+
+	parseSearchPathsNoTokenExpansion(pattern: string): ISearchPathsInfo {
+		return this.parseSearchPatterns(splitGlobPattern(pattern));
+	}
+
+	private parseSearchPatterns(patterns: string[]): ISearchPathsInfo {
+		const isSearchPath = (segment: string): boolean => {
 			// A segment is a search path if it is an absolute path or starts with ./, ../, .\, or ..\
 			return path.isAbsolute(segment) || /^\.\.?([\/\\]|$)/.test(segment);
 		};
 
-		const segments = splitGlobPattern(pattern)
-			.map(segment => untildify(segment, this.environmentService.userHome));
+		const segments = patterns.map(segment => untildify(segment, this.environmentService.userHome));
 		const groups = collections.groupBy(segments,
 			segment => isSearchPath(segment) ? 'searchPaths' : 'exprSegments');
 

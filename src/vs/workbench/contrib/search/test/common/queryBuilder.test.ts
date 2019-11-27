@@ -51,9 +51,9 @@ suite('QueryBuilder', () => {
 		queryBuilder = instantiationService.createInstance(QueryBuilder);
 	});
 
-	test('simple text pattern', () => {
+	test('simple text pattern', async () => {
 		assertEqualTextQueries(
-			queryBuilder.text(PATTERN_INFO),
+			await queryBuilder.text(PATTERN_INFO),
 			{
 				folderQueries: [],
 				contentPattern: PATTERN_INFO,
@@ -61,9 +61,9 @@ suite('QueryBuilder', () => {
 			});
 	});
 
-	test('normalize literal newlines', () => {
+	test('normalize literal newlines', async () => {
 		assertEqualTextQueries(
-			queryBuilder.text({ pattern: 'foo\nbar', isRegExp: true }),
+			await queryBuilder.text({ pattern: 'foo\nbar', isRegExp: true }),
 			{
 				folderQueries: [],
 				contentPattern: {
@@ -75,7 +75,7 @@ suite('QueryBuilder', () => {
 			});
 
 		assertEqualTextQueries(
-			queryBuilder.text({ pattern: 'foo\nbar', isRegExp: false }),
+			await queryBuilder.text({ pattern: 'foo\nbar', isRegExp: false }),
 			{
 				folderQueries: [],
 				contentPattern: {
@@ -101,9 +101,9 @@ suite('QueryBuilder', () => {
 			});
 	});
 
-	test('folderResources', () => {
+	test('folderResources', async () => {
 		assertEqualTextQueries(
-			queryBuilder.text(
+			await queryBuilder.text(
 				PATTERN_INFO,
 				[ROOT_1_URI]
 			),
@@ -114,7 +114,7 @@ suite('QueryBuilder', () => {
 			});
 	});
 
-	test('simple exclude setting', () => {
+	test('simple exclude setting', async () => {
 		mockConfigService.setUserConfiguration('search', {
 			...DEFAULT_USER_CONFIG,
 			exclude: {
@@ -126,7 +126,7 @@ suite('QueryBuilder', () => {
 		});
 
 		assertEqualTextQueries(
-			queryBuilder.text(
+			await queryBuilder.text(
 				PATTERN_INFO,
 				[ROOT_1_URI],
 				{
@@ -148,9 +148,9 @@ suite('QueryBuilder', () => {
 			});
 	});
 
-	test('simple include', () => {
+	test('simple include', async () => {
 		assertEqualTextQueries(
-			queryBuilder.text(
+			await queryBuilder.text(
 				PATTERN_INFO,
 				[ROOT_1_URI],
 				{
@@ -171,7 +171,7 @@ suite('QueryBuilder', () => {
 			});
 
 		assertEqualTextQueries(
-			queryBuilder.text(
+			await queryBuilder.text(
 				PATTERN_INFO,
 				[ROOT_1_URI],
 				{
@@ -190,10 +190,10 @@ suite('QueryBuilder', () => {
 			});
 	});
 
-	test('simple include with ./ syntax', () => {
+	test('simple include with ./ syntax', async () => {
 
 		assertEqualTextQueries(
-			queryBuilder.text(
+			await queryBuilder.text(
 				PATTERN_INFO,
 				[ROOT_1_URI],
 				{
@@ -214,7 +214,7 @@ suite('QueryBuilder', () => {
 			});
 
 		assertEqualTextQueries(
-			queryBuilder.text(
+			await queryBuilder.text(
 				PATTERN_INFO,
 				[ROOT_1_URI],
 				{
@@ -235,7 +235,7 @@ suite('QueryBuilder', () => {
 			});
 	});
 
-	test('exclude setting and searchPath', () => {
+	test('exclude setting and searchPath', async () => {
 		mockConfigService.setUserConfiguration('search', {
 			...DEFAULT_USER_CONFIG,
 			exclude: {
@@ -247,7 +247,7 @@ suite('QueryBuilder', () => {
 		});
 
 		assertEqualTextQueries(
-			queryBuilder.text(
+			await queryBuilder.text(
 				PATTERN_INFO,
 				[ROOT_1_URI],
 				{
@@ -274,7 +274,7 @@ suite('QueryBuilder', () => {
 			});
 	});
 
-	test('multiroot exclude settings', () => {
+	test('multiroot exclude settings', async () => {
 		const ROOT_2 = fixPath('/project/root2');
 		const ROOT_2_URI = getUri(ROOT_2);
 		const ROOT_3 = fixPath('/project/root3');
@@ -294,7 +294,7 @@ suite('QueryBuilder', () => {
 
 		// There are 3 roots, the first two have search.exclude settings, test that the correct basic query is returned
 		assertEqualTextQueries(
-			queryBuilder.text(
+			await queryBuilder.text(
 				PATTERN_INFO,
 				[ROOT_1_URI, ROOT_2_URI, ROOT_3_URI]
 			),
@@ -311,7 +311,7 @@ suite('QueryBuilder', () => {
 
 		// Now test that it merges the root excludes when an 'include' is used
 		assertEqualTextQueries(
-			queryBuilder.text(
+			await queryBuilder.text(
 				PATTERN_INFO,
 				[ROOT_1_URI, ROOT_2_URI, ROOT_3_URI],
 				{
@@ -338,9 +338,9 @@ suite('QueryBuilder', () => {
 		);
 	});
 
-	test('simple exclude input pattern', () => {
+	test('simple exclude input pattern', async () => {
 		assertEqualTextQueries(
-			queryBuilder.text(
+			await queryBuilder.text(
 				PATTERN_INFO,
 				[ROOT_1_URI],
 				{
@@ -372,9 +372,9 @@ suite('QueryBuilder', () => {
 			});
 	});
 
-	test('exclude ./ syntax', () => {
+	test('exclude ./ syntax', async () => {
 		assertEqualTextQueries(
-			queryBuilder.text(
+			await queryBuilder.text(
 				PATTERN_INFO,
 				[ROOT_1_URI],
 				{
@@ -392,7 +392,7 @@ suite('QueryBuilder', () => {
 			});
 
 		assertEqualTextQueries(
-			queryBuilder.text(
+			await queryBuilder.text(
 				PATTERN_INFO,
 				[ROOT_1_URI],
 				{
@@ -410,7 +410,7 @@ suite('QueryBuilder', () => {
 			});
 
 		assertEqualTextQueries(
-			queryBuilder.text(
+			await queryBuilder.text(
 				PATTERN_INFO,
 				[ROOT_1_URI],
 				{
@@ -428,9 +428,9 @@ suite('QueryBuilder', () => {
 			});
 	});
 
-	test('extraFileResources', () => {
+	test('extraFileResources', async () => {
 		assertEqualTextQueries(
-			queryBuilder.text(
+			await queryBuilder.text(
 				PATTERN_INFO,
 				[ROOT_1_URI],
 				{ extraFileResources: [getUri('/foo/bar.js')] }
@@ -445,7 +445,7 @@ suite('QueryBuilder', () => {
 			});
 
 		assertEqualTextQueries(
-			queryBuilder.text(
+			await queryBuilder.text(
 				PATTERN_INFO,
 				[ROOT_1_URI],
 				{
@@ -464,7 +464,7 @@ suite('QueryBuilder', () => {
 			});
 
 		assertEqualTextQueries(
-			queryBuilder.text(
+			await queryBuilder.text(
 				PATTERN_INFO,
 				[ROOT_1_URI],
 				{
@@ -484,38 +484,40 @@ suite('QueryBuilder', () => {
 	});
 
 	suite('parseSearchPaths', () => {
-		test('simple includes', () => {
-			function testSimpleIncludes(includePattern: string, expectedPatterns: string[]): void {
+		test('simple includes', async () => {
+			async function testSimpleIncludes(includePattern: string, expectedPatterns: string[]): Promise<void> {
 				assert.deepEqual(
-					queryBuilder.parseSearchPaths(includePattern),
+					await queryBuilder.parseSearchPaths(includePattern),
 					{
 						pattern: patternsToIExpression(...expectedPatterns)
 					},
 					includePattern);
 			}
 
-			[
+			const promises = [
 				['a', ['**/a/**', '**/a']],
 				['a/b', ['**/a/b', '**/a/b/**']],
 				['a/b,  c', ['**/a/b', '**/c', '**/a/b/**', '**/c/**']],
 				['a,.txt', ['**/a', '**/a/**', '**/*.txt', '**/*.txt/**']],
 				['a,,,b', ['**/a', '**/a/**', '**/b', '**/b/**']],
 				['**/a,b/**', ['**/a', '**/a/**', '**/b/**']]
-			].forEach(([includePattern, expectedPatterns]) => testSimpleIncludes(<string>includePattern, <string[]>expectedPatterns));
+			].map(([includePattern, expectedPatterns]) => testSimpleIncludes(<string>includePattern, <string[]>expectedPatterns));
+
+			await Promise.all(promises);
 		});
 
-		function testIncludes(includePattern: string, expectedResult: ISearchPathsInfo): void {
+		async function testIncludes(includePattern: string, expectedResult: ISearchPathsInfo): Promise<void> {
 			assertEqualSearchPathResults(
-				queryBuilder.parseSearchPaths(includePattern),
+				await queryBuilder.parseSearchPaths(includePattern),
 				expectedResult,
 				includePattern);
 		}
 
-		function testIncludesDataItem([includePattern, expectedResult]: [string, ISearchPathsInfo]): void {
-			testIncludes(includePattern, expectedResult);
+		async function testIncludesDataItem([includePattern, expectedResult]: [string, ISearchPathsInfo]): Promise<void> {
+			await testIncludes(includePattern, expectedResult);
 		}
 
-		test('absolute includes', () => {
+		test('absolute includes', async () => {
 			const cases: [string, ISearchPathsInfo][] = [
 				[
 					fixPath('/foo/bar'),
@@ -581,10 +583,10 @@ suite('QueryBuilder', () => {
 					}
 				]
 			];
-			cases.forEach(testIncludesDataItem);
+			await Promise.all(cases.map(testIncludesDataItem));
 		});
 
-		test('includes with tilde', () => {
+		test('includes with tilde', async () => {
 			const userHome = TestEnvironmentService.userHome;
 			const cases: [string, ISearchPathsInfo][] = [
 				[
@@ -607,10 +609,10 @@ suite('QueryBuilder', () => {
 					}
 				],
 			];
-			cases.forEach(testIncludesDataItem);
+			await Promise.all(cases.map(testIncludesDataItem));
 		});
 
-		test('relative includes w/single root folder', () => {
+		test('relative includes w/single root folder', async () => {
 			const cases: [string, ISearchPathsInfo][] = [
 				[
 					'./a',
@@ -686,10 +688,10 @@ suite('QueryBuilder', () => {
 					}
 				]
 			];
-			cases.forEach(testIncludesDataItem);
+			await Promise.all(cases.map(testIncludesDataItem));
 		});
 
-		test('relative includes w/two root folders', () => {
+		test('relative includes w/two root folders', async () => {
 			const ROOT_2 = '/project/root2';
 			mockWorkspace.folders = toWorkspaceFolders([{ path: ROOT_1_URI.fsPath }, { path: getUri(ROOT_2).fsPath }], WS_CONFIG_PATH);
 			mockWorkspace.configuration = uri.file(fixPath('config'));
@@ -726,10 +728,10 @@ suite('QueryBuilder', () => {
 					}
 				]
 			];
-			cases.forEach(testIncludesDataItem);
+			await Promise.all(cases.map(testIncludesDataItem));
 		});
 
-		test('include ./foldername', () => {
+		test('include ./foldername', async () => {
 			const ROOT_2 = '/project/root2';
 			const ROOT_1_FOLDERNAME = 'foldername';
 			mockWorkspace.folders = toWorkspaceFolders([{ path: ROOT_1_URI.fsPath, name: ROOT_1_FOLDERNAME }, { path: getUri(ROOT_2).fsPath }], WS_CONFIG_PATH);
@@ -754,10 +756,10 @@ suite('QueryBuilder', () => {
 					}
 				]
 			];
-			cases.forEach(testIncludesDataItem);
+			await Promise.all(cases.map(testIncludesDataItem));
 		});
 
-		test('relative includes w/multiple ambiguous root folders', () => {
+		test('relative includes w/multiple ambiguous root folders', async () => {
 			const ROOT_2 = '/project/rootB';
 			const ROOT_3 = '/otherproject/rootB';
 			mockWorkspace.folders = toWorkspaceFolders([{ path: ROOT_1_URI.fsPath }, { path: getUri(ROOT_2).fsPath }, { path: getUri(ROOT_3).fsPath }], WS_CONFIG_PATH);
@@ -830,13 +832,13 @@ suite('QueryBuilder', () => {
 					}
 				]
 			];
-			cases.forEach(testIncludesDataItem);
+			await Promise.all(cases.map(testIncludesDataItem));
 		});
 	});
 
 	suite('smartCase', () => {
-		test('no flags -> no change', () => {
-			const query = queryBuilder.text(
+		test('no flags -> no change', async () => {
+			const query = await queryBuilder.text(
 				{
 					pattern: 'a'
 				},
@@ -845,8 +847,8 @@ suite('QueryBuilder', () => {
 			assert(!query.contentPattern.isCaseSensitive);
 		});
 
-		test('maintains isCaseSensitive when smartCase not set', () => {
-			const query = queryBuilder.text(
+		test('maintains isCaseSensitive when smartCase not set', async () => {
+			const query = await queryBuilder.text(
 				{
 					pattern: 'a',
 					isCaseSensitive: true
@@ -856,8 +858,8 @@ suite('QueryBuilder', () => {
 			assert(query.contentPattern.isCaseSensitive);
 		});
 
-		test('maintains isCaseSensitive when smartCase set', () => {
-			const query = queryBuilder.text(
+		test('maintains isCaseSensitive when smartCase set', async () => {
+			const query = await queryBuilder.text(
 				{
 					pattern: 'a',
 					isCaseSensitive: true
@@ -870,8 +872,8 @@ suite('QueryBuilder', () => {
 			assert(query.contentPattern.isCaseSensitive);
 		});
 
-		test('smartCase determines not case sensitive', () => {
-			const query = queryBuilder.text(
+		test('smartCase determines not case sensitive', async () => {
+			const query = await queryBuilder.text(
 				{
 					pattern: 'abcd'
 				},
@@ -883,8 +885,8 @@ suite('QueryBuilder', () => {
 			assert(!query.contentPattern.isCaseSensitive);
 		});
 
-		test('smartCase determines case sensitive', () => {
-			const query = queryBuilder.text(
+		test('smartCase determines case sensitive', async () => {
+			const query = await queryBuilder.text(
 				{
 					pattern: 'abCd'
 				},
@@ -896,8 +898,8 @@ suite('QueryBuilder', () => {
 			assert(query.contentPattern.isCaseSensitive);
 		});
 
-		test('smartCase determines not case sensitive (regex)', () => {
-			const query = queryBuilder.text(
+		test('smartCase determines not case sensitive (regex)', async () => {
+			const query = await queryBuilder.text(
 				{
 					pattern: 'ab\\Sd',
 					isRegExp: true
@@ -910,8 +912,8 @@ suite('QueryBuilder', () => {
 			assert(!query.contentPattern.isCaseSensitive);
 		});
 
-		test('smartCase determines case sensitive (regex)', () => {
-			const query = queryBuilder.text(
+		test('smartCase determines case sensitive (regex)', async () => {
+			const query = await queryBuilder.text(
 				{
 					pattern: 'ab[A-Z]d',
 					isRegExp: true

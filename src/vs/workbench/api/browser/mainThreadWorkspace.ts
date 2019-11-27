@@ -163,8 +163,7 @@ export class MainThreadWorkspace implements MainThreadWorkspaceShape {
 		const workspace = this._contextService.getWorkspace();
 		const folders = workspace.folders.map(folder => folder.uri);
 
-		const query = this._queryBuilder.text(pattern, folders, options);
-		query._reason = 'startTextSearch';
+		const queryPromise = this._queryBuilder.text(pattern, folders, options);
 
 		const onProgress = (p: ISearchProgressItem) => {
 			if ((<IFileMatch>p).results) {
@@ -172,19 +171,23 @@ export class MainThreadWorkspace implements MainThreadWorkspaceShape {
 			}
 		};
 
-		const search = this._searchService.textSearch(query, token, onProgress).then(
-			result => {
-				return { limitHit: result.limitHit };
-			},
-			err => {
-				if (!isPromiseCanceledError(err)) {
-					return Promise.reject(err);
-				}
+		return queryPromise.then(query => {
+			query._reason = 'startTextSearch';
 
-				return undefined;
-			});
+			const search = this._searchService.textSearch(query, token, onProgress).then(
+				result => {
+					return { limitHit: result.limitHit };
+				},
+				err => {
+					if (!isPromiseCanceledError(err)) {
+						return Promise.reject(err);
+					}
 
-		return search;
+					return undefined;
+				});
+
+			return search;
+		});
 	}
 
 	$checkExists(folders: UriComponents[], includes: string[], token: CancellationToken): Promise<boolean> {

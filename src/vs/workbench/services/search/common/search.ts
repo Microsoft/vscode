@@ -329,6 +329,7 @@ export interface ISearchConfigurationProperties {
 	actionsPosition: 'auto' | 'right';
 	maintainFileSearchCache: boolean;
 	collapseResults: 'auto' | 'alwaysCollapse' | 'alwaysExpand';
+	expandableTokens: { [token: string]: string[] };
 	searchOnType: boolean;
 	searchOnTypeDebouncePeriod: number;
 	enableSearchEditorPreview: boolean;

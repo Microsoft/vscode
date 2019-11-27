@@ -1243,21 +1243,20 @@ export class SearchView extends ViewletPane {
 			this.viewModel.searchResult.clear();
 		};
 
-		let query: ITextQuery;
-		try {
-			query = this.queryBuilder.text(content, folderResources.map(folder => folder.uri), options);
-		} catch (err) {
-			onQueryValidationError(err);
-			return;
-		}
+		this.queryBuilder.text(content, folderResources.map(folder => folder.uri), options)
+			.then(query => {
+				this.validateQuery(query).then(() => {
+					this.onQueryTriggered(query, options, excludePatternText, includePatternText, triggeredOnType);
 
-		this.validateQuery(query).then(() => {
-			this.onQueryTriggered(query, options, excludePatternText, includePatternText, triggeredOnType);
-
-			if (!preserveFocus) {
-				this.searchWidget.focus(false); // focus back to input field
-			}
-		}, onQueryValidationError);
+					if (!preserveFocus) {
+						this.searchWidget.focus(false); // focus back to input field
+					}
+				}, onQueryValidationError);
+			})
+			.catch(err => {
+				onQueryValidationError(err);
+				return;
+			});
 	}
 
 	private validateQuery(query: ITextQuery): Promise<void> {

@@ -804,6 +804,15 @@ configurationRegistry.registerConfiguration({
 			default: 'auto',
 			description: nls.localize('search.actionsPosition', "Controls the positioning of the actionbar on rows in the search view.")
 		},
+		'search.expandableTokens': {
+			type: 'object',
+			markdownDescription: nls.localize('expandableTokens', "Configure tokens for quick search. Read more about expanding tokens [here](https://code.visualstudio.com/docs/editor/codebasics#_advanced-search-options)."),
+			default: {
+				'@config': ['**/*.config', 'src/**/*.cscfg'],
+				'@deploy': ['**/deploy', '@config']
+			},
+			scope: ConfigurationScope.RESOURCE
+		},
 		'search.searchOnType': {
 			type: 'boolean',
 			default: true,

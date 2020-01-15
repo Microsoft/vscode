@@ -333,27 +333,28 @@ suite('Editor Contrib - Line Operations', () => {
 					editor.setSelection(new Selection(1, 2, 1, 2));
 					joinLinesAction.run(null!, editor);
 					assert.equal(model.getLineContent(1), 'hello world', '001');
-					assert.deepEqual(editor.getSelection()!.toString(), new Selection(1, 6, 1, 6).toString(), '002');
+					assert.deepEqual(editor.getSelection()!.toString(), new Selection(1, 1, 1, 12).toString(), '002');
 
 					editor.setSelection(new Selection(2, 2, 2, 2));
 					joinLinesAction.run(null!, editor);
 					assert.equal(model.getLineContent(2), 'hello world', '003');
-					assert.deepEqual(editor.getSelection()!.toString(), new Selection(2, 7, 2, 7).toString(), '004');
+					assert.deepEqual(editor.getSelection()!.toString(), new Selection(2, 1, 2, 12).toString(), '004');
 
 					editor.setSelection(new Selection(3, 2, 3, 2));
 					joinLinesAction.run(null!, editor);
 					assert.equal(model.getLineContent(3), 'hello world', '005');
-					assert.deepEqual(editor.getSelection()!.toString(), new Selection(3, 7, 3, 7).toString(), '006');
+					assert.deepEqual(editor.getSelection()!.toString(), new Selection(3, 1, 3, 12).toString(), '006');
 
 					editor.setSelection(new Selection(4, 2, 5, 3));
 					joinLinesAction.run(null!, editor);
 					assert.equal(model.getLineContent(4), 'hello world', '007');
-					assert.deepEqual(editor.getSelection()!.toString(), new Selection(4, 2, 4, 8).toString(), '008');
+					assert.deepEqual(editor.getSelection()!.toString(), new Selection(4, 1, 4, 12).toString(), '008');
 
 					editor.setSelection(new Selection(5, 1, 7, 3));
 					joinLinesAction.run(null!, editor);
 					assert.equal(model.getLineContent(5), 'hello world', '009');
-					assert.deepEqual(editor.getSelection()!.toString(), new Selection(5, 1, 5, 3).toString(), '010');
+					assert.deepEqual(editor.getSelection()!.toString(), new Selection(5, 1, 5, 12).toString(), '010');
+
 				});
 		});
 
@@ -370,7 +371,7 @@ suite('Editor Contrib - Line Operations', () => {
 					joinLinesAction.run(null!, editor);
 					assert.equal(model.getLineContent(1), 'hello', '001');
 					assert.equal(model.getLineContent(2), 'world', '002');
-					assert.deepEqual(editor.getSelection()!.toString(), new Selection(2, 6, 2, 6).toString(), '003');
+					assert.deepEqual(editor.getSelection()!.toString(), new Selection(2, 1, 2, 1).toString(), '003');
 				});
 		});
 
@@ -403,18 +404,16 @@ suite('Editor Contrib - Line Operations', () => {
 					]);
 
 					joinLinesAction.run(null!, editor);
-					assert.equal(model.getLinesContent().join('\n'), 'hello world\nhello world\nhello world\nhello world\n\nhello world', '001');
+					assert.equal(model.getLinesContent().join('\n'), 'hello world\nhello world hello world hello world\n\nhello world', '001');
 					assert.deepEqual(editor.getSelections()!.toString(), [
 						/** primary cursor */
-						new Selection(3, 4, 3, 8),
-						new Selection(1, 6, 1, 6),
-						new Selection(2, 2, 2, 8),
-						new Selection(4, 5, 4, 9),
-						new Selection(6, 1, 6, 1)
+						new Selection(1, 1, 1, 12),
+						new Selection(2, 1, 2, 36),
+						new Selection(4, 1, 4, 12)
 					].toString(), '002');
 
 					/** primary cursor */
-					assert.deepEqual(editor.getSelection()!.toString(), new Selection(3, 4, 3, 8).toString(), '003');
+					assert.deepEqual(editor.getSelection()!.toString(), new Selection(1, 1, 1, 12).toString(), '003');
 				});
 		});
 
@@ -435,7 +434,7 @@ suite('Editor Contrib - Line Operations', () => {
 
 					joinLinesAction.run(null!, editor);
 					assert.equal(model.getLineContent(1), 'hello my dear world');
-					assert.deepEqual(editor.getSelection(), new Selection(1, 14, 1, 14));
+					assert.deepEqual(editor.getSelection(), new Selection(1, 1, 1, 20));
 
 					editor.trigger('keyboard', Handler.Undo, {});
 					assert.equal(model.getLineContent(1), 'hello my dear');

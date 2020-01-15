@@ -698,6 +698,13 @@ export class DeleteAllRightAction extends AbstractDeleteAllToBoundaryAction {
 	}
 }
 
+interface IJoinLinesOperation {
+	startLineNumber: number;
+	selectionStartColumn: number;
+	endLineNumber: number;
+	positionColumn: number;
+}
+
 export class JoinLinesAction extends EditorAction {
 	constructor() {
 		super({
@@ -714,146 +721,132 @@ export class JoinLinesAction extends EditorAction {
 		});
 	}
 
-	public run(_accessor: ServicesAccessor, editor: ICodeEditor): void {
-		let selections = editor.getSelections();
-		if (selections === null) {
-			return;
+	private joinLines(line: number, model: ITextModel, editor: ICodeEditor): IIdentifiedSingleEditOperation | null {
+		if (line >= model.getLineCount()) {
+			return null;
 		}
-
-		let primaryCursor = editor.getSelection();
-		if (primaryCursor === null) {
-			return;
+		const whitespaceAtEnd = model.getLineContent(line).match(/\s*$/);
+		if (!whitespaceAtEnd) {
+			return null;
 		}
+		const range = new Range(line, model.getLineMaxColumn(line) - whitespaceAtEnd[0].length, line + 1, model.getLineFirstNonWhitespaceColumn(line + 1));
+		if (model.getLineContent(line).length > 0) {
+			return EditOperation.replace(range, ' ');
+		} else {
+			return EditOperation.replace(range, '');
+		}
+	}
 
-		selections.sort(Range.compareRangesUsingStarts);
-		let reducedSelections: Selection[] = [];
+	private _getLinesToJoin(editor: IActiveCodeEditor): IJoinLinesOperation[] {
+		// Construct Join operations
+		let operations: IJoinLinesOperation[] = editor.getSelections().map((s) => {
 
-		let lastSelection = selections.reduce((previousValue, currentValue) => {
-			if (previousValue.isEmpty()) {
-				if (previousValue.endLineNumber === currentValue.startLineNumber) {
-					if (primaryCursor!.equalsSelection(previousValue)) {
-						primaryCursor = currentValue;
-					}
-					return currentValue;
-				}
-
-				if (currentValue.startLineNumber > previousValue.endLineNumber + 1) {
-					reducedSelections.push(previousValue);
-					return currentValue;
-				} else {
-					return new Selection(previousValue.startLineNumber, previousValue.startColumn, currentValue.endLineNumber, currentValue.endColumn);
-				}
-			} else {
-				if (currentValue.startLineNumber > previousValue.endLineNumber) {
-					reducedSelections.push(previousValue);
-					return currentValue;
-				} else {
-					return new Selection(previousValue.startLineNumber, previousValue.startColumn, currentValue.endLineNumber, currentValue.endColumn);
-				}
+			let endLineNumber = s.endLineNumber;
+			if (s.startLineNumber < s.endLineNumber && s.endColumn === 1) {
+				endLineNumber -= 1;
 			}
+
+			return {
+				startLineNumber: s.startLineNumber,
+				selectionStartColumn: s.selectionStartColumn,
+				endLineNumber: endLineNumber,
+				positionColumn: s.positionColumn
+			};
 		});
 
-		reducedSelections.push(lastSelection);
+		// Sort Join operations
+		operations.sort((a, b) => {
+			if (a.startLineNumber === b.startLineNumber) {
+				return a.endLineNumber - b.endLineNumber;
+			}
+			return a.startLineNumber - b.startLineNumber;
+		});
 
+		// Merge Join operations which are adjacent or overlapping
+		let mergedOperations: IJoinLinesOperation[] = [];
+		let previousOperation = operations[0];
+		for (let i = 1; i < operations.length; i++) {
+			if (previousOperation.endLineNumber + 1 >= operations[i].startLineNumber) {
+				// Merge current operations into the previous one
+				previousOperation.endLineNumber = operations[i].endLineNumber;
+			} else {
+				// Push previous operation
+				mergedOperations.push(previousOperation);
+				previousOperation = operations[i];
+			}
+		}
+		// Push the last operation
+		mergedOperations.push(previousOperation);
+
+		return mergedOperations;
+	}
+
+	public run(_accessor: ServicesAccessor, editor: ICodeEditor): void {
+		if (!editor.hasModel()) {
+			return;
+		}
 		let model = editor.getModel();
-		if (model === null) {
+
+		let removeLines = this._getLinesToJoin(editor);
+		let ops: IIdentifiedSingleEditOperation[] = [];
+		let conString: String[] = [];
+		let cursorState: Selection[] = [];
+
+		for (let i = 0; i < removeLines.length; i++) {
+			if (removeLines[i].startLineNumber === removeLines[i].endLineNumber && removeLines[i].selectionStartColumn === removeLines[i].positionColumn) {
+				const range = this.joinLines(removeLines[i].startLineNumber, model, editor);
+				if (range && i < removeLines.length) {
+					let string: String[] = [];
+					string.push(model.getLineContent(removeLines[i].startLineNumber).trim());
+					string.push(model.getLineContent(removeLines[i].startLineNumber + 1).trim());
+					ops.push(range);
+					conString.push(string.join(' '));
+				} else {
+
+				}
+			} else {
+				let string: String[] = [];
+				for (let line = removeLines[i].startLineNumber; line < removeLines[i].endLineNumber; line++) {
+					const range = this.joinLines(line, model, editor);
+					if (range && line < removeLines[i].endLineNumber) {
+						string.push(model.getLineContent(line).trim());
+						ops.push(range);
+					}
+				}
+				if (removeLines[i].endLineNumber <= model.getLineCount()) {
+					string.push(model.getLineContent(removeLines[i].endLineNumber).trim());
+				}
+				conString.push(string.join(' ') + ' ');
+			}
+
+		}
+
+		if (ops.length === 0) {
 			return;
 		}
 
-		let edits: IIdentifiedSingleEditOperation[] = [];
-		let endCursorState: Selection[] = [];
-		let endPrimaryCursor = primaryCursor;
-		let lineOffset = 0;
+		let linesDeleted = 0;
+		for (let i = 0; i < removeLines.length; i++) {
+			const op = removeLines[i];
 
-		for (let i = 0, len = reducedSelections.length; i < len; i++) {
-			let selection = reducedSelections[i];
-			let startLineNumber = selection.startLineNumber;
-			let startColumn = 1;
-			let columnDeltaOffset = 0;
-			let endLineNumber: number,
-				endColumn: number;
+			let startLineNumber = op.startLineNumber;
+			let endLineNumber = op.endLineNumber;
 
-			let selectionEndPositionOffset = model.getLineContent(selection.endLineNumber).length - selection.endColumn;
+			if (endLineNumber === startLineNumber && endLineNumber < model.getLineCount()) {
+				endLineNumber += 1;
+			}
 
-			if (selection.isEmpty() || selection.startLineNumber === selection.endLineNumber) {
-				let position = selection.getStartPosition();
-				if (position.lineNumber < model.getLineCount()) {
-					endLineNumber = startLineNumber + 1;
-					endColumn = model.getLineMaxColumn(endLineNumber);
-				} else {
-					endLineNumber = position.lineNumber;
-					endColumn = model.getLineMaxColumn(position.lineNumber);
-				}
+			let start = model.getLineFirstNonWhitespaceColumn(startLineNumber);
+			if (endLineNumber < model.getLineCount()) {
+				cursorState.push(new Selection(startLineNumber - linesDeleted, start, startLineNumber - linesDeleted, start + conString[i].length));
+				linesDeleted += (endLineNumber - startLineNumber);
 			} else {
-				endLineNumber = selection.endLineNumber;
-				endColumn = model.getLineMaxColumn(endLineNumber);
+				cursorState.push(new Selection(startLineNumber - linesDeleted, start, startLineNumber - linesDeleted, start + conString[conString.length - 1].length));
 			}
-
-			let trimmedLinesContent = model.getLineContent(startLineNumber);
-
-			for (let i = startLineNumber + 1; i <= endLineNumber; i++) {
-				let lineText = model.getLineContent(i);
-				let firstNonWhitespaceIdx = model.getLineFirstNonWhitespaceColumn(i);
-
-				if (firstNonWhitespaceIdx >= 1) {
-					let insertSpace = true;
-					if (trimmedLinesContent === '') {
-						insertSpace = false;
-					}
-
-					if (insertSpace && (trimmedLinesContent.charAt(trimmedLinesContent.length - 1) === ' ' ||
-						trimmedLinesContent.charAt(trimmedLinesContent.length - 1) === '\t')) {
-						insertSpace = false;
-						trimmedLinesContent = trimmedLinesContent.replace(/[\s\uFEFF\xA0]+$/g, ' ');
-					}
-
-					let lineTextWithoutIndent = lineText.substr(firstNonWhitespaceIdx - 1);
-
-					trimmedLinesContent += (insertSpace ? ' ' : '') + lineTextWithoutIndent;
-
-					if (insertSpace) {
-						columnDeltaOffset = lineTextWithoutIndent.length + 1;
-					} else {
-						columnDeltaOffset = lineTextWithoutIndent.length;
-					}
-				} else {
-					columnDeltaOffset = 0;
-				}
-			}
-
-			let deleteSelection = new Range(startLineNumber, startColumn, endLineNumber, endColumn);
-
-			if (!deleteSelection.isEmpty()) {
-				let resultSelection: Selection;
-
-				if (selection.isEmpty()) {
-					edits.push(EditOperation.replace(deleteSelection, trimmedLinesContent));
-					resultSelection = new Selection(deleteSelection.startLineNumber - lineOffset, trimmedLinesContent.length - columnDeltaOffset + 1, startLineNumber - lineOffset, trimmedLinesContent.length - columnDeltaOffset + 1);
-				} else {
-					if (selection.startLineNumber === selection.endLineNumber) {
-						edits.push(EditOperation.replace(deleteSelection, trimmedLinesContent));
-						resultSelection = new Selection(selection.startLineNumber - lineOffset, selection.startColumn,
-							selection.endLineNumber - lineOffset, selection.endColumn);
-					} else {
-						edits.push(EditOperation.replace(deleteSelection, trimmedLinesContent));
-						resultSelection = new Selection(selection.startLineNumber - lineOffset, selection.startColumn,
-							selection.startLineNumber - lineOffset, trimmedLinesContent.length - selectionEndPositionOffset);
-					}
-				}
-
-				if (Range.intersectRanges(deleteSelection, primaryCursor) !== null) {
-					endPrimaryCursor = resultSelection;
-				} else {
-					endCursorState.push(resultSelection);
-				}
-			}
-
-			lineOffset += deleteSelection.endLineNumber - deleteSelection.startLineNumber;
 		}
 
-		endCursorState.unshift(endPrimaryCursor);
 		editor.pushUndoStop();
-		editor.executeEdits(this.id, edits, endCursorState);
+		editor.executeEdits(this.id, ops, cursorState);
 		editor.pushUndoStop();
 	}
 }

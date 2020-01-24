@@ -66,6 +66,7 @@ import { Selection } from 'vs/editor/common/core/selection';
 import { SIDE_BAR_BACKGROUND, PANEL_BACKGROUND } from 'vs/workbench/common/theme';
 import { createEditorFromSearchResult } from 'vs/workbench/contrib/search/browser/searchEditorActions';
 import { Color, RGBA } from 'vs/base/common/color';
+import { EndOfLinePreference } from 'vs/editor/common/model';
 
 const $ = dom.$;
 
@@ -1075,25 +1076,7 @@ export class SearchView extends ViewPane {
 		}
 
 		if (!range.isEmpty()) {
-			let searchText = '';
-			for (let i = range.startLineNumber; i <= range.endLineNumber; i++) {
-				let lineText = activeTextEditorWidget.getModel().getLineContent(i);
-				if (i === range.endLineNumber) {
-					lineText = lineText.substring(0, range.endColumn - 1);
-				}
-
-				if (i === range.startLineNumber) {
-					lineText = lineText.substring(range.startColumn - 1);
-				}
-
-				if (i !== range.startLineNumber) {
-					lineText = '\n' + lineText;
-				}
-
-				searchText += lineText;
-			}
-
-			return searchText;
+			return activeTextEditorWidget.getModel().getValueInRange(range, EndOfLinePreference.LF);
 		}
 
 		return null;

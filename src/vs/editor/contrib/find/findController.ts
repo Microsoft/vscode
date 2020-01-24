@@ -27,6 +27,7 @@ import { IStorageService, StorageScope } from 'vs/platform/storage/common/storag
 import { IThemeService } from 'vs/platform/theme/common/themeService';
 import { INotificationService } from 'vs/platform/notification/common/notification';
 import { EditorOption } from 'vs/editor/common/config/editorOptions';
+import { EndOfLinePreference } from 'vs/editor/common/model';
 
 const SEARCH_STRING_MAX_LENGTH = 524288;
 
@@ -36,17 +37,14 @@ export function getSelectionSearchString(editor: ICodeEditor): string | null {
 	}
 
 	const selection = editor.getSelection();
-	// if selection spans multiple lines, default search string to empty
-	if (selection.startLineNumber === selection.endLineNumber) {
-		if (selection.isEmpty()) {
-			let wordAtPosition = editor.getModel().getWordAtPosition(selection.getStartPosition());
-			if (wordAtPosition) {
-				return wordAtPosition.word;
-			}
-		} else {
-			if (editor.getModel().getValueLengthInRange(selection) < SEARCH_STRING_MAX_LENGTH) {
-				return editor.getModel().getValueInRange(selection);
-			}
+	if (selection.isEmpty()) {
+		let wordAtPosition = editor.getModel().getWordAtPosition(selection.getStartPosition());
+		if (wordAtPosition) {
+			return wordAtPosition.word;
+		}
+	} else {
+		if (editor.getModel().getValueLengthInRange(selection) < SEARCH_STRING_MAX_LENGTH) {
+			return editor.getModel().getValueInRange(selection, EndOfLinePreference.LF);
 		}
 	}
 
@@ -718,10 +716,9 @@ export class StartFindReplaceAction extends EditorAction {
 		let controller = CommonFindController.get(editor);
 		let currentSelection = editor.getSelection();
 		let findInputFocused = controller.isFindInputFocused();
-		// we only seed search string from selection when the current selection is single line and not empty,
-		// + the find input is not focused
+		// We only seed search string from selection when the current selection is not empty and the find input is not focused
 		let seedSearchStringFromSelection = !currentSelection.isEmpty()
-			&& currentSelection.startLineNumber === currentSelection.endLineNumber && editor.getOption(EditorOption.find).seedSearchStringFromSelection
+			&& editor.getOption(EditorOption.find).seedSearchStringFromSelection
 			&& !findInputFocused;
 		/*
 		 * if the existing search string in find widget is empty and we don't seed search string from selection, it means the Find Input is still empty, so we should focus the Find Input instead of Replace Input.

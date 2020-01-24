@@ -68,17 +68,17 @@ suite('Find', () => {
 			// Select first line and newline
 			editor.setSelection(new Range(1, 1, 2, 1));
 			let searchStringSelectionWholeLine = getSelectionSearchString(editor);
-			assert.equal(searchStringSelectionWholeLine, null);
+			assert.equal(searchStringSelectionWholeLine, 'ABC DEF\n');
 
 			// Select first line and chunk of second
 			editor.setSelection(new Range(1, 1, 2, 4));
 			let searchStringSelectionTwoLines = getSelectionSearchString(editor);
-			assert.equal(searchStringSelectionTwoLines, null);
+			assert.equal(searchStringSelectionTwoLines, 'ABC DEF\n012');
 
 			// Select end of first line newline and chunk of second
 			editor.setSelection(new Range(1, 7, 2, 4));
 			let searchStringSelectionSpanLines = getSelectionSearchString(editor);
-			assert.equal(searchStringSelectionSpanLines, null);
+			assert.equal(searchStringSelectionSpanLines, 'F\n012');
 
 		});
 	});

@@ -550,7 +550,7 @@ export interface ITreeItem {
 
 	tooltip?: string;
 
-	contextValue?: string;
+	contextValue?: any;
 
 	command?: Command;
 

@@ -45,11 +45,49 @@ export class Context implements IContext {
 	}
 
 	public getValue<T>(key: string): T | undefined {
-		const ret = this._value[key];
-		if (typeof ret === 'undefined' && this._parent) {
+		// If the key contains any `.` characters, they are treated as property accessors.
+		// Everything up to the first `.` is used to look up the key in this context.
+		const firstDotIndex = key.indexOf('.');
+		const rootToken = (firstDotIndex >= 0) ? key.substring(0, firstDotIndex) : key;
+
+		const root = this._value[rootToken];
+		if (typeof root === 'undefined' && this._parent) {
 			return this._parent.getValue<T>(key);
 		}
-		return ret;
+
+		if (firstDotIndex < 0) {
+			// No dots, so just return the value we found.
+			return root;
+		} else {
+			// There were dots, so evaluate the property access.
+			return Context.accessProperty<T>(root, key, firstDotIndex + 1);
+		}
+	}
+
+	private static accessProperty<T>(root: any, key: string, startIndex: number): T | undefined {
+		let tokenStart = startIndex;
+		let currentObject = root;
+		while (true) {
+			if ((currentObject === undefined) || (currentObject === null)) {
+				// No object to access, so just return `undefined`.
+				return undefined;
+			}
+
+			// The current token goes until just before the next `.`, or to the end of the string.
+			let tokenEnd = key.indexOf('.', tokenStart);
+			if (tokenEnd < 0) {
+				tokenEnd = key.length;
+			}
+			const token = key.substring(tokenStart, tokenEnd);
+			currentObject = currentObject[token];
+			if (tokenEnd === key.length) {
+				// No more dots, so this is the object.
+				return currentObject;
+			} else {
+				// Skip the dot, and start at the next character.
+				tokenStart = tokenEnd + 1;
+			}
+		}
 	}
 
 	collectAllValues(): { [key: string]: any; } {

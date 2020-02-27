@@ -37,17 +37,11 @@ export function getSelectionSearchString(editor: ICodeEditor): string | null {
 
 	const selection = editor.getSelection();
 	// if selection spans multiple lines, default search string to empty
-	if (selection.startLineNumber === selection.endLineNumber) {
-		if (selection.isEmpty()) {
-			let wordAtPosition = editor.getModel().getWordAtPosition(selection.getStartPosition());
-			if (wordAtPosition) {
-				return wordAtPosition.word;
-			}
-		} else {
-			if (editor.getModel().getValueLengthInRange(selection) < SEARCH_STRING_MAX_LENGTH) {
-				return editor.getModel().getValueInRange(selection);
-			}
-		}
+	if (selection.startLineNumber === selection.endLineNumber
+		&& !selection.isEmpty()
+		&& editor.getModel().getValueLengthInRange(selection) < SEARCH_STRING_MAX_LENGTH
+	) {
+		return editor.getModel().getValueInRange(selection);
 	}
 
 	return null;

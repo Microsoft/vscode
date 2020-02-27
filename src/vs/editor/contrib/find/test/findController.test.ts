@@ -218,9 +218,11 @@ suite('FindController', () => {
 			let findController = editor.registerAndInstantiateContribution<TestFindController>(TestFindController.ID, TestFindController);
 			let nextMatchFindAction = new NextMatchFindAction();
 
-			editor.setPosition({
-				lineNumber: 1,
-				column: 9
+			editor.setSelection({
+				startLineNumber: 1,
+				startColumn: 8,
+				endLineNumber: 1,
+				endColumn: 11
 			});
 
 			nextMatchFindAction.run(null, editor);

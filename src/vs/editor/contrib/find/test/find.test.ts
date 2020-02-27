@@ -20,17 +20,12 @@ suite('Find', () => {
 
 			// The cursor is at the very top, of the file, at the first ABC
 			let searchStringAtTop = getSelectionSearchString(editor);
-			assert.equal(searchStringAtTop, 'ABC');
+			assert.equal(searchStringAtTop, null);
 
 			// Move cursor to the end of ABC
 			editor.setPosition(new Position(1, 3));
 			let searchStringAfterABC = getSelectionSearchString(editor);
-			assert.equal(searchStringAfterABC, 'ABC');
-
-			// Move cursor to DEF
-			editor.setPosition(new Position(1, 5));
-			let searchStringInsideDEF = getSelectionSearchString(editor);
-			assert.equal(searchStringInsideDEF, 'DEF');
+			assert.equal(searchStringAfterABC, null);
 
 		});
 	});

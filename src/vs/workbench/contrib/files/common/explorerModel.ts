@@ -79,6 +79,9 @@ export class ExplorerModel implements IDisposable {
 export class ExplorerItem {
 	protected _isDirectoryResolved: boolean;
 	private _isDisposed: boolean;
+	private _virtualDirectoryMode: VirtualDirectoryMode;
+	private _virtualDirectoryName: string;
+
 	public isError = false;
 
 	constructor(
@@ -93,6 +96,8 @@ export class ExplorerItem {
 	) {
 		this._isDirectoryResolved = false;
 		this._isDisposed = false;
+		this._virtualDirectoryMode = 'NONE';
+		this._virtualDirectoryName = '';
 	}
 
 	get isDisposed(): boolean {
@@ -138,6 +143,19 @@ export class ExplorerItem {
 
 		return this._parent.root;
 	}
+
+	get isVirtualDirectory() {
+		return this._virtualDirectoryMode === 'DIRECTORY';
+	}
+
+	get isVirtualDirectoryMember() {
+		return this._virtualDirectoryMode === 'MEMBER';
+	}
+
+	get virtualDirectoryName() {
+		return this._virtualDirectoryName;
+	}
+
 
 	@memoize get children(): Map<string, ExplorerItem> {
 		return new Map<string, ExplorerItem>();
@@ -258,6 +276,13 @@ export class ExplorerItem {
 		this.children.set(this.getPlatformAwareName(child.name), child);
 	}
 
+	addVirtualChild(child: ExplorerItem): void {
+		// Inherit some parent properties to child
+		child._parent = this;
+		this.children.set(this.getPlatformAwareName(child.name), child);
+	}
+
+
 	getChild(name: string): ExplorerItem | undefined {
 		return this.children.get(this.getPlatformAwareName(name));
 	}
@@ -310,6 +335,14 @@ export class ExplorerItem {
 
 	private getPlatformAwareName(name: string): string {
 		return this.fileService.hasCapability(this.resource, FileSystemProviderCapabilities.PathCaseSensitive) ? name : name.toLowerCase();
+	}
+
+	/**
+	 * Configures this element as virtual directory member.
+	 */
+	setVirtualDirectoryConfig(mode: VirtualDirectoryMode, name: string) {
+		this._virtualDirectoryMode = mode;
+		this._virtualDirectoryName = name;
 	}
 
 	/**
@@ -405,3 +438,5 @@ export class NewExplorerItem extends ExplorerItem {
 		this._isDirectoryResolved = true;
 	}
 }
+
+type VirtualDirectoryMode = 'NONE' | 'MEMBER' | 'DIRECTORY';

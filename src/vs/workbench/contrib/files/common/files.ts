@@ -109,6 +109,8 @@ export interface IFilesConfiguration extends PlatformIFilesConfiguration, IWorkb
 			visible: number;
 		};
 		autoReveal: boolean;
+		enableFileNesting: boolean;
+		fileNestingPatterns: string[];
 		enableDragAndDrop: boolean;
 		confirmDelete: boolean;
 		sortOrder: SortOrder;

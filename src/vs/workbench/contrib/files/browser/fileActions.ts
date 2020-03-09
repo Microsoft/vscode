@@ -945,7 +945,10 @@ export const renameHandler = (accessor: ServicesAccessor) => {
 		validationMessage: value => validateFileName(stat, value),
 		onFinish: async (value, success) => {
 			if (success) {
-				const parentResource = stat.parent!.resource;
+				const parentResource = stat.parent!.isVirtualDirectory
+					? stat.parent!.parent!.resource
+					: stat.parent!.resource;
+
 				const targetResource = resources.joinPath(parentResource, value);
 				if (stat.resource.toString() !== targetResource.toString()) {
 					try {

@@ -46,7 +46,7 @@ import { FuzzyScore } from 'vs/base/common/filters';
 import { IClipboardService } from 'vs/platform/clipboard/common/clipboardService';
 import { isEqualOrParent } from 'vs/base/common/resources';
 import { values } from 'vs/base/common/map';
-import { first } from 'vs/base/common/arrays';
+import { first, equals } from 'vs/base/common/arrays';
 import { withNullAsUndefined } from 'vs/base/common/types';
 import { IFileService, FileSystemProviderCapabilities } from 'vs/platform/files/common/files';
 import { DisposableStore } from 'vs/base/common/lifecycle';
@@ -146,6 +146,8 @@ export class ExplorerView extends ViewPane {
 	private shouldRefresh = true;
 	private dragHandler!: DelayedDragHandler;
 	private autoReveal = false;
+	private enableFileNesting = false;
+	private fileNestingPatterns: string[] = [];
 	private actions: IAction[] | undefined;
 	private decorationsProvider: ExplorerDecorationsProvider | undefined;
 
@@ -456,11 +458,23 @@ export class ExplorerView extends ViewPane {
 
 	private onConfigurationUpdated(configuration: IFilesConfiguration, event?: IConfigurationChangeEvent): void {
 		this.autoReveal = configuration?.explorer?.autoReveal;
+		let enableFileNesting = configuration?.explorer?.enableFileNesting;
+		let fileNestingPatterns = configuration?.explorer?.fileNestingPatterns;
 
 		// Push down config updates to components of viewer
 		let needsRefresh = false;
 		if (this.filter) {
 			needsRefresh = this.filter.updateConfiguration();
+		}
+
+		// When file nesting configuration changes
+		// const arrayIsIncluded = (arr1: string[], arr2: string[]) => arr1.every(x => arr2.includes(x));
+
+		if ((this.enableFileNesting !== enableFileNesting) || !equals(this.fileNestingPatterns, fileNestingPatterns)) {
+			this.enableFileNesting = enableFileNesting;
+			this.fileNestingPatterns = fileNestingPatterns;
+
+			needsRefresh = true;
 		}
 
 		if (event && !needsRefresh) {

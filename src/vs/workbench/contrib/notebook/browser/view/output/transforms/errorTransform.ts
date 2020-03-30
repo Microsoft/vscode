@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { IRenderOutput, CellOutputKind } from 'vs/workbench/contrib/notebook/common/notebookCommon';
+import { IRenderOutput, CellOutputKind } from 'vs/workbench/services/notebook/common/notebookCommon';
 import { registerOutputTransform } from 'vs/workbench/contrib/notebook/browser/notebookRegistry';
 import * as DOM from 'vs/base/browser/dom';
 import { RGBA, Color } from 'vs/base/common/color';

@@ -239,23 +239,24 @@ export namespace CellUri {
 
 	export const scheme = 'vscode-notebook';
 
-	export function generate(notebook: URI, handle: number): URI {
+	export function generate(notebook: URI, viewType: string, handle: number): URI {
 		return notebook.with({
 			path: `${notebook.path}#cell-${handle}`,
-			query: JSON.stringify({ cell: handle, notebook: notebook.toString() }),
+			query: JSON.stringify({ cell: handle, notebook: notebook.toString(), viewType: viewType }),
 			scheme,
 		});
 	}
 
-	export function parse(cell: URI): { notebook: URI, handle: number } | undefined {
+	export function parse(cell: URI): { notebook: URI, handle: number, viewType: string } | undefined {
 		if (cell.scheme !== scheme) {
 			return undefined;
 		}
 		try {
-			const data = <{ cell: number, notebook: string }>JSON.parse(cell.query);
+			const data = <{ cell: number, notebook: string, viewType: string }>JSON.parse(cell.query);
 			return {
 				handle: data.cell,
-				notebook: URI.parse(data.notebook)
+				notebook: URI.parse(data.notebook),
+				viewType: data.viewType
 			};
 		} catch {
 			return undefined;

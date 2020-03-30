@@ -6,8 +6,8 @@
 import { Emitter, Event } from 'vs/base/common/event';
 import { Disposable, IDisposable } from 'vs/base/common/lifecycle';
 import { URI } from 'vs/base/common/uri';
-import { NotebookCellTextModel } from 'vs/workbench/contrib/notebook/common/model/notebookCellTextModel';
-import { INotebookTextModel, NotebookCellOutputsSplice, NotebookCellsSplice, NotebookDocumentMetadata, NotebookCellMetadata, ICellEditOperation, CellEditType, CellUri, ICellInsertEdit, NotebookCellsChangedEvent, CellKind, IOutput } from 'vs/workbench/contrib/notebook/common/notebookCommon';
+import { NotebookCellTextModel } from 'vs/workbench/services/notebook/common/model/notebookCellTextModel';
+import { INotebookTextModel, NotebookCellOutputsSplice, NotebookCellsSplice, NotebookDocumentMetadata, NotebookCellMetadata, ICellEditOperation, CellEditType, CellUri, ICellInsertEdit, NotebookCellsChangedEvent, CellKind, IOutput } from 'vs/workbench/services/notebook/common/notebookCommon';
 
 export class NotebookTextModel extends Disposable implements INotebookTextModel {
 	private static _cellhandlePool: number = 0;
@@ -48,7 +48,7 @@ export class NotebookTextModel extends Disposable implements INotebookTextModel 
 		metadata: NotebookCellMetadata | undefined
 	) {
 		const cellHandle = NotebookTextModel._cellhandlePool++;
-		const cellUri = CellUri.generate(this.uri, cellHandle);
+		const cellUri = CellUri.generate(this.uri, this.viewType, cellHandle);
 		return new NotebookCellTextModel(URI.revive(cellUri), cellHandle, source, language, cellKind, outputs || [], metadata);
 	}
 
@@ -63,7 +63,7 @@ export class NotebookTextModel extends Disposable implements INotebookTextModel 
 					const insertEdit = edits[i] as ICellInsertEdit;
 					const mainCells = insertEdit.cells.map(cell => {
 						const cellHandle = NotebookTextModel._cellhandlePool++;
-						const cellUri = CellUri.generate(this.uri, cellHandle);
+						const cellUri = CellUri.generate(this.uri, this.viewType, cellHandle);
 						return new NotebookCellTextModel(URI.revive(cellUri), cellHandle, cell.source, cell.language, cell.cellKind, cell.outputs || [], cell.metadata);
 					});
 					this.insertNewCell(insertEdit.index, mainCells);

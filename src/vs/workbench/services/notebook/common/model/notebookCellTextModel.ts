@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Emitter, Event } from 'vs/base/common/event';
-import { ICell, IOutput, NotebookCellOutputsSplice, CellKind, NotebookCellMetadata } from 'vs/workbench/contrib/notebook/common/notebookCommon';
+import { ICell, IOutput, NotebookCellOutputsSplice, CellKind, NotebookCellMetadata } from 'vs/workbench/services/notebook/common/notebookCommon';
 import { PieceTreeTextBufferFactory, PieceTreeTextBufferBuilder } from 'vs/editor/common/model/pieceTreeTextBuffer/pieceTreeTextBufferBuilder';
 import { URI } from 'vs/base/common/uri';
 

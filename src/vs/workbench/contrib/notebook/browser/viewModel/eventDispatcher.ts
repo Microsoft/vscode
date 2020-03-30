@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Emitter } from 'vs/base/common/event';
-import { NotebookDocumentMetadata } from 'vs/workbench/contrib/notebook/common/notebookCommon';
+import { NotebookDocumentMetadata } from 'vs/workbench/services/notebook/common/notebookCommon';
 import { NotebookLayoutChangeEvent, NotebookLayoutInfo } from 'vs/workbench/contrib/notebook/browser/notebookBrowser';
 
 export enum NotebookViewEventType {

@@ -6,13 +6,13 @@
 import * as assert from 'assert';
 import { URI } from 'vs/base/common/uri';
 import { TestInstantiationService } from 'vs/platform/instantiation/test/common/instantiationServiceMock';
-import { NotebookEditorModel } from 'vs/workbench/contrib/notebook/browser/notebookEditorInput';
+import { NotebookEditorModel } from 'vs/workbench/services/notebook/browser/notebookEditorInput';
 import { NotebookViewModel } from 'vs/workbench/contrib/notebook/browser/viewModel/notebookViewModel';
-import { CellKind } from 'vs/workbench/contrib/notebook/common/notebookCommon';
+import { CellKind } from 'vs/workbench/services/notebook/common/notebookCommon';
 import { withTestNotebook, TestCell } from 'vs/workbench/contrib/notebook/test/testNotebookEditor';
 import { IBulkEditService } from 'vs/editor/browser/services/bulkEditService';
 import { IUndoRedoService } from 'vs/platform/undoRedo/common/undoRedo';
-import { NotebookTextModel } from 'vs/workbench/contrib/notebook/common/model/notebookTextModel';
+import { NotebookTextModel } from 'vs/workbench/services/notebook/common/model/notebookTextModel';
 import { NotebookEventDispatcher } from 'vs/workbench/contrib/notebook/browser/viewModel/eventDispatcher';
 
 suite('NotebookViewModel', () => {

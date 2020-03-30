@@ -15,8 +15,8 @@ import { EditorDescriptor, Extensions as EditorExtensions, IEditorRegistry } fro
 import { Extensions as WorkbenchExtensions, IWorkbenchContribution, IWorkbenchContributionsRegistry } from 'vs/workbench/common/contributions';
 import { IEditorInput, IEditorInputFactoryRegistry, Extensions as EditorInputExtensions, IEditorInputFactory, EditorInput } from 'vs/workbench/common/editor';
 import { NotebookEditor, NotebookEditorOptions } from 'vs/workbench/contrib/notebook/browser/notebookEditor';
-import { NotebookEditorInput } from 'vs/workbench/contrib/notebook/browser/notebookEditorInput';
-import { INotebookService, NotebookService } from 'vs/workbench/contrib/notebook/browser/notebookService';
+import { NotebookEditorInput } from 'vs/workbench/services/notebook/browser/notebookEditorInput';
+import { INotebookService, NotebookService } from 'vs/workbench/services/notebook/browser/notebookService';
 import { IEditorGroup } from 'vs/workbench/services/editor/common/editorGroupsService';
 import { IEditorService, IOpenEditorOverride } from 'vs/workbench/services/editor/common/editorService';
 import { ITextModelContentProvider, ITextModelService } from 'vs/editor/common/services/resolverService';
@@ -27,7 +27,7 @@ import { IModeService } from 'vs/editor/common/services/modeService';
 import { IDisposable } from 'vs/base/common/lifecycle';
 import { assertType } from 'vs/base/common/types';
 import { parse } from 'vs/base/common/marshalling';
-import { CellUri } from 'vs/workbench/contrib/notebook/common/notebookCommon';
+import { CellUri } from 'vs/workbench/services/notebook/common/notebookCommon';
 import { ResourceMap } from 'vs/base/common/map';
 
 // Output renderers registration
@@ -39,7 +39,7 @@ import 'vs/workbench/contrib/notebook/browser/view/output/transforms/richTransfo
 // Actions
 import 'vs/workbench/contrib/notebook/browser/contrib/notebookActions';
 import { basename } from 'vs/base/common/resources';
-import { NotebookProviderInfo } from 'vs/workbench/contrib/notebook/common/notebookProvider';
+import { NotebookProviderInfo } from 'vs/workbench/services/notebook/common/notebookProvider';
 
 Registry.as<IEditorRegistry>(EditorExtensions.Editors).registerEditor(
 	EditorDescriptor.create(
@@ -81,8 +81,8 @@ Registry.as<IEditorInputFactoryRegistry>(EditorInputExtensions.EditorInputFactor
 	}
 );
 
-function getFirstNotebookInfo(notebookService: INotebookService, uri: URI): NotebookProviderInfo | undefined {
-	return notebookService.getContributedNotebookProviders(uri)[0];
+function getFirstNotebookInfo(notebookService: INotebookService, uri: URI, viewType?: string): NotebookProviderInfo | undefined {
+	return notebookService.getContributedNotebookProviders(uri, viewType)[0];
 }
 
 export class NotebookContribution implements IWorkbenchContribution {
@@ -167,7 +167,7 @@ class CellContentProvider implements ITextModelContentProvider {
 		if (!data) {
 			return null;
 		}
-		const info = getFirstNotebookInfo(this._notebookService, data.notebook);
+		const info = getFirstNotebookInfo(this._notebookService, data.notebook, data.viewType);
 		if (!info) {
 			return null;
 		}

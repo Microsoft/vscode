@@ -6,7 +6,7 @@
 import { IJSONSchema } from 'vs/base/common/jsonSchema';
 import * as nls from 'vs/nls';
 import { ExtensionsRegistry } from 'vs/workbench/services/extensions/common/extensionsRegistry';
-import { NotebookSelector } from 'vs/workbench/contrib/notebook/common/notebookProvider';
+import { NotebookSelector } from 'vs/workbench/services/notebook/common/notebookProvider';
 
 namespace NotebookEditorContribution {
 	export const viewType = 'viewType';

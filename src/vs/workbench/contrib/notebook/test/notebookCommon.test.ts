@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as assert from 'assert';
-import { NOTEBOOK_DISPLAY_ORDER, sortMimeTypes, CellKind, diff, CellUri } from 'vs/workbench/contrib/notebook/common/notebookCommon';
+import { NOTEBOOK_DISPLAY_ORDER, sortMimeTypes, CellKind, diff, CellUri } from 'vs/workbench/services/notebook/common/notebookCommon';
 import { TestCell } from 'vs/workbench/contrib/notebook/test/testNotebookEditor';
 import { URI } from 'vs/base/common/uri';
 
@@ -331,11 +331,13 @@ suite('CellUri', function () {
 
 		const nb = URI.parse('foo:///bar/følder/file.nb');
 		const id = 17;
+		const viewType = 'code';
 
-		const data = CellUri.generate(nb, id);
+		const data = CellUri.generate(nb, viewType, id);
 		const actual = CellUri.parse(data);
 		assert.ok(Boolean(actual));
 		assert.equal(actual?.handle, id);
+		assert.equal(actual?.viewType, viewType);
 		assert.equal(actual?.notebook.toString(), nb.toString());
 	});
 });

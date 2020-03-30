@@ -53,6 +53,8 @@ import { IMarker, IMarkerService, MarkerSeverity, IMarkerData } from 'vs/platfor
 import { find } from 'vs/base/common/arrays';
 import { STATUS_BAR_PROMINENT_ITEM_BACKGROUND, STATUS_BAR_PROMINENT_ITEM_FOREGROUND } from 'vs/workbench/common/theme';
 import { themeColorFromId } from 'vs/platform/theme/common/themeService';
+import { INotebookService } from 'vs/workbench/services/notebook/browser/notebookService';
+import { NotebookEditorInput } from 'vs/workbench/services/notebook/browser/notebookEditorInput';
 
 class SideBySideEditorEncodingSupport implements IEncodingSupport {
 	constructor(private master: IEncodingSupport, private details: IEncodingSupport) { }
@@ -1041,7 +1043,8 @@ export class ChangeModeAction extends Action {
 		@IQuickInputService private readonly quickInputService: IQuickInputService,
 		@IPreferencesService private readonly preferencesService: IPreferencesService,
 		@IInstantiationService private readonly instantiationService: IInstantiationService,
-		@ITextFileService private readonly textFileService: ITextFileService
+		@ITextFileService private readonly textFileService: ITextFileService,
+		@INotebookService private readonly notebookService: INotebookService
 	) {
 		super(actionId, actionLabel);
 	}
@@ -1117,6 +1120,14 @@ export class ChangeModeAction extends Action {
 			picks.unshift(autoDetectMode);
 		}
 
+		const notebookTypes = this.notebookService.getAllContributedNotebookProviders();
+		let notebookActions: (IQuickPickItem & { viewType: string; })[] = [];
+		if (notebookTypes.length) {
+			picks.push({ type: 'separator', label: nls.localize('notebookPicks', "noteooks (identifier)") });
+			notebookActions = notebookTypes.map(type => ({ label: type.displayName, description: `(${type.id})`, viewType: type.id }));
+			picks.push(...notebookActions);
+		}
+
 		const pick = await this.quickInputService.pick(picks, { placeHolder: nls.localize('pickLanguage', "Select Language Mode"), matchOnDescription: true });
 		if (!pick) {
 			return;
@@ -1156,6 +1167,12 @@ export class ChangeModeAction extends Action {
 							languageSelection = this.modeService.createByFilepathOrFirstLine(resource, textModel.getLineContent(1));
 						}
 					}
+				} else if (notebookActions.indexOf(pick as (IQuickPickItem & { viewType: string; }))) {
+					const name = basename(resource!);
+					const input = this.instantiationService.createInstance(NotebookEditorInput, resource!, name, (pick as (IQuickPickItem & { viewType: string; })).viewType);
+					await this.editorService.replaceEditors([{ replacement: input, editor: activeEditor }], this.editorService.activeEditorPane!.group);
+					await this.editorService.openEditor(input);
+					return;
 				} else {
 					languageSelection = this.modeService.createByLanguageName(pick.label);
 				}

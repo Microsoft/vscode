@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
-import { IOutput, IRenderOutput } from 'vs/workbench/contrib/notebook/common/notebookCommon';
+import { IOutput, IRenderOutput } from 'vs/workbench/services/notebook/common/notebookCommon';
 import { NotebookRegistry } from 'vs/workbench/contrib/notebook/browser/notebookRegistry';
 import { onUnexpectedError } from 'vs/base/common/errors';
 import { INotebookEditor, IOutputTransformContribution } from 'vs/workbench/contrib/notebook/browser/notebookBrowser';

@@ -283,6 +283,10 @@
 			"project": "vscode-workbench"
 		},
 		{
+			"name": "vs/workbench/services/notebook",
+			"project": "vscode-workbench"
+		},
+		{
 			"name": "vs/workbench/services/progress",
 			"project": "vscode-workbench"
 		},

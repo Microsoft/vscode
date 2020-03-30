@@ -3,18 +3,18 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Disposable, IDisposable, DisposableStore } from 'vs/base/common/lifecycle';
-import { createDecorator } from 'vs/platform/instantiation/common/instantiation';
-import { URI } from 'vs/base/common/uri';
-import { notebookProviderExtensionPoint, notebookRendererExtensionPoint } from 'vs/workbench/contrib/notebook/browser/extensionPoint';
-import { NotebookProviderInfo } from 'vs/workbench/contrib/notebook/common/notebookProvider';
-import { NotebookExtensionDescription } from 'vs/workbench/api/common/extHost.protocol';
 import { Emitter, Event } from 'vs/base/common/event';
-import { INotebookTextModel, INotebookMimeTypeSelector, INotebookRendererInfo } from 'vs/workbench/contrib/notebook/common/notebookCommon';
-import { IExtensionService } from 'vs/workbench/services/extensions/common/extensions';
-import { NotebookOutputRendererInfo } from 'vs/workbench/contrib/notebook/common/notebookOutputRenderer';
 import { Iterable } from 'vs/base/common/iterator';
-import { NotebookTextModel } from 'vs/workbench/contrib/notebook/common/model/notebookTextModel';
+import { Disposable, DisposableStore, IDisposable } from 'vs/base/common/lifecycle';
+import { URI } from 'vs/base/common/uri';
+import { createDecorator } from 'vs/platform/instantiation/common/instantiation';
+import { NotebookExtensionDescription } from 'vs/workbench/api/common/extHost.protocol';
+import { notebookProviderExtensionPoint, notebookRendererExtensionPoint } from 'vs/workbench/services/notebook/browser/extensionPoint';
+import { IExtensionService } from 'vs/workbench/services/extensions/common/extensions';
+import { NotebookTextModel } from 'vs/workbench/services/notebook/common/model/notebookTextModel';
+import { INotebookMimeTypeSelector, INotebookRendererInfo, INotebookTextModel } from 'vs/workbench/services/notebook/common/notebookCommon';
+import { NotebookOutputRendererInfo } from 'vs/workbench/services/notebook/common/notebookOutputRenderer';
+import { NotebookProviderInfo } from 'vs/workbench/services/notebook/common/notebookProvider';
 
 function MODEL_ID(resource: URI): string {
 	return resource.toString();
@@ -43,8 +43,8 @@ export interface INotebookService {
 	resolveNotebook(viewType: string, uri: URI): Promise<NotebookTextModel | undefined>;
 	executeNotebook(viewType: string, uri: URI): Promise<void>;
 	executeNotebookCell(viewType: string, uri: URI, handle: number): Promise<void>;
-
-	getContributedNotebookProviders(resource: URI): readonly NotebookProviderInfo[];
+	getAllContributedNotebookProviders(): readonly NotebookProviderInfo[];
+	getContributedNotebookProviders(resource: URI, viewType?: string): readonly NotebookProviderInfo[];
 	getNotebookProviderResourceRoots(): URI[];
 	destoryNotebookDocument(viewType: string, notebook: INotebookTextModel): void;
 	updateActiveNotebookDocument(viewType: string, resource: URI): void;
@@ -71,7 +71,18 @@ export class NotebookProviderInfoStore {
 		this.contributedEditors.set(info.id, info);
 	}
 
-	getContributedNotebook(resource: URI): readonly NotebookProviderInfo[] {
+	getAllContributedNotebookProviders(): readonly NotebookProviderInfo[] {
+		return [...this.contributedEditors.values()];
+	}
+
+	getContributedNotebook(resource: URI, viewType?: string): readonly NotebookProviderInfo[] {
+		if (resource.scheme === 'untitled') {
+			if (!viewType) {
+				return [];
+			}
+
+			return [...Iterable.filter(this.contributedEditors.values(), customEditor => customEditor.id === viewType)];
+		}
 		return [...Iterable.filter(this.contributedEditors.values(), customEditor => customEditor.matches(resource))];
 	}
 }
@@ -259,8 +270,13 @@ export class NotebookService extends Disposable implements INotebookService {
 		}
 	}
 
-	getContributedNotebookProviders(resource: URI): readonly NotebookProviderInfo[] {
-		return this.notebookProviderInfoStore.getContributedNotebook(resource);
+	getAllContributedNotebookProviders(): readonly NotebookProviderInfo[] {
+		return this.notebookProviderInfoStore.getAllContributedNotebookProviders();
+
+	}
+
+	getContributedNotebookProviders(resource: URI, viewType?: string): readonly NotebookProviderInfo[] {
+		return this.notebookProviderInfoStore.getContributedNotebook(resource, viewType);
 	}
 
 	getContributedNotebookOutputRenderers(mimeType: string): readonly NotebookOutputRendererInfo[] {

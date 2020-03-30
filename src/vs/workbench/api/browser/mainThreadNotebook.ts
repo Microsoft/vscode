@@ -7,10 +7,10 @@ import { extHostNamedCustomer } from 'vs/workbench/api/common/extHostCustomers';
 import { MainContext, MainThreadNotebookShape, NotebookExtensionDescription, IExtHostContext, ExtHostNotebookShape, ExtHostContext } from '../common/extHost.protocol';
 import { Disposable } from 'vs/base/common/lifecycle';
 import { URI, UriComponents } from 'vs/base/common/uri';
-import { INotebookService, IMainNotebookController } from 'vs/workbench/contrib/notebook/browser/notebookService';
-import { INotebookTextModel, INotebookMimeTypeSelector, NOTEBOOK_DISPLAY_ORDER, NotebookCellOutputsSplice, CellKind, NotebookDocumentMetadata, NotebookCellMetadata, ICellEditOperation } from 'vs/workbench/contrib/notebook/common/notebookCommon';
+import { INotebookService, IMainNotebookController } from 'vs/workbench/services/notebook/browser/notebookService';
+import { INotebookTextModel, INotebookMimeTypeSelector, NOTEBOOK_DISPLAY_ORDER, NotebookCellOutputsSplice, CellKind, NotebookDocumentMetadata, NotebookCellMetadata, ICellEditOperation } from 'vs/workbench/services/notebook/common/notebookCommon';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
-import { NotebookTextModel } from 'vs/workbench/contrib/notebook/common/model/notebookTextModel';
+import { NotebookTextModel } from 'vs/workbench/services/notebook/common/model/notebookTextModel';
 import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
 import { INotebookEditor } from 'vs/workbench/contrib/notebook/browser/notebookBrowser';
 

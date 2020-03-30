@@ -22,12 +22,12 @@ import { IThemeService, registerThemingParticipant } from 'vs/platform/theme/com
 import { BaseEditor } from 'vs/workbench/browser/parts/editor/baseEditor';
 import { EditorOptions, IEditorMemento, IEditorCloseEvent } from 'vs/workbench/common/editor';
 import { INotebookEditor, NotebookLayoutInfo, CellEditState, NOTEBOOK_EDITOR_FOCUSED, CellFocusMode, ICellViewModel, CellRunState, NOTEBOOK_EDITOR_EDITABLE } from 'vs/workbench/contrib/notebook/browser/notebookBrowser';
-import { NotebookEditorInput, NotebookEditorModel } from 'vs/workbench/contrib/notebook/browser/notebookEditorInput';
-import { INotebookService } from 'vs/workbench/contrib/notebook/browser/notebookService';
+import { NotebookEditorInput, NotebookEditorModel } from 'vs/workbench/services/notebook/browser/notebookEditorInput';
+import { INotebookService } from 'vs/workbench/services/notebook/browser/notebookService';
 import { OutputRenderer } from 'vs/workbench/contrib/notebook/browser/view/output/outputRenderer';
 import { BackLayerWebView } from 'vs/workbench/contrib/notebook/browser/view/renderers/backLayerWebView';
 import { CodeCellRenderer, MarkdownCellRenderer, NotebookCellListDelegate } from 'vs/workbench/contrib/notebook/browser/view/renderers/cellRenderer';
-import { IOutput, CellKind, CellUri } from 'vs/workbench/contrib/notebook/common/notebookCommon';
+import { IOutput, CellKind, CellUri } from 'vs/workbench/services/notebook/common/notebookCommon';
 import { getExtraColor } from 'vs/workbench/contrib/welcome/walkThrough/common/walkThroughUtils';
 import { IEditorGroup, IEditorGroupsService } from 'vs/workbench/services/editor/common/editorGroupsService';
 import { ICodeEditor } from 'vs/editor/browser/editorBrowser';

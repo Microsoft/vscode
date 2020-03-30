@@ -3,14 +3,14 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { EditorInput, EditorModel, IEditorInput, GroupIdentifier, ISaveOptions, IRevertOptions } from 'vs/workbench/common/editor';
 import { Emitter, Event } from 'vs/base/common/event';
-import { INotebookService } from 'vs/workbench/contrib/notebook/browser/notebookService';
-import { ICell, NotebookCellsSplice } from 'vs/workbench/contrib/notebook/common/notebookCommon';
-import { URI } from 'vs/base/common/uri';
-import { NotebookTextModel } from 'vs/workbench/contrib/notebook/common/model/notebookTextModel';
-import { NotebookCellTextModel } from 'vs/workbench/contrib/notebook/common/model/notebookCellTextModel';
 import { isEqual } from 'vs/base/common/resources';
+import { URI } from 'vs/base/common/uri';
+import { EditorInput, EditorModel, GroupIdentifier, IEditorInput, IRevertOptions, ISaveOptions } from 'vs/workbench/common/editor';
+import { INotebookService } from 'vs/workbench/services/notebook/browser/notebookService';
+import { NotebookCellTextModel } from 'vs/workbench/services/notebook/common/model/notebookCellTextModel';
+import { NotebookTextModel } from 'vs/workbench/services/notebook/common/model/notebookTextModel';
+import { ICell, NotebookCellsSplice } from 'vs/workbench/services/notebook/common/notebookCommon';
 
 export class NotebookEditorModel extends EditorModel {
 	private _dirty = false;

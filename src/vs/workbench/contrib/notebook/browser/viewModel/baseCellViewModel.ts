@@ -9,7 +9,7 @@ import { ICodeEditor } from 'vs/editor/browser/editorBrowser';
 import * as editorCommon from 'vs/editor/common/editorCommon';
 import * as model from 'vs/editor/common/model';
 import { Range } from 'vs/editor/common/core/range';
-import { ICell, NotebookCellMetadata, NotebookDocumentMetadata } from 'vs/workbench/contrib/notebook/common/notebookCommon';
+import { ICell, NotebookCellMetadata, NotebookDocumentMetadata } from 'vs/workbench/services/notebook/common/notebookCommon';
 import { CursorAtBoundary, CellFocusMode, CellEditState, CellRunState } from 'vs/workbench/contrib/notebook/browser/notebookBrowser';
 import { EDITOR_TOOLBAR_HEIGHT, EDITOR_TOP_MARGIN } from 'vs/workbench/contrib/notebook/browser/constants';
 import { SearchParams } from 'vs/editor/common/model/textModelSearch';

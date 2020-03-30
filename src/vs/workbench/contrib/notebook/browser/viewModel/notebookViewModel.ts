@@ -15,11 +15,11 @@ import { WorkspaceTextEdit } from 'vs/editor/common/modes';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { IUndoRedoService } from 'vs/platform/undoRedo/common/undoRedo';
 import { CellFindMatch, CellEditState, ICellViewModel, NotebookLayoutInfo } from 'vs/workbench/contrib/notebook/browser/notebookBrowser';
-import { NotebookEditorModel } from 'vs/workbench/contrib/notebook/browser/notebookEditorInput';
+import { NotebookEditorModel } from 'vs/workbench/services/notebook/browser/notebookEditorInput';
 import { DeleteCellEdit, InsertCellEdit, MoveCellEdit } from 'vs/workbench/contrib/notebook/browser/viewModel/cellEdit';
 import { CodeCellViewModel } from 'vs/workbench/contrib/notebook/browser/viewModel/codeCellViewModel';
 import { MarkdownCellViewModel } from 'vs/workbench/contrib/notebook/browser/viewModel/markdownCellViewModel';
-import { CellKind, ICell } from 'vs/workbench/contrib/notebook/common/notebookCommon';
+import { CellKind, ICell } from 'vs/workbench/services/notebook/common/notebookCommon';
 import { NotebookEventDispatcher, NotebookMetadataChangedEvent } from 'vs/workbench/contrib/notebook/browser/viewModel/eventDispatcher';
 
 export interface INotebookEditorViewState {

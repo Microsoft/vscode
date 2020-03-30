@@ -6,10 +6,10 @@
 import { Emitter, Event } from 'vs/base/common/event';
 import { URI } from 'vs/base/common/uri';
 import { PieceTreeTextBufferFactory } from 'vs/editor/common/model/pieceTreeTextBuffer/pieceTreeTextBufferBuilder';
-import { CellKind, ICell, IOutput, NotebookCellOutputsSplice, CellUri, NotebookCellMetadata } from 'vs/workbench/contrib/notebook/common/notebookCommon';
+import { CellKind, ICell, IOutput, NotebookCellOutputsSplice, CellUri, NotebookCellMetadata } from 'vs/workbench/services/notebook/common/notebookCommon';
 import { NotebookViewModel, IModelDecorationsChangeAccessor, CellViewModel } from 'vs/workbench/contrib/notebook/browser/viewModel/notebookViewModel';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
-import { NotebookEditorModel } from 'vs/workbench/contrib/notebook/browser/notebookEditorInput';
+import { NotebookEditorModel } from 'vs/workbench/services/notebook/browser/notebookEditorInput';
 import { INotebookEditor, NotebookLayoutInfo, ICellViewModel } from 'vs/workbench/contrib/notebook/browser/notebookBrowser';
 import { IMouseWheelEvent } from 'vs/base/browser/mouseEvent';
 import { OutputRenderer } from 'vs/workbench/contrib/notebook/browser/view/output/outputRenderer';
@@ -17,8 +17,8 @@ import { BareFontInfo } from 'vs/editor/common/config/fontInfo';
 import { Range } from 'vs/editor/common/core/range';
 import { IBulkEditService } from 'vs/editor/browser/services/bulkEditService';
 import { IUndoRedoService } from 'vs/platform/undoRedo/common/undoRedo';
-import { NotebookTextModel } from 'vs/workbench/contrib/notebook/common/model/notebookTextModel';
-import { NotebookCellTextModel } from 'vs/workbench/contrib/notebook/common/model/notebookCellTextModel';
+import { NotebookTextModel } from 'vs/workbench/services/notebook/common/model/notebookTextModel';
+import { NotebookCellTextModel } from 'vs/workbench/services/notebook/common/model/notebookCellTextModel';
 import { NotebookEventDispatcher } from 'vs/workbench/contrib/notebook/browser/viewModel/eventDispatcher';
 
 export class TestCell implements ICell {
@@ -61,7 +61,7 @@ export class TestCell implements ICell {
 		outputs: IOutput[]
 	) {
 		this._outputs = outputs;
-		this.uri = CellUri.generate(URI.parse('test:///fake/notebook'), handle);
+		this.uri = CellUri.generate(URI.parse('test:///fake/notebook'), viewType, handle);
 	}
 	contentChange(): void {
 		// throw new Error('Method not implemented.');

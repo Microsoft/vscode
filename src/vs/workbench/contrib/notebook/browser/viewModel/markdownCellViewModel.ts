@@ -11,7 +11,7 @@ import { IInstantiationService } from 'vs/platform/instantiation/common/instanti
 import { ICellViewModel, CellFindMatch, MarkdownCellLayoutInfo, MarkdownCellLayoutChangeEvent, CellEditState, NotebookLayoutInfo } from 'vs/workbench/contrib/notebook/browser/notebookBrowser';
 import { MarkdownRenderer } from 'vs/workbench/contrib/notebook/browser/view/renderers/mdRenderer';
 import { BaseCellViewModel } from 'vs/workbench/contrib/notebook/browser/viewModel/baseCellViewModel';
-import { CellKind, ICell } from 'vs/workbench/contrib/notebook/common/notebookCommon';
+import { CellKind, ICell } from 'vs/workbench/services/notebook/common/notebookCommon';
 import { CELL_MARGIN, CELL_RUN_GUTTER } from 'vs/workbench/contrib/notebook/browser/constants';
 import { NotebookEventDispatcher } from 'vs/workbench/contrib/notebook/browser/viewModel/eventDispatcher';
 

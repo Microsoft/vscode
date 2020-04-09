@@ -4,8 +4,12 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
+import { AbcEditorProvider } from './abcEditor';
 
-export function activate(_context: vscode.ExtensionContext) {
-	// noop
+export function activate(context: vscode.ExtensionContext) {
+	enableCustomEditors(context);
 }
 
+export function enableCustomEditors(context: vscode.ExtensionContext) {
+	context.subscriptions.push(new AbcEditorProvider(context).register());
+}

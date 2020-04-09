@@ -6,7 +6,7 @@
 import * as assert from 'assert';
 import { join } from 'path';
 import * as vscode from 'vscode';
-import { createRandomFile, testFs } from '../utils';
+import { createRandomFile, getTestFs } from '../utils';
 
 suite('vscode API - languages', () => {
 
@@ -103,7 +103,7 @@ suite('vscode API - languages', () => {
 				return [new vscode.DocumentLink(range, target)];
 			}
 		};
-		vscode.languages.registerDocumentLinkProvider({ language: 'java', scheme: testFs.scheme }, linkProvider);
+		vscode.languages.registerDocumentLinkProvider({ language: 'java', scheme: getTestFs().scheme }, linkProvider);
 
 		const links = await vscode.commands.executeCommand<vscode.DocumentLink[]>('vscode.executeLinkProvider', doc.uri);
 		assert.equal(2, links && links.length);

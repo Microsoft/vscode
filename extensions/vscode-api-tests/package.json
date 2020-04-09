@@ -8,9 +8,10 @@
 	"private": true,
 	"activationEvents": [
 		"onFileSystem:memfs",
-		"onDebug"
+		"onDebug",
+		"onCustomEditor:testWebviewEditor.abc"
 	],
-  "main": "./out/extension",
+	"main": "./out/extension",
 	"engines": {
 		"vscode": "^1.25.0"
 	},
@@ -109,6 +110,17 @@
 					}
 				]
 			}
+		],
+		"customEditors": [
+			{
+				"viewType": "testWebviewEditor.abc",
+				"displayName": "Test ABC editor",
+				"selector": [
+					{
+						"filenamePattern": "*.abc"
+					}
+				]
+			}
 		]
 	},
 	"scripts": {
@@ -122,5 +134,8 @@
 		"mocha-multi-reporters": "^1.1.7",
 		"typescript": "^1.6.2",
 		"vscode": "1.1.5"
+	},
+	"dependencies": {
+		"p-limit": "^2.2.2"
 	}
 }

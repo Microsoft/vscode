@@ -5,7 +5,6 @@
 
 import * as dom from 'vs/base/browser/dom';
 import { domEvent, stop } from 'vs/base/browser/event';
-import * as aria from 'vs/base/browser/ui/aria/aria';
 import { DomScrollableElement } from 'vs/base/browser/ui/scrollbar/scrollableElement';
 import { Event } from 'vs/base/common/event';
 import { Disposable, DisposableStore } from 'vs/base/common/lifecycle';
@@ -16,7 +15,6 @@ import * as modes from 'vs/editor/common/modes';
 import { IModeService } from 'vs/editor/common/services/modeService';
 import { MarkdownRenderer } from 'vs/editor/contrib/markdown/markdownRenderer';
 import { Context } from 'vs/editor/contrib/parameterHints/provideSignatureHelp';
-import * as nls from 'vs/nls';
 import { IContextKey, IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
 import { IOpenerService } from 'vs/platform/opener/common/opener';
 import { editorHoverBackground, editorHoverBorder, textCodeBlockBackground, textLinkForeground, editorHoverForeground } from 'vs/platform/theme/common/colorRegistry';
@@ -25,6 +23,7 @@ import { ParameterHintsModel, TriggerContext } from 'vs/editor/contrib/parameter
 import { pad } from 'vs/base/common/strings';
 
 const $ = dom.$;
+const ARIA_ID = 'parameter-hints-active';
 
 export class ParameterHintsWidget extends Disposable implements IContentWidget {
 
@@ -45,7 +44,6 @@ export class ParameterHintsWidget extends Disposable implements IContentWidget {
 	};
 
 	private visible: boolean = false;
-	private announcedLabel: string | null = null;
 
 	// Editor.IContentWidget.allowEditorOverflow
 	allowEditorOverflow = true;
@@ -159,10 +157,10 @@ export class ParameterHintsWidget extends Disposable implements IContentWidget {
 
 		this.keyVisible.reset();
 		this.visible = false;
-		this.announcedLabel = null;
 		if (this.domNodes) {
 			dom.removeClass(this.domNodes.element, 'visible');
 		}
+		this.editor.setAriaOptions({ activeDescendant: undefined });
 		this.editor.layoutContentWidget(this);
 	}
 
@@ -241,17 +239,7 @@ export class ParameterHintsWidget extends Disposable implements IContentWidget {
 
 		this.domNodes.overloads.textContent =
 			pad(hints.activeSignature + 1, hints.signatures.length.toString().length) + '/' + hints.signatures.length;
-
-		if (activeParameter) {
-			const labelToAnnounce = this.getParameterLabel(signature, hints.activeParameter);
-			// Select method gets called on every user type while parameter hints are visible.
-			// We do not want to spam the user with same announcements, so we only announce if the current parameter changed.
-
-			if (this.announcedLabel !== labelToAnnounce) {
-				aria.alert(nls.localize('hint', "{0}, hint", labelToAnnounce));
-				this.announcedLabel = labelToAnnounce;
-			}
-		}
+		this.editor.setAriaOptions({ activeDescendant: ARIA_ID });
 
 		this.editor.layoutContentWidget(this);
 		this.domNodes.scrollbar.scanDomNode();
@@ -282,20 +270,12 @@ export class ParameterHintsWidget extends Disposable implements IContentWidget {
 		const paramSpan = document.createElement('span');
 		paramSpan.textContent = signature.label.substring(start, end);
 		paramSpan.className = 'parameter active';
+		paramSpan.id = ARIA_ID;
 
 		const afterSpan = document.createElement('span');
 		afterSpan.textContent = signature.label.substring(end);
 
 		dom.append(parent, beforeSpan, paramSpan, afterSpan);
-	}
-
-	private getParameterLabel(signature: modes.SignatureInformation, paramIdx: number): string {
-		const param = signature.parameters[paramIdx];
-		if (typeof param.label === 'string') {
-			return param.label;
-		} else {
-			return signature.label.substring(param.label[0], param.label[1]);
-		}
 	}
 
 	private getParameterLabelOffsets(signature: modes.SignatureInformation, paramIdx: number): [number, number] {

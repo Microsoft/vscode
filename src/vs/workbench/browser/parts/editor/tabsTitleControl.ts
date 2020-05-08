@@ -27,7 +27,7 @@ import { getOrSet } from 'vs/base/common/map';
 import { IThemeService, registerThemingParticipant, IColorTheme, ICssStyleCollector, HIGH_CONTRAST } from 'vs/platform/theme/common/themeService';
 import { TAB_INACTIVE_BACKGROUND, TAB_ACTIVE_BACKGROUND, TAB_ACTIVE_FOREGROUND, TAB_INACTIVE_FOREGROUND, TAB_BORDER, EDITOR_DRAG_AND_DROP_BACKGROUND, TAB_UNFOCUSED_ACTIVE_FOREGROUND, TAB_UNFOCUSED_INACTIVE_FOREGROUND, TAB_UNFOCUSED_ACTIVE_BACKGROUND, TAB_UNFOCUSED_ACTIVE_BORDER, TAB_ACTIVE_BORDER, TAB_HOVER_BACKGROUND, TAB_HOVER_BORDER, TAB_UNFOCUSED_HOVER_BACKGROUND, TAB_UNFOCUSED_HOVER_BORDER, EDITOR_GROUP_HEADER_TABS_BACKGROUND, WORKBENCH_BACKGROUND, TAB_ACTIVE_BORDER_TOP, TAB_UNFOCUSED_ACTIVE_BORDER_TOP, TAB_ACTIVE_MODIFIED_BORDER, TAB_INACTIVE_MODIFIED_BORDER, TAB_UNFOCUSED_ACTIVE_MODIFIED_BORDER, TAB_UNFOCUSED_INACTIVE_MODIFIED_BORDER, TAB_UNFOCUSED_INACTIVE_BACKGROUND, TAB_HOVER_FOREGROUND, TAB_UNFOCUSED_HOVER_FOREGROUND, EDITOR_GROUP_HEADER_TABS_BORDER } from 'vs/workbench/common/theme';
 import { activeContrastBorder, contrastBorder, editorBackground, breadcrumbsBackground } from 'vs/platform/theme/common/colorRegistry';
-import { ResourcesDropHandler, fillResourceDataTransfers, DraggedEditorIdentifier, DraggedEditorGroupIdentifier, DragAndDropObserver } from 'vs/workbench/browser/dnd';
+import { ResourcesDropHandler, DraggedEditorIdentifier, DraggedEditorGroupIdentifier, DragAndDropObserver } from 'vs/workbench/browser/dnd';
 import { Color } from 'vs/base/common/color';
 import { INotificationService } from 'vs/platform/notification/common/notification';
 import { IExtensionService } from 'vs/workbench/services/extensions/common/extensions';
@@ -60,6 +60,11 @@ export class TabsTitleControl extends TitleControl {
 	private static readonly SCROLLBAR_SIZES = {
 		default: 3,
 		large: 10
+	};
+
+	private static readonly TAB_SIZES = {
+		sticky: 38,
+		fit: 120
 	};
 
 	private titleContainer: HTMLElement | undefined;
@@ -329,23 +334,18 @@ export class TabsTitleControl extends TitleControl {
 			}
 
 			// Shift-key enables or disables this behaviour depending on the setting
-			if (this.accessor.partOptions.scrollToSwitchTabs === 'off') {
-				if (!e.shiftKey) {
-					return; // 'off': only enable this when Shift-key is pressed
-				}
-			} else {
+			if (this.accessor.partOptions.scrollToSwitchTabs === true) {
 				if (e.shiftKey) {
 					return; // 'on': only enable this when Shift-key is not pressed
+				}
+			} else {
+				if (!e.shiftKey) {
+					return; // 'off': only enable this when Shift-key is pressed
 				}
 			}
 
 			// Figure out scrolling direction
-			let scrollingUp = e.deltaX < 0 || e.deltaY < 0;
-			if (this.accessor.partOptions.scrollToSwitchTabs === 'reverse') {
-				scrollingUp = !scrollingUp;
-			}
-
-			const nextEditor = this.group.getEditorByIndex(this.group.getIndexOfEditor(activeEditor) + (scrollingUp ? -1 : 1));
+			const nextEditor = this.group.getEditorByIndex(this.group.getIndexOfEditor(activeEditor) + (e.deltaX < 0 || e.deltaY < 0 /* scrolling up */ ? -1 : 1));
 			if (!nextEditor) {
 				return;
 			}
@@ -389,10 +389,6 @@ export class TabsTitleControl extends TitleControl {
 	}
 
 	closeEditors(editors: IEditorInput[]): void {
-		this.handleClosedEditors();
-	}
-
-	closeAllEditors(): void {
 		this.handleClosedEditors();
 	}
 
@@ -453,7 +449,24 @@ export class TabsTitleControl extends TitleControl {
 	}
 
 	pinEditor(editor: IEditorInput): void {
-		this.withTab(editor, (editor, index, tabContainer, tabLabelWidget, tabLabel) => this.redrawLabel(editor, tabContainer, tabLabelWidget, tabLabel));
+		this.withTab(editor, (editor, index, tabContainer, tabLabelWidget, tabLabel) => this.redrawLabel(editor, index, tabContainer, tabLabelWidget, tabLabel));
+	}
+
+	stickEditor(editor: IEditorInput): void {
+		this.doHandleStickyEditorChange(editor);
+	}
+
+	unstickEditor(editor: IEditorInput): void {
+		this.doHandleStickyEditorChange(editor);
+	}
+
+	private doHandleStickyEditorChange(editor: IEditorInput): void {
+
+		// Update tab
+		this.withTab(editor, (editor, index, tabContainer, tabLabelWidget, tabLabel) => this.redrawTab(editor, index, tabContainer, tabLabelWidget, tabLabel));
+
+		// A change to the sticky state requires a layout to keep the active editor visible
+		this.layout(this.dimension);
 	}
 
 	setActive(isGroupActive: boolean): void {
@@ -487,7 +500,7 @@ export class TabsTitleControl extends TitleControl {
 
 		// As such we need to redraw each label
 		this.forEachTab((editor, index, tabContainer, tabLabelWidget, tabLabel) => {
-			this.redrawLabel(editor, tabContainer, tabLabelWidget, tabLabel);
+			this.redrawLabel(editor, index, tabContainer, tabLabelWidget, tabLabel);
 		});
 
 		// A change to a label requires a layout to keep the active editor visible
@@ -745,10 +758,7 @@ export class TabsTitleControl extends TitleControl {
 			}
 
 			// Apply some datatransfer types to allow for dragging the element outside of the application
-			const resource = toResource(editor, { supportSideBySide: SideBySideEditor.MASTER });
-			if (resource) {
-				this.instantiationService.invokeFunction(fillResourceDataTransfers, [resource], e);
-			}
+			this.doFillResourceDataTransfers(editor, e);
 
 			// Fixes https://github.com/Microsoft/vscode/issues/18733
 			addClass(tab, 'dragged');
@@ -1003,7 +1013,7 @@ export class TabsTitleControl extends TitleControl {
 	private redrawTab(editor: IEditorInput, index: number, tabContainer: HTMLElement, tabLabelWidget: IResourceLabel, tabLabel: IEditorInputLabel): void {
 
 		// Label
-		this.redrawLabel(editor, tabContainer, tabLabelWidget, tabLabel);
+		this.redrawLabel(editor, index, tabContainer, tabLabelWidget, tabLabel);
 
 		// Borders / Outline
 		const borderRightColor = (this.getColor(TAB_BORDER) || this.getColor(contrastBorder));
@@ -1011,10 +1021,12 @@ export class TabsTitleControl extends TitleControl {
 		tabContainer.style.outlineColor = this.getColor(activeContrastBorder) || '';
 
 		// Settings
+		const isTabSticky = this.group.isSticky(index);
 		const options = this.accessor.partOptions;
 
+		const tabCloseButton = isTabSticky ? 'off' /* treat sticky tabs as tabCloseButton: 'off' */ : options.tabCloseButton;
 		['off', 'left', 'right'].forEach(option => {
-			const domAction = options.tabCloseButton === option ? addClass : removeClass;
+			const domAction = tabCloseButton === option ? addClass : removeClass;
 			domAction(tabContainer, `close-button-${option}`);
 		});
 
@@ -1029,24 +1041,51 @@ export class TabsTitleControl extends TitleControl {
 			removeClass(tabContainer, 'has-icon-theme');
 		}
 
+		// Sticky Tabs need a position to remain at their location
+		// when scrolling to stay in view (requirement for position: sticky)
+		if (isTabSticky) {
+			addClass(tabContainer, 'sticky');
+			tabContainer.style.left = `${index * TabsTitleControl.TAB_SIZES.sticky}px`;
+		} else {
+			removeClass(tabContainer, 'sticky');
+			tabContainer.style.left = 'auto';
+		}
+
 		// Active / dirty state
 		this.redrawEditorActiveAndDirty(this.accessor.activeGroup === this.group, editor, tabContainer, tabLabelWidget);
 	}
 
-	private redrawLabel(editor: IEditorInput, tabContainer: HTMLElement, tabLabelWidget: IResourceLabel, tabLabel: IEditorInputLabel): void {
-		const name = tabLabel.name;
-		const description = tabLabel.description || '';
+	private redrawLabel(editor: IEditorInput, index: number, tabContainer: HTMLElement, tabLabelWidget: IResourceLabel, tabLabel: IEditorInputLabel): void {
+		const isTabSticky = this.group.isSticky(index);
+
+		// Unless tabs are sticky, show the full label and description
+		// Sticky tabs will only show an icon if icons are enabled
+		// or their first character of the name otherwise
+		let name: string | undefined;
+		let description: string;
+		if (isTabSticky) {
+			const isShowingIcons = this.accessor.partOptions.showIcons && !!this.accessor.partOptions.iconTheme;
+			name = isShowingIcons ? '' : tabLabel.name?.charAt(0).toUpperCase();
+			description = '';
+		} else {
+			name = tabLabel.name;
+			description = tabLabel.description || '';
+		}
+
 		const title = tabLabel.title || '';
 
 		if (tabLabel.ariaLabel) {
 			tabContainer.setAttribute('aria-label', tabLabel.ariaLabel);
+			// Set aria-description to empty string so that screen readers would not read the title as well
+			// More details https://github.com/microsoft/vscode/issues/95378
+			tabContainer.setAttribute('aria-description', '');
 		}
 		tabContainer.title = title;
 
 		// Label
 		tabLabelWidget.setResource(
 			{ name, description, resource: toResource(editor, { supportSideBySide: SideBySideEditor.BOTH }) },
-			{ title, extraClasses: ['tab-label'], italic: !this.group.isPinned(editor) }
+			{ title, extraClasses: ['tab-label'], italic: !this.group.isPinned(editor), forceLabel: isTabSticky }
 		);
 
 		// Tests helper
@@ -1158,8 +1197,8 @@ export class TabsTitleControl extends TitleControl {
 	layout(dimension: Dimension | undefined): void {
 		this.dimension = dimension;
 
-		const activeTab = this.group.activeEditor ? this.getTab(this.group.activeEditor) : undefined;
-		if (!activeTab || !this.dimension) {
+		const activeTabAndIndex = this.group.activeEditor ? this.getTabAndIndex(this.group.activeEditor) : undefined;
+		if (!activeTabAndIndex || !this.dimension) {
 			return;
 		}
 
@@ -1177,20 +1216,66 @@ export class TabsTitleControl extends TitleControl {
 	}
 
 	private doLayout(dimension: Dimension): void {
-		const activeTab = this.group.activeEditor ? this.getTab(this.group.activeEditor) : undefined;
-		if (!activeTab) {
-			return;
+		const activeTabAndIndex = this.group.activeEditor ? this.getTabAndIndex(this.group.activeEditor) : undefined;
+		if (!activeTabAndIndex) {
+			return; // nothing to do if not editor opened
 		}
 
-		const [tabsContainer, tabsScrollbar] = assertAllDefined(this.tabsContainer, this.tabsScrollbar);
+		// Breadcrumbs
+		this.doLayoutBreadcrumbs(dimension);
 
+		// Tabs
+		const [activeTab, activeIndex] = activeTabAndIndex;
+		this.doLayoutTabs(activeTab, activeIndex);
+	}
+
+	private doLayoutBreadcrumbs(dimension: Dimension): void {
 		if (this.breadcrumbsControl && !this.breadcrumbsControl.isHidden()) {
+			const tabsScrollbar = assertIsDefined(this.tabsScrollbar);
+
 			this.breadcrumbsControl.layout({ width: dimension.width, height: BreadcrumbsControl.HEIGHT });
 			tabsScrollbar.getDomNode().style.height = `${dimension.height - BreadcrumbsControl.HEIGHT}px`;
 		}
+	}
 
-		const visibleContainerWidth = tabsContainer.offsetWidth;
-		const totalContainerWidth = tabsContainer.scrollWidth;
+	private doLayoutTabs(activeTab: HTMLElement, activeIndex: number): void {
+		const [tabsContainer, tabsScrollbar] = assertAllDefined(this.tabsContainer, this.tabsScrollbar);
+
+		//
+		// Synopsis
+		// - allTabsWidth:   			sum of all tab widths
+		// - stickyTabsWidth:			sum of all sticky tab widths
+		// - visibleContainerWidth: 	size of tab container
+		// - availableContainerWidth: 	size of tab container minus size of sticky tabs
+		//
+		// [------------------------------ All tabs width ---------------------------------------]
+		// [------------------- Visible container width -------------------]
+		//                         [------ Available container width ------]
+		// [ Sticky A ][ Sticky B ][ Tab C ][ Tab D ][ Tab E ][ Tab F ][ Tab G ][ Tab H ][ Tab I ]
+		//                 Active Tab Width [-------]
+		// [------- Active Tab Pos X -------]
+		// [-- Sticky Tabs Width --]
+		//
+
+		const visibleTabsContainerWidth = tabsContainer.offsetWidth;
+		const allTabsWidth = tabsContainer.scrollWidth;
+
+		let stickyTabsWidth = this.group.stickyCount * TabsTitleControl.TAB_SIZES.sticky;
+		let activeTabSticky = this.group.isSticky(activeIndex);
+		let availableTabsContainerWidth = visibleTabsContainerWidth - stickyTabsWidth;
+
+		// Special case: we have sticky tabs but the available space for showing tabs
+		// is little enough that we need to disable sticky tabs sticky positioning
+		// so that tabs can be scrolled at naturally.
+		if (this.group.stickyCount > 0 && availableTabsContainerWidth < TabsTitleControl.TAB_SIZES.fit) {
+			addClass(tabsContainer, 'disable-sticky-tabs');
+
+			availableTabsContainerWidth = visibleTabsContainerWidth;
+			stickyTabsWidth = 0;
+			activeTabSticky = false;
+		} else {
+			removeClass(tabsContainer, 'disable-sticky-tabs');
+		}
 
 		let activeTabPosX: number | undefined;
 		let activeTabWidth: number | undefined;
@@ -1202,42 +1287,78 @@ export class TabsTitleControl extends TitleControl {
 
 		// Update scrollbar
 		tabsScrollbar.setScrollDimensions({
-			width: visibleContainerWidth,
-			scrollWidth: totalContainerWidth
+			width: visibleTabsContainerWidth,
+			scrollWidth: allTabsWidth
 		});
 
 		// Return now if we are blocked to reveal the active tab and clear flag
-		if (this.blockRevealActiveTab || typeof activeTabPosX !== 'number' || typeof activeTabWidth !== 'number') {
+		// We also return if the active tab is sticky because this means it is
+		// always visible anyway.
+		if (this.blockRevealActiveTab || typeof activeTabPosX !== 'number' || typeof activeTabWidth !== 'number' || activeTabSticky) {
 			this.blockRevealActiveTab = false;
 			return;
 		}
 
 		// Reveal the active one
-		const containerScrollPosX = tabsScrollbar.getScrollPosition().scrollLeft;
-		const activeTabFits = activeTabWidth <= visibleContainerWidth;
+		const tabsContainerScrollPosX = tabsScrollbar.getScrollPosition().scrollLeft;
+		const activeTabFits = activeTabWidth <= availableTabsContainerWidth;
+		const adjustedActiveTabPosX = activeTabPosX - stickyTabsWidth;
 
+		//
+		// Synopsis
+		// - adjustedActiveTabPosX: the adjusted tabPosX takes the width of sticky tabs into account
+		//   conceptually the scrolling only begins after sticky tabs so in order to reveal a tab fully
+		//   the actual position needs to be adjusted for sticky tabs.
+		//
 		// Tab is overflowing to the right: Scroll minimally until the element is fully visible to the right
 		// Note: only try to do this if we actually have enough width to give to show the tab fully!
-		if (activeTabFits && containerScrollPosX + visibleContainerWidth < activeTabPosX + activeTabWidth) {
+		//
+		// Example: Tab G should be made active and needs to be fully revealed as such.
+		//
+		// [-------------------------------- All tabs width -----------------------------------------]
+		// [-------------------- Visible container width --------------------]
+		//                           [----- Available container width -------]
+		//     [ Sticky A ][ Sticky B ][ Tab C ][ Tab D ][ Tab E ][ Tab F ][ Tab G ][ Tab H ][ Tab I ]
+		//                     Active Tab Width [-------]
+		//     [------- Active Tab Pos X -------]
+		//                             [-------- Adjusted Tab Pos X -------]
+		//     [-- Sticky Tabs Width --]
+		//
+		//
+		if (activeTabFits && tabsContainerScrollPosX + availableTabsContainerWidth < adjustedActiveTabPosX + activeTabWidth) {
 			tabsScrollbar.setScrollPosition({
-				scrollLeft: containerScrollPosX + ((activeTabPosX + activeTabWidth) /* right corner of tab */ - (containerScrollPosX + visibleContainerWidth) /* right corner of view port */)
+				scrollLeft: tabsContainerScrollPosX + ((adjustedActiveTabPosX + activeTabWidth) /* right corner of tab */ - (tabsContainerScrollPosX + availableTabsContainerWidth) /* right corner of view port */)
 			});
 		}
 
-		// Tab is overlflowng to the left or does not fit: Scroll it into view to the left
-		else if (containerScrollPosX > activeTabPosX || !activeTabFits) {
+		//
+		// Tab is overlflowing to the left or does not fit: Scroll it into view to the left
+		//
+		// Example: Tab C should be made active and needs to be fully revealed as such.
+		//
+		// [----------------------------- All tabs width ----------------------------------------]
+		//     [------------------ Visible container width ------------------]
+		//                           [----- Available container width -------]
+		// [ Sticky A ][ Sticky B ][ Tab C ][ Tab D ][ Tab E ][ Tab F ][ Tab G ][ Tab H ][ Tab I ]
+		//                 Active Tab Width [-------]
+		// [------- Active Tab Pos X -------]
+		//      Adjusted Tab Pos X []
+		// [-- Sticky Tabs Width --]
+		//
+		//
+		else if (tabsContainerScrollPosX > adjustedActiveTabPosX || !activeTabFits) {
 			tabsScrollbar.setScrollPosition({
-				scrollLeft: activeTabPosX
+				scrollLeft: adjustedActiveTabPosX
 			});
 		}
 	}
 
-	private getTab(editor: IEditorInput): HTMLElement | undefined {
+	private getTabAndIndex(editor: IEditorInput): [HTMLElement, number /* index */] | undefined {
 		const editorIndex = this.group.getIndexOfEditor(editor);
 		if (editorIndex >= 0) {
 			const tabsContainer = assertIsDefined(this.tabsContainer);
 
-			return tabsContainer.children[editorIndex] as HTMLElement;
+			return [tabsContainer.children[editorIndex] as HTMLElement, editorIndex];
 		}
 
 		return undefined;
@@ -1457,11 +1578,11 @@ registerThemingParticipant((theme: IColorTheme, collector: ICssStyleCollector) =
 
 		// Adjust gradient for focused and unfocused hover background
 		const makeTabHoverBackgroundRule = (color: Color, colorDrag: Color, hasFocus = false) => `
-			.monaco-workbench .part.editor > .content:not(.dragged-over) .editor-group-container${hasFocus ? '.active' : ''} > .title .tabs-container > .tab.sizing-shrink:not(.dragged):hover > .tab-label::after {
+			.monaco-workbench .part.editor > .content:not(.dragged-over) .editor-group-container${hasFocus ? '.active' : ''} > .title .tabs-container > .tab.sizing-shrink:not(.dragged):not(.sticky):hover > .tab-label::after {
 				background: linear-gradient(to left, ${color}, transparent) !important;
 			}
 
-			.monaco-workbench .part.editor > .content.dragged-over .editor-group-container${hasFocus ? '.active' : ''} > .title .tabs-container > .tab.sizing-shrink:not(.dragged):hover > .tab-label::after {
+			.monaco-workbench .part.editor > .content.dragged-over .editor-group-container${hasFocus ? '.active' : ''} > .title .tabs-container > .tab.sizing-shrink:not(.dragged):not(.sticky):hover > .tab-label::after {
 				background: linear-gradient(to left, ${colorDrag}, transparent) !important;
 			}
 		`;
@@ -1484,19 +1605,19 @@ registerThemingParticipant((theme: IColorTheme, collector: ICssStyleCollector) =
 		if (editorDragAndDropBackground && adjustedTabDragBackground) {
 			const adjustedColorDrag = editorDragAndDropBackground.flatten(adjustedTabDragBackground);
 			collector.addRule(`
-				.monaco-workbench .part.editor > .content.dragged-over .editor-group-container.active > .title .tabs-container > .tab.sizing-shrink.dragged-over:not(.active):not(.dragged) > .tab-label::after,
-				.monaco-workbench .part.editor > .content.dragged-over .editor-group-container:not(.active) > .title .tabs-container > .tab.sizing-shrink.dragged-over:not(.dragged) > .tab-label::after {
+				.monaco-workbench .part.editor > .content.dragged-over .editor-group-container.active > .title .tabs-container > .tab.sizing-shrink.dragged-over:not(.active):not(.dragged):not(.sticky) > .tab-label::after,
+				.monaco-workbench .part.editor > .content.dragged-over .editor-group-container:not(.active) > .title .tabs-container > .tab.sizing-shrink.dragged-over:not(.dragged):not(.sticky) > .tab-label::after {
 					background: linear-gradient(to left, ${adjustedColorDrag}, transparent) !important;
 				}
 		`);
 		}
 
 		const makeTabBackgroundRule = (color: Color, colorDrag: Color, focused: boolean, active: boolean) => `
-				.monaco-workbench .part.editor > .content:not(.dragged-over) .editor-group-container${focused ? '.active' : ':not(.active)'} > .title .tabs-container > .tab.sizing-shrink${active ? '.active' : ''}:not(.dragged) > .tab-label::after {
+				.monaco-workbench .part.editor > .content:not(.dragged-over) .editor-group-container${focused ? '.active' : ':not(.active)'} > .title .tabs-container > .tab.sizing-shrink${active ? '.active' : ''}:not(.dragged):not(.sticky) > .tab-label::after {
 					background: linear-gradient(to left, ${color}, transparent);
 				}
 
-				.monaco-workbench .part.editor > .content.dragged-over .editor-group-container${focused ? '.active' : ':not(.active)'} > .title .tabs-container > .tab.sizing-shrink${active ? '.active' : ''}:not(.dragged) > .tab-label::after {
+				.monaco-workbench .part.editor > .content.dragged-over .editor-group-container${focused ? '.active' : ':not(.active)'} > .title .tabs-container > .tab.sizing-shrink${active ? '.active' : ''}:not(.dragged):not(.sticky) > .tab-label::after {
 					background: linear-gradient(to left, ${colorDrag}, transparent);
 				}
 		`;

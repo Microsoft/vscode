@@ -395,6 +395,10 @@ export class SCMAccessibilityProvider implements IListAccessibilityProvider<Tree
 
 	constructor(@ILabelService private readonly labelService: ILabelService) { }
 
+	getWidgetAriaLabel(): string {
+		return localize('scm', "Source Control Management");
+	}
+
 	getAriaLabel(element: TreeElement): string {
 		if (ResourceTree.isResourceNode(element)) {
 			return this.labelService.getUriLabel(element.uri, { relative: true, noPrefix: true }) || element.name;
@@ -403,11 +407,11 @@ export class SCMAccessibilityProvider implements IListAccessibilityProvider<Tree
 		} else {
 			const result: string[] = [];
 
+			result.push(basename(element.sourceUri));
+
 			if (element.decorations.tooltip) {
 				result.push(element.decorations.tooltip);
 			}
-
-			result.push(basename(element.sourceUri));
 
 			const path = this.labelService.getUriLabel(dirname(element.sourceUri), { relative: true, noPrefix: true });
 
@@ -762,7 +766,7 @@ export class RepositoryPane extends ViewPane {
 			cursorWidth: 1,
 			fontSize: 13,
 			lineHeight: 20,
-			fontFamily: ' -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif',
+			fontFamily: ' system-ui, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif',
 			wrappingStrategy: 'advanced',
 			wrappingIndent: 'none',
 			padding: { top: 3, bottom: 3 },
@@ -861,13 +865,7 @@ export class RepositoryPane extends ViewPane {
 
 		const actionRunner = new RepositoryPaneActionRunner(() => this.getSelectedResources());
 		this._register(actionRunner);
-		this._register(actionRunner.onDidRun(() => {
-			if (this.repository.input.visible && this.inputEditor.hasWidgetFocus()) {
-				return;
-			}
-
-			this.tree.domFocus();
-		}));
+		this._register(actionRunner.onDidBeforeRun(() => this.tree.domFocus()));
 
 		const renderers = [
 			new ResourceGroupRenderer(actionViewItemProvider, this.themeService, this.menus),
@@ -960,6 +958,10 @@ export class RepositoryPane extends ViewPane {
 	layoutBody(height: number | undefined = this.cachedHeight, width: number | undefined = this.cachedWidth): void {
 		if (height === undefined) {
 			return;
+		}
+
+		if (width !== undefined) {
+			super.layoutBody(height, width);
 		}
 
 		this.cachedHeight = height;
@@ -1075,7 +1077,7 @@ export class RepositoryPane extends ViewPane {
 		}
 
 		const actionRunner = new RepositoryPaneActionRunner(() => this.getSelectedResources());
-		actionRunner.onDidRun(() => this.tree.domFocus());
+		actionRunner.onDidBeforeRun(() => this.tree.domFocus());
 
 		this.contextMenuService.showContextMenu({
 			getAnchor: () => e.anchor,

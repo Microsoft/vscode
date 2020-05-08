@@ -19,6 +19,7 @@ import { MementoObject } from 'vs/workbench/common/memento';
 import { isEqualOrParent, joinPath } from 'vs/base/common/resources';
 import { isLinux } from 'vs/base/common/platform';
 import { indexOfPath } from 'vs/base/common/extpath';
+import { IDisposable } from 'vs/base/common/lifecycle';
 
 /**
  * The base class of editors in the workbench. Editors register themselves for specific editor inputs.
@@ -107,6 +108,8 @@ export abstract class BaseEditor extends Composite implements IEditorPane {
 
 	onHide() { }
 
+	onWillHide() { }
+
 	/**
 	 * Called to create the editor in the parent HTMLElement.
 	 */
@@ -169,6 +172,7 @@ interface MapGroupToMemento<T> {
 export class EditorMemento<T> implements IEditorMemento<T> {
 	private cache: LRUCache<string, MapGroupToMemento<T>> | undefined;
 	private cleanedUp = false;
+	private editorDisposables: Map<EditorInput, IDisposable> | undefined;
 
 	constructor(
 		public readonly id: string,
@@ -198,9 +202,18 @@ export class EditorMemento<T> implements IEditorMemento<T> {
 
 		// Automatically clear when editor input gets disposed if any
 		if (resourceOrEditor instanceof EditorInput) {
-			Event.once(resourceOrEditor.onDispose)(() => {
-				this.clearEditorState(resource);
-			});
+			const editor = resourceOrEditor;
+
+			if (!this.editorDisposables) {
+				this.editorDisposables = new Map<EditorInput, IDisposable>();
+			}
+
+			if (!this.editorDisposables.has(editor)) {
+				this.editorDisposables.set(editor, Event.once(resourceOrEditor.onDispose)(() => {
+					this.clearEditorState(resource);
+					this.editorDisposables?.delete(editor);
+				}));
+			}
 		}
 	}
 

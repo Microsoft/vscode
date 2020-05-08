@@ -4,7 +4,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 import type * as Proto from '../protocol';
-import { escapeRegExp } from '../utils/regexp';
 import { TypeScriptVersion } from '../utils/versionProvider';
 
 
@@ -14,8 +13,8 @@ export class TypeScriptServerError extends Error {
 		version: TypeScriptVersion,
 		response: Proto.Response
 	): TypeScriptServerError {
-		const parsedResult = TypeScriptServerError.parseErrorText(version, response);
-		return new TypeScriptServerError(serverId, version, response, parsedResult?.message, parsedResult?.stack);
+		const parsedResult = TypeScriptServerError.parseErrorText(response);
+		return new TypeScriptServerError(serverId, version, response, parsedResult?.message, parsedResult?.stack, parsedResult?.sanitizedStack);
 	}
 
 	private constructor(
@@ -23,7 +22,8 @@ export class TypeScriptServerError extends Error {
 		public readonly version: TypeScriptVersion,
 		private readonly response: Proto.Response,
 		public readonly serverMessage: string | undefined,
-		public readonly serverStack: string | undefined
+		public readonly serverStack: string | undefined,
+		private readonly sanitizedStack: string | undefined
 	) {
 		super(`<${serverId}> TypeScript Server Error (${version.displayName})\n${serverMessage}\n${serverStack}`);
 	}
@@ -33,19 +33,17 @@ export class TypeScriptServerError extends Error {
 	public get serverCommand() { return this.response.command; }
 
 	public get telemetry() {
+		// The "sanitizedstack" has been purged of error messages, paths, and file names (other than tsserver)
+		// and, thus, can be classified as SystemMetaData, rather than CallstackOrException.
 		/* __GDPR__FRAGMENT__
 			"TypeScriptRequestErrorProperties" : {
 				"command" : { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
-				"message" : { "classification": "CallstackOrException", "purpose": "PerformanceAndHealth" },
-				"stack" : { "classification": "CallstackOrException", "purpose": "PerformanceAndHealth" },
-				"errortext" : { "classification": "CallstackOrException", "purpose": "PerformanceAndHealth" }
+				"sanitizedstack" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth" }
 			}
 		*/
 		return {
 			command: this.serverCommand,
-			message: this.serverMessage || '',
-			stack: this.serverStack || '',
-			errortext: this.serverErrorText || '',
+			sanitizedstack: this.sanitizedStack || '',
 		} as const;
 	}
 
@@ -53,27 +51,20 @@ export class TypeScriptServerError extends Error {
 	 * Given a `errorText` from a tsserver request indicating failure in handling a request,
 	 * prepares a payload for telemetry-logging.
 	 */
-	private static parseErrorText(version: TypeScriptVersion, response: Proto.Response) {
+	private static parseErrorText(response: Proto.Response) {
 		const errorText = response.message;
 		if (errorText) {
 			const errorPrefix = 'Error processing request. ';
 			if (errorText.startsWith(errorPrefix)) {
-				let prefixFreeErrorText = errorText.substr(errorPrefix.length);
-
-				// Prior to https://github.com/microsoft/TypeScript/pull/32785, this error
-				// returned and excessively long and detailed list of paths.  Since server-side
-				// filtering doesn't have sufficient granularity to drop these specific
-				// messages, we sanitize them here.
-				if (prefixFreeErrorText.indexOf('Could not find sourceFile') >= 0) {
-					prefixFreeErrorText = prefixFreeErrorText.replace(/ in \[[^\]]*\]/g, '');
-				}
-
+				const prefixFreeErrorText = errorText.substr(errorPrefix.length);
 				const newlineIndex = prefixFreeErrorText.indexOf('\n');
 				if (newlineIndex >= 0) {
 					// Newline expected between message and stack.
+					const stack = prefixFreeErrorText.substring(newlineIndex + 1);
 					return {
 						message: prefixFreeErrorText.substring(0, newlineIndex),
-						stack: TypeScriptServerError.normalizeMessageStack(version, prefixFreeErrorText.substring(newlineIndex + 1))
+						stack,
+						sanitizedStack: TypeScriptServerError.sanitizeStack(stack)
 					};
 				}
 			}
@@ -82,12 +73,23 @@ export class TypeScriptServerError extends Error {
 	}
 
 	/**
-	 * Try to replace full TS Server paths with 'tsserver.js' so that we don't have to post process the data as much
+	 * Drop everything but ".js" and line/column numbers (though retain "tsserver" if that's the filename).
 	 */
-	private static normalizeMessageStack(version: TypeScriptVersion, message: string | undefined) {
+	private static sanitizeStack(message: string | undefined) {
 		if (!message) {
 			return '';
 		}
-		return message.replace(new RegExp(`${escapeRegExp(version.path)}[/\\\\]tsserver.js:`, 'gi'), 'tsserver.js:');
+		const regex = /(tsserver)?(\.(?:ts|tsx|js|jsx)(?::\d+(?::\d+)?)?)\)?$/igm;
+		let serverStack = '';
+		while (true) {
+			const match = regex.exec(message);
+			if (!match) {
+				break;
+			}
+			// [1] is 'tsserver' or undefined
+			// [2] is '.js:{line_number}:{column_number}'
+			serverStack += `${match[1] || 'suppressed'}${match[2]}\n`;
+		}
+		return serverStack;
 	}
 }

@@ -135,9 +135,10 @@ export class TerminalConfigHelper implements IBrowserTerminalConfigHelper {
 			if (this.config.rendererType === 'dom') {
 				this._lastFontMeasurement.charWidth = rect.width;
 			} else {
-				const scaledCharWidth = rect.width * window.devicePixelRatio;
+				const scaledCharWidth = Math.floor(rect.width * window.devicePixelRatio);
 				const scaledCellWidth = scaledCharWidth + Math.round(letterSpacing);
-				this._lastFontMeasurement.charWidth = Math.round(scaledCellWidth / window.devicePixelRatio);
+				const actualCellWidth = scaledCellWidth / window.devicePixelRatio;
+				this._lastFontMeasurement.charWidth = actualCellWidth - Math.round(letterSpacing) / window.devicePixelRatio;
 			}
 		}
 
@@ -188,7 +189,7 @@ export class TerminalConfigHelper implements IBrowserTerminalConfigHelper {
 					letterSpacing,
 					lineHeight,
 					charHeight: xtermCore._renderService.dimensions.actualCellHeight / lineHeight,
-					charWidth: xtermCore._renderService.dimensions.actualCellWidth
+					charWidth: xtermCore._renderService.dimensions.actualCellWidth - Math.round(letterSpacing) / window.devicePixelRatio
 				};
 			}
 		}

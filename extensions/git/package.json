@@ -409,6 +409,11 @@
         "command": "git.timeline.copyCommitMessage",
         "title": "%command.timelineCopyCommitMessage%",
         "category": "Git"
+      },
+      {
+        "command": "git.rebaseAbort",
+        "title": "%command.rebaseAbort%",
+        "category": "Git"
       }
     ],
     "keybindings": [
@@ -607,10 +612,6 @@
         },
         {
           "command": "git.pullRebase",
-          "when": "config.git.enabled && !git.missing && gitOpenRepositoryCount != 0"
-        },
-        {
-          "command": "git.pullFrom",
           "when": "config.git.enabled && !git.missing && gitOpenRepositoryCount != 0"
         },
         {
@@ -1675,6 +1676,24 @@
           "default": "mixed",
           "description": "%config.untrackedChanges%",
           "scope": "resource"
+        },
+        "git.showCommitInput": {
+          "type": "boolean",
+          "scope": "resource",
+          "default": true,
+          "description": "%config.showCommitInput%"
+        },
+        "git.terminalAuthentication": {
+          "type": "boolean",
+          "scope": "resource",
+          "default": true,
+          "description": "%config.terminalAuthentication%"
+        },
+        "git.githubAuthentication": {
+          "type": "boolean",
+          "scope": "resource",
+          "default": true,
+          "description": "%config.githubAuthentication%"
         }
       }
     },
@@ -1787,6 +1806,7 @@
           "ignore"
         ],
         "filenames": [
+          ".gitignore_global",
           ".gitignore"
         ],
         "configuration": "./languages/ignore.language-configuration.json"

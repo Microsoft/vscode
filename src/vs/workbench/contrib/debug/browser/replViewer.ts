@@ -23,6 +23,7 @@ import { IReplElementSource, IDebugService, IExpression, IReplElement, IDebugCon
 import { IDisposable, dispose } from 'vs/base/common/lifecycle';
 import { IThemeService } from 'vs/platform/theme/common/themeService';
 import { localize } from 'vs/nls';
+import { Codicon } from 'vs/base/common/codicons';
 
 const $ = dom.$;
 
@@ -128,7 +129,7 @@ export class ReplEvaluationResultsRenderer implements ITreeRenderer<ReplEvaluati
 			linkDetector: this.linkDetector
 		});
 		if (expression.hasChildren) {
-			templateData.annotation.className = 'annotation codicon codicon-info';
+			templateData.annotation.className = 'annotation ' + Codicon.info.classNames;
 			templateData.annotation.title = localize('stateCapture', "Object state is captured from first evaluation");
 		}
 	}
@@ -262,7 +263,7 @@ export class ReplRawObjectsRenderer implements ITreeRenderer<RawObjectReplElemen
 
 		// annotation if any
 		if (element.annotation) {
-			templateData.annotation.className = 'annotation codicon codicon-info';
+			templateData.annotation.className = 'annotation ' + Codicon.info.classNames;
 			templateData.annotation.title = element.annotation;
 		} else {
 			templateData.annotation.className = '';
@@ -366,15 +367,20 @@ export class ReplDataSource implements IAsyncDataSource<IDebugSession, IReplElem
 }
 
 export class ReplAccessibilityProvider implements IListAccessibilityProvider<IReplElement> {
+
+	getWidgetAriaLabel(): string {
+		return localize('debugConsole', "Debug Console");
+	}
+
 	getAriaLabel(element: IReplElement): string {
 		if (element instanceof Variable) {
-			return localize('replVariableAriaLabel', "Variable {0} has value {1}, read eval print loop, debug", element.name, element.value);
+			return localize('replVariableAriaLabel', "Variable {0}, value {1}", element.name, element.value);
 		}
 		if (element instanceof SimpleReplElement || element instanceof ReplEvaluationInput || element instanceof ReplEvaluationResult) {
-			return localize('replValueOutputAriaLabel', "{0}, read eval print loop, debug", element.value);
+			return localize('replValueOutputAriaLabel', "{0}", element.value);
 		}
 		if (element instanceof RawObjectReplElement) {
-			return localize('replRawObjectAriaLabel', "Repl variable {0} has value {1}, read eval print loop, debug", element.name, element.value);
+			return localize('replRawObjectAriaLabel', "Repl variable {0}, value {1}", element.name, element.value);
 		}
 		if (element instanceof ReplGroup) {
 			return localize('replGroup', "Repl group {0}, read eval print loop, debug", element.name);

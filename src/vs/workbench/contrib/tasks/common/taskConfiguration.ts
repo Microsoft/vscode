@@ -1197,7 +1197,7 @@ namespace ProblemMatcherConverter {
 				if (global) {
 					return Objects.deepClone(global);
 				}
-				let localProblemMatcher = context.namedProblemMatchers[variableName];
+				let localProblemMatcher: ProblemMatcher & Partial<NamedProblemMatcher> = context.namedProblemMatchers[variableName];
 				if (localProblemMatcher) {
 					localProblemMatcher = Objects.deepClone(localProblemMatcher);
 					// remove the name

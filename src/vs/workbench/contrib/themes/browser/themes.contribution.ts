@@ -333,19 +333,19 @@ class GenerateColorThemeAction extends Action {
 
 const category = localize('preferences', "Preferences");
 
-const colorThemeDescriptor = SyncActionDescriptor.create(SelectColorThemeAction, SelectColorThemeAction.ID, SelectColorThemeAction.LABEL, { primary: KeyChord(KeyMod.CtrlCmd | KeyCode.KEY_K, KeyMod.CtrlCmd | KeyCode.KEY_T) });
+const colorThemeDescriptor = SyncActionDescriptor.from(SelectColorThemeAction, { primary: KeyChord(KeyMod.CtrlCmd | KeyCode.KEY_K, KeyMod.CtrlCmd | KeyCode.KEY_T) });
 Registry.as<IWorkbenchActionRegistry>(Extensions.WorkbenchActions).registerWorkbenchAction(colorThemeDescriptor, 'Preferences: Color Theme', category);
 
-const fileIconThemeDescriptor = SyncActionDescriptor.create(SelectFileIconThemeAction, SelectFileIconThemeAction.ID, SelectFileIconThemeAction.LABEL);
+const fileIconThemeDescriptor = SyncActionDescriptor.from(SelectFileIconThemeAction);
 Registry.as<IWorkbenchActionRegistry>(Extensions.WorkbenchActions).registerWorkbenchAction(fileIconThemeDescriptor, 'Preferences: File Icon Theme', category);
 
-const productIconThemeDescriptor = SyncActionDescriptor.create(SelectProductIconThemeAction, SelectProductIconThemeAction.ID, SelectProductIconThemeAction.LABEL);
+const productIconThemeDescriptor = SyncActionDescriptor.from(SelectProductIconThemeAction);
 Registry.as<IWorkbenchActionRegistry>(Extensions.WorkbenchActions).registerWorkbenchAction(productIconThemeDescriptor, 'Preferences: Product Icon Theme', category);
 
 
 const developerCategory = localize('developer', "Developer");
 
-const generateColorThemeDescriptor = SyncActionDescriptor.create(GenerateColorThemeAction, GenerateColorThemeAction.ID, GenerateColorThemeAction.LABEL);
+const generateColorThemeDescriptor = SyncActionDescriptor.from(GenerateColorThemeAction);
 Registry.as<IWorkbenchActionRegistry>(Extensions.WorkbenchActions).registerWorkbenchAction(generateColorThemeDescriptor, 'Developer: Generate Color Theme From Current Settings', developerCategory);
 
 MenuRegistry.appendMenuItem(MenuId.MenubarPreferencesMenu, {

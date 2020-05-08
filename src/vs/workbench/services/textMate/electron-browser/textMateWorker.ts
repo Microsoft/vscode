@@ -11,7 +11,7 @@ import { TMGrammarFactory, ICreateGrammarResult } from 'vs/workbench/services/te
 import { IModelChangedEvent, MirrorTextModel } from 'vs/editor/common/model/mirrorTextModel';
 import { TextMateWorkerHost } from 'vs/workbench/services/textMate/electron-browser/textMateService';
 import { TokenizationStateStore } from 'vs/editor/common/model/textModelTokens';
-import { IGrammar, StackElement, IRawTheme } from 'vscode-textmate';
+import { IGrammar, StackElement, IRawTheme, IOnigLib } from 'vscode-textmate';
 import { MultilineTokensBuilder, countEOL } from 'vs/editor/common/model/tokensStore';
 import { LineTokens } from 'vs/editor/common/core/lineTokens';
 
@@ -118,7 +118,7 @@ export class TextMateWorker {
 	private readonly _host: TextMateWorkerHost;
 	private readonly _models: { [uri: string]: TextMateWorkerModel; };
 	private readonly _grammarCache: Promise<ICreateGrammarResult>[];
-	private readonly _grammarFactory: TMGrammarFactory | null;
+	private readonly _grammarFactory: Promise<TMGrammarFactory | null>;
 
 	constructor(ctx: IWorkerContext<TextMateWorkerHost>, createData: ICreateData) {
 		this._host = ctx.host;
@@ -134,24 +134,36 @@ export class TextMateWorker {
 				injectTo: def.injectTo,
 			};
 		});
+		this._grammarFactory = this._loadTMGrammarFactory(grammarDefinitions);
+	}
 
-		const globalDefine = (<any>self).define;
-		try {
-			(<any>self).define.amd = undefined;
-			const vscodeTextmate = <typeof import('vscode-textmate')>require.__$__nodeRequire('vscode-textmate');
+	private async _loadTMGrammarFactory(grammarDefinitions: IValidGrammarDefinition[]): Promise<TMGrammarFactory> {
+		require.config({
+			paths: {
+				'vscode-textmate': '../node_modules/vscode-textmate/release/main',
+				'vscode-oniguruma': '../node_modules/vscode-oniguruma/release/main',
+			}
+		});
+		const vscodeTextmate = await import('vscode-textmate');
+		const vscodeOniguruma = await import('vscode-oniguruma');
+		const wasmPath = require.toUrl('vscode-oniguruma/../onig.wasm');
+		const response = await fetch(wasmPath);
+		// Using the response directly only works if the server sets the MIME type 'application/wasm'.
+		// Otherwise, a TypeError is thrown when using the streaming compiler.
+		// We therefore use the non-streaming compiler :(.
+		const bytes = await response.arrayBuffer();
+		await vscodeOniguruma.loadWASM(bytes);
 
-			this._grammarFactory = new TMGrammarFactory({
-				logTrace: (msg: string) => {/* console.log(msg) */ },
-				logError: (msg: string, err: any) => console.error(msg, err),
-				readFile: (resource: URI) => this._host.readFile(resource)
-			}, grammarDefinitions, vscodeTextmate, undefined);
-		} catch (err) {
-			console.error(err);
-			this._grammarFactory = null;
-			return;
-		} finally {
-			(<any>self).define = globalDefine;
-		}
+		const onigLib: Promise<IOnigLib> = Promise.resolve({
+			createOnigScanner: (sources) => vscodeOniguruma.createOnigScanner(sources),
+			createOnigString: (str) => vscodeOniguruma.createOnigString(str)
+		});
+
+		return new TMGrammarFactory({
+			logTrace: (msg: string) => {/* console.log(msg) */ },
+			logError: (msg: string, err: any) => console.error(msg, err),
+			readFile: (resource: URI) => this._host.readFile(resource)
+		}, grammarDefinitions, vscodeTextmate, onigLib);
 	}
 
 	public acceptNewModel(data: IRawModelData): void {
@@ -175,19 +187,21 @@ export class TextMateWorker {
 		}
 	}
 
-	public getOrCreateGrammar(languageId: LanguageId): Promise<ICreateGrammarResult | null> {
-		if (!this._grammarFactory) {
+	public async getOrCreateGrammar(languageId: LanguageId): Promise<ICreateGrammarResult | null> {
+		const grammarFactory = await this._grammarFactory;
+		if (!grammarFactory) {
 			return Promise.resolve(null);
 		}
 		if (!this._grammarCache[languageId]) {
-			this._grammarCache[languageId] = this._grammarFactory.createGrammar(languageId);
+			this._grammarCache[languageId] = grammarFactory.createGrammar(languageId);
 		}
 		return this._grammarCache[languageId];
 	}
 
-	public acceptTheme(theme: IRawTheme, colorMap: string[]): void {
-		if (this._grammarFactory) {
-			this._grammarFactory.setTheme(theme, colorMap);
+	public async acceptTheme(theme: IRawTheme, colorMap: string[]): Promise<void> {
+		const grammarFactory = await this._grammarFactory;
+		if (grammarFactory) {
+			grammarFactory.setTheme(theme, colorMap);
 		}
 	}
 

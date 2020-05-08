@@ -306,7 +306,7 @@ export interface IGitOptions {
 function getGitErrorCode(stderr: string): string | undefined {
 	if (/Another git process seems to be running in this repository|If no other git process is currently running/.test(stderr)) {
 		return GitErrorCodes.RepositoryIsLocked;
-	} else if (/Authentication failed/.test(stderr)) {
+	} else if (/Authentication failed/i.test(stderr)) {
 		return GitErrorCodes.AuthenticationFailed;
 	} else if (/Not a git repository/i.test(stderr)) {
 		return GitErrorCodes.NotAGitRepository;
@@ -542,7 +542,8 @@ export class Git {
 		options.env = assign({}, process.env, this.env, options.env || {}, {
 			VSCODE_GIT_COMMAND: args[0],
 			LC_ALL: 'en_US.UTF-8',
-			LANG: 'en_US.UTF-8'
+			LANG: 'en_US.UTF-8',
+			GIT_PAGER: 'cat'
 		});
 
 		if (options.cwd) {
@@ -1342,6 +1343,10 @@ export class Repository {
 		}
 	}
 
+	async rebaseAbort(): Promise<void> {
+		await this.run(['rebase', '--abort']);
+	}
+
 	async rebaseContinue(): Promise<void> {
 		const args = ['rebase', '--continue'];
 
@@ -1507,7 +1512,12 @@ export class Repository {
 	}
 
 	async removeRemote(name: string): Promise<void> {
-		const args = ['remote', 'rm', name];
+		const args = ['remote', 'remove', name];
+		await this.run(args);
+	}
+
+	async renameRemote(name: string, newName: string): Promise<void> {
+		const args = ['remote', 'rename', name, newName];
 		await this.run(args);
 	}
 

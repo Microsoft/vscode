@@ -8,7 +8,7 @@ import { SyncDescriptor } from 'vs/platform/instantiation/common/descriptors';
 import { Registry } from 'vs/platform/registry/common/platform';
 import { BaseEditor } from 'vs/workbench/browser/parts/editor/baseEditor';
 import { IConstructorSignature0, IInstantiationService, BrandedService } from 'vs/platform/instantiation/common/instantiation';
-import { find, insert } from 'vs/base/common/arrays';
+import { insert } from 'vs/base/common/arrays';
 import { IDisposable, toDisposable } from 'vs/base/common/lifecycle';
 
 export interface IEditorDescriptor {
@@ -154,7 +154,7 @@ class EditorRegistry implements IEditorRegistry {
 	}
 
 	getEditorById(editorId: string): EditorDescriptor | undefined {
-		return find(this.editors, editor => editor.getId() === editorId);
+		return this.editors.find(editor => editor.getId() === editorId);
 	}
 
 	getEditors(): readonly EditorDescriptor[] {

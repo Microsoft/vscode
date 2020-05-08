@@ -167,10 +167,16 @@ export abstract class AbstractSynchroniser extends Disposable {
 			if (e instanceof UserDataSyncError) {
 				switch (e.code) {
 					case UserDataSyncErrorCode.RemotePreconditionFailed:
-						// Rejected as there is a new remote version. Syncing again,
+						// Rejected as there is a new remote version. Syncing again...
 						this.logService.info(`${this.syncResourceLogLabel}: Failed to synchronize as there is a new remote version available. Synchronizing again...`);
+
 						// Avoid cache and get latest remote user data - https://github.com/microsoft/vscode/issues/90624
 						remoteUserData = await this.getRemoteUserData(null);
+
+						// Get the latest last sync user data. Because multiples parallel syncs (in Web) could share same last sync data
+						// and one of them successfully updated remote and last sync state.
+						lastSyncUserData = await this.getLastSyncUserData();
+
 						return this.doSync(remoteUserData, lastSyncUserData);
 				}
 			}

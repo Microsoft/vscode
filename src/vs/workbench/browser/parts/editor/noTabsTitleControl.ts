@@ -136,16 +136,20 @@ export class NoTabsTitleControl extends TitleControl {
 		this.ifActiveEditorChanged(() => this.redraw());
 	}
 
-	closeAllEditors(): void {
-		this.redraw();
-	}
-
 	moveEditor(editor: IEditorInput, fromIndex: number, targetIndex: number): void {
 		this.ifActiveEditorChanged(() => this.redraw());
 	}
 
 	pinEditor(editor: IEditorInput): void {
 		this.ifEditorIsActive(editor, () => this.redraw());
+	}
+
+	stickEditor(editor: IEditorInput): void {
+		// Sticky editors are not presented any different with tabs disabled
+	}
+
+	unstickEditor(editor: IEditorInput): void {
+		// Sticky editors are not presented any different with tabs disabled
 	}
 
 	setActive(isActive: boolean): void {
@@ -218,7 +222,6 @@ export class NoTabsTitleControl extends TitleControl {
 			fn(); // only run if pinned state has changed
 		}
 	}
-
 
 	private ifEditorIsActive(editor: IEditorInput, fn: () => void): void {
 		if (this.group.isActive(editor)) {

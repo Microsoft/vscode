@@ -176,6 +176,7 @@ async function main(server: Server, initData: ISharedProcessInitData, configurat
 			const config: ITelemetryServiceConfig = {
 				appender: combinedAppender(appInsightsAppender, new LogAppender(logService)),
 				commonProperties: resolveCommonProperties(product.commit, product.version, configuration.machineId, product.msftInternalDomains, installSourcePath),
+				sendErrorTelemetry: true,
 				piiPaths: extensionsPath ? [appRoot, extensionsPath] : [appRoot]
 			};
 

@@ -129,10 +129,6 @@
 	cursor: pointer;
 }
 
-.monaco-list-type-filter > .controls > .filter:checked::before {
-	content: "\eb83" !important; /* codicon-list-filter */
-}
-
 .monaco-list-type-filter > .controls > .filter {
 	margin-left: 4px;
 }

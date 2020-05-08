@@ -5,6 +5,7 @@
 
 .monaco-workbench .part.activitybar {
 	width: 48px;
+	height: 100%;
 }
 
 .monaco-workbench .activitybar > .content {
@@ -14,18 +15,40 @@
 	justify-content: space-between;
 }
 
+/*
+ * Fix menu jumping and background inheritance in Safari
+ */
+.monaco-workbench.safari .activitybar > .content {
+	position: absolute;
+	background-color: inherit;
+}
+
 /** Home Bar */
 
 .monaco-workbench .activitybar > .content > .home-bar {
+	position: relative;
 	width: 100%;
-	height: 35px;
+	height: 48px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	order: -1;
 }
 
-.monaco-workbench .activitybar > .content > .home-bar > .action-label {
-	font-size: 24px;
+.monaco-workbench .activitybar > .content > .home-bar > .home-bar-icon-badge {
+	position: absolute;
+	right: 10px;
+	bottom: 9px;
+	width: 14px;
+	height: 14px;
+	z-index: 1; /* on top of home indicator */
+	background-image: url('../../../media/code-icon.svg');
+	background-repeat: no-repeat;
+	background-position: center center;
+	background-size: 14px;
+	pointer-events: none;
+	border-top: 2px solid transparent;
+	border-left: 2px solid transparent;
 }
 
 /** Viewlet Switcher */

@@ -185,7 +185,7 @@ export function activate(context: vscode.ExtensionContext) {
 	const trackers = new Set<string>();
 
 	context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('*', {
-		resolveDebugConfiguration(_folder: vscode.WorkspaceFolder | undefined, debugConfiguration: vscode.DebugConfiguration) {
+		resolveDebugConfigurationWithSubstitutedVariables(_folder: vscode.WorkspaceFolder | undefined, debugConfiguration: vscode.DebugConfiguration) {
 			if (debugConfiguration.type && debugConfiguration.serverReadyAction) {
 				if (!trackers.has(debugConfiguration.type)) {
 					trackers.add(debugConfiguration.type);

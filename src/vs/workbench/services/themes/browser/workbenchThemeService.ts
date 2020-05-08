@@ -32,6 +32,7 @@ import { ThemeRegistry, registerColorThemeExtensionPoint, registerFileIconThemeE
 import { updateColorThemeConfigurationSchemas, updateFileIconThemeConfigurationSchemas, ThemeConfiguration, updateProductIconThemeConfigurationSchemas } from 'vs/workbench/services/themes/common/themeConfiguration';
 import { ProductIconThemeData, DEFAULT_PRODUCT_ICON_THEME_ID } from 'vs/workbench/services/themes/browser/productIconThemeData';
 import { registerProductIconThemeSchemas } from 'vs/workbench/services/themes/common/productIconThemeSchema';
+import { ILogService } from 'vs/platform/log/common/log';
 
 // implementation
 
@@ -97,7 +98,8 @@ export class WorkbenchThemeService implements IWorkbenchThemeService {
 		@IWorkbenchEnvironmentService private readonly environmentService: IWorkbenchEnvironmentService,
 		@IFileService private readonly fileService: IFileService,
 		@IExtensionResourceLoaderService private readonly extensionResourceLoaderService: IExtensionResourceLoaderService,
-		@IWorkbenchLayoutService readonly layoutService: IWorkbenchLayoutService
+		@IWorkbenchLayoutService readonly layoutService: IWorkbenchLayoutService,
+		@ILogService private readonly logService: ILogService
 	) {
 		this.container = layoutService.getWorkbenchContainer();
 		this.settings = new ThemeConfiguration(configurationService);
@@ -218,8 +220,8 @@ export class WorkbenchThemeService implements IWorkbenchThemeService {
 					this.currentColorTheme.setCustomTokenColors(this.settings.tokenColorCustomizations);
 					hasColorChanges = true;
 				}
-				if (e.affectsConfiguration(ThemeSettings.TOKEN_COLOR_CUSTOMIZATIONS_EXPERIMENTAL)) {
-					this.currentColorTheme.setCustomTokenStyleRules(this.settings.tokenStylesCustomizations);
+				if (e.affectsConfiguration(ThemeSettings.SEMANTIC_TOKEN_COLOR_CUSTOMIZATIONS) || e.affectsConfiguration(ThemeSettings.TOKEN_COLOR_CUSTOMIZATIONS_EXPERIMENTAL)) {
+					this.currentColorTheme.setCustomSemanticTokenColors(this.settings.semanticTokenColorCustomizations, this.settings.experimentalSemanticTokenColorCustomizations);
 					hasColorChanges = true;
 				}
 				if (hasColorChanges) {
@@ -571,7 +573,7 @@ export class WorkbenchThemeService implements IWorkbenchThemeService {
 		}
 
 		const newThemeData = await this.productIconThemeRegistry.findThemeById(iconTheme) || ProductIconThemeData.defaultTheme;
-		await newThemeData.ensureLoaded(this.fileService);
+		await newThemeData.ensureLoaded(this.fileService, this.logService);
 
 		this.applyAndSetProductIconTheme(newThemeData);
 
@@ -585,7 +587,7 @@ export class WorkbenchThemeService implements IWorkbenchThemeService {
 	}
 
 	private async reloadCurrentProductIconTheme() {
-		await this.currentProductIconTheme.reload(this.fileService);
+		await this.currentProductIconTheme.reload(this.fileService, this.logService);
 		this.applyAndSetProductIconTheme(this.currentProductIconTheme);
 	}
 

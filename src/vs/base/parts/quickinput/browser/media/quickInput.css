@@ -97,10 +97,14 @@
 	align-self: center;
 	position: absolute;
 	right: 4px;
+	display: flex;
+	align-items: center;
 }
 
 .quick-input-count .monaco-count-badge {
 	vertical-align: middle;
+	padding: 2px 4px;
+	border-radius: 2px;
 }
 
 .quick-input-action {
@@ -108,9 +112,8 @@
 }
 
 .quick-input-action .monaco-text-button {
-	font-size: 85%;
+	font-size: 11px;
 	padding: 0 6px;
-	line-height: initial;
 	display: flex;
 	height: 100%;
 	align-items: center;

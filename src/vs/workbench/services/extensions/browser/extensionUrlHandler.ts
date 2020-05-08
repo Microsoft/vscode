@@ -410,4 +410,4 @@ export class ManageAuthorizedExtensionURIsAction extends Action {
 }
 
 const actionRegistry = Registry.as<IWorkbenchActionRegistry>(WorkbenchActionExtensions.WorkbenchActions);
-actionRegistry.registerWorkbenchAction(SyncActionDescriptor.create(ManageAuthorizedExtensionURIsAction, ManageAuthorizedExtensionURIsAction.ID, ManageAuthorizedExtensionURIsAction.LABEL), `Extensions: Manage Authorized Extension URIs...`, ExtensionsLabel);
+actionRegistry.registerWorkbenchAction(SyncActionDescriptor.from(ManageAuthorizedExtensionURIsAction), `Extensions: Manage Authorized Extension URIs...`, ExtensionsLabel);

@@ -72,7 +72,7 @@ export class TitlebarPart extends Part implements ITitleService {
 
 	private isInactive: boolean = false;
 
-	private readonly properties: ITitleProperties = { isPure: true, isAdmin: false };
+	private readonly properties: ITitleProperties = { isPure: true, isAdmin: false, prefix: undefined };
 	private readonly activeEditorListeners = this._register(new DisposableStore());
 
 	private readonly titleUpdater = this._register(new RunOnceScheduler(() => this.doUpdateTitle(), 0));
@@ -191,6 +191,10 @@ export class TitlebarPart extends Part implements ITitleService {
 	private getWindowTitle(): string {
 		let title = this.doGetWindowTitle();
 
+		if (this.properties.prefix) {
+			title = `${this.properties.prefix} ${title || this.productService.nameLong}`;
+		}
+
 		if (this.properties.isAdmin) {
 			title = `${title || this.productService.nameLong} ${TitlebarPart.NLS_USER_IS_ADMIN}`;
 		}
@@ -212,10 +216,12 @@ export class TitlebarPart extends Part implements ITitleService {
 	updateProperties(properties: ITitleProperties): void {
 		const isAdmin = typeof properties.isAdmin === 'boolean' ? properties.isAdmin : this.properties.isAdmin;
 		const isPure = typeof properties.isPure === 'boolean' ? properties.isPure : this.properties.isPure;
+		const prefix = typeof properties.prefix === 'string' ? properties.prefix : this.properties.prefix;
 
-		if (isAdmin !== this.properties.isAdmin || isPure !== this.properties.isPure) {
+		if (isAdmin !== this.properties.isAdmin || isPure !== this.properties.isPure || prefix !== this.properties.prefix) {
 			this.properties.isAdmin = isAdmin;
 			this.properties.isPure = isPure;
+			this.properties.prefix = prefix;
 
 			this.titleUpdater.schedule();
 		}

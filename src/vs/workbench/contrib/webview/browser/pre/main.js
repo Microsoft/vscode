@@ -197,8 +197,21 @@
 			}
 
 			if (initData.styles) {
+				const documentStyle = document.documentElement.style;
+
+				// Remove stale properties
+				for (let i = documentStyle.length - 1; i >= 0; i--) {
+					const property = documentStyle[i];
+
+					// Don't remove properties that the webview might have added separately
+					if (property && property.startsWith('--vscode-')) {
+						documentStyle.removeProperty(property);
+					}
+				}
+
+				// Re-add new properties
 				for (const variable of Object.keys(initData.styles)) {
-					document.documentElement.style.setProperty(`--${variable}`, initData.styles[variable]);
+					documentStyle.setProperty(`--${variable}`, initData.styles[variable]);
 				}
 			}
 		};

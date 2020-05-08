@@ -442,7 +442,7 @@ export class SettingsEditor2 extends BaseEditor {
 			inputBorder: settingsTextInputBorder
 		}));
 
-		this.countElement = DOM.append(searchContainer, DOM.$('.settings-count-widget'));
+		this.countElement = DOM.append(searchContainer, DOM.$('.settings-count-widget.monaco-count-badge.long'));
 		this._register(attachStylerCallback(this.themeService, { badgeBackground, contrastBorder, badgeForeground }, colors => {
 			const background = colors.badgeBackground ? colors.badgeBackground.toString() : '';
 			const border = colors.contrastBorder ? colors.contrastBorder.toString() : '';
@@ -493,14 +493,14 @@ export class SettingsEditor2 extends BaseEditor {
 	private onDidClickSetting(evt: ISettingLinkClickEvent, recursed?: boolean): void {
 		const elements = this.currentSettingsModel.getElementsByName(evt.targetKey);
 		if (elements && elements[0]) {
-			let sourceTop = this.settingsTree.getRelativeTop(evt.source);
-			if (typeof sourceTop !== 'number') {
-				return;
-			}
-
-			if (sourceTop < 0) {
+			let sourceTop = 0.5;
+			try {
+				const _sourceTop = this.settingsTree.getRelativeTop(evt.source);
+				if (_sourceTop !== null) {
+					sourceTop = _sourceTop;
+				}
+			} catch {
 				// e.g. clicked a searched element, now the search has been cleared
-				sourceTop = 0.5;
 			}
 
 			this.settingsTree.reveal(elements[0], sourceTop);
@@ -1358,7 +1358,7 @@ export class SettingsEditor2 extends BaseEditor {
 					const message = getErrorMessage(err).trim();
 					if (message && message !== 'Error') {
 						// "Error" = any generic network error
-						this.telemetryService.publicLog('settingsEditor.searchError', { message }, true);
+						this.telemetryService.publicLogError('settingsEditor.searchError', { message });
 						this.logService.info('Setting search error: ' + message);
 					}
 					return null;

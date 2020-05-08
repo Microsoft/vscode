@@ -19,6 +19,7 @@ import { OverviewRulerLane } from 'vs/editor/common/model';
 import { MarkdownString } from 'vs/base/common/htmlContent';
 import { createTextModel } from 'vs/editor/test/common/editorTestUtils';
 import { generateUuid } from 'vs/base/common/uuid';
+import { createMockDebugModel } from 'vs/workbench/contrib/debug/test/common/mockDebug';
 
 function createMockSession(model: DebugModel, name = 'mockSession', options?: IDebugSessionOptions): DebugSession {
 	return new DebugSession(generateUuid(), { resolved: { name, type: 'node', request: 'launch' }, unresolved: undefined }, undefined!, model, options, undefined!, undefined!, undefined!, undefined!, undefined!, undefined!, undefined!, undefined!, NullOpenerService, undefined!, undefined!);
@@ -48,7 +49,7 @@ suite('Debug - Breakpoints', () => {
 	let model: DebugModel;
 
 	setup(() => {
-		model = new DebugModel([], [], [], [], [], <any>{ isDirty: (e: any) => false });
+		model = createMockDebugModel();
 	});
 
 	// Breakpoints

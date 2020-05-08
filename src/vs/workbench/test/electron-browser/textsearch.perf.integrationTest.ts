@@ -79,7 +79,7 @@ suite.skip('TextSearch performance (integration)', () => {
 			[IDialogService, dialogService],
 			[INotificationService, notificationService],
 			[IUndoRedoService, undoRedoService],
-			[IModelService, new ModelServiceImpl(configurationService, textResourcePropertiesService, new TestThemeService(), logService, undoRedoService, dialogService)],
+			[IModelService, new ModelServiceImpl(configurationService, textResourcePropertiesService, new TestThemeService(), logService, undoRedoService)],
 			[IWorkspaceContextService, new TestContextService(testWorkspace(URI.file(testWorkspacePath)))],
 			[IEditorService, new TestEditorService()],
 			[IEditorGroupsService, new TestEditorGroupsService()],
@@ -184,6 +184,14 @@ class TestTelemetryService implements ITelemetryService {
 
 	public publicLog2<E extends ClassifiedEvent<T> = never, T extends GDPRClassification<T> = never>(eventName: string, data?: StrictPropertyCheck<T, E>) {
 		return this.publicLog(eventName, data as any);
+	}
+
+	public publicLogError(eventName: string, data?: any): Promise<void> {
+		return this.publicLog(eventName, data);
+	}
+
+	public publicLogError2<E extends ClassifiedEvent<T> = never, T extends GDPRClassification<T> = never>(eventName: string, data?: StrictPropertyCheck<T, E>) {
+		return this.publicLogError(eventName, data as any);
 	}
 
 	public getTelemetryInfo(): Promise<ITelemetryInfo> {

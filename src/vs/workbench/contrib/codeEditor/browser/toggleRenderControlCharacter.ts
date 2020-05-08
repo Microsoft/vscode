@@ -31,7 +31,7 @@ export class ToggleRenderControlCharacterAction extends Action {
 }
 
 const registry = Registry.as<IWorkbenchActionRegistry>(ActionExtensions.WorkbenchActions);
-registry.registerWorkbenchAction(SyncActionDescriptor.create(ToggleRenderControlCharacterAction, ToggleRenderControlCharacterAction.ID, ToggleRenderControlCharacterAction.LABEL), 'View: Toggle Control Characters', nls.localize('view', "View"));
+registry.registerWorkbenchAction(SyncActionDescriptor.from(ToggleRenderControlCharacterAction), 'View: Toggle Control Characters', nls.localize('view', "View"));
 
 MenuRegistry.appendMenuItem(MenuId.MenubarViewMenu, {
 	group: '5_editor',

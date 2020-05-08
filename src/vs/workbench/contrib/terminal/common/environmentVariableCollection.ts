@@ -65,7 +65,7 @@ export class MergedEnvironmentVariableCollection implements IMergedEnvironmentVa
 		});
 	}
 
-	diff(other: IMergedEnvironmentVariableCollection): IMergedEnvironmentVariableCollectionDiff {
+	diff(other: IMergedEnvironmentVariableCollection): IMergedEnvironmentVariableCollectionDiff | undefined {
 		const added: Map<string, IExtensionOwnedEnvironmentVariableMutator[]> = new Map();
 		const changed: Map<string, IExtensionOwnedEnvironmentVariableMutator[]> = new Map();
 		const removed: Map<string, IExtensionOwnedEnvironmentVariableMutator[]> = new Map();
@@ -96,6 +96,10 @@ export class MergedEnvironmentVariableCollection implements IMergedEnvironmentVa
 				changed.set(variable, result);
 			}
 		});
+
+		if (added.size === 0 && changed.size === 0 && removed.size === 0) {
+			return undefined;
+		}
 
 		return { added, changed, removed };
 	}

@@ -688,6 +688,8 @@ export interface IStyleController {
 
 export interface IListAccessibilityProvider<T> extends IListViewAccessibilityProvider<T> {
 	getAriaLabel(element: T): string | null;
+	getWidgetAriaLabel(): string;
+	getWidgetRole?(): string;
 	getAriaLevel?(element: T): number | undefined;
 	onDidChangeActiveDescendant?: Event<void>;
 	getActiveDescendantId?(element: T): string | undefined;
@@ -820,8 +822,6 @@ export interface IListOptions<T> {
 	readonly automaticKeyboardNavigation?: boolean;
 	readonly keyboardNavigationLabelProvider?: IKeyboardNavigationLabelProvider<T>;
 	readonly keyboardNavigationDelegate?: IKeyboardNavigationDelegate;
-	readonly ariaRole?: string;
-	readonly ariaLabel?: string;
 	readonly keyboardSupport?: boolean;
 	readonly multipleSelectionSupport?: boolean;
 	readonly multipleSelectionController?: IMultipleSelectionController<T>;
@@ -838,6 +838,7 @@ export interface IListOptions<T> {
 	readonly mouseSupport?: boolean;
 	readonly horizontalScrolling?: boolean;
 	readonly additionalScrollHeight?: number;
+	readonly transformOptimization?: boolean;
 }
 
 export interface IListStyles {
@@ -1106,6 +1107,7 @@ export class List<T> implements ISpliceable<T>, IDisposable {
 	private styleController: IStyleController;
 	private typeLabelController?: TypeLabelController<T>;
 	private accessibilityProvider?: IListAccessibilityProvider<T>;
+	private _ariaLabel: string = '';
 
 	protected readonly disposables = new DisposableStore();
 
@@ -1184,7 +1186,8 @@ export class List<T> implements ISpliceable<T>, IDisposable {
 		renderers: IListRenderer<any /* TODO@joao */, any>[],
 		private _options: IListOptions<T> = DefaultOptions
 	) {
-		this.selection = new SelectionTrait(this._options.ariaRole !== 'listbox');
+		const role = this._options.accessibilityProvider && this._options.accessibilityProvider.getWidgetRole ? this._options.accessibilityProvider?.getWidgetRole() : 'list';
+		this.selection = new SelectionTrait(role !== 'listbox');
 		this.focus = new Trait('focused');
 
 		mixin(_options, defaultStyles, false);
@@ -1209,7 +1212,7 @@ export class List<T> implements ISpliceable<T>, IDisposable {
 		};
 
 		this.view = new ListView(container, virtualDelegate, renderers, viewOptions);
-		this.view.domNode.setAttribute('role', _options.ariaRole ?? 'list');
+		this.view.domNode.setAttribute('role', role);
 
 		if (_options.styleController) {
 			this.styleController = _options.styleController(this.view.domId);
@@ -1250,8 +1253,8 @@ export class List<T> implements ISpliceable<T>, IDisposable {
 		this.onDidChangeFocus(this._onFocusChange, this, this.disposables);
 		this.onDidChangeSelection(this._onSelectionChange, this, this.disposables);
 
-		if (_options.ariaLabel) {
-			this.view.domNode.setAttribute('aria-label', localize('aria list', "{0}. Use the navigation keys to navigate.", _options.ariaLabel));
+		if (this.accessibilityProvider) {
+			this.ariaLabel = this.accessibilityProvider.getWidgetAriaLabel();
 		}
 		if (_options.multipleSelectionSupport) {
 			this.view.domNode.setAttribute('aria-multiselectable', 'true');
@@ -1352,6 +1355,15 @@ export class List<T> implements ISpliceable<T>, IDisposable {
 
 	get lastVisibleIndex(): number {
 		return this.view.lastVisibleIndex;
+	}
+
+	get ariaLabel(): string {
+		return this._ariaLabel;
+	}
+
+	set ariaLabel(value: string) {
+		this._ariaLabel = value;
+		this.view.domNode.setAttribute('aria-label', localize('aria list', "{0}. Use the navigation keys to navigate.", value));
 	}
 
 	domFocus(): void {

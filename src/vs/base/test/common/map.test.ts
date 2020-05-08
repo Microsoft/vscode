@@ -656,18 +656,21 @@ suite('Map', () => {
 
 		assert.equal(map.size, 0);
 
-		map.set(resource1, 1);
+		let res = map.set(resource1, 1);
+		assert.ok(res === map);
 		map.set(resource2, '2');
 		map.set(resource3, true);
 
-		const values = map.values();
+		const values = [...map.values()];
 		assert.equal(values[0], 1);
 		assert.equal(values[1], '2');
 		assert.equal(values[2], true);
 
 		let counter = 0;
-		map.forEach(value => {
+		map.forEach((value, key, mapObj) => {
 			assert.equal(value, values[counter++]);
+			assert.ok(URI.isUri(key));
+			assert.ok(map === mapObj);
 		});
 
 		const obj = Object.create(null);

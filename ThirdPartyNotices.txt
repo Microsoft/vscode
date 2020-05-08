@@ -40,7 +40,7 @@ This project incorporates components from the projects listed below. The origina
 33.	mdn-data version 1.1.12 (https://github.com/mdn/data)
 34.	Microsoft/TypeScript-TmLanguage version 0.0.1 (https://github.com/Microsoft/TypeScript-TmLanguage)
 35.	Microsoft/vscode-JSON.tmLanguage (https://github.com/Microsoft/vscode-JSON.tmLanguage)
-36.	Microsoft/vscode-mssql version 1.6.0 (https://github.com/Microsoft/vscode-mssql)
+36.	Microsoft/vscode-mssql version 1.9.0 (https://github.com/Microsoft/vscode-mssql)
 37.	mmims/language-batchfile version 0.7.5 (https://github.com/mmims/language-batchfile)
 38.	octref/language-css version 0.42.11 (https://github.com/octref/language-css)
 39.	PowerShell/EditorSyntax version 1.0.0 (https://github.com/PowerShell/EditorSyntax)

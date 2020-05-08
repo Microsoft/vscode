@@ -960,6 +960,25 @@ suite('Editor Contrib - Line Operations', () => {
 		model.dispose();
 	});
 
+	test('Indenting on empty line should move cursor', () => {
+		const model = createTextModel(
+			[
+				''
+			].join('\n')
+		);
+
+		withTestCodeEditor(null, { model: model, useTabStops: false }, (editor) => {
+			const indentLinesAction = new IndentLinesAction();
+			editor.setPosition(new Position(1, 1));
+
+			executeAction(indentLinesAction, editor);
+			assert.equal(model.getLineContent(1), '    ');
+			assert.deepEqual(editor.getSelection(), new Selection(1, 5, 1, 5));
+		});
+
+		model.dispose();
+	});
+
 	test('issue #62112: Delete line does not work properly when multiple cursors are on line', () => {
 		const TEXT = [
 			'a',

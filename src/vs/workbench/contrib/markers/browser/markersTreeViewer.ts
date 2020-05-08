@@ -75,6 +75,10 @@ export class MarkersTreeAccessibilityProvider implements IListAccessibilityProvi
 
 	constructor(@ILabelService private readonly labelService: ILabelService) { }
 
+	getWidgetAriaLabel(): string {
+		return localize('problemsView', "Problems View");
+	}
+
 	public getAriaLabel(element: TreeElement): string | null {
 		if (element instanceof ResourceMarkers) {
 			const path = this.labelService.getUriLabel(element.resource, { relative: true }) || element.resource.fsPath;
@@ -845,7 +849,7 @@ export class ResourceDragAndDrop implements ITreeDragAndDrop<TreeElement> {
 
 		if (resources.length) {
 			// Apply some datatransfer types to allow for dragging the element outside of the application
-			this.instantiationService.invokeFunction(fillResourceDataTransfers, resources, originalEvent);
+			this.instantiationService.invokeFunction(fillResourceDataTransfers, resources, undefined, originalEvent);
 		}
 	}
 

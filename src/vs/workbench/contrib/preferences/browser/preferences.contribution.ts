@@ -471,7 +471,7 @@ class PreferencesActionsContribution extends Disposable implements IWorkbenchCon
 					id: SETTINGS_EDITOR_COMMAND_FILTER_MODIFIED,
 					title: { value: nls.localize('filterModifiedLabel', "Show modified settings"), original: 'Show modified settings' },
 					menu: {
-						id: MenuId.ExplorerContext,
+						id: MenuId.EditorTitle,
 						group: '1_filter',
 						order: 1,
 						when: ContextKeyExpr.and(CONTEXT_SETTINGS_EDITOR, CONTEXT_SETTINGS_JSON_EDITOR.toNegated())
@@ -491,7 +491,7 @@ class PreferencesActionsContribution extends Disposable implements IWorkbenchCon
 					id: SETTINGS_EDITOR_COMMAND_FILTER_ONLINE,
 					title: { value: nls.localize('filterOnlineServicesLabel', "Show settings for online services"), original: 'Show settings for online services' },
 					menu: {
-						id: MenuId.ExplorerContext,
+						id: MenuId.EditorTitle,
 						group: '1_filter',
 						order: 2,
 						when: ContextKeyExpr.and(CONTEXT_SETTINGS_EDITOR, CONTEXT_SETTINGS_JSON_EDITOR.toNegated())

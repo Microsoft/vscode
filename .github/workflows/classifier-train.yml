@@ -1,0 +1,40 @@
+name: "Classifier: Trainer"
+on:
+  schedule:
+    - cron: 0 0 12 * *
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Actions
+        uses: actions/checkout@v2
+        with:
+          repository: 'microsoft/vscode-github-triage-actions'
+          ref: master
+          lfs: true
+          path: ./actions
+      - name: Install Actions
+        run: npm install --production --prefix ./actions
+      - name: Install Additional Dependencies
+        # Pulls in a bunch of other packages that arent needed for the rest of the actions
+        run: npm install @azure/storage-blob@12
+      - name: "Run Classifier: Scraper"
+        uses: ./actions/classifier/train/fetch-issues
+        with:
+          token: ${{secrets.ISSUE_SCRAPER_TOKEN}} # My personal token, so as to not risk going over quota on main token
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install --upgrade numpy scipy scikit-learn joblib nltk
+      - name: "Run Classifier: Generator"
+        run: python ./actions/classifier/train/generate-models/generate.py category
+      - name: "Run Classifier: Upload"
+        uses: ./actions/classifier/train/upload-models
+        with:
+          blobContainerName: classifier-models
+          blobStorageKey: ${{secrets.AZURE_BLOB_STORAGE_CONNECTION_STRING}}

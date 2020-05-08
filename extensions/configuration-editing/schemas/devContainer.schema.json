@@ -282,33 +282,42 @@
 			]
 		}
 	},
-	"allOf": [
+	"oneOf": [
 		{
-			"oneOf": [
+			"allOf": [
 				{
-					"allOf": [
+					"oneOf": [
 						{
-							"oneOf": [
+							"allOf": [
 								{
-									"$ref": "#/definitions/dockerfileContainer"
+									"oneOf": [
+										{
+											"$ref": "#/definitions/dockerfileContainer"
+										},
+										{
+											"$ref": "#/definitions/imageContainer"
+										}
+									]
 								},
 								{
-									"$ref": "#/definitions/imageContainer"
+									"$ref": "#/definitions/nonComposeBase"
 								}
 							]
 						},
 						{
-							"$ref": "#/definitions/nonComposeBase"
+							"$ref": "#/definitions/composeContainer"
 						}
 					]
 				},
 				{
-					"$ref": "#/definitions/composeContainer"
+					"$ref": "#/definitions/devContainerCommon"
 				}
 			]
 		},
 		{
-			"$ref": "#/definitions/devContainerCommon"
+			"type": "object",
+			"$ref": "#/definitions/devContainerCommon",
+			"additionalProperties": false
 		}
 	]
 }

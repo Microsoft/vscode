@@ -232,39 +232,39 @@ const registry = Registry.as<IWorkbenchActionRegistry>(Extensions.WorkbenchActio
 const helpCategory = nls.localize('help', "Help");
 
 if (KeybindingsReferenceAction.AVAILABLE) {
-	registry.registerWorkbenchAction(SyncActionDescriptor.create(KeybindingsReferenceAction, KeybindingsReferenceAction.ID, KeybindingsReferenceAction.LABEL, { primary: KeyChord(KeyMod.CtrlCmd | KeyCode.KEY_K, KeyMod.CtrlCmd | KeyCode.KEY_R) }), 'Help: Keyboard Shortcuts Reference', helpCategory);
+	registry.registerWorkbenchAction(SyncActionDescriptor.from(KeybindingsReferenceAction, { primary: KeyChord(KeyMod.CtrlCmd | KeyCode.KEY_K, KeyMod.CtrlCmd | KeyCode.KEY_R) }), 'Help: Keyboard Shortcuts Reference', helpCategory);
 }
 
 if (OpenDocumentationUrlAction.AVAILABLE) {
-	registry.registerWorkbenchAction(SyncActionDescriptor.create(OpenDocumentationUrlAction, OpenDocumentationUrlAction.ID, OpenDocumentationUrlAction.LABEL), 'Help: Documentation', helpCategory);
+	registry.registerWorkbenchAction(SyncActionDescriptor.from(OpenDocumentationUrlAction), 'Help: Documentation', helpCategory);
 }
 
 if (OpenIntroductoryVideosUrlAction.AVAILABLE) {
-	registry.registerWorkbenchAction(SyncActionDescriptor.create(OpenIntroductoryVideosUrlAction, OpenIntroductoryVideosUrlAction.ID, OpenIntroductoryVideosUrlAction.LABEL), 'Help: Introductory Videos', helpCategory);
+	registry.registerWorkbenchAction(SyncActionDescriptor.from(OpenIntroductoryVideosUrlAction), 'Help: Introductory Videos', helpCategory);
 }
 
 if (OpenTipsAndTricksUrlAction.AVAILABLE) {
-	registry.registerWorkbenchAction(SyncActionDescriptor.create(OpenTipsAndTricksUrlAction, OpenTipsAndTricksUrlAction.ID, OpenTipsAndTricksUrlAction.LABEL), 'Help: Tips and Tricks', helpCategory);
+	registry.registerWorkbenchAction(SyncActionDescriptor.from(OpenTipsAndTricksUrlAction), 'Help: Tips and Tricks', helpCategory);
 }
 
 if (OpenNewsletterSignupUrlAction.AVAILABLE) {
-	registry.registerWorkbenchAction(SyncActionDescriptor.create(OpenNewsletterSignupUrlAction, OpenNewsletterSignupUrlAction.ID, OpenNewsletterSignupUrlAction.LABEL), 'Help: Tips and Tricks', helpCategory);
+	registry.registerWorkbenchAction(SyncActionDescriptor.from(OpenNewsletterSignupUrlAction), 'Help: Tips and Tricks', helpCategory);
 }
 
 if (OpenTwitterUrlAction.AVAILABLE) {
-	registry.registerWorkbenchAction(SyncActionDescriptor.create(OpenTwitterUrlAction, OpenTwitterUrlAction.ID, OpenTwitterUrlAction.LABEL), 'Help: Join Us on Twitter', helpCategory);
+	registry.registerWorkbenchAction(SyncActionDescriptor.from(OpenTwitterUrlAction), 'Help: Join Us on Twitter', helpCategory);
 }
 
 if (OpenRequestFeatureUrlAction.AVAILABLE) {
-	registry.registerWorkbenchAction(SyncActionDescriptor.create(OpenRequestFeatureUrlAction, OpenRequestFeatureUrlAction.ID, OpenRequestFeatureUrlAction.LABEL), 'Help: Search Feature Requests', helpCategory);
+	registry.registerWorkbenchAction(SyncActionDescriptor.from(OpenRequestFeatureUrlAction), 'Help: Search Feature Requests', helpCategory);
 }
 
 if (OpenLicenseUrlAction.AVAILABLE) {
-	registry.registerWorkbenchAction(SyncActionDescriptor.create(OpenLicenseUrlAction, OpenLicenseUrlAction.ID, OpenLicenseUrlAction.LABEL), 'Help: View License', helpCategory);
+	registry.registerWorkbenchAction(SyncActionDescriptor.from(OpenLicenseUrlAction), 'Help: View License', helpCategory);
 }
 
 if (OpenPrivacyStatementUrlAction.AVAILABE) {
-	registry.registerWorkbenchAction(SyncActionDescriptor.create(OpenPrivacyStatementUrlAction, OpenPrivacyStatementUrlAction.ID, OpenPrivacyStatementUrlAction.LABEL), 'Help: Privacy Statement', helpCategory);
+	registry.registerWorkbenchAction(SyncActionDescriptor.from(OpenPrivacyStatementUrlAction), 'Help: Privacy Statement', helpCategory);
 }
 
 // --- Menu Registration

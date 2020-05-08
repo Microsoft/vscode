@@ -7,6 +7,8 @@ import { GlobalMouseMoveMonitor, IStandardMouseMoveEventData, standardMouseMoveM
 import { IMouseEvent } from 'vs/base/browser/mouseEvent';
 import { Widget } from 'vs/base/browser/ui/widget';
 import { IntervalTimer, TimeoutTimer } from 'vs/base/common/async';
+import { Codicon } from 'vs/base/common/codicons';
+import { addClasses } from 'vs/base/browser/dom';
 
 /**
  * The arrow image size.
@@ -16,6 +18,7 @@ export const ARROW_IMG_SIZE = 11;
 export interface ScrollbarArrowOptions {
 	onActivate: () => void;
 	className: string;
+	icon: Codicon;
 
 	bgWidth: number;
 	bgHeight: number;
@@ -59,6 +62,8 @@ export class ScrollbarArrow extends Widget {
 
 		this.domNode = document.createElement('div');
 		this.domNode.className = opts.className;
+		addClasses(this.domNode, opts.icon.classNames);
+
 		this.domNode.style.position = 'absolute';
 		this.domNode.style.width = ARROW_IMG_SIZE + 'px';
 		this.domNode.style.height = ARROW_IMG_SIZE + 'px';

@@ -213,7 +213,7 @@ class FormatDocumentAction extends EditorAction {
 			id: 'editor.action.formatDocument',
 			label: nls.localize('formatDocument.label', "Format Document"),
 			alias: 'Format Document',
-			precondition: ContextKeyExpr.and(EditorContextKeys.writable, EditorContextKeys.hasDocumentFormattingProvider),
+			precondition: ContextKeyExpr.and(EditorContextKeys.notInCompositeEditor, EditorContextKeys.writable, EditorContextKeys.hasDocumentFormattingProvider),
 			kbOpts: {
 				kbExpr: ContextKeyExpr.and(EditorContextKeys.editorTextFocus, EditorContextKeys.hasDocumentFormattingProvider),
 				primary: KeyMod.Shift | KeyMod.Alt | KeyCode.KEY_F,

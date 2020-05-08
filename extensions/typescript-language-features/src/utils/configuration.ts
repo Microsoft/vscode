@@ -59,6 +59,7 @@ export class TypeScriptServiceConfiguration {
 	public readonly useSeparateSyntaxServer: boolean;
 	public readonly enableProjectDiagnostics: boolean;
 	public readonly maxTsServerMemory: number;
+	public readonly enablePromptUseWorkspaceTsdk: boolean;
 	public readonly watchOptions: protocol.WatchOptions | undefined;
 
 	public static loadFromWorkspace(): TypeScriptServiceConfiguration {
@@ -80,6 +81,7 @@ export class TypeScriptServiceConfiguration {
 		this.useSeparateSyntaxServer = TypeScriptServiceConfiguration.readUseSeparateSyntaxServer(configuration);
 		this.enableProjectDiagnostics = TypeScriptServiceConfiguration.readEnableProjectDiagnostics(configuration);
 		this.maxTsServerMemory = TypeScriptServiceConfiguration.readMaxTsServerMemory(configuration);
+		this.enablePromptUseWorkspaceTsdk = TypeScriptServiceConfiguration.readEnablePromptUseWorkspaceTsdk(configuration);
 		this.watchOptions = TypeScriptServiceConfiguration.readWatchOptions(configuration);
 	}
 
@@ -96,7 +98,8 @@ export class TypeScriptServiceConfiguration {
 			&& this.useSeparateSyntaxServer === other.useSeparateSyntaxServer
 			&& this.enableProjectDiagnostics === other.enableProjectDiagnostics
 			&& this.maxTsServerMemory === other.maxTsServerMemory
-			&& objects.equals(this.watchOptions, other.watchOptions);
+			&& objects.equals(this.watchOptions, other.watchOptions)
+			&& this.enablePromptUseWorkspaceTsdk === other.enablePromptUseWorkspaceTsdk;
 	}
 
 	private static fixPathPrefixes(inspectValue: string): string {
@@ -174,5 +177,9 @@ export class TypeScriptServiceConfiguration {
 			return defaultMaxMemory;
 		}
 		return Math.max(memoryInMB, minimumMaxMemory);
+	}
+
+	private static readEnablePromptUseWorkspaceTsdk(configuration: vscode.WorkspaceConfiguration): boolean {
+		return configuration.get<boolean>('typescript.enablePromptUseWorkspaceTsdk', false);
 	}
 }

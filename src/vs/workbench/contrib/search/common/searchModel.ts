@@ -192,8 +192,8 @@ export class FileMatch extends Disposable implements IFileMatch {
 		return (selected ? FileMatch._CURRENT_FIND_MATCH : FileMatch._FIND_MATCH);
 	}
 
-	private _onChange = this._register(new Emitter<boolean>());
-	readonly onChange: Event<boolean> = this._onChange.event;
+	private _onChange = this._register(new Emitter<{ didRemove?: boolean; forceUpdateModel?: boolean }>());
+	readonly onChange: Event<{ didRemove?: boolean; forceUpdateModel?: boolean }> = this._onChange.event;
 
 	private _onDispose = this._register(new Emitter<void>());
 	readonly onDispose: Event<void> = this._onDispose.event;
@@ -323,7 +323,7 @@ export class FileMatch extends Disposable implements IFileMatch {
 				.filter((result => !resultIsMatch(result)) as ((a: any) => a is ITextSearchContext))
 				.map(context => ({ ...context, lineNumber: context.lineNumber + 1 })));
 
-		this._onChange.fire(modelChange);
+		this._onChange.fire({ forceUpdateModel: modelChange });
 		this.updateHighlights();
 	}
 
@@ -357,7 +357,7 @@ export class FileMatch extends Disposable implements IFileMatch {
 	remove(match: Match): void {
 		this.removeMatch(match);
 		this._removedMatches.add(match.id());
-		this._onChange.fire(false);
+		this._onChange.fire({ didRemove: true });
 	}
 
 	replace(toReplace: Match): Promise<void> {
@@ -410,7 +410,7 @@ export class FileMatch extends Disposable implements IFileMatch {
 	add(match: Match, trigger?: boolean) {
 		this._matches.set(match.id(), match);
 		if (trigger) {
-			this._onChange.fire(true);
+			this._onChange.fire({ forceUpdateModel: true });
 		}
 	}
 
@@ -529,7 +529,7 @@ export class FolderMatch extends Disposable {
 				const fileMatch = this.instantiationService.createInstance(FileMatch, this._query.contentPattern, this._query.previewOptions, this._query.maxResults, this, rawFileMatch);
 				this.doAdd(fileMatch);
 				added.push(fileMatch);
-				const disposable = fileMatch.onChange(() => this.onFileChange(fileMatch));
+				const disposable = fileMatch.onChange(({ didRemove }) => this.onFileChange(fileMatch, didRemove));
 				fileMatch.onDispose(() => disposable.dispose());
 			}
 		});
@@ -562,7 +562,7 @@ export class FolderMatch extends Disposable {
 	}
 
 	matches(): FileMatch[] {
-		return this._fileMatches.values();
+		return [...this._fileMatches.values()];
 	}
 
 	isEmpty(): boolean {
@@ -577,9 +577,8 @@ export class FolderMatch extends Disposable {
 		return this.matches().reduce<number>((prev, match) => prev + match.count(), 0);
 	}
 
-	private onFileChange(fileMatch: FileMatch): void {
-		let added: boolean = false;
-		let removed: boolean = false;
+	private onFileChange(fileMatch: FileMatch, removed = false): void {
+		let added = false;
 		if (!this._fileMatches.has(fileMatch.resource)) {
 			this.doAdd(fileMatch);
 			added = true;
@@ -621,8 +620,8 @@ export class FolderMatch extends Disposable {
 	}
 
 	private disposeMatches(): void {
-		this._fileMatches.values().forEach((fileMatch: FileMatch) => fileMatch.dispose());
-		this._unDisposedFileMatches.values().forEach((fileMatch: FileMatch) => fileMatch.dispose());
+		[...this._fileMatches.values()].forEach((fileMatch: FileMatch) => fileMatch.dispose());
+		[...this._unDisposedFileMatches.values()].forEach((fileMatch: FileMatch) => fileMatch.dispose());
 		this._fileMatches.clear();
 		this._unDisposedFileMatches.clear();
 	}
@@ -703,7 +702,7 @@ export class SearchResult extends Disposable {
 	private _rangeHighlightDecorations: RangeHighlightDecorations;
 	private disposePastResults: () => void = () => { };
 
-	private _hasRemovedResults = false;
+	private _isDirty = false;
 
 	constructor(
 		private _searchModel: SearchModel,
@@ -719,13 +718,13 @@ export class SearchResult extends Disposable {
 
 		this._register(this.onChange(e => {
 			if (e.removed) {
-				this._hasRemovedResults = true;
+				this._isDirty = !this.isEmpty();
 			}
 		}));
 	}
 
-	get hasRemovedResults(): boolean {
-		return this._hasRemovedResults;
+	get isDirty(): boolean {
+		return this._isDirty;
 	}
 
 	get query(): ITextQuery | null {
@@ -738,7 +737,7 @@ export class SearchResult extends Disposable {
 		new Promise(resolve => this.disposePastResults = resolve)
 			.then(() => oldFolderMatches.forEach(match => match.clear()))
 			.then(() => oldFolderMatches.forEach(match => match.dispose()))
-			.then(() => this._hasRemovedResults = false);
+			.then(() => this._isDirty = false);
 
 		this._rangeHighlightDecorations.removeHighlightRange();
 		this._folderMatchesMap = TernarySearchTree.forUris<FolderMatchWithResource>();
@@ -1101,7 +1100,7 @@ export class SearchModel extends Disposable {
 		this._resultQueue = [];
 
 		const options: IPatternInfo = objects.assign({}, this._searchQuery.contentPattern);
-		delete options.pattern;
+		delete (options as any).pattern;
 
 		const stats = completed && completed.stats as ITextSearchStats;
 

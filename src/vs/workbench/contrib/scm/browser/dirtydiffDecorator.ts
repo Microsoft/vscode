@@ -300,7 +300,7 @@ class DirtyDiffWidget extends PeekViewWidget {
 			fixedOverflowWidgets: true,
 			minimap: { enabled: false },
 			renderSideBySide: false,
-			readOnly: true,
+			readOnly: false,
 			ignoreTrimWhitespace: false
 		};
 
@@ -356,6 +356,10 @@ class DirtyDiffWidget extends PeekViewWidget {
 
 	protected revealLine(lineNumber: number) {
 		this.editor.revealLineInCenterIfOutsideViewport(lineNumber, ScrollType.Smooth);
+	}
+
+	hasFocus(): boolean {
+		return this.diffEditor.hasTextFocus();
 	}
 }
 
@@ -690,9 +694,10 @@ export class DirtyDiffController extends Disposable implements IEditorContributi
 	}
 
 	private onDidModelChange(splices: ISplice<IChange>[]): void {
-		if (!this.model) {
+		if (!this.model || !this.widget || this.widget.hasFocus()) {
 			return;
 		}
+
 		for (const splice of splices) {
 			if (splice.start <= this.currentIndex) {
 				if (this.currentIndex < splice.start + splice.deleteCount) {

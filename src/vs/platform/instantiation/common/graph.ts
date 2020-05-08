@@ -3,86 +3,78 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { isEmptyObject } from 'vs/base/common/types';
-import { forEach } from 'vs/base/common/collections';
+export class Node<T> {
 
-export interface Node<T> {
-	data: T;
-	incoming: { [key: string]: Node<T> };
-	outgoing: { [key: string]: Node<T> };
-}
+	readonly data: T;
+	readonly incoming = new Map<string, Node<T>>();
+	readonly outgoing = new Map<string, Node<T>>();
 
-function newNode<T>(data: T): Node<T> {
-	return {
-		data: data,
-		incoming: Object.create(null),
-		outgoing: Object.create(null)
-	};
+	constructor(data: T) {
+		this.data = data;
+	}
 }
 
 export class Graph<T> {
 
-	private _nodes: { [key: string]: Node<T> } = Object.create(null);
+	private readonly _nodes = new Map<string, Node<T>>();
 
-	constructor(private _hashFn: (element: T) => string) {
+	constructor(private readonly _hashFn: (element: T) => string) {
 		// empty
 	}
 
 	roots(): Node<T>[] {
 		const ret: Node<T>[] = [];
-		forEach(this._nodes, entry => {
-			if (isEmptyObject(entry.value.outgoing)) {
-				ret.push(entry.value);
+		for (let node of this._nodes.values()) {
+			if (node.outgoing.size === 0) {
+				ret.push(node);
 			}
-		});
+		}
 		return ret;
 	}
 
 	insertEdge(from: T, to: T): void {
-		const fromNode = this.lookupOrInsertNode(from),
-			toNode = this.lookupOrInsertNode(to);
+		const fromNode = this.lookupOrInsertNode(from);
+		const toNode = this.lookupOrInsertNode(to);
 
-		fromNode.outgoing[this._hashFn(to)] = toNode;
-		toNode.incoming[this._hashFn(from)] = fromNode;
+		fromNode.outgoing.set(this._hashFn(to), toNode);
+		toNode.incoming.set(this._hashFn(from), fromNode);
 	}
 
 	removeNode(data: T): void {
 		const key = this._hashFn(data);
-		delete this._nodes[key];
-		forEach(this._nodes, (entry) => {
-			delete entry.value.outgoing[key];
-			delete entry.value.incoming[key];
-		});
+		this._nodes.delete(key);
+		for (let node of this._nodes.values()) {
+			node.outgoing.delete(key);
+			node.incoming.delete(key);
+		}
 	}
 
 	lookupOrInsertNode(data: T): Node<T> {
 		const key = this._hashFn(data);
-		let node = this._nodes[key];
+		let node = this._nodes.get(key);
 
 		if (!node) {
-			node = newNode(data);
-			this._nodes[key] = node;
+			node = new Node(data);
+			this._nodes.set(key, node);
 		}
 
 		return node;
 	}
 
-	lookup(data: T): Node<T> {
-		return this._nodes[this._hashFn(data)];
+	lookup(data: T): Node<T> | undefined {
+		return this._nodes.get(this._hashFn(data));
 	}
 
 	isEmpty(): boolean {
-		for (const _key in this._nodes) {
-			return false;
-		}
-		return true;
+		return this._nodes.size === 0;
 	}
 
 	toString(): string {
 		let data: string[] = [];
-		forEach(this._nodes, entry => {
-			data.push(`${entry.key}, (incoming)[${Object.keys(entry.value.incoming).join(', ')}], (outgoing)[${Object.keys(entry.value.outgoing).join(',')}]`);
-		});
+		for (let [key, value] of this._nodes) {
+			data.push(`${key}, (incoming)[${[...value.incoming.keys()].join(', ')}], (outgoing)[${[...value.outgoing.keys()].join(',')}]`);
+
+		}
 		return data.join('\n');
 	}
 }

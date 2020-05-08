@@ -77,10 +77,6 @@ export interface EditorGroupLayout {
 	groups: GroupLayoutArgument[];
 }
 
-export interface ICloseEditorOptions {
-	preserveFocus?: boolean;
-}
-
 export interface IMoveEditorOptions {
 	index?: number;
 	inactive?: boolean;
@@ -103,11 +99,20 @@ export interface IMergeGroupOptions {
 	index?: number;
 }
 
+export interface ICloseEditorOptions {
+	preserveFocus?: boolean;
+}
+
 export type ICloseEditorsFilter = {
 	except?: IEditorInput,
 	direction?: CloseDirection,
-	savedOnly?: boolean
+	savedOnly?: boolean,
+	excludeSticky?: boolean
 };
+
+export interface ICloseAllEditorsOptions {
+	excludeSticky?: boolean;
+}
 
 export interface IEditorReplacement {
 	editor: IEditorInput;
@@ -419,9 +424,14 @@ export interface IEditorGroup {
 	readonly previewEditor: IEditorInput | null;
 
 	/**
-	 * The number of opend editors in this group.
+	 * The number of opened editors in this group.
 	 */
 	readonly count: number;
+
+	/**
+	 * The number of sticky editors in this group.
+	 */
+	readonly stickyCount: number;
 
 	/**
 	 * All opened editors in the group in sequential order of their appearance.
@@ -432,8 +442,9 @@ export interface IEditorGroup {
 	 * Get all editors that are currently opened in the group.
 	 *
 	 * @param order the order of the editors to use
+	 * @param options options to select only specific editors as instructed
 	 */
-	getEditors(order: EditorsOrder): ReadonlyArray<IEditorInput>;
+	getEditors(order: EditorsOrder, options?: { excludeSticky?: boolean }): ReadonlyArray<IEditorInput>;
 
 	/**
 	 * Returns the editor at a specific index of the group.
@@ -474,6 +485,11 @@ export interface IEditorGroup {
 	 * Find out if the provided editor is pinned in the group.
 	 */
 	isPinned(editor: IEditorInput): boolean;
+
+	/**
+	 * Find out if the provided editor or index of editor is sticky in the group.
+	 */
+	isSticky(editorOrIndex: IEditorInput | number): boolean;
 
 	/**
 	 * Find out if the provided editor is active in the group.
@@ -517,7 +533,7 @@ export interface IEditorGroup {
 	 *
 	 * @returns a promise when all editors are closed.
 	 */
-	closeAllEditors(): Promise<void>;
+	closeAllEditors(options?: ICloseAllEditorsOptions): Promise<void>;
 
 	/**
 	 * Replaces editors in this group with the provided replacement.
@@ -537,6 +553,24 @@ export interface IEditorGroup {
 	 * if unspecified.
 	 */
 	pinEditor(editor?: IEditorInput): void;
+
+	/**
+	 * Set an editor to be sticky. A sticky editor is showing in the beginning
+	 * of the tab stripe and will not be impacted by close operations.
+	 *
+	 * @param editor the editor to make sticky, or the currently active editor
+	 * if unspecified.
+	 */
+	stickEditor(editor?: IEditorInput): void;
+
+	/**
+	 * Set an editor to be non-sticky and thus moves back to a location after
+	 * sticky editors and can be closed normally.
+	 *
+	 * @param editor the editor to make unsticky, or the currently active editor
+	 * if unspecified.
+	 */
+	unstickEditor(editor?: IEditorInput): void;
 
 	/**
 	 * Move keyboard focus into the group.

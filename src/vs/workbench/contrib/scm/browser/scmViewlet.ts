@@ -24,16 +24,16 @@ import { INotificationService } from 'vs/platform/notification/common/notificati
 import { IWorkbenchLayoutService } from 'vs/workbench/services/layout/browser/layoutService';
 import { IExtensionService } from 'vs/workbench/services/extensions/common/extensions';
 import { IWorkspaceContextService } from 'vs/platform/workspace/common/workspace';
-import { IViewsRegistry, Extensions, IViewDescriptorService, IViewDescriptor } from 'vs/workbench/common/views';
+import { IViewsRegistry, Extensions, IViewDescriptorService, IViewDescriptor, IAddedViewDescriptorRef, IViewDescriptorRef } from 'vs/workbench/common/views';
 import { Registry } from 'vs/platform/registry/common/platform';
 import { RepositoryPane, RepositoryViewDescriptor } from 'vs/workbench/contrib/scm/browser/repositoryPane';
 import { MainPaneDescriptor, MainPane, IViewModel } from 'vs/workbench/contrib/scm/browser/mainPane';
 import { ViewPaneContainer, IViewPaneOptions, ViewPane } from 'vs/workbench/browser/parts/views/viewPaneContainer';
-import type { IAddedViewDescriptorRef, IViewDescriptorRef } from 'vs/workbench/browser/parts/views/views';
 import { debounce } from 'vs/base/common/decorators';
 import { SyncDescriptor } from 'vs/platform/instantiation/common/descriptors';
 import { IOpenerService } from 'vs/platform/opener/common/opener';
 import { addClass } from 'vs/base/browser/dom';
+import { Codicon } from 'vs/base/common/codicons';
 
 export interface ISpliceEvent<T> {
 	index: number;
@@ -69,7 +69,7 @@ export class EmptyPane extends ViewPane {
 export class EmptyPaneDescriptor implements IViewDescriptor {
 	readonly id = EmptyPane.ID;
 	readonly name = EmptyPane.TITLE;
-	readonly containerIcon = 'codicon-source-control';
+	readonly containerIcon = Codicon.sourceControl.classNames;
 	readonly ctorDescriptor = new SyncDescriptor(EmptyPane);
 	readonly canToggleVisibility = true;
 	readonly hideByDefault = false;
@@ -79,8 +79,6 @@ export class EmptyPaneDescriptor implements IViewDescriptor {
 }
 
 export class SCMViewPaneContainer extends ViewPaneContainer implements IViewModel {
-
-	private static readonly STATE_KEY = 'workbench.scm.views.state';
 
 	private menus: SCMMenus;
 	private _repositories: ISCMRepository[] = [];
@@ -104,7 +102,7 @@ export class SCMViewPaneContainer extends ViewPaneContainer implements IViewMode
 	}
 
 	get onDidChangeVisibleRepositories(): Event<ISCMRepository[]> {
-		const modificationEvent = Event.debounce(Event.any(this.viewsModel.onDidAdd, this.viewsModel.onDidRemove), () => null, 0);
+		const modificationEvent = Event.debounce(Event.any(this.viewContainerModel.onDidAddVisibleViewDescriptors, this.viewContainerModel.onDidRemoveVisibleViewDescriptors), () => null, 0);
 		return Event.map(modificationEvent, () => this.visibleRepositories);
 	}
 
@@ -126,7 +124,7 @@ export class SCMViewPaneContainer extends ViewPaneContainer implements IViewMode
 		@IContextKeyService contextKeyService: IContextKeyService,
 		@IViewDescriptorService viewDescriptorService: IViewDescriptorService
 	) {
-		super(VIEWLET_ID, SCMViewPaneContainer.STATE_KEY, { mergeViewWithContainerWhenSingleView: true }, instantiationService, configurationService, layoutService, contextMenuService, telemetryService, extensionService, themeService, storageService, contextService, viewDescriptorService);
+		super(VIEWLET_ID, { mergeViewWithContainerWhenSingleView: true }, instantiationService, configurationService, layoutService, contextMenuService, telemetryService, extensionService, themeService, storageService, contextService, viewDescriptorService);
 
 		this.menus = instantiationService.createInstance(SCMMenus, undefined);
 		this._register(this.menus.onDidChangeTitle(this.updateTitleArea, this));
@@ -143,14 +141,14 @@ export class SCMViewPaneContainer extends ViewPaneContainer implements IViewMode
 
 		this._register(configurationService.onDidChangeConfiguration(e => {
 			if (e.affectsConfiguration('scm.alwaysShowProviders') && configurationService.getValue<boolean>('scm.alwaysShowProviders')) {
-				this.viewsModel.setVisible(MainPane.ID, true);
+				this.viewContainerModel.setVisible(MainPane.ID, true);
 			}
 		}));
 
 		this.repositoryCountKey = contextKeyService.createKey('scm.providerCount', 0);
 
-		this._register(this.viewsModel.onDidAdd(this.onDidShowView, this));
-		this._register(this.viewsModel.onDidRemove(this.onDidHideView, this));
+		this._register(this.viewContainerModel.onDidAddVisibleViewDescriptors(this.onDidShowView, this));
+		this._register(this.viewContainerModel.onDidRemoveVisibleViewDescriptors(this.onDidHideView, this));
 	}
 
 	create(parent: HTMLElement): void {
@@ -217,8 +215,8 @@ export class SCMViewPaneContainer extends ViewPaneContainer implements IViewMode
 
 	@debounce(0)
 	private afterOnDidHideView(): void {
-		if (this.repositoryCountKey.get()! > 0 && this.viewDescriptors.every(d => !this.viewsModel.isVisible(d.id))) {
-			this.viewsModel.setVisible(this.viewDescriptors[0].id, true);
+		if (this.repositoryCountKey.get()! > 0 && this.viewDescriptors.every(d => !this.viewContainerModel.isVisible(d.id))) {
+			this.viewContainerModel.setVisible(this.viewDescriptors[0].id, true);
 		}
 	}
 
@@ -285,9 +283,9 @@ export class SCMViewPaneContainer extends ViewPaneContainer implements IViewMode
 	}
 
 	setVisibleRepositories(repositories: ISCMRepository[]): void {
-		const visibleViewDescriptors = this.viewsModel.visibleViewDescriptors;
+		const visibleViewDescriptors = this.viewContainerModel.visibleViewDescriptors;
 
-		const toSetVisible = this.viewsModel.viewDescriptors
+		const toSetVisible = this.viewContainerModel.activeViewDescriptors
 			.filter((d): d is RepositoryViewDescriptor => d instanceof RepositoryViewDescriptor && repositories.indexOf(d.repository) > -1 && visibleViewDescriptors.indexOf(d) === -1);
 
 		const toSetInvisible = visibleViewDescriptors
@@ -305,11 +303,11 @@ export class SCMViewPaneContainer extends ViewPaneContainer implements IViewMode
 				}
 			}
 
-			this.viewsModel.setVisible(viewDescriptor.id, false);
+			this.viewContainerModel.setVisible(viewDescriptor.id, false);
 		}
 
 		for (const viewDescriptor of toSetVisible) {
-			this.viewsModel.setVisible(viewDescriptor.id, true, size);
+			this.viewContainerModel.setVisible(viewDescriptor.id, true, size);
 		}
 	}
 }

@@ -91,7 +91,7 @@ export class NativeBackupTracker extends BackupTracker implements IWorkbenchCont
 
 		// we ran a backup but received an error that we show to the user
 		if (backupError) {
-			this.showErrorDialog(localize('backupTrackerBackupFailed', "One or many editors that are dirty could not be saved to the backup location."), backupError);
+			this.showErrorDialog(localize('backupTrackerBackupFailed', "One or more dirty editors could not be saved to the back up location."), backupError);
 
 			return true; // veto (the backup failed)
 		}
@@ -101,7 +101,7 @@ export class NativeBackupTracker extends BackupTracker implements IWorkbenchCont
 		try {
 			return await this.confirmBeforeShutdown(workingCopies.filter(workingCopy => backups.indexOf(workingCopy) === -1));
 		} catch (error) {
-			this.showErrorDialog(localize('backupTrackerConfirmFailed', "One or many editors that are dirty could not be saved or reverted."), error);
+			this.showErrorDialog(localize('backupTrackerConfirmFailed', "One or more dirty editors could not be saved or reverted."), error);
 
 			return true; // veto (save or revert failed)
 		}

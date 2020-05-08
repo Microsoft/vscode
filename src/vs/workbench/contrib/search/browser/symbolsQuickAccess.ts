@@ -23,6 +23,7 @@ import { getSelectionSearchString } from 'vs/editor/contrib/find/findController'
 import { withNullAsUndefined } from 'vs/base/common/types';
 import { prepareQuery, IPreparedQuery, scoreFuzzy2, pieceToQuery } from 'vs/base/common/fuzzyScorer';
 import { IMatch } from 'vs/base/common/filters';
+import { Codicon } from 'vs/base/common/codicons';
 
 interface ISymbolQuickPickItem extends IPickerQuickAccessItem, IQuickPickItemWithResource {
 	score?: number;
@@ -143,16 +144,16 @@ export class SymbolsQuickAccessProvider extends PickerQuickAccessProvider<ISymbo
 					// can be a match on a markdown symbol "change log"). In that
 					// case we want to skip the container query altogether.
 					if (symbolQuery !== query) {
-						[symbolScore, symbolMatches] = scoreFuzzy2(symbolLabel, { ...query, values: undefined /* disable multi-query support */ }, 0, symbolLabelIconOffset);
-						if (symbolScore) {
+						[symbolScore, symbolMatches] = scoreFuzzy2(symbolLabelWithIcon, { ...query, values: undefined /* disable multi-query support */ }, 0, symbolLabelIconOffset);
+						if (typeof symbolScore === 'number') {
 							skipContainerQuery = true; // since we consumed the query, skip any container matching
 						}
 					}
 
 					// Otherwise: score on the symbol query and match on the container later
-					if (!symbolScore) {
-						[symbolScore, symbolMatches] = scoreFuzzy2(symbolLabel, symbolQuery, 0, symbolLabelIconOffset);
-						if (!symbolScore) {
+					if (typeof symbolScore !== 'number') {
+						[symbolScore, symbolMatches] = scoreFuzzy2(symbolLabelWithIcon, symbolQuery, 0, symbolLabelIconOffset);
+						if (typeof symbolScore !== 'number') {
 							continue;
 						}
 					}
@@ -177,11 +178,11 @@ export class SymbolsQuickAccessProvider extends PickerQuickAccessProvider<ISymbo
 						[containerScore, containerMatches] = scoreFuzzy2(containerLabel, containerQuery);
 					}
 
-					if (!containerScore) {
+					if (typeof containerScore !== 'number') {
 						continue;
 					}
 
-					if (symbolScore) {
+					if (typeof symbolScore === 'number') {
 						symbolScore += containerScore; // boost symbolScore by containerScore
 					}
 				}
@@ -202,7 +203,7 @@ export class SymbolsQuickAccessProvider extends PickerQuickAccessProvider<ISymbo
 					strikethrough: deprecated,
 					buttons: [
 						{
-							iconClass: openSideBySideDirection === 'right' ? 'codicon-split-horizontal' : 'codicon-split-vertical',
+							iconClass: openSideBySideDirection === 'right' ? Codicon.splitHorizontal.classNames : Codicon.splitVertical.classNames,
 							tooltip: openSideBySideDirection === 'right' ? localize('openToSide', "Open to the Side") : localize('openToBottom', "Open to the Bottom")
 						}
 					],
@@ -257,7 +258,7 @@ export class SymbolsQuickAccessProvider extends PickerQuickAccessProvider<ISymbo
 	private compareSymbols(symbolA: ISymbolQuickPickItem, symbolB: ISymbolQuickPickItem): number {
 
 		// By score
-		if (symbolA.score && symbolB.score) {
+		if (typeof symbolA.score === 'number' && typeof symbolB.score === 'number') {
 			if (symbolA.score > symbolB.score) {
 				return -1;
 			}

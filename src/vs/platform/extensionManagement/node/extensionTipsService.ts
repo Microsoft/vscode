@@ -12,13 +12,13 @@ import { INativeEnvironmentService } from 'vs/platform/environment/node/environm
 import { IFileService } from 'vs/platform/files/common/files';
 import { isWindows } from 'vs/base/common/platform';
 import { isNonEmptyArray } from 'vs/base/common/arrays';
-import { IExtensionTipsService, IExecutableBasedExtensionTip, IWorkspaceTips } from 'vs/platform/extensionManagement/common/extensionManagement';
+import { IExecutableBasedExtensionTip } from 'vs/platform/extensionManagement/common/extensionManagement';
 import { IStringDictionary, forEach } from 'vs/base/common/collections';
-import { IRequestService, asJson } from 'vs/platform/request/common/request';
-import { CancellationToken } from 'vs/base/common/cancellation';
+import { IRequestService } from 'vs/platform/request/common/request';
 import { ILogService } from 'vs/platform/log/common/log';
+import { ExtensionTipsService as BaseExtensionTipsService } from 'vs/platform/extensionManagement/common/extensionTipsService';
 
-export class ExtensionTipsService implements IExtensionTipsService {
+export class ExtensionTipsService extends BaseExtensionTipsService {
 
 	_serviceBrand: any;
 
@@ -26,14 +26,15 @@ export class ExtensionTipsService implements IExtensionTipsService {
 	private readonly allOtherExecutableTips: IStringDictionary<IExeBasedExtensionTip> = {};
 
 	constructor(
-		@IFileService private readonly fileService: IFileService,
 		@IEnvironmentService private readonly environmentService: INativeEnvironmentService,
-		@IProductService private readonly productService: IProductService,
-		@IRequestService private readonly requestService: IRequestService,
-		@ILogService private readonly logService: ILogService,
+		@IFileService fileService: IFileService,
+		@IProductService productService: IProductService,
+		@IRequestService requestService: IRequestService,
+		@ILogService logService: ILogService,
 	) {
-		if (this.productService.exeBasedExtensionTips) {
-			forEach(this.productService.exeBasedExtensionTips, ({ key, value }) => {
+		super(fileService, productService, requestService, logService);
+		if (productService.exeBasedExtensionTips) {
+			forEach(productService.exeBasedExtensionTips, ({ key, value }) => {
 				if (value.important) {
 					this.allImportantExecutableTips[key] = value;
 				} else {
@@ -41,10 +42,6 @@ export class ExtensionTipsService implements IExtensionTipsService {
 				}
 			});
 		}
-	}
-
-	getAllWorkspacesTips(): Promise<IWorkspaceTips[]> {
-		return this.fetchWorkspacesTips();
 	}
 
 	getImportantExecutableBasedTips(): Promise<IExecutableBasedExtensionTip[]> {
@@ -97,26 +94,6 @@ export class ExtensionTipsService implements IExtensionTipsService {
 		}
 
 		return result;
-	}
-
-	private async fetchWorkspacesTips(): Promise<IWorkspaceTips[]> {
-		if (!this.productService.extensionsGallery?.recommendationsUrl) {
-			return [];
-		}
-		try {
-			const context = await this.requestService.request({ type: 'GET', url: this.productService.extensionsGallery?.recommendationsUrl }, CancellationToken.None);
-			if (context.res.statusCode !== 200) {
-				return [];
-			}
-			const result = await asJson<{ workspaceRecommendations?: IWorkspaceTips[] }>(context);
-			if (!result) {
-				return [];
-			}
-			return result.workspaceRecommendations || [];
-		} catch (error) {
-			this.logService.error(error);
-			return [];
-		}
 	}
 
 }

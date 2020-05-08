@@ -152,9 +152,7 @@
 }
 
 .search-view .message {
-	padding-left: 22px;
-	padding-right: 22px;
-	padding-top: 0px;
+	padding: 0 22px 8px;
 }
 
 .search-view .message p:first-child {
@@ -173,20 +171,20 @@
 	padding: 0;
 }
 
-.search-view:not(.wide) .foldermatch .monaco-icon-label,
-.search-view:not(.wide) .filematch .monaco-icon-label {
+.pane-body:not(.wide) .search-view .foldermatch .monaco-icon-label,
+.pane-body:not(.wide) .search-view .filematch .monaco-icon-label {
 	flex: 1;
 }
 
-.search-view:not(.wide) .monaco-list .monaco-list-row:hover:not(.highlighted) .foldermatch .monaco-icon-label,
-.search-view:not(.wide) .monaco-list .monaco-list-row.focused .foldermatch .monaco-icon-label,
-.search-view:not(.wide) .monaco-list .monaco-list-row:hover:not(.highlighted) .filematch .monaco-icon-label,
-.search-view:not(.wide) .monaco-list .monaco-list-row.focused .filematch .monaco-icon-label {
+.pane-body:not(.wide) .search-view .monaco-list .monaco-list-row:hover:not(.highlighted) .foldermatch .monaco-icon-label,
+.pane-body:not(.wide) .search-view .monaco-list .monaco-list-row.focused .foldermatch .monaco-icon-label,
+.pane-body:not(.wide) .search-view .monaco-list .monaco-list-row:hover:not(.highlighted) .filematch .monaco-icon-label,
+.pane-body:not(.wide) .search-view .monaco-list .monaco-list-row.focused .filematch .monaco-icon-label {
 	flex: 1;
 }
 
-.search-view.wide .foldermatch .badge,
-.search-view.wide .filematch .badge {
+.pane-body.wide .search-view .foldermatch .badge,
+.pane-body.wide .search-view .filematch .badge {
 	margin-left: 10px;
 }
 
@@ -215,21 +213,21 @@
 	display: block;
 }
 
-.search-view.wide .monaco-list .monaco-list-row .foldermatch .actionBarContainer,
-.search-view.wide .monaco-list .monaco-list-row .filematch .actionBarContainer,
+.pane-body.wide .search-view .monaco-list .monaco-list-row .foldermatch .actionBarContainer,
+.pane-body.wide .search-view .monaco-list .monaco-list-row .filematch .actionBarContainer,
 .search-view .monaco-list .monaco-list-row .linematch .actionBarContainer {
 	flex: 1 0 auto;
 }
 
-.search-view:not(.wide) .monaco-list .monaco-list-row .foldermatch .actionBarContainer,
-.search-view:not(.wide) .monaco-list .monaco-list-row .filematch .actionBarContainer {
+.pane-body:not(.wide) .search-view .monaco-list .monaco-list-row .foldermatch .actionBarContainer,
+.pane-body:not(.wide) .search-view .monaco-list .monaco-list-row .filematch .actionBarContainer {
 	flex: 0 0 auto;
 }
 
 .search-view.actions-right .monaco-list .monaco-list-row .foldermatch .actionBarContainer,
 .search-view.actions-right .monaco-list .monaco-list-row .filematch .actionBarContainer,
 .search-view.actions-right .monaco-list .monaco-list-row .linematch .actionBarContainer,
-.search-view:not(.wide) .monaco-list .monaco-list-row .linematch .actionBarContainer {
+.pane-body:not(.wide) .search-view .monaco-list .monaco-list-row .linematch .actionBarContainer {
 	text-align: right;
 }
 
@@ -266,12 +264,12 @@
 	margin-right: 12px;
 }
 
-.search-view:not(.wide) > .results > .monaco-list .monaco-list-row:hover .filematch .monaco-count-badge,
-.search-view:not(.wide) > .results > .monaco-list .monaco-list-row:hover .foldermatch .monaco-count-badge,
-.search-view:not(.wide) > .results > .monaco-list .monaco-list-row:hover .linematch .monaco-count-badge,
-.search-view:not(.wide) > .results > .monaco-list .monaco-list-row.focused .filematch .monaco-count-badge,
-.search-view:not(.wide) > .results > .monaco-list .monaco-list-row.focused .foldermatch .monaco-count-badge,
-.search-view:not(.wide) > .results > .monaco-list .monaco-list-row.focused .linematch .monaco-count-badge {
+.pane-body:not(.wide) .search-view > .results > .monaco-list .monaco-list-row:hover .filematch .monaco-count-badge,
+.pane-body:not(.wide) .search-view > .results > .monaco-list .monaco-list-row:hover .foldermatch .monaco-count-badge,
+.pane-body:not(.wide) .search-view > .results > .monaco-list .monaco-list-row:hover .linematch .monaco-count-badge,
+.pane-body:not(.wide) .search-view > .results > .monaco-list .monaco-list-row.focused .filematch .monaco-count-badge,
+.pane-body:not(.wide) .search-view > .results > .monaco-list .monaco-list-row.focused .foldermatch .monaco-count-badge,
+.pane-body:not(.wide) .search-view > .results > .monaco-list .monaco-list-row.focused .linematch .monaco-count-badge {
 	display: none;
 }
 

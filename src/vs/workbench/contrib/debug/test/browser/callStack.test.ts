@@ -6,7 +6,7 @@
 import * as assert from 'assert';
 import { DebugModel, StackFrame, Thread } from 'vs/workbench/contrib/debug/common/debugModel';
 import * as sinon from 'sinon';
-import { MockRawSession } from 'vs/workbench/contrib/debug/test/common/mockDebug';
+import { MockRawSession, createMockDebugModel } from 'vs/workbench/contrib/debug/test/common/mockDebug';
 import { Source } from 'vs/workbench/contrib/debug/common/debugSource';
 import { DebugSession } from 'vs/workbench/contrib/debug/browser/debugSession';
 import { Range } from 'vs/editor/common/core/range';
@@ -14,7 +14,7 @@ import { IDebugSessionOptions, State } from 'vs/workbench/contrib/debug/common/d
 import { NullOpenerService } from 'vs/platform/opener/common/opener';
 import { createDecorationsForStackFrame } from 'vs/workbench/contrib/debug/browser/callStackEditorContribution';
 import { Constants } from 'vs/base/common/uint';
-import { getContext, getContextForContributedActions } from 'vs/workbench/contrib/debug/browser/callStackView';
+import { getContext, getContextForContributedActions, getSpecificSourceName } from 'vs/workbench/contrib/debug/browser/callStackView';
 import { getStackFrameThreadAndSessionToFocus } from 'vs/workbench/contrib/debug/browser/debugService';
 import { generateUuid } from 'vs/base/common/uuid';
 
@@ -53,7 +53,7 @@ suite('Debug - CallStack', () => {
 	let rawSession: MockRawSession;
 
 	setup(() => {
-		model = new DebugModel([], [], [], [], [], <any>{ isDirty: (e: any) => false });
+		model = createMockDebugModel();
 		rawSession = new MockRawSession();
 	});
 
@@ -250,8 +250,8 @@ suite('Debug - CallStack', () => {
 		model.addSession(session);
 		const { firstStackFrame, secondStackFrame } = createTwoStackFrames(session);
 
-		assert.equal(firstStackFrame.getSpecificSourceName(), '.../b/c/d/internalModule.js');
-		assert.equal(secondStackFrame.getSpecificSourceName(), '.../x/c/d/internalModule.js');
+		assert.equal(getSpecificSourceName(firstStackFrame), '.../b/c/d/internalModule.js');
+		assert.equal(getSpecificSourceName(secondStackFrame), '.../x/c/d/internalModule.js');
 	});
 
 	test('stack frame toString()', () => {

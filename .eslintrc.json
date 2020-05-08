@@ -461,7 +461,8 @@
                     "**/vs/workbench/common/**",
                     "**/vs/workbench/services/**/common/**",
                     "**/vs/workbench/api/**/common/**",
-                    "vscode-textmate"
+                    "vscode-textmate",
+                    "vscode-oniguruma"
                 ]
             },
             {
@@ -490,7 +491,7 @@
                     "**/vs/workbench/api/{common,browser}/**",
                     "**/vs/workbench/services/**/{common,browser}/**",
                     "vscode-textmate",
-                    "onigasm-umd"
+                    "vscode-oniguruma"
                 ]
             },
             {

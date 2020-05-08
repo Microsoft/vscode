@@ -27,6 +27,7 @@ import { withNullAsUndefined } from 'vs/base/common/types';
 import { IQuickInputOptions } from 'vs/base/parts/quickinput/browser/quickInput';
 import { IListOptions, List, IListStyles, IListAccessibilityProvider } from 'vs/base/browser/ui/list/listWidget';
 import { KeybindingLabel } from 'vs/base/browser/ui/keybindingLabel/keybindingLabel';
+import { localize } from 'vs/nls';
 
 const $ = dom.$;
 
@@ -286,8 +287,7 @@ export class QuickInputList {
 			setRowLineHeight: false,
 			multipleSelectionSupport: false,
 			horizontalScrolling: false,
-			accessibilityProvider,
-			ariaRole: 'listbox'
+			accessibilityProvider
 		} as IListOptions<ListElement>);
 		this.list.getHTMLElement().id = id;
 		this.disposables.push(this.list);
@@ -714,8 +714,16 @@ function compareEntries(elementA: ListElement, elementB: ListElement, lookFor: s
 
 class QuickInputAccessibilityProvider implements IListAccessibilityProvider<ListElement> {
 
+	getWidgetAriaLabel(): string {
+		return localize('quickInput', "Quick Input");
+	}
+
 	getAriaLabel(element: ListElement): string | null {
 		return element.saneAriaLabel;
+	}
+
+	getWidgetRole() {
+		return 'listbox';
 	}
 
 	getRole() {

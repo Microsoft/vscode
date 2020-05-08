@@ -21,6 +21,10 @@ export const ICustomEditorService = createDecorator<ICustomEditorService>('custo
 export const CONTEXT_CUSTOM_EDITORS = new RawContextKey<string>('customEditors', '');
 export const CONTEXT_FOCUSED_CUSTOM_EDITOR_IS_EDITABLE = new RawContextKey<boolean>('focusedCustomEditorIsEditable', false);
 
+export interface CustomEditorCapabilities {
+	readonly supportsMultipleEditorsPerDocument?: boolean;
+}
+
 export interface ICustomEditorService {
 	_serviceBrand: any;
 
@@ -35,6 +39,8 @@ export interface ICustomEditorService {
 
 	openWith(resource: URI, customEditorViewType: string, options?: ITextEditorOptions, group?: IEditorGroup): Promise<IEditorPane | undefined>;
 	promptOpenWith(resource: URI, options?: ITextEditorOptions, group?: IEditorGroup): Promise<IEditorPane | undefined>;
+
+	registerCustomEditorCapabilities(viewType: string, options: CustomEditorCapabilities): IDisposable;
 }
 
 export interface ICustomEditorModelManager {
@@ -50,6 +56,7 @@ export interface ICustomEditorModelManager {
 export interface ICustomEditorModel extends IDisposable {
 	readonly viewType: string;
 	readonly resource: URI;
+	readonly backupId: string | undefined;
 
 	isReadonly(): boolean;
 

@@ -8,7 +8,8 @@ import * as os from 'os';
 import * as browser from 'vs/base/browser/browser';
 import { $ } from 'vs/base/browser/dom';
 import { Button } from 'vs/base/browser/ui/button/button';
-import { CodiconLabel } from 'vs/base/browser/ui/codiconLabel/codiconLabel';
+import 'vs/base/browser/ui/codicons/codiconStyles'; // make sure codicon css is loaded
+import { CodiconLabel } from 'vs/base/browser/ui/codicons/codiconLabel';
 import * as collections from 'vs/base/common/collections';
 import { debounce } from 'vs/base/common/decorators';
 import { Disposable } from 'vs/base/common/lifecycle';
@@ -340,7 +341,7 @@ export class IssueReporter extends Disposable {
 			const appender = combinedAppender(new TelemetryAppenderClient(channel), new LogAppender(logService));
 			const commonProperties = resolveCommonProperties(product.commit || 'Commit unknown', product.version, configuration.machineId, product.msftInternalDomains, this.environmentService.installSourcePath);
 			const piiPaths = this.environmentService.extensionsPath ? [this.environmentService.appRoot, this.environmentService.extensionsPath] : [this.environmentService.appRoot];
-			const config: ITelemetryServiceConfig = { appender, commonProperties, piiPaths };
+			const config: ITelemetryServiceConfig = { appender, commonProperties, piiPaths, sendErrorTelemetry: true };
 
 			const telemetryService = instantiationService.createInstance(TelemetryService, config);
 			this._register(telemetryService);
@@ -715,7 +716,7 @@ export class IssueReporter extends Disposable {
 		type IssueReporterSearchError = {
 			message: string;
 		};
-		this.telemetryService.publicLog2<IssueReporterSearchError, IssueReporterSearchErrorClassification>('issueReporterSearchError', { message: error.message }, true);
+		this.telemetryService.publicLogError2<IssueReporterSearchError, IssueReporterSearchErrorClassification>('issueReporterSearchError', { message: error.message });
 	}
 
 	private setUpTypes(): void {

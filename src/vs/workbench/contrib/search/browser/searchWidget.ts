@@ -33,6 +33,7 @@ import { IAccessibilityService } from 'vs/platform/accessibility/common/accessib
 import { isMacintosh } from 'vs/base/common/platform';
 import { Checkbox } from 'vs/base/browser/ui/checkbox/checkbox';
 import { IViewsService } from 'vs/workbench/common/views';
+import { searchReplaceAllIcon, searchHideReplaceIcon, searchShowContextIcon, searchShowReplaceIcon } from 'vs/workbench/contrib/search/browser/searchIcons';
 
 /** Specified in searchview.css */
 export const SingleLineInputHeight = 24;
@@ -55,7 +56,7 @@ class ReplaceAllAction extends Action {
 	static readonly ID: string = 'search.action.replaceAll';
 
 	constructor(private _searchWidget: SearchWidget) {
-		super(ReplaceAllAction.ID, '', 'codicon-replace-all', false);
+		super(ReplaceAllAction.ID, '', searchReplaceAllIcon.classNames, false);
 	}
 
 	set searchWidget(searchWidget: SearchWidget) {
@@ -291,8 +292,7 @@ export class SearchWidget extends Widget {
 		};
 		this.toggleReplaceButton = this._register(new Button(parent, opts));
 		this.toggleReplaceButton.element.setAttribute('aria-expanded', 'false');
-		this.toggleReplaceButton.element.classList.add('codicon');
-		this.toggleReplaceButton.element.classList.add('codicon-chevron-right');
+		dom.addClasses(this.toggleReplaceButton.element, searchHideReplaceIcon.classNames);
 		this.toggleReplaceButton.icon = 'toggle-replace-button';
 		// TODO@joh need to dispose this listener eventually
 		this.toggleReplaceButton.onDidClick(() => this.onToggleReplaceButton());
@@ -349,7 +349,7 @@ export class SearchWidget extends Widget {
 		this._register(this.searchInputFocusTracker.onDidBlur(() => this.searchInputBoxFocused.set(false)));
 
 
-		this.showContextCheckbox = new Checkbox({ isChecked: false, title: nls.localize('showContext', "Show Context"), actionClassName: 'codicon-list-selection' });
+		this.showContextCheckbox = new Checkbox({ isChecked: false, title: nls.localize('showContext', "Show Context"), icon: searchShowContextIcon });
 		this._register(this.showContextCheckbox.onChange(() => this.onContextLinesChanged()));
 
 		if (options.showContextToggle) {
@@ -426,8 +426,13 @@ export class SearchWidget extends Widget {
 
 	private onToggleReplaceButton(): void {
 		dom.toggleClass(this.replaceContainer, 'disabled');
-		dom.toggleClass(this.toggleReplaceButton.element, 'codicon-chevron-right');
-		dom.toggleClass(this.toggleReplaceButton.element, 'codicon-chevron-down');
+		if (this.isReplaceShown()) {
+			dom.removeClasses(this.toggleReplaceButton.element, searchHideReplaceIcon.classNames);
+			dom.addClasses(this.toggleReplaceButton.element, searchShowReplaceIcon.classNames);
+		} else {
+			dom.removeClasses(this.toggleReplaceButton.element, searchShowReplaceIcon.classNames);
+			dom.addClasses(this.toggleReplaceButton.element, searchHideReplaceIcon.classNames);
+		}
 		this.toggleReplaceButton.element.setAttribute('aria-expanded', this.isReplaceShown() ? 'true' : 'false');
 		this.updateReplaceActiveState();
 		this._onReplaceToggled.fire();

@@ -25,7 +25,7 @@ import { LogsDataCleaner } from 'vs/workbench/contrib/logs/common/logsDataCleane
 
 const workbenchActionsRegistry = Registry.as<IWorkbenchActionRegistry>(WorkbenchActionExtensions.WorkbenchActions);
 const devCategory = nls.localize('developer', "Developer");
-workbenchActionsRegistry.registerWorkbenchAction(SyncActionDescriptor.create(SetLogLevelAction, SetLogLevelAction.ID, SetLogLevelAction.LABEL), 'Developer: Set Log Level...', devCategory);
+workbenchActionsRegistry.registerWorkbenchAction(SyncActionDescriptor.from(SetLogLevelAction), 'Developer: Set Log Level...', devCategory);
 
 class LogOutputChannels extends Disposable implements IWorkbenchContribution {
 
@@ -54,7 +54,7 @@ class LogOutputChannels extends Disposable implements IWorkbenchContribution {
 
 		const workbenchActionsRegistry = Registry.as<IWorkbenchActionRegistry>(WorkbenchActionExtensions.WorkbenchActions);
 		const devCategory = nls.localize('developer', "Developer");
-		workbenchActionsRegistry.registerWorkbenchAction(SyncActionDescriptor.create(OpenWindowSessionLogFileAction, OpenWindowSessionLogFileAction.ID, OpenWindowSessionLogFileAction.LABEL), 'Developer: Open Window Log File (Session)...', devCategory);
+		workbenchActionsRegistry.registerWorkbenchAction(SyncActionDescriptor.from(OpenWindowSessionLogFileAction), 'Developer: Open Window Log File (Session)...', devCategory);
 	}
 
 	private registerNativeContributions(): void {

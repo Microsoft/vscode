@@ -23,8 +23,12 @@ import { editorHoverBackground, editorHoverBorder, textCodeBlockBackground, text
 import { HIGH_CONTRAST, registerThemingParticipant } from 'vs/platform/theme/common/themeService';
 import { ParameterHintsModel, TriggerContext } from 'vs/editor/contrib/parameterHints/parameterHintsModel';
 import { pad } from 'vs/base/common/strings';
+import { registerIcon, Codicon } from 'vs/base/common/codicons';
 
 const $ = dom.$;
+
+const parameterHintsNextIcon = registerIcon('parameter-hints-next', Codicon.chevronDown);
+const parameterHintsPreviousIcon = registerIcon('parameter-hints-previous', Codicon.chevronUp);
 
 export class ParameterHintsWidget extends Disposable implements IContentWidget {
 
@@ -78,9 +82,9 @@ export class ParameterHintsWidget extends Disposable implements IContentWidget {
 		wrapper.tabIndex = -1;
 
 		const controls = dom.append(wrapper, $('.controls'));
-		const previous = dom.append(controls, $('.button.codicon.codicon-chevron-up'));
+		const previous = dom.append(controls, $('.button' + parameterHintsPreviousIcon.cssSelector));
 		const overloads = dom.append(controls, $('.overloads'));
-		const next = dom.append(controls, $('.button.codicon.codicon-chevron-down'));
+		const next = dom.append(controls, $('.button' + parameterHintsNextIcon.cssSelector));
 
 		const onPreviousClick = stop(domEvent(previous, 'click'));
 		this._register(onPreviousClick(this.previous, this));

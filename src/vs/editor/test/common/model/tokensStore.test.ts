@@ -8,7 +8,7 @@ import { MultilineTokens2, SparseEncodedTokens, TokensStore2 } from 'vs/editor/c
 import { Range } from 'vs/editor/common/core/range';
 import { TextModel } from 'vs/editor/common/model/textModel';
 import { IIdentifiedSingleEditOperation } from 'vs/editor/common/model';
-import { MetadataConsts, TokenMetadata } from 'vs/editor/common/modes';
+import { MetadataConsts, TokenMetadata, FontStyle } from 'vs/editor/common/modes';
 import { createTextModel } from 'vs/editor/test/common/editorTestUtils';
 import { LineTokens } from 'vs/editor/common/core/lineTokens';
 
@@ -386,5 +386,51 @@ suite('TokensStore', () => {
 
 		const lineTokens = store.addSemanticTokens(36451, new LineTokens(new Uint32Array([60, 1]), `                        if (flags & ModifierFlags.Ambient) {`));
 		assert.equal(lineTokens.getCount(), 7);
+	});
+
+
+	test('issue #95949: Identifiers are colored in bold when targetting keywords', () => {
+
+		function createTMMetadata(foreground: number, fontStyle: number, languageId: number): number {
+			return (
+				(languageId << MetadataConsts.LANGUAGEID_OFFSET)
+				| (fontStyle << MetadataConsts.FONT_STYLE_OFFSET)
+				| (foreground << MetadataConsts.FOREGROUND_OFFSET)
+			) >>> 0;
+		}
+
+		function toArr(lineTokens: LineTokens): number[] {
+			let r: number[] = [];
+			for (let i = 0; i < lineTokens.getCount(); i++) {
+				r.push(lineTokens.getEndOffset(i));
+				r.push(lineTokens.getMetadata(i));
+			}
+			return r;
+		}
+
+		const store = new TokensStore2();
+
+		store.set([
+			new MultilineTokens2(1, new SparseEncodedTokens(new Uint32Array([
+				0, 6, 11, (1 << MetadataConsts.FOREGROUND_OFFSET) | MetadataConsts.SEMANTIC_USE_FOREGROUND,
+			])))
+		], true);
+
+		const lineTokens = store.addSemanticTokens(1, new LineTokens(new Uint32Array([
+			5, createTMMetadata(5, FontStyle.Bold, 53),
+			14, createTMMetadata(1, FontStyle.None, 53),
+			17, createTMMetadata(6, FontStyle.None, 53),
+			18, createTMMetadata(1, FontStyle.None, 53),
+		]), `const hello = 123;`));
+
+		const actual = toArr(lineTokens);
+		assert.deepEqual(actual, [
+			5, createTMMetadata(5, FontStyle.Bold, 53),
+			6, createTMMetadata(1, FontStyle.None, 53),
+			11, createTMMetadata(1, FontStyle.None, 53),
+			14, createTMMetadata(1, FontStyle.None, 53),
+			17, createTMMetadata(6, FontStyle.None, 53),
+			18, createTMMetadata(1, FontStyle.None, 53)
+		]);
 	});
 });

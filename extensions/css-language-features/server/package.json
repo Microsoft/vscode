@@ -9,14 +9,14 @@
   },
   "main": "./out/cssServerMain",
   "dependencies": {
-    "vscode-css-languageservice": "^4.1.1",
+    "vscode-css-languageservice": "^4.1.2",
     "vscode-languageserver": "^6.1.1"
   },
   "devDependencies": {
-    "@types/mocha": "7.0.1",
+    "@types/mocha": "7.0.2",
     "@types/node": "^12.11.7",
     "glob": "^7.1.6",
-    "mocha": "^7.0.1",
+    "mocha": "^7.1.2",
     "mocha-junit-reporter": "^1.23.3",
     "mocha-multi-reporters": "^1.1.7"
   },

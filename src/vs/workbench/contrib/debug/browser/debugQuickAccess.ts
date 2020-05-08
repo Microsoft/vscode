@@ -23,7 +23,7 @@ export class StartDebugQuickAccessProvider extends PickerQuickAccessProvider<IPi
 		@IDebugService private readonly debugService: IDebugService,
 		@IWorkspaceContextService private readonly contextService: IWorkspaceContextService,
 		@ICommandService private readonly commandService: ICommandService,
-		@INotificationService private readonly notificationService: INotificationService
+		@INotificationService private readonly notificationService: INotificationService,
 	) {
 		super(StartDebugQuickAccessProvider.PREFIX, {
 			noResultsPick: {
@@ -32,8 +32,9 @@ export class StartDebugQuickAccessProvider extends PickerQuickAccessProvider<IPi
 		});
 	}
 
-	protected getPicks(filter: string): (IQuickPickSeparator | IPickerQuickAccessItem)[] {
+	protected async getPicks(filter: string): Promise<(IQuickPickSeparator | IPickerQuickAccessItem)[]> {
 		const picks: Array<IPickerQuickAccessItem | IQuickPickSeparator> = [];
+		picks.push({ type: 'separator', label: 'launch.json' });
 
 		const configManager = this.debugService.getConfigurationManager();
 
@@ -77,12 +78,32 @@ export class StartDebugQuickAccessProvider extends PickerQuickAccessProvider<IPi
 			}
 		}
 
+		// Entries detected configurations
+		const dynamicProviders = await configManager.getDynamicProviders();
+		if (dynamicProviders.length > 0) {
+			picks.push({ type: 'separator', label: localize('contributed', "contributed") });
+		}
+
+		dynamicProviders.forEach(provider => {
+			picks.push({
+				label: `$(folder) ${provider.label}...`,
+				ariaLabel: localize('providerAriaLabel', "{0} contributed configurations", provider.label),
+				accept: async () => {
+					const pick = await provider.pick();
+					if (pick) {
+						this.debugService.startDebugging(pick.launch, pick.config);
+					}
+				}
+			});
+		});
+
+
 		// Entries: launches
 		const visibleLaunches = configManager.getLaunches().filter(launch => !launch.hidden);
 
 		// Separator
 		if (visibleLaunches.length > 0) {
-			picks.push({ type: 'separator' });
+			picks.push({ type: 'separator', label: localize('configure', "configure") });
 		}
 
 		for (const launch of visibleLaunches) {

@@ -430,6 +430,7 @@ function markNodes(languageService, options) {
                                 || ts.isIndexSignatureDeclaration(member)
                                 || ts.isCallSignatureDeclaration(member)
                                 || memberName === '[Symbol.iterator]'
+                                || memberName === '[Symbol.toStringTag]'
                                 || memberName === 'toJSON'
                                 || memberName === 'toString'
                                 || memberName === 'dispose' // TODO: keeping all `dispose` methods

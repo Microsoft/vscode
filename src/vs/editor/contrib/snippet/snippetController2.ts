@@ -5,7 +5,6 @@
 
 import { KeyCode, KeyMod } from 'vs/base/common/keyCodes';
 import { dispose, DisposableStore } from 'vs/base/common/lifecycle';
-import { repeat } from 'vs/base/common/strings';
 import { ICodeEditor } from 'vs/editor/browser/editorBrowser';
 import { EditorCommand, registerEditorCommand, registerEditorContribution } from 'vs/editor/browser/editorExtensions';
 import { Range } from 'vs/editor/common/core/range';
@@ -191,7 +190,7 @@ export class SnippetController2 implements IEditorContribution {
 					insertText: option.value,
 					// insertText: `\${1|${after.concat(before).join(',')}|}$0`,
 					// snippetType: 'textmate',
-					sortText: repeat('a', i + 1),
+					sortText: 'a'.repeat(i + 1),
 					range: Range.fromPositions(this._editor.getPosition()!, this._editor.getPosition()!.delta(0, first.value.length))
 				};
 			}));

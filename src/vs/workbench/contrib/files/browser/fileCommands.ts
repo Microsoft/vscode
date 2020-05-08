@@ -40,12 +40,16 @@ import { coalesce } from 'vs/base/common/arrays';
 import { ICodeEditorService } from 'vs/editor/browser/services/codeEditorService';
 import { EmbeddedCodeEditorWidget } from 'vs/editor/browser/widget/embeddedCodeEditorWidget';
 import { ITextFileService } from 'vs/workbench/services/textfile/common/textfiles';
+import { openEditorWith } from 'vs/workbench/contrib/files/common/openWith';
+import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
+import { IQuickInputService } from 'vs/platform/quickinput/common/quickInput';
 
 // Commands
 
 export const REVEAL_IN_EXPLORER_COMMAND_ID = 'revealInExplorer';
 export const REVERT_FILE_COMMAND_ID = 'workbench.action.files.revert';
 export const OPEN_TO_SIDE_COMMAND_ID = 'explorer.openToSide';
+export const OPEN_WITH_EXPLORER_COMMAND_ID = 'explorer.openWith';
 export const SELECT_FOR_COMPARE_COMMAND_ID = 'selectForCompare';
 
 export const COMPARE_SELECTED_COMMAND_ID = 'compareSelected';
@@ -309,6 +313,22 @@ CommandsRegistry.registerCommand({
 				openEditorsView.setExpanded(true);
 				openEditorsView.focus();
 			}
+		}
+	}
+});
+
+CommandsRegistry.registerCommand({
+	id: OPEN_WITH_EXPLORER_COMMAND_ID,
+	handler: async (accessor, resource: URI | object) => {
+		const editorService = accessor.get(IEditorService);
+		const editorGroupsService = accessor.get(IEditorGroupsService);
+		const configurationService = accessor.get(IConfigurationService);
+		const quickInputService = accessor.get(IQuickInputService);
+
+		const uri = getResourceForCommand(resource, accessor.get(IListService), accessor.get(IEditorService));
+		if (uri) {
+			const input = editorService.createEditorInput({ resource: uri });
+			openEditorWith(input, undefined, undefined, editorGroupsService.activeGroup, editorService, configurationService, quickInputService);
 		}
 	}
 });

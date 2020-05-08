@@ -20,9 +20,8 @@ import { ServiceCollection } from 'vs/platform/instantiation/common/serviceColle
 import { KeyboardMapperFactory } from 'vs/workbench/services/keybinding/electron-browser/nativeKeymapService';
 import { INativeWindowConfiguration } from 'vs/platform/windows/node/window';
 import { ISingleFolderWorkspaceIdentifier, IWorkspaceInitializationPayload, ISingleFolderWorkspaceInitializationPayload, reviveWorkspaceIdentifier } from 'vs/platform/workspaces/common/workspaces';
-import { ConsoleLogService, MultiplexLogService, ILogService, ConsoleLogInMainService } from 'vs/platform/log/common/log';
+import { ILogService } from 'vs/platform/log/common/log';
 import { NativeStorageService } from 'vs/platform/storage/node/storageService';
-import { LoggerChannelClient, FollowerLogService } from 'vs/platform/log/common/logIpc';
 import { Schemas } from 'vs/base/common/network';
 import { sanitizeFilePath } from 'vs/base/common/extpath';
 import { GlobalStorageDatabaseChannelClient } from 'vs/platform/storage/node/storageIpc';
@@ -41,7 +40,6 @@ import { IFileService } from 'vs/platform/files/common/files';
 import { DiskFileSystemProvider } from 'vs/platform/files/electron-browser/diskFileSystemProvider';
 import { RemoteFileSystemProvider } from 'vs/workbench/services/remote/common/remoteAgentFileSystemChannel';
 import { ConfigurationCache } from 'vs/workbench/services/configuration/node/configurationCache';
-import { SpdLogService } from 'vs/platform/log/node/spdlogService';
 import { SignService } from 'vs/platform/sign/node/signService';
 import { ISignService } from 'vs/platform/sign/common/sign';
 import { FileUserDataProvider } from 'vs/workbench/services/userData/common/fileUserDataProvider';
@@ -50,6 +48,7 @@ import { IProductService } from 'vs/platform/product/common/productService';
 import product from 'vs/platform/product/common/product';
 import { NativeResourceIdentityService } from 'vs/platform/resource/node/resourceIdentityServiceImpl';
 import { IResourceIdentityService } from 'vs/platform/resource/common/resourceIdentityService';
+import { DesktopLogService } from 'vs/workbench/services/log/electron-browser/logService';
 
 class DesktopMain extends Disposable {
 
@@ -181,7 +180,7 @@ class DesktopMain extends Disposable {
 		serviceCollection.set(IProductService, { _serviceBrand: undefined, ...product });
 
 		// Log
-		const logService = this._register(this.createLogService(mainProcessService, this.environmentService));
+		const logService = this._register(new DesktopLogService(this.configuration.windowId, mainProcessService, this.environmentService));
 		serviceCollection.set(ILogService, logService);
 
 		// Remote
@@ -203,7 +202,7 @@ class DesktopMain extends Disposable {
 		fileService.registerProvider(Schemas.file, diskFileSystemProvider);
 
 		// User Data Provider
-		fileService.registerProvider(Schemas.userData, new FileUserDataProvider(this.environmentService.appSettingsHome, this.environmentService.backupHome, diskFileSystemProvider, this.environmentService));
+		fileService.registerProvider(Schemas.userData, new FileUserDataProvider(this.environmentService.appSettingsHome, this.environmentService.backupHome, diskFileSystemProvider, this.environmentService, logService));
 
 		const connection = remoteAgentService.getConnection();
 		if (connection) {
@@ -314,27 +313,6 @@ class DesktopMain extends Disposable {
 		}
 	}
 
-	private createLogService(mainProcessService: IMainProcessService, environmentService: IWorkbenchEnvironmentService): ILogService {
-		const loggerClient = new LoggerChannelClient(mainProcessService.getChannel('logger'));
-
-		// Extension development test CLI: forward everything to main side
-		const loggers: ILogService[] = [];
-		if (environmentService.isExtensionDevelopment && !!environmentService.extensionTestsLocationURI) {
-			loggers.push(
-				new ConsoleLogInMainService(loggerClient, this.environmentService.configuration.logLevel)
-			);
-		}
-
-		// Normal logger: spdylog and console
-		else {
-			loggers.push(
-				new ConsoleLogService(this.environmentService.configuration.logLevel),
-				new SpdLogService(`renderer${this.configuration.windowId}`, environmentService.logsPath, this.environmentService.configuration.logLevel)
-			);
-		}
-
-		return new FollowerLogService(loggerClient, new MultiplexLogService(loggers));
-	}
 }
 
 export function main(configuration: INativeWindowConfiguration): Promise<void> {

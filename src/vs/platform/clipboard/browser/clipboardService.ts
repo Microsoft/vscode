@@ -5,6 +5,7 @@
 
 import { IClipboardService } from 'vs/platform/clipboard/common/clipboardService';
 import { URI } from 'vs/base/common/uri';
+import { $ } from 'vs/base/browser/dom';
 
 export class BrowserClipboardService implements IClipboardService {
 
@@ -14,39 +15,57 @@ export class BrowserClipboardService implements IClipboardService {
 
 	async writeText(text: string, type?: string): Promise<void> {
 		if (type) {
-			return; // TODO@sbatten
+			return; // TODO@sbatten support for writing a specific type into clipboard is unsupported
 		}
 
-		if (navigator.clipboard && navigator.clipboard.writeText) {
-			return navigator.clipboard.writeText(text);
-		} else {
-			const activeElement = <HTMLElement>document.activeElement;
-			const newTextarea = document.createElement('textarea');
-			newTextarea.className = 'clipboard-copy';
-			newTextarea.style.visibility = 'false';
-			newTextarea.style.height = '1px';
-			newTextarea.style.width = '1px';
-			newTextarea.setAttribute('aria-hidden', 'true');
-			newTextarea.style.position = 'absolute';
-			newTextarea.style.top = '-1000';
-			newTextarea.style.left = '-1000';
-			document.body.appendChild(newTextarea);
-			newTextarea.value = text;
-			newTextarea.focus();
-			newTextarea.select();
-			document.execCommand('copy');
-			activeElement.focus();
-			document.body.removeChild(newTextarea);
+		// Guard access to navigator.clipboard with try/catch
+		// as we have seen DOMExceptions in certain browsers
+		// due to security policies.
+		try {
+			return await navigator.clipboard.writeText(text);
+		} catch (error) {
+			console.error(error);
 		}
+
+		// Fallback to textarea and execCommand solution
+
+		const activeElement = document.activeElement;
+
+		const textArea: HTMLTextAreaElement = document.body.appendChild($('textarea', { 'aria-hidden': true }));
+		textArea.style.height = '1px';
+		textArea.style.width = '1px';
+		textArea.style.position = 'absolute';
+
+		textArea.value = text;
+		textArea.focus();
+		textArea.select();
+
+		document.execCommand('copy');
+
+		if (activeElement instanceof HTMLElement) {
+			activeElement.focus();
+		}
+
+		document.body.removeChild(textArea);
+
 		return;
 	}
 
 	async readText(type?: string): Promise<string> {
 		if (type) {
-			return ''; // TODO@sbatten
+			return ''; // TODO@sbatten support for reading a specific type from clipboard is unsupported
 		}
 
-		return navigator.clipboard.readText();
+		// Guard access to navigator.clipboard with try/catch
+		// as we have seen DOMExceptions in certain browsers
+		// due to security policies.
+		try {
+			return await navigator.clipboard.readText();
+		} catch (error) {
+			console.error(error);
+
+			return '';
+		}
 	}
 
 	readTextSync(): string | undefined {

@@ -156,6 +156,10 @@ export function createTOCIterator(model: TOCTreeModel | SettingsTreeGroupElement
 }
 
 class SettingsAccessibilityProvider implements IListAccessibilityProvider<SettingsTreeGroupElement> {
+	getWidgetAriaLabel(): string {
+		return localize('settingsTOC', "Settings Table of Contents");
+	}
+
 	getAriaLabel(element: SettingsTreeElement): string {
 		if (!element) {
 			return '';

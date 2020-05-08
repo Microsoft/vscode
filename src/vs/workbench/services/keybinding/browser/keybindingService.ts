@@ -47,6 +47,7 @@ import { INavigatorWithKeyboard, IKeyboard } from 'vs/workbench/services/keybind
 import { ScanCode, ScanCodeUtils, IMMUTABLE_CODE_TO_KEY_CODE } from 'vs/base/common/scanCode';
 import { flatten } from 'vs/base/common/arrays';
 import { BrowserFeatures, KeyboardSupport } from 'vs/base/browser/canIUse';
+import { ILogService } from 'vs/platform/log/common/log';
 
 interface ContributedKeyBinding {
 	command: string;
@@ -190,6 +191,7 @@ export class WorkbenchKeybindingService extends AbstractKeybindingService {
 		@IHostService private readonly hostService: IHostService,
 		@IExtensionService extensionService: IExtensionService,
 		@IFileService fileService: IFileService,
+		@ILogService logService: ILogService,
 		@IKeymapService private readonly keymapService: IKeymapService
 	) {
 		super(contextKeyService, commandService, telemetryService, notificationService);
@@ -216,13 +218,14 @@ export class WorkbenchKeybindingService extends AbstractKeybindingService {
 
 		this._cachedResolver = null;
 
-		this.userKeybindings = this._register(new UserKeybindings(environmentService.keybindingsResource, fileService));
+		this.userKeybindings = this._register(new UserKeybindings(environmentService.keybindingsResource, fileService, logService));
 		this.userKeybindings.initialize().then(() => {
 			if (this.userKeybindings.keybindings.length) {
 				this.updateResolver({ source: KeybindingSource.User });
 			}
 		});
 		this._register(this.userKeybindings.onDidChange(() => {
+			logService.debug('User keybindings changed');
 			this.updateResolver({
 				source: KeybindingSource.User,
 				keybindings: this.userKeybindings.keybindings
@@ -642,7 +645,8 @@ class UserKeybindings extends Disposable {
 
 	constructor(
 		private readonly keybindingsResource: URI,
-		private readonly fileService: IFileService
+		private readonly fileService: IFileService,
+		logService: ILogService,
 	) {
 		super();
 
@@ -651,7 +655,10 @@ class UserKeybindings extends Disposable {
 				this._onDidChange.fire();
 			}
 		}), 50));
-		this._register(Event.filter(this.fileService.onDidFilesChange, e => e.contains(this.keybindingsResource))(() => this.reloadConfigurationScheduler.schedule()));
+		this._register(Event.filter(this.fileService.onDidFilesChange, e => e.contains(this.keybindingsResource))(() => {
+			logService.debug('Keybindings file changed');
+			this.reloadConfigurationScheduler.schedule();
+		}));
 	}
 
 	async initialize(): Promise<void> {
@@ -709,10 +716,17 @@ let schema: IJSONSchema = {
 				'description': nls.localize('keybindings.json.key', "Key or key sequence (separated by space)"),
 			},
 			'command': {
-				'type': 'string',
-				'enum': commandsEnum,
-				'enumDescriptions': <any>commandsEnumDescriptions,
-				'description': nls.localize('keybindings.json.command', "Name of the command to execute"),
+				'anyOf': [
+					{
+						'type': 'string',
+						'enum': commandsEnum,
+						'enumDescriptions': <any>commandsEnumDescriptions,
+						'description': nls.localize('keybindings.json.command', "Name of the command to execute"),
+					},
+					{
+						'type': 'string'
+					}
+				]
 			},
 			'when': {
 				'type': 'string',

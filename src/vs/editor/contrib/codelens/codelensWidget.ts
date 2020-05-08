@@ -4,7 +4,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 import 'vs/css!./codelensWidget';
-import * as dom from 'vs/base/browser/dom';
 import { renderCodicons } from 'vs/base/common/codicons';
 import { escape } from 'vs/base/common/strings';
 import { IViewZone, IContentWidget, IActiveCodeEditor, IContentWidgetPosition, ContentWidgetPositionPreference, IViewZoneChangeAccessor } from 'vs/editor/browser/editorBrowser';
@@ -113,7 +112,7 @@ class CodeLensContentWidget implements IContentWidget {
 			}
 			this._domNode.innerHTML = innerHtml;
 			if (this._isEmpty && animate) {
-				dom.addClass(this._domNode, 'fadein');
+				this._domNode.classList.add('fadein');
 			}
 			this._isEmpty = false;
 		}

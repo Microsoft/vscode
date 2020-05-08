@@ -47,10 +47,10 @@ export class ContentHoverWidget extends Widget implements IContentWidget {
 		this._containerDomNode = document.createElement('div');
 		this._containerDomNode.className = 'monaco-editor-hover hidden';
 		this._containerDomNode.tabIndex = 0;
+		this._containerDomNode.setAttribute('role', 'tooltip');
 
 		this._domNode = document.createElement('div');
 		this._domNode.className = 'monaco-editor-hover-content';
-		this._domNode.setAttribute('role', 'tooltip');
 
 		this.scrollbar = new DomScrollableElement(this._domNode, {});
 		this._register(this.scrollbar);

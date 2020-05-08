@@ -68,7 +68,7 @@ export class TextFileEditorModelManager extends Disposable implements ITextFileE
 	})();
 
 	get models(): TextFileEditorModel[] {
-		return this.mapResourceToModel.values();
+		return [...this.mapResourceToModel.values()];
 	}
 
 	constructor(

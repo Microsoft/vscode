@@ -83,7 +83,7 @@
 
 .linux .monaco-pane-view .pane > .pane-header .action-item .monaco-select-box,
 .windows .monaco-pane-view .pane > .pane-header .action-item .monaco-select-box {
-	padding: 0px 23px 2px 8px;
+	padding: 0px 23px 0px 8px;
 }
 
 /* Bold font style does not go well with CJK fonts */

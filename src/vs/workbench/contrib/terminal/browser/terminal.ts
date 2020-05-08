@@ -35,7 +35,7 @@ export interface ITerminalInstanceService {
 	getXtermUnicode11Constructor(): Promise<typeof XTermUnicode11Addon>;
 	getXtermWebLinksConstructor(): Promise<typeof XTermWebLinksAddon>;
 	getXtermWebglConstructor(): Promise<typeof XTermWebglAddon>;
-	createWindowsShellHelper(shellProcessId: number, instance: ITerminalInstance, xterm: XTermTerminal): IWindowsShellHelper;
+	createWindowsShellHelper(shellProcessId: number, xterm: XTermTerminal): IWindowsShellHelper;
 	createTerminalProcess(shellLaunchConfig: IShellLaunchConfig, cwd: string, cols: number, rows: number, env: IProcessEnvironment, windowsEnableConpty: boolean): ITerminalChildProcess;
 
 	getDefaultShellAndArgs(useAutomationShell: boolean, platformOverride?: Platform): Promise<{ shell: string, args: string[] | string | undefined }>;
@@ -319,6 +319,11 @@ export interface ITerminalInstance {
 	readonly navigationMode: INavigationMode | undefined;
 
 	/**
+	 * Shows the environment information hover if the widget exists.
+	 */
+	showEnvironmentInfoHover(): void;
+
+	/**
 	 * Dispose the terminal instance, removing it from the panel/service and freeing up resources.
 	 *
 	 * @param immediate Whether the kill should be immediate or not. Immediate should only be used
@@ -470,6 +475,12 @@ export interface ITerminalInstance {
 	 * @param shell The new launch configuration.
 	 */
 	reuseTerminal(shell: IShellLaunchConfig): void;
+
+	/**
+	 * Relaunches the terminal, killing it and reusing the launch config used initially. Any
+	 * environment variable changes will be recalculated when this happens.
+	 */
+	relaunch(): void;
 
 	/**
 	 * Sets the title of the terminal instance.

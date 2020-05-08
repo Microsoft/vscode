@@ -177,6 +177,10 @@ export class MainThreadCommentController {
 		this._reactions = reactions;
 	}
 
+	get options() {
+		return this._features.options;
+	}
+
 	private readonly _threads: Map<number, MainThreadCommentThread> = new Map<number, MainThreadCommentThread>();
 	public activeCommentThread?: MainThreadCommentThread;
 
@@ -378,7 +382,7 @@ export class MainThreadComments extends Disposable implements MainThreadComments
 		this._commentService.registerCommentController(providerId, provider);
 		this._commentControllers.set(handle, provider);
 
-		const commentsPanelAlreadyConstructed = !!this._viewDescriptorService.getViewDescriptor(COMMENTS_VIEW_ID);
+		const commentsPanelAlreadyConstructed = !!this._viewDescriptorService.getViewDescriptorById(COMMENTS_VIEW_ID);
 		if (!commentsPanelAlreadyConstructed) {
 			this.registerView(commentsPanelAlreadyConstructed);
 			this.registerViewOpenedListener(commentsPanelAlreadyConstructed);
@@ -451,7 +455,8 @@ export class MainThreadComments extends Disposable implements MainThreadComments
 			const VIEW_CONTAINER: ViewContainer = Registry.as<IViewContainersRegistry>(ViewExtensions.ViewContainersRegistry).registerViewContainer({
 				id: COMMENTS_VIEW_ID,
 				name: COMMENTS_VIEW_TITLE,
-				ctorDescriptor: new SyncDescriptor(ViewPaneContainer, [COMMENTS_VIEW_ID, COMMENTS_VIEW_TITLE, { mergeViewWithContainerWhenSingleView: true, donotShowContainerTitleWhenMergedWithContainer: true }]),
+				ctorDescriptor: new SyncDescriptor(ViewPaneContainer, [COMMENTS_VIEW_ID, { mergeViewWithContainerWhenSingleView: true, donotShowContainerTitleWhenMergedWithContainer: true }]),
+				storageId: COMMENTS_VIEW_TITLE,
 				hideIfEmpty: true,
 				order: 10,
 			}, ViewContainerLocation.Panel);

@@ -7,7 +7,7 @@ import 'vs/css!./renameInputField';
 import { DisposableStore } from 'vs/base/common/lifecycle';
 import { ContentWidgetPositionPreference, ICodeEditor, IContentWidget, IContentWidgetPosition } from 'vs/editor/browser/editorBrowser';
 import { Position } from 'vs/editor/common/core/position';
-import { IRange, Range } from 'vs/editor/common/core/range';
+import { IRange } from 'vs/editor/common/core/range';
 import { ScrollType } from 'vs/editor/common/editorCommon';
 import { localize } from 'vs/nls';
 import { IContextKey, IContextKeyService, RawContextKey } from 'vs/platform/contextkey/common/contextkey';
@@ -15,7 +15,7 @@ import { inputBackground, inputBorder, inputForeground, widgetShadow, editorWidg
 import { IColorTheme, IThemeService } from 'vs/platform/theme/common/themeService';
 import { EditorOption } from 'vs/editor/common/config/editorOptions';
 import { IKeybindingService } from 'vs/platform/keybinding/common/keybinding';
-import { toggleClass } from 'vs/base/browser/dom';
+import { CancellationToken } from 'vs/base/common/cancellation';
 
 export const CONTEXT_RENAME_INPUT_VISIBLE = new RawContextKey<boolean>('renameInputVisible', false);
 
@@ -149,9 +149,9 @@ export class RenameInputField implements IContentWidget {
 		}
 	}
 
-	getInput(where: IRange, value: string, selectionStart: number, selectionEnd: number, supportPreview: boolean): Promise<RenameInputFieldResult | boolean> {
+	getInput(where: IRange, value: string, selectionStart: number, selectionEnd: number, supportPreview: boolean, token: CancellationToken): Promise<RenameInputFieldResult | boolean> {
 
-		toggleClass(this._domNode!, 'preview', supportPreview);
+		this._domNode!.classList.toggle('preview', supportPreview);
 
 		this._position = new Position(where.startLineNumber, where.startColumn);
 		this._input!.value = value;
@@ -185,14 +185,7 @@ export class RenameInputField implements IContentWidget {
 				});
 			};
 
-			let onCursorChanged = () => {
-				const editorPosition = this._editor.getPosition();
-				if (!editorPosition || !Range.containsPosition(where, editorPosition)) {
-					this.cancelInput(true);
-				}
-			};
-
-			disposeOnDone.add(this._editor.onDidChangeCursorSelection(onCursorChanged));
+			token.onCancellationRequested(() => this.cancelInput(true));
 			disposeOnDone.add(this._editor.onDidBlurEditorWidget(() => this.cancelInput(false)));
 
 			this._show();

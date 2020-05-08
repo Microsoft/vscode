@@ -3,10 +3,18 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Terminal, ILinkProvider, IViewportRange, IBufferCellPosition, ILink, IBufferLine } from 'xterm';
-import { getXtermLineContent, convertLinkRangeToBuffer, convertBufferRangeToViewport, positionIsInRange, TOOLTIP_HOVER_THRESHOLD } from 'vs/workbench/contrib/terminal/browser/links/terminalLinkHelpers';
+import { Terminal, IViewportRange, IBufferLine } from 'xterm';
+import { getXtermLineContent, convertLinkRangeToBuffer } from 'vs/workbench/contrib/terminal/browser/links/terminalLinkHelpers';
 import { OperatingSystem } from 'vs/base/common/platform';
 import { URI } from 'vs/base/common/uri';
+import { TerminalLink, OPEN_FILE_LABEL, FOLDER_IN_WORKSPACE_LABEL, FOLDER_NOT_IN_WORKSPACE_LABEL } from 'vs/workbench/contrib/terminal/browser/links/terminalLink';
+import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
+import { isEqualOrParent } from 'vs/base/common/resources';
+import { ICommandService } from 'vs/platform/commands/common/commands';
+import { IWorkspaceContextService } from 'vs/platform/workspace/common/workspace';
+import { IHostService } from 'vs/workbench/services/host/browser/host';
+import { XtermLinkMatcherHandler } from 'vs/workbench/contrib/terminal/browser/links/terminalLinkManager';
+import { TerminalBaseLinkProvider } from 'vs/workbench/contrib/terminal/browser/links/terminalBaseLinkProvider';
 
 const pathPrefix = '(\\.\\.?|\\~)';
 const pathSeparatorClause = '\\/';
@@ -34,20 +42,25 @@ const lineAndColumnClause = [
 	'(([^:\\s\\(\\)<>\'\"\\[\\]]*)(:(\\d+))?(:(\\d+))?)' // (file path):336, (file path):336:9
 ].join('|').replace(/ /g, `[${'\u00A0'} ]`);
 
-export class TerminalValidatedLocalLinkProvider implements ILinkProvider {
+export class TerminalValidatedLocalLinkProvider extends TerminalBaseLinkProvider {
 	constructor(
 		private readonly _xterm: Terminal,
 		private readonly _processOperatingSystem: OperatingSystem,
-		private readonly _activateFileCallback: (event: MouseEvent, link: string) => void,
-		private readonly _activateDirectoryCallback: (event: MouseEvent, link: string, uri: URI) => void,
-		private readonly _tooltipCallback: (event: MouseEvent, link: string, location: IViewportRange) => boolean | void,
-		private readonly _leaveCallback: () => void,
-		private readonly _validationCallback: (link: string, callback: (result: { uri: URI, isDirectory: boolean } | undefined) => void) => void
+		private readonly _activateFileCallback: (event: MouseEvent | undefined, link: string) => void,
+		private readonly _wrapLinkHandler: (handler: (event: MouseEvent | undefined, link: string) => void) => XtermLinkMatcherHandler,
+		private readonly _tooltipCallback: (link: TerminalLink, viewportRange: IViewportRange, modifierDownCallback?: () => void, modifierUpCallback?: () => void) => void,
+		private readonly _validationCallback: (link: string, callback: (result: { uri: URI, isDirectory: boolean } | undefined) => void) => void,
+		@IInstantiationService private readonly _instantiationService: IInstantiationService,
+		@ICommandService private readonly _commandService: ICommandService,
+		@IWorkspaceContextService private readonly _workspaceContextService: IWorkspaceContextService,
+		@IHostService private readonly _hostService: IHostService
 	) {
+		super();
 	}
 
-	public provideLink(position: IBufferCellPosition, callback: (link: ILink | undefined) => void): void {
-		let startLine = position.y - 1;
+	protected async _provideLinks(y: number): Promise<TerminalLink[]> {
+		const result: TerminalLink[] = [];
+		let startLine = y - 1;
 		let endLine = startLine;
 
 		const lines: IBufferLine[] = [
@@ -72,7 +85,7 @@ export class TerminalValidatedLocalLinkProvider implements ILinkProvider {
 		let stringIndex = -1;
 		while ((match = rex.exec(text)) !== null) {
 			// const link = match[typeof matcher.matchIndex !== 'number' ? 0 : matcher.matchIndex];
-			const link = match[0];
+			let link = match[0];
 			if (!link) {
 				// something matched but does not comply with the given matchIndex
 				// since this is most likely a bug the regex itself we simply do nothing here
@@ -91,6 +104,18 @@ export class TerminalValidatedLocalLinkProvider implements ILinkProvider {
 				break;
 			}
 
+			// Adjust the link range to exclude a/ and b/ if it looks like a git diff
+			if (
+				// --- a/foo/bar
+				// +++ b/foo/bar
+				((text.startsWith('--- a/') || text.startsWith('+++ b/')) && stringIndex === 4) ||
+				// diff --git a/foo/bar b/foo/bar
+				(text.startsWith('diff --git') && (link.startsWith('a/') || link.startsWith('b/')))
+			) {
+				link = link.substring(2);
+				stringIndex += 2;
+			}
+
 			// Convert the link text's string index into a wrapped buffer range
 			const bufferRange = convertLinkRangeToBuffer(lines, this._xterm.cols, {
 				startColumn: stringIndex + 1,
@@ -99,48 +124,57 @@ export class TerminalValidatedLocalLinkProvider implements ILinkProvider {
 				endLineNumber: 1
 			}, startLine);
 
-			if (positionIsInRange(position, bufferRange)) {
+			const validatedLink = await new Promise<TerminalLink | undefined>(r => {
 				this._validationCallback(link, (result) => {
 					if (result) {
-						let timeout: number | undefined;
-						callback({
-							text: link,
-							range: bufferRange,
-							activate: (event: MouseEvent, text: string) => {
-								if (result.isDirectory) {
-									this._activateDirectoryCallback(event, text, result.uri);
-								} else {
-									this._activateFileCallback(event, text);
-								}
-							},
-							hover: (event: MouseEvent, text: string) => {
-								timeout = window.setTimeout(() => {
-									this._tooltipCallback(event, text, convertBufferRangeToViewport(bufferRange, this._xterm.buffer.active.viewportY));
-								}, TOOLTIP_HOVER_THRESHOLD);
-							},
-							leave: () => {
-								if (timeout !== undefined) {
-									window.clearTimeout(timeout);
-								}
-								this._leaveCallback();
+						const label = result.isDirectory
+							? (this._isDirectoryInsideWorkspace(result.uri) ? FOLDER_IN_WORKSPACE_LABEL : FOLDER_NOT_IN_WORKSPACE_LABEL)
+							: OPEN_FILE_LABEL;
+						const activateCallback = this._wrapLinkHandler((event: MouseEvent | undefined, text: string) => {
+							if (result.isDirectory) {
+								this._handleLocalFolderLink(result.uri);
+							} else {
+								this._activateFileCallback(event, text);
 							}
 						});
+						r(this._instantiationService.createInstance(TerminalLink, bufferRange, link, this._xterm.buffer.active.viewportY, activateCallback, this._tooltipCallback, true, label));
 					} else {
-						callback(undefined);
+						r(undefined);
 					}
 				});
-			} else {
-				callback(undefined);
+			});
+			if (validatedLink) {
+				result.push(validatedLink);
 			}
-			return;
 		}
 
-		callback(undefined);
+		return result;
 	}
 
 	protected get _localLinkRegex(): RegExp {
 		const baseLocalLinkClause = this._processOperatingSystem === OperatingSystem.Windows ? winLocalLinkClause : unixLocalLinkClause;
 		// Append line and column number regex
 		return new RegExp(`${baseLocalLinkClause}(${lineAndColumnClause})`);
+	}
+
+	private async _handleLocalFolderLink(uri: URI): Promise<void> {
+		// If the folder is within one of the window's workspaces, focus it in the explorer
+		if (this._isDirectoryInsideWorkspace(uri)) {
+			await this._commandService.executeCommand('revealInExplorer', uri);
+			return;
+		}
+
+		// Open a new window for the folder
+		this._hostService.openWindow([{ folderUri: uri }], { forceNewWindow: true });
+	}
+
+	private _isDirectoryInsideWorkspace(uri: URI) {
+		const folders = this._workspaceContextService.getWorkspace().folders;
+		for (let i = 0; i < folders.length; i++) {
+			if (isEqualOrParent(uri, folders[i].uri)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

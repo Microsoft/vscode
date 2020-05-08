@@ -258,3 +258,19 @@ export type Dto<T> = { [K in keyof T]: T[K] extends URI
 	: T[K] extends Function
 	? never
 	: UriDto<T[K]> };
+
+
+export function NotImplementedProxy<T>(name: string): { new(): T } {
+	return <any>class {
+		constructor() {
+			return new Proxy({}, {
+				get(target: any, prop: PropertyKey) {
+					if (target[prop]) {
+						return target[prop];
+					}
+					throw new Error(`Not Implemented: ${name}->${String(prop)}`);
+				}
+			});
+		}
+	};
+}

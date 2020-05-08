@@ -4,13 +4,14 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as assert from 'assert';
-import { ITreeNode } from 'vs/base/browser/ui/tree/tree';
+import { ITreeNode, ITreeFilter, TreeVisibility } from 'vs/base/browser/ui/tree/tree';
 import { ISpliceable } from 'vs/base/common/sequence';
 import { ObjectTreeModel } from 'vs/base/browser/ui/tree/objectTreeModel';
 
 function toSpliceable<T>(arr: T[]): ISpliceable<T> {
 	return {
 		splice(start: number, deleteCount: number, elements: T[]): void {
+			// console.log(`splice (${start}, ${deleteCount}, ${elements.length} [${elements.join(', ')}] )`); // debugging
 			arr.splice(start, deleteCount, ...elements);
 		}
 	};
@@ -239,5 +240,36 @@ suite('ObjectTreeModel', function () {
 		assert.deepEqual(toArray(list), [0, 1, 2]);
 		model.expandTo(1000);
 		assert.deepEqual(toArray(list), [0, 10, 100, 1000, 11, 12, 1, 2]);
+	});
+
+	test('issue #95641', () => {
+		const list: ITreeNode<string>[] = [];
+		let fn = (_: string) => true;
+		const filter = new class implements ITreeFilter<string> {
+			filter(element: string, parentVisibility: TreeVisibility): TreeVisibility {
+				if (element === 'file') {
+					return TreeVisibility.Recurse;
+				}
+
+				return fn(element) ? TreeVisibility.Visible : parentVisibility;
+			}
+		};
+		const model = new ObjectTreeModel<string>('test', toSpliceable(list), { filter });
+
+		model.setChildren(null, [{ element: 'file', children: [{ element: 'hello' }] }]);
+		assert.deepEqual(toArray(list), ['file', 'hello']);
+
+		fn = (el: string) => el === 'world';
+		model.refilter();
+		assert.deepEqual(toArray(list), []);
+
+		model.setChildren('file', [{ element: 'world' }]);
+		assert.deepEqual(toArray(list), ['file', 'world']);
+
+		model.setChildren('file', [{ element: 'hello' }]);
+		assert.deepEqual(toArray(list), []);
+
+		model.setChildren('file', [{ element: 'world' }]);
+		assert.deepEqual(toArray(list), ['file', 'world']);
 	});
 });

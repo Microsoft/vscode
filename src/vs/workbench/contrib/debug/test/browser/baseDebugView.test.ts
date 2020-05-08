@@ -6,8 +6,8 @@
 import * as assert from 'assert';
 import { renderExpressionValue, renderVariable, renderViewTree } from 'vs/workbench/contrib/debug/browser/baseDebugView';
 import * as dom from 'vs/base/browser/dom';
-import { Expression, Variable, Scope, StackFrame, Thread, DebugModel } from 'vs/workbench/contrib/debug/common/debugModel';
-import { MockSession } from 'vs/workbench/contrib/debug/test/common/mockDebug';
+import { Expression, Variable, Scope, StackFrame, Thread } from 'vs/workbench/contrib/debug/common/debugModel';
+import { MockSession, createMockDebugModel } from 'vs/workbench/contrib/debug/test/common/mockDebug';
 import { HighlightedLabel } from 'vs/base/browser/ui/highlightedlabel/highlightedLabel';
 import { LinkDetector } from 'vs/workbench/contrib/debug/browser/linkDetector';
 import { TestInstantiationService } from 'vs/platform/instantiation/test/common/instantiationServiceMock';
@@ -123,7 +123,7 @@ suite('Debug - Base Debug View', () => {
 	});
 
 	test('statusbar in debug mode', () => {
-		const model = new DebugModel([], [], [], [], [], <any>{ isDirty: (e: any) => false });
+		const model = createMockDebugModel();
 		const session = createMockSession(model);
 		assert.equal(isStatusbarInDebugMode(State.Inactive, undefined), false);
 		assert.equal(isStatusbarInDebugMode(State.Initializing, session), false);

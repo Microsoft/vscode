@@ -311,7 +311,6 @@ export class ReferenceWidget extends peekView.PeekViewWidget {
 		// tree
 		this._treeContainer = dom.append(containerElement, dom.$('div.ref-tree.inline'));
 		const treeOptions: IWorkbenchAsyncDataTreeOptions<TreeElement, FuzzyScore> = {
-			ariaLabel: nls.localize('treeAriaLabel', "References"),
 			keyboardSupport: this._defaultTreeKeyboardSupport,
 			accessibilityProvider: new AccessibilityProvider(),
 			keyboardNavigationLabelProvider: this._instantiationService.createInstance(StringRepresentationProvider),
@@ -466,7 +465,7 @@ export class ReferenceWidget extends peekView.PeekViewWidget {
 		}));
 
 		// make sure things are rendered
-		dom.addClass(this.container!, 'results-loaded');
+		this.container!.classList.add('results-loaded');
 		dom.show(this._treeContainer);
 		dom.show(this._previewContainer);
 		this._splitView.layout(this._dim.width);

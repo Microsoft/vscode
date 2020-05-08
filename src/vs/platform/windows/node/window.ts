@@ -168,7 +168,7 @@ function findWindowOnFilePath<W extends IWindowContext>(windows: W[], fileUri: U
 export function getLastActiveWindow<W extends IWindowContext>(windows: W[]): W | undefined {
 	const lastFocusedDate = Math.max.apply(Math, windows.map(window => window.lastFocusTime));
 
-	return windows.filter(window => window.lastFocusTime === lastFocusedDate)[0];
+	return windows.find(window => window.lastFocusTime === lastFocusedDate);
 }
 
 export function findWindowOnWorkspace<W extends IWindowContext>(windows: W[], workspace: (IWorkspaceIdentifier | ISingleFolderWorkspaceIdentifier)): W | null {

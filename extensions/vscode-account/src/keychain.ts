@@ -28,7 +28,7 @@ export type Keytar = {
 	deletePassword: typeof keytarType['deletePassword'];
 };
 
-const SERVICE_ID = `${vscode.env.uriScheme}-vscode.login`;
+const SERVICE_ID = `${vscode.env.uriScheme}-microsoft.login`;
 const ACCOUNT_ID = 'account';
 
 export class Keychain {
@@ -42,6 +42,23 @@ export class Keychain {
 
 		this.keytar = keytar;
 	}
+
+	// TODO remove, temporary migration
+	async migrateToken(): Promise<void> {
+		const oldServiceId = `${vscode.env.uriScheme}-vscode.login`;
+		try {
+			const data = await this.keytar.getPassword(oldServiceId, ACCOUNT_ID);
+			if (data) {
+				Logger.info('Migrating token...');
+				this.setToken(data);
+				await this.keytar.deletePassword(oldServiceId, ACCOUNT_ID);
+				Logger.info('Migration successful');
+			}
+		} catch (e) {
+			Logger.error(`Migrating token failed: ${e}`);
+		}
+	}
+
 
 	async setToken(token: string): Promise<void> {
 		try {

@@ -5,10 +5,13 @@
 
 import * as assert from 'assert';
 import { TerminalValidatedLocalLinkProvider } from 'vs/workbench/contrib/terminal/browser/links/terminalValidatedLocalLinkProvider';
-import { Terminal, ILink, IBufferRange, IBufferCellPosition } from 'xterm';
+import { Terminal, ILink } from 'xterm';
 import { OperatingSystem } from 'vs/base/common/platform';
 import { format } from 'vs/base/common/strings';
 import { URI } from 'vs/base/common/uri';
+import { TestConfigurationService } from 'vs/platform/configuration/test/common/testConfigurationService';
+import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
+import { TestInstantiationService } from 'vs/platform/instantiation/test/common/instantiationServiceMock';
 
 const unixLinks = [
 	'/foo',
@@ -66,43 +69,35 @@ const supportedLinkFormats: LinkFormatInfo[] = [
 ];
 
 suite('Workbench - TerminalValidatedLocalLinkProvider', () => {
-	async function assertLink(text: string, os: OperatingSystem, expected: { text: string, range: [number, number][] }) {
+	let instantiationService: TestInstantiationService;
+
+	setup(() => {
+		instantiationService = new TestInstantiationService();
+		instantiationService.stub(IConfigurationService, TestConfigurationService);
+	});
+
+	async function assertLink(text: string, os: OperatingSystem, expected: { text: string, range: [number, number][] }[]) {
 		const xterm = new Terminal();
-		const provider = new TerminalValidatedLocalLinkProvider(xterm, os, () => { }, () => { }, () => { }, () => { }, (_, cb) => { cb({ uri: URI.file('/'), isDirectory: false }); });
+		const provider = instantiationService.createInstance(TerminalValidatedLocalLinkProvider, xterm, os, () => { }, () => { }, () => { }, (_: string, cb: (result: { uri: URI, isDirectory: boolean } | undefined) => void) => { cb({ uri: URI.file('/'), isDirectory: false }); });
 
 		// Write the text and wait for the parser to finish
 		await new Promise<void>(r => xterm.write(text, r));
 
-		// Calculate positions just outside of link boundaries
-		const noLinkPositions: IBufferCellPosition[] = [
-			{ x: expected.range[0][0] - 1, y: expected.range[0][1] },
-			{ x: expected.range[1][0] + 1, y: expected.range[1][1] }
-		];
-
-		// Ensure outside positions do not detect the link
-		for (let i = 0; i < noLinkPositions.length; i++) {
-			const link = await new Promise<ILink | undefined>(r => provider.provideLink(noLinkPositions[i], r));
-			assert.equal(link, undefined, `Just outside range boundary should not result in link, link found at (${link?.range.start.x}, ${link?.range.start.y}) to (${link?.range.end.x}, ${link?.range.end.y}) while checking (${noLinkPositions[i].x}, ${noLinkPositions[i].y})\nExpected link text=${expected.text}\nActual link text=${link?.text}`);
-		}
-
-		// Convert range from [[startx, starty], [endx, endy]] to an IBufferRange
-		const linkRange: IBufferRange = {
-			start: { x: expected.range[0][0], y: expected.range[0][1] },
-			end: { x: expected.range[1][0], y: expected.range[1][1] },
-		};
-
-		// Calculate positions inside the link boundaries
-		const linkPositions: IBufferCellPosition[] = [
-			linkRange.start,
-			linkRange.end
-		];
-
-		// Ensure inside positions do detect the link
-		for (let i = 0; i < linkPositions.length; i++) {
-			const link = await new Promise<ILink | undefined>(r => provider.provideLink(linkPositions[i], r));
-			assert.deepEqual(link?.text, expected.text);
-			assert.deepEqual(link?.range, linkRange);
-		}
+		// Ensure all links are provided
+		const links = (await new Promise<ILink[] | undefined>(r => provider.provideLinks(1, r)))!;
+		assert.equal(links.length, expected.length);
+		const actual = links.map(e => ({
+			text: e.text,
+			range: e.range
+		}));
+		const expectedVerbose = expected.map(e => ({
+			text: e.text,
+			range: {
+				start: { x: e.range[0][0], y: e.range[0][1] },
+				end: { x: e.range[1][0], y: e.range[1][1] },
+			}
+		}));
+		assert.deepEqual(actual, expectedVerbose);
 	}
 
 	suite('Linux/macOS', () => {
@@ -112,13 +107,21 @@ suite('Workbench - TerminalValidatedLocalLinkProvider', () => {
 					const linkFormat = supportedLinkFormats[i];
 					test(`Format: ${linkFormat.urlFormat}`, async () => {
 						const formattedLink = format(linkFormat.urlFormat, baseLink, linkFormat.line, linkFormat.column);
-						await assertLink(formattedLink, OperatingSystem.Linux, { text: formattedLink, range: [[1, 1], [formattedLink.length, 1]] });
-						await assertLink(` ${formattedLink} `, OperatingSystem.Linux, { text: formattedLink, range: [[2, 1], [formattedLink.length + 1, 1]] });
-						await assertLink(`(${formattedLink})`, OperatingSystem.Linux, { text: formattedLink, range: [[2, 1], [formattedLink.length + 1, 1]] });
-						await assertLink(`[${formattedLink}]`, OperatingSystem.Linux, { text: formattedLink, range: [[2, 1], [formattedLink.length + 1, 1]] });
+						await assertLink(formattedLink, OperatingSystem.Linux, [{ text: formattedLink, range: [[1, 1], [formattedLink.length, 1]] }]);
+						await assertLink(` ${formattedLink} `, OperatingSystem.Linux, [{ text: formattedLink, range: [[2, 1], [formattedLink.length + 1, 1]] }]);
+						await assertLink(`(${formattedLink})`, OperatingSystem.Linux, [{ text: formattedLink, range: [[2, 1], [formattedLink.length + 1, 1]] }]);
+						await assertLink(`[${formattedLink}]`, OperatingSystem.Linux, [{ text: formattedLink, range: [[2, 1], [formattedLink.length + 1, 1]] }]);
 					});
 				}
 			});
+		});
+		test('Git diff links', async () => {
+			await assertLink(`diff --git a/foo/bar b/foo/bar`, OperatingSystem.Linux, [
+				{ text: 'foo/bar', range: [[14, 1], [20, 1]] },
+				{ text: 'foo/bar', range: [[24, 1], [30, 1]] }
+			]);
+			await assertLink(`--- a/foo/bar`, OperatingSystem.Linux, [{ text: 'foo/bar', range: [[7, 1], [13, 1]] }]);
+			await assertLink(`+++ b/foo/bar`, OperatingSystem.Linux, [{ text: 'foo/bar', range: [[7, 1], [13, 1]] }]);
 		});
 	});
 
@@ -129,13 +132,28 @@ suite('Workbench - TerminalValidatedLocalLinkProvider', () => {
 					const linkFormat = supportedLinkFormats[i];
 					test(`Format: ${linkFormat.urlFormat}`, async () => {
 						const formattedLink = format(linkFormat.urlFormat, baseLink, linkFormat.line, linkFormat.column);
-						await assertLink(formattedLink, OperatingSystem.Windows, { text: formattedLink, range: [[1, 1], [formattedLink.length, 1]] });
-						await assertLink(` ${formattedLink} `, OperatingSystem.Windows, { text: formattedLink, range: [[2, 1], [formattedLink.length + 1, 1]] });
-						await assertLink(`(${formattedLink})`, OperatingSystem.Windows, { text: formattedLink, range: [[2, 1], [formattedLink.length + 1, 1]] });
-						await assertLink(`[${formattedLink}]`, OperatingSystem.Windows, { text: formattedLink, range: [[2, 1], [formattedLink.length + 1, 1]] });
+						await assertLink(formattedLink, OperatingSystem.Windows, [{ text: formattedLink, range: [[1, 1], [formattedLink.length, 1]] }]);
+						await assertLink(` ${formattedLink} `, OperatingSystem.Windows, [{ text: formattedLink, range: [[2, 1], [formattedLink.length + 1, 1]] }]);
+						await assertLink(`(${formattedLink})`, OperatingSystem.Windows, [{ text: formattedLink, range: [[2, 1], [formattedLink.length + 1, 1]] }]);
+						await assertLink(`[${formattedLink}]`, OperatingSystem.Windows, [{ text: formattedLink, range: [[2, 1], [formattedLink.length + 1, 1]] }]);
 					});
 				}
 			});
 		});
+		test('Git diff links', async () => {
+			await assertLink(`diff --git a/foo/bar b/foo/bar`, OperatingSystem.Linux, [
+				{ text: 'foo/bar', range: [[14, 1], [20, 1]] },
+				{ text: 'foo/bar', range: [[24, 1], [30, 1]] }
+			]);
+			await assertLink(`--- a/foo/bar`, OperatingSystem.Linux, [{ text: 'foo/bar', range: [[7, 1], [13, 1]] }]);
+			await assertLink(`+++ b/foo/bar`, OperatingSystem.Linux, [{ text: 'foo/bar', range: [[7, 1], [13, 1]] }]);
+		});
+	});
+
+	test('should support multiple link results', async () => {
+		await assertLink('./foo ./bar', OperatingSystem.Linux, [
+			{ range: [[1, 1], [5, 1]], text: './foo' },
+			{ range: [[7, 1], [11, 1]], text: './bar' }
+		]);
 	});
 });

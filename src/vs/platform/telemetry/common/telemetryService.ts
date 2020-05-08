@@ -17,6 +17,7 @@ import { ClassifiedEvent, StrictPropertyCheck, GDPRClassification } from 'vs/pla
 
 export interface ITelemetryServiceConfig {
 	appender: ITelemetryAppender;
+	sendErrorTelemetry?: boolean;
 	commonProperties?: Promise<{ [name: string]: any }>;
 	piiPaths?: string[];
 	trueMachineId?: string;
@@ -34,6 +35,7 @@ export class TelemetryService implements ITelemetryService {
 	private _piiPaths: string[];
 	private _userOptIn: boolean;
 	private _enabled: boolean;
+	private _sendErrorTelemetry: boolean;
 
 	private readonly _disposables = new DisposableStore();
 	private _cleanupPatterns: RegExp[] = [];
@@ -47,6 +49,7 @@ export class TelemetryService implements ITelemetryService {
 		this._piiPaths = config.piiPaths || [];
 		this._userOptIn = true;
 		this._enabled = true;
+		this._sendErrorTelemetry = !!config.sendErrorTelemetry;
 
 		// static cleanup pattern for: `file:///DANGEROUS/PATH/resources/app/Useful/Information`
 		this._cleanupPatterns = [/file:\/\/\/.*?\/resources\/app\//gi];
@@ -142,6 +145,19 @@ export class TelemetryService implements ITelemetryService {
 
 	publicLog2<E extends ClassifiedEvent<T> = never, T extends GDPRClassification<T> = never>(eventName: string, data?: StrictPropertyCheck<T, E>, anonymizeFilePaths?: boolean): Promise<any> {
 		return this.publicLog(eventName, data as ITelemetryData, anonymizeFilePaths);
+	}
+
+	publicLogError(errorEventName: string, data?: ITelemetryData): Promise<any> {
+		if (!this._sendErrorTelemetry) {
+			return Promise.resolve(undefined);
+		}
+
+		// Send error event and anonymize paths
+		return this.publicLog(errorEventName, data, true);
+	}
+
+	publicLogError2<E extends ClassifiedEvent<T> = never, T extends GDPRClassification<T> = never>(eventName: string, data?: StrictPropertyCheck<T, E>): Promise<any> {
+		return this.publicLogError(eventName, data as ITelemetryData);
 	}
 
 	private _cleanupInfo(stack: string, anonymizeFilePaths?: boolean): string {

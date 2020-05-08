@@ -14,7 +14,6 @@ import { IConfigurationService } from 'vs/platform/configuration/common/configur
 import { ViewPane } from 'vs/workbench/browser/parts/views/viewPaneContainer';
 import { ResourcesDropHandler, DragAndDropObserver } from 'vs/workbench/browser/dnd';
 import { listDropBackground } from 'vs/platform/theme/common/colorRegistry';
-import { SIDE_BAR_BACKGROUND } from 'vs/workbench/common/theme';
 import { ILabelService } from 'vs/platform/label/common/label';
 import { IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
 import { IViewDescriptorService } from 'vs/workbench/common/views';
@@ -55,8 +54,7 @@ export class EmptyView extends ViewPane {
 
 		this._register(new DragAndDropObserver(container, {
 			onDrop: e => {
-				const color = this.themeService.getColorTheme().getColor(SIDE_BAR_BACKGROUND);
-				container.style.backgroundColor = color ? color.toString() : '';
+				container.style.backgroundColor = '';
 				const dropHandler = this.instantiationService.createInstance(ResourcesDropHandler, { allowWorkspaceOpen: true });
 				dropHandler.handleDrop(e, () => undefined, () => undefined);
 			},
@@ -65,12 +63,10 @@ export class EmptyView extends ViewPane {
 				container.style.backgroundColor = color ? color.toString() : '';
 			},
 			onDragEnd: () => {
-				const color = this.themeService.getColorTheme().getColor(SIDE_BAR_BACKGROUND);
-				container.style.backgroundColor = color ? color.toString() : '';
+				container.style.backgroundColor = '';
 			},
 			onDragLeave: () => {
-				const color = this.themeService.getColorTheme().getColor(SIDE_BAR_BACKGROUND);
-				container.style.backgroundColor = color ? color.toString() : '';
+				container.style.backgroundColor = '';
 			},
 			onDragOver: e => {
 				if (e.dataTransfer) {

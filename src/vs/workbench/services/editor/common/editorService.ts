@@ -10,6 +10,7 @@ import { Event } from 'vs/base/common/event';
 import { IEditor, IDiffEditor } from 'vs/editor/common/editorCommon';
 import { IEditorGroup, IEditorReplacement } from 'vs/workbench/services/editor/common/editorGroupsService';
 import { IDisposable } from 'vs/base/common/lifecycle';
+import { URI } from 'vs/base/common/uri';
 
 export const IEditorService = createDecorator<IEditorService>('editorService');
 
@@ -35,7 +36,7 @@ export interface IOpenEditorOverrideEntry {
 
 export interface IOpenEditorOverrideHandler {
 	open(editor: IEditorInput, options: IEditorOptions | ITextEditorOptions | undefined, group: IEditorGroup, id?: string): IOpenEditorOverride | undefined;
-	getEditorOverrides?(editor: IEditorInput, options: IEditorOptions | undefined, group: IEditorGroup | undefined): IOpenEditorOverrideEntry[];
+	getEditorOverrides?(resource: URI, options: IEditorOptions | undefined, group: IEditorGroup | undefined): IOpenEditorOverrideEntry[];
 }
 
 export interface IOpenEditorOverride {
@@ -61,6 +62,11 @@ export interface IBaseSaveRevertAllEditorOptions {
 	 * Whether to include untitled editors as well.
 	 */
 	readonly includeUntitled?: boolean;
+
+	/**
+	 * Whether to exclude sticky editors.
+	 */
+	readonly excludeSticky?: boolean;
 }
 
 export interface ISaveAllEditorsOptions extends ISaveEditorsOptions, IBaseSaveRevertAllEditorOptions { }
@@ -165,7 +171,8 @@ export interface IEditorService {
 	 *
 	 * @param order the order of the editors to use
 	 */
-	getEditors(order: EditorsOrder): ReadonlyArray<IEditorIdentifier>;
+	getEditors(order: EditorsOrder.MOST_RECENTLY_ACTIVE): ReadonlyArray<IEditorIdentifier>;
+	getEditors(order: EditorsOrder.SEQUENTIAL, options?: { excludeSticky?: boolean }): ReadonlyArray<IEditorIdentifier>;
 
 	/**
 	 * Open an editor in an editor group.
@@ -224,7 +231,7 @@ export interface IEditorService {
 	/**
 	 * Get all available editor overrides for the editor input.
 	 */
-	getEditorOverrides(editorInput: IEditorInput, options: IEditorOptions | undefined, group: IEditorGroup | undefined): [IOpenEditorOverrideHandler, IOpenEditorOverrideEntry][];
+	getEditorOverrides(resource: URI, options: IEditorOptions | undefined, group: IEditorGroup | undefined): [IOpenEditorOverrideHandler, IOpenEditorOverrideEntry][];
 
 	/**
 	 * Allows to override the opening of editors by installing a handler that will
@@ -261,11 +268,15 @@ export interface IEditorService {
 
 	/**
 	 * Reverts the provided list of editors.
+	 *
+	 * @returns `true` if all editors reverted and `false` otherwise.
 	 */
-	revert(editors: IEditorIdentifier | IEditorIdentifier[], options?: IRevertOptions): Promise<void>;
+	revert(editors: IEditorIdentifier | IEditorIdentifier[], options?: IRevertOptions): Promise<boolean>;
 
 	/**
 	 * Reverts all editors.
+	 *
+	 * @returns `true` if all editors reverted and `false` otherwise.
 	 */
-	revertAll(options?: IRevertAllEditorsOptions): Promise<void>;
+	revertAll(options?: IRevertAllEditorsOptions): Promise<boolean>;
 }

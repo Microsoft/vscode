@@ -32,14 +32,7 @@ export = new class ApiEventNaming implements eslint.Rule.RuleModule {
 			['TSTypeAnnotation TSTypeReference Identifier[name="Event"]']: (node: any) => {
 
 				const def = (<TSESTree.Identifier>node).parent?.parent?.parent;
-				let ident: TSESTree.Identifier | undefined;
-
-				if (def?.type === AST_NODE_TYPES.Identifier) {
-					ident = def;
-
-				} else if ((def?.type === AST_NODE_TYPES.TSPropertySignature || def?.type === AST_NODE_TYPES.ClassProperty) && def.key.type === AST_NODE_TYPES.Identifier) {
-					ident = def.key;
-				}
+				const ident = this.getIdent(def);
 
 				if (!ident) {
 					// event on unknown structure...
@@ -86,6 +79,20 @@ export = new class ApiEventNaming implements eslint.Rule.RuleModule {
 				}
 			}
 		};
+	}
+
+	private getIdent(def: TSESTree.Node | undefined): TSESTree.Identifier | undefined {
+		if (!def) {
+			return;
+		}
+
+		if (def.type === AST_NODE_TYPES.Identifier) {
+			return def;
+		} else if ((def.type === AST_NODE_TYPES.TSPropertySignature || def.type === AST_NODE_TYPES.ClassProperty) && def.key.type === AST_NODE_TYPES.Identifier) {
+			return def.key;
+		}
+
+		return this.getIdent(def.parent);
 	}
 };
 

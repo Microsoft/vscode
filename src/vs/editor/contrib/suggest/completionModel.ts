@@ -101,7 +101,7 @@ export class CompletionModel {
 	}
 
 	adopt(except: Set<CompletionItemProvider>): CompletionItem[] {
-		let res = new Array<CompletionItem>();
+		let res: CompletionItem[] = [];
 		for (let i = 0; i < this._items.length;) {
 			if (!except.has(this._items[i].provider)) {
 				res.push(this._items[i]);
@@ -150,6 +150,10 @@ export class CompletionModel {
 		for (let i = 0; i < source.length; i++) {
 
 			const item = source[i];
+
+			if (item.isInvalid) {
+				continue; // SKIP invalid items
+			}
 
 			// collect those supports that signaled having
 			// an incomplete result

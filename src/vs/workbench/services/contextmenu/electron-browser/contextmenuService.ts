@@ -192,7 +192,7 @@ class NativeContextMenuService extends Disposable implements IContextMenuService
 	private async runAction(actionRunner: IActionRunner, actionToRun: IAction, delegate: IContextMenuDelegate, event: IContextMenuEvent): Promise<void> {
 		this.telemetryService.publicLog2<WorkbenchActionExecutedEvent, WorkbenchActionExecutedClassification>('workbenchActionExecuted', { id: actionToRun.id, from: 'contextMenu' });
 
-		const context = delegate.getActionsContext ? delegate.getActionsContext(event) : event;
+		const context = delegate.getActionsContext ? delegate.getActionsContext(event) : undefined;
 
 		const runnable = actionRunner.run(actionToRun, context);
 		if (runnable) {

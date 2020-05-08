@@ -18,6 +18,7 @@ import { Schemas } from 'vs/base/common/network';
 import { Emitter, Event } from 'vs/base/common/event';
 import { withUndefinedAsNull } from 'vs/base/common/types';
 import { minimapWarning, minimapError } from 'vs/platform/theme/common/colorRegistry';
+import { Delayer } from 'vs/base/common/async';
 
 function MODEL_ID(resource: URI): string {
 	return resource.toString();
@@ -41,13 +42,14 @@ class MarkerDecorations extends Disposable {
 		return super._register(t);
 	}
 
-	public update(markers: IMarker[], newDecorations: IModelDeltaDecoration[]): void {
+	public update(markers: IMarker[], newDecorations: IModelDeltaDecoration[]): boolean {
 		const oldIds = keys(this._markersData);
 		this._markersData.clear();
 		const ids = this.model.deltaDecorations(oldIds, newDecorations);
 		for (let index = 0; index < ids.length; index++) {
 			this._markersData.set(ids[index], markers[index]);
 		}
+		return oldIds.length !== 0 || ids.length !== 0;
 	}
 
 	getMarker(decoration: IModelDecoration): IMarker | undefined {
@@ -114,7 +116,8 @@ export class MarkerDecorationsService extends Disposable implements IMarkerDecor
 	private _onModelAdded(model: ITextModel): void {
 		const markerDecorations = new MarkerDecorations(model);
 		this._markerDecorations.set(MODEL_ID(model.uri), markerDecorations);
-		markerDecorations.register(model.onDidChangeContent(() => this._updateDecorations(markerDecorations)));
+		const delayer = markerDecorations.register(new Delayer(100));
+		markerDecorations.register(model.onDidChangeContent(() => delayer.trigger(() => this._updateDecorations(markerDecorations))));
 		this._updateDecorations(markerDecorations);
 	}
 
@@ -144,8 +147,9 @@ export class MarkerDecorationsService extends Disposable implements IMarkerDecor
 				options: this._createDecorationOption(marker)
 			};
 		});
-		markerDecorations.update(markers, newModelDecorations);
-		this._onDidChangeMarker.fire(markerDecorations.model);
+		if (markerDecorations.update(markers, newModelDecorations)) {
+			this._onDidChangeMarker.fire(markerDecorations.model);
+		}
 	}
 
 	private _createDecorationRange(model: ITextModel, rawMarker: IMarker): Range {

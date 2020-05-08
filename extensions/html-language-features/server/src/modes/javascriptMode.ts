@@ -8,7 +8,7 @@ import {
 	SymbolInformation, SymbolKind, CompletionItem, Location, SignatureHelp, SignatureInformation, ParameterInformation,
 	Definition, TextEdit, TextDocument, Diagnostic, DiagnosticSeverity, Range, CompletionItemKind, Hover, MarkedString,
 	DocumentHighlight, DocumentHighlightKind, CompletionList, Position, FormattingOptions, FoldingRange, FoldingRangeKind, SelectionRange,
-	LanguageMode, Settings, SemanticTokenData
+	LanguageMode, Settings, SemanticTokenData, Workspace
 } from './languageModes';
 import { getWordAtText, startsWith, isWhitespaceOnly, repeat } from '../utils/strings';
 import { HTMLDocumentRegions } from './embeddedSupport';
@@ -24,12 +24,12 @@ if (!ts.sys.fileExists(jquery_d_ts)) {
 	jquery_d_ts = join(__dirname, '../../lib/jquery.d.ts'); // from source
 }
 
-export function getJavaScriptMode(documentRegions: LanguageModelCache<HTMLDocumentRegions>, languageId: 'javascript' | 'typescript'): LanguageMode {
+export function getJavaScriptMode(documentRegions: LanguageModelCache<HTMLDocumentRegions>, languageId: 'javascript' | 'typescript', workspace: Workspace): LanguageMode {
 	let jsDocuments = getLanguageModelCache<TextDocument>(10, 60, document => documentRegions.get(document).getEmbeddedDocument(languageId));
 
 	const workingFile = languageId === 'javascript' ? 'vscode://javascript/1.js' : 'vscode://javascript/2.ts'; // the same 'file' is used for all contents
 
-	let compilerOptions: ts.CompilerOptions = { allowNonTsExtensions: true, allowJs: true, lib: ['lib.es6.d.ts'], target: ts.ScriptTarget.Latest, moduleResolution: ts.ModuleResolutionKind.Classic };
+	let compilerOptions: ts.CompilerOptions = { allowNonTsExtensions: true, allowJs: true, lib: ['lib.es6.d.ts'], target: ts.ScriptTarget.Latest, moduleResolution: ts.ModuleResolutionKind.Classic, experimentalDecorators: false };
 	let currentTextDocument: TextDocument;
 	let scriptFileVersion: number = 0;
 	function updateCurrentTextDocument(doc: TextDocument) {
@@ -74,8 +74,9 @@ export function getJavaScriptMode(documentRegions: LanguageModelCache<HTMLDocume
 		getId() {
 			return languageId;
 		},
-		doValidation(document: TextDocument): Diagnostic[] {
+		doValidation(document: TextDocument, settings = workspace.settings): Diagnostic[] {
 			updateCurrentTextDocument(document);
+			host.getCompilationSettings()['experimentalDecorators'] = settings && settings.javascript && settings.javascript.implicitProjectConfig.experimentalDecorators;
 			const syntaxDiagnostics: ts.Diagnostic[] = jsLanguageService.getSyntacticDiagnostics(workingFile);
 			const semanticDiagnostics = jsLanguageService.getSemanticDiagnostics(workingFile);
 			return syntaxDiagnostics.concat(semanticDiagnostics).map((diag: ts.Diagnostic): Diagnostic => {

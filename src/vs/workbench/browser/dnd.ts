@@ -11,7 +11,7 @@ import { IWindowOpenable } from 'vs/platform/windows/common/windows';
 import { URI } from 'vs/base/common/uri';
 import { ITextFileService, stringToSnapshot } from 'vs/workbench/services/textfile/common/textfiles';
 import { Schemas } from 'vs/base/common/network';
-import { IEditorViewState } from 'vs/editor/common/editorCommon';
+import { ITextEditorOptions } from 'vs/platform/editor/common/editor';
 import { DataTransfers, IDragAndDropData } from 'vs/base/browser/dnd';
 import { DragMouseEvent } from 'vs/base/browser/mouseEvent';
 import { normalizeDriveLetter } from 'vs/base/common/labels';
@@ -58,7 +58,7 @@ export interface IDraggedEditor extends IDraggedResource {
 	content?: string;
 	encoding?: string;
 	mode?: string;
-	viewState?: IEditorViewState;
+	options?: ITextEditorOptions;
 }
 
 export interface ISerializedDraggedEditor {
@@ -66,7 +66,7 @@ export interface ISerializedDraggedEditor {
 	content?: string;
 	encoding?: string;
 	mode?: string;
-	viewState?: IEditorViewState;
+	options?: ITextEditorOptions;
 }
 
 export const CodeDataTransfers = {
@@ -90,7 +90,7 @@ export function extractResources(e: DragEvent, externalOnly?: boolean): Array<ID
 						resources.push({
 							resource: URI.parse(draggedEditor.resource),
 							content: draggedEditor.content,
-							viewState: draggedEditor.viewState,
+							options: draggedEditor.options,
 							encoding: draggedEditor.encoding,
 							mode: draggedEditor.mode,
 							isExternal: false
@@ -202,9 +202,9 @@ export class ResourcesDropHandler {
 			encoding: (untitledOrFileResource as IDraggedEditor).encoding,
 			mode: (untitledOrFileResource as IDraggedEditor).mode,
 			options: {
+				...(untitledOrFileResource as IDraggedEditor).options,
 				pinned: true,
-				index: targetIndex,
-				viewState: (untitledOrFileResource as IDraggedEditor).viewState
+				index: targetIndex
 			}
 		}));
 
@@ -311,7 +311,7 @@ export class ResourcesDropHandler {
 	}
 }
 
-export function fillResourceDataTransfers(accessor: ServicesAccessor, resources: (URI | { resource: URI, isDirectory: boolean })[], event: DragMouseEvent | DragEvent): void {
+export function fillResourceDataTransfers(accessor: ServicesAccessor, resources: (URI | { resource: URI, isDirectory: boolean })[], optionsCallback: ((resource: URI) => ITextEditorOptions) | undefined, event: DragMouseEvent | DragEvent): void {
 	if (resources.length === 0 || !event.dataTransfer) {
 		return;
 	}
@@ -346,18 +346,30 @@ export function fillResourceDataTransfers(accessor: ServicesAccessor, resources:
 
 	const draggedEditors: ISerializedDraggedEditor[] = [];
 	files.forEach(file => {
+		let options: ITextEditorOptions | undefined = undefined;
 
-		// Try to find editor view state from the visible editors that match given resource
-		let viewState: IEditorViewState | undefined = undefined;
-		const textEditorControls = editorService.visibleTextEditorControls;
-		for (const textEditorControl of textEditorControls) {
-			if (isCodeEditor(textEditorControl)) {
-				const model = textEditorControl.getModel();
-				if (model?.uri?.toString() === file.resource.toString()) {
-					viewState = withNullAsUndefined(textEditorControl.saveViewState());
-					break;
-				}
-			}
+		// Use provided callback for editor options
+		if (typeof optionsCallback === 'function') {
+			options = optionsCallback(file.resource);
+		}
+
+		// Otherwise try to figure out the view state from opened editors that match
+		else {
+			options = {
+				viewState: (() => {
+					const textEditorControls = editorService.visibleTextEditorControls;
+					for (const textEditorControl of textEditorControls) {
+						if (isCodeEditor(textEditorControl)) {
+							const model = textEditorControl.getModel();
+							if (model?.uri?.toString() === file.resource.toString()) {
+								return withNullAsUndefined(textEditorControl.saveViewState());
+							}
+						}
+					}
+
+					return undefined;
+				})()
+			};
 		}
 
 		// Try to find encoding and mode from text model
@@ -378,7 +390,7 @@ export function fillResourceDataTransfers(accessor: ServicesAccessor, resources:
 		}
 
 		// Add as dragged editor
-		draggedEditors.push({ resource: file.resource.toString(), content, viewState, encoding, mode });
+		draggedEditors.push({ resource: file.resource.toString(), content, options, encoding, mode });
 	});
 
 	if (draggedEditors.length) {
@@ -576,6 +588,15 @@ export class CompositeDragAndDropObserver extends Disposable {
 	private constructor() {
 		super();
 		this.transferData = LocalSelectionTransfer.getInstance<DraggedCompositeIdentifier | DraggedViewIdentifier>();
+
+		this._register(this._onDragEnd.event(e => {
+			const id = e.dragAndDropData.getData().id;
+			const type = e.dragAndDropData.getData().type;
+			const data = this.readDragData(type);
+			if (data && data.getData().id === id) {
+				this.transferData.clearData(type === 'view' ? DraggedViewIdentifier.prototype : DraggedCompositeIdentifier.prototype);
+			}
+		}));
 	}
 	private readDragData(type: ViewType): CompositeDragAndDropData | undefined {
 		if (this.transferData.hasData(type === 'view' ? DraggedViewIdentifier.prototype : DraggedCompositeIdentifier.prototype)) {
@@ -658,12 +679,8 @@ export class CompositeDragAndDropObserver extends Disposable {
 		}));
 		disposableStore.add(new DragAndDropObserver(element, {
 			onDragEnd: e => {
-				const { id, type } = draggedItemProvider();
-
+				const { type } = draggedItemProvider();
 				const data = this.readDragData(type);
-				if (data && data.getData().id === id) {
-					this.transferData.clearData(type === 'view' ? DraggedViewIdentifier.prototype : DraggedCompositeIdentifier.prototype);
-				}
 
 				if (!data) {
 					return;

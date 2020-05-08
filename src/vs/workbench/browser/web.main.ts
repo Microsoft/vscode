@@ -38,7 +38,7 @@ import { FileUserDataProvider } from 'vs/workbench/services/userData/common/file
 import { BACKUPS } from 'vs/platform/environment/common/environment';
 import { joinPath } from 'vs/base/common/resources';
 import { BrowserStorageService } from 'vs/platform/storage/browser/storageService';
-import { IStorageService } from 'vs/platform/storage/common/storage';
+import { IStorageService, StorageScope } from 'vs/platform/storage/common/storage';
 import { getThemeTypeSelector, DARK, HIGH_CONTRAST, LIGHT } from 'vs/platform/theme/common/themeService';
 import { registerWindowDriver } from 'vs/platform/driver/browser/driver';
 import { BufferLogService } from 'vs/platform/log/common/bufferLog';
@@ -52,6 +52,7 @@ import { coalesce } from 'vs/base/common/arrays';
 import { InMemoryFileSystemProvider } from 'vs/platform/files/common/inMemoryFilesystemProvider';
 import { WebResourceIdentityService, IResourceIdentityService } from 'vs/platform/resource/common/resourceIdentityService';
 import { ICommandService } from 'vs/platform/commands/common/commands';
+import { Settings } from 'vs/workbench/browser/layout';
 
 class BrowserMain extends Disposable {
 
@@ -64,6 +65,11 @@ class BrowserMain extends Disposable {
 
 	async open(): Promise<IWorkbench> {
 		const services = await this.initServices();
+
+		const firstOpen = services.storageService.getBoolean(Settings.WORKSPACE_FIRST_OPEN, StorageScope.WORKSPACE);
+		if (firstOpen === undefined || firstOpen) {
+			services.storageService.store(Settings.WORKSPACE_FIRST_OPEN, !(firstOpen ?? false), StorageScope.WORKSPACE);
+		}
 
 		await domContentLoaded();
 		mark('willStartWorkbench');
@@ -266,7 +272,7 @@ class BrowserMain extends Disposable {
 			if (!this.configuration.userDataProvider) {
 				const remoteUserDataUri = this.getRemoteUserDataUri();
 				if (remoteUserDataUri) {
-					this.configuration.userDataProvider = this._register(new FileUserDataProvider(remoteUserDataUri, joinPath(remoteUserDataUri, BACKUPS), remoteFileSystemProvider, environmentService));
+					this.configuration.userDataProvider = this._register(new FileUserDataProvider(remoteUserDataUri, joinPath(remoteUserDataUri, BACKUPS), remoteFileSystemProvider, environmentService, logService));
 				}
 			}
 		}

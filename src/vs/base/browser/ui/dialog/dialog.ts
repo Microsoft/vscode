@@ -6,7 +6,7 @@
 import 'vs/css!./dialog';
 import * as nls from 'vs/nls';
 import { Disposable } from 'vs/base/common/lifecycle';
-import { $, hide, show, EventHelper, clearNode, removeClasses, addClass, addClasses, removeNode, isAncestor, addDisposableListener, EventType } from 'vs/base/browser/dom';
+import { $, hide, show, EventHelper, clearNode, removeClasses, addClasses, removeNode, isAncestor, addDisposableListener, EventType } from 'vs/base/browser/dom';
 import { domEvent } from 'vs/base/browser/event';
 import { StandardKeyboardEvent } from 'vs/base/browser/keyboardEvent';
 import { KeyCode, KeyMod } from 'vs/base/common/keyCodes';
@@ -17,6 +17,7 @@ import { Action } from 'vs/base/common/actions';
 import { mnemonicButtonLabel } from 'vs/base/common/labels';
 import { isMacintosh, isLinux } from 'vs/base/common/platform';
 import { SimpleCheckbox, ISimpleCheckboxStyles } from 'vs/base/browser/ui/checkbox/checkbox';
+import { Codicon, registerIcon } from 'vs/base/common/codicons';
 
 export interface IDialogOptions {
 	cancelId?: number;
@@ -37,12 +38,20 @@ export interface IDialogStyles extends IButtonStyles, ISimpleCheckboxStyles {
 	dialogBackground?: Color;
 	dialogShadow?: Color;
 	dialogBorder?: Color;
+	errorIconForeground?: Color;
+	warningIconForeground?: Color;
+	infoIconForeground?: Color;
 }
 
 interface ButtonMapEntry {
 	label: string;
 	index: number;
 }
+
+const dialogErrorIcon = registerIcon('dialog-error', Codicon.error);
+const dialogWarningIcon = registerIcon('dialog-warning', Codicon.warning);
+const dialogInfoIcon = registerIcon('dialog-info', Codicon.info);
+const dialogCloseIcon = registerIcon('dialog-close', Codicon.close);
 
 export class Dialog extends Disposable {
 	private element: HTMLElement | undefined;
@@ -202,30 +211,29 @@ export class Dialog extends Disposable {
 				}
 			}));
 
-			addClass(this.iconElement, 'codicon');
-			removeClasses(this.iconElement, 'codicon-alert', 'codicon-warning', 'codicon-info');
+			removeClasses(this.iconElement, dialogErrorIcon.classNames, dialogWarningIcon.classNames, dialogInfoIcon.classNames, Codicon.loading.classNames);
 
 			switch (this.options.type) {
 				case 'error':
-					addClass(this.iconElement, 'codicon-error');
+					addClasses(this.iconElement, dialogErrorIcon.classNames);
 					break;
 				case 'warning':
-					addClass(this.iconElement, 'codicon-warning');
+					addClasses(this.iconElement, dialogWarningIcon.classNames);
 					break;
 				case 'pending':
-					addClasses(this.iconElement, 'codicon-loading', 'codicon-animation-spin');
+					addClasses(this.iconElement, Codicon.loading.classNames, 'codicon-animation-spin');
 					break;
 				case 'none':
 				case 'info':
 				case 'question':
 				default:
-					addClass(this.iconElement, 'codicon-info');
+					addClasses(this.iconElement, dialogInfoIcon.classNames);
 					break;
 			}
 
 			const actionBar = new ActionBar(this.toolbarContainer, {});
 
-			const action = new Action('dialog.close', nls.localize('dialogClose', "Close Dialog"), 'codicon codicon-close', true, () => {
+			const action = new Action('dialog.close', nls.localize('dialogClose', "Close Dialog"), dialogCloseIcon.classNames, true, () => {
 				resolve({ button: this.options.cancelId || 0, checkboxChecked: this.checkbox ? this.checkbox.checked : undefined });
 				return Promise.resolve();
 			});
@@ -268,9 +276,27 @@ export class Dialog extends Disposable {
 					this.checkbox.style(style);
 				}
 
-				if (this.messageDetailElement) {
+				if (this.messageDetailElement && fgColor && bgColor) {
 					const messageDetailColor = Color.fromHex(fgColor).transparent(.9);
 					this.messageDetailElement.style.color = messageDetailColor.makeOpaque(Color.fromHex(bgColor)).toString();
+				}
+
+				if (this.iconElement) {
+					let color;
+					switch (this.options.type) {
+						case 'error':
+							color = style.errorIconForeground;
+							break;
+						case 'warning':
+							color = style.warningIconForeground;
+							break;
+						default:
+							color = style.infoIconForeground;
+							break;
+					}
+					if (color) {
+						this.iconElement.style.color = color.toString();
+					}
 				}
 			}
 

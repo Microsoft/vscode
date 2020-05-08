@@ -15,6 +15,7 @@ import severity from 'vs/base/common/severity';
 import { AbstractDebugAdapter } from 'vs/workbench/contrib/debug/common/abstractDebugAdapter';
 import { IWorkspaceFolder } from 'vs/platform/workspace/common/workspace';
 import { convertToVSCPaths, convertToDAPaths } from 'vs/workbench/contrib/debug/common/debugUtils';
+import { DebugConfigurationProviderTriggerKind } from 'vs/workbench/api/common/extHostTypes';
 
 @extHostNamedCustomer(MainContext.MainThreadDebugService)
 export class MainThreadDebugService implements MainThreadDebugServiceShape, IDebugAdapterFactory {
@@ -154,10 +155,11 @@ export class MainThreadDebugService implements MainThreadDebugServiceShape, IDeb
 		return Promise.resolve();
 	}
 
-	public $registerDebugConfigurationProvider(debugType: string, hasProvide: boolean, hasResolve: boolean, hasResolve2: boolean, hasProvideDebugAdapter: boolean, handle: number): Promise<void> {
+	public $registerDebugConfigurationProvider(debugType: string, providerTriggerKind: DebugConfigurationProviderTriggerKind, hasProvide: boolean, hasResolve: boolean, hasResolve2: boolean, hasProvideDebugAdapter: boolean, handle: number): Promise<void> {
 
 		const provider = <IDebugConfigurationProvider>{
-			type: debugType
+			type: debugType,
+			triggerKind: providerTriggerKind
 		};
 		if (hasProvide) {
 			provider.provideDebugConfigurations = (folder, token) => {
@@ -270,7 +272,6 @@ export class MainThreadDebugService implements MainThreadDebugServiceShape, IDeb
 	public $acceptDAMessage(handle: number, message: DebugProtocol.ProtocolMessage) {
 		this.getDebugAdapter(handle).acceptMessage(convertToVSCPaths(message, false));
 	}
-
 
 	public $acceptDAError(handle: number, name: string, message: string, stack: string) {
 		this.getDebugAdapter(handle).fireError(handle, new Error(`${name}: ${message}\n${stack}`));

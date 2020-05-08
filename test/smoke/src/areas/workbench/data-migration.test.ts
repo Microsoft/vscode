@@ -8,7 +8,7 @@ import { join } from 'path';
 
 export function setup(stableCodePath: string, testDataPath: string) {
 
-	describe('Data Migration: This test MUST run before releasing by providing the --stable-build command line argument', () => {
+	describe('Datamigration', () => {
 		it(`verifies opened editors are restored`, async function () {
 			if (!stableCodePath) {
 				this.skip();

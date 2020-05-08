@@ -143,22 +143,22 @@ const newCommands: ApiCommand[] = [
 	new ApiCommand(
 		'vscode.executeDefinitionProvider', '_executeDefinitionProvider', 'Execute all definition providers.',
 		[ApiCommandArgument.Uri, ApiCommandArgument.Position],
-		new ApiCommandResult<modes.Location[], types.Location[] | undefined>('A promise that resolves to an array of Location-instances.', tryMapWith(typeConverters.location.to))
+		new ApiCommandResult<(modes.Location | modes.LocationLink)[], (types.Location | vscode.LocationLink)[] | undefined>('A promise that resolves to an array of Location or LocationLink instances.', mapLocationOrLocationLink)
 	),
 	new ApiCommand(
 		'vscode.executeTypeDefinitionProvider', '_executeTypeDefinitionProvider', 'Execute all type definition providers.',
 		[ApiCommandArgument.Uri, ApiCommandArgument.Position],
-		new ApiCommandResult<modes.Location[], types.Location[] | undefined>('A promise that resolves to an array of Location-instances.', tryMapWith(typeConverters.location.to))
+		new ApiCommandResult<(modes.Location | modes.LocationLink)[], (types.Location | vscode.LocationLink)[] | undefined>('A promise that resolves to an array of Location or LocationLink instances.', mapLocationOrLocationLink)
 	),
 	new ApiCommand(
 		'vscode.executeDeclarationProvider', '_executeDeclarationProvider', 'Execute all declaration providers.',
 		[ApiCommandArgument.Uri, ApiCommandArgument.Position],
-		new ApiCommandResult<modes.Location[], types.Location[] | undefined>('A promise that resolves to an array of Location-instances.', tryMapWith(typeConverters.location.to))
+		new ApiCommandResult<(modes.Location | modes.LocationLink)[], (types.Location | vscode.LocationLink)[] | undefined>('A promise that resolves to an array of Location or LocationLink instances.', mapLocationOrLocationLink)
 	),
 	new ApiCommand(
 		'vscode.executeImplementationProvider', '_executeImplementationProvider', 'Execute all implementation providers.',
 		[ApiCommandArgument.Uri, ApiCommandArgument.Position],
-		new ApiCommandResult<modes.Location[], types.Location[] | undefined>('A promise that resolves to an array of Location-instances.', tryMapWith(typeConverters.location.to))
+		new ApiCommandResult<(modes.Location | modes.LocationLink)[], (types.Location | vscode.LocationLink)[] | undefined>('A promise that resolves to an array of Location or LocationLink instances.', mapLocationOrLocationLink)
 	),
 	new ApiCommand(
 		'vscode.executeReferenceProvider', '_executeReferenceProvider', 'Execute all reference providers.',
@@ -506,4 +506,19 @@ function tryMapWith<T, R>(f: (x: T) => R) {
 		}
 		return undefined;
 	};
+}
+
+function mapLocationOrLocationLink(values: (modes.Location | modes.LocationLink)[]): (types.Location | vscode.LocationLink)[] | undefined {
+	if (!Array.isArray(values)) {
+		return undefined;
+	}
+	const result: (types.Location | vscode.LocationLink)[] = [];
+	for (const item of values) {
+		if (modes.isLocationLink(item)) {
+			result.push(typeConverters.DefinitionLink.to(item));
+		} else {
+			result.push(typeConverters.location.to(item));
+		}
+	}
+	return result;
 }

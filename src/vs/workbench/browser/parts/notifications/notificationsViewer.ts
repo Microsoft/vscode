@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { IListVirtualDelegate, IListRenderer } from 'vs/base/browser/ui/list/list';
-import { clearNode, addClass, removeClass, toggleClass, addDisposableListener, EventType, EventHelper, $ } from 'vs/base/browser/dom';
+import { clearNode, addClass, toggleClass, addDisposableListener, EventType, EventHelper, $, addClasses, removeClasses } from 'vs/base/browser/dom';
 import { IOpenerService } from 'vs/platform/opener/common/opener';
 import { URI } from 'vs/base/common/uri';
 import { localize } from 'vs/nls';
@@ -23,6 +23,7 @@ import { IKeybindingService } from 'vs/platform/keybinding/common/keybinding';
 import { ProgressBar } from 'vs/base/browser/ui/progressbar/progressbar';
 import { Severity } from 'vs/platform/notification/common/notification';
 import { isNonEmptyArray } from 'vs/base/common/arrays';
+import { Codicon } from 'vs/base/common/codicons';
 
 export class NotificationsListDelegate implements IListVirtualDelegate<INotificationViewItem> {
 
@@ -275,7 +276,7 @@ export class NotificationTemplateRenderer extends Disposable {
 	private static expandNotificationAction: ExpandNotificationAction;
 	private static collapseNotificationAction: CollapseNotificationAction;
 
-	private static readonly SEVERITIES: Array<'info' | 'warning' | 'error'> = ['info', 'warning', 'error'];
+	private static readonly SEVERITIES = [Severity.Info, Severity.Warning, Severity.Error];
 
 	private readonly inputDisposables = this._register(new DisposableStore());
 
@@ -352,10 +353,13 @@ export class NotificationTemplateRenderer extends Disposable {
 	}
 
 	private renderSeverity(notification: INotificationViewItem): void {
+		// first remove, then set as the codicon class names overlap
 		NotificationTemplateRenderer.SEVERITIES.forEach(severity => {
-			const domAction = notification.severity === this.toSeverity(severity) ? addClass : removeClass;
-			domAction(this.template.icon, `codicon-${severity}`);
+			if (notification.severity !== severity) {
+				removeClasses(this.template.icon, this.toSeverityIcon(severity).classNames);
+			}
 		});
+		addClasses(this.template.icon, this.toSeverityIcon(notification.severity).classNames);
 	}
 
 	private renderMessage(notification: INotificationViewItem): boolean {
@@ -488,15 +492,14 @@ export class NotificationTemplateRenderer extends Disposable {
 		}
 	}
 
-	private toSeverity(severity: 'info' | 'warning' | 'error'): Severity {
+	private toSeverityIcon(severity: Severity): Codicon {
 		switch (severity) {
-			case 'info':
-				return Severity.Info;
-			case 'warning':
-				return Severity.Warning;
-			case 'error':
-				return Severity.Error;
+			case Severity.Warning:
+				return Codicon.warning;
+			case Severity.Error:
+				return Codicon.error;
 		}
+		return Codicon.info;
 	}
 
 	private getKeybindingLabel(action: IAction): string | null {

@@ -728,6 +728,18 @@ export namespace DefinitionLink {
 				: undefined,
 		};
 	}
+	export function to(value: modes.LocationLink): vscode.LocationLink {
+		return {
+			targetUri: value.uri,
+			targetRange: Range.to(value.range),
+			targetSelectionRange: value.targetSelectionRange
+				? Range.to(value.targetSelectionRange)
+				: undefined,
+			originSelectionRange: value.originSelectionRange
+				? Range.to(value.originSelectionRange)
+				: undefined
+		};
+	}
 }
 
 export namespace Hover {

@@ -4,9 +4,11 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as assert from 'assert';
-import { window, tasks, Disposable, TaskDefinition, Task, EventEmitter, CustomExecution, Pseudoterminal, TaskScope, commands, Task2 } from 'vscode';
+import { window, tasks, Disposable, TaskDefinition, Task, EventEmitter, CustomExecution, Pseudoterminal, TaskScope, commands, Task2, env, UIKind } from 'vscode';
 
-suite('vscode API - tasks', () => {
+// Disable tasks tests:
+// - Web https://github.com/microsoft/vscode/issues/90528
+((env.uiKind === UIKind.Web) ? suite.skip : suite)('vscode API - tasks', () => {
 
 	suite('Tasks', () => {
 		let disposables: Disposable[] = [];

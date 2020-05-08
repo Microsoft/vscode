@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: 'microsoft/vscode-github-triage-actions'
-          ref: v5
+          ref: v15
           path: ./actions
       - name: Install Actions
         if: github.event_name != 'issues' || contains(github.event.issue.labels.*.name, 'author-verification-requested')
@@ -31,6 +31,6 @@ jobs:
         if: github.event_name != 'issues' || contains(github.event.issue.labels.*.name, 'author-verification-requested')
         uses: ./actions/author-verified
         with:
-          requestVerificationComment: "This bug has been fixed in to the latest release of [VS Code Insiders](https://code.visualstudio.com/insiders/)!\n\n@${author}, you can help us out by confirming things are working as expected in the latest Insiders release. If things look good, please leave a comment with the text `/verified` to let us know. If not, please ensure you're on version ${commit} of Insiders (today's or later - you can use `Help: About` in the command pallette to check), and leave a comment letting us know what isn't working as expected.\n\nHappy Coding!"
+          requestVerificationComment: "This bug has been fixed in to the latest release of [VS Code Insiders](https://code.visualstudio.com/insiders/)!\n\n@${author}, you can help us out by commenting `/verified` if things are now working as expected.\n\nIf things still don't seem right, please ensure you're on version ${commit} of Insiders (today's or later - you can use `Help: About` in the command pallette to check), and leave a comment letting us know what isn't working as expected.\n\nHappy Coding!"
           pendingReleaseLabel: awaiting-insiders-release
           authorVerificationRequestedLabel: author-verification-requested

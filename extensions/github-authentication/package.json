@@ -14,6 +14,23 @@
   "activationEvents": [
     "*"
   ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "github.provide-token",
+        "title": "Manually Provide Token"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "github.provide-token",
+          "when": "false"
+        }
+      ]
+    }
+  },
+  "aiKey": "AIF-d9b70cd4-b9f9-4d70-929b-a071c400b217",
   "main": "./out/extension.js",
   "scripts": {
     "vscode:prepublish": "npm run compile",
@@ -22,6 +39,7 @@
   },
   "dependencies": {
     "uuid": "^3.3.3",
+    "vscode-extension-telemetry": "0.1.1",
     "vscode-nls": "^4.1.2"
   },
   "devDependencies": {

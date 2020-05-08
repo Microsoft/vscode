@@ -127,12 +127,12 @@ class FileServiceBasedConfiguration extends Disposable {
 		this._folderSettingsModelParser.parseContent('');
 
 		// parse
-		if (settingsContents[0]) {
+		if (settingsContents[0] !== undefined) {
 			this._folderSettingsModelParser.parseContent(settingsContents[0]);
 		}
 		for (let index = 0; index < standAloneConfigurationContents.length; index++) {
 			const contents = standAloneConfigurationContents[index];
-			if (contents) {
+			if (contents !== undefined) {
 				const standAloneConfigurationModelParser = new StandaloneConfigurationModelParser(this.standAloneConfigurationResources[index][1].toString(), this.standAloneConfigurationResources[index][0]);
 				standAloneConfigurationModelParser.parseContent(contents);
 				this._standAloneConfigurations.push(standAloneConfigurationModelParser.configurationModel);

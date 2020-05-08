@@ -3,6 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import 'vs/css!./media/titlecontrol';
 import { applyDragImage, DataTransfers } from 'vs/base/browser/dnd';
 import { addDisposableListener, Dimension, EventType } from 'vs/base/browser/dom';
 import { StandardMouseEvent } from 'vs/base/browser/mouseEvent';
@@ -12,8 +13,7 @@ import { IAction, IRunEvent, WorkbenchActionExecutedEvent, WorkbenchActionExecut
 import * as arrays from 'vs/base/common/arrays';
 import { ResolvedKeybinding } from 'vs/base/common/keyCodes';
 import { dispose, DisposableStore } from 'vs/base/common/lifecycle';
-import 'vs/css!./media/titlecontrol';
-import { getCodeEditor } from 'vs/editor/browser/editorBrowser';
+import { getCodeEditor, isCodeEditor } from 'vs/editor/browser/editorBrowser';
 import { localize } from 'vs/nls';
 import { createActionViewItem, createAndFillInActionBarActions, createAndFillInContextMenuActions } from 'vs/platform/actions/browser/menuEntryActionViewItem';
 import { ExecuteCommandAction, IMenu, IMenuService, MenuId } from 'vs/platform/actions/common/actions';
@@ -32,13 +32,14 @@ import { BaseEditor } from 'vs/workbench/browser/parts/editor/baseEditor';
 import { BreadcrumbsConfig } from 'vs/workbench/browser/parts/editor/breadcrumbs';
 import { BreadcrumbsControl, IBreadcrumbsControlOptions } from 'vs/workbench/browser/parts/editor/breadcrumbsControl';
 import { EDITOR_TITLE_HEIGHT, IEditorGroupsAccessor, IEditorGroupView } from 'vs/workbench/browser/parts/editor/editor';
-import { EditorCommandsContextActionRunner, IEditorCommandsContext, IEditorInput, toResource, IEditorPartOptions, SideBySideEditor, EditorPinnedContext } from 'vs/workbench/common/editor';
+import { EditorCommandsContextActionRunner, IEditorCommandsContext, IEditorInput, toResource, IEditorPartOptions, SideBySideEditor, EditorPinnedContext, EditorStickyContext } from 'vs/workbench/common/editor';
 import { ResourceContextKey } from 'vs/workbench/common/resources';
 import { IExtensionService } from 'vs/workbench/services/extensions/common/extensions';
 import { AnchorAlignment } from 'vs/base/browser/ui/contextview/contextview';
 import { IFileService } from 'vs/platform/files/common/files';
 import { withNullAsUndefined, withUndefinedAsNull, assertIsDefined } from 'vs/base/common/types';
 import { isFirefox } from 'vs/base/browser/browser';
+import { ITextEditorOptions } from 'vs/platform/editor/common/editor';
 
 export interface IToolbarActions {
 	primary: IAction[];
@@ -59,6 +60,7 @@ export abstract class TitleControl extends Themable {
 
 	private resourceContext: ResourceContextKey;
 	private editorPinnedContext: IContextKey<boolean>;
+	private editorStickyContext: IContextKey<boolean>;
 
 	private readonly editorToolBarMenuDisposables = this._register(new DisposableStore());
 
@@ -85,6 +87,7 @@ export abstract class TitleControl extends Themable {
 
 		this.resourceContext = this._register(instantiationService.createInstance(ResourceContextKey));
 		this.editorPinnedContext = EditorPinnedContext.bindTo(contextKeyService);
+		this.editorStickyContext = EditorStickyContext.bindTo(contextKeyService);
 
 		this.contextMenu = this._register(this.menuService.createMenu(MenuId.EditorTitleContext, this.contextKeyService));
 
@@ -221,6 +224,7 @@ export abstract class TitleControl extends Themable {
 		// Update contexts
 		this.resourceContext.set(this.group.activeEditor ? withUndefinedAsNull(toResource(this.group.activeEditor, { supportSideBySide: SideBySideEditor.MASTER })) : null);
 		this.editorPinnedContext.set(this.group.activeEditor ? this.group.isPinned(this.group.activeEditor) : false);
+		this.editorStickyContext.set(this.group.activeEditor ? this.group.isSticky(this.group.activeEditor) : false);
 
 		// Editor actions require the editor control to be there, so we retrieve it via service
 		const activeEditorPane = this.group.activeEditorPane;
@@ -265,10 +269,8 @@ export abstract class TitleControl extends Themable {
 			// If tabs are disabled, treat dragging as if an editor tab was dragged
 			let hasDataTransfer = false;
 			if (!this.accessor.partOptions.showTabs) {
-				const resource = this.group.activeEditor ? toResource(this.group.activeEditor, { supportSideBySide: SideBySideEditor.MASTER }) : null;
-				if (resource) {
-					this.instantiationService.invokeFunction(fillResourceDataTransfers, [resource], e);
-					hasDataTransfer = true;
+				if (this.group.activeEditor) {
+					hasDataTransfer = this.doFillResourceDataTransfers(this.group.activeEditor, e);
 				}
 			}
 
@@ -294,6 +296,31 @@ export abstract class TitleControl extends Themable {
 		}));
 	}
 
+	protected doFillResourceDataTransfers(editor: IEditorInput, e: DragEvent): boolean {
+		const resource = toResource(editor, { supportSideBySide: SideBySideEditor.MASTER });
+		if (!resource) {
+			return false;
+		}
+
+		const editorOptions: ITextEditorOptions = {
+			viewState: (() => {
+				if (this.group.activeEditor === editor) {
+					const activeControl = this.group.activeEditorPane?.getControl();
+					if (isCodeEditor(activeControl)) {
+						return withNullAsUndefined(activeControl.saveViewState());
+					}
+				}
+
+				return undefined;
+			})(),
+			sticky: this.group.isSticky(editor)
+		};
+
+		this.instantiationService.invokeFunction(fillResourceDataTransfers, [resource], () => editorOptions, e);
+
+		return true;
+	}
+
 	protected onContextMenu(editor: IEditorInput, e: Event, node: HTMLElement): void {
 
 		// Update contexts based on editor picked and remember previous to restore
@@ -301,6 +328,8 @@ export abstract class TitleControl extends Themable {
 		this.resourceContext.set(withUndefinedAsNull(toResource(editor, { supportSideBySide: SideBySideEditor.MASTER })));
 		const currentPinnedContext = !!this.editorPinnedContext.get();
 		this.editorPinnedContext.set(this.group.isPinned(editor));
+		const currentStickyContext = !!this.editorStickyContext.get();
+		this.editorStickyContext.set(this.group.isSticky(editor));
 
 		// Find target anchor
 		let anchor: HTMLElement | { x: number, y: number } = node;
@@ -324,6 +353,7 @@ export abstract class TitleControl extends Themable {
 				// restore previous contexts
 				this.resourceContext.set(currentResourceContext || null);
 				this.editorPinnedContext.set(currentPinnedContext);
+				this.editorStickyContext.set(currentStickyContext);
 
 				// restore focus to active group
 				this.accessor.activeGroup.focus();
@@ -350,11 +380,13 @@ export abstract class TitleControl extends Themable {
 
 	abstract closeEditors(editors: IEditorInput[]): void;
 
-	abstract closeAllEditors(): void;
-
 	abstract moveEditor(editor: IEditorInput, fromIndex: number, targetIndex: number): void;
 
 	abstract pinEditor(editor: IEditorInput): void;
+
+	abstract stickEditor(editor: IEditorInput): void;
+
+	abstract unstickEditor(editor: IEditorInput): void;
 
 	abstract setActive(isActive: boolean): void;
 

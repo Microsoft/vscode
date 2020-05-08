@@ -26,10 +26,10 @@ export class DesktopHostService extends Disposable implements IHostService {
 	}
 
 	get onDidChangeFocus(): Event<boolean> { return this._onDidChangeFocus; }
-	private _onDidChangeFocus: Event<boolean> = Event.any(
+	private _onDidChangeFocus: Event<boolean> = Event.latch(Event.any(
 		Event.map(Event.filter(this.electronService.onWindowFocus, id => id === this.environmentService.configuration.windowId), () => this.hasFocus),
 		Event.map(Event.filter(this.electronService.onWindowBlur, id => id === this.environmentService.configuration.windowId), () => this.hasFocus)
-	);
+	));
 
 	get hasFocus(): boolean {
 		return document.hasFocus();

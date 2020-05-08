@@ -85,7 +85,7 @@
 	height: 100%;
 	position: relative;
 	z-index: 3000;
-	background-image: url('code-icon.svg');
+	background-image: url('../../../media/code-icon.svg');
 	background-repeat: no-repeat;
 	background-position: center center;
 	background-size: 16px;

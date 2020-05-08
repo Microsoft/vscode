@@ -82,10 +82,10 @@ function _doScore(target: string, query: string, fuzzy: boolean): scorer.FuzzySc
 	return scorer.scoreFuzzy(target, preparedQuery.normalized, preparedQuery.normalizedLowercase, fuzzy);
 }
 
-function _doScore2(target: string, query: string): scorer.FuzzyScore2 {
+function _doScore2(target: string, query: string, matchOffset: number = 0): scorer.FuzzyScore2 {
 	const preparedQuery = scorer.prepareQuery(query);
 
-	return scorer.scoreFuzzy2(target, preparedQuery);
+	return scorer.scoreFuzzy2(target, preparedQuery, 0, matchOffset);
 }
 
 function scoreItem<T>(item: T, query: string, fuzzy: boolean, accessor: scorer.IItemAccessor<T>): scorer.IItemScore {
@@ -912,6 +912,19 @@ suite('Fuzzy Scorer', () => {
 		assert.equal(res[0], resourceB);
 	});
 
+	test('compareFilesByScore - prefer case match (bug #96122)', function () {
+		const resourceA = URI.file('lists.php');
+		const resourceB = URI.file('lib/Lists.php');
+
+		let query = 'Lists.php';
+
+		let res = [resourceA, resourceB].sort((r1, r2) => compareItemsByScore(r1, r2, query, true, ResourceAccessor));
+		assert.equal(res[0], resourceB);
+
+		res = [resourceB, resourceA].sort((r1, r2) => compareItemsByScore(r1, r2, query, true, ResourceAccessor));
+		assert.equal(res[0], resourceB);
+	});
+
 	test('prepareQuery', () => {
 		assert.equal(scorer.prepareQuery(' f*a ').normalized, 'fa');
 		assert.equal(scorer.prepareQuery('model Tester.ts').original, 'model Tester.ts');
@@ -973,6 +986,28 @@ suite('Fuzzy Scorer', () => {
 		}
 	});
 
+	test('fuzzyScore2 (matching)', function () {
+		const target = 'HeLlo-World';
+
+		for (const offset of [0, 3]) {
+			let [score, matches] = _doScore2(offset === 0 ? target : `123${target}`, 'HeLlo-World', offset);
+
+			assert.ok(score);
+			assert.equal(matches.length, 1);
+			assert.equal(matches[0].start, 0 + offset);
+			assert.equal(matches[0].end, target.length + offset);
+
+			[score, matches] = _doScore2(offset === 0 ? target : `123${target}`, 'HW', offset);
+
+			assert.ok(score);
+			assert.equal(matches.length, 2);
+			assert.equal(matches[0].start, 0 + offset);
+			assert.equal(matches[0].end, 1 + offset);
+			assert.equal(matches[1].start, 6 + offset);
+			assert.equal(matches[1].end, 7 + offset);
+		}
+	});
+
 	test('fuzzyScore2 (multiple queries)', function () {
 		const target = 'HeLlo-World';
 
@@ -998,7 +1033,7 @@ suite('Fuzzy Scorer', () => {
 		}
 
 		function assertNoScore() {
-			assert.equal(multiScore, 0);
+			assert.equal(multiScore, undefined);
 			assert.equal(multiMatches.length, 0);
 		}
 
@@ -1015,5 +1050,14 @@ suite('Fuzzy Scorer', () => {
 
 		[multiScore, multiMatches] = _doScore2(target, 'More Nothing');
 		assertNoScore();
+	});
+
+	test('fuzzyScore2 (#95716)', function () {
+		const target = '# ❌ Wow';
+
+		const score = _doScore2(target, '❌');
+		assert.ok(score);
+		assert.ok(typeof score[0] === 'number');
+		assert.ok(score[1].length > 0);
 	});
 });

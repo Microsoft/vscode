@@ -302,6 +302,10 @@ export class EditorsObserver extends Disposable {
 				return false; // never the editor that should be excluded
 			}
 
+			if (this.editorGroupsService.getGroup(groupId)?.isSticky(editor)) {
+				return false; // never sticky editors
+			}
+
 			return true;
 		});
 

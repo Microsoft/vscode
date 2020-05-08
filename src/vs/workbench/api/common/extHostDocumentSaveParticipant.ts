@@ -5,7 +5,6 @@
 
 import { Event } from 'vs/base/common/event';
 import { URI, UriComponents } from 'vs/base/common/uri';
-import { sequence } from 'vs/base/common/async';
 import { illegalState } from 'vs/base/common/errors';
 import { ExtHostDocumentSaveParticipantShape, MainThreadTextEditorsShape, IWorkspaceEditDto } from 'vs/workbench/api/common/extHost.protocol';
 import { TextEdit } from 'vs/workbench/api/common/extHostTypes';
@@ -48,26 +47,27 @@ export class ExtHostDocumentSaveParticipant implements ExtHostDocumentSavePartic
 		};
 	}
 
-	$participateInSave(data: UriComponents, reason: SaveReason): Promise<boolean[]> {
+	async $participateInSave(data: UriComponents, reason: SaveReason): Promise<boolean[]> {
 		const resource = URI.revive(data);
-		const entries = this._callbacks.toArray();
 
 		let didTimeout = false;
 		const didTimeoutHandle = setTimeout(() => didTimeout = true, this._thresholds.timeout);
 
-		const promise = sequence(entries.map(listener => {
-			return () => {
-
+		const results: boolean[] = [];
+		try {
+			for (let listener of [...this._callbacks]) { // copy to prevent concurrent modifications
 				if (didTimeout) {
 					// timeout - no more listeners
-					return Promise.resolve();
+					break;
 				}
-
 				const document = this._documents.getDocument(resource);
-				return this._deliverEventAsyncAndBlameBadListeners(listener, <any>{ document, reason: TextDocumentSaveReason.to(reason) });
-			};
-		}));
-		return promise.finally(() => clearTimeout(didTimeoutHandle));
+				const success = await this._deliverEventAsyncAndBlameBadListeners(listener, <any>{ document, reason: TextDocumentSaveReason.to(reason) });
+				results.push(success);
+			}
+		} finally {
+			clearTimeout(didTimeoutHandle);
+		}
+		return results;
 	}
 
 	private _deliverEventAsyncAndBlameBadListeners([listener, thisArg, extension]: Listener, stubEvent: vscode.TextDocumentWillSaveEvent): Promise<any> {

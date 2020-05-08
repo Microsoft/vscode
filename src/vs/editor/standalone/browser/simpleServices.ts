@@ -560,6 +560,14 @@ export class StandaloneTelemetryService implements ITelemetryService {
 		return this.publicLog(eventName, data as any);
 	}
 
+	public publicLogError(eventName: string, data?: any): Promise<void> {
+		return Promise.resolve(undefined);
+	}
+
+	publicLogError2<E extends ClassifiedEvent<T> = never, T extends GDPRClassification<T> = never>(eventName: string, data?: StrictPropertyCheck<T, E>) {
+		return this.publicLogError(eventName, data as any);
+	}
+
 	public getTelemetryInfo(): Promise<ITelemetryInfo> {
 		throw new Error(`Not available`);
 	}

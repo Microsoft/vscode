@@ -11,7 +11,7 @@ import { IConfigurationService } from 'vs/platform/configuration/common/configur
 import { ICommandService } from 'vs/platform/commands/common/commands';
 import { IConfigurationResolverService } from 'vs/workbench/services/configurationResolver/common/configurationResolver';
 import { BaseConfigurationResolverService } from 'vs/workbench/services/configurationResolver/browser/configurationResolverService';
-import { IWorkspaceFolder } from 'vs/platform/workspace/common/workspace';
+import { Workspace, IWorkspaceFolder } from 'vs/platform/workspace/common/workspace';
 import { TestEditorService } from 'vs/workbench/test/browser/workbenchTestServices';
 import { TestWindowConfiguration } from 'vs/workbench/test/electron-browser/workbenchTestServices';
 import { TestConfigurationService } from 'vs/platform/configuration/test/common/testConfigurationService';
@@ -23,6 +23,7 @@ import { EditorType } from 'vs/editor/common/editorCommon';
 import { Selection } from 'vs/editor/common/core/selection';
 import { NativeWorkbenchEnvironmentService } from 'vs/workbench/services/environment/electron-browser/environmentService';
 import { TestContextService } from 'vs/workbench/test/common/workbenchTestServices';
+import { testWorkspace } from 'vs/platform/workspace/test/common/testWorkspace';
 
 const mockLineNumber = 10;
 class TestEditorServiceWithActiveEditor extends TestEditorService {
@@ -33,6 +34,13 @@ class TestEditorServiceWithActiveEditor extends TestEditorService {
 			},
 			getSelection() {
 				return new Selection(mockLineNumber, 1, mockLineNumber, 10);
+			}
+		};
+	}
+	get activeEditor(): any {
+		return {
+			get resource(): any {
+				return uri.parse('file:///VSCode/workspaceLocation/file');
 			}
 		};
 	}
@@ -48,6 +56,7 @@ suite('Configuration Resolver Service', () => {
 	let environmentService: MockWorkbenchEnvironmentService;
 	let mockCommandService: MockCommandService;
 	let editorService: TestEditorServiceWithActiveEditor;
+	let containingWorkspace: Workspace;
 	let workspace: IWorkspaceFolder;
 	let quickInputService: MockQuickInputService;
 
@@ -56,13 +65,9 @@ suite('Configuration Resolver Service', () => {
 		editorService = new TestEditorServiceWithActiveEditor();
 		quickInputService = new MockQuickInputService();
 		environmentService = new MockWorkbenchEnvironmentService(envVariables);
-		workspace = {
-			uri: uri.parse('file:///VSCode/workspaceLocation'),
-			name: 'hey',
-			index: 0,
-			toResource: (path: string) => uri.file(path)
-		};
-		configurationResolverService = new TestConfigurationResolverService({ getExecPath: () => undefined }, environmentService.userEnv, editorService, new MockInputsConfigurationService(), mockCommandService, new TestContextService(), quickInputService);
+		containingWorkspace = testWorkspace(uri.parse('file:///VSCode/workspaceLocation'));
+		workspace = containingWorkspace.folders[0];
+		configurationResolverService = new TestConfigurationResolverService({ getExecPath: () => undefined }, environmentService.userEnv, editorService, new MockInputsConfigurationService(), mockCommandService, new TestContextService(containingWorkspace), quickInputService);
 	});
 
 	teardown(() => {
@@ -77,12 +82,68 @@ suite('Configuration Resolver Service', () => {
 		}
 	});
 
+	test('workspace folder with argument', () => {
+		if (platform.isWindows) {
+			assert.strictEqual(configurationResolverService!.resolve(workspace, 'abc ${workspaceFolder:workspaceLocation} xyz'), 'abc \\VSCode\\workspaceLocation xyz');
+		} else {
+			assert.strictEqual(configurationResolverService!.resolve(workspace, 'abc ${workspaceFolder:workspaceLocation} xyz'), 'abc /VSCode/workspaceLocation xyz');
+		}
+	});
+
+	test('workspace folder with invalid argument', () => {
+		assert.throws(() => configurationResolverService!.resolve(workspace, 'abc ${workspaceFolder:invalidLocation} xyz'));
+	});
+
+	test('workspace folder with undefined workspace folder', () => {
+		assert.throws(() => configurationResolverService!.resolve(undefined, 'abc ${workspaceFolder} xyz'));
+	});
+
+	test('workspace folder with argument and undefined workspace folder', () => {
+		if (platform.isWindows) {
+			assert.strictEqual(configurationResolverService!.resolve(undefined, 'abc ${workspaceFolder:workspaceLocation} xyz'), 'abc \\VSCode\\workspaceLocation xyz');
+		} else {
+			assert.strictEqual(configurationResolverService!.resolve(undefined, 'abc ${workspaceFolder:workspaceLocation} xyz'), 'abc /VSCode/workspaceLocation xyz');
+		}
+	});
+
+	test('workspace folder with invalid argument and undefined workspace folder', () => {
+		assert.throws(() => configurationResolverService!.resolve(undefined, 'abc ${workspaceFolder:invalidLocation} xyz'));
+	});
+
 	test('workspace root folder name', () => {
 		assert.strictEqual(configurationResolverService!.resolve(workspace, 'abc ${workspaceRootFolderName} xyz'), 'abc workspaceLocation xyz');
 	});
 
 	test('current selected line number', () => {
 		assert.strictEqual(configurationResolverService!.resolve(workspace, 'abc ${lineNumber} xyz'), `abc ${mockLineNumber} xyz`);
+	});
+
+	test('relative file', () => {
+		assert.strictEqual(configurationResolverService!.resolve(workspace, 'abc ${relativeFile} xyz'), 'abc file xyz');
+	});
+
+	test('relative file with argument', () => {
+		assert.strictEqual(configurationResolverService!.resolve(workspace, 'abc ${relativeFile:workspaceLocation} xyz'), 'abc file xyz');
+	});
+
+	test('relative file with invalid argument', () => {
+		assert.throws(() => configurationResolverService!.resolve(workspace, 'abc ${relativeFile:invalidLocation} xyz'));
+	});
+
+	test('relative file with undefined workspace folder', () => {
+		if (platform.isWindows) {
+			assert.strictEqual(configurationResolverService!.resolve(undefined, 'abc ${relativeFile} xyz'), 'abc \\VSCode\\workspaceLocation\\file xyz');
+		} else {
+			assert.strictEqual(configurationResolverService!.resolve(undefined, 'abc ${relativeFile} xyz'), 'abc /VSCode/workspaceLocation/file xyz');
+		}
+	});
+
+	test('relative file with argument and undefined workspace folder', () => {
+		assert.strictEqual(configurationResolverService!.resolve(undefined, 'abc ${relativeFile:workspaceLocation} xyz'), 'abc file xyz');
+	});
+
+	test('relative file with invalid argument and undefined workspace folder', () => {
+		assert.throws(() => configurationResolverService!.resolve(undefined, 'abc ${relativeFile:invalidLocation} xyz'));
 	});
 
 	test('substitute many', () => {

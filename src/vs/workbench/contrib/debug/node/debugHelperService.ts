@@ -33,7 +33,7 @@ export class NodeDebugHelperService implements IDebugHelperService {
 		const channel = client.getChannel('telemetryAppender');
 		const appender = new TelemetryAppenderClient(channel);
 
-		return new TelemetryService({ appender }, configurationService);
+		return new TelemetryService({ appender, sendErrorTelemetry: true }, configurationService);
 	}
 }
 

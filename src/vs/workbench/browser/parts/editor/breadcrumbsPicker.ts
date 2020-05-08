@@ -3,7 +3,6 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as dom from 'vs/base/browser/dom';
 import { compareFileNames } from 'vs/base/common/comparers';
 import { onUnexpectedError } from 'vs/base/common/errors';
 import { Emitter, Event } from 'vs/base/common/event';
@@ -24,12 +23,13 @@ import { IWorkspace, IWorkspaceContextService, IWorkspaceFolder } from 'vs/platf
 import { ResourceLabels, IResourceLabel, DEFAULT_LABELS_CONTAINER } from 'vs/workbench/browser/labels';
 import { BreadcrumbsConfig } from 'vs/workbench/browser/parts/editor/breadcrumbs';
 import { BreadcrumbElement, FileElement } from 'vs/workbench/browser/parts/editor/breadcrumbsModel';
-
 import { IAsyncDataSource, ITreeRenderer, ITreeNode, ITreeFilter, TreeVisibility, ITreeSorter } from 'vs/base/browser/ui/tree/tree';
 import { OutlineVirtualDelegate, OutlineGroupRenderer, OutlineElementRenderer, OutlineItemComparator, OutlineIdentityProvider, OutlineNavigationLabelProvider, OutlineDataSource, OutlineSortOrder, OutlineFilter, OutlineAccessibilityProvider } from 'vs/editor/contrib/documentSymbols/outlineTree';
 import { IIdentityProvider, IListVirtualDelegate, IKeyboardNavigationLabelProvider } from 'vs/base/browser/ui/list/list';
 import { IFileIconTheme, IThemeService } from 'vs/platform/theme/common/themeService';
 import { IListAccessibilityProvider } from 'vs/base/browser/ui/list/listWidget';
+import { IModeService } from 'vs/editor/common/services/modeService';
+import { localize } from 'vs/nls';
 
 export function createBreadcrumbsPicker(instantiationService: IInstantiationService, parent: HTMLElement, element: BreadcrumbElement): BreadcrumbsPicker {
 	return element instanceof FileElement
@@ -275,6 +275,10 @@ class FileNavigationLabelProvider implements IKeyboardNavigationLabelProvider<IW
 
 class FileAccessibilityProvider implements IListAccessibilityProvider<IWorkspaceFolder | IFileStat> {
 
+	getWidgetAriaLabel(): string {
+		return localize('breadcrumbs', "Breadcrumbs");
+	}
+
 	getAriaLabel(element: IWorkspaceFolder | IFileStat): string | null {
 		return element.name;
 	}
@@ -370,11 +374,11 @@ export class BreadcrumbsFilePicker extends BreadcrumbsPicker {
 	_createTree(container: HTMLElement) {
 
 		// tree icon theme specials
-		dom.addClass(this._treeContainer, 'file-icon-themable-tree');
-		dom.addClass(this._treeContainer, 'show-file-icons');
+		this._treeContainer.classList.add('file-icon-themable-tree');
+		this._treeContainer.classList.add('show-file-icons');
 		const onFileIconThemeChange = (fileIconTheme: IFileIconTheme) => {
-			dom.toggleClass(this._treeContainer, 'align-icons-and-twisties', fileIconTheme.hasFileIcons && !fileIconTheme.hasFolderIcons);
-			dom.toggleClass(this._treeContainer, 'hide-arrows', fileIconTheme.hidesExplorerArrows === true);
+			this._treeContainer.classList.toggle('align-icons-and-twisties', fileIconTheme.hasFileIcons && !fileIconTheme.hasFolderIcons);
+			this._treeContainer.classList.toggle('hide-arrows', fileIconTheme.hidesExplorerArrows === true);
 		};
 		this._disposables.add(this._themeService.onDidFileIconThemeChange(onFileIconThemeChange));
 		onFileIconThemeChange(this._themeService.getFileIconTheme());
@@ -452,6 +456,7 @@ export class BreadcrumbsOutlinePicker extends BreadcrumbsPicker {
 		@IInstantiationService instantiationService: IInstantiationService,
 		@IThemeService themeService: IThemeService,
 		@IConfigurationService configurationService: IConfigurationService,
+		@IModeService private readonly _modeService: IModeService,
 	) {
 		super(parent, instantiationService, themeService, configurationService);
 		this._symbolSortOrder = BreadcrumbsConfig.SymbolSortOrder.bindTo(this._configurationService);
@@ -473,7 +478,7 @@ export class BreadcrumbsOutlinePicker extends BreadcrumbsPicker {
 				sorter: this._outlineComparator,
 				identityProvider: new OutlineIdentityProvider(),
 				keyboardNavigationLabelProvider: new OutlineNavigationLabelProvider(),
-				accessibilityProvider: new OutlineAccessibilityProvider(),
+				accessibilityProvider: new OutlineAccessibilityProvider(localize('breadcrumbs', "Breadcrumbs")),
 				filter: this._instantiationService.createInstance(OutlineFilter, 'breadcrumbs')
 			}
 		);
@@ -489,10 +494,9 @@ export class BreadcrumbsOutlinePicker extends BreadcrumbsPicker {
 		const model = OutlineModel.get(element)!;
 		const tree = this._tree as WorkbenchDataTree<OutlineModel, any, FuzzyScore>;
 
-		const textModel = model.textModel;
 		const overrideConfiguration = {
-			resource: textModel.uri,
-			overrideIdentifier: textModel.getLanguageIdentifier().language
+			resource: model.uri,
+			overrideIdentifier: this._modeService.getModeIdByFilepathOrFirstLine(model.uri)
 		};
 		this._outlineComparator.type = this._getOutlineItemCompareType(overrideConfiguration);
 

@@ -255,6 +255,17 @@ export const terminalConfiguration: IConfigurationNode = {
 			},
 			default: {}
 		},
+		'terminal.integrated.environmentChangesIndicator': {
+			markdownDescription: localize('terminal.integrated.environmentChangesIndicator', "Whether to display the environment changes indicator on each terminal which explains whether extensions have made, or want to make changes to the terminal's environment."),
+			type: 'string',
+			enum: ['off', 'on', 'warnonly'],
+			enumDescriptions: [
+				localize('terminal.integrated.environmentChangesIndicator.off', "Disable the indicator."),
+				localize('terminal.integrated.environmentChangesIndicator.on', "Enable the indicator."),
+				localize('terminal.integrated.environmentChangesIndicator.warnonly', "Only show the warning indicator when a terminal's environment is 'stale', not the information indicator that shows a terminal has had its environment modified by an extension."),
+			],
+			default: 'warnonly'
+		},
 		'terminal.integrated.showExitAlert': {
 			description: localize('terminal.integrated.showExitAlert', "Controls whether to show the alert \"The terminal process terminated with exit code\" when exit code is non-zero."),
 			type: 'boolean',
@@ -279,7 +290,7 @@ export const terminalConfiguration: IConfigurationNode = {
 		'terminal.integrated.wordSeparators': {
 			description: localize('terminal.integrated.wordSeparators', "A string containing all characters to be considered word separators by the double click to select word feature."),
 			type: 'string',
-			default: ' ()[]{}\',"`'
+			default: ' ()[]{}\',"`─'
 		},
 		'terminal.integrated.experimentalUseTitleEvent': {
 			description: localize('terminal.integrated.experimentalUseTitleEvent', "An experimental setting that will use the terminal title event for the dropdown title. This setting will only apply to new terminals."),
@@ -287,7 +298,7 @@ export const terminalConfiguration: IConfigurationNode = {
 			default: false
 		},
 		'terminal.integrated.enableFileLinks': {
-			description: localize('terminal.integrated.enableFileLinks', "Whether to enable file links in the terminal. Links can be slow when working on a network drive in particular because each file link is verified against the file system."),
+			description: localize('terminal.integrated.enableFileLinks', "Whether to enable file links in the terminal. Links can be slow when working on a network drive in particular because each file link is verified against the file system. Changing this will take effect only in new terminals."),
 			type: 'boolean',
 			default: true
 		},
@@ -304,7 +315,7 @@ export const terminalConfiguration: IConfigurationNode = {
 		'terminal.integrated.experimentalLinkProvider': {
 			description: localize('terminal.integrated.experimentalLinkProvider', "An experimental setting that aims to improve link detection in the terminal by improving when links are detected and by enabling shared link detection with the editor. Currently this only supports web links."),
 			type: 'boolean',
-			default: false
+			default: true
 		}
 	}
 };

@@ -6,3 +6,4 @@
 import './inputClipboardActions';
 import './sleepResumeRepaintMinimap';
 import './selectionClipboard';
+import './startDebugTextMate';

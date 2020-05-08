@@ -303,6 +303,7 @@ export const enum Operation {
 	CheckIgnore = 'CheckIgnore',
 	GetObjectDetails = 'GetObjectDetails',
 	SubmoduleUpdate = 'SubmoduleUpdate',
+	RebaseAbort = 'RebaseAbort',
 	RebaseContinue = 'RebaseContinue',
 	FindTrackingBranches = 'GetTracking',
 	Apply = 'Apply',
@@ -743,6 +744,15 @@ export class Repository implements Disposable {
 		const onConfigListenerForUntracked = filterEvent(workspace.onDidChangeConfiguration, e => e.affectsConfiguration('git.untrackedChanges', root));
 		onConfigListenerForUntracked(this.updateModelState, this, this.disposables);
 
+		const updateInputBoxVisibility = () => {
+			const config = workspace.getConfiguration('git', root);
+			this._sourceControl.inputBox.visible = config.get<boolean>('showCommitInput', true);
+		};
+
+		const onConfigListenerForInputBoxVisibility = filterEvent(workspace.onDidChangeConfiguration, e => e.affectsConfiguration('git.showCommitInput', root));
+		onConfigListenerForInputBoxVisibility(updateInputBoxVisibility, this, this.disposables);
+		updateInputBoxVisibility();
+
 		this.mergeGroup.hideWhenEmpty = true;
 		this.untrackedGroup.hideWhenEmpty = true;
 
@@ -1087,6 +1097,10 @@ export class Repository implements Disposable {
 		await this.run(Operation.Remote, () => this.repository.removeRemote(name));
 	}
 
+	async renameRemote(name: string, newName: string): Promise<void> {
+		await this.run(Operation.Remote, () => this.repository.renameRemote(name, newName));
+	}
+
 	@throttle
 	async fetchDefault(options: { silent?: boolean } = {}): Promise<void> {
 		await this.run(Operation.Fetch, () => this.repository.fetch(options));
@@ -1316,6 +1330,10 @@ export class Repository implements Disposable {
 			await workspace.applyEdit(edit);
 			await document.save();
 		});
+	}
+
+	async rebaseAbort(): Promise<void> {
+		await this.run(Operation.RebaseAbort, async () => await this.repository.rebaseAbort());
 	}
 
 	checkIgnore(filePaths: string[]): Promise<Set<string>> {

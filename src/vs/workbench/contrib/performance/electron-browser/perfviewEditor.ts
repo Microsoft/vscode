@@ -13,7 +13,6 @@ import { IModeService } from 'vs/editor/common/services/modeService';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { IModelService } from 'vs/editor/common/services/modelService';
 import { ITimerService, IStartupMetrics } from 'vs/workbench/services/timer/electron-browser/timerService';
-import { repeat } from 'vs/base/common/strings';
 import { IExtensionService } from 'vs/workbench/services/extensions/common/extensions';
 import * as perf from 'vs/base/common/performance';
 import { IDisposable, dispose } from 'vs/base/common/lifecycle';
@@ -377,7 +376,7 @@ class MarkdownBuilder {
 	value: string = '';
 
 	heading(level: number, value: string): this {
-		this.value += `${repeat('#', level)} ${value}\n\n`;
+		this.value += `${'#'.repeat(level)} ${value}\n\n`;
 		return this;
 	}
 
@@ -407,16 +406,16 @@ class MarkdownBuilder {
 		});
 
 		// header
-		header.forEach((cell, ci) => { this.value += `| ${cell + repeat(' ', lengths[ci] - cell.toString().length)} `; });
+		header.forEach((cell, ci) => { this.value += `| ${cell + ' '.repeat(lengths[ci] - cell.toString().length)} `; });
 		this.value += '|\n';
-		header.forEach((_cell, ci) => { this.value += `| ${repeat('-', lengths[ci])} `; });
+		header.forEach((_cell, ci) => { this.value += `| ${'-'.repeat(lengths[ci])} `; });
 		this.value += '|\n';
 
 		// cells
 		rows.forEach(row => {
 			row.forEach((cell, ci) => {
 				if (typeof cell !== 'undefined') {
-					this.value += `| ${cell + repeat(' ', lengths[ci] - cell.toString().length)} `;
+					this.value += `| ${cell + ' '.repeat(lengths[ci] - cell.toString().length)} `;
 				}
 			});
 			this.value += '|\n';

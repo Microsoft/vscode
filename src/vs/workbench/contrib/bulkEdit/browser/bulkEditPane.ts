@@ -157,6 +157,7 @@ export class BulkEditPane extends ViewPane {
 	}
 
 	protected layoutBody(height: number, width: number): void {
+		super.layoutBody(height, width);
 		this._tree.layout(height, width);
 	}
 

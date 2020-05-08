@@ -8,6 +8,7 @@ import { isNonEmptyArray } from 'vs/base/common/arrays';
 import { onUnexpectedError } from 'vs/base/common/errors';
 import { KeyCode, KeyMod, SimpleKeybinding } from 'vs/base/common/keyCodes';
 import { dispose, IDisposable, DisposableStore, toDisposable, MutableDisposable } from 'vs/base/common/lifecycle';
+import { StableEditorScrollState } from 'vs/editor/browser/core/editorState';
 import { ICodeEditor } from 'vs/editor/browser/editorBrowser';
 import { EditorAction, EditorCommand, registerEditorAction, registerEditorCommand, registerEditorContribution, ServicesAccessor } from 'vs/editor/browser/editorExtensions';
 import { EditOperation } from 'vs/editor/common/core/editOperation';
@@ -273,6 +274,8 @@ export class SuggestController implements IEditorContribution {
 		// keep item in memory
 		this._memoryService.memorize(model, this.editor.getPosition(), item);
 
+		const scrollState = StableEditorScrollState.capture(this.editor);
+
 		if (Array.isArray(suggestion.additionalTextEdits)) {
 			this.editor.executeEdits('suggestController.additionalTextEdits', suggestion.additionalTextEdits.map(edit => EditOperation.replace(Range.lift(edit.range), edit.text)));
 		}
@@ -289,6 +292,8 @@ export class SuggestController implements IEditorContribution {
 			undoStopAfter: false,
 			adjustWhitespace: !(suggestion.insertTextRules! & CompletionItemInsertTextRule.KeepWhitespace)
 		});
+
+		scrollState.restoreRelativeVerticalPositionOfCursor(this.editor);
 
 		if (!(flags & InsertFlags.NoAfterUndoStop)) {
 			this.editor.pushUndoStop();

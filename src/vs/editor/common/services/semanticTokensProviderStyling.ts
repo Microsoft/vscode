@@ -29,50 +29,65 @@ export class SemanticTokensProviderStyling {
 		let metadata: number;
 		if (entry) {
 			metadata = entry.metadata;
-		} else {
-			const tokenType = this._legend.tokenTypes[tokenTypeIndex];
-			const tokenModifiers: string[] = [];
-			let modifierSet = tokenModifierSet;
-			for (let modifierIndex = 0; modifierSet > 0 && modifierIndex < this._legend.tokenModifiers.length; modifierIndex++) {
-				if (modifierSet & 1) {
-					tokenModifiers.push(this._legend.tokenModifiers[modifierIndex]);
-				}
-				modifierSet = modifierSet >> 1;
+			if (this._logService.getLevel() === LogLevel.Trace) {
+				this._logService.trace(`SemanticTokensProviderStyling [CACHED] ${tokenTypeIndex} / ${tokenModifierSet}: foreground ${TokenMetadata.getForeground(metadata)}, fontStyle ${TokenMetadata.getFontStyle(metadata).toString(2)}`);
 			}
+		} else {
+			let tokenType = this._legend.tokenTypes[tokenTypeIndex];
+			const tokenModifiers: string[] = [];
+			if (tokenType) {
+				let modifierSet = tokenModifierSet;
+				for (let modifierIndex = 0; modifierSet > 0 && modifierIndex < this._legend.tokenModifiers.length; modifierIndex++) {
+					if (modifierSet & 1) {
+						tokenModifiers.push(this._legend.tokenModifiers[modifierIndex]);
+					}
+					modifierSet = modifierSet >> 1;
+				}
+				if (modifierSet > 0 && this._logService.getLevel() === LogLevel.Trace) {
+					this._logService.trace(`SemanticTokensProviderStyling: unknown token modifier index: ${tokenModifierSet.toString(2)} for legend: ${JSON.stringify(this._legend.tokenModifiers)}`);
+					tokenModifiers.push('not-in-legend');
+				}
 
-			const tokenStyle = this._themeService.getColorTheme().getTokenStyleMetadata(tokenType, tokenModifiers, languageId.language);
-			if (typeof tokenStyle === 'undefined') {
-				metadata = SemanticTokensProviderStylingConstants.NO_STYLING;
-			} else {
-				metadata = 0;
-				if (typeof tokenStyle.italic !== 'undefined') {
-					const italicBit = (tokenStyle.italic ? FontStyle.Italic : 0) << MetadataConsts.FONT_STYLE_OFFSET;
-					metadata |= italicBit | MetadataConsts.SEMANTIC_USE_ITALIC;
-				}
-				if (typeof tokenStyle.bold !== 'undefined') {
-					const boldBit = (tokenStyle.bold ? FontStyle.Bold : 0) << MetadataConsts.FONT_STYLE_OFFSET;
-					metadata |= boldBit | MetadataConsts.SEMANTIC_USE_BOLD;
-				}
-				if (typeof tokenStyle.underline !== 'undefined') {
-					const underlineBit = (tokenStyle.underline ? FontStyle.Underline : 0) << MetadataConsts.FONT_STYLE_OFFSET;
-					metadata |= underlineBit | MetadataConsts.SEMANTIC_USE_UNDERLINE;
-				}
-				if (tokenStyle.foreground) {
-					const foregroundBits = (tokenStyle.foreground) << MetadataConsts.FOREGROUND_OFFSET;
-					metadata |= foregroundBits | MetadataConsts.SEMANTIC_USE_FOREGROUND;
-				}
-				if (metadata === 0) {
-					// Nothing!
+				const tokenStyle = this._themeService.getColorTheme().getTokenStyleMetadata(tokenType, tokenModifiers, languageId.language);
+				if (typeof tokenStyle === 'undefined') {
 					metadata = SemanticTokensProviderStylingConstants.NO_STYLING;
+				} else {
+					metadata = 0;
+					if (typeof tokenStyle.italic !== 'undefined') {
+						const italicBit = (tokenStyle.italic ? FontStyle.Italic : 0) << MetadataConsts.FONT_STYLE_OFFSET;
+						metadata |= italicBit | MetadataConsts.SEMANTIC_USE_ITALIC;
+					}
+					if (typeof tokenStyle.bold !== 'undefined') {
+						const boldBit = (tokenStyle.bold ? FontStyle.Bold : 0) << MetadataConsts.FONT_STYLE_OFFSET;
+						metadata |= boldBit | MetadataConsts.SEMANTIC_USE_BOLD;
+					}
+					if (typeof tokenStyle.underline !== 'undefined') {
+						const underlineBit = (tokenStyle.underline ? FontStyle.Underline : 0) << MetadataConsts.FONT_STYLE_OFFSET;
+						metadata |= underlineBit | MetadataConsts.SEMANTIC_USE_UNDERLINE;
+					}
+					if (tokenStyle.foreground) {
+						const foregroundBits = (tokenStyle.foreground) << MetadataConsts.FOREGROUND_OFFSET;
+						metadata |= foregroundBits | MetadataConsts.SEMANTIC_USE_FOREGROUND;
+					}
+					if (metadata === 0) {
+						// Nothing!
+						metadata = SemanticTokensProviderStylingConstants.NO_STYLING;
+					}
 				}
+			} else {
+				if (this._logService.getLevel() === LogLevel.Trace) {
+					this._logService.trace(`SemanticTokensProviderStyling: unknown token type index: ${tokenTypeIndex} for legend: ${JSON.stringify(this._legend.tokenTypes)}`);
+				}
+				metadata = SemanticTokensProviderStylingConstants.NO_STYLING;
+				tokenType = 'not-in-legend';
 			}
 			this._hashTable.add(tokenTypeIndex, tokenModifierSet, languageId.id, metadata);
+
+			if (this._logService.getLevel() === LogLevel.Trace) {
+				this._logService.trace(`SemanticTokensProviderStyling ${tokenTypeIndex} (${tokenType}) / ${tokenModifierSet} (${tokenModifiers.join(' ')}): foreground ${TokenMetadata.getForeground(metadata)}, fontStyle ${TokenMetadata.getFontStyle(metadata).toString(2)}`);
+			}
 		}
-		if (this._logService.getLevel() === LogLevel.Trace) {
-			const type = this._legend.tokenTypes[tokenTypeIndex];
-			const modifiers = tokenModifierSet ? ' ' + this._legend.tokenModifiers.filter((_, i) => tokenModifierSet & (1 << i)).join(' ') : '';
-			this._logService.trace(`tokenStyleMetadata ${entry ? '[CACHED] ' : ''}${type}${modifiers}: foreground ${TokenMetadata.getForeground(metadata)}, fontStyle ${TokenMetadata.getFontStyle(metadata).toString(2)}`);
-		}
+
 		return metadata;
 	}
 }

@@ -136,7 +136,7 @@ export class BaseActionViewItem extends Disposable implements IActionViewItem {
 
 		if (platform.isMacintosh) {
 			// macOS: allow to trigger the button when holding Ctrl+key and pressing the
-			//  main mouse button. This is for scenarios where e.g. some interaction forces
+			// main mouse button. This is for scenarios where e.g. some interaction forces
 			// the Ctrl+key to be pressed and hold but the user still wants to interact
 			// with the actions (for example quick access in quick navigation mode).
 			this._register(DOM.addDisposableListener(element, DOM.EventType.CONTEXT_MENU, e => {
@@ -178,17 +178,7 @@ export class BaseActionViewItem extends Disposable implements IActionViewItem {
 	onClick(event: DOM.EventLike): void {
 		DOM.EventHelper.stop(event, true);
 
-		let context: any;
-		if (types.isUndefinedOrNull(this._context)) {
-			context = event;
-		} else {
-			context = this._context;
-
-			if (types.isObject(context)) {
-				context.event = event;
-			}
-		}
-
+		const context = types.isUndefinedOrNull(this._context) ? undefined : this._context;
 		this.actionRunner.run(this._action, context);
 	}
 
@@ -275,7 +265,6 @@ export class ActionViewItem extends BaseActionViewItem {
 		if (this.element) {
 			this.label = DOM.append(this.element, DOM.$('a.action-label'));
 		}
-
 
 		if (this.label) {
 			if (this._action.id === Separator.ID) {
@@ -488,27 +477,27 @@ export class ActionBar extends Disposable implements IActionRunner {
 			DOM.addClass(this.domNode, 'animated');
 		}
 
-		let previousKey: KeyCode;
-		let nextKey: KeyCode;
+		let previousKeys: KeyCode[];
+		let nextKeys: KeyCode[];
 
 		switch (this.options.orientation) {
 			case ActionsOrientation.HORIZONTAL:
-				previousKey = KeyCode.LeftArrow;
-				nextKey = KeyCode.RightArrow;
+				previousKeys = [KeyCode.LeftArrow, KeyCode.UpArrow];
+				nextKeys = [KeyCode.RightArrow, KeyCode.DownArrow];
 				break;
 			case ActionsOrientation.HORIZONTAL_REVERSE:
-				previousKey = KeyCode.RightArrow;
-				nextKey = KeyCode.LeftArrow;
+				previousKeys = [KeyCode.RightArrow, KeyCode.DownArrow];
+				nextKeys = [KeyCode.LeftArrow, KeyCode.UpArrow];
 				this.domNode.className += ' reverse';
 				break;
 			case ActionsOrientation.VERTICAL:
-				previousKey = KeyCode.UpArrow;
-				nextKey = KeyCode.DownArrow;
+				previousKeys = [KeyCode.LeftArrow, KeyCode.UpArrow];
+				nextKeys = [KeyCode.RightArrow, KeyCode.DownArrow];
 				this.domNode.className += ' vertical';
 				break;
 			case ActionsOrientation.VERTICAL_REVERSE:
-				previousKey = KeyCode.DownArrow;
-				nextKey = KeyCode.UpArrow;
+				previousKeys = [KeyCode.RightArrow, KeyCode.DownArrow];
+				nextKeys = [KeyCode.LeftArrow, KeyCode.UpArrow];
 				this.domNode.className += ' vertical reverse';
 				break;
 		}
@@ -517,9 +506,9 @@ export class ActionBar extends Disposable implements IActionRunner {
 			const event = new StandardKeyboardEvent(e);
 			let eventHandled = true;
 
-			if (event.equals(previousKey)) {
+			if (previousKeys && (event.equals(previousKeys[0]) || event.equals(previousKeys[1]))) {
 				this.focusPrevious();
-			} else if (event.equals(nextKey)) {
+			} else if (nextKeys && (event.equals(nextKeys[0]) || event.equals(nextKeys[1]))) {
 				this.focusNext();
 			} else if (event.equals(KeyCode.Escape)) {
 				this._onDidCancel.fire();

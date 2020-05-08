@@ -702,7 +702,8 @@ export class Menubar {
 			}
 
 			// DevTools focused
-			if (activeWindow.webContents.isDevToolsFocused()) {
+			if (activeWindow.webContents.isDevToolsFocused() &&
+				activeWindow.webContents.devToolsWebContents) {
 				return contextSpecificHandlers.inDevTools(activeWindow.webContents.devToolsWebContents);
 			}
 

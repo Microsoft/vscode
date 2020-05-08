@@ -7,6 +7,7 @@ import * as nls from 'vs/nls';
 import { Registry } from 'vs/platform/registry/common/platform';
 import { Extensions as JSONExtensions, IJSONContributionRegistry } from 'vs/platform/jsonschemas/common/jsonContributionRegistry';
 import { IJSONSchema } from 'vs/base/common/jsonSchema';
+import { fontWeightRegex, fontStyleRegex, fontSizeRegex, fontIdRegex } from 'vs/workbench/services/themes/common/productIconThemeSchema';
 
 const schemaId = 'vscode://schemas/icon-theme';
 const schema: IJSONSchema = {
@@ -110,7 +111,9 @@ const schema: IJSONSchema = {
 				properties: {
 					id: {
 						type: 'string',
-						description: nls.localize('schema.id', 'The ID of the font.')
+						description: nls.localize('schema.id', 'The ID of the font.'),
+						pattern: fontIdRegex,
+						patternErrorMessage: nls.localize('schema.id.formatError', 'The ID must only contain letter, numbers, underscore and minus.')
 					},
 					src: {
 						type: 'array',
@@ -124,7 +127,8 @@ const schema: IJSONSchema = {
 								},
 								format: {
 									type: 'string',
-									description: nls.localize('schema.font-format', 'The format of the font.')
+									description: nls.localize('schema.font-format', 'The format of the font.'),
+									enum: ['woff', 'woff2', 'truetype', 'opentype', 'embedded-opentype', 'svg']
 								}
 							},
 							required: [
@@ -135,15 +139,18 @@ const schema: IJSONSchema = {
 					},
 					weight: {
 						type: 'string',
-						description: nls.localize('schema.font-weight', 'The weight of the font.')
+						description: nls.localize('schema.font-weight', 'The weight of the font. See https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight for valid values.'),
+						pattern: fontWeightRegex
 					},
 					style: {
 						type: 'string',
-						description: nls.localize('schema.font-sstyle', 'The style of the font.')
+						description: nls.localize('schema.font-style', 'The style of the font. See https://developer.mozilla.org/en-US/docs/Web/CSS/font-style for valid values.'),
+						pattern: fontStyleRegex
 					},
 					size: {
 						type: 'string',
-						description: nls.localize('schema.font-size', 'The default size of the font.')
+						description: nls.localize('schema.font-size', 'The default size of the font. See https://developer.mozilla.org/en-US/docs/Web/CSS/font-size for valid values.'),
+						pattern: fontSizeRegex
 					}
 				},
 				required: [
@@ -174,7 +181,8 @@ const schema: IJSONSchema = {
 					},
 					fontSize: {
 						type: 'string',
-						description: nls.localize('schema.fontSize', 'When using a font: The font size in percentage to the text font. If not set, defaults to the size in the font definition.')
+						description: nls.localize('schema.fontSize', 'When using a font: The font size in percentage to the text font. If not set, defaults to the size in the font definition.'),
+						pattern: fontSizeRegex
 					},
 					fontId: {
 						type: 'string',

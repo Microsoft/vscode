@@ -6,7 +6,7 @@
 import 'vs/workbench/browser/parts/editor/editor.contribution';
 import { IThemeService } from 'vs/platform/theme/common/themeService';
 import { Part } from 'vs/workbench/browser/part';
-import { Dimension, isAncestor, toggleClass, addClass, $ } from 'vs/base/browser/dom';
+import { Dimension, isAncestor, toggleClass, addClass, $, EventHelper } from 'vs/base/browser/dom';
 import { Event, Emitter, Relay } from 'vs/base/common/event';
 import { contrastBorder, editorBackground } from 'vs/platform/theme/common/colorRegistry';
 import { GroupDirection, IAddGroupOptions, GroupsArrangement, GroupOrientation, IMergeGroupOptions, MergeGroupMode, ICopyEditorOptions, GroupsOrder, GroupChangeKind, GroupLocation, IFindGroupScope, EditorGroupLayout, GroupLayoutArgument, IEditorGroupsService } from 'vs/workbench/services/editor/common/editorGroupsService';
@@ -830,14 +830,23 @@ export class EditorPart extends Part implements IEditorGroupsService, IEditorGro
 		addClass(overlay, 'drop-block-overlay');
 		parent.appendChild(overlay);
 
-		CompositeDragAndDropObserver.INSTANCE.registerTarget(this.element, {
+		this._register(CompositeDragAndDropObserver.INSTANCE.registerTarget(this.element, {
 			onDragStart: e => {
 				toggleClass(overlay, 'visible', true);
 			},
 			onDragEnd: e => {
 				toggleClass(overlay, 'visible', false);
 			}
-		});
+		}));
+
+		this._register(CompositeDragAndDropObserver.INSTANCE.registerTarget(overlay, {
+			onDragOver: e => {
+				EventHelper.stop(e.eventData, true);
+				if (e.eventData.dataTransfer) {
+					e.eventData.dataTransfer.dropEffect = 'none';
+				}
+			}
+		}));
 
 		return this.container;
 	}

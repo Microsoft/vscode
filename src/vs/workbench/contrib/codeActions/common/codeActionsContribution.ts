@@ -114,7 +114,6 @@ export class CodeActionsContribution extends Disposable implements IWorkbenchCon
 					}
 				},
 				then: {
-					required: ['args'],
 					properties: {
 						'args': {
 							required: ['kind'],

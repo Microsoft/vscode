@@ -201,9 +201,11 @@ export class CommentsList extends WorkbenchAsyncDataTree<any, any> {
 							);
 						}
 						return '';
+					},
+					getWidgetAriaLabel(): string {
+						return COMMENTS_VIEW_TITLE;
 					}
 				},
-				ariaLabel: COMMENTS_VIEW_TITLE,
 				keyboardSupport: true,
 				identityProvider: {
 					getId: (element: any) => {

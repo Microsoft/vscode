@@ -5,22 +5,30 @@
 
 import { IWorkbenchContribution } from 'vs/workbench/common/contributions';
 import { Registry } from 'vs/platform/registry/common/platform';
-import { IViewsRegistry, Extensions, ITreeViewDescriptor, ITreeViewDataProvider, ITreeItem, TreeItemCollapsibleState, IViewsService, TreeViewItemHandleArg, IViewContainersRegistry, ViewContainerLocation, ViewContainer } from 'vs/workbench/common/views';
+import { IViewsRegistry, Extensions, ITreeViewDescriptor, ITreeViewDataProvider, ITreeItem, TreeItemCollapsibleState, IViewsService, TreeViewItemHandleArg, IViewContainersRegistry, ViewContainerLocation, ViewContainer, IViewDescriptorService } from 'vs/workbench/common/views';
 import { localize } from 'vs/nls';
 import { SyncDescriptor } from 'vs/platform/instantiation/common/descriptors';
 import { TreeViewPane, TreeView } from 'vs/workbench/browser/parts/views/treeView';
 import { IInstantiationService, ServicesAccessor } from 'vs/platform/instantiation/common/instantiation';
-import { ALL_SYNC_RESOURCES, CONTEXT_SYNC_ENABLEMENT, SyncResource, IUserDataSyncService, ISyncResourceHandle } from 'vs/platform/userDataSync/common/userDataSync';
+import { ALL_SYNC_RESOURCES, SyncResource, IUserDataSyncService, ISyncResourceHandle, CONTEXT_SYNC_STATE, SyncStatus } from 'vs/platform/userDataSync/common/userDataSync';
 import { registerAction2, Action2, MenuId } from 'vs/platform/actions/common/actions';
-import { IContextKeyService, RawContextKey, ContextKeyExpr, ContextKeyEqualsExpr } from 'vs/platform/contextkey/common/contextkey';
+import { IContextKeyService, RawContextKey, ContextKeyExpr, ContextKeyEqualsExpr, IContextKey } from 'vs/platform/contextkey/common/contextkey';
 import { URI } from 'vs/base/common/uri';
 import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
 import { FolderThemeIcon } from 'vs/platform/theme/common/themeService';
 import { fromNow } from 'vs/base/common/date';
 import { pad, uppercaseFirstLetter } from 'vs/base/common/strings';
 import { ViewPaneContainer } from 'vs/workbench/browser/parts/views/viewPaneContainer';
+import { Codicon } from 'vs/base/common/codicons';
+import { CONTEXT_ACCOUNT_STATE } from 'vs/workbench/contrib/userDataSync/browser/userDataSync';
+import { AccountStatus } from 'vs/workbench/contrib/userDataSync/browser/userDataSyncAccount';
+
+export const VIEW_CONTAINER_ID = 'workbench.view.sync';
+const CONTEXT_ENABLE_VIEWS = new RawContextKey<boolean>(`showUserDataSyncViews`, false);
 
 export class UserDataSyncViewContribution implements IWorkbenchContribution {
+
+	private readonly viewsEnablementContext: IContextKey<boolean>;
 
 	constructor(
 		@IInstantiationService private readonly instantiationService: IInstantiationService,
@@ -28,29 +36,29 @@ export class UserDataSyncViewContribution implements IWorkbenchContribution {
 		@IUserDataSyncService private readonly userDataSyncService: IUserDataSyncService,
 	) {
 		const container = this.registerSyncViewContainer();
-		this.registerBackupView(container, true);
-		this.registerBackupView(container, false);
+		this.viewsEnablementContext = CONTEXT_ENABLE_VIEWS.bindTo(this.contextKeyService);
+		this.registerView(container, true);
+		this.registerView(container, false);
 	}
 
 	private registerSyncViewContainer(): ViewContainer {
 		return Registry.as<IViewContainersRegistry>(Extensions.ViewContainersRegistry).registerViewContainer(
 			{
-				id: 'workbench.view.sync',
+				id: VIEW_CONTAINER_ID,
 				name: localize('sync preferences', "Preferences Sync"),
 				ctorDescriptor: new SyncDescriptor(
 					ViewPaneContainer,
-					['workbench.view.sync', `workbench.view.sync.state`, { mergeViewWithContainerWhenSingleView: true }]
+					[VIEW_CONTAINER_ID, { mergeViewWithContainerWhenSingleView: true }]
 				),
-				icon: 'codicon-sync',
+				icon: Codicon.sync.classNames,
 				hideIfEmpty: true,
 			}, ViewContainerLocation.Sidebar);
 	}
 
-	private registerBackupView(container: ViewContainer, remote: boolean): void {
-		const id = `workbench.views.sync.${remote ? 'remote' : 'local'}BackupView`;
-		const name = remote ? localize('remote title', "Remote Backup") : localize('local title', "Local Backup");
-		const contextKey = new RawContextKey<boolean>(`showUserDataSync${remote ? 'Remote' : 'Local'}BackupView`, false);
-		const viewEnablementContext = contextKey.bindTo(this.contextKeyService);
+	private registerView(container: ViewContainer, remote: boolean): void {
+		const that = this;
+		const id = `workbench.views.sync.${remote ? 'remote' : 'local'}DataView`;
+		const name = remote ? localize('remote title', "Remote Data") : localize('local title', "Local Backup");
 		const treeView = this.instantiationService.createInstance(TreeView, id, name);
 		treeView.showCollapseAllAction = true;
 		treeView.showRefreshAction = true;
@@ -65,7 +73,7 @@ export class UserDataSyncViewContribution implements IWorkbenchContribution {
 			id,
 			name,
 			ctorDescriptor: new SyncDescriptor(TreeViewPane),
-			when: ContextKeyExpr.and(CONTEXT_SYNC_ENABLEMENT, contextKey),
+			when: ContextKeyExpr.and(CONTEXT_SYNC_STATE.notEqualsTo(SyncStatus.Uninitialized), CONTEXT_ACCOUNT_STATE.isEqualTo(AccountStatus.Available), CONTEXT_ENABLE_VIEWS),
 			canToggleVisibility: true,
 			canMoveView: true,
 			treeView,
@@ -76,20 +84,35 @@ export class UserDataSyncViewContribution implements IWorkbenchContribution {
 		registerAction2(class extends Action2 {
 			constructor() {
 				super({
-					id: `workbench.actions.showSync${remote ? 'Remote' : 'Local'}BackupView`,
+					id: `workbench.actions.showSync${remote ? 'Remote' : 'Local'}DataView`,
 					title: remote ?
-						{ value: localize('workbench.action.showSyncRemoteBackup', "Show Remote Backup"), original: `Show Remote Backup` }
+						{ value: localize('workbench.action.showSyncRemoteBackup', "Show Remote Data"), original: `Show Remote Data` }
 						: { value: localize('workbench.action.showSyncLocalBackup', "Show Local Backup"), original: `Show Local Backup` },
 					category: { value: localize('sync preferences', "Preferences Sync"), original: `Preferences Sync` },
 					menu: {
 						id: MenuId.CommandPalette,
-						when: CONTEXT_SYNC_ENABLEMENT
+						when: ContextKeyExpr.and(CONTEXT_SYNC_STATE.notEqualsTo(SyncStatus.Uninitialized), CONTEXT_ACCOUNT_STATE.isEqualTo(AccountStatus.Available)),
 					},
 				});
 			}
 			async run(accessor: ServicesAccessor): Promise<void> {
-				viewEnablementContext.set(true);
-				accessor.get(IViewsService).openView(id, true);
+				const viewDescriptorService = accessor.get(IViewDescriptorService);
+				const viewsService = accessor.get(IViewsService);
+				that.viewsEnablementContext.set(true);
+				const viewContainer = viewDescriptorService.getViewContainerByViewId(id);
+				if (viewContainer) {
+					const model = viewDescriptorService.getViewContainerModel(viewContainer);
+					if (model.activeViewDescriptors.some(viewDescriptor => viewDescriptor.id === id)) {
+						viewsService.openView(id, true);
+					} else {
+						const disposable = model.onDidChangeActiveViewDescriptors(e => {
+							if (e.added.some(viewDescriptor => viewDescriptor.id === id)) {
+								disposable.dispose();
+								viewsService.openView(id, true);
+							}
+						});
+					}
+				}
 			}
 		});
 

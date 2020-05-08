@@ -36,6 +36,7 @@ export interface INativeEnvironmentService extends IEnvironmentService {
 	installSourcePath: string;
 
 	extensionsPath?: string;
+	extensionsDownloadPath?: string;
 	builtinExtensionsPath: string;
 
 	globalStorageHome: string;
@@ -95,6 +96,9 @@ export class EnvironmentService implements INativeEnvironmentService {
 	get sync(): 'on' | 'off' | undefined { return this.args.sync; }
 
 	@memoize
+	get enableSyncByDefault(): boolean { return false; }
+
+	@memoize
 	get machineSettingsResource(): URI { return resources.joinPath(URI.file(path.join(this.userDataPath, 'Machine')), 'settings.json'); }
 
 	@memoize
@@ -145,6 +149,10 @@ export class EnvironmentService implements INativeEnvironmentService {
 		} else {
 			return path.normalize(path.join(getPathFromAmdModule(require, ''), '..', 'extensions'));
 		}
+	}
+
+	get extensionsDownloadPath(): string | undefined {
+		return parsePathArg(this._args['extensions-download-dir'], process);
 	}
 
 	@memoize
@@ -245,6 +253,7 @@ export class EnvironmentService implements INativeEnvironmentService {
 
 	get disableUpdates(): boolean { return !!this._args['disable-updates']; }
 	get disableCrashReporter(): boolean { return !!this._args['disable-crash-reporter']; }
+	get crashReporterDirectory(): string | undefined { return this._args['crash-reporter-directory']; }
 
 	get driverHandle(): string | undefined { return this._args['driver']; }
 	get driverVerbose(): boolean { return !!this._args['driver-verbose']; }

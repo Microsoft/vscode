@@ -89,6 +89,7 @@
 }
 
 .settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .monaco-text-button.setting-list-addButton {
+	display: inline-block;
 	margin-top: 4px;
 	margin-right: 10px;
 }

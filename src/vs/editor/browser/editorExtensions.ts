@@ -21,6 +21,8 @@ import { IKeybindings, KeybindingsRegistry } from 'vs/platform/keybinding/common
 import { Registry } from 'vs/platform/registry/common/platform';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 import { withNullAsUndefined, assertType } from 'vs/base/common/types';
+import { ThemeIcon } from 'vs/platform/theme/common/themeService';
+
 
 export type ServicesAccessor = InstantiationServicesAccessor;
 export type IEditorContributionCtor = IConstructorSignature1<ICodeEditor, IEditorContribution>;
@@ -48,6 +50,7 @@ export interface ICommandMenuOptions {
 	order: number;
 	when?: ContextKeyExpression;
 	title: string;
+	icon?: ThemeIcon
 }
 export interface ICommandOptions {
 	id: string;
@@ -118,6 +121,7 @@ export abstract class Command {
 			command: {
 				id: this.id,
 				title: item.title,
+				icon: item.icon
 				// precondition: this.precondition
 			},
 			when: item.when,

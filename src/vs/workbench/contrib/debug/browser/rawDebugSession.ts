@@ -700,13 +700,13 @@ export class RawDebugSession implements IDisposable {
 				"error" : { "classification": "CallstackOrException", "purpose": "FeatureInsight" }
 			}
 		*/
-		this.telemetryService.publicLog('debugProtocolErrorResponse', { error: telemetryMessage });
+		this.telemetryService.publicLogError('debugProtocolErrorResponse', { error: telemetryMessage });
 		if (this.customTelemetryService) {
 			/* __GDPR__TODO__
 				The message is sent in the name of the adapter but the adapter doesn't know about it.
 				However, since adapters are an open-ended set, we can not declared the events statically either.
 			*/
-			this.customTelemetryService.publicLog('debugProtocolErrorResponse', { error: telemetryMessage }, true);
+			this.customTelemetryService.publicLogError('debugProtocolErrorResponse', { error: telemetryMessage });
 		}
 	}
 

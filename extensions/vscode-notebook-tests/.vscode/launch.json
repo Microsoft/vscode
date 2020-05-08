@@ -1,0 +1,17 @@
+// A launch configuration that compiles the extension and then opens it inside a new window
+{
+	"version": "0.1.0",
+	"configurations": [
+		{
+			"name": "Launch Tests",
+			"type": "extensionHost",
+			"request": "launch",
+			"runtimeExecutable": "${execPath}",
+			"args": ["${workspaceFolder}/../../", "${workspaceFolder}/test", "--extensionDevelopmentPath=${workspaceFolder}", "--extensionTestsPath=${workspaceFolder}/out" ],
+			"stopOnEntry": false,
+			"sourceMaps": true,
+			"outDir": "${workspaceFolder}/out",
+			"preLaunchTask": "npm"
+		}
+	]
+}

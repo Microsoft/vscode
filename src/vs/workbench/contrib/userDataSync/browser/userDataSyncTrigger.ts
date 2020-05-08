@@ -9,10 +9,10 @@ import { IEditorService } from 'vs/workbench/services/editor/common/editorServic
 import { SettingsEditor2Input, KeybindingsEditorInput, PreferencesEditorInput } from 'vs/workbench/services/preferences/common/preferencesEditorInput';
 import { isEqual } from 'vs/base/common/resources';
 import { IWorkbenchEnvironmentService } from 'vs/workbench/services/environment/common/environmentService';
-import { IViewletService } from 'vs/workbench/services/viewlet/browser/viewlet';
 import { VIEWLET_ID } from 'vs/workbench/contrib/extensions/common/extensions';
 import { IEditorInput } from 'vs/workbench/common/editor';
-import { IViewlet } from 'vs/workbench/common/viewlet';
+import { IViewsService } from 'vs/workbench/common/views';
+import { VIEW_CONTAINER_ID } from 'vs/workbench/contrib/userDataSync/browser/userDataSyncView';
 
 export class UserDataSyncTrigger extends Disposable {
 
@@ -22,24 +22,15 @@ export class UserDataSyncTrigger extends Disposable {
 	constructor(
 		@IEditorService editorService: IEditorService,
 		@IWorkbenchEnvironmentService private readonly workbenchEnvironmentService: IWorkbenchEnvironmentService,
-		@IViewletService viewletService: IViewletService,
+		@IViewsService viewsService: IViewsService,
 	) {
 		super();
-		this._register(Event.any<string | undefined>(
-			Event.map(editorService.onDidActiveEditorChange, () => this.getUserDataEditorInputSource(editorService.activeEditor)),
-			Event.map(viewletService.onDidViewletOpen, viewlet => this.getUserDataViewletSource(viewlet))
-		)(source => {
-			if (source) {
-				this._onDidTriggerSync.fire(source);
-			}
-		}));
-	}
-
-	private getUserDataViewletSource(viewlet: IViewlet): string | undefined {
-		if (viewlet.getId() === VIEWLET_ID) {
-			return 'extensionsViewlet';
-		}
-		return undefined;
+		this._register(
+			Event.filter(
+				Event.any<string | undefined>(
+					Event.map(editorService.onDidActiveEditorChange, () => this.getUserDataEditorInputSource(editorService.activeEditor)),
+					Event.map(Event.filter(viewsService.onDidChangeViewContainerVisibility, e => [VIEWLET_ID, VIEW_CONTAINER_ID].includes(e.id) && e.visible), e => e.id)
+				), source => source !== undefined)(source => this._onDidTriggerSync.fire(source!)));
 	}
 
 	private getUserDataEditorInputSource(editorInput: IEditorInput | undefined): string | undefined {

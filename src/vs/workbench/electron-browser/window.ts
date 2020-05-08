@@ -141,7 +141,7 @@ export class NativeWindow extends Disposable {
 					}
 				}
 			} else {
-				args.push({ from: request.from }); // TODO@telemetry this is a bit weird to send this to every action?
+				args.push({ from: request.from });
 			}
 
 			try {
@@ -426,8 +426,20 @@ export class NativeWindow extends Disposable {
 		this.updateTouchbarMenu();
 
 		// Crash reporter (if enabled)
-		if (!this.environmentService.disableCrashReporter && product.crashReporter && product.appCenter && this.configurationService.getValue('telemetry.enableCrashReporter')) {
-			this.setupCrashReporter(product.crashReporter.companyName, product.crashReporter.productName, product.appCenter);
+		if (!this.environmentService.disableCrashReporter && this.configurationService.getValue('telemetry.enableCrashReporter')) {
+			const companyName = product.crashReporter?.companyName || 'Microsoft';
+			const productName = product.crashReporter?.productName || product.nameShort;
+
+			// With appCenter enabled, crashes will be uploaded
+			if (product.appCenter) {
+				this.setupCrashReporter(companyName, productName, product.appCenter, undefined);
+			}
+
+			// With a provided crash reporter directory, crashes
+			// will be stored only locally in that folder
+			else if (this.environmentService.crashReporterDirectory) {
+				this.setupCrashReporter(companyName, productName, undefined, this.environmentService.crashReporterDirectory);
+			}
 		}
 	}
 
@@ -540,13 +552,14 @@ export class NativeWindow extends Disposable {
 		}
 	}
 
-	private async setupCrashReporter(companyName: string, productName: string, appCenterConfig: typeof product.appCenter): Promise<void> {
-		if (!appCenterConfig) {
-			return;
+	private async setupCrashReporter(companyName: string, productName: string, appCenter: typeof product.appCenter, crashesDirectory: undefined): Promise<void>;
+	private async setupCrashReporter(companyName: string, productName: string, appCenter: undefined, crashesDirectory: string): Promise<void>;
+	private async setupCrashReporter(companyName: string, productName: string, appCenter: typeof product.appCenter | undefined, crashesDirectory: string | undefined): Promise<void> {
+		let submitURL: string | undefined = undefined;
+		if (appCenter) {
+			submitURL = isWindows ? appCenter[process.arch === 'ia32' ? 'win32-ia32' : 'win32-x64'] : isLinux ? appCenter[`linux-x64`] : appCenter.darwin;
 		}
 
-		const appCenterURL = isWindows ? appCenterConfig[process.arch === 'ia32' ? 'win32-ia32' : 'win32-x64']
-			: isLinux ? appCenterConfig[`linux-x64`] : appCenterConfig.darwin;
 		const info = await this.telemetryService.getTelemetryInfo();
 		const crashReporterId = this.storageService.get(crashReporterIdStorageKey, StorageScope.GLOBAL)!;
 
@@ -554,11 +567,14 @@ export class NativeWindow extends Disposable {
 		const options: CrashReporterStartOptions = {
 			companyName,
 			productName,
-			submitURL: appCenterURL.concat('&uid=', crashReporterId, '&iid=', crashReporterId, '&sid=', info.sessionId),
+			submitURL: (submitURL?.concat('&uid=', crashReporterId, '&iid=', crashReporterId, '&sid=', info.sessionId)) || '',
 			extra: {
 				vscode_version: product.version,
 				vscode_commit: product.commit || ''
-			}
+			},
+
+			// If `crashesDirectory` is specified, we do not upload
+			uploadToServer: !crashesDirectory,
 		};
 
 		// start crash reporter in the main process first.

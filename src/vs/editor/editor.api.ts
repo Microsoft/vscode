@@ -41,6 +41,8 @@ if (typeof global.require !== 'undefined' && typeof global.require.config === 'f
 		ignoreDuplicateModules: [
 			'vscode-languageserver-types',
 			'vscode-languageserver-types/main',
+			'vscode-languageserver-textdocument',
+			'vscode-languageserver-textdocument/main',
 			'vscode-nls',
 			'vscode-nls/vscode-nls',
 			'jsonc-parser',

@@ -25,7 +25,7 @@
 	outline: none;
 }
 
-.monaco-breadcrumbs .monaco-breadcrumb-item .codicon-chevron-right {
+.monaco-breadcrumbs .monaco-breadcrumb-item .codicon-breadcrumb-separator {
 	color: inherit;
 }
 

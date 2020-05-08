@@ -22,24 +22,31 @@ export function activate(context: vscode.ExtensionContext): any {
 			function addToken(value: string, startLine: number, startCharacter: number, length: number) {
 				const [type, ...modifiers] = value.split('.');
 
+				const selectedModifiers = [];
+
 				let tokenType = legend.tokenTypes.indexOf(type);
 				if (tokenType === -1) {
-					return;
-				}
-
-				let tokenModifiers = 0;
-				for (let i = 0; i < modifiers.length; i++) {
-					const index = legend.tokenModifiers.indexOf(modifiers[i]);
-					if (index !== -1) {
-						tokenModifiers = tokenModifiers | 1 << index;
+					if (type === 'notInLegend') {
+						tokenType = tokenTypes.length + 2;
+					} else {
+						return;
 					}
 				}
 
-
+				let tokenModifiers = 0;
+				for (const modifier of modifiers) {
+					const index = legend.tokenModifiers.indexOf(modifier);
+					if (index !== -1) {
+						tokenModifiers = tokenModifiers | 1 << index;
+						selectedModifiers.push(modifier);
+					} else if (modifier === 'notInLegend') {
+						tokenModifiers = tokenModifiers | 1 << (legend.tokenModifiers.length + 2);
+						selectedModifiers.push(modifier);
+					}
+				}
 				builder.push(startLine, startCharacter, length, tokenType, tokenModifiers);
 
-				const selectedModifiers = legend.tokenModifiers.filter((_val, bit) => tokenModifiers & (1 << bit)).join(' ');
-				outputChannel.appendLine(`line: ${startLine}, character: ${startCharacter}, length ${length}, ${legend.tokenTypes[tokenType]} (${tokenType}), ${selectedModifiers} ${tokenModifiers.toString(2)}`);
+				outputChannel.appendLine(`line: ${startLine}, character: ${startCharacter}, length ${length}, ${type} (${tokenType}), ${selectedModifiers} ${tokenModifiers.toString(2)}`);
 			}
 
 			outputChannel.appendLine('---');

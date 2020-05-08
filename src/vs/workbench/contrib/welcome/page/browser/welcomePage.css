@@ -220,7 +220,7 @@
 
 .file-icons-enabled .show-file-icons .vs_code_welcome_page-name-file-icon.file-icon::before {
 	content: ' ';
-	background-image: url('../../code-icon.svg');
+	background-image: url('../../../../browser/media/code-icon.svg');
 }
 
 .monaco-workbench .part.editor > .content .welcomePage .mac-only,

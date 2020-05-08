@@ -1428,6 +1428,28 @@ suite('Editor Controller - Regression tests', () => {
 		model.dispose();
 	});
 
+	test('issue #95591: Unindenting moves cursor to beginning of line', () => {
+		let model = createTextModel(
+			[
+				'        '
+			].join('\n')
+		);
+
+		withTestCodeEditor(null, {
+			model: model,
+			useTabStops: false
+		}, (editor, cursor) => {
+			moveTo(cursor, 1, 9, false);
+			assertCursor(cursor, new Selection(1, 9, 1, 9));
+
+			CoreEditingCommands.Outdent.runEditorCommand(null, editor, null);
+			assert.equal(model.getLineContent(1), '    ');
+			assertCursor(cursor, new Selection(1, 5, 1, 5));
+		});
+
+		model.dispose();
+	});
+
 	test('Bug #16657: [editor] Tab on empty line of zero indentation moves cursor to position (1,1)', () => {
 		let model = createTextModel(
 			[

@@ -29,7 +29,7 @@ export class CustomEditorInput extends LazilyResolvedWebviewEditorInput {
 	private readonly _editorResource: URI;
 	private _defaultDirtyState: boolean | undefined;
 
-	public readonly backupId: string | undefined;
+	private readonly _backupId: string | undefined;
 
 	get resource() { return this._editorResource; }
 
@@ -54,7 +54,7 @@ export class CustomEditorInput extends LazilyResolvedWebviewEditorInput {
 		super(id, viewType, '', webview, webviewService, webviewWorkbenchService);
 		this._editorResource = resource;
 		this._defaultDirtyState = options.startsDirty;
-		this.backupId = options.backupId;
+		this._backupId = options.backupId;
 	}
 
 	public getTypeId(): string {
@@ -119,6 +119,10 @@ export class CustomEditorInput extends LazilyResolvedWebviewEditorInput {
 	}
 
 	public isSaving(): boolean {
+		if (this.isUntitled()) {
+			return false; // untitled is never saving automatically
+		}
+
 		if (!this.isDirty()) {
 			return false; // the editor needs to be dirty for being saved
 		}
@@ -213,7 +217,7 @@ export class CustomEditorInput extends LazilyResolvedWebviewEditorInput {
 			this.viewType,
 			this.id,
 			new Lazy(() => undefined!),
-			{ startsDirty: this._defaultDirtyState, backupId: this.backupId }); // this webview is replaced in the transfer call
+			{ startsDirty: this._defaultDirtyState, backupId: this._backupId }); // this webview is replaced in the transfer call
 		this.transfer(newEditor);
 		newEditor.updateGroup(group);
 		return newEditor;
@@ -244,5 +248,12 @@ export class CustomEditorInput extends LazilyResolvedWebviewEditorInput {
 		other._moveHandler = this._moveHandler;
 		this._moveHandler = undefined;
 		return other;
+	}
+
+	get backupId(): string | undefined {
+		if (this._modelRef) {
+			return this._modelRef.object.backupId;
+		}
+		return this._backupId;
 	}
 }

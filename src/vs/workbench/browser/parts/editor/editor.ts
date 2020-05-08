@@ -52,9 +52,7 @@ export function getEditorPartOptions(config: IWorkbenchEditorConfiguration): IEd
 		return options;
 	}
 
-	if (typeof config.workbench.iconTheme === 'string') {
-		options.iconTheme = config.workbench.iconTheme;
-	}
+	options.iconTheme = config.workbench.iconTheme;
 
 	if (config.workbench.editor) {
 		Object.assign(options, config.workbench.editor);

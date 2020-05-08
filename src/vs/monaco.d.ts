@@ -3400,29 +3400,16 @@ declare namespace monaco.editor {
 		 */
 		readonly contentWidth: number;
 		/**
-		 * The position for the minimap
+		 * Layout information for the minimap
 		 */
-		readonly minimapLeft: number;
-		/**
-		 * The width of the minimap
-		 */
-		readonly minimapWidth: number;
-		readonly minimapHeightIsEditorHeight: boolean;
-		readonly minimapIsSampling: boolean;
-		readonly minimapScale: number;
-		readonly minimapLineHeight: number;
-		readonly minimapCanvasInnerWidth: number;
-		readonly minimapCanvasInnerHeight: number;
-		readonly minimapCanvasOuterWidth: number;
-		readonly minimapCanvasOuterHeight: number;
-		/**
-		 * Minimap render type
-		 */
-		readonly renderMinimap: RenderMinimap;
+		readonly minimap: EditorMinimapLayoutInfo;
 		/**
 		 * The number of columns (of typical characters) fitting on a viewport line.
 		 */
 		readonly viewportColumn: number;
+		readonly isWordWrapMinified: boolean;
+		readonly isViewportWrapping: boolean;
+		readonly wrappingColumn: number;
 		/**
 		 * The width of the vertical scrollbar.
 		 */
@@ -3435,6 +3422,23 @@ declare namespace monaco.editor {
 		 * The position of the overview ruler.
 		 */
 		readonly overviewRuler: OverviewRulerPosition;
+	}
+
+	/**
+	 * The internal layout details of the editor.
+	 */
+	export interface EditorMinimapLayoutInfo {
+		readonly renderMinimap: RenderMinimap;
+		readonly minimapLeft: number;
+		readonly minimapWidth: number;
+		readonly minimapHeightIsEditorHeight: boolean;
+		readonly minimapIsSampling: boolean;
+		readonly minimapScale: number;
+		readonly minimapLineHeight: number;
+		readonly minimapCanvasInnerWidth: number;
+		readonly minimapCanvasInnerHeight: number;
+		readonly minimapCanvasOuterWidth: number;
+		readonly minimapCanvasOuterHeight: number;
 	}
 
 	/**
@@ -5586,7 +5590,7 @@ declare namespace monaco.languages {
 		 *
 		 * The editor will only resolve a completion item once.
 		 */
-		resolveCompletionItem?(model: editor.ITextModel, position: Position, item: CompletionItem, token: CancellationToken): ProviderResult<CompletionItem>;
+		resolveCompletionItem?(item: CompletionItem, token: CancellationToken): ProviderResult<CompletionItem>;
 	}
 
 	export interface CodeAction {
@@ -6298,9 +6302,9 @@ declare namespace monaco.languages {
 	 * 		shorthands: [reg,act] == { regex: reg, action: act}
 	 *		and       : [reg,act,nxt] == { regex: reg, action: act{ next: nxt }}
 	 */
-	export type IShortMonarchLanguageRule1 = [RegExp, IMonarchLanguageAction];
+	export type IShortMonarchLanguageRule1 = [string | RegExp, IMonarchLanguageAction];
 
-	export type IShortMonarchLanguageRule2 = [RegExp, IMonarchLanguageAction, string];
+	export type IShortMonarchLanguageRule2 = [string | RegExp, IMonarchLanguageAction, string];
 
 	export interface IExpandedMonarchLanguageRule {
 		/**

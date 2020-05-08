@@ -45,7 +45,7 @@ class Menu implements IMenu {
 		// rebuild this menu whenever the menu registry reports an
 		// event for this MenuId
 		this._dispoables.add(Event.debounce(
-			Event.filter(MenuRegistry.onDidChangeMenu, menuId => menuId === this._id),
+			Event.filter(MenuRegistry.onDidChangeMenu, set => set.has(this._id)),
 			() => { },
 			50
 		)(this._build, this));

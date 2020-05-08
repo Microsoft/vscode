@@ -44,6 +44,8 @@ import { IRecentlyOpened, isRecentWorkspace, IRecentWorkspace, IRecentFolder, is
 import { CancellationToken } from 'vs/base/common/cancellation';
 import { IHostService } from 'vs/workbench/services/host/browser/host';
 import { IProductService } from 'vs/platform/product/common/productService';
+import { IEditorOptions } from 'vs/platform/editor/common/editor';
+import { IWorkbenchLayoutService } from 'vs/workbench/services/layout/browser/layoutService';
 
 const configurationKey = 'workbench.startupEditor';
 const oldConfigurationKey = 'workbench.welcome.enabled';
@@ -59,13 +61,14 @@ export class WelcomePageContribution implements IWorkbenchContribution {
 		@IFileService fileService: IFileService,
 		@IWorkspaceContextService contextService: IWorkspaceContextService,
 		@ILifecycleService lifecycleService: ILifecycleService,
+		@IWorkbenchLayoutService layoutService: IWorkbenchLayoutService,
 		@ICommandService private readonly commandService: ICommandService,
 	) {
 		const enabled = isWelcomePageEnabled(configurationService, contextService);
 		if (enabled && lifecycleService.startupKind !== StartupKind.ReloadedWindow) {
 			backupFileService.hasBackups().then(hasBackups => {
-				const activeEditor = editorService.activeEditor;
-				if (!activeEditor && !hasBackups) {
+				// Open the welcome even if we opened a set of default editors
+				if ((!editorService.activeEditor || layoutService.openedDefaultEditors) && !hasBackups) {
 					const openWithReadme = configurationService.getValue(configurationKey) === 'readme';
 					if (openWithReadme) {
 						return Promise.all(contextService.getWorkspace().folders.map(folder => {
@@ -97,7 +100,18 @@ export class WelcomePageContribution implements IWorkbenchContribution {
 								return undefined;
 							});
 					} else {
-						return instantiationService.createInstance(WelcomePage).openEditor();
+						let options: IEditorOptions;
+						let editor = editorService.activeEditor;
+						if (editor) {
+							// Ensure that the welcome editor won't get opened more than once
+							if (editor.getTypeId() === welcomeInputTypeId || editorService.editors.some(e => e.getTypeId() === welcomeInputTypeId)) {
+								return undefined;
+							}
+							options = { pinned: false, index: 0 };
+						} else {
+							options = { pinned: false };
+						}
+						return instantiationService.createInstance(WelcomePage).openEditor(options);
 					}
 				}
 				return undefined;
@@ -287,8 +301,8 @@ class WelcomePage extends Disposable {
 		});
 	}
 
-	public openEditor() {
-		return this.editorService.openEditor(this.editorInput, { pinned: false });
+	public openEditor(options: IEditorOptions = { pinned: false }) {
+		return this.editorService.openEditor(this.editorInput, options);
 	}
 
 	private onReady(container: HTMLElement, recentlyOpened: Promise<IRecentlyOpened>, installedExtensions: Promise<IExtensionStatus[]>): void {

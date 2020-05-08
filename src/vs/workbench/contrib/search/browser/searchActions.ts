@@ -22,12 +22,13 @@ import { IReplaceService } from 'vs/workbench/contrib/search/common/replace';
 import { FolderMatch, FileMatch, FolderMatchWithResource, Match, RenderableMatch, searchMatchComparer, SearchResult } from 'vs/workbench/contrib/search/common/searchModel';
 import { IEditorGroupsService } from 'vs/workbench/services/editor/common/editorGroupsService';
 import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
-import { ISearchConfiguration, VIEW_ID } from 'vs/workbench/services/search/common/search';
+import { ISearchConfiguration, VIEW_ID, VIEWLET_ID } from 'vs/workbench/services/search/common/search';
 import { ISearchHistoryService } from 'vs/workbench/contrib/search/common/searchHistoryService';
 import { ITreeNavigator } from 'vs/base/browser/ui/tree/tree';
 import { IViewsService } from 'vs/workbench/common/views';
 import { SearchEditorInput } from 'vs/workbench/contrib/searchEditor/browser/searchEditorInput';
 import { SearchEditor } from 'vs/workbench/contrib/searchEditor/browser/searchEditor';
+import { searchRefreshIcon, searchCollapseAllIcon, searchExpandAllIcon, searchClearIcon, searchReplaceAllIcon, searchReplaceIcon, searchRemoveIcon, searchStopIcon } from 'vs/workbench/contrib/search/browser/searchIcons';
 
 export function isSearchViewFocused(viewsService: IViewsService): boolean {
 	const searchView = getSearchView(viewsService);
@@ -181,6 +182,7 @@ export const FindInFilesCommand: ICommandHandler = (accessor, args: IFindInFiles
 
 export class OpenSearchViewletAction extends FindOrReplaceInFilesAction {
 
+	static readonly ID = VIEWLET_ID;
 	static readonly LABEL = nls.localize('showSearch', "Show Search");
 
 	constructor(id: string, label: string,
@@ -268,7 +270,7 @@ export class RefreshAction extends Action {
 	constructor(id: string, label: string,
 		@IViewsService private readonly viewsService: IViewsService
 	) {
-		super(id, label, 'search-action codicon-refresh');
+		super(id, label, 'search-action ' + searchRefreshIcon.classNames);
 	}
 
 	get enabled(): boolean {
@@ -298,7 +300,7 @@ export class CollapseDeepestExpandedLevelAction extends Action {
 	constructor(id: string, label: string,
 		@IViewsService private readonly viewsService: IViewsService
 	) {
-		super(id, label, 'search-action codicon-collapse-all');
+		super(id, label, 'search-action ' + searchCollapseAllIcon.classNames);
 		this.update();
 	}
 
@@ -354,7 +356,7 @@ export class ExpandAllAction extends Action {
 	constructor(id: string, label: string,
 		@IViewsService private readonly viewsService: IViewsService
 	) {
-		super(id, label, 'search-action codicon-expand-all');
+		super(id, label, 'search-action ' + searchExpandAllIcon.classNames);
 		this.update();
 	}
 
@@ -438,7 +440,7 @@ export class ClearSearchResultsAction extends Action {
 	constructor(id: string, label: string,
 		@IViewsService private readonly viewsService: IViewsService
 	) {
-		super(id, label, 'search-action codicon-clear-all');
+		super(id, label, 'search-action ' + searchClearIcon.classNames);
 		this.update();
 	}
 
@@ -464,7 +466,7 @@ export class CancelSearchAction extends Action {
 	constructor(id: string, label: string,
 		@IViewsService private readonly viewsService: IViewsService
 	) {
-		super(id, label, 'search-action codicon-search-stop');
+		super(id, label, 'search-action ' + searchStopIcon.classNames);
 		this.update();
 	}
 
@@ -599,7 +601,7 @@ export class RemoveAction extends AbstractSearchAndReplaceAction {
 		private viewer: WorkbenchObjectTree<RenderableMatch>,
 		private element: RenderableMatch
 	) {
-		super('remove', RemoveAction.LABEL, 'codicon-close');
+		super('remove', RemoveAction.LABEL, searchRemoveIcon.classNames);
 	}
 
 	run(): Promise<any> {
@@ -639,7 +641,7 @@ export class ReplaceAllAction extends AbstractSearchAndReplaceAction {
 		private fileMatch: FileMatch,
 		@IKeybindingService keyBindingService: IKeybindingService
 	) {
-		super(Constants.ReplaceAllInFileActionId, appendKeyBindingLabel(ReplaceAllAction.LABEL, keyBindingService.lookupKeybinding(Constants.ReplaceAllInFileActionId), keyBindingService), 'codicon-replace-all');
+		super(Constants.ReplaceAllInFileActionId, appendKeyBindingLabel(ReplaceAllAction.LABEL, keyBindingService.lookupKeybinding(Constants.ReplaceAllInFileActionId), keyBindingService), searchReplaceAllIcon.classNames);
 	}
 
 	run(): Promise<any> {
@@ -663,7 +665,7 @@ export class ReplaceAllInFolderAction extends AbstractSearchAndReplaceAction {
 	constructor(private viewer: WorkbenchObjectTree<RenderableMatch>, private folderMatch: FolderMatch,
 		@IKeybindingService keyBindingService: IKeybindingService
 	) {
-		super(Constants.ReplaceAllInFolderActionId, appendKeyBindingLabel(ReplaceAllInFolderAction.LABEL, keyBindingService.lookupKeybinding(Constants.ReplaceAllInFolderActionId), keyBindingService), 'codicon-replace-all');
+		super(Constants.ReplaceAllInFolderActionId, appendKeyBindingLabel(ReplaceAllInFolderAction.LABEL, keyBindingService.lookupKeybinding(Constants.ReplaceAllInFolderActionId), keyBindingService), searchReplaceAllIcon.classNames);
 	}
 
 	run(): Promise<any> {
@@ -686,7 +688,7 @@ export class ReplaceAction extends AbstractSearchAndReplaceAction {
 		@IKeybindingService keyBindingService: IKeybindingService,
 		@IEditorService private readonly editorService: IEditorService,
 		@IConfigurationService private readonly configurationService: IConfigurationService) {
-		super(Constants.ReplaceActionId, appendKeyBindingLabel(ReplaceAction.LABEL, keyBindingService.lookupKeybinding(Constants.ReplaceActionId), keyBindingService), 'codicon-replace');
+		super(Constants.ReplaceActionId, appendKeyBindingLabel(ReplaceAction.LABEL, keyBindingService.lookupKeybinding(Constants.ReplaceActionId), keyBindingService), searchReplaceIcon.classNames);
 	}
 
 	run(): Promise<any> {
@@ -763,7 +765,16 @@ export class ReplaceAction extends AbstractSearchAndReplaceAction {
 	}
 }
 
-export const copyPathCommand: ICommandHandler = async (accessor, fileMatch: FileMatch | FolderMatchWithResource) => {
+export const copyPathCommand: ICommandHandler = async (accessor, fileMatch: FileMatch | FolderMatchWithResource | undefined) => {
+	if (!fileMatch) {
+		const selection = getSelectedRow(accessor);
+		if (!(selection instanceof FileMatch || selection instanceof FolderMatchWithResource)) {
+			return;
+		}
+
+		fileMatch = selection;
+	}
+
 	const clipboardService = accessor.get(IClipboardService);
 	const labelService = accessor.get(ILabelService);
 
@@ -830,7 +841,16 @@ function folderMatchToString(folderMatch: FolderMatchWithResource | FolderMatch,
 }
 
 const maxClipboardMatches = 1e4;
-export const copyMatchCommand: ICommandHandler = async (accessor, match: RenderableMatch) => {
+export const copyMatchCommand: ICommandHandler = async (accessor, match: RenderableMatch | undefined) => {
+	if (!match) {
+		const selection = getSelectedRow(accessor);
+		if (!selection) {
+			return;
+		}
+
+		match = selection;
+	}
+
 	const clipboardService = accessor.get(IClipboardService);
 	const labelService = accessor.get(ILabelService);
 
@@ -861,6 +881,12 @@ function allFolderMatchesToString(folderMatches: Array<FolderMatchWithResource |
 	}
 
 	return folderResults.join(lineDelimiter + lineDelimiter);
+}
+
+function getSelectedRow(accessor: ServicesAccessor): RenderableMatch | undefined | null {
+	const viewsService = accessor.get(IViewsService);
+	const searchView = getSearchView(viewsService);
+	return searchView?.getControl().getSelection()[0];
 }
 
 export const copyAllCommand: ICommandHandler = async (accessor) => {

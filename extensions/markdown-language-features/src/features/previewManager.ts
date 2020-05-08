@@ -133,7 +133,6 @@ export class MarkdownPreviewManager extends Disposable implements vscode.Webview
 		webview: vscode.WebviewPanel,
 		state: any
 	): Promise<void> {
-		console.log(state);
 		const resource = vscode.Uri.parse(state.resource);
 		const locked = state.locked;
 		const line = state.line;

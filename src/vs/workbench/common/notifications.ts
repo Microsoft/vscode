@@ -10,7 +10,7 @@ import { Disposable, IDisposable, toDisposable } from 'vs/base/common/lifecycle'
 import { isPromiseCanceledError } from 'vs/base/common/errors';
 import { Action } from 'vs/base/common/actions';
 import { isErrorWithActions } from 'vs/base/common/errorsWithActions';
-import { find, equals } from 'vs/base/common/arrays';
+import { equals } from 'vs/base/common/arrays';
 import { parseLinkedText, LinkedText } from 'vs/base/common/linkedText';
 
 export interface INotificationsModel {
@@ -220,7 +220,7 @@ export class NotificationsModel extends Disposable implements INotificationsMode
 	}
 
 	private findNotification(item: INotificationViewItem): INotificationViewItem | undefined {
-		return find(this._notifications, notification => notification.equals(item));
+		return this._notifications.find(notification => notification.equals(item));
 	}
 
 	private createViewItem(notification: INotification): INotificationViewItem | undefined {

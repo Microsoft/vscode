@@ -4,7 +4,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { URI } from 'vs/base/common/uri';
-import { first } from 'vs/base/common/async';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { ITextModel } from 'vs/editor/common/model';
 import { IDisposable, toDisposable, IReference, ReferenceCollection, ImmortalReference } from 'vs/base/common/lifecycle';
@@ -110,7 +109,6 @@ class ResourceModelCollection extends ReferenceCollection<Promise<ITextEditorMod
 	private async resolveTextModelContent(key: string): Promise<ITextModel> {
 		const resource = URI.parse(key);
 		const providers = this.providers[resource.scheme] || [];
-		const factories = providers.map(p => () => Promise.resolve(p.provideTextContent(resource)));
 
 		if (resource.query || resource.fragment) {
 			type TextModelResolverUri = {
@@ -127,12 +125,13 @@ class ResourceModelCollection extends ReferenceCollection<Promise<ITextEditorMod
 			});
 		}
 
-		const model = await first(factories);
-		if (!model) {
-			throw new Error('resource is not available');
+		for (const provider of providers) {
+			const value = await provider.provideTextContent(resource);
+			if (value) {
+				return value;
+			}
 		}
-
-		return model;
+		throw new Error('resource is not available');
 	}
 }
 

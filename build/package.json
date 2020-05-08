@@ -33,7 +33,6 @@
     "@typescript-eslint/parser": "^2.12.0",
     "applicationinsights": "1.0.8",
     "azure-storage": "^2.1.0",
-    "bl": "^4.0.2",
     "github-releases": "^0.4.1",
     "gulp-bom": "^1.0.0",
     "gulp-sourcemaps": "^1.11.0",
@@ -44,8 +43,7 @@
     "minimist": "^1.2.3",
     "request": "^2.85.0",
     "terser": "4.3.8",
-    "tree-kill": "^1.2.2",
-    "typescript": "^3.9.0-dev.20200413",
+    "typescript": "^3.9.1-rc",
     "vsce": "1.48.0",
     "vscode-telemetry-extractor": "^1.5.4",
     "xml2js": "^0.4.17"

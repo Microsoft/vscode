@@ -4,11 +4,10 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { localize } from 'vs/nls';
-import { Registry } from 'vs/platform/registry/common/platform';
-import { IQuickPickSeparator, IQuickInputService } from 'vs/platform/quickinput/common/quickInput';
+import { IQuickPickSeparator, IQuickInputService, ItemActivation } from 'vs/platform/quickinput/common/quickInput';
 import { IPickerQuickAccessItem, PickerQuickAccessProvider } from 'vs/platform/quickinput/browser/pickerQuickAccess';
 import { IViewletService } from 'vs/workbench/services/viewlet/browser/viewlet';
-import { IViewDescriptorService, IViewsService, ViewContainer, Extensions as ViewExtensions, IViewContainersRegistry } from 'vs/workbench/common/views';
+import { IViewDescriptorService, IViewsService, ViewContainer } from 'vs/workbench/common/views';
 import { IOutputService } from 'vs/workbench/contrib/output/common/output';
 import { ITerminalService } from 'vs/workbench/contrib/terminal/browser/terminal';
 import { IPanelService, IPanelIdentifier } from 'vs/workbench/services/panel/common/panelService';
@@ -96,9 +95,9 @@ export class ViewQuickAccessProvider extends PickerQuickAccessProvider<IViewQuic
 		const viewEntries: Array<IViewQuickPickItem> = [];
 
 		const getViewEntriesForViewlet = (viewlet: ViewletDescriptor, viewContainer: ViewContainer): IViewQuickPickItem[] => {
-			const viewDescriptors = this.viewDescriptorService.getViewDescriptors(viewContainer);
+			const viewContainerModel = this.viewDescriptorService.getViewContainerModel(viewContainer);
 			const result: IViewQuickPickItem[] = [];
-			for (const view of viewDescriptors.allViewDescriptors) {
+			for (const view of viewContainerModel.allViewDescriptors) {
 				if (this.contextKeyService.contextMatchesRules(view.when)) {
 					result.push({
 						label: view.name,
@@ -137,7 +136,7 @@ export class ViewQuickAccessProvider extends PickerQuickAccessProvider<IViewQuic
 
 		// Viewlet Views
 		for (const viewlet of viewlets) {
-			const viewContainer = Registry.as<IViewContainersRegistry>(ViewExtensions.ViewContainersRegistry).get(viewlet.id);
+			const viewContainer = this.viewDescriptorService.getViewContainerById(viewlet.id);
 			if (viewContainer) {
 				viewEntries.push(...getViewEntriesForViewlet(viewlet, viewContainer));
 			}
@@ -174,9 +173,9 @@ export class ViewQuickAccessProvider extends PickerQuickAccessProvider<IViewQuic
 	}
 
 	private includeViewContainer(container: ViewletDescriptor | IPanelIdentifier): boolean {
-		const viewContainer = Registry.as<IViewContainersRegistry>(ViewExtensions.ViewContainersRegistry).get(container.id);
+		const viewContainer = this.viewDescriptorService.getViewContainerById(container.id);
 		if (viewContainer?.hideIfEmpty) {
-			return this.viewDescriptorService.getViewDescriptors(viewContainer).activeViewDescriptors.length > 0;
+			return this.viewDescriptorService.getViewContainerModel(viewContainer).activeViewDescriptors.length > 0;
 		}
 
 		return true;
@@ -221,7 +220,7 @@ export class QuickAccessViewPickerAction extends Action {
 	async run(): Promise<void> {
 		const keys = this.keybindingService.lookupKeybindings(this.id);
 
-		this.quickInputService.quickAccess.show(ViewQuickAccessProvider.PREFIX, { quickNavigateConfiguration: { keybindings: keys } });
+		this.quickInputService.quickAccess.show(ViewQuickAccessProvider.PREFIX, { quickNavigateConfiguration: { keybindings: keys }, itemActivation: ItemActivation.FIRST });
 	}
 }
 

@@ -412,6 +412,7 @@ export class Repl extends ViewPane implements IHistoryNavigationWidget {
 	}
 
 	protected layoutBody(height: number, width: number): void {
+		super.layoutBody(height, width);
 		this.dimension = new dom.Dimension(width, height);
 		const replInputHeight = Math.min(this.replInput.getContentHeight(), height);
 		if (this.tree) {
@@ -530,7 +531,6 @@ export class Repl extends ViewPane implements IHistoryNavigationWidget {
 			// https://github.com/microsoft/TypeScript/issues/32526
 			new ReplDataSource() as IAsyncDataSource<IDebugSession, IReplElement>,
 			{
-				ariaLabel: localize('replAriaLabel', "Read Eval Print Loop Panel"),
 				accessibilityProvider: new ReplAccessibilityProvider(),
 				identityProvider: { getId: (element: IReplElement) => element.getId() },
 				mouseSupport: false,

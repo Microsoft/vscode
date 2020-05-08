@@ -21,6 +21,7 @@
 	"reportIssueUrl": "https://github.com/Microsoft/vscode/issues/new",
 	"urlProtocol": "code-oss",
 	"extensionAllowedProposedApi": [
+		"ms-vscode.vscode-js-profile-table",
 		"ms-vscode.references-view"
 	],
 	"builtInExtensions": [
@@ -56,7 +57,7 @@
 		},
 		{
 			"name": "ms-vscode.references-view",
-			"version": "0.0.50",
+			"version": "0.0.51",
 			"repo": "https://github.com/Microsoft/vscode-reference-view",
 			"metadata": {
 				"id": "dc489f46-520d-4556-ae85-1f9eab3c412d",
@@ -86,10 +87,25 @@
 		},
 		{
 			"name": "ms-vscode.js-debug-nightly",
-			"version": "2020.4.817",
+			"version": "2020.5.417",
 			"repo": "https://github.com/Microsoft/vscode-js-debug",
 			"metadata": {
 				"id": "7acbb4ce-c85a-49d4-8d95-a8054406ae97",
+				"publisherId": {
+					"publisherId": "5f5636e7-69ed-4afe-b5d6-8d231fb3d3ee",
+					"publisherName": "ms-vscode",
+					"displayName": "Microsoft",
+					"flags": "verified"
+				},
+				"publisherDisplayName": "Microsoft"
+			}
+		},
+		{
+			"name": "ms-vscode.vscode-js-profile-table",
+			"version": "0.0.2",
+			"repo": "https://github.com/Microsoft/vscode-js-debug",
+			"metadata": {
+				"id": "7e52b41b-71ad-457b-ab7e-0620f1fc4feb",
 				"publisherId": {
 					"publisherId": "5f5636e7-69ed-4afe-b5d6-8d231fb3d3ee",
 					"publisherName": "ms-vscode",

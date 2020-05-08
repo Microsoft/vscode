@@ -32,16 +32,16 @@ import { IJSONSchema } from 'vs/base/common/jsonSchema';
 	(function registerZoomActions(): void {
 		const viewCategory = nls.localize('view', "View");
 
-		registry.registerWorkbenchAction(SyncActionDescriptor.create(ZoomInAction, ZoomInAction.ID, ZoomInAction.LABEL, { primary: KeyMod.CtrlCmd | KeyCode.US_EQUAL, secondary: [KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.US_EQUAL, KeyMod.CtrlCmd | KeyCode.NUMPAD_ADD] }), 'View: Zoom In', viewCategory);
-		registry.registerWorkbenchAction(SyncActionDescriptor.create(ZoomOutAction, ZoomOutAction.ID, ZoomOutAction.LABEL, { primary: KeyMod.CtrlCmd | KeyCode.US_MINUS, secondary: [KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.US_MINUS, KeyMod.CtrlCmd | KeyCode.NUMPAD_SUBTRACT], linux: { primary: KeyMod.CtrlCmd | KeyCode.US_MINUS, secondary: [KeyMod.CtrlCmd | KeyCode.NUMPAD_SUBTRACT] } }), 'View: Zoom Out', viewCategory);
-		registry.registerWorkbenchAction(SyncActionDescriptor.create(ZoomResetAction, ZoomResetAction.ID, ZoomResetAction.LABEL, { primary: KeyMod.CtrlCmd | KeyCode.NUMPAD_0 }), 'View: Reset Zoom', viewCategory);
+		registry.registerWorkbenchAction(SyncActionDescriptor.from(ZoomInAction, { primary: KeyMod.CtrlCmd | KeyCode.US_EQUAL, secondary: [KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.US_EQUAL, KeyMod.CtrlCmd | KeyCode.NUMPAD_ADD] }), 'View: Zoom In', viewCategory);
+		registry.registerWorkbenchAction(SyncActionDescriptor.from(ZoomOutAction, { primary: KeyMod.CtrlCmd | KeyCode.US_MINUS, secondary: [KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.US_MINUS, KeyMod.CtrlCmd | KeyCode.NUMPAD_SUBTRACT], linux: { primary: KeyMod.CtrlCmd | KeyCode.US_MINUS, secondary: [KeyMod.CtrlCmd | KeyCode.NUMPAD_SUBTRACT] } }), 'View: Zoom Out', viewCategory);
+		registry.registerWorkbenchAction(SyncActionDescriptor.from(ZoomResetAction, { primary: KeyMod.CtrlCmd | KeyCode.NUMPAD_0 }), 'View: Reset Zoom', viewCategory);
 	})();
 
 	// Actions: Window
 	(function registerWindowActions(): void {
-		registry.registerWorkbenchAction(SyncActionDescriptor.create(CloseCurrentWindowAction, CloseCurrentWindowAction.ID, CloseCurrentWindowAction.LABEL, { primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KEY_W }), 'Close Window');
-		registry.registerWorkbenchAction(SyncActionDescriptor.create(SwitchWindow, SwitchWindow.ID, SwitchWindow.LABEL, { primary: 0, mac: { primary: KeyMod.WinCtrl | KeyCode.KEY_W } }), 'Switch Window...');
-		registry.registerWorkbenchAction(SyncActionDescriptor.create(QuickSwitchWindow, QuickSwitchWindow.ID, QuickSwitchWindow.LABEL), 'Quick Switch Window...');
+		registry.registerWorkbenchAction(SyncActionDescriptor.from(CloseCurrentWindowAction, { primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KEY_W }), 'Close Window');
+		registry.registerWorkbenchAction(SyncActionDescriptor.from(SwitchWindow, { primary: 0, mac: { primary: KeyMod.WinCtrl | KeyCode.KEY_W } }), 'Switch Window...');
+		registry.registerWorkbenchAction(SyncActionDescriptor.from(QuickSwitchWindow), 'Quick Switch Window...');
 
 		KeybindingsRegistry.registerCommandAndKeybindingRule({
 			id: CloseCurrentWindowAction.ID, // close the window when the last editor is closed by reusing the same keybinding
@@ -91,9 +91,9 @@ import { IJSONSchema } from 'vs/base/common/jsonSchema';
 	// Actions: Developer
 	(function registerDeveloperActions(): void {
 		const developerCategory = nls.localize('developer', "Developer");
-		registry.registerWorkbenchAction(SyncActionDescriptor.create(ToggleSharedProcessAction, ToggleSharedProcessAction.ID, ToggleSharedProcessAction.LABEL), 'Developer: Toggle Shared Process', developerCategory);
-		registry.registerWorkbenchAction(SyncActionDescriptor.create(ReloadWindowWithExtensionsDisabledAction, ReloadWindowWithExtensionsDisabledAction.ID, ReloadWindowWithExtensionsDisabledAction.LABEL), 'Developer: Reload With Extensions Disabled', developerCategory);
-		registry.registerWorkbenchAction(SyncActionDescriptor.create(ToggleDevToolsAction, ToggleDevToolsAction.ID, ToggleDevToolsAction.LABEL), 'Developer: Toggle Developer Tools', developerCategory);
+		registry.registerWorkbenchAction(SyncActionDescriptor.from(ToggleSharedProcessAction), 'Developer: Toggle Shared Process', developerCategory);
+		registry.registerWorkbenchAction(SyncActionDescriptor.from(ReloadWindowWithExtensionsDisabledAction), 'Developer: Reload With Extensions Disabled', developerCategory);
+		registry.registerWorkbenchAction(SyncActionDescriptor.from(ToggleDevToolsAction), 'Developer: Toggle Developer Tools', developerCategory);
 
 		KeybindingsRegistry.registerKeybindingRule({
 			id: ToggleDevToolsAction.ID,
@@ -107,7 +107,7 @@ import { IJSONSchema } from 'vs/base/common/jsonSchema';
 	// Actions: Runtime Arguments
 	(function registerRuntimeArgumentsAction(): void {
 		const preferencesCategory = nls.localize('preferences', "Preferences");
-		registry.registerWorkbenchAction(SyncActionDescriptor.create(ConfigureRuntimeArgumentsAction, ConfigureRuntimeArgumentsAction.ID, ConfigureRuntimeArgumentsAction.LABEL), 'Preferences: Configure Runtime Arguments', preferencesCategory);
+		registry.registerWorkbenchAction(SyncActionDescriptor.from(ConfigureRuntimeArgumentsAction), 'Preferences: Configure Runtime Arguments', preferencesCategory);
 	})();
 })();
 

@@ -171,6 +171,12 @@ export interface IEditorOptions {
 	readonly pinned?: boolean;
 
 	/**
+	 * An editor that is sticky moves to the beginning of the editors list within the group and will remain
+	 * there unless explicitly closed. Operations such as "Close All" will not close sticky editors.
+	 */
+	readonly sticky?: boolean;
+
+	/**
 	 * The index in the document stack where to insert the editor into when opening.
 	 */
 	readonly index?: number;

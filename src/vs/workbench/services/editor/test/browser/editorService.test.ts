@@ -146,6 +146,22 @@ suite('EditorService', () => {
 		assert.equal(activeEditorChangeEventCounter, 4);
 		assert.equal(visibleEditorChangeEventCounter, 4);
 
+		const stickyInput = new TestFileEditorInput(URI.parse('my://resource3-basics'), TEST_EDITOR_INPUT_ID);
+		await service.openEditor(stickyInput, { sticky: true });
+
+		assert.equal(3, service.count);
+
+		const allSequentialEditors = service.getEditors(EditorsOrder.SEQUENTIAL);
+		assert.equal(allSequentialEditors.length, 3);
+		assert.equal(stickyInput, allSequentialEditors[0].editor);
+		assert.equal(input, allSequentialEditors[1].editor);
+		assert.equal(otherInput, allSequentialEditors[2].editor);
+
+		const sequentialEditorsExcludingSticky = service.getEditors(EditorsOrder.SEQUENTIAL, { excludeSticky: true });
+		assert.equal(sequentialEditorsExcludingSticky.length, 2);
+		assert.equal(input, sequentialEditorsExcludingSticky[0].editor);
+		assert.equal(otherInput, sequentialEditorsExcludingSticky[1].editor);
+
 		activeEditorChangeListener.dispose();
 		visibleEditorChangeListener.dispose();
 		didCloseEditorListener.dispose();
@@ -795,6 +811,10 @@ suite('EditorService', () => {
 		input1.gotSavedAs = false;
 		input1.gotReverted = false;
 
+		input1.dirty = true;
+		input2.dirty = true;
+		sameInput1.dirty = true;
+
 		await service.save({ groupId: rootGroup.id, editor: input1 }, { saveAs: true });
 		assert.equal(input1.gotSavedAs, true);
 
@@ -802,14 +822,24 @@ suite('EditorService', () => {
 		input1.gotSavedAs = false;
 		input1.gotReverted = false;
 
-		await service.revertAll();
+		input1.dirty = true;
+		input2.dirty = true;
+		sameInput1.dirty = true;
+
+		const revertRes = await service.revertAll();
+		assert.equal(revertRes, true);
 		assert.equal(input1.gotReverted, true);
 
 		input1.gotSaved = false;
 		input1.gotSavedAs = false;
 		input1.gotReverted = false;
 
-		await service.saveAll();
+		input1.dirty = true;
+		input2.dirty = true;
+		sameInput1.dirty = true;
+
+		const saveRes = await service.saveAll();
+		assert.equal(saveRes, true);
 		assert.equal(input1.gotSaved, true);
 		assert.equal(input2.gotSaved, true);
 
@@ -820,6 +850,10 @@ suite('EditorService', () => {
 		input2.gotSavedAs = false;
 		input2.gotReverted = false;
 
+		input1.dirty = true;
+		input2.dirty = true;
+		sameInput1.dirty = true;
+
 		await service.saveAll({ saveAs: true });
 
 		assert.equal(input1.gotSavedAs, true);
@@ -829,6 +863,48 @@ suite('EditorService', () => {
 		assert.equal(sameInput1.gotSaved, false);
 		assert.equal(sameInput1.gotSavedAs, false);
 		assert.equal(sameInput1.gotReverted, false);
+
+		part.dispose();
+	});
+
+	test('saveAll, revertAll (sticky editor)', async function () {
+		const [part, service] = createEditorService();
+
+		const input1 = new TestFileEditorInput(URI.parse('my://resource1'), TEST_EDITOR_INPUT_ID);
+		input1.dirty = true;
+		const input2 = new TestFileEditorInput(URI.parse('my://resource2'), TEST_EDITOR_INPUT_ID);
+		input2.dirty = true;
+		const sameInput1 = new TestFileEditorInput(URI.parse('my://resource1'), TEST_EDITOR_INPUT_ID);
+		sameInput1.dirty = true;
+
+		await part.whenRestored;
+
+		await service.openEditor(input1, { pinned: true, sticky: true });
+		await service.openEditor(input2, { pinned: true });
+		await service.openEditor(sameInput1, { pinned: true }, SIDE_GROUP);
+
+		const revertRes = await service.revertAll({ excludeSticky: true });
+		assert.equal(revertRes, true);
+		assert.equal(input1.gotReverted, false);
+		assert.equal(sameInput1.gotReverted, true);
+
+		input1.gotSaved = false;
+		input1.gotSavedAs = false;
+		input1.gotReverted = false;
+
+		sameInput1.gotSaved = false;
+		sameInput1.gotSavedAs = false;
+		sameInput1.gotReverted = false;
+
+		input1.dirty = true;
+		input2.dirty = true;
+		sameInput1.dirty = true;
+
+		const saveRes = await service.saveAll({ excludeSticky: true });
+		assert.equal(saveRes, true);
+		assert.equal(input1.gotSaved, false);
+		assert.equal(input2.gotSaved, true);
+		assert.equal(sameInput1.gotSaved, true);
 
 		part.dispose();
 	});

@@ -13,6 +13,7 @@ import { BACKUPS } from 'vs/platform/environment/common/environment';
 import { IWorkbenchEnvironmentService } from 'vs/workbench/services/environment/common/environmentService';
 import { CancellationToken } from 'vs/base/common/cancellation';
 import { ReadableStreamEvents } from 'vs/base/common/stream';
+import { ILogService } from 'vs/platform/log/common/log';
 
 export class FileUserDataProvider extends Disposable implements
 	IFileSystemProviderWithFileReadWriteCapability,
@@ -31,7 +32,8 @@ export class FileUserDataProvider extends Disposable implements
 		private readonly fileSystemUserDataHome: URI,
 		private readonly fileSystemBackupsHome: URI,
 		private readonly fileSystemProvider: IFileSystemProviderWithFileReadWriteCapability | IFileSystemProviderWithOpenReadWriteCloseCapability,
-		environmentService: IWorkbenchEnvironmentService
+		environmentService: IWorkbenchEnvironmentService,
+		private readonly logService: ILogService,
 	) {
 		super();
 
@@ -127,6 +129,7 @@ export class FileUserDataProvider extends Disposable implements
 			}
 		}
 		if (userDataChanges.length) {
+			this.logService.debug('User data changed');
 			this._onDidChangeFile.fire(userDataChanges);
 		}
 	}

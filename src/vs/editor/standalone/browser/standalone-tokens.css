@@ -6,7 +6,7 @@
 
 /* Default standalone editor font */
 .monaco-editor {
-	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "HelveticaNeue-Light", "Ubuntu", "Droid Sans", sans-serif;
+	font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "HelveticaNeue-Light", "Ubuntu", "Droid Sans", sans-serif;
 }
 
 .monaco-menu .monaco-action-bar.vertical .action-item .action-menu-item:focus .action-label {

@@ -89,9 +89,9 @@ interface ICommand {
 interface IHomeIndicator {
 
 	/**
-	 * The location to open when clicking the home indicator.
+	 * The identifier of the command to run when clicking the home indicator.
 	 */
-	href: string;
+	command: string;
 
 	/**
 	 * The icon name for the home indicator. This needs to be one of the existing
@@ -103,6 +103,57 @@ interface IHomeIndicator {
 	 * A tooltip that will appear while hovering over the home indicator.
 	 */
 	title: string;
+}
+
+interface IDefaultSideBarLayout {
+	visible?: boolean;
+	containers?: ({
+		id: 'explorer' | 'run' | 'scm' | 'search' | 'extensions' | 'remote' | string;
+		active: true;
+		order?: number;
+		views?: {
+			id: string;
+			order?: number;
+			visible?: boolean;
+			collapsed?: boolean;
+		}[];
+	} | {
+		id: 'explorer' | 'run' | 'scm' | 'search' | 'extensions' | 'remote' | string;
+		active?: false;
+		order?: number;
+		visible?: boolean;
+		views?: {
+			id: string;
+			order?: number;
+			visible?: boolean;
+			collapsed?: boolean;
+		}[];
+	})[];
+}
+
+interface IDefaultPanelLayout {
+	visible?: boolean;
+	containers?: ({
+		id: 'terminal' | 'debug' | 'problems' | 'output' | 'comments' | string;
+		order?: number;
+		active: true;
+	} | {
+		id: 'terminal' | 'debug' | 'problems' | 'output' | 'comments' | string;
+		order?: number;
+		active?: false;
+		visible?: boolean;
+	})[];
+}
+
+interface IDefaultEditor {
+	readonly uri: UriComponents;
+	readonly openOnlyIfExists?: boolean;
+}
+
+interface IDefaultLayout {
+	readonly sidebar?: IDefaultSideBarLayout;
+	readonly panel?: IDefaultPanelLayout;
+	readonly editors?: IDefaultEditor[];
 }
 
 interface IWorkbenchConstructionOptions {
@@ -168,6 +219,16 @@ interface IWorkbenchConstructionOptions {
 	userDataProvider?: IFileSystemProvider;
 
 	/**
+	 * Session id of the current authenticated user
+	 */
+	readonly authenticationSessionId?: string;
+
+	/**
+	 * Enables user data sync by default and syncs into the current authenticated user account using the provided [authenticationSessionId}(#authenticationSessionId).
+	 */
+	readonly enableSyncByDefault?: boolean;
+
+	/**
 	 * The credentials provider to store and retrieve secrets.
 	 */
 	readonly credentialsProvider?: ICredentialsProvider;
@@ -204,6 +265,11 @@ interface IWorkbenchConstructionOptions {
 	 * Optional home indicator to appear above the hamburger menu in the activity bar.
 	 */
 	readonly homeIndicator?: IHomeIndicator;
+
+	/**
+	 * Optional default layout to apply on first time the workspace is opened.
+	 */
+	readonly defaultLayout?: IDefaultLayout;
 
 	//#endregion
 
@@ -351,7 +417,13 @@ export {
 	commands,
 
 	// Home Indicator
-	IHomeIndicator
+	IHomeIndicator,
+
+	// Default layout
+	IDefaultEditor,
+	IDefaultLayout,
+	IDefaultPanelLayout,
+	IDefaultSideBarLayout,
 };
 
 //#endregion

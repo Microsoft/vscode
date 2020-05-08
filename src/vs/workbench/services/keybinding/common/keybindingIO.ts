@@ -31,12 +31,16 @@ export class KeybindingIO {
 		if (quotedSerializedWhen.length > 0) {
 			out.write(`${quotedSerializeCommand},`);
 			out.writeLine();
-			out.write(`                                     "when": ${quotedSerializedWhen} `);
+			out.write(`                                     "when": ${quotedSerializedWhen}`);
 		} else {
-			out.write(`${quotedSerializeCommand} `);
+			out.write(`${quotedSerializeCommand}`);
 		}
-		// out.write(String(item.weight1 + '-' + item.weight2));
-		out.write('}');
+		if (item.commandArgs) {
+			out.write(',');
+			out.writeLine();
+			out.write(`                                     "args": ${JSON.stringify(item.commandArgs)}`);
+		}
+		out.write(' }');
 	}
 
 	public static readUserKeybindingItem(input: IUserFriendlyKeybinding): IUserKeybindingItem {

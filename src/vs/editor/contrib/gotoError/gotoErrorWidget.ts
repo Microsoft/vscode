@@ -27,6 +27,10 @@ import { IActionBarOptions, ActionsOrientation } from 'vs/base/browser/ui/action
 import { SeverityIcon } from 'vs/platform/severityIcon/common/severityIcon';
 import { EditorOption } from 'vs/editor/common/config/editorOptions';
 import { IOpenerService } from 'vs/platform/opener/common/opener';
+import { MenuId, IMenuService, MenuItemAction } from 'vs/platform/actions/common/actions';
+import { IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
+import { createAndFillInActionBarActions, MenuEntryActionViewItem } from 'vs/platform/actions/browser/menuEntryActionViewItem';
+import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 
 class MessageWidget {
 
@@ -224,6 +228,8 @@ class MessageWidget {
 
 export class MarkerNavigationWidget extends PeekViewWidget {
 
+	static readonly TitleMenu = new MenuId('gotoErrorTitleMenu');
+
 	private _parentContainer!: HTMLElement;
 	private _container!: HTMLElement;
 	private _icon!: HTMLElement;
@@ -238,9 +244,11 @@ export class MarkerNavigationWidget extends PeekViewWidget {
 
 	constructor(
 		editor: ICodeEditor,
-		private readonly actions: ReadonlyArray<IAction>,
-		private readonly _themeService: IThemeService,
-		private readonly _openerService: IOpenerService
+		@IThemeService private readonly _themeService: IThemeService,
+		@IOpenerService private readonly _openerService: IOpenerService,
+		@IMenuService private readonly _menuService: IMenuService,
+		@IContextKeyService private readonly _contextKeyService: IContextKeyService,
+		@IInstantiationService private readonly _instantiationService: IInstantiationService,
 	) {
 		super(editor, { showArrow: true, showFrame: true, isAccessible: true });
 		this._severity = MarkerSeverity.Warning;
@@ -288,7 +296,11 @@ export class MarkerNavigationWidget extends PeekViewWidget {
 
 	protected _fillHead(container: HTMLElement): void {
 		super._fillHead(container);
-		this._actionbarWidget!.push(this.actions, { label: false, icon: true, index: 0 });
+		const actions: IAction[] = [];
+		const menu = this._menuService.createMenu(MarkerNavigationWidget.TitleMenu, this._contextKeyService);
+		createAndFillInActionBarActions(menu, undefined, actions);
+		this._actionbarWidget!.push(actions, { label: false, icon: true, index: 0 });
+		menu.dispose();
 	}
 
 	protected _fillTitleIcon(container: HTMLElement): void {
@@ -297,7 +309,8 @@ export class MarkerNavigationWidget extends PeekViewWidget {
 
 	protected _getActionBarOptions(): IActionBarOptions {
 		return {
-			orientation: ActionsOrientation.HORIZONTAL
+			orientation: ActionsOrientation.HORIZONTAL,
+			actionViewItemProvider: action => action instanceof MenuItemAction ? this._instantiationService.createInstance(MenuEntryActionViewItem, action) : undefined
 		};
 	}
 

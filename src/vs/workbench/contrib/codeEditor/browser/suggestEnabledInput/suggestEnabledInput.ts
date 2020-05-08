@@ -311,7 +311,7 @@ function getSuggestEnabledInputOptions(ariaLabel?: string): IEditorOptions {
 		roundedSelection: false,
 		renderIndentGuides: false,
 		cursorWidth: 1,
-		fontFamily: ' -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif',
+		fontFamily: ' system-ui, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif',
 		ariaLabel: ariaLabel || '',
 
 		snippetSuggestions: 'none',

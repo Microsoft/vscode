@@ -14,6 +14,8 @@ import { ITextModel } from 'vs/editor/common/model';
 import { DocumentSymbol, DocumentSymbolProvider, DocumentSymbolProviderRegistry } from 'vs/editor/common/modes';
 import { MarkerSeverity } from 'vs/platform/markers/common/markers';
 import { Iterable } from 'vs/base/common/iterator';
+import { MovingAverage } from 'vs/base/common/numbers';
+import { URI } from 'vs/base/common/uri';
 
 export abstract class TreeElement {
 
@@ -120,14 +122,14 @@ export class OutlineGroup extends TreeElement {
 	constructor(
 		readonly id: string,
 		public parent: TreeElement | undefined,
-		readonly provider: DocumentSymbolProvider,
-		readonly providerIndex: number,
+		readonly label: string,
+		readonly order: number,
 	) {
 		super();
 	}
 
 	adopt(parent: TreeElement): OutlineGroup {
-		let res = new OutlineGroup(this.id, parent, this.provider, this.providerIndex);
+		let res = new OutlineGroup(this.id, parent, this.label, this.order);
 		for (const [key, value] of this.children) {
 			res.children.set(key, value.adopt(res));
 		}
@@ -202,21 +204,7 @@ export class OutlineGroup extends TreeElement {
 	}
 }
 
-class MovingAverage {
 
-	private _n = 1;
-	private _val = 0;
-
-	update(value: number): this {
-		this._val = this._val + (value - this._val) / this._n;
-		this._n += 1;
-		return this;
-	}
-
-	get value(): number {
-		return this._val;
-	}
-}
 
 export class OutlineModel extends TreeElement {
 
@@ -315,14 +303,14 @@ export class OutlineModel extends TreeElement {
 	private static _create(textModel: ITextModel, token: CancellationToken): Promise<OutlineModel> {
 
 		const cts = new CancellationTokenSource(token);
-		const result = new OutlineModel(textModel);
+		const result = new OutlineModel(textModel.uri);
 		const provider = DocumentSymbolProviderRegistry.ordered(textModel);
 		const promises = provider.map((provider, index) => {
 
 			let id = TreeElement.findId(`provider_${index}`, result);
-			let group = new OutlineGroup(id, result, provider, index);
+			let group = new OutlineGroup(id, result, provider.displayName ?? 'Unknown Outline Provider', index);
 
-			return Promise.resolve(provider.provideDocumentSymbols(result.textModel, cts.token)).then(result => {
+			return Promise.resolve(provider.provideDocumentSymbols(textModel, cts.token)).then(result => {
 				for (const info of result || []) {
 					OutlineModel._makeOutlineElement(info, group);
 				}
@@ -384,7 +372,7 @@ export class OutlineModel extends TreeElement {
 	protected _groups = new Map<string, OutlineGroup>();
 	children = new Map<string, OutlineGroup | OutlineElement>();
 
-	protected constructor(readonly textModel: ITextModel) {
+	protected constructor(readonly uri: URI) {
 		super();
 
 		this.id = 'root';
@@ -392,7 +380,7 @@ export class OutlineModel extends TreeElement {
 	}
 
 	adopt(): OutlineModel {
-		let res = new OutlineModel(this.textModel);
+		let res = new OutlineModel(this.uri);
 		for (const [key, value] of this._groups) {
 			res._groups.set(key, value.adopt(res));
 		}
@@ -423,7 +411,7 @@ export class OutlineModel extends TreeElement {
 	}
 
 	merge(other: OutlineModel): boolean {
-		if (this.textModel.uri.toString() !== other.textModel.uri.toString()) {
+		if (this.uri.toString() !== other.uri.toString()) {
 			return false;
 		}
 		if (this._groups.size !== other._groups.size) {

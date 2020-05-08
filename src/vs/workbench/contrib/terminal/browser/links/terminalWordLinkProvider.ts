@@ -3,82 +3,95 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Terminal, ILinkProvider, IViewportRange, IBufferCellPosition, ILink } from 'xterm';
-import { convertBufferRangeToViewport, TOOLTIP_HOVER_THRESHOLD } from 'vs/workbench/contrib/terminal/browser/links/terminalLinkHelpers';
+import { Terminal, IViewportRange } from 'xterm';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { ITerminalConfiguration, TERMINAL_CONFIG_SECTION } from 'vs/workbench/contrib/terminal/common/terminal';
+import { TerminalLink } from 'vs/workbench/contrib/terminal/browser/links/terminalLink';
+import { localize } from 'vs/nls';
+import { IQuickInputService } from 'vs/platform/quickinput/common/quickInput';
+import { IWorkspaceContextService } from 'vs/platform/workspace/common/workspace';
+import { ISearchService } from 'vs/workbench/services/search/common/search';
+import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
+import { QueryBuilder } from 'vs/workbench/contrib/search/common/queryBuilder';
+import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
+import { XtermLinkMatcherHandler } from 'vs/workbench/contrib/terminal/browser/links/terminalLinkManager';
+import { TerminalBaseLinkProvider } from 'vs/workbench/contrib/terminal/browser/links/terminalBaseLinkProvider';
 
-export class TerminalWordLinkProvider implements ILinkProvider {
+export class TerminalWordLinkProvider extends TerminalBaseLinkProvider {
+	private readonly _fileQueryBuilder = this._instantiationService.createInstance(QueryBuilder);
+
 	constructor(
 		private readonly _xterm: Terminal,
-		private readonly _activateCallback: (event: MouseEvent, uri: string) => void,
-		private readonly _tooltipCallback: (event: MouseEvent, uri: string, location: IViewportRange) => boolean | void,
-		private readonly _leaveCallback: () => void,
-		@IConfigurationService private readonly _configurationService: IConfigurationService
+		private readonly _wrapLinkHandler: (handler: (event: MouseEvent | undefined, link: string) => void) => XtermLinkMatcherHandler,
+		private readonly _tooltipCallback: (link: TerminalLink, viewportRange: IViewportRange, modifierDownCallback?: () => void, modifierUpCallback?: () => void) => void,
+		@IInstantiationService private readonly _instantiationService: IInstantiationService,
+		@IConfigurationService private readonly _configurationService: IConfigurationService,
+		@IQuickInputService private readonly _quickInputService: IQuickInputService,
+		@IWorkspaceContextService private readonly _workspaceContextService: IWorkspaceContextService,
+		@ISearchService private readonly _searchService: ISearchService,
+		@IEditorService private readonly _editorService: IEditorService
 	) {
+		super();
 	}
 
-	public provideLink(position: IBufferCellPosition, callback: (link: ILink | undefined) => void): void {
-		const start: IBufferCellPosition = { x: position.x, y: position.y };
-		const end: IBufferCellPosition = { x: position.x, y: position.y };
-
+	protected _provideLinks(y: number): TerminalLink[] {
 		// TODO: Support wrapping
+		// Dispose of all old links if new links are provides, links are only cached for the current line
+		const result: TerminalLink[] = [];
+		const wordSeparators = this._configurationService.getValue<ITerminalConfiguration>(TERMINAL_CONFIG_SECTION).wordSeparators;
+		const activateCallback = this._wrapLinkHandler((_, link) => this._activate(link));
 
-		// Expand to the left until a word separator is hit
-		const line = this._xterm.buffer.active.getLine(position.y - 1)!;
+		const line = this._xterm.buffer.active.getLine(y - 1)!;
 		let text = '';
-		start.x++; // The hovered cell is considered first
-		for (let x = position.x; x > 0; x--) {
-			const char = line.getCell(x - 1)?.getChars();
-			if (!char) {
-				break;
+		let startX = -1;
+		const cellData = line.getCell(0)!;
+		for (let x = 0; x < line.length; x++) {
+			line.getCell(x, cellData);
+			const chars = cellData.getChars();
+			const width = cellData.getWidth();
+
+			// Add a link if this is a separator
+			if (width !== 0 && wordSeparators.indexOf(chars) >= 0) {
+				if (startX !== -1) {
+					result.push(new TerminalLink({ start: { x: startX + 1, y }, end: { x, y } }, text, this._xterm.buffer.active.viewportY, activateCallback, this._tooltipCallback, false, localize('searchWorkspace', 'Search workspace'), this._configurationService));
+					text = '';
+					startX = -1;
+				}
+				continue;
 			}
-			const config = this._configurationService.getValue<ITerminalConfiguration>(TERMINAL_CONFIG_SECTION);
-			if (config.wordSeparators.indexOf(char) >= 0) {
-				break;
+
+			// Mark the start of a link if it hasn't started yet
+			if (startX === -1) {
+				startX = x;
 			}
-			start.x--;
-			text = char + text;
+
+			text += chars;
 		}
 
-		// No links were found (the hovered cell is whitespace)
-		if (text.length === 0) {
-			callback(undefined);
+		// Add the final link if there is one
+		if (startX !== -1) {
+			result.push(new TerminalLink({ start: { x: startX + 1, y }, end: { x: line.length, y } }, text, this._xterm.buffer.active.viewportY, activateCallback, this._tooltipCallback, false, localize('searchWorkspace', 'Search workspace'), this._configurationService));
+		}
+
+		return result;
+	}
+
+	private async _activate(link: string) {
+		const results = await this._searchService.fileSearch(
+			this._fileQueryBuilder.file(this._workspaceContextService.getWorkspace().folders, {
+				filePattern: link,
+				maxResults: 2
+			})
+		);
+
+		// If there was exactly one match, open it
+		if (results.results.length === 1) {
+			const match = results.results[0];
+			await this._editorService.openEditor({ resource: match.resource, options: { pinned: true } });
 			return;
 		}
 
-		// Expand to the right until a word separator is hit
-		// end.x++; // The hovered cell is considered first
-		for (let x = position.x + 1; x <= line.length; x++) {
-			const char = line.getCell(x - 1)?.getChars();
-			if (!char) {
-				break;
-			}
-			const config = this._configurationService.getValue<ITerminalConfiguration>(TERMINAL_CONFIG_SECTION);
-			if (config.wordSeparators.indexOf(char) >= 0) {
-				break;
-			}
-			end.x++;
-			text += char;
-		}
-
-		const range = { start, end };
-		let timeout: number | undefined;
-		callback({
-			text,
-			range,
-			activate: (event: MouseEvent, text: string) => this._activateCallback(event, text),
-			hover: (event: MouseEvent, text: string) => {
-				timeout = window.setTimeout(() => {
-					this._tooltipCallback(event, text, convertBufferRangeToViewport(range, this._xterm.buffer.active.viewportY));
-				}, TOOLTIP_HOVER_THRESHOLD);
-			},
-			leave: () => {
-				if (timeout !== undefined) {
-					window.clearTimeout(timeout);
-				}
-				this._leaveCallback();
-			}
-		});
+		// Fallback to searching quick access
+		this._quickInputService.quickAccess.show(link);
 	}
 }

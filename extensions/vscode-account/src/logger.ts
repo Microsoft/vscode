@@ -17,7 +17,7 @@ class Log {
 	private level: Level;
 
 	constructor() {
-		this.output = vscode.window.createOutputChannel('Account');
+		this.output = vscode.window.createOutputChannel('Microsoft Authentication');
 		this.level = vscode.workspace.getConfiguration('microsoftAccount').get('logLevel') || Level.Info;
 		vscode.workspace.onDidChangeConfiguration(e => {
 			if (e.affectsConfiguration('microsoftAccount.logLevel')) {

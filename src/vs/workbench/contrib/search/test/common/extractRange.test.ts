@@ -13,7 +13,7 @@ suite('extractRangeFromFilter', () => {
 		assert.ok(!extractRangeFromFilter('/some/path'));
 		assert.ok(!extractRangeFromFilter('/some/path/file.txt'));
 
-		for (const lineSep of [':', '#', '(']) {
+		for (const lineSep of [':', '#', '(', ':line ']) {
 			for (const colSep of [':', '#', ',']) {
 				const base = '/some/path/file.txt';
 

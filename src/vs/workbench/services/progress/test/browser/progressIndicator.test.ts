@@ -30,7 +30,7 @@ class TestViewlet implements IViewlet {
 	getControl(): IEditorControl { return null!; }
 	focus(): void { }
 	getOptimalWidth(): number { return 10; }
-	openView(id: string, focus?: boolean): IView { return null!; }
+	openView<T extends IView>(id: string, focus?: boolean): T | undefined { return undefined; }
 	getViewPaneContainer(): IViewPaneContainer { return null!; }
 	saveState(): void { }
 }

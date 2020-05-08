@@ -40,12 +40,9 @@
 }
 
 .settings-editor > .settings-header > .search-container > .settings-count-widget {
-	margin: 6px 0px;
-	padding: 0px 8px;
-	border-radius: 2px;
 	position: absolute;
 	right: 35px;
-	top: 0;
+	top: 6px;
 }
 
 .settings-editor > .settings-header > .search-container > .settings-clear-widget {
@@ -179,14 +176,14 @@
 	width: 26px;
 }
 
-.settings-editor > .settings-body .settings-tree-container .monaco-list-row .mouseover .setting-toolbar-container > .monaco-toolbar .codicon-more,
-.settings-editor > .settings-body .settings-tree-container .monaco-list-row .setting-item-contents.focused .setting-toolbar-container > .monaco-toolbar .codicon-more,
-.settings-editor > .settings-body .settings-tree-container .monaco-list-row .setting-toolbar-container:hover > .monaco-toolbar .codicon-more,
-.settings-editor > .settings-body .settings-tree-container .monaco-list-row .setting-toolbar-container > .monaco-toolbar .active .codicon-more {
+.settings-editor > .settings-body .settings-tree-container .monaco-list-row .mouseover .setting-toolbar-container > .monaco-toolbar .codicon,
+.settings-editor > .settings-body .settings-tree-container .monaco-list-row .setting-item-contents.focused .setting-toolbar-container > .monaco-toolbar .codicon,
+.settings-editor > .settings-body .settings-tree-container .monaco-list-row .setting-toolbar-container:hover > .monaco-toolbar .codicon,
+.settings-editor > .settings-body .settings-tree-container .monaco-list-row .setting-toolbar-container > .monaco-toolbar .active .codicon {
 	opacity: 1;
 }
 
-.settings-editor > .settings-body .settings-tree-container .setting-toolbar-container > .monaco-toolbar .codicon-more {
+.settings-editor > .settings-body .settings-tree-container .setting-toolbar-container > .monaco-toolbar .codicon {
 	opacity: 0;
 	transition: opacity .3s;
 	width: 22px;
@@ -414,21 +411,21 @@
 	-moz-appearance: textfield !important;
 }
 
-.settings-editor > .settings-body > .settings-tree-container .setting-item-contents .setting-item-description-markdown * {
+.settings-editor > .settings-body > .settings-tree-container .setting-item-contents .setting-item-markdown * {
 	margin: 0px;
 }
 
-.settings-editor > .settings-body > .settings-tree-container .setting-item-contents .setting-item-description-markdown a:focus {
+.settings-editor > .settings-body > .settings-tree-container .setting-item-contents .setting-item-markdown a:focus {
 	outline: 1px solid -webkit-focus-ring-color;
 	outline-offset: -1px;
 	text-decoration: underline;
 }
 
-.settings-editor > .settings-body > .settings-tree-container .setting-item-contents .setting-item-description-markdown a:hover {
+.settings-editor > .settings-body > .settings-tree-container .setting-item-contents .setting-item-markdown a:hover {
 	text-decoration: underline;
 }
 
-.settings-editor > .settings-body > .settings-tree-container .setting-item-contents .setting-item-description-markdown code {
+.settings-editor > .settings-body > .settings-tree-container .setting-item-contents .setting-item-markdown code {
 	line-height: 15px;
 	/** For some reason, this is needed, otherwise <code> will take up 20px height */
 	font-family: var(--monaco-monospace-font);

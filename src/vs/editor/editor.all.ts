@@ -48,3 +48,5 @@ import 'vs/editor/contrib/wordPartOperations/wordPartOperations';
 // Load up these strings even in VSCode, even if they are not used
 // in order to get them translated
 import 'vs/editor/common/standaloneStrings';
+
+import 'vs/base/browser/ui/codicons/codiconStyles'; // The codicons are defined here and must be loaded

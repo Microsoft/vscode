@@ -19,7 +19,7 @@ registerSingleton(IWebviewService, ElectronWebviewService, true);
 const actionRegistry = Registry.as<IWorkbenchActionRegistry>(ActionExtensions.WorkbenchActions);
 
 actionRegistry.registerWorkbenchAction(
-	SyncActionDescriptor.create(webviewCommands.OpenWebviewDeveloperToolsAction, webviewCommands.OpenWebviewDeveloperToolsAction.ID, webviewCommands.OpenWebviewDeveloperToolsAction.LABEL),
+	SyncActionDescriptor.from(webviewCommands.OpenWebviewDeveloperToolsAction),
 	webviewCommands.OpenWebviewDeveloperToolsAction.ALIAS,
 	webviewDeveloperCategory);
 

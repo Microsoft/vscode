@@ -295,7 +295,7 @@ export class DropdownMenuActionViewItem extends BaseActionViewItem {
 
 	render(container: HTMLElement): void {
 		const labelRenderer: ILabelRenderer = (el: HTMLElement): IDisposable | null => {
-			this.element = append(el, $('a.action-label.codicon'));
+			this.element = append(el, $('a.action-label.codicon')); // todo@aeschli: remove codicon, should come through `this.clazz`
 			if (this.clazz) {
 				addClasses(this.element, this.clazz);
 			}

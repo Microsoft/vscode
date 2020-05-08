@@ -9,6 +9,10 @@ import { Extensions as JSONExtensions, IJSONContributionRegistry } from 'vs/plat
 import { IJSONSchema } from 'vs/base/common/jsonSchema';
 import { iconsSchemaId } from 'vs/platform/theme/common/iconRegistry';
 
+export const fontIdRegex = '^([\\w-_]+)$';
+export const fontStyleRegex = '^(normal|italic|(oblique[ \\w\\s-]+))$';
+export const fontWeightRegex = '^(normal|bold|lighter|bolder|(\\d{0-1000}))$';
+export const fontSizeRegex = '^([\\w .%-_]+)$';
 
 const schemaId = 'vscode://schemas/product-icon-theme';
 const schema: IJSONSchema = {
@@ -18,13 +22,14 @@ const schema: IJSONSchema = {
 	properties: {
 		fonts: {
 			type: 'array',
-			description: nls.localize('schema.fonts', 'Fonts that are used in the icon definitions.'),
 			items: {
 				type: 'object',
 				properties: {
 					id: {
 						type: 'string',
-						description: nls.localize('schema.id', 'The ID of the font.')
+						description: nls.localize('schema.id', 'The ID of the font.'),
+						pattern: fontIdRegex,
+						patternErrorMessage: nls.localize('schema.id.formatError', 'The ID must only contain letters, numbers, underscore and minus.')
 					},
 					src: {
 						type: 'array',
@@ -38,7 +43,8 @@ const schema: IJSONSchema = {
 								},
 								format: {
 									type: 'string',
-									description: nls.localize('schema.font-format', 'The format of the font.')
+									description: nls.localize('schema.font-format', 'The format of the font.'),
+									enum: ['woff', 'woff2', 'truetype', 'opentype', 'embedded-opentype', 'svg']
 								}
 							},
 							required: [
@@ -49,15 +55,19 @@ const schema: IJSONSchema = {
 					},
 					weight: {
 						type: 'string',
-						description: nls.localize('schema.font-weight', 'The weight of the font.')
+						description: nls.localize('schema.font-weight', 'The weight of the font. See https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight for valid values.'),
+						anyOf: [
+							{ enum: ['normal', 'bold', 'lighter', 'bolder'] },
+							{ type: 'string', pattern: fontWeightRegex }
+						]
 					},
 					style: {
 						type: 'string',
-						description: nls.localize('schema.font-sstyle', 'The style of the font.')
-					},
-					size: {
-						type: 'string',
-						description: nls.localize('schema.font-size', 'The default size of the font.')
+						description: nls.localize('schema.font-style', 'The style of the font. See https://developer.mozilla.org/en-US/docs/Web/CSS/font-style for valid values.'),
+						anyOf: [
+							{ enum: ['normal', 'italic', 'oblique'] },
+							{ type: 'string', pattern: fontStyleRegex }
+						]
 					}
 				},
 				required: [

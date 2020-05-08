@@ -120,7 +120,7 @@ export default abstract class BaseErrorTelemetry {
 	private _flushBuffer(): void {
 		for (let error of this._buffer) {
 			type UnhandledErrorClassification = {} & ErrorEventFragment;
-			this._telemetryService.publicLog2<ErrorEvent, UnhandledErrorClassification>('UnhandledError', error, true);
+			this._telemetryService.publicLogError2<ErrorEvent, UnhandledErrorClassification>('UnhandledError', error);
 		}
 		this._buffer.length = 0;
 	}

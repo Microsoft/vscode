@@ -339,6 +339,11 @@ export class CommentNode extends Disposable {
 		this._commentEditor.layout({ width: container.clientWidth - 14, height: 90 });
 		this._commentEditor.focus();
 
+		dom.scheduleAtNextAnimationFrame(() => {
+			this._commentEditor!.layout({ width: container.clientWidth - 14, height: 90 });
+			this._commentEditor!.focus();
+		});
+
 		const lastLine = this._commentEditorModel.getLineCount();
 		const lastColumn = this._commentEditorModel.getLineContent(lastLine).length + 1;
 		this._commentEditor.setSelection(new Selection(lastLine, lastColumn, lastLine, lastColumn));

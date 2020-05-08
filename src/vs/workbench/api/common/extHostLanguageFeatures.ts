@@ -7,7 +7,7 @@ import { URI, UriComponents } from 'vs/base/common/uri';
 import { mixin } from 'vs/base/common/objects';
 import type * as vscode from 'vscode';
 import * as typeConvert from 'vs/workbench/api/common/extHostTypeConverters';
-import { Range, Disposable, CompletionList, SnippetString, CodeActionKind, SymbolInformation, DocumentSymbol, SemanticTokensEdits } from 'vs/workbench/api/common/extHostTypes';
+import { Range, Disposable, CompletionList, SnippetString, CodeActionKind, SymbolInformation, DocumentSymbol, SemanticTokensEdits, SemanticTokens, SemanticTokensEdit } from 'vs/workbench/api/common/extHostTypes';
 import { ISingleEditOperation } from 'vs/editor/common/model';
 import * as modes from 'vs/editor/common/modes';
 import { ExtHostDocuments } from 'vs/workbench/api/common/extHostDocuments';
@@ -676,6 +676,13 @@ class SemanticTokensPreviousResult {
 	) { }
 }
 
+type RelaxedSemanticTokens = { readonly resultId?: string; readonly data: number[]; };
+type RelaxedSemanticTokensEdit = { readonly start: number; readonly deleteCount: number; readonly data?: number[]; };
+type RelaxedSemanticTokensEdits = { readonly resultId?: string; readonly edits: RelaxedSemanticTokensEdit[]; };
+
+type ProvidedSemanticTokens = vscode.SemanticTokens | RelaxedSemanticTokens;
+type ProvidedSemanticTokensEdits = vscode.SemanticTokensEdits | RelaxedSemanticTokensEdits;
+
 export class DocumentSemanticTokensAdapter {
 
 	private readonly _previousResults: Map<number, SemanticTokensPreviousResult>;
@@ -696,13 +703,14 @@ export class DocumentSemanticTokensAdapter {
 				return this._provider.provideDocumentSemanticTokensEdits(doc, previousResult.resultId, token);
 			}
 			return this._provider.provideDocumentSemanticTokens(doc, token);
-		}).then(value => {
+		}).then((value: ProvidedSemanticTokens | ProvidedSemanticTokensEdits | null | undefined) => {
 			if (previousResult) {
 				this._previousResults.delete(previousResultId);
 			}
 			if (!value) {
 				return null;
 			}
+			value = DocumentSemanticTokensAdapter._fixProvidedSemanticTokens(value);
 			return this._send(DocumentSemanticTokensAdapter._convertToEdits(previousResult, value), value);
 		});
 	}
@@ -711,12 +719,40 @@ export class DocumentSemanticTokensAdapter {
 		this._previousResults.delete(semanticColoringResultId);
 	}
 
-	private static _isSemanticTokens(v: vscode.SemanticTokens | vscode.SemanticTokensEdits): v is vscode.SemanticTokens {
-		return v && !!((v as vscode.SemanticTokens).data);
+	private static _fixProvidedSemanticTokens(v: ProvidedSemanticTokens | ProvidedSemanticTokensEdits): vscode.SemanticTokens | vscode.SemanticTokensEdits {
+		if (DocumentSemanticTokensAdapter._isSemanticTokens(v)) {
+			if (DocumentSemanticTokensAdapter._isCorrectSemanticTokens(v)) {
+				return v;
+			}
+			return new SemanticTokens(new Uint32Array(v.data), v.resultId);
+		} else if (DocumentSemanticTokensAdapter._isSemanticTokensEdits(v)) {
+			if (DocumentSemanticTokensAdapter._isCorrectSemanticTokensEdits(v)) {
+				return v;
+			}
+			return new SemanticTokensEdits(v.edits.map(edit => new SemanticTokensEdit(edit.start, edit.deleteCount, edit.data ? new Uint32Array(edit.data) : edit.data)), v.resultId);
+		}
+		return v;
 	}
 
-	private static _isSemanticTokensEdits(v: vscode.SemanticTokens | vscode.SemanticTokensEdits): v is vscode.SemanticTokensEdits {
-		return v && Array.isArray((v as vscode.SemanticTokensEdits).edits);
+	private static _isSemanticTokens(v: ProvidedSemanticTokens | ProvidedSemanticTokensEdits): v is ProvidedSemanticTokens {
+		return v && !!((v as ProvidedSemanticTokens).data);
+	}
+
+	private static _isCorrectSemanticTokens(v: ProvidedSemanticTokens): v is vscode.SemanticTokens {
+		return (v.data instanceof Uint32Array);
+	}
+
+	private static _isSemanticTokensEdits(v: ProvidedSemanticTokens | ProvidedSemanticTokensEdits): v is ProvidedSemanticTokensEdits {
+		return v && Array.isArray((v as ProvidedSemanticTokensEdits).edits);
+	}
+
+	private static _isCorrectSemanticTokensEdits(v: ProvidedSemanticTokensEdits): v is vscode.SemanticTokensEdits {
+		for (const edit of v.edits) {
+			if (!(edit.data instanceof Uint32Array)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private static _convertToEdits(previousResult: SemanticTokensPreviousResult | null | undefined, newResult: vscode.SemanticTokens | vscode.SemanticTokensEdits): vscode.SemanticTokens | vscode.SemanticTokensEdits {
@@ -834,7 +870,7 @@ class SuggestAdapter {
 		private readonly _extension: IExtensionDescription,
 	) { }
 
-	provideCompletionItems(resource: URI, position: IPosition, context: modes.CompletionContext, token: CancellationToken): Promise<extHostProtocol.ISuggestResultDto | undefined> {
+	async provideCompletionItems(resource: URI, position: IPosition, context: modes.CompletionContext, token: CancellationToken): Promise<extHostProtocol.ISuggestResultDto | undefined> {
 
 		const doc = this._documents.getDocument(resource);
 		const pos = typeConvert.Position.to(position);
@@ -845,96 +881,91 @@ class SuggestAdapter {
 		const replaceRange = doc.getWordRangeAtPosition(pos) || new Range(pos, pos);
 		const insertRange = replaceRange.with({ end: pos });
 
-		return asPromise(() => this._provider.provideCompletionItems(doc, pos, token, typeConvert.CompletionContext.to(context))).then(value => {
+		const itemsOrList = await asPromise(() => this._provider.provideCompletionItems(doc, pos, token, typeConvert.CompletionContext.to(context)));
 
-			if (!value) {
-				// undefined and null are valid results
-				return undefined;
-			}
+		if (!itemsOrList) {
+			// undefined and null are valid results
+			return undefined;
+		}
 
-			if (token.isCancellationRequested) {
-				// cancelled -> return without further ado, esp no caching
-				// of results as they will leak
-				return undefined;
-			}
+		if (token.isCancellationRequested) {
+			// cancelled -> return without further ado, esp no caching
+			// of results as they will leak
+			return undefined;
+		}
 
-			const list = Array.isArray(value) ? new CompletionList(value) : value;
+		const list = Array.isArray(itemsOrList) ? new CompletionList(itemsOrList) : itemsOrList;
 
-			// keep result for providers that support resolving
-			const pid: number = SuggestAdapter.supportsResolving(this._provider) ? this._cache.add(list.items) : this._cache.add([]);
-			const disposables = new DisposableStore();
-			this._disposables.set(pid, disposables);
+		// keep result for providers that support resolving
+		const pid: number = SuggestAdapter.supportsResolving(this._provider) ? this._cache.add(list.items) : this._cache.add([]);
+		const disposables = new DisposableStore();
+		this._disposables.set(pid, disposables);
 
-			const completions: extHostProtocol.ISuggestDataDto[] = [];
-			const result: extHostProtocol.ISuggestResultDto = {
-				x: pid,
-				[extHostProtocol.ISuggestResultDtoField.completions]: completions,
-				[extHostProtocol.ISuggestResultDtoField.defaultRanges]: { replace: typeConvert.Range.from(replaceRange), insert: typeConvert.Range.from(insertRange) },
-				[extHostProtocol.ISuggestResultDtoField.isIncomplete]: list.isIncomplete || undefined
-			};
+		const completions: extHostProtocol.ISuggestDataDto[] = [];
+		const result: extHostProtocol.ISuggestResultDto = {
+			x: pid,
+			[extHostProtocol.ISuggestResultDtoField.completions]: completions,
+			[extHostProtocol.ISuggestResultDtoField.defaultRanges]: { replace: typeConvert.Range.from(replaceRange), insert: typeConvert.Range.from(insertRange) },
+			[extHostProtocol.ISuggestResultDtoField.isIncomplete]: list.isIncomplete || undefined
+		};
 
-			for (let i = 0; i < list.items.length; i++) {
-				const item = list.items[i];
-				// check for bad completion item first
-				if (this._validateCompletionItem(item, pos)) {
-					const dto = this._convertCompletionItem(item, [pid, i], insertRange, replaceRange);
-					completions.push(dto);
-				}
-			}
+		for (let i = 0; i < list.items.length; i++) {
+			const item = list.items[i];
+			// check for bad completion item first
+			const dto = this._convertCompletionItem(item, [pid, i], insertRange, replaceRange);
+			completions.push(dto);
+		}
 
-			return result;
-		});
+		return result;
 	}
 
-	resolveCompletionItem(_resource: URI, position: IPosition, id: extHostProtocol.ChainedCacheId, token: CancellationToken): Promise<extHostProtocol.ISuggestDataDto | undefined> {
+	async resolveCompletionItem(id: extHostProtocol.ChainedCacheId, token: CancellationToken): Promise<extHostProtocol.ISuggestDataDto | undefined> {
 
 		if (typeof this._provider.resolveCompletionItem !== 'function') {
-			return Promise.resolve(undefined);
+			return undefined;
 		}
 
 		const item = this._cache.get(...id);
 		if (!item) {
-			return Promise.resolve(undefined);
+			return undefined;
 		}
 
-		const pos = typeConvert.Position.to(position);
 		const _mustNotChange = SuggestAdapter._mustNotChangeHash(item);
 		const _mayNotChange = SuggestAdapter._mayNotChangeHash(item);
 
-		return asPromise(() => this._provider.resolveCompletionItem!(item, token)).then(resolvedItem => {
+		const resolvedItem = await asPromise(() => this._provider.resolveCompletionItem!(item, token));
 
-			if (!resolvedItem || !this._validateCompletionItem(resolvedItem, pos)) {
-				return undefined;
-			}
+		if (!resolvedItem) {
+			return undefined;
+		}
 
-			type BlameExtension = {
-				extensionId: string;
-				kind: string;
-				index: string;
-			};
+		type BlameExtension = {
+			extensionId: string;
+			kind: string;
+			index: string;
+		};
 
-			type BlameExtensionMeta = {
-				extensionId: { classification: 'SystemMetaData', purpose: 'PerformanceAndHealth' };
-				kind: { classification: 'SystemMetaData', purpose: 'PerformanceAndHealth' };
-				index: { classification: 'SystemMetaData', purpose: 'PerformanceAndHealth' };
-			};
+		type BlameExtensionMeta = {
+			extensionId: { classification: 'SystemMetaData', purpose: 'PerformanceAndHealth' };
+			kind: { classification: 'SystemMetaData', purpose: 'PerformanceAndHealth' };
+			index: { classification: 'SystemMetaData', purpose: 'PerformanceAndHealth' };
+		};
 
-			let _mustNotChangeIndex = !this._didWarnMust && SuggestAdapter._mustNotChangeDiff(_mustNotChange, resolvedItem);
-			if (typeof _mustNotChangeIndex === 'string') {
-				this._logService.warn(`[${this._extension.identifier.value}] INVALID result from 'resolveCompletionItem', extension MUST NOT change any of: label, sortText, filterText, insertText, or textEdit`);
-				this._telemetry.$publicLog2<BlameExtension, BlameExtensionMeta>('badresolvecompletion', { extensionId: this._extension.identifier.value, kind: 'must', index: _mustNotChangeIndex });
-				this._didWarnMust = true;
-			}
+		let _mustNotChangeIndex = !this._didWarnMust && SuggestAdapter._mustNotChangeDiff(_mustNotChange, resolvedItem);
+		if (typeof _mustNotChangeIndex === 'string') {
+			this._logService.warn(`[${this._extension.identifier.value}] INVALID result from 'resolveCompletionItem', extension MUST NOT change any of: label, sortText, filterText, insertText, or textEdit`);
+			this._telemetry.$publicLog2<BlameExtension, BlameExtensionMeta>('badresolvecompletion', { extensionId: this._extension.identifier.value, kind: 'must', index: _mustNotChangeIndex });
+			this._didWarnMust = true;
+		}
 
-			let _mayNotChangeIndex = !this._didWarnShould && SuggestAdapter._mayNotChangeDiff(_mayNotChange, resolvedItem);
-			if (typeof _mayNotChangeIndex === 'string') {
-				this._logService.info(`[${this._extension.identifier.value}] UNSAVE result from 'resolveCompletionItem', extension SHOULD NOT change any of: additionalTextEdits, or command`);
-				this._telemetry.$publicLog2<BlameExtension, BlameExtensionMeta>('badresolvecompletion', { extensionId: this._extension.identifier.value, kind: 'should', index: _mayNotChangeIndex });
-				this._didWarnShould = true;
-			}
+		let _mayNotChangeIndex = !this._didWarnShould && SuggestAdapter._mayNotChangeDiff(_mayNotChange, resolvedItem);
+		if (typeof _mayNotChangeIndex === 'string') {
+			this._logService.info(`[${this._extension.identifier.value}] UNSAVE result from 'resolveCompletionItem', extension SHOULD NOT change any of: additionalTextEdits, or command`);
+			this._telemetry.$publicLog2<BlameExtension, BlameExtensionMeta>('badresolvecompletion', { extensionId: this._extension.identifier.value, kind: 'should', index: _mayNotChangeIndex });
+			this._didWarnShould = true;
+		}
 
-			return this._convertCompletionItem(resolvedItem, id);
-		});
+		return this._convertCompletionItem(resolvedItem, id);
 	}
 
 	releaseCompletionItems(id: number): any {
@@ -954,14 +985,14 @@ class SuggestAdapter {
 			//
 			x: id,
 			//
-			[extHostProtocol.ISuggestDataDtoField.label]: item.label,
+			[extHostProtocol.ISuggestDataDtoField.label]: item.label ?? '',
 			[extHostProtocol.ISuggestDataDtoField.label2]: item.label2,
-			[extHostProtocol.ISuggestDataDtoField.kind]: item.kind ? typeConvert.CompletionItemKind.from(item.kind) : undefined,
+			[extHostProtocol.ISuggestDataDtoField.kind]: item.kind !== undefined ? typeConvert.CompletionItemKind.from(item.kind) : undefined,
 			[extHostProtocol.ISuggestDataDtoField.kindModifier]: item.tags && item.tags.map(typeConvert.CompletionItemTag.from),
 			[extHostProtocol.ISuggestDataDtoField.detail]: item.detail,
 			[extHostProtocol.ISuggestDataDtoField.documentation]: typeof item.documentation === 'undefined' ? undefined : typeConvert.MarkdownString.fromStrict(item.documentation),
-			[extHostProtocol.ISuggestDataDtoField.sortText]: item.sortText,
-			[extHostProtocol.ISuggestDataDtoField.filterText]: item.filterText,
+			[extHostProtocol.ISuggestDataDtoField.sortText]: item.sortText !== item.label ? item.sortText : undefined,
+			[extHostProtocol.ISuggestDataDtoField.filterText]: item.filterText !== item.label ? item.filterText : undefined,
 			[extHostProtocol.ISuggestDataDtoField.preselect]: item.preselect || undefined,
 			[extHostProtocol.ISuggestDataDtoField.insertTextRules]: item.keepWhitespace ? modes.CompletionItemInsertTextRule.KeepWhitespace : 0,
 			[extHostProtocol.ISuggestDataDtoField.commitCharacters]: item.commitCharacters,
@@ -1003,31 +1034,6 @@ class SuggestAdapter {
 		}
 
 		return result;
-	}
-
-	private _validateCompletionItem(item: vscode.CompletionItem, position: vscode.Position): boolean {
-		if (typeof item.label !== 'string' || item.label.length === 0) {
-			this._logService.warn('INVALID text edit -> must have at least a label');
-			return false;
-		}
-
-		if (Range.isRange(item.range)) {
-			if (!item.range.isSingleLine || item.range.start.line !== position.line) {
-				this._logService.trace('INVALID range -> must be single line and on the same line');
-				return false;
-			}
-
-		} else if (item.range) {
-			if (!item.range.inserting.isSingleLine || item.range.inserting.start.line !== position.line
-				|| !item.range.replacing.isSingleLine || item.range.replacing.start.line !== position.line
-				|| !item.range.inserting.start.isEqual(item.range.replacing.start)
-				|| !item.range.replacing.contains(item.range.inserting)
-			) {
-				this._logService.trace('INVALID range -> must be single line, on the same line, insert range must be a prefix of replace range');
-				return false;
-			}
-		}
-		return true;
 	}
 
 	private static _mustNotChangeHash(item: vscode.CompletionItem) {
@@ -1783,8 +1789,8 @@ export class ExtHostLanguageFeatures implements extHostProtocol.ExtHostLanguageF
 		return this._withAdapter(handle, SuggestAdapter, adapter => adapter.provideCompletionItems(URI.revive(resource), position, context, token), undefined);
 	}
 
-	$resolveCompletionItem(handle: number, resource: UriComponents, position: IPosition, id: extHostProtocol.ChainedCacheId, token: CancellationToken): Promise<extHostProtocol.ISuggestDataDto | undefined> {
-		return this._withAdapter(handle, SuggestAdapter, adapter => adapter.resolveCompletionItem(URI.revive(resource), position, id, token), undefined);
+	$resolveCompletionItem(handle: number, id: extHostProtocol.ChainedCacheId, token: CancellationToken): Promise<extHostProtocol.ISuggestDataDto | undefined> {
+		return this._withAdapter(handle, SuggestAdapter, adapter => adapter.resolveCompletionItem(id, token), undefined);
 	}
 
 	$releaseCompletionItems(handle: number, id: number): void {

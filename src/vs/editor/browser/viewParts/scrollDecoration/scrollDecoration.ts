@@ -58,10 +58,10 @@ export class ScrollDecorationViewPart extends ViewPart {
 		const options = this._context.configuration.options;
 		const layoutInfo = options.get(EditorOption.layoutInfo);
 
-		if (layoutInfo.renderMinimap === 0 || (layoutInfo.minimapWidth > 0 && layoutInfo.minimapLeft === 0)) {
+		if (layoutInfo.minimap.renderMinimap === 0 || (layoutInfo.minimap.minimapWidth > 0 && layoutInfo.minimap.minimapLeft === 0)) {
 			this._width = layoutInfo.width;
 		} else {
-			this._width = layoutInfo.width - layoutInfo.minimapWidth - layoutInfo.verticalScrollbarWidth;
+			this._width = layoutInfo.width - layoutInfo.minimap.minimapWidth - layoutInfo.verticalScrollbarWidth;
 		}
 	}
 

@@ -59,6 +59,7 @@ export interface ISetting {
 	overrides?: ISetting[];
 	overrideOf?: ISetting;
 	deprecationMessage?: string;
+	deprecationMessageIsMarkdown?: boolean;
 
 	scope?: ConfigurationScope;
 	type?: string | string[];

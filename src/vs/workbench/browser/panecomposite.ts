@@ -59,8 +59,8 @@ export class PaneComposite extends Composite implements IPaneComposite {
 		return this.viewPaneContainer.getOptimalWidth();
 	}
 
-	openView(id: string, focus?: boolean): IView {
-		return this.viewPaneContainer.openView(id, focus);
+	openView<T extends IView>(id: string, focus?: boolean): T | undefined {
+		return this.viewPaneContainer.openView(id, focus) as T;
 	}
 
 	getViewPaneContainer(): ViewPaneContainer {

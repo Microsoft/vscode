@@ -11,5 +11,5 @@ import { OpenLogsFolderAction, OpenExtensionLogsFolderAction } from 'vs/workbenc
 
 const workbenchActionsRegistry = Registry.as<IWorkbenchActionRegistry>(WorkbenchActionExtensions.WorkbenchActions);
 const devCategory = nls.localize('developer', "Developer");
-workbenchActionsRegistry.registerWorkbenchAction(SyncActionDescriptor.create(OpenLogsFolderAction, OpenLogsFolderAction.ID, OpenLogsFolderAction.LABEL), 'Developer: Open Logs Folder', devCategory);
-workbenchActionsRegistry.registerWorkbenchAction(SyncActionDescriptor.create(OpenExtensionLogsFolderAction, OpenExtensionLogsFolderAction.ID, OpenExtensionLogsFolderAction.LABEL), 'Developer: Open Extension Logs Folder', devCategory);
+workbenchActionsRegistry.registerWorkbenchAction(SyncActionDescriptor.from(OpenLogsFolderAction), 'Developer: Open Logs Folder', devCategory);
+workbenchActionsRegistry.registerWorkbenchAction(SyncActionDescriptor.from(OpenExtensionLogsFolderAction), 'Developer: Open Extension Logs Folder', devCategory);

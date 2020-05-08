@@ -22,11 +22,12 @@ import { InEditorZenModeContext, IsCenteredLayoutContext, EditorAreaVisibleConte
 import { ContextKeyExpr, IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
 import { SideBarVisibleContext } from 'vs/workbench/common/viewlet';
 import { IEnvironmentService } from 'vs/platform/environment/common/environment';
-import { IViewDescriptorService, IViewContainersRegistry, Extensions as ViewContainerExtensions, IViewsService, FocusedViewContext, ViewContainerLocation, IViewDescriptor } from 'vs/workbench/common/views';
+import { IViewDescriptorService, IViewsService, FocusedViewContext, ViewContainerLocation, IViewDescriptor } from 'vs/workbench/common/views';
 import { IQuickInputService, IQuickPickItem, IQuickPickSeparator } from 'vs/platform/quickinput/common/quickInput';
 import { INotificationService } from 'vs/platform/notification/common/notification';
 import { IActivityBarService } from 'vs/workbench/services/activityBar/browser/activityBarService';
 import { IPanelService } from 'vs/workbench/services/panel/common/panelService';
+import { Codicon } from 'vs/base/common/codicons';
 
 const registry = Registry.as<IWorkbenchActionRegistry>(WorkbenchExtensions.WorkbenchActions);
 const viewCategory = nls.localize('view', "View");
@@ -53,7 +54,7 @@ export class CloseSidebarAction extends Action {
 	}
 }
 
-registry.registerWorkbenchAction(SyncActionDescriptor.create(CloseSidebarAction, CloseSidebarAction.ID, CloseSidebarAction.LABEL), 'View: Close Side Bar', viewCategory);
+registry.registerWorkbenchAction(SyncActionDescriptor.from(CloseSidebarAction), 'View: Close Side Bar', viewCategory);
 
 // --- Toggle Activity Bar
 
@@ -83,7 +84,7 @@ export class ToggleActivityBarVisibilityAction extends Action {
 	}
 }
 
-registry.registerWorkbenchAction(SyncActionDescriptor.create(ToggleActivityBarVisibilityAction, ToggleActivityBarVisibilityAction.ID, ToggleActivityBarVisibilityAction.LABEL), 'View: Toggle Activity Bar Visibility', viewCategory);
+registry.registerWorkbenchAction(SyncActionDescriptor.from(ToggleActivityBarVisibilityAction), 'View: Toggle Activity Bar Visibility', viewCategory);
 
 MenuRegistry.appendMenuItem(MenuId.MenubarAppearanceMenu, {
 	group: '2_workbench_layout',
@@ -116,7 +117,7 @@ class ToggleCenteredLayout extends Action {
 	}
 }
 
-registry.registerWorkbenchAction(SyncActionDescriptor.create(ToggleCenteredLayout, ToggleCenteredLayout.ID, ToggleCenteredLayout.LABEL), 'View: Toggle Centered Layout', viewCategory);
+registry.registerWorkbenchAction(SyncActionDescriptor.from(ToggleCenteredLayout), 'View: Toggle Centered Layout', viewCategory);
 
 MenuRegistry.appendMenuItem(MenuId.MenubarAppearanceMenu, {
 	group: '1_toggle_view',
@@ -144,7 +145,7 @@ export class ToggleEditorLayoutAction extends Action {
 	) {
 		super(id, label);
 
-		this.class = 'codicon-editor-layout';
+		this.class = Codicon.editorLayout.classNames;
 		this.updateEnablement();
 
 		this.registerListeners();
@@ -166,7 +167,7 @@ export class ToggleEditorLayoutAction extends Action {
 }
 
 const group = viewCategory;
-registry.registerWorkbenchAction(SyncActionDescriptor.create(ToggleEditorLayoutAction, ToggleEditorLayoutAction.ID, ToggleEditorLayoutAction.LABEL, { primary: KeyMod.Shift | KeyMod.Alt | KeyCode.KEY_0, mac: { primary: KeyMod.CtrlCmd | KeyMod.Alt | KeyCode.KEY_0 } }), 'View: Toggle Vertical/Horizontal Editor Layout', group);
+registry.registerWorkbenchAction(SyncActionDescriptor.from(ToggleEditorLayoutAction, { primary: KeyMod.Shift | KeyMod.Alt | KeyCode.KEY_0, mac: { primary: KeyMod.CtrlCmd | KeyMod.Alt | KeyCode.KEY_0 } }), 'View: Toggle Vertical/Horizontal Editor Layout', group);
 
 MenuRegistry.appendMenuItem(MenuId.MenubarLayoutMenu, {
 	group: 'z_flip',
@@ -209,7 +210,7 @@ export class ToggleSidebarPositionAction extends Action {
 	}
 }
 
-registry.registerWorkbenchAction(SyncActionDescriptor.create(ToggleSidebarPositionAction, ToggleSidebarPositionAction.ID, ToggleSidebarPositionAction.LABEL), 'View: Toggle Side Bar Position', viewCategory);
+registry.registerWorkbenchAction(SyncActionDescriptor.from(ToggleSidebarPositionAction), 'View: Toggle Side Bar Position', viewCategory);
 
 MenuRegistry.appendMenuItem(MenuId.MenubarAppearanceMenu, {
 	group: '3_workbench_layout_move',
@@ -252,7 +253,7 @@ export class ToggleEditorVisibilityAction extends Action {
 	}
 }
 
-registry.registerWorkbenchAction(SyncActionDescriptor.create(ToggleEditorVisibilityAction, ToggleEditorVisibilityAction.ID, ToggleEditorVisibilityAction.LABEL), 'View: Toggle Editor Area Visibility', viewCategory);
+registry.registerWorkbenchAction(SyncActionDescriptor.from(ToggleEditorVisibilityAction), 'View: Toggle Editor Area Visibility', viewCategory);
 
 MenuRegistry.appendMenuItem(MenuId.MenubarAppearanceMenu, {
 	group: '2_workbench_layout',
@@ -285,7 +286,7 @@ export class ToggleSidebarVisibilityAction extends Action {
 	}
 }
 
-registry.registerWorkbenchAction(SyncActionDescriptor.create(ToggleSidebarVisibilityAction, ToggleSidebarVisibilityAction.ID, ToggleSidebarVisibilityAction.LABEL, { primary: KeyMod.CtrlCmd | KeyCode.KEY_B }), 'View: Toggle Side Bar Visibility', viewCategory);
+registry.registerWorkbenchAction(SyncActionDescriptor.from(ToggleSidebarVisibilityAction, { primary: KeyMod.CtrlCmd | KeyCode.KEY_B }), 'View: Toggle Side Bar Visibility', viewCategory);
 
 MenuRegistry.appendMenuItem(MenuId.MenubarViewMenu, {
 	group: '2_appearance',
@@ -332,7 +333,7 @@ export class ToggleStatusbarVisibilityAction extends Action {
 	}
 }
 
-registry.registerWorkbenchAction(SyncActionDescriptor.create(ToggleStatusbarVisibilityAction, ToggleStatusbarVisibilityAction.ID, ToggleStatusbarVisibilityAction.LABEL), 'View: Toggle Status Bar Visibility', viewCategory);
+registry.registerWorkbenchAction(SyncActionDescriptor.from(ToggleStatusbarVisibilityAction), 'View: Toggle Status Bar Visibility', viewCategory);
 
 MenuRegistry.appendMenuItem(MenuId.MenubarAppearanceMenu, {
 	group: '2_workbench_layout',
@@ -369,7 +370,7 @@ class ToggleTabsVisibilityAction extends Action {
 	}
 }
 
-registry.registerWorkbenchAction(SyncActionDescriptor.create(ToggleTabsVisibilityAction, ToggleTabsVisibilityAction.ID, ToggleTabsVisibilityAction.LABEL, {
+registry.registerWorkbenchAction(SyncActionDescriptor.from(ToggleTabsVisibilityAction, {
 	primary: undefined,
 	mac: { primary: KeyMod.CtrlCmd | KeyMod.WinCtrl | KeyCode.KEY_W, },
 	linux: { primary: KeyMod.CtrlCmd | KeyMod.WinCtrl | KeyCode.KEY_W, }
@@ -396,7 +397,7 @@ class ToggleZenMode extends Action {
 	}
 }
 
-registry.registerWorkbenchAction(SyncActionDescriptor.create(ToggleZenMode, ToggleZenMode.ID, ToggleZenMode.LABEL, { primary: KeyChord(KeyMod.CtrlCmd | KeyCode.KEY_K, KeyCode.KEY_Z) }), 'View: Toggle Zen Mode', viewCategory);
+registry.registerWorkbenchAction(SyncActionDescriptor.from(ToggleZenMode, { primary: KeyChord(KeyMod.CtrlCmd | KeyCode.KEY_K, KeyCode.KEY_Z) }), 'View: Toggle Zen Mode', viewCategory);
 
 MenuRegistry.appendMenuItem(MenuId.MenubarAppearanceMenu, {
 	group: '1_toggle_view',
@@ -457,7 +458,7 @@ export class ToggleMenuBarAction extends Action {
 }
 
 if (isWindows || isLinux || isWeb) {
-	registry.registerWorkbenchAction(SyncActionDescriptor.create(ToggleMenuBarAction, ToggleMenuBarAction.ID, ToggleMenuBarAction.LABEL), 'View: Toggle Menu Bar', viewCategory);
+	registry.registerWorkbenchAction(SyncActionDescriptor.from(ToggleMenuBarAction), 'View: Toggle Menu Bar', viewCategory);
 }
 
 MenuRegistry.appendMenuItem(MenuId.MenubarAppearanceMenu, {
@@ -486,23 +487,28 @@ export class ResetViewLocationsAction extends Action {
 	}
 
 	async run(): Promise<void> {
-		const viewContainerRegistry = Registry.as<IViewContainersRegistry>(ViewContainerExtensions.ViewContainersRegistry);
-		viewContainerRegistry.all.forEach(viewContainer => {
-			const viewDescriptors = this.viewDescriptorService.getViewDescriptors(viewContainer);
+		this.viewDescriptorService.viewContainers.forEach(viewContainer => {
+			const viewContainerModel = this.viewDescriptorService.getViewContainerModel(viewContainer);
 
-			viewDescriptors.allViewDescriptors.forEach(viewDescriptor => {
-				const defaultContainer = this.viewDescriptorService.getDefaultContainer(viewDescriptor.id);
-				const currentContainer = this.viewDescriptorService.getViewContainer(viewDescriptor.id);
+			viewContainerModel.allViewDescriptors.forEach(viewDescriptor => {
+				const defaultContainer = this.viewDescriptorService.getDefaultContainerById(viewDescriptor.id);
+				const currentContainer = this.viewDescriptorService.getViewContainerByViewId(viewDescriptor.id);
 
 				if (defaultContainer && currentContainer !== defaultContainer) {
 					this.viewDescriptorService.moveViewsToContainer([viewDescriptor], defaultContainer);
 				}
 			});
+
+			const defaultContainerLocation = this.viewDescriptorService.getDefaultViewContainerLocation(viewContainer);
+			const currentContainerLocation = this.viewDescriptorService.getViewContainerLocation(viewContainer);
+			if (defaultContainerLocation !== null && currentContainerLocation !== defaultContainerLocation) {
+				this.viewDescriptorService.moveViewContainerToLocation(viewContainer, defaultContainerLocation);
+			}
 		});
 	}
 }
 
-registry.registerWorkbenchAction(SyncActionDescriptor.create(ResetViewLocationsAction, ResetViewLocationsAction.ID, ResetViewLocationsAction.LABEL), 'View: Reset View Locations', viewCategory);
+registry.registerWorkbenchAction(SyncActionDescriptor.from(ResetViewLocationsAction), 'View: Reset View Locations', viewCategory);
 
 // --- Toggle View with Command
 export abstract class ToggleViewAction extends Action {
@@ -524,7 +530,7 @@ export abstract class ToggleViewAction extends Action {
 		const focusedViewId = FocusedViewContext.getValue(this.contextKeyService);
 
 		if (focusedViewId === this.viewId) {
-			if (this.viewDescriptorService.getViewLocation(this.viewId) === ViewContainerLocation.Sidebar) {
+			if (this.viewDescriptorService.getViewLocationById(this.viewId) === ViewContainerLocation.Sidebar) {
 				this.layoutService.setSideBarHidden(true);
 			} else {
 				this.layoutService.setPanelHidden(true);
@@ -555,8 +561,6 @@ export class MoveFocusedViewAction extends Action {
 	}
 
 	async run(): Promise<void> {
-		const viewContainerRegistry = Registry.as<IViewContainersRegistry>(ViewContainerExtensions.ViewContainersRegistry);
-
 		const focusedViewId = FocusedViewContext.getValue(this.contextKeyService);
 
 		if (focusedViewId === undefined || focusedViewId.trim() === '') {
@@ -564,7 +568,7 @@ export class MoveFocusedViewAction extends Action {
 			return;
 		}
 
-		const viewDescriptor = this.viewDescriptorService.getViewDescriptor(focusedViewId);
+		const viewDescriptor = this.viewDescriptorService.getViewDescriptorById(focusedViewId);
 		if (!viewDescriptor || !viewDescriptor.canMoveView) {
 			this.notificationService.error(nls.localize('moveFocusedView.error.nonMovableView', "The currently focused view is not movable."));
 			return;
@@ -581,9 +585,9 @@ export class MoveFocusedViewAction extends Action {
 			label: nls.localize('sidebar', "Side Bar")
 		});
 
-		const currentContainer = this.viewDescriptorService.getViewContainer(focusedViewId)!;
-		const currentLocation = this.viewDescriptorService.getViewLocation(focusedViewId)!;
-		const isViewSolo = this.viewDescriptorService.getViewDescriptors(currentContainer).allViewDescriptors.length === 1;
+		const currentContainer = this.viewDescriptorService.getViewContainerByViewId(focusedViewId)!;
+		const currentLocation = this.viewDescriptorService.getViewLocationById(focusedViewId)!;
+		const isViewSolo = this.viewDescriptorService.getViewContainerModel(currentContainer).allViewDescriptors.length === 1;
 
 		if (!(isViewSolo && currentLocation === ViewContainerLocation.Sidebar)) {
 			items.push({
@@ -592,19 +596,19 @@ export class MoveFocusedViewAction extends Action {
 			});
 		}
 
-		const pinnedViewlets = this.activityBarService.getPinnedViewletIds();
+		const pinnedViewlets = this.activityBarService.getPinnedViewContainerIds();
 		items.push(...pinnedViewlets
 			.filter(viewletId => {
-				if (viewletId === this.viewDescriptorService.getViewContainer(focusedViewId)!.id) {
+				if (viewletId === this.viewDescriptorService.getViewContainerByViewId(focusedViewId)!.id) {
 					return false;
 				}
 
-				return !viewContainerRegistry.get(viewletId)!.rejectAddedViews;
+				return !this.viewDescriptorService.getViewContainerById(viewletId)!.rejectAddedViews;
 			})
 			.map(viewletId => {
 				return {
 					id: viewletId,
-					label: viewContainerRegistry.get(viewletId)!.name
+					label: this.viewDescriptorService.getViewContainerById(viewletId)!.name
 				};
 			}));
 
@@ -623,16 +627,16 @@ export class MoveFocusedViewAction extends Action {
 		const pinnedPanels = this.panelService.getPinnedPanels();
 		items.push(...pinnedPanels
 			.filter(panel => {
-				if (panel.id === this.viewDescriptorService.getViewContainer(focusedViewId)!.id) {
+				if (panel.id === this.viewDescriptorService.getViewContainerByViewId(focusedViewId)!.id) {
 					return false;
 				}
 
-				return !viewContainerRegistry.get(panel.id)!.rejectAddedViews;
+				return !this.viewDescriptorService.getViewContainerById(panel.id)!.rejectAddedViews;
 			})
 			.map(panel => {
 				return {
 					id: panel.id,
-					label: viewContainerRegistry.get(panel.id)!.name
+					label: this.viewDescriptorService.getViewContainerById(panel.id)!.name
 				};
 			}));
 
@@ -648,7 +652,7 @@ export class MoveFocusedViewAction extends Action {
 				this.viewDescriptorService.moveViewToLocation(viewDescriptor!, ViewContainerLocation.Sidebar);
 				this.viewsService.openView(focusedViewId, true);
 			} else if (destination.id) {
-				this.viewDescriptorService.moveViewsToContainer([viewDescriptor], viewContainerRegistry.get(destination.id)!);
+				this.viewDescriptorService.moveViewsToContainer([viewDescriptor], this.viewDescriptorService.getViewContainerById(destination.id)!);
 				this.viewsService.openView(focusedViewId, true);
 			}
 
@@ -659,7 +663,7 @@ export class MoveFocusedViewAction extends Action {
 	}
 }
 
-registry.registerWorkbenchAction(SyncActionDescriptor.create(MoveFocusedViewAction, MoveFocusedViewAction.ID, MoveFocusedViewAction.LABEL), 'View: Move Focused View', viewCategory, FocusedViewContext.notEqualsTo(''));
+registry.registerWorkbenchAction(SyncActionDescriptor.from(MoveFocusedViewAction), 'View: Move Focused View', viewCategory, FocusedViewContext.notEqualsTo(''));
 
 
 // --- Reset View Location with Command
@@ -683,7 +687,7 @@ export class ResetFocusedViewLocationAction extends Action {
 
 		let viewDescriptor: IViewDescriptor | null = null;
 		if (focusedViewId !== undefined && focusedViewId.trim() !== '') {
-			viewDescriptor = this.viewDescriptorService.getViewDescriptor(focusedViewId);
+			viewDescriptor = this.viewDescriptorService.getViewDescriptorById(focusedViewId);
 		}
 
 		if (!viewDescriptor) {
@@ -691,8 +695,8 @@ export class ResetFocusedViewLocationAction extends Action {
 			return;
 		}
 
-		const defaultContainer = this.viewDescriptorService.getDefaultContainer(viewDescriptor.id);
-		if (!defaultContainer || defaultContainer === this.viewDescriptorService.getViewContainer(viewDescriptor.id)) {
+		const defaultContainer = this.viewDescriptorService.getDefaultContainerById(viewDescriptor.id);
+		if (!defaultContainer || defaultContainer === this.viewDescriptorService.getViewContainerByViewId(viewDescriptor.id)) {
 			return;
 		}
 
@@ -702,7 +706,7 @@ export class ResetFocusedViewLocationAction extends Action {
 	}
 }
 
-registry.registerWorkbenchAction(SyncActionDescriptor.create(ResetFocusedViewLocationAction, ResetFocusedViewLocationAction.ID, ResetFocusedViewLocationAction.LABEL), 'View: Reset Focused View Location', viewCategory, FocusedViewContext.notEqualsTo(''));
+registry.registerWorkbenchAction(SyncActionDescriptor.from(ResetFocusedViewLocationAction), 'View: Reset Focused View Location', viewCategory, FocusedViewContext.notEqualsTo(''));
 
 
 // --- Resize View
@@ -776,5 +780,5 @@ export class DecreaseViewSizeAction extends BaseResizeViewAction {
 	}
 }
 
-registry.registerWorkbenchAction(SyncActionDescriptor.create(IncreaseViewSizeAction, IncreaseViewSizeAction.ID, IncreaseViewSizeAction.LABEL, undefined), 'View: Increase Current View Size', viewCategory);
-registry.registerWorkbenchAction(SyncActionDescriptor.create(DecreaseViewSizeAction, DecreaseViewSizeAction.ID, DecreaseViewSizeAction.LABEL, undefined), 'View: Decrease Current View Size', viewCategory);
+registry.registerWorkbenchAction(SyncActionDescriptor.from(IncreaseViewSizeAction, undefined), 'View: Increase Current View Size', viewCategory);
+registry.registerWorkbenchAction(SyncActionDescriptor.from(DecreaseViewSizeAction, undefined), 'View: Decrease Current View Size', viewCategory);

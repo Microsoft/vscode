@@ -39,7 +39,6 @@ function contextKeyForSupportedActions(kind: CodeActionKind) {
 
 const argsSchema: IJSONSchema = {
 	type: 'object',
-	required: ['kind'],
 	defaultSnippets: [{ body: { kind: '' } }],
 	properties: {
 		'kind': {

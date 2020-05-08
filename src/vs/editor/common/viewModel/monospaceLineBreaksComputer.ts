@@ -119,6 +119,8 @@ function createLineBreaksFromPreviousLineBreaks(classifier: WrappingCharacterCla
 	let breakingOffsets: number[] = arrPool1;
 	let breakingOffsetsVisibleColumn: number[] = arrPool2;
 	let breakingOffsetsCount: number = 0;
+	let lastBreakingOffset = 0;
+	let lastBreakingOffsetVisibleColumn = 0;
 
 	let breakingColumn = firstLineBreakColumn;
 	const prevLen = prevBreakingOffsets.length;
@@ -138,8 +140,12 @@ function createLineBreaksFromPreviousLineBreaks(classifier: WrappingCharacterCla
 
 	while (prevIndex < prevLen) {
 		// Allow for prevIndex to be -1 (for the case where we hit a tab when walking backwards from the first break)
-		const prevBreakOffset = prevIndex < 0 ? 0 : prevBreakingOffsets[prevIndex];
-		const prevBreakoffsetVisibleColumn = prevIndex < 0 ? 0 : prevBreakingOffsetsVisibleColumn[prevIndex];
+		let prevBreakOffset = prevIndex < 0 ? 0 : prevBreakingOffsets[prevIndex];
+		let prevBreakOffsetVisibleColumn = prevIndex < 0 ? 0 : prevBreakingOffsetsVisibleColumn[prevIndex];
+		if (lastBreakingOffset > prevBreakOffset) {
+			prevBreakOffset = lastBreakingOffset;
+			prevBreakOffsetVisibleColumn = lastBreakingOffsetVisibleColumn;
+		}
 
 		let breakOffset = 0;
 		let breakOffsetVisibleColumn = 0;
@@ -148,10 +154,10 @@ function createLineBreaksFromPreviousLineBreaks(classifier: WrappingCharacterCla
 		let forcedBreakOffsetVisibleColumn = 0;
 
 		// initially, we search as much as possible to the right (if it fits)
-		if (prevBreakoffsetVisibleColumn <= breakingColumn) {
-			let visibleColumn = prevBreakoffsetVisibleColumn;
-			let prevCharCode = lineText.charCodeAt(prevBreakOffset - 1);
-			let prevCharCodeClass = classifier.get(prevCharCode);
+		if (prevBreakOffsetVisibleColumn <= breakingColumn) {
+			let visibleColumn = prevBreakOffsetVisibleColumn;
+			let prevCharCode = prevBreakOffset === 0 ? CharCode.Null : lineText.charCodeAt(prevBreakOffset - 1);
+			let prevCharCodeClass = prevBreakOffset === 0 ? CharacterClass.NONE : classifier.get(prevCharCode);
 			let entireLineFits = true;
 			for (let i = prevBreakOffset; i < len; i++) {
 				const charStartOffset = i;
@@ -169,7 +175,7 @@ function createLineBreaksFromPreviousLineBreaks(classifier: WrappingCharacterCla
 					charWidth = computeCharWidth(charCode, visibleColumn, tabSize, columnsForFullWidthChar);
 				}
 
-				if (canBreak(prevCharCode, prevCharCodeClass, charCode, charCodeClass)) {
+				if (charStartOffset > lastBreakingOffset && canBreak(prevCharCode, prevCharCodeClass, charCode, charCodeClass)) {
 					breakOffset = charStartOffset;
 					breakOffsetVisibleColumn = visibleColumn;
 				}
@@ -179,8 +185,14 @@ function createLineBreaksFromPreviousLineBreaks(classifier: WrappingCharacterCla
 				// check if adding character at `i` will go over the breaking column
 				if (visibleColumn > breakingColumn) {
 					// We need to break at least before character at `i`:
-					forcedBreakOffset = charStartOffset;
-					forcedBreakOffsetVisibleColumn = visibleColumn - charWidth;
+					if (charStartOffset > lastBreakingOffset) {
+						forcedBreakOffset = charStartOffset;
+						forcedBreakOffsetVisibleColumn = visibleColumn - charWidth;
+					} else {
+						// we need to advance at least by one character
+						forcedBreakOffset = i + 1;
+						forcedBreakOffsetVisibleColumn = visibleColumn;
+					}
 
 					if (visibleColumn - breakOffsetVisibleColumn > wrappedLineBreakColumn) {
 						// Cannot break at `breakOffset` => reset it if it was set
@@ -198,7 +210,7 @@ function createLineBreaksFromPreviousLineBreaks(classifier: WrappingCharacterCla
 			if (entireLineFits) {
 				// there is no more need to break => stop the outer loop!
 				if (breakingOffsetsCount > 0) {
-					// Add last segment
+					// Add last segment, no need to assign to `lastBreakingOffset` and `lastBreakingOffsetVisibleColumn`
 					breakingOffsets[breakingOffsetsCount] = prevBreakingOffsets[prevBreakingOffsets.length - 1];
 					breakingOffsetsVisibleColumn[breakingOffsetsCount] = prevBreakingOffsetsVisibleColumn[prevBreakingOffsets.length - 1];
 					breakingOffsetsCount++;
@@ -209,11 +221,11 @@ function createLineBreaksFromPreviousLineBreaks(classifier: WrappingCharacterCla
 
 		if (breakOffset === 0) {
 			// must search left
-			let visibleColumn = prevBreakoffsetVisibleColumn;
+			let visibleColumn = prevBreakOffsetVisibleColumn;
 			let charCode = lineText.charCodeAt(prevBreakOffset);
 			let charCodeClass = classifier.get(charCode);
 			let hitATabCharacter = false;
-			for (let i = prevBreakOffset - 1; i >= 0; i--) {
+			for (let i = prevBreakOffset - 1; i >= lastBreakingOffset; i--) {
 				const charStartOffset = i + 1;
 				const prevCharCode = lineText.charCodeAt(i);
 
@@ -290,7 +302,9 @@ function createLineBreaksFromPreviousLineBreaks(classifier: WrappingCharacterCla
 			breakOffsetVisibleColumn = forcedBreakOffsetVisibleColumn;
 		}
 
+		lastBreakingOffset = breakOffset;
 		breakingOffsets[breakingOffsetsCount] = breakOffset;
+		lastBreakingOffsetVisibleColumn = breakOffsetVisibleColumn;
 		breakingOffsetsVisibleColumn[breakingOffsetsCount] = breakOffsetVisibleColumn;
 		breakingOffsetsCount++;
 		breakingColumn = breakOffsetVisibleColumn + wrappedLineBreakColumn;

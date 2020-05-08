@@ -27,13 +27,7 @@ module.exports = new (_a = class ApiEventNaming {
                 ['TSTypeAnnotation TSTypeReference Identifier[name="Event"]']: (node) => {
                     var _a, _b;
                     const def = (_b = (_a = node.parent) === null || _a === void 0 ? void 0 : _a.parent) === null || _b === void 0 ? void 0 : _b.parent;
-                    let ident;
-                    if ((def === null || def === void 0 ? void 0 : def.type) === experimental_utils_1.AST_NODE_TYPES.Identifier) {
-                        ident = def;
-                    }
-                    else if (((def === null || def === void 0 ? void 0 : def.type) === experimental_utils_1.AST_NODE_TYPES.TSPropertySignature || (def === null || def === void 0 ? void 0 : def.type) === experimental_utils_1.AST_NODE_TYPES.ClassProperty) && def.key.type === experimental_utils_1.AST_NODE_TYPES.Identifier) {
-                        ident = def.key;
-                    }
+                    const ident = this.getIdent(def);
                     if (!ident) {
                         // event on unknown structure...
                         return context.report({
@@ -75,6 +69,18 @@ module.exports = new (_a = class ApiEventNaming {
                     }
                 }
             };
+        }
+        getIdent(def) {
+            if (!def) {
+                return;
+            }
+            if (def.type === experimental_utils_1.AST_NODE_TYPES.Identifier) {
+                return def;
+            }
+            else if ((def.type === experimental_utils_1.AST_NODE_TYPES.TSPropertySignature || def.type === experimental_utils_1.AST_NODE_TYPES.ClassProperty) && def.key.type === experimental_utils_1.AST_NODE_TYPES.Identifier) {
+                return def.key;
+            }
+            return this.getIdent(def.parent);
         }
     },
     _a._nameRegExp = /on(Did|Will)([A-Z][a-z]+)([A-Z][a-z]+)?/,

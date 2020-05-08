@@ -32,6 +32,7 @@ import { IWorkbenchLayoutService } from 'vs/workbench/services/layout/browser/la
 import { SyncDescriptor } from 'vs/platform/instantiation/common/descriptors';
 import type { ServicesAccessor } from 'vs/platform/instantiation/common/instantiation';
 import { ToggleViewAction } from 'vs/workbench/browser/actions/layoutActions';
+import { Codicon } from 'vs/base/common/codicons';
 
 registerSingleton(IMarkersWorkbenchService, MarkersWorkbenchService, false);
 
@@ -112,9 +113,11 @@ class ToggleMarkersPanelAction extends ToggleViewAction {
 const VIEW_CONTAINER: ViewContainer = Registry.as<IViewContainersRegistry>(ViewContainerExtensions.ViewContainersRegistry).registerViewContainer({
 	id: Constants.MARKERS_CONTAINER_ID,
 	name: Messages.MARKERS_PANEL_TITLE_PROBLEMS,
+	icon: Codicon.warning.classNames,
 	hideIfEmpty: true,
 	order: 0,
-	ctorDescriptor: new SyncDescriptor(ViewPaneContainer, [Constants.MARKERS_CONTAINER_ID, Constants.MARKERS_VIEW_STORAGE_ID, { mergeViewWithContainerWhenSingleView: true, donotShowContainerTitleWhenMergedWithContainer: true }]),
+	ctorDescriptor: new SyncDescriptor(ViewPaneContainer, [Constants.MARKERS_CONTAINER_ID, { mergeViewWithContainerWhenSingleView: true, donotShowContainerTitleWhenMergedWithContainer: true }]),
+	storageId: Constants.MARKERS_VIEW_STORAGE_ID,
 	focusCommand: {
 		id: ToggleMarkersPanelAction.ID, keybindings: {
 			primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KEY_M
@@ -124,7 +127,7 @@ const VIEW_CONTAINER: ViewContainer = Registry.as<IViewContainersRegistry>(ViewC
 
 Registry.as<IViewsRegistry>(ViewContainerExtensions.ViewsRegistry).registerViews([{
 	id: Constants.MARKERS_VIEW_ID,
-	containerIcon: 'codicon-warning',
+	containerIcon: Codicon.warning.classNames,
 	name: Messages.MARKERS_PANEL_TITLE_PROBLEMS,
 	canToggleVisibility: false,
 	canMoveView: true,
@@ -137,10 +140,10 @@ workbenchRegistry.registerWorkbenchContribution(ActivityUpdater, LifecyclePhase.
 
 // actions
 const registry = Registry.as<IWorkbenchActionRegistry>(ActionExtensions.WorkbenchActions);
-registry.registerWorkbenchAction(SyncActionDescriptor.create(ToggleMarkersPanelAction, ToggleMarkersPanelAction.ID, ToggleMarkersPanelAction.LABEL, {
+registry.registerWorkbenchAction(SyncActionDescriptor.from(ToggleMarkersPanelAction, {
 	primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KEY_M
 }), 'View: Toggle Problems (Errors, Warnings, Infos)', Messages.MARKERS_PANEL_VIEW_CATEGORY);
-registry.registerWorkbenchAction(SyncActionDescriptor.create(ShowProblemsPanelAction, ShowProblemsPanelAction.ID, ShowProblemsPanelAction.LABEL), 'View: Focus Problems (Errors, Warnings, Infos)', Messages.MARKERS_PANEL_VIEW_CATEGORY);
+registry.registerWorkbenchAction(SyncActionDescriptor.from(ShowProblemsPanelAction), 'View: Focus Problems (Errors, Warnings, Infos)', Messages.MARKERS_PANEL_VIEW_CATEGORY);
 registerAction2(class extends Action2 {
 	constructor() {
 		super({

@@ -757,7 +757,7 @@ suite('SuggestModel - TriggerAndCancelOracle', function () {
 					dispose() { disposeB += 1; }
 				};
 			},
-			resolveCompletionItem(doc, pos, item) {
+			resolveCompletionItem(item) {
 				return item;
 			},
 		}));

@@ -152,15 +152,29 @@ steps:
   displayName: Run smoke tests (Browser)
   condition: and(succeeded(), eq(variables['VSCODE_STEP_ON_IT'], 'false'))
 
+- task: PublishPipelineArtifact@0
+  inputs:
+    artifactName: crash-dump-macos
+    targetPath: .build/crashes
+  displayName: 'Publish Crash Reports'
+  condition: succeededOrFailed()
+
 - script: |
     set -e
+    APP_ROOT=$(agent.builddirectory)/VSCode-darwin
+    APP_NAME="`ls $APP_ROOT | head -n 1`"
+    HELPER_APP_NAME="`echo $APP_NAME | sed -e 's/^Visual Studio //;s/\.app$//'`"
+    APP_FRAMEWORK_PATH="$APP_ROOT/$APP_NAME/Contents/Frameworks"
     security create-keychain -p pwd $(agent.tempdirectory)/buildagent.keychain
     security default-keychain -s $(agent.tempdirectory)/buildagent.keychain
     security unlock-keychain -p pwd $(agent.tempdirectory)/buildagent.keychain
     echo "$(macos-developer-certificate)" | base64 -D > $(agent.tempdirectory)/cert.p12
     security import $(agent.tempdirectory)/cert.p12 -k $(agent.tempdirectory)/buildagent.keychain -P "$(macos-developer-certificate-key)" -T /usr/bin/codesign
     security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k pwd $(agent.tempdirectory)/buildagent.keychain
-    codesign -s 99FM488X57 --deep --force --options runtime --entitlements build/azure-pipelines/darwin/entitlements.plist $(agent.builddirectory)/VSCode-darwin/*.app
+    codesign -s 99FM488X57 --deep --force --options runtime --entitlements build/azure-pipelines/darwin/entitlements.plist "$APP_ROOT"/*.app
+    codesign -s 99FM488X57 --force --options runtime --entitlements build/azure-pipelines/darwin/helper-gpu-entitlements.plist "$APP_FRAMEWORK_PATH/$HELPER_APP_NAME Helper (GPU).app"
+    codesign -s 99FM488X57 --force --options runtime --entitlements build/azure-pipelines/darwin/helper-plugin-entitlements.plist "$APP_FRAMEWORK_PATH/$HELPER_APP_NAME Helper (Plugin).app"
+    codesign -s 99FM488X57 --force --options runtime --entitlements build/azure-pipelines/darwin/helper-renderer-entitlements.plist "$APP_FRAMEWORK_PATH/$HELPER_APP_NAME Helper (Renderer).app"
   displayName: Set Hardened Entitlements
 
 - script: |

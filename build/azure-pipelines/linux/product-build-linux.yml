@@ -140,6 +140,13 @@ steps:
   displayName: Run integration tests (Browser)
   condition: and(succeeded(), eq(variables['VSCODE_STEP_ON_IT'], 'false'))
 
+- task: PublishPipelineArtifact@0
+  inputs:
+    artifactName: crash-dump-linux
+    targetPath: .build/crashes
+  displayName: 'Publish Crash Reports'
+  condition: succeededOrFailed()
+
 - script: |
     set -e
     yarn gulp "vscode-linux-x64-build-deb"

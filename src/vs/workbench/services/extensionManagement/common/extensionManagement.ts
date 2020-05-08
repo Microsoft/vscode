@@ -85,11 +85,12 @@ export type RecommendationChangeNotification = {
 };
 
 export type DynamicRecommendation = 'dynamic';
+export type ConfigRecommendation = 'config';
 export type ExecutableRecommendation = 'executable';
 export type CachedRecommendation = 'cached';
 export type ApplicationRecommendation = 'application';
 export type ExperimentalRecommendation = 'experimental';
-export type ExtensionRecommendationSource = IWorkspace | IWorkspaceFolder | URI | DynamicRecommendation | ExecutableRecommendation | CachedRecommendation | ApplicationRecommendation | ExperimentalRecommendation;
+export type ExtensionRecommendationSource = IWorkspace | IWorkspaceFolder | URI | DynamicRecommendation | ExecutableRecommendation | CachedRecommendation | ApplicationRecommendation | ExperimentalRecommendation | ConfigRecommendation;
 
 export interface IExtensionRecommendation {
 	extensionId: string;
@@ -100,6 +101,7 @@ export const enum ExtensionRecommendationReason {
 	Workspace,
 	File,
 	Executable,
+	WorkspaceConfig,
 	DynamicWorkspace,
 	Experimental,
 	Application,
@@ -117,6 +119,7 @@ export interface IExtensionRecommendationsService {
 
 	getAllRecommendationsWithReason(): IStringDictionary<IExtensionRecommendationReson>;
 	getFileBasedRecommendations(): IExtensionRecommendation[];
+	getConfigBasedRecommendations(): Promise<IExtensionRecommendation[]>;
 	getOtherRecommendations(): Promise<IExtensionRecommendation[]>;
 	getWorkspaceRecommendations(): Promise<IExtensionRecommendation[]>;
 	getKeymapRecommendations(): IExtensionRecommendation[];

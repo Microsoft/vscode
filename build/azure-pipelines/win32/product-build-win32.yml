@@ -149,6 +149,13 @@ steps:
   displayName: Run integration tests (Browser)
   condition: and(succeeded(), eq(variables['VSCODE_STEP_ON_IT'], 'false'))
 
+- task: PublishPipelineArtifact@0
+  inputs:
+    artifactName: crash-dump-windows-$(VSCODE_ARCH)
+    targetPath: .build\crashes
+  displayName: 'Publish Crash Reports'
+  condition: succeededOrFailed()
+
 - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@1
   inputs:
     ConnectedServiceName: 'ESRP CodeSign'

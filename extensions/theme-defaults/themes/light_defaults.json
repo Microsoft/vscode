@@ -17,7 +17,9 @@
 		"settings.textInputBorder": "#CECECE",
 		"settings.numberInputBorder": "#CECECE",
 		"statusBarItem.remoteForeground": "#FFF",
-		"statusBarItem.remoteBackground": "#16825D"
+		"statusBarItem.remoteBackground": "#16825D",
+		"sideBarSectionHeader.background": "#0000",
+		"sideBarSectionHeader.border": "#61616130"
 	},
 	"semanticHighlighting": true
 }

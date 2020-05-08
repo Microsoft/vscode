@@ -16,7 +16,6 @@ import { GroupDirection, MergeGroupMode } from 'vs/workbench/services/editor/com
 import { toDisposable } from 'vs/base/common/lifecycle';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { RunOnceScheduler } from 'vs/base/common/async';
-import { find } from 'vs/base/common/arrays';
 import { DataTransfers } from 'vs/base/browser/dnd';
 import { VSBuffer } from 'vs/base/common/buffer';
 import { IFileDialogService } from 'vs/platform/dialogs/common/dialogs';
@@ -267,7 +266,10 @@ class DropOverlay extends Themable {
 					}
 
 					// Open in target group
-					const options = getActiveTextEditorOptions(sourceGroup, draggedEditor.editor, EditorOptions.create({ pinned: true }));
+					const options = getActiveTextEditorOptions(sourceGroup, draggedEditor.editor, EditorOptions.create({
+						pinned: true,										// always pin dropped editor
+						sticky: sourceGroup.isSticky(draggedEditor.editor)	// preserve sticky state
+					}));
 					targetGroup.openEditor(draggedEditor.editor, options);
 
 					// Ensure target has focus
@@ -600,7 +602,7 @@ export class EditorDropTarget extends Themable {
 
 	private findTargetGroupView(child: HTMLElement): IEditorGroupView | undefined {
 		const groups = this.accessor.groups;
-		return find(groups, groupView => isAncestor(child, groupView.element) || this.delegate.groupContainsPredicate?.(groupView));
+		return groups.find(groupView => isAncestor(child, groupView.element) || this.delegate.groupContainsPredicate?.(groupView));
 	}
 
 	private updateContainer(isDraggedOver: boolean): void {

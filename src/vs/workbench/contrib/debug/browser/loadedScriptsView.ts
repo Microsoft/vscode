@@ -473,7 +473,6 @@ export class LoadedScriptsView extends ViewPane {
 				},
 				filter: this.filter,
 				accessibilityProvider: new LoadedSciptsAccessibilityProvider(),
-				ariaLabel: nls.localize({ comment: ['Debug is a noun in this context, not a verb.'], key: 'loadedScriptsAriaLabel' }, "Debug Loaded Scripts"),
 				overrideStyles: {
 					listBackground: this.getBackgroundColor()
 				}
@@ -611,6 +610,7 @@ export class LoadedScriptsView extends ViewPane {
 	}
 
 	layoutBody(height: number, width: number): void {
+		super.layoutBody(height, width);
 		this.tree.layout(height, width);
 	}
 
@@ -709,6 +709,10 @@ class LoadedScriptsRenderer implements ICompressibleTreeRenderer<BaseTreeItem, F
 }
 
 class LoadedSciptsAccessibilityProvider implements IListAccessibilityProvider<LoadedScriptsItem> {
+
+	getWidgetAriaLabel(): string {
+		return nls.localize({ comment: ['Debug is a noun in this context, not a verb.'], key: 'loadedScriptsAriaLabel' }, "Debug Loaded Scripts");
+	}
 
 	getAriaLabel(element: LoadedScriptsItem): string {
 

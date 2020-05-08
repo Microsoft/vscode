@@ -103,14 +103,14 @@ export class ShiftCommand implements ICommand {
 		const { tabSize, indentSize, insertSpaces } = this._opts;
 		const shouldIndentEmptyLines = (startLine === endLine);
 
-		// if indenting or outdenting on a whitespace only line
-		if (this._selection.isEmpty()) {
-			if (/^\s*$/.test(model.getLineContent(startLine))) {
-				this._useLastEditRangeForCursorEndPosition = true;
-			}
-		}
-
 		if (this._opts.useTabStops) {
+			// if indenting or outdenting on a whitespace only line
+			if (this._selection.isEmpty()) {
+				if (/^\s*$/.test(model.getLineContent(startLine))) {
+					this._useLastEditRangeForCursorEndPosition = true;
+				}
+			}
+
 			// keep track of previous line's "miss-alignment"
 			let previousLineExtraSpaces = 0, extraSpaces = 0;
 			for (let lineNumber = startLine; lineNumber <= endLine; lineNumber++, previousLineExtraSpaces = extraSpaces) {
@@ -187,6 +187,11 @@ export class ShiftCommand implements ICommand {
 				}
 			}
 		} else {
+
+			// if indenting or outdenting on a whitespace only line
+			if (!this._opts.isUnshift && this._selection.isEmpty() && model.getLineLength(startLine) === 0) {
+				this._useLastEditRangeForCursorEndPosition = true;
+			}
 
 			const oneIndent = (insertSpaces ? cachedStringRepeat(' ', indentSize) : '\t');
 

@@ -409,7 +409,7 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 				return callback({ cancel: true });
 			}
 
-			return callback({ cancel: false, responseHeaders });
+			return callback({ cancel: false });
 		});
 
 		// Remember that we loaded
@@ -502,7 +502,7 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 	}
 
 	private onWindowError(error: WindowError): void {
-		this.logService.error(error === WindowError.CRASHED ? '[VS Code]: render process crashed!' : '[VS Code]: detected unresponsive');
+		this.logService.error(error === WindowError.CRASHED ? '[VS Code]: renderer process crashed!' : '[VS Code]: detected unresponsive');
 
 		// If we run extension tests from CLI, showing a dialog is not
 		// very helpful in this case. Rather, we bring down the test run
@@ -603,12 +603,15 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 			|| (env.https_proxy || process.env.HTTPS_PROXY || process.env.http_proxy || process.env.HTTP_PROXY || '').trim() // Not standardized.
 			|| undefined;
 		const newNoProxy = (env.no_proxy || env.NO_PROXY || '').trim() || undefined; // Not standardized.
-		if (newHttpProxy !== this.currentHttpProxy || newNoProxy !== this.currentNoProxy) {
+		if ((newHttpProxy || '').indexOf('@') === -1 && (newHttpProxy !== this.currentHttpProxy || newNoProxy !== this.currentNoProxy)) {
 			this.currentHttpProxy = newHttpProxy;
 			this.currentNoProxy = newNoProxy;
+			const proxyRules = newHttpProxy || '';
+			const proxyBypassRules = newNoProxy ? `${newNoProxy},<local>` : '<local>';
+			this.logService.trace(`Setting proxy to '${proxyRules}', bypassing '${proxyBypassRules}'`);
 			this._win.webContents.session.setProxy({
-				proxyRules: newHttpProxy || '',
-				proxyBypassRules: newNoProxy ? `${newNoProxy},<local>` : '<local>',
+				proxyRules,
+				proxyBypassRules,
 				pacScript: '',
 			});
 		}
@@ -743,11 +746,11 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 
 		// Config (combination of process.argv and window configuration)
 		const environment = parseArgs(process.argv, OPTIONS);
-		const config = Object.assign(environment, windowConfiguration);
+		const config = Object.assign(environment, windowConfiguration) as unknown as { [key: string]: unknown };
 		for (const key in config) {
-			const configValue = (config as any)[key];
+			const configValue = config[key];
 			if (configValue === undefined || configValue === null || configValue === '' || configValue === false) {
-				delete (config as any)[key]; // only send over properties that have a true value
+				delete config[key]; // only send over properties that have a true value
 			}
 		}
 
@@ -934,7 +937,7 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 
 		// Multi Montior (fullscreen): try to find the previously used display
 		if (state.display && state.mode === WindowMode.Fullscreen) {
-			const display = displays.filter(d => d.id === state.display)[0];
+			const display = displays.find(d => d.id === state.display);
 			if (display && typeof display.bounds?.x === 'number' && typeof display.bounds?.y === 'number') {
 				this.logService.trace('window#validateWindowState: restoring fullscreen to previous display');
 

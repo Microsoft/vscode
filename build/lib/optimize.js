@@ -68,12 +68,7 @@ function loader(src, bundledFileHeader, bundleLoader) {
             this.emit('data', data);
         }
     }))
-        .pipe(util.loadSourcemaps())
-        .pipe(concat('vs/loader.js'))
-        .pipe(es.mapSync(function (f) {
-        f.sourceMap.sourceRoot = util.toFileUri(path.join(REPO_ROOT_PATH, 'src'));
-        return f;
-    })));
+        .pipe(concat('vs/loader.js')));
 }
 function toConcatStream(src, bundledFileHeader, sources, dest) {
     const useSourcemaps = /\.js$/.test(dest) && !/\.nls\.js$/.test(dest);

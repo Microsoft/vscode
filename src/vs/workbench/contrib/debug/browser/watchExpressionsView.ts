@@ -76,7 +76,6 @@ export class WatchExpressionsView extends ViewPane {
 		const expressionsRenderer = this.instantiationService.createInstance(WatchExpressionsRenderer);
 		this.tree = <WorkbenchAsyncDataTree<IDebugService | IExpression, IExpression, FuzzyScore>>this.instantiationService.createInstance(WorkbenchAsyncDataTree, 'WatchExpressions', treeContainer, new WatchExpressionsDelegate(), [expressionsRenderer, this.instantiationService.createInstance(VariablesRenderer)],
 			new WatchExpressionsDataSource(), {
-			ariaLabel: nls.localize({ comment: ['Debug is a noun in this context, not a verb.'], key: 'watchAriaTreeLabel' }, "Debug Watch Expressions"),
 			accessibilityProvider: new WatchExpressionsAccessibilityProvider(),
 			identityProvider: { getId: (element: IExpression) => element.getId() },
 			keyboardNavigationLabelProvider: {
@@ -94,7 +93,6 @@ export class WatchExpressionsView extends ViewPane {
 				listBackground: this.getBackgroundColor()
 			}
 		});
-
 		this.tree.setInput(this.debugService);
 		CONTEXT_WATCH_EXPRESSIONS_FOCUSED.bindTo(this.tree.contextKeyService);
 
@@ -144,6 +142,7 @@ export class WatchExpressionsView extends ViewPane {
 	}
 
 	layoutBody(height: number, width: number): void {
+		super.layoutBody(height, width);
 		this.tree.layout(height, width);
 	}
 
@@ -154,7 +153,7 @@ export class WatchExpressionsView extends ViewPane {
 	getActions(): IAction[] {
 		return [
 			new AddWatchExpressionAction(AddWatchExpressionAction.ID, AddWatchExpressionAction.LABEL, this.debugService, this.keybindingService),
-			new CollapseAction(this.tree, true, 'explorer-action codicon-collapse-all'),
+			new CollapseAction(() => this.tree, true, 'explorer-action codicon-collapse-all'),
 			new RemoveAllWatchExpressionsAction(RemoveAllWatchExpressionsAction.ID, RemoveAllWatchExpressionsAction.LABEL, this.debugService, this.keybindingService)
 		];
 	}
@@ -297,13 +296,18 @@ export class WatchExpressionsRenderer extends AbstractExpressionsRenderer {
 }
 
 class WatchExpressionsAccessibilityProvider implements IListAccessibilityProvider<IExpression> {
+
+	getWidgetAriaLabel(): string {
+		return nls.localize({ comment: ['Debug is a noun in this context, not a verb.'], key: 'watchAriaTreeLabel' }, "Debug Watch Expressions");
+	}
+
 	getAriaLabel(element: IExpression): string {
 		if (element instanceof Expression) {
-			return nls.localize('watchExpressionAriaLabel', "{0} value {1}, watch, debug", (<Expression>element).name, (<Expression>element).value);
+			return nls.localize('watchExpressionAriaLabel', "{0}, value {1}", (<Expression>element).name, (<Expression>element).value);
 		}
 
 		// Variable
-		return nls.localize('watchVariableAriaLabel', "{0} value {1}, watch, debug", (<Variable>element).name, (<Variable>element).value);
+		return nls.localize('watchVariableAriaLabel', "{0}, value {1}", (<Variable>element).name, (<Variable>element).value);
 	}
 }
 

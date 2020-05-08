@@ -10,12 +10,13 @@ import { Widget } from 'vs/base/browser/ui/widget';
 import { Color } from 'vs/base/common/color';
 import { Emitter, Event } from 'vs/base/common/event';
 import { KeyCode } from 'vs/base/common/keyCodes';
-import * as objects from 'vs/base/common/objects';
 import { BaseActionViewItem } from 'vs/base/browser/ui/actionbar/actionbar';
 import { DisposableStore } from 'vs/base/common/lifecycle';
+import { Codicon } from 'vs/base/common/codicons';
 
 export interface ICheckboxOpts extends ICheckboxStyles {
 	readonly actionClassName?: string;
+	readonly icon?: Codicon;
 	readonly title: string;
 	readonly isChecked: boolean;
 }
@@ -93,13 +94,23 @@ export class Checkbox extends Widget {
 	constructor(opts: ICheckboxOpts) {
 		super();
 
-		this._opts = objects.deepClone(opts);
-		objects.mixin(this._opts, defaultOpts, false);
+		this._opts = { ...defaultOpts, ...opts };
 		this._checked = this._opts.isChecked;
+
+		const classes = ['monaco-custom-checkbox'];
+		if (this._opts.icon) {
+			classes.push(this._opts.icon.classNames);
+		} else {
+			classes.push('codicon'); // todo@aeschli: remove once codicon fully adopted
+		}
+		if (this._opts.actionClassName) {
+			classes.push(this._opts.actionClassName);
+		}
+		classes.push(this._checked ? 'checked' : 'unchecked');
 
 		this.domNode = document.createElement('div');
 		this.domNode.title = this._opts.title;
-		this.domNode.className = 'monaco-custom-checkbox codicon ' + (this._opts.actionClassName || '') + ' ' + (this._checked ? 'checked' : 'unchecked');
+		this.domNode.className = classes.join(' ');
 		this.domNode.tabIndex = 0;
 		this.domNode.setAttribute('role', 'checkbox');
 		this.domNode.setAttribute('aria-checked', String(this._checked));
@@ -192,7 +203,7 @@ export class SimpleCheckbox extends Widget {
 	constructor(private title: string, private isChecked: boolean) {
 		super();
 
-		this.checkbox = new Checkbox({ title: this.title, isChecked: this.isChecked, actionClassName: 'monaco-simple-checkbox codicon-check' });
+		this.checkbox = new Checkbox({ title: this.title, isChecked: this.isChecked, icon: Codicon.check, actionClassName: 'monaco-simple-checkbox' });
 
 		this.domNode = this.checkbox.domNode;
 

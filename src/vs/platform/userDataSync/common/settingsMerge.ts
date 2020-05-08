@@ -98,8 +98,13 @@ export function merge(originalLocalContent: string, originalRemoteContent: strin
 		return { conflictsSettings: [], localContent: updateIgnoredSettings(originalRemoteContent, originalLocalContent, ignoredSettings, formattingOptions), remoteContent: null, hasConflicts: false };
 	}
 
-	/* remote and local has changed */
+	/* local is empty and not synced before */
+	if (baseContent === null && isEmpty(originalLocalContent)) {
+		const localContent = areSame(originalLocalContent, originalRemoteContent, ignoredSettings) ? null : updateIgnoredSettings(originalRemoteContent, originalLocalContent, ignoredSettings, formattingOptions);
+		return { conflictsSettings: [], localContent, remoteContent: null, hasConflicts: false };
+	}
 
+	/* remote and local has changed */
 	let localContent = originalLocalContent;
 	let remoteContent = originalRemoteContent;
 	const local = parse(originalLocalContent);
@@ -256,6 +261,11 @@ export function areSame(localContent: string, remoteContent: string, ignoredSett
 	}
 
 	return true;
+}
+
+export function isEmpty(content: string): boolean {
+	const nodes = parseSettings(content);
+	return nodes.length === 0;
 }
 
 function compare(from: IStringDictionary<any> | null, to: IStringDictionary<any>, ignored: Set<string>): { added: Set<string>, removed: Set<string>, updated: Set<string> } {

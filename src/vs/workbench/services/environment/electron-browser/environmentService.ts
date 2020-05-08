@@ -18,6 +18,7 @@ export interface INativeWorkbenchEnvironmentService extends IWorkbenchEnvironmen
 	readonly configuration: INativeEnvironmentConfiguration;
 
 	readonly disableCrashReporter: boolean;
+	readonly crashReporterDirectory?: string;
 
 	readonly cliPath: string;
 
@@ -54,6 +55,9 @@ export class NativeWorkbenchEnvironmentService extends EnvironmentService implem
 
 	@memoize
 	get extHostLogsPath(): URI { return URI.file(join(this.logsPath, `exthost${this.configuration.windowId}`)); }
+
+	@memoize
+	get skipReleaseNotes(): boolean { return !!this.args['skip-release-notes']; }
 
 	constructor(
 		readonly configuration: INativeEnvironmentConfiguration,

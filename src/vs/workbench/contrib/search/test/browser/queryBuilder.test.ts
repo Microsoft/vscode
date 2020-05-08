@@ -951,8 +951,8 @@ export function assertEqualQueries(actual: ITextQuery | IFileQuery, expected: IT
 	// Avoid comparing URI objects, not a good idea
 	if (expected.folderQueries) {
 		assert.deepEqual(actual.folderQueries.map(folderQueryToCompareObject), expected.folderQueries.map(folderQueryToCompareObject));
-		delete actual.folderQueries;
-		delete expected.folderQueries;
+		actual.folderQueries = [];
+		expected.folderQueries = [];
 	}
 
 	if (expected.extraFileResources) {

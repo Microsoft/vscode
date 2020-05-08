@@ -5,13 +5,13 @@
 
 import * as vscode from 'vscode';
 import { AzureActiveDirectoryService, onDidChangeSessions } from './AADHelper';
-import * as nls from 'vscode-nls';
-
-const localize = nls.loadMessageBundle();
+import TelemetryReporter from 'vscode-extension-telemetry';
 
 export const DEFAULT_SCOPES = 'https://management.core.windows.net/.default offline_access';
 
 export async function activate(context: vscode.ExtensionContext) {
+	const { name, version, aiKey } = require('../package.json') as { name: string, version: string, aiKey: string };
+	const telemetryReporter = new TelemetryReporter(name, version, aiKey);
 
 	const loginService = new AzureActiveDirectoryService();
 
@@ -20,52 +20,28 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.authentication.registerAuthenticationProvider({
 		id: 'microsoft',
 		displayName: 'Microsoft',
-		supportsMultipleAccounts: true,
 		onDidChangeSessions: onDidChangeSessions.event,
 		getSessions: () => Promise.resolve(loginService.sessions),
-		login: async (scopes: string[] | undefined) => {
-			const loginScopes = scopes ? scopes.sort().join(' ') : 'https://management.core.windows.net/.default offline_access';
-			await loginService.login(loginScopes);
-			const session = loginService.sessions[loginService.sessions.length - 1];
-			onDidChangeSessions.fire({ added: [session.id], removed: [], changed: [] });
-			return loginService.sessions[0]!;
+		login: async (scopes: string[]) => {
+			try {
+				telemetryReporter.sendTelemetryEvent('login');
+				await loginService.login(scopes.sort().join(' '));
+				const session = loginService.sessions[loginService.sessions.length - 1];
+				onDidChangeSessions.fire({ added: [session.id], removed: [], changed: [] });
+				return loginService.sessions[0]!;
+			} catch (e) {
+				telemetryReporter.sendTelemetryEvent('loginFailed');
+				throw e;
+			}
 		},
 		logout: async (id: string) => {
-			await loginService.logout(id);
-			onDidChangeSessions.fire({ added: [], removed: [id], changed: [] });
-		}
-	}));
-
-	context.subscriptions.push(vscode.commands.registerCommand('microsoft.signin', () => {
-		return loginService.login(DEFAULT_SCOPES);
-	}));
-
-	context.subscriptions.push(vscode.commands.registerCommand('microsoft.signout', async () => {
-		const sessions = loginService.sessions;
-		if (sessions.length === 0) {
-			return;
-		}
-
-		if (sessions.length === 1) {
-			const id = loginService.sessions[0].id;
-			await loginService.logout(id);
-			onDidChangeSessions.fire({ added: [], removed: [id], changed: [] });
-			vscode.window.showInformationMessage(localize('signedOut', "Successfully signed out."));
-			return;
-		}
-
-		const selectedSession = await vscode.window.showQuickPick(sessions.map(session => {
-			return {
-				id: session.id,
-				label: session.accountName
-			};
-		}));
-
-		if (selectedSession) {
-			await loginService.logout(selectedSession.id);
-			onDidChangeSessions.fire({ added: [], removed: [selectedSession.id], changed: [] });
-			vscode.window.showInformationMessage(localize('signedOut', "Successfully signed out."));
-			return;
+			try {
+				telemetryReporter.sendTelemetryEvent('logout');
+				await loginService.logout(id);
+				onDidChangeSessions.fire({ added: [], removed: [id], changed: [] });
+			} catch (e) {
+				telemetryReporter.sendTelemetryEvent('logoutFailed');
+			}
 		}
 	}));
 

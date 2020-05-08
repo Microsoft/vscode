@@ -168,6 +168,9 @@ export abstract class BaseWebview<T extends HTMLElement> extends Disposable {
 	private readonly _onDidFocus = this._register(new Emitter<void>());
 	public readonly onDidFocus = this._onDidFocus.event;
 
+	private readonly _onDidBlur = this._register(new Emitter<void>());
+	public readonly onDidBlur = this._onDidBlur.event;
+
 	public sendMessage(data: any): void {
 		this._send('message', data);
 	}
@@ -267,6 +270,8 @@ export abstract class BaseWebview<T extends HTMLElement> extends Disposable {
 		this._focused = isFocused;
 		if (isFocused) {
 			this._onDidFocus.fire();
+		} else {
+			this._onDidBlur.fire();
 		}
 	}
 

@@ -19,6 +19,13 @@ export const NullTelemetryService = new class implements ITelemetryService {
 	publicLog2<E extends ClassifiedEvent<T> = never, T extends GDPRClassification<T> = never>(eventName: string, data?: StrictPropertyCheck<T, E>) {
 		return this.publicLog(eventName, data as ITelemetryData);
 	}
+	publicLogError(eventName: string, data?: ITelemetryData) {
+		return Promise.resolve(undefined);
+	}
+	publicLogError2<E extends ClassifiedEvent<T> = never, T extends GDPRClassification<T> = never>(eventName: string, data?: StrictPropertyCheck<T, E>) {
+		return this.publicLogError(eventName, data as ITelemetryData);
+	}
+
 	setEnabled() { }
 	isOptedIn = true;
 	getTelemetryInfo(): Promise<ITelemetryInfo> {

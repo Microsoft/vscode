@@ -57,6 +57,6 @@ registerAction2(class extends SelectAllWebviewEditorCommand {
 
 const actionRegistry = Registry.as<IWorkbenchActionRegistry>(ActionExtensions.WorkbenchActions);
 actionRegistry.registerWorkbenchAction(
-	SyncActionDescriptor.create(ReloadWebviewAction, ReloadWebviewAction.ID, ReloadWebviewAction.LABEL),
+	SyncActionDescriptor.from(ReloadWebviewAction),
 	'Reload Webviews',
 	webviewDeveloperCategory);

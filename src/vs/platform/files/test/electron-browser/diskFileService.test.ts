@@ -21,14 +21,13 @@ import { isLinux, isWindows } from 'vs/base/common/platform';
 import { DisposableStore } from 'vs/base/common/lifecycle';
 import { isEqual, joinPath } from 'vs/base/common/resources';
 import { VSBuffer, VSBufferReadable, streamToBufferReadableStream, VSBufferReadableStream, bufferToReadable, bufferToStream, streamToBuffer } from 'vs/base/common/buffer';
-import { find } from 'vs/base/common/arrays';
 
 function getByName(root: IFileStat, name: string): IFileStat | undefined {
 	if (root.children === undefined) {
 		return undefined;
 	}
 
-	return find(root.children, child => child.name === name);
+	return root.children.find(child => child.name === name);
 }
 
 function toLineByLineReadable(content: string): VSBufferReadable {
@@ -442,7 +441,7 @@ suite('Disk File Service', function () {
 		assert.equal(resolved.isDirectory, true);
 		assert.equal(resolved.children!.length, 9);
 
-		const resolvedLink = resolved.children?.filter(child => child.name === 'bar' && child.isSymbolicLink)[0];
+		const resolvedLink = resolved.children?.find(child => child.name === 'bar' && child.isSymbolicLink);
 		assert.ok(resolvedLink);
 
 		assert.ok(!resolvedLink?.isDirectory);
@@ -1501,10 +1500,10 @@ suite('Disk File Service', function () {
 
 		// Also test when the stat size is wrong
 		fileProvider.setSmallStatSize(true);
-		return doTestFileExceedsMemoryLimit(false);
+		return doTestFileExceedsMemoryLimit();
 	}
 
-	async function doTestFileExceedsMemoryLimit(testTotalBytesRead = true) {
+	async function doTestFileExceedsMemoryLimit() {
 		const resource = URI.file(join(testDir, 'index.html'));
 
 		let error: FileOperationError | undefined = undefined;
@@ -1516,10 +1515,6 @@ suite('Disk File Service', function () {
 
 		assert.ok(error);
 		assert.equal(error!.fileOperationResult, FileOperationResult.FILE_EXCEEDS_MEMORY_LIMIT);
-
-		if (testTotalBytesRead) {
-			assert.equal(fileProvider.totalBytesRead, 0);
-		}
 	}
 
 	test('readFile - FILE_TOO_LARGE - default', async () => {
@@ -1538,14 +1533,14 @@ suite('Disk File Service', function () {
 		return testFileTooLarge();
 	});
 
-	(isWindows /* not reliable on windows */ ? test.skip : test)('readFile - FILE_TOO_LARGE - streamed', async () => {
+	test('readFile - FILE_TOO_LARGE - streamed', async () => {
 		setCapabilities(fileProvider, FileSystemProviderCapabilities.FileReadStream);
 
 		return testFileTooLarge();
 	});
 
 	async function testFileTooLarge() {
-		await doTestFileExceedsMemoryLimit();
+		await doTestFileTooLarge();
 
 		// Also test when the stat size is wrong
 		fileProvider.setSmallStatSize(true);

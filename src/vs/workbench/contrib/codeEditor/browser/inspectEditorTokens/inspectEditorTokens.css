@@ -32,6 +32,7 @@
 .tiw-metadata-value {
 	font-family: var(--monaco-monospace-font);
 	text-align: right;
+	word-break: break-word;
 }
 .tiw-metadata-key {
 	vertical-align: top;

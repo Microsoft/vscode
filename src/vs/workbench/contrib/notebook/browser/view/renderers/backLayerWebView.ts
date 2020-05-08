@@ -9,7 +9,7 @@ import * as path from 'vs/base/common/path';
 import { URI } from 'vs/base/common/uri';
 import * as UUID from 'vs/base/common/uuid';
 import { INotebookEditor } from 'vs/workbench/contrib/notebook/browser/notebookBrowser';
-import { INotebookService } from 'vs/workbench/contrib/notebook/browser/notebookService';
+import { INotebookService } from 'vs/workbench/contrib/notebook/common/notebookService';
 import { IOutput } from 'vs/workbench/contrib/notebook/common/notebookCommon';
 import { IWebviewService, WebviewElement } from 'vs/workbench/contrib/webview/browser/webview';
 import { WebviewResourceScheme } from 'vs/workbench/contrib/webview/common/resourceLoader';
@@ -18,12 +18,26 @@ import { CELL_MARGIN, CELL_RUN_GUTTER } from 'vs/workbench/contrib/notebook/brow
 import { Emitter, Event } from 'vs/base/common/event';
 import { IOpenerService } from 'vs/platform/opener/common/opener';
 import { getPathFromAmdModule } from 'vs/base/common/amd';
+import { isWeb } from 'vs/base/common/platform';
+import { IEnvironmentService } from 'vs/platform/environment/common/environment';
 
-export interface IDimentionMessage {
+export interface IDimensionMessage {
 	__vscode_notebook_message: boolean;
 	type: 'dimension';
 	id: string;
 	data: DOM.Dimension;
+}
+
+export interface IMouseEnterMessage {
+	__vscode_notebook_message: boolean;
+	type: 'mouseenter';
+	id: string;
+}
+
+export interface IMouseLeaveMessage {
+	__vscode_notebook_message: boolean;
+	type: 'mouseleave';
+	id: string;
 }
 
 export interface IWheelMessage {
@@ -79,40 +93,75 @@ export interface IUpdatePreloadResourceMessage {
 	resources: string[];
 }
 
-type IMessage = IDimentionMessage | IScrollAckMessage | IWheelMessage;
+type IMessage = IDimensionMessage | IScrollAckMessage | IWheelMessage | IMouseEnterMessage | IMouseLeaveMessage;
 
 let version = 0;
 export class BackLayerWebView extends Disposable {
 	element: HTMLElement;
-	webview: WebviewElement;
+	webview!: WebviewElement;
 	insetMapping: Map<IOutput, { outputId: string, cell: CodeCellViewModel, cacheOffset: number | undefined }> = new Map();
+	hiddenInsetMapping: Set<IOutput> = new Set();
 	reversedInsetMapping: Map<string, IOutput> = new Map();
 	preloadsCache: Map<string, boolean> = new Map();
 	localResourceRootsCache: URI[] | undefined = undefined;
 	rendererRootsCache: URI[] = [];
 	private readonly _onMessage = this._register(new Emitter<any>());
 	public readonly onMessage: Event<any> = this._onMessage.event;
+	private _initalized: Promise<void>;
 
 
 	constructor(
 		public notebookEditor: INotebookEditor,
-		@IWebviewService webviewService: IWebviewService,
-		@IOpenerService openerService: IOpenerService,
+		@IWebviewService readonly webviewService: IWebviewService,
+		@IOpenerService readonly openerService: IOpenerService,
 		@INotebookService private readonly notebookService: INotebookService,
+		@IEnvironmentService private readonly environmentService: IEnvironmentService
 	) {
 		super();
 		this.element = document.createElement('div');
 
-		this.element.style.width = `calc(100% - ${CELL_MARGIN * 2}px)`;
+		this.element.style.width = `calc(100% - ${CELL_MARGIN * 2 + CELL_RUN_GUTTER}px)`;
 		this.element.style.height = '1400px';
 		this.element.style.position = 'absolute';
-		this.element.style.margin = `0px 0 0px ${CELL_MARGIN}px`;
+		this.element.style.margin = `0px 0 0px ${CELL_MARGIN + CELL_RUN_GUTTER}px`;
 
 		const pathsPath = getPathFromAmdModule(require, 'vs/loader.js');
 		const loader = URI.file(pathsPath).with({ scheme: WebviewResourceScheme });
 
-		const outputNodePadding = 8;
-		let content = /* html */`
+		let coreDependencies = '';
+		let resolveFunc: () => void;
+
+		this._initalized = new Promise<void>((resolve, reject) => {
+			resolveFunc = resolve;
+		});
+
+		if (!isWeb) {
+			coreDependencies = `<script src="${loader}"></script>`;
+			const htmlContent = this.generateContent(8, coreDependencies);
+			this.initialize(htmlContent);
+			resolveFunc!();
+		} else {
+			fetch(pathsPath).then(async response => {
+				if (response.status !== 200) {
+					throw new Error(response.statusText);
+				}
+
+				const loaderJs = await response.text();
+
+				coreDependencies = `
+<script>
+${loaderJs}
+</script>
+`;
+				const htmlContent = this.generateContent(8, coreDependencies);
+				this.initialize(htmlContent);
+				resolveFunc!();
+			});
+		}
+	}
+
+	generateContent(outputNodePadding: number, coreDependencies: string) {
+		return /* html */`
 		<html lang="en">
 			<head>
 				<meta charset="UTF-8">
@@ -121,7 +170,7 @@ export class BackLayerWebView extends Disposable {
 						width: 100%;
 						padding: ${outputNodePadding}px;
 						box-sizing: border-box;
-						background-color: var(--vscode-list-inactiveSelectionBackground);
+						background-color: var(--vscode-notebook-outputContainerBackgroundColor);
 					}
 					body {
 						padding: 0px;
@@ -134,7 +183,7 @@ export class BackLayerWebView extends Disposable {
 				<script>
 					self.require = {};
 				</script>
-				<script src="${loader}"></script>
+				${coreDependencies}
 				<div id="__vscode_preloads"></div>
 				<div id='container' class="widgetarea" style="position: absolute;width:100%;top: 0px"></div>
 <script>
@@ -244,6 +293,23 @@ export class BackLayerWebView extends Disposable {
 						newElement.id = id;
 						document.getElementById('container').appendChild(newElement);
 						cellOutputContainer = newElement;
+
+						cellOutputContainer.addEventListener('mouseenter', () => {
+							vscode.postMessage({
+								__vscode_notebook_message: true,
+								type: 'mouseenter',
+								id: outputId,
+								data: { }
+							});
+						});
+						cellOutputContainer.addEventListener('mouseleave', () => {
+							vscode.postMessage({
+								__vscode_notebook_message: true,
+								type: 'mouseleave',
+								id: outputId,
+								data: { }
+							});
+						});
 					}
 
 					let outputNode = document.createElement('div');
@@ -280,6 +346,7 @@ export class BackLayerWebView extends Disposable {
 					for (let i = 0; i < event.data.widgets.length; i++) {
 						let widget = document.getElementById(event.data.widgets[i].id);
 						widget.style.top = event.data.widgets[i].top + 'px';
+						widget.parentNode.style.display = 'block';
 					}
 					break;
 				}
@@ -292,9 +359,21 @@ export class BackLayerWebView extends Disposable {
 				observers = [];
 				break;
 			case 'clearOutput':
-				let output = document.getElementById(id);
-				output.parentNode.removeChild(output);
-				// @TODO remove observer
+				{
+					let output = document.getElementById(id);
+					document.getElementById(id).parentNode.removeChild(output);
+					// @TODO remove observer
+				}
+				break;
+			case 'hideOutput':
+				document.getElementById(id).parentNode.style.display = 'none';
+				break;
+			case 'showOutput':
+				{
+					let output = document.getElementById(id);
+					output.parentNode.style.display = 'block';
+					output.style.top = event.data.top + 'px';
+				}
 				break;
 			case 'preload':
 				let resources = event.data.resources;
@@ -312,31 +391,49 @@ export class BackLayerWebView extends Disposable {
 </script>
 </body>
 `;
+	}
 
-		this.webview = this._createInset(webviewService, content);
+	private resolveOutputId(id: string): { cell: CodeCellViewModel, output: IOutput } | undefined {
+		const output = this.reversedInsetMapping.get(id);
+		if (!output) {
+			return;
+		}
+
+		return { cell: this.insetMapping.get(output)!.cell, output };
+	}
+
+	initialize(content: string) {
+		this.webview = this._createInset(this.webviewService, content);
 		this.webview.mountTo(this.element);
 
 		this._register(this.webview.onDidClickLink(link => {
-			openerService.open(link, { fromUserGesture: true });
+			this.openerService.open(link, { fromUserGesture: true });
 		}));
 
 		this._register(this.webview.onMessage((data: IMessage) => {
 			if (data.__vscode_notebook_message) {
 				if (data.type === 'dimension') {
-					let output = this.reversedInsetMapping.get(data.id);
-
-					if (!output) {
-						return;
-					}
-
-					let cell = this.insetMapping.get(output)!.cell;
 					let height = data.data.height;
 					let outputHeight = height;
 
-					if (cell) {
+					const info = this.resolveOutputId(data.id);
+					if (info) {
+						const { cell, output } = info;
 						let outputIndex = cell.outputs.indexOf(output);
 						cell.updateOutputHeight(outputIndex, outputHeight);
 						this.notebookEditor.layoutNotebookCell(cell, cell.layoutInfo.totalHeight);
+					}
+				} else if (data.type === 'mouseenter') {
+					const info = this.resolveOutputId(data.id);
+					if (info) {
+						const { cell } = info;
+						cell.outputIsHovered = true;
+					}
+				} else if (data.type === 'mouseleave') {
+					const info = this.resolveOutputId(data.id);
+					if (info) {
+						const { cell } = info;
+						cell.outputIsHovered = false;
 					}
 				} else if (data.type === 'scroll-ack') {
 					// const date = new Date();
@@ -354,6 +451,10 @@ export class BackLayerWebView extends Disposable {
 
 			this._onMessage.fire(data);
 		}));
+	}
+
+	async waitForInitialization() {
+		await this._initalized;
 	}
 
 	private _createInset(webviewService: IWebviewService, content: string) {
@@ -375,6 +476,10 @@ export class BackLayerWebView extends Disposable {
 		let outputIndex = cell.outputs.indexOf(output);
 		let outputOffset = cellTop + cell.getOutputOffset(outputIndex);
 
+		if (this.hiddenInsetMapping.has(output)) {
+			return true;
+		}
+
 		if (outputOffset === outputCache.cacheOffset) {
 			return false;
 		}
@@ -390,11 +495,12 @@ export class BackLayerWebView extends Disposable {
 
 			let outputOffset = item.cellTop + item.cell.getOutputOffset(outputIndex);
 			outputCache.cacheOffset = outputOffset;
+			this.hiddenInsetMapping.delete(item.output);
 
 			return {
 				id: id,
 				top: outputOffset,
-				left: CELL_RUN_GUTTER
+				left: 0
 			};
 		});
 
@@ -411,6 +517,21 @@ export class BackLayerWebView extends Disposable {
 	createInset(cell: CodeCellViewModel, output: IOutput, cellTop: number, offset: number, shadowContent: string, preloads: Set<number>) {
 		this.updateRendererPreloads(preloads);
 		let initialTop = cellTop + offset;
+
+		if (this.insetMapping.has(output)) {
+			let outputCache = this.insetMapping.get(output);
+
+			if (outputCache) {
+				this.hiddenInsetMapping.delete(output);
+				this.webview.sendMessage({
+					type: 'showOutput',
+					id: outputCache.outputId,
+					top: initialTop
+				});
+				return;
+			}
+		}
+
 		let outputId = UUID.generateUuid();
 
 		let message: ICreationRequestMessage = {
@@ -419,11 +540,12 @@ export class BackLayerWebView extends Disposable {
 			id: cell.id,
 			outputId: outputId,
 			top: initialTop,
-			left: CELL_RUN_GUTTER
+			left: 0
 		};
 
 		this.webview.sendMessage(message);
 		this.insetMapping.set(output, { outputId: outputId, cell: cell, cacheOffset: initialTop });
+		this.hiddenInsetMapping.delete(output);
 		this.reversedInsetMapping.set(outputId, output);
 	}
 
@@ -443,6 +565,21 @@ export class BackLayerWebView extends Disposable {
 		this.reversedInsetMapping.delete(id);
 	}
 
+	hideInset(output: IOutput) {
+		let outputCache = this.insetMapping.get(output);
+		if (!outputCache) {
+			return;
+		}
+
+		let id = outputCache.outputId;
+		this.hiddenInsetMapping.add(output);
+
+		this.webview.sendMessage({
+			type: 'hideOutput',
+			id: id
+		});
+	}
+
 	clearInsets() {
 		this.webview.sendMessage({
 			type: 'clear'
@@ -459,7 +596,12 @@ export class BackLayerWebView extends Disposable {
 			let rendererInfo = this.notebookService.getRendererInfo(preload);
 
 			if (rendererInfo) {
-				let preloadResources = rendererInfo.preloads.map(preloadResource => preloadResource.with({ scheme: WebviewResourceScheme }));
+				let preloadResources = rendererInfo.preloads.map(preloadResource => {
+					if (this.environmentService.isExtensionDevelopment && (preloadResource.scheme === 'http' || preloadResource.scheme === 'https')) {
+						return preloadResource;
+					}
+					return preloadResource.with({ scheme: WebviewResourceScheme });
+				});
 				extensionLocations.push(rendererInfo.extensionLocation);
 				preloadResources.forEach(e => {
 					if (!this.preloadsCache.has(e.toString())) {

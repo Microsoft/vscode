@@ -95,7 +95,7 @@ export class BackupFilesModel implements IBackupFilesModel {
 	}
 
 	get(): URI[] {
-		return this.cache.keys();
+		return [...this.cache.keys()];
 	}
 
 	remove(resource: URI): void {

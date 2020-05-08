@@ -54,6 +54,10 @@ export class CustomTextEditorModel extends Disposable implements ICustomEditorMo
 		return this._model.object.isReadonly();
 	}
 
+	public get backupId() {
+		return undefined;
+	}
+
 	public isDirty(): boolean {
 		return this.textFileService.isDirty(this.resource);
 	}

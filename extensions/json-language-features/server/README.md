@@ -23,6 +23,7 @@ The server implements the following capabilities of the language server protocol
 - [Code Formatting](https://microsoft.github.io/language-server-protocol/specification#textDocument_rangeFormatting) supporting ranges and formatting the whole document.
 - [Folding Ranges](https://microsoft.github.io/language-server-protocol/specification#textDocument_foldingRange) for all folding ranges in the document.
 - Semantic Selection for semantic selection for one or multiple cursor positions.
+- [Goto Definition](https://microsoft.github.io/language-server-protocol/specification#textDocument_definition) for $ref references in JSON schemas
 - [Diagnostics (Validation)](https://microsoft.github.io/language-server-protocol/specification#textDocument_publishDiagnostics) are pushed for all open documents
    - syntax errors
    - structural validation based on the document's [JSON schema](http://json-schema.org/).

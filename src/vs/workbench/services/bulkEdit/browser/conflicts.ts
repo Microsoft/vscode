@@ -87,7 +87,7 @@ export class ConflictDetector {
 	}
 
 	list(): URI[] {
-		return this._conflicts.keys();
+		return [...this._conflicts.keys()];
 	}
 
 	hasConflicts(): boolean {

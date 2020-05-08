@@ -55,10 +55,12 @@ export class DirtyFilesIndicator extends Disposable implements IWorkbenchContrib
 
 		// Indicate dirty count in badge if any
 		if (dirtyCount > 0) {
-			this.badgeHandle.value = this.activityService.showActivity(
+			this.badgeHandle.value = this.activityService.showViewContainerActivity(
 				VIEWLET_ID,
-				new NumberBadge(dirtyCount, num => num === 1 ? nls.localize('dirtyFile', "1 unsaved file") : nls.localize('dirtyFiles', "{0} unsaved files", dirtyCount)),
-				'explorer-viewlet-label'
+				{
+					badge: new NumberBadge(dirtyCount, num => num === 1 ? nls.localize('dirtyFile', "1 unsaved file") : nls.localize('dirtyFiles', "{0} unsaved files", dirtyCount)),
+					clazz: 'explorer-viewlet-label'
+				}
 			);
 		} else {
 			this.badgeHandle.clear();

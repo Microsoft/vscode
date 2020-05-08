@@ -52,6 +52,7 @@
 }
 
 .monaco-workbench .pane-body.integrated-terminal .xterm-viewport {
+	box-sizing: border-box;
 	margin-right: -10px;
 }
 .monaco-workbench .pane-body.integrated-terminal .monaco-split-view2.horizontal .split-view-view:last-child .xterm-viewport {

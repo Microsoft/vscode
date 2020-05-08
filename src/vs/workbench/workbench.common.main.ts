@@ -45,7 +45,7 @@ import 'vs/workbench/browser/parts/activitybar/activitybarPart';
 import 'vs/workbench/browser/parts/panel/panelPart';
 import 'vs/workbench/browser/parts/sidebar/sidebarPart';
 import 'vs/workbench/browser/parts/statusbar/statusbarPart';
-import 'vs/workbench/browser/parts/views/views';
+import 'vs/workbench/browser/parts/views/viewsService';
 
 //#endregion
 

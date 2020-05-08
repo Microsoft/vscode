@@ -30,7 +30,7 @@
     "vscode": "^1.1.36"
   },
   "scripts": {
-    "vscode:prepublish": "node ../../node_modules/gulp/bin/gulp.js --gulpfile ../../build/gulpfile.extensions.js compile-extension:typescript ./tsconfig.json"
+    "vscode:prepublish": "node ../../node_modules/gulp/bin/gulp.js --gulpfile ../../build/gulpfile.extensions.js compile-extension:typescript-language-features"
   },
   "activationEvents": [
     "onLanguage:javascript",
@@ -139,6 +139,12 @@
           "tags": [
             "usesOnlineServices"
           ]
+        },
+        "typescript.enablePromptUseWorkspaceTsdk": {
+          "type": "boolean",
+          "default": false,
+          "description": "%typescript.enablePromptUseWorkspaceTsdk%",
+          "scope": "window"
         },
         "typescript.npm": {
           "type": [
@@ -836,6 +842,20 @@
               "description": "%configuration.tsserver.watchOptions.synchronousWatchDirectory%"
             }
           }
+        },
+        "typescript.workspaceSymbols.scope": {
+          "type": "string",
+          "enum": [
+            "allOpenProjects",
+            "currentProject"
+          ],
+          "enumDescriptions": [
+            "%typescript.workspaceSymbols.scope.allOpenProjects%",
+            "%typescript.workspaceSymbols.scope.currentProject%"
+          ],
+          "default": "allOpenProjects",
+          "markdownDescription": "%typescript.workspaceSymbols.scope%",
+          "scope": "window"
         }
       }
     },

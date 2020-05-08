@@ -151,6 +151,26 @@ export class FoldingRegions {
 		}
 		return res.join(', ');
 	}
+
+	public equals(b: FoldingRegions) {
+		if (this.length !== b.length) {
+			return false;
+		}
+
+		for (let i = 0; i < this.length; i++) {
+			if (this.getStartLineNumber(i) !== b.getStartLineNumber(i)) {
+				return false;
+			}
+			if (this.getEndLineNumber(i) !== b.getEndLineNumber(i)) {
+				return false;
+			}
+			if (this.getType(i) !== b.getType(i)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
 }
 
 export class FoldingRegion {

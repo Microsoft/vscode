@@ -851,6 +851,9 @@ export function safeBtoa(str: string): string {
 	return btoa(encodeURIComponent(str)); // we use encodeURIComponent because btoa fails for non Latin 1 values
 }
 
+/**
+ * @deprecated ES6
+ */
 export function repeat(s: string, count: number): string {
 	let result = '';
 	for (let i = 0; i < count; i++) {

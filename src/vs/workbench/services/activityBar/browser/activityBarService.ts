@@ -18,7 +18,17 @@ export interface IActivityBarService {
 	showActivity(viewletOrActionId: string, badge: IBadge, clazz?: string, priority?: number): IDisposable;
 
 	/**
-	 * Returns id of pinned viewlets following the visual order.
+	 * Returns id of pinned view containers following the visual order.
 	 */
-	getPinnedViewletIds(): string[];
+	getPinnedViewContainerIds(): string[];
+
+	/**
+	 * Returns id of visible viewlets following the visual order.
+	 */
+	getVisibleViewContainerIds(): string[];
+
+	/**
+	 * Focuses the activity bar.
+	 */
+	focusActivityBar(): void;
 }

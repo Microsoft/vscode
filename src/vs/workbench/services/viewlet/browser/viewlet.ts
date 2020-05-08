@@ -31,11 +31,6 @@ export interface IViewletService {
 	getActiveViewlet(): IViewlet | undefined;
 
 	/**
-	 * Returns the id of the default viewlet.
-	 */
-	getDefaultViewletId(): string;
-
-	/**
 	 * Returns the viewlet by id.
 	 */
 	getViewlet(id: string): ViewletDescriptor | undefined;

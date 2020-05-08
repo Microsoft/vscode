@@ -1491,6 +1491,10 @@ var AMDLoader;
             result.getStats = function () {
                 return _this.getLoaderEvents();
             };
+            result.config = function (params, shouldOverwrite) {
+                if (shouldOverwrite === void 0) { shouldOverwrite = false; }
+                _this.configure(params, shouldOverwrite);
+            };
             result.__$__nodeRequire = AMDLoader.global.nodeRequire;
             return result;
         };

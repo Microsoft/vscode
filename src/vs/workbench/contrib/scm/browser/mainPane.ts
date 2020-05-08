@@ -25,7 +25,7 @@ import { ActionBar, ActionViewItem } from 'vs/base/browser/ui/actionbar/actionba
 import { IThemeService } from 'vs/platform/theme/common/themeService';
 import { attachBadgeStyler } from 'vs/platform/theme/common/styler';
 import { Command } from 'vs/editor/common/modes';
-import { renderCodicons } from 'vs/base/common/codicons';
+import { renderCodicons, Codicon } from 'vs/base/common/codicons';
 import { escape } from 'vs/base/common/strings';
 import { WorkbenchList } from 'vs/platform/list/browser/listService';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
@@ -212,6 +212,9 @@ export class MainPane extends ViewPane {
 			accessibilityProvider: {
 				getAriaLabel(r: ISCMRepository) {
 					return r.provider.label;
+				},
+				getWidgetAriaLabel() {
+					return MainPane.TITLE;
 				}
 			}
 		}) as WorkbenchList<ISCMRepository>;
@@ -246,7 +249,12 @@ export class MainPane extends ViewPane {
 		this.updateBodySize();
 	}
 
+	focus(): void {
+		this.list.domFocus();
+	}
+
 	protected layoutBody(height: number, width: number): void {
+		super.layoutBody(height, width);
 		this.list.layout(height, width);
 	}
 
@@ -333,7 +341,7 @@ export class MainPaneDescriptor implements IViewDescriptor {
 
 	readonly id = MainPane.ID;
 	readonly name = MainPane.TITLE;
-	readonly containerIcon = 'codicon-source-control';
+	readonly containerIcon = Codicon.sourceControl.classNames;
 	readonly ctorDescriptor: SyncDescriptor<MainPane>;
 	readonly canToggleVisibility = true;
 	readonly hideByDefault = false;

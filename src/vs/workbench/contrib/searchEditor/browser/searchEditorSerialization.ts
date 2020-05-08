@@ -114,7 +114,7 @@ const contentPatternToSearchConfiguration = (pattern: ITextQuery, includes: stri
 		wholeWord: !!pattern.contentPattern.isWordMatch,
 		excludes, includes,
 		showIncludesExcludes: !!(includes || excludes || pattern?.userDisabledExcludesAndIgnoreFiles),
-		useIgnores: !!(pattern?.userDisabledExcludesAndIgnoreFiles === undefined ? undefined : !pattern.userDisabledExcludesAndIgnoreFiles),
+		useIgnores: (pattern?.userDisabledExcludesAndIgnoreFiles === undefined ? true : !pattern.userDisabledExcludesAndIgnoreFiles),
 		contextLines,
 	};
 };

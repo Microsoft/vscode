@@ -1034,10 +1034,12 @@ export class TokensStore2 {
 				aIndex++;
 			}
 
-			if (aIndex < aLen && aTokens.getEndOffset(aIndex) === bEndCharacter) {
-				// `a` ends exactly at the same spot as `b`!
-				emitToken(aTokens.getEndOffset(aIndex), (aTokens.getMetadata(aIndex) & aMask) | (bMetadata & bMask));
-				aIndex++;
+			if (aIndex < aLen) {
+				emitToken(bEndCharacter, (aTokens.getMetadata(aIndex) & aMask) | (bMetadata & bMask));
+				if (aTokens.getEndOffset(aIndex) === bEndCharacter) {
+					// `a` ends exactly at the same spot as `b`!
+					aIndex++;
+				}
 			} else {
 				const aMergeIndex = Math.min(Math.max(0, aIndex - 1), aLen - 1);
 

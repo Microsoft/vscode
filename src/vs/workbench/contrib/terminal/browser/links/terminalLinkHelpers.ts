@@ -6,8 +6,6 @@
 import { IViewportRange, IBufferRange, IBufferLine, IBuffer, IBufferCellPosition } from 'xterm';
 import { IRange } from 'vs/editor/common/core/range';
 
-export const TOOLTIP_HOVER_THRESHOLD = 500;
-
 export function convertLinkRangeToBuffer(lines: IBufferLine[], bufferWidth: number, range: IRange, startLine: number) {
 	const bufferRange: IBufferRange = {
 		start: {

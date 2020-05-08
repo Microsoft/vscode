@@ -535,9 +535,12 @@ class TypeScriptCompletionItemProvider implements vscode.CompletionItemProvider 
 			useFuzzyWordRangeLogic: this.client.apiVersion.lt(API.v390),
 		};
 
-		const items = entries
-			.filter(entry => !shouldExcludeCompletionEntry(entry, completionConfiguration))
-			.map(entry => new MyCompletionItem(position, document, entry, completionContext, metadata));
+		const items: vscode.CompletionItem[] = [];
+		for (let entry of entries) {
+			if (!shouldExcludeCompletionEntry(entry, completionConfiguration)) {
+				items.push(new MyCompletionItem(position, document, entry, completionContext, metadata));
+			}
+		}
 		return new vscode.CompletionList(items, isIncomplete);
 	}
 

@@ -10,7 +10,6 @@ import { Disposable, MutableDisposable } from 'vs/base/common/lifecycle';
 import { URI } from 'vs/base/common/uri';
 import { IActivityService, NumberBadge, IBadge, ProgressBadge } from 'vs/workbench/services/activity/common/activity';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
-import { GLOBAL_ACTIVITY_ID } from 'vs/workbench/common/activity';
 import { IOpenerService } from 'vs/platform/opener/common/opener';
 import { IWorkbenchContribution } from 'vs/workbench/common/contributions';
 import { IStorageService, StorageScope } from 'vs/platform/storage/common/storage';
@@ -137,7 +136,7 @@ export class ProductContribution implements IWorkbenchContribution {
 
 			// was there an update? if so, open release notes
 			const releaseNotesUrl = productService.releaseNotesUrl;
-			if (shouldShowReleaseNotes && releaseNotesUrl && lastVersion && productService.version !== lastVersion) {
+			if (shouldShowReleaseNotes && !environmentService.skipReleaseNotes && releaseNotesUrl && lastVersion && productService.version !== lastVersion) {
 				showReleaseNotes(instantiationService, productService.version)
 					.then(undefined, () => {
 						notificationService.prompt(
@@ -257,7 +256,7 @@ export class UpdateContribution extends Disposable implements IWorkbenchContribu
 		this.badgeDisposable.clear();
 
 		if (badge) {
-			this.badgeDisposable.value = this.activityService.showActivity(GLOBAL_ACTIVITY_ID, badge, clazz, priority);
+			this.badgeDisposable.value = this.activityService.showGlobalActivity({ badge, clazz, priority });
 		}
 
 		this.state = state;

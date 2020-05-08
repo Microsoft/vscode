@@ -1,0 +1,43 @@
+{
+  "name": "vscode-notebook-tests",
+  "description": "Notebook tests for VS Code",
+  "version": "0.0.1",
+  "publisher": "vscode",
+  "license": "MIT",
+  "private": true,
+  "activationEvents": [
+    "*"
+  ],
+  "main": "./out/notebookTestMain",
+  "enableProposedApi": true,
+  "engines": {
+    "vscode": "^1.25.0"
+  },
+  "scripts": {
+    "compile": "node ./node_modules/vscode/bin/compile -watch -p ./",
+    "vscode:prepublish": "node ../../node_modules/gulp/bin/gulp.js --gulpfile ../../build/gulpfile.extensions.js compile-extension:vscode-notebook-tests ./tsconfig.json"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^3.8.3",
+    "@types/node": "^12.11.7",
+    "mocha-junit-reporter": "^1.17.0",
+    "mocha-multi-reporters": "^1.1.7",
+    "vscode": "~1.1.36",
+    "mocha": "^2.3.3"
+  },
+  "contributes": {
+    "notebookProvider": [
+      {
+        "viewType": "notebookCoreTest",
+        "displayName": "Notebook Core Test",
+        "selector": [
+          {
+            "filenamePattern": "*.vsctestnb",
+            "excludeFileNamePattern": ""
+          }
+        ]
+      }
+    ]
+  }
+}

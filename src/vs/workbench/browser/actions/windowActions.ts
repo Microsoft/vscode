@@ -30,6 +30,7 @@ import { ContextKeyExpr } from 'vs/platform/contextkey/common/contextkey';
 import { inQuickPickContext, getQuickNavigateHandler } from 'vs/workbench/browser/quickaccess';
 import { IHostService } from 'vs/workbench/services/host/browser/host';
 import { ResourceMap } from 'vs/base/common/map';
+import { Codicon } from 'vs/base/common/codicons';
 
 export const inRecentFilesPickerContextKey = 'inRecentFilesPicker';
 
@@ -41,12 +42,12 @@ interface IRecentlyOpenedPick extends IQuickPickItem {
 abstract class BaseOpenRecentAction extends Action {
 
 	private readonly removeFromRecentlyOpened: IQuickInputButton = {
-		iconClass: 'codicon-close',
+		iconClass: Codicon.removeClose.classNames,
 		tooltip: nls.localize('remove', "Remove from Recently Opened")
 	};
 
 	private readonly dirtyRecentlyOpened: IQuickInputButton = {
-		iconClass: 'dirty-workspace codicon-circle-filled',
+		iconClass: 'dirty-workspace ' + Codicon.closeDirty.classNames,
 		tooltip: nls.localize('dirtyRecentlyOpened', "Workspace With Dirty Files"),
 		alwaysVisible: true
 	};
@@ -336,18 +337,18 @@ const registry = Registry.as<IWorkbenchActionRegistry>(Extensions.WorkbenchActio
 // --- Actions Registration
 
 const fileCategory = nls.localize('file', "File");
-registry.registerWorkbenchAction(SyncActionDescriptor.create(NewWindowAction, NewWindowAction.ID, NewWindowAction.LABEL, { primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KEY_N }), 'New Window');
-registry.registerWorkbenchAction(SyncActionDescriptor.create(QuickPickRecentAction, QuickPickRecentAction.ID, QuickPickRecentAction.LABEL), 'File: Quick Open Recent...', fileCategory);
-registry.registerWorkbenchAction(SyncActionDescriptor.create(OpenRecentAction, OpenRecentAction.ID, OpenRecentAction.LABEL, { primary: KeyMod.CtrlCmd | KeyCode.KEY_R, mac: { primary: KeyMod.WinCtrl | KeyCode.KEY_R } }), 'File: Open Recent...', fileCategory);
+registry.registerWorkbenchAction(SyncActionDescriptor.from(NewWindowAction, { primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KEY_N }), 'New Window');
+registry.registerWorkbenchAction(SyncActionDescriptor.from(QuickPickRecentAction), 'File: Quick Open Recent...', fileCategory);
+registry.registerWorkbenchAction(SyncActionDescriptor.from(OpenRecentAction, { primary: KeyMod.CtrlCmd | KeyCode.KEY_R, mac: { primary: KeyMod.WinCtrl | KeyCode.KEY_R } }), 'File: Open Recent...', fileCategory);
 
 const viewCategory = nls.localize('view', "View");
-registry.registerWorkbenchAction(SyncActionDescriptor.create(ToggleFullScreenAction, ToggleFullScreenAction.ID, ToggleFullScreenAction.LABEL, { primary: KeyCode.F11, mac: { primary: KeyMod.CtrlCmd | KeyMod.WinCtrl | KeyCode.KEY_F } }), 'View: Toggle Full Screen', viewCategory);
+registry.registerWorkbenchAction(SyncActionDescriptor.from(ToggleFullScreenAction, { primary: KeyCode.F11, mac: { primary: KeyMod.CtrlCmd | KeyMod.WinCtrl | KeyCode.KEY_F } }), 'View: Toggle Full Screen', viewCategory);
 
 const developerCategory = nls.localize('developer', "Developer");
-registry.registerWorkbenchAction(SyncActionDescriptor.create(ReloadWindowAction, ReloadWindowAction.ID, ReloadWindowAction.LABEL), 'Developer: Reload Window', developerCategory);
+registry.registerWorkbenchAction(SyncActionDescriptor.from(ReloadWindowAction), 'Developer: Reload Window', developerCategory);
 
 const helpCategory = nls.localize('help', "Help");
-registry.registerWorkbenchAction(SyncActionDescriptor.create(ShowAboutDialogAction, ShowAboutDialogAction.ID, ShowAboutDialogAction.LABEL), `Help: About`, helpCategory);
+registry.registerWorkbenchAction(SyncActionDescriptor.from(ShowAboutDialogAction), `Help: About`, helpCategory);
 
 // --- Commands/Keybindings Registration
 

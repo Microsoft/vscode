@@ -96,32 +96,24 @@ export class AtaProgressReporter extends Disposable {
 		}
 	}
 
-	private onTypesInstallerInitializationFailed() {
-		interface MyMessageItem extends vscode.MessageItem {
-			id: number;
-		}
+	private async onTypesInstallerInitializationFailed() {
+		const config = vscode.workspace.getConfiguration('typescript');
 
-		if (vscode.workspace.getConfiguration('typescript').get<boolean>('check.npmIsInstalled', true)) {
-			vscode.window.showWarningMessage<MyMessageItem>(
+		if (config.get<boolean>('check.npmIsInstalled', true)) {
+			const dontShowAgain: vscode.MessageItem = {
+				title: localize('typesInstallerInitializationFailed.doNotCheckAgain', "Don't Show Again"),
+			};
+			const selected = await vscode.window.showWarningMessage(
 				localize(
 					'typesInstallerInitializationFailed.title',
 					"Could not install typings files for JavaScript language features. Please ensure that NPM is installed or configure 'typescript.npm' in your user settings. Click [here]({0}) to learn more.",
 					'https://go.microsoft.com/fwlink/?linkid=847635'
-				), {
-				title: localize('typesInstallerInitializationFailed.doNotCheckAgain', "Don't Show Again"),
-				id: 1
+				),
+				dontShowAgain);
+
+			if (selected === dontShowAgain) {
+				config.update('check.npmIsInstalled', false, true);
 			}
-			).then(selected => {
-				if (!selected) {
-					return;
-				}
-				switch (selected.id) {
-					case 1:
-						const tsConfig = vscode.workspace.getConfiguration('typescript');
-						tsConfig.update('check.npmIsInstalled', false, true);
-						break;
-				}
-			});
 		}
 	}
 }

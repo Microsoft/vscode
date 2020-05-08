@@ -184,13 +184,18 @@ export abstract class Pane extends Disposable implements IView {
 		}
 
 		this._orientation = orientation;
+
+		if (this.header) {
+			this.updateHeader();
+		}
 	}
 
 	render(): void {
 		this.header = $('.pane-header');
 		append(this.element, this.header);
 		this.header.setAttribute('tabindex', '0');
-		this.header.setAttribute('role', 'toolbar');
+		// Use role button so the aria-expanded state gets read https://github.com/microsoft/vscode/issues/95996
+		this.header.setAttribute('role', 'button');
 		this.header.setAttribute('aria-label', this.ariaHeaderLabel);
 		this.renderHeader(this.header);
 
@@ -236,6 +241,7 @@ export abstract class Pane extends Disposable implements IView {
 		const height = this._orientation === Orientation.VERTICAL ? size - headerSize : this.orthogonalSize - headerSize;
 
 		if (this.isExpanded()) {
+			toggleClass(this.body, 'wide', width >= 600);
 			this.layoutBody(height, width);
 			this.expandedSize = size;
 		}

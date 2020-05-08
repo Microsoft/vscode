@@ -87,6 +87,7 @@ interface IStackEntry {
 interface IRecentlyClosedFile {
 	resource: URI;
 	index: number;
+	sticky: boolean;
 }
 
 export class HistoryService extends Disposable implements IHistoryService {
@@ -616,7 +617,7 @@ export class HistoryService extends Disposable implements IHistoryService {
 
 				// Remove all inputs matching and add as last recently closed
 				this.removeFromRecentlyClosedFiles(event.editor);
-				this.recentlyClosedFiles.push({ resource, index: event.index });
+				this.recentlyClosedFiles.push({ resource, index: event.index, sticky: event.sticky });
 
 				// Bounding
 				if (this.recentlyClosedFiles.length > HistoryService.MAX_RECENTLY_CLOSED_EDITORS) {
@@ -637,7 +638,10 @@ export class HistoryService extends Disposable implements IHistoryService {
 
 		if (lastClosedFile) {
 			(async () => {
-				const editor = await this.editorService.openEditor({ resource: lastClosedFile.resource, options: { pinned: true, index: lastClosedFile.index } });
+				const editor = await this.editorService.openEditor({
+					resource: lastClosedFile.resource,
+					options: { pinned: true, sticky: lastClosedFile.sticky, index: lastClosedFile.index }
+				});
 
 				// Fix for https://github.com/Microsoft/vscode/issues/67882
 				// If opening of the editor fails, make sure to try the next one

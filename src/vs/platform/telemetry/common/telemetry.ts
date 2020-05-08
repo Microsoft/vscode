@@ -33,6 +33,10 @@ export interface ITelemetryService {
 
 	publicLog2<E extends ClassifiedEvent<T> = never, T extends GDPRClassification<T> = never>(eventName: string, data?: StrictPropertyCheck<T, E>, anonymizeFilePaths?: boolean): Promise<void>;
 
+	publicLogError(errorEventName: string, data?: ITelemetryData): Promise<void>;
+
+	publicLogError2<E extends ClassifiedEvent<T> = never, T extends GDPRClassification<T> = never>(eventName: string, data?: StrictPropertyCheck<T, E>): Promise<void>;
+
 	setEnabled(value: boolean): void;
 
 	getTelemetryInfo(): Promise<ITelemetryInfo>;

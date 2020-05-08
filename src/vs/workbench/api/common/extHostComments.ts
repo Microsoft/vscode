@@ -451,6 +451,18 @@ class ExtHostCommentController implements vscode.CommentController {
 		this._proxy.$updateCommentControllerFeatures(this.handle, { reactionHandler: !!handler });
 	}
 
+	private _options: modes.CommentOptions | undefined;
+
+	get options() {
+		return this._options;
+	}
+
+	set options(options: modes.CommentOptions | undefined) {
+		this._options = options;
+
+		this._proxy.$updateCommentControllerFeatures(this.handle, { options: this._options });
+	}
+
 	constructor(
 		private _extension: IExtensionDescription,
 		private _handle: number,

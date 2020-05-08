@@ -23,7 +23,9 @@ export function activate(context: vscode.ExtensionContext) {
 
 	const previewManager = new PreviewManager(extensionRoot, sizeStatusBarEntry, binarySizeStatusBarEntry, zoomStatusBarEntry);
 
-	context.subscriptions.push(vscode.window.registerCustomEditorProvider2(PreviewManager.viewType, previewManager));
+	context.subscriptions.push(vscode.window.registerCustomEditorProvider2(PreviewManager.viewType, previewManager, {
+		supportsMultipleEditorsPerDocument: true,
+	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('imagePreview.zoomIn', () => {
 		previewManager.activePreview?.zoomIn();

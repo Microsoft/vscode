@@ -88,7 +88,7 @@ export class ReleaseNotesManager {
 			this._currentReleaseNotes.webview.onDidClickLink(uri => this.onDidClickLink(URI.parse(uri)));
 			this._currentReleaseNotes.onDispose(() => { this._currentReleaseNotes = undefined; });
 
-			const iconPath = URI.parse(require.toUrl('./media/code-icon.svg'));
+			const iconPath = URI.parse(require.toUrl('vs/workbench/browser/media/code-icon.svg'));
 			this._currentReleaseNotes.iconPath = {
 				light: iconPath,
 				dark: iconPath

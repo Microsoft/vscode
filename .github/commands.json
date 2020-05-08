@@ -90,7 +90,7 @@
 			"@author"
 		],
 		"action": "updateLabels",
-		"addLabel": "author-verified",
+		"addLabel": "z-author-verified",
 		"removeLabel": "author-verification-requested",
 		"requireLabel": "author-verification-requested",
 		"disallowLabel": "awaiting-insiders-release"
@@ -325,5 +325,20 @@
 		"action": "close",
 		"addLabel": "*caused-by-extension",
 		"comment": "It looks like this is caused by the Java Debugger extension. Please file it with the repository [here](https://github.com/Microsoft/vscode-java-debug). Make sure to check their issue reporting template and provide them relevant information such as the extension version you're using. See also our [issue reporting](https://aka.ms/vscodeissuereporting) guidelines for more information.\n\nHappy Coding!"
+	},
+	{
+		"type": "comment",
+		"name": "label",
+		"allowUsers": []
+	},
+	{
+		"type": "comment",
+		"name": "assign",
+		"allowUsers": [
+			"cleidigh",
+			"usernamehw",
+			"gjsjohnmurray",
+			"IllusionMH"
+		]
 	}
 ]

@@ -220,6 +220,7 @@ const excludedExtensions = [
 	'vscode-test-resolver',
 	'ms-vscode.node-debug',
 	'ms-vscode.node-debug2',
+	'vscode-notebook-tests'
 ];
 
 interface IBuiltInExtension {

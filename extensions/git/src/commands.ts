@@ -6,10 +6,10 @@
 import { lstat, Stats } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { commands, Disposable, LineChange, MessageOptions, OutputChannel, Position, ProgressLocation, QuickPickItem, Range, SourceControlResourceState, TextDocumentShowOptions, TextEditor, Uri, ViewColumn, window, workspace, WorkspaceEdit, WorkspaceFolder, TimelineItem, env } from 'vscode';
+import { commands, Disposable, LineChange, MessageOptions, OutputChannel, Position, ProgressLocation, QuickPickItem, Range, SourceControlResourceState, TextDocumentShowOptions, TextEditor, Uri, ViewColumn, window, workspace, WorkspaceEdit, WorkspaceFolder, TimelineItem, env, QuickPick } from 'vscode';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import * as nls from 'vscode-nls';
-import { Branch, GitErrorCodes, Ref, RefType, Status, CommitOptions } from './api/git';
+import { Branch, GitErrorCodes, Ref, RefType, Status, CommitOptions, RemoteSourceProvider, RemoteSource } from './api/git';
 import { ForcePushMode, Git, Stash } from './git';
 import { Model } from './model';
 import { Repository, Resource, ResourceGroupType } from './repository';
@@ -18,6 +18,7 @@ import { fromGitUri, toGitUri, isGitUri } from './uri';
 import { grep, isDescendant, pathEquals } from './util';
 import { Log, LogLevel } from './log';
 import { GitTimelineItem } from './timelineProvider';
+import { throttle, debounce } from './decorators';
 
 const localize = nls.loadMessageBundle();
 
@@ -231,6 +232,71 @@ interface PushOptions {
 	pushType: PushType;
 	forcePush?: boolean;
 	silent?: boolean;
+}
+
+async function getQuickPickResult<T extends QuickPickItem>(quickpick: QuickPick<T>): Promise<T | undefined> {
+	const result = await new Promise<T | undefined>(c => {
+		quickpick.onDidAccept(() => c(quickpick.selectedItems[0]));
+		quickpick.onDidHide(() => c(undefined));
+		quickpick.show();
+	});
+
+	quickpick.hide();
+	return result;
+}
+
+class RemoteSourceProviderQuickPick {
+
+	private quickpick: QuickPick<QuickPickItem & { remoteSource?: RemoteSource }>;
+
+	constructor(private provider: RemoteSourceProvider) {
+		this.quickpick = window.createQuickPick();
+		this.quickpick.ignoreFocusOut = true;
+
+		if (provider.supportsQuery) {
+			this.quickpick.placeholder = localize('type to search', "Repository name (type to search)");
+			this.quickpick.onDidChangeValue(this.onDidChangeValue, this);
+		} else {
+			this.quickpick.placeholder = localize('type to filter', "Repository name");
+		}
+	}
+
+	@debounce(300)
+	onDidChangeValue(): void {
+		this.query();
+	}
+
+	@throttle
+	async query(): Promise<void> {
+		this.quickpick.busy = true;
+
+		try {
+			const remoteSources = await this.provider.getRemoteSources(this.quickpick.value) || [];
+
+			if (remoteSources.length === 0) {
+				this.quickpick.items = [{
+					label: localize('none found', "No remote repositories found."),
+					alwaysShow: true
+				}];
+			} else {
+				this.quickpick.items = remoteSources.map(remoteSource => ({
+					label: remoteSource.name,
+					description: remoteSource.description || (typeof remoteSource.url === 'string' ? remoteSource.url : remoteSource.url[0]),
+					remoteSource
+				}));
+			}
+		} catch (err) {
+			this.quickpick.items = [{ label: localize('error', "$(error) Error: {0}", err.message), alwaysShow: true }];
+		} finally {
+			this.quickpick.busy = false;
+		}
+	}
+
+	async pick(): Promise<RemoteSource | undefined> {
+		this.query();
+		const result = await getQuickPickResult(this.quickpick);
+		return result?.remoteSource;
+	}
 }
 
 export class CommandCenter {
@@ -454,10 +520,51 @@ export class CommandCenter {
 	@command('git.clone')
 	async clone(url?: string, parentPath?: string): Promise<void> {
 		if (!url) {
-			url = await window.showInputBox({
-				prompt: localize('repourl', "Repository URL"),
-				ignoreFocusOut: true
-			});
+			const quickpick = window.createQuickPick<(QuickPickItem & { provider?: RemoteSourceProvider, url?: string })>();
+			quickpick.ignoreFocusOut = true;
+
+			const providers = this.model.getRemoteProviders()
+				.map(provider => ({ label: (provider.icon ? `$(${provider.icon}) ` : '') + localize('clonefrom', "Clone from {0}", provider.name), alwaysShow: true, provider }));
+
+			quickpick.placeholder = providers.length === 0
+				? localize('provide url', "Provide repository URL.")
+				: localize('provide url or pick', "Provide repository URL or pick a repository source.");
+
+			const updatePicks = (value?: string) => {
+				if (value) {
+					quickpick.items = [{
+						label: localize('repourl', "Clone from URL"),
+						description: value,
+						alwaysShow: true,
+						url: value
+					},
+					...providers];
+				} else {
+					quickpick.items = providers;
+				}
+			};
+
+			quickpick.onDidChangeValue(updatePicks);
+			updatePicks();
+
+			const result = await getQuickPickResult(quickpick);
+
+			if (result) {
+				if (result.url) {
+					url = result.url;
+				} else if (result.provider) {
+					const quickpick = new RemoteSourceProviderQuickPick(result.provider);
+					const remote = await quickpick.pick();
+
+					if (remote) {
+						if (typeof remote.url === 'string') {
+							url = remote.url;
+						} else if (remote.url.length > 0) {
+							url = await window.showQuickPick(remote.url, { ignoreFocusOut: true, placeHolder: localize('pick url', "Choose a URL to clone from.") });
+						}
+					}
+				}
+			}
 		}
 
 		if (!url) {
@@ -2403,6 +2510,10 @@ export class CommandCenter {
 		env.clipboard.writeText(item.message);
 	}
 
+	@command('git.rebaseAbort', { repository: true })
+	async rebaseAbort(repository: Repository): Promise<void> {
+		await repository.rebaseAbort();
+	}
 
 	private createCommand(id: string, key: string, method: Function, options: CommandOptions): (...args: any[]) => any {
 		const result = (...args: any[]) => {
@@ -2468,6 +2579,14 @@ export class CommandCenter {
 						message = localize('stash merge conflicts', "There were merge conflicts while applying the stash.");
 						type = 'warning';
 						options.modal = false;
+						break;
+					case GitErrorCodes.AuthenticationFailed:
+						const regex = /Authentication failed for '(.*)'/i;
+						const match = regex.exec(err.stderr || String(err));
+
+						message = match
+							? localize('auth failed specific', "Failed to authenticate to git remote:\n\n{0}", match[1])
+							: localize('auth failed', "Failed to authenticate to git remote.");
 						break;
 					case GitErrorCodes.NoUserNameConfigured:
 					case GitErrorCodes.NoUserEmailConfigured:

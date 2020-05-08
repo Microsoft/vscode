@@ -8,7 +8,6 @@ import { RawContextKey, IContextKeyService, ContextKeyExpr, IContextKey } from '
 import { KeybindingWeight } from 'vs/platform/keybinding/common/keybindingsRegistry';
 import { ISnippetsService } from './snippets.contribution';
 import { getNonWhitespacePrefix } from './snippetsService';
-import { endsWith } from 'vs/base/common/strings';
 import { IDisposable, dispose } from 'vs/base/common/lifecycle';
 import { IEditorContribution } from 'vs/editor/common/editorCommon';
 import { Range } from 'vs/editor/common/core/range';
@@ -97,7 +96,7 @@ export class TabCompletionController implements IEditorContribution {
 			const prefix = getNonWhitespacePrefix(model, selection.getPosition());
 			if (prefix) {
 				for (const snippet of snippets) {
-					if (endsWith(prefix, snippet.prefix)) {
+					if (prefix.endsWith(snippet.prefix)) {
 						this._activeSnippets.push(snippet);
 					}
 				}

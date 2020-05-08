@@ -17,7 +17,7 @@ jobs:
         with:
           repository: 'microsoft/vscode-github-triage-actions'
           path: ./actions
-          ref: v5
+          ref: v15
       - name: Install Actions
         if: github.event_name != 'issues' || contains(github.event.issue.labels.*.name, 'feature-request')
         run: npm install --production --prefix ./actions

@@ -66,7 +66,6 @@
 	max-width: 260px;
 	margin-left: auto;
 	margin-right: auto;
-	display: block;
 }
 
 .monaco-workbench .pane > .pane-body .welcome-view-content {

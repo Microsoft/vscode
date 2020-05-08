@@ -51,16 +51,6 @@
 	text-align: right;
 }
 
-.monaco-editor .diagonal-fill {
-	background: url('diagonal-fill.png');
-}
-.monaco-editor.vs-dark .diagonal-fill {
-	opacity: 0.2;
-}
-.monaco-editor.hc-black .diagonal-fill {
-	background: none;
-}
-
 /* ---------- Inline Diff ---------- */
 
 .monaco-editor .view-zones .view-lines .view-line span {

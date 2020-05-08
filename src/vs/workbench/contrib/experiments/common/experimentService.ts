@@ -10,7 +10,7 @@ import { ITelemetryService, lastSessionDateStorageKey } from 'vs/platform/teleme
 import { ILifecycleService, LifecyclePhase } from 'vs/platform/lifecycle/common/lifecycle';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { IExtensionManagementService } from 'vs/platform/extensionManagement/common/extensionManagement';
-import { language } from 'vs/base/common/platform';
+import { language, OperatingSystem, OS } from 'vs/base/common/platform';
 import { Disposable } from 'vs/base/common/lifecycle';
 import { match } from 'vs/base/common/glob';
 import { IRequestService, asJson } from 'vs/platform/request/common/request';
@@ -93,7 +93,7 @@ interface IExperimentStorageState {
  * be incremented when adding a condition, otherwise experiments might activate
  * on older versions of VS Code where not intended.
  */
-export const currentSchemaVersion = 3;
+export const currentSchemaVersion = 4;
 
 interface IRawExperiment {
 	id: string;
@@ -111,6 +111,7 @@ interface IRawExperiment {
 			uniqueDays?: number;
 			minEvents: number;
 		};
+		os: OperatingSystem[];
 		installedExtensions?: {
 			excludes?: string[];
 			includes?: string[];
@@ -437,6 +438,10 @@ export class ExperimentService extends Disposable implements IExperimentService 
 		const condition = experiment.condition;
 		if (!condition) {
 			return Promise.resolve(ExperimentState.Run);
+		}
+
+		if (experiment.condition?.os && !experiment.condition.os.includes(OS)) {
+			return Promise.resolve(ExperimentState.NoRun);
 		}
 
 		if (!this.checkExperimentDependencies(experiment)) {

@@ -19,13 +19,6 @@ vscode-sqlite3/build/**
 vscode-sqlite3/src/**
 !vscode-sqlite3/build/Release/*.node
 
-oniguruma/binding.gyp
-oniguruma/build/**
-oniguruma/src/**
-oniguruma/deps/**
-!oniguruma/build/Release/*.node
-!oniguruma/src/*.js
-
 windows-mutex/binding.gyp
 windows-mutex/build/**
 windows-mutex/src/**

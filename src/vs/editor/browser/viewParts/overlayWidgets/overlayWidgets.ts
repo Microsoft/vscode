@@ -42,7 +42,7 @@ export class ViewOverlayWidgets extends ViewPart {
 
 		this._widgets = {};
 		this._verticalScrollbarWidth = layoutInfo.verticalScrollbarWidth;
-		this._minimapWidth = layoutInfo.minimapWidth;
+		this._minimapWidth = layoutInfo.minimap.minimapWidth;
 		this._horizontalScrollbarHeight = layoutInfo.horizontalScrollbarHeight;
 		this._editorHeight = layoutInfo.height;
 		this._editorWidth = layoutInfo.width;
@@ -68,7 +68,7 @@ export class ViewOverlayWidgets extends ViewPart {
 		const layoutInfo = options.get(EditorOption.layoutInfo);
 
 		this._verticalScrollbarWidth = layoutInfo.verticalScrollbarWidth;
-		this._minimapWidth = layoutInfo.minimapWidth;
+		this._minimapWidth = layoutInfo.minimap.minimapWidth;
 		this._horizontalScrollbarHeight = layoutInfo.horizontalScrollbarHeight;
 		this._editorHeight = layoutInfo.height;
 		this._editorWidth = layoutInfo.width;

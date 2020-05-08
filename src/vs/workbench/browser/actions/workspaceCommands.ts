@@ -7,7 +7,6 @@ import * as nls from 'vs/nls';
 import { IWorkspaceContextService } from 'vs/platform/workspace/common/workspace';
 import { IWorkspaceEditingService } from 'vs/workbench/services/workspaces/common/workspaceEditing';
 import * as resources from 'vs/base/common/resources';
-import { IViewletService } from 'vs/workbench/services/viewlet/browser/viewlet';
 import { CancellationToken } from 'vs/base/common/cancellation';
 import { mnemonicButtonLabel } from 'vs/base/common/labels';
 import { CommandsRegistry } from 'vs/platform/commands/common/commands';
@@ -19,6 +18,7 @@ import { getIconClasses } from 'vs/editor/common/services/getIconClasses';
 import { IModelService } from 'vs/editor/common/services/modelService';
 import { IModeService } from 'vs/editor/common/services/modeService';
 import { IFileDialogService } from 'vs/platform/dialogs/common/dialogs';
+import { IViewDescriptorService, IViewsService, ViewContainerLocation } from 'vs/workbench/common/views';
 
 export const ADD_ROOT_FOLDER_COMMAND_ID = 'addRootFolder';
 export const ADD_ROOT_FOLDER_LABEL = nls.localize('addFolderToWorkspace', "Add Folder to Workspace...");
@@ -55,7 +55,8 @@ CommandsRegistry.registerCommand({
 CommandsRegistry.registerCommand({
 	id: ADD_ROOT_FOLDER_COMMAND_ID,
 	handler: async (accessor) => {
-		const viewletService = accessor.get(IViewletService);
+		const viewDescriptorService = accessor.get(IViewDescriptorService);
+		const viewsService = accessor.get(IViewsService);
 		const workspaceEditingService = accessor.get(IWorkspaceEditingService);
 		const dialogsService = accessor.get(IFileDialogService);
 		const folders = await dialogsService.showOpenDialog({
@@ -71,7 +72,7 @@ CommandsRegistry.registerCommand({
 		}
 
 		await workspaceEditingService.addFolders(folders.map(folder => ({ uri: resources.removeTrailingPathSeparator(folder) })));
-		await viewletService.openViewlet(viewletService.getDefaultViewletId(), true);
+		await viewsService.openViewContainer(viewDescriptorService.getDefaultViewContainer(ViewContainerLocation.Sidebar)!.id, true);
 	}
 });
 

@@ -25,6 +25,8 @@ import { IEditorService } from 'vs/workbench/services/editor/common/editorServic
 import { IRemoteAgentService } from 'vs/workbench/services/remote/common/remoteAgentService';
 import { optional } from 'vs/platform/instantiation/common/instantiation';
 import { IExplorerService } from 'vs/workbench/contrib/files/common/files';
+import { isWeb } from 'vs/base/common/platform';
+import { IPathService } from 'vs/workbench/services/path/common/pathService';
 
 
 const OPEN_IN_TERMINAL_COMMAND_ID = 'openInTerminal';
@@ -82,58 +84,41 @@ CommandsRegistry.registerCommand({
 	}
 });
 
-const OPEN_NATIVE_CONSOLE_COMMAND_ID = 'workbench.action.terminal.openNativeConsole';
-KeybindingsRegistry.registerCommandAndKeybindingRule({
-	id: OPEN_NATIVE_CONSOLE_COMMAND_ID,
-	primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KEY_C,
-	when: KEYBINDING_CONTEXT_TERMINAL_NOT_FOCUSED,
-	weight: KeybindingWeight.WorkbenchContrib,
-	handler: (accessor) => {
-		const remoteAgentService = accessor.get(IRemoteAgentService);
-		const historyService = accessor.get(IHistoryService);
-
-		// Open integrated terminal in remote workspaces
-		if (remoteAgentService.getConnection()) {
-			const integratedTerminalService = accessor.get(IIntegratedTerminalService);
-			const root = historyService.getLastActiveWorkspaceRoot(Schemas.vscodeRemote);
-			let cwd: string | undefined;
+if (!isWeb) {
+	const OPEN_NATIVE_CONSOLE_COMMAND_ID = 'workbench.action.terminal.openNativeConsole';
+	KeybindingsRegistry.registerCommandAndKeybindingRule({
+		id: OPEN_NATIVE_CONSOLE_COMMAND_ID,
+		primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KEY_C,
+		when: KEYBINDING_CONTEXT_TERMINAL_NOT_FOCUSED,
+		weight: KeybindingWeight.WorkbenchContrib,
+		handler: async (accessor) => {
+			const historyService = accessor.get(IHistoryService);
+			// Open external terminal in local workspaces
+			const terminalService = accessor.get(IExternalTerminalService);
+			const root = historyService.getLastActiveWorkspaceRoot(Schemas.file);
 			if (root) {
-				cwd = root.path;
+				terminalService.openTerminal(root.fsPath);
 			} else {
-				const activeFile = historyService.getLastActiveFile(Schemas.vscodeRemote);
+				// Opens current file's folder, if no folder is open in editor
+				const activeFile = historyService.getLastActiveFile(Schemas.file);
 				if (activeFile) {
-					cwd = paths.dirname(activeFile.path);
+					terminalService.openTerminal(paths.dirname(activeFile.fsPath));
+				} else {
+					const pathService = accessor.get(IPathService);
+					const userHome = await pathService.userHome;
+					terminalService.openTerminal(userHome.fsPath);
 				}
 			}
-			if (cwd) {
-				const instance = integratedTerminalService.createTerminal({ cwd });
-				integratedTerminalService.setActiveInstance(instance);
-				integratedTerminalService.showPanel(true);
-			}
-			return;
 		}
+	});
 
-		// Open external terminal in local workspaces
-		const terminalService = accessor.get(IExternalTerminalService);
-		const root = historyService.getLastActiveWorkspaceRoot(Schemas.file);
-		if (root) {
-			terminalService.openTerminal(root.fsPath);
-		} else {
-			// Opens current file's folder, if no folder is open in editor
-			const activeFile = historyService.getLastActiveFile(Schemas.file);
-			if (activeFile) {
-				terminalService.openTerminal(paths.dirname(activeFile.fsPath));
-			}
+	MenuRegistry.appendMenuItem(MenuId.CommandPalette, {
+		command: {
+			id: OPEN_NATIVE_CONSOLE_COMMAND_ID,
+			title: { value: nls.localize('globalConsoleAction', "Open New External Terminal"), original: 'Open New External Terminal' }
 		}
-	}
-});
-
-MenuRegistry.appendMenuItem(MenuId.CommandPalette, {
-	command: {
-		id: OPEN_NATIVE_CONSOLE_COMMAND_ID,
-		title: { value: nls.localize('globalConsoleAction', "Open New External Terminal"), original: 'Open New External Terminal' }
-	}
-});
+	});
+}
 
 const openConsoleCommand = {
 	id: OPEN_IN_TERMINAL_COMMAND_ID,

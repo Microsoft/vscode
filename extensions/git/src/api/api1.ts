@@ -5,7 +5,7 @@
 
 import { Model } from '../model';
 import { Repository as BaseRepository, Resource } from '../repository';
-import { InputBox, Git, API, Repository, Remote, RepositoryState, Branch, Ref, Submodule, Commit, Change, RepositoryUIState, Status, LogOptions, APIState, CommitOptions, GitExtension, RefType } from './git';
+import { InputBox, Git, API, Repository, Remote, RepositoryState, Branch, Ref, Submodule, Commit, Change, RepositoryUIState, Status, LogOptions, APIState, CommitOptions, GitExtension, RefType, RemoteSourceProvider, CredentialsProvider } from './git';
 import { Event, SourceControlInputBox, Uri, SourceControl, Disposable, commands } from 'vscode';
 import { mapEvent } from '../util';
 import { toGitUri } from '../uri';
@@ -183,6 +183,10 @@ export class ApiRepository implements Repository {
 		return this._repository.removeRemote(name);
 	}
 
+	renameRemote(name: string, newName: string): Promise<void> {
+		return this._repository.renameRemote(name, newName);
+	}
+
 	fetch(remote?: string | undefined, ref?: string | undefined, depth?: number | undefined): Promise<void> {
 		return this._repository.fetch(remote, ref, depth);
 	}
@@ -246,6 +250,21 @@ export class ApiImpl implements API {
 	getRepository(uri: Uri): Repository | null {
 		const result = this._model.getRepository(uri);
 		return result ? new ApiRepository(result) : null;
+	}
+
+	async init(root: Uri): Promise<Repository | null> {
+		const path = root.fsPath;
+		await this._model.git.init(path);
+		await this._model.openRepository(path);
+		return this.getRepository(root) || null;
+	}
+
+	registerRemoteSourceProvider(provider: RemoteSourceProvider): Disposable {
+		return this._model.registerRemoteSourceProvider(provider);
+	}
+
+	registerCredentialsProvider(provider: CredentialsProvider): Disposable {
+		return this._model.registerCredentialsProvider(provider);
 	}
 
 	constructor(private _model: Model) { }

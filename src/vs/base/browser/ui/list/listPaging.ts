@@ -78,6 +78,10 @@ class PagedAccessibilityProvider<T> implements IListAccessibilityProvider<number
 		private accessibilityProvider: IListAccessibilityProvider<T>
 	) { }
 
+	getWidgetAriaLabel(): string {
+		return this.accessibilityProvider.getWidgetAriaLabel();
+	}
+
 	getAriaLabel(index: number): string | null {
 		const model = this.modelProvider();
 

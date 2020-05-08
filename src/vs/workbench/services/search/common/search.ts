@@ -344,10 +344,13 @@ export interface ISearchConfigurationProperties {
 	maintainFileSearchCache: boolean;
 	collapseResults: 'auto' | 'alwaysCollapse' | 'alwaysExpand';
 	searchOnType: boolean;
+	seedOnFocus: boolean;
+	seedWithNearestWord: boolean;
 	searchOnTypeDebouncePeriod: number;
 	searchEditor: {
 		doubleClickBehaviour: 'selectWord' | 'goToLocation' | 'openLocationToSide',
-		experimental: { reusePriorSearchConfiguration: boolean }
+		reusePriorSearchConfiguration: boolean,
+		experimental: {}
 	};
 	sortOrder: SearchSortOrder;
 }

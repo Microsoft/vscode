@@ -7,7 +7,8 @@
 		"**/.DS_Store": true,
 		"build/**/*.js": {
 			"when": "$(basename).ts"
-		}
+		},
+		"src/vs/server": false
 	},
 	"files.associations": {
 		"cglicenses.json": "jsonc"
@@ -24,7 +25,8 @@
 		"test/smoke/out/**": true,
 		"test/automation/out/**": true,
 		"test/integration/browser/out/**": true,
-		"src/vs/base/test/node/uri.test.data.txt": true
+		"src/vs/base/test/node/uri.test.data.txt": true,
+		"src/vs/server": false
 	},
 	"lcov.path": [
 		"./.build/coverage/lcov.info",
@@ -72,5 +74,6 @@
 	"files.insertFinalNewline": true,
   "[typescript]": {
 		"editor.defaultFormatter": "vscode.typescript-language-features"
-	}
+	},
+	"typescript.tsc.autoDetect": "off"
 }

@@ -51,7 +51,7 @@ export interface IExtHostDebugService extends ExtHostDebugServiceShape {
 	addBreakpoints(breakpoints0: vscode.Breakpoint[]): Promise<void>;
 	removeBreakpoints(breakpoints0: vscode.Breakpoint[]): Promise<void>;
 	startDebugging(folder: vscode.WorkspaceFolder | undefined, nameOrConfig: string | vscode.DebugConfiguration, options: vscode.DebugSessionOptions): Promise<boolean>;
-	registerDebugConfigurationProvider(type: string, provider: vscode.DebugConfigurationProvider): vscode.Disposable;
+	registerDebugConfigurationProvider(type: string, provider: vscode.DebugConfigurationProvider, trigger: vscode.DebugConfigurationProviderTriggerKind): vscode.Disposable;
 	registerDebugAdapterDescriptorFactory(extension: IExtensionDescription, type: string, factory: vscode.DebugAdapterDescriptorFactory): vscode.Disposable;
 	registerDebugAdapterTrackerFactory(type: string, factory: vscode.DebugAdapterTrackerFactory): vscode.Disposable;
 	asDebugSourceUri(source: vscode.DebugProtocolSource, session?: vscode.DebugSession): vscode.Uri;
@@ -299,7 +299,7 @@ export class ExtHostDebugServiceBase implements IExtHostDebugService, ExtHostDeb
 		});
 	}
 
-	public registerDebugConfigurationProvider(type: string, provider: vscode.DebugConfigurationProvider): vscode.Disposable {
+	public registerDebugConfigurationProvider(type: string, provider: vscode.DebugConfigurationProvider, trigger: vscode.DebugConfigurationProviderTriggerKind): vscode.Disposable {
 
 		if (!provider) {
 			return new Disposable(() => { });
@@ -312,7 +312,7 @@ export class ExtHostDebugServiceBase implements IExtHostDebugService, ExtHostDeb
 		const handle = this._configProviderHandleCounter++;
 		this._configProviders.push({ type, handle, provider });
 
-		this._debugServiceProxy.$registerDebugConfigurationProvider(type,
+		this._debugServiceProxy.$registerDebugConfigurationProvider(type, trigger,
 			!!provider.provideDebugConfigurations,
 			!!provider.resolveDebugConfiguration,
 			!!provider.resolveDebugConfigurationWithSubstitutedVariables,

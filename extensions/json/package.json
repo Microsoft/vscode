@@ -22,13 +22,12 @@
         "extensions": [
           ".json",
           ".bowerrc",
-          ".jshintrc",
           ".jscsrc",
-          ".swcrc",
           ".webmanifest",
           ".js.map",
           ".css.map",
           ".har",
+          ".jslintrc",
           ".jsonld"
         ],
         "filenames": [
@@ -52,7 +51,10 @@
           ".babelrc",
           ".jsonc",
           ".eslintrc",
-          ".eslintrc.json"
+          ".eslintrc.json",
+          ".jsfmtrc",
+          ".jshintrc",
+          ".swcrc"
         ],
         "configuration": "./language-configuration.json"
       }

@@ -111,7 +111,7 @@ export class TelemetryContribution extends Disposable implements IWorkbenchContr
 			customKeybindingsCount: keybindingsService.customKeybindingsCount(),
 			theme: themeService.getColorTheme().id,
 			language,
-			pinnedViewlets: activityBarService.getPinnedViewletIds(),
+			pinnedViewlets: activityBarService.getPinnedViewContainerIds(),
 			restoredViewlet: activeViewlet ? activeViewlet.getId() : undefined,
 			restoredEditors: editorService.visibleEditors.length,
 			startupKind: lifecycleService.startupKind

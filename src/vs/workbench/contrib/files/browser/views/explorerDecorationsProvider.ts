@@ -56,11 +56,6 @@ export class ExplorerDecorationsProvider implements IDecorationsProvider {
 		this.toDispose.add(contextService.onDidChangeWorkspaceFolders(e => {
 			this._onDidChange.fire(e.changed.concat(e.added).map(wf => wf.uri));
 		}));
-		this.toDispose.add(explorerService.onDidChangeItem(change => {
-			if (change.item) {
-				this._onDidChange.fire([change.item.resource]);
-			}
-		}));
 		this.toDispose.add(explorerRootErrorEmitter.event((resource => {
 			this._onDidChange.fire([resource]);
 		})));

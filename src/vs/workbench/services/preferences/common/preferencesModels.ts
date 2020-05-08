@@ -639,7 +639,8 @@ export class DefaultSettings extends Disposable {
 					tags: prop.tags,
 					disallowSyncIgnore: prop.disallowSyncIgnore,
 					extensionInfo: extensionInfo,
-					deprecationMessage: prop.deprecationMessage,
+					deprecationMessage: prop.markdownDeprecationMessage || prop.deprecationMessage,
+					deprecationMessageIsMarkdown: !!prop.markdownDeprecationMessage,
 					validator: createValidator(prop)
 				});
 			}

@@ -34,6 +34,7 @@ import { registerSingleton } from 'vs/platform/instantiation/common/extensions';
 import { LayoutPriority } from 'vs/base/browser/ui/grid/grid';
 import { assertIsDefined } from 'vs/base/common/types';
 import { CompositeDragAndDropObserver } from 'vs/workbench/browser/dnd';
+import { IViewDescriptorService, ViewContainerLocation } from 'vs/workbench/common/views';
 
 export class SidebarPart extends CompositePart<Viewlet> implements IViewletService {
 
@@ -93,6 +94,7 @@ export class SidebarPart extends CompositePart<Viewlet> implements IViewletServi
 		@IKeybindingService keybindingService: IKeybindingService,
 		@IInstantiationService instantiationService: IInstantiationService,
 		@IThemeService themeService: IThemeService,
+		@IViewDescriptorService private readonly viewDescriptorService: IViewDescriptorService,
 		@IContextKeyService private readonly contextKeyService: IContextKeyService,
 		@IExtensionService private readonly extensionService: IExtensionService
 	) {
@@ -107,7 +109,7 @@ export class SidebarPart extends CompositePart<Viewlet> implements IViewletServi
 			themeService,
 			Registry.as<ViewletRegistry>(ViewletExtensions.Viewlets),
 			SidebarPart.activeViewletSettingsKey,
-			Registry.as<ViewletRegistry>(ViewletExtensions.Viewlets).getDefaultViewletId(),
+			viewDescriptorService.getDefaultViewContainer(ViewContainerLocation.Sidebar)!.id,
 			'sideBar',
 			'viewlet',
 			SIDE_BAR_TITLE_FOREGROUND,
@@ -134,9 +136,18 @@ export class SidebarPart extends CompositePart<Viewlet> implements IViewletServi
 
 		// Viewlet deregister
 		this._register(this.registry.onDidDeregister(async (viewletDescriptor: ViewletDescriptor) => {
-			const activeViewlet = this.getActiveViewlet();
-			if (!activeViewlet || activeViewlet.getId() === viewletDescriptor.id) {
-				await this.openViewlet(this.getDefaultViewletId());
+
+			const activeContainers = this.viewDescriptorService.getViewContainersByLocation(ViewContainerLocation.Sidebar)
+				.filter(container => this.viewDescriptorService.getViewContainerModel(container).activeViewDescriptors.length > 0);
+
+			if (activeContainers.length) {
+				if (this.getActiveComposite()?.getId() === viewletDescriptor.id) {
+					const defaultViewletId = this.viewDescriptorService.getDefaultViewContainer(ViewContainerLocation.Sidebar)?.id;
+					const containerToOpen = activeContainers.filter(c => c.id === defaultViewletId)[0] || activeContainers[0];
+					await this.openViewlet(containerToOpen.id);
+				}
+			} else {
+				this.layoutService.setSideBarHidden(true);
 			}
 
 			this.removeComposite(viewletDescriptor.id);
@@ -165,12 +176,7 @@ export class SidebarPart extends CompositePart<Viewlet> implements IViewletServi
 
 		const draggedItemProvider = (): { type: 'view' | 'composite', id: string } => {
 			const activeViewlet = this.getActiveViewlet()!;
-			const visibleViews = activeViewlet.getViewPaneContainer().views.filter(v => v.isVisible());
-			if (visibleViews.length === 1) {
-				return { type: 'view', id: visibleViews[0].id };
-			} else {
-				return { type: 'composite', id: activeViewlet.getId() };
-			}
+			return { type: 'composite', id: activeViewlet.getId() };
 		};
 
 		this._register(CompositeDragAndDropObserver.INSTANCE.registerDraggable(this.titleLabelElement!, draggedItemProvider, {}));
@@ -245,10 +251,6 @@ export class SidebarPart extends CompositePart<Viewlet> implements IViewletServi
 
 			return v1.order - v2.order;
 		});
-	}
-
-	getDefaultViewletId(): string {
-		return this.viewletRegistry.getDefaultViewletId();
 	}
 
 	getViewlet(id: string): ViewletDescriptor {
@@ -331,7 +333,7 @@ class FocusSideBarAction extends Action {
 }
 
 const registry = Registry.as<IWorkbenchActionRegistry>(ActionExtensions.WorkbenchActions);
-registry.registerWorkbenchAction(SyncActionDescriptor.create(FocusSideBarAction, FocusSideBarAction.ID, FocusSideBarAction.LABEL, {
+registry.registerWorkbenchAction(SyncActionDescriptor.from(FocusSideBarAction, {
 	primary: KeyMod.CtrlCmd | KeyCode.KEY_0
 }), 'View: Focus into Side Bar', nls.localize('viewCategory', "View"));
 

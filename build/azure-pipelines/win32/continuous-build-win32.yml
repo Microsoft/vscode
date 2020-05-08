@@ -2,56 +2,79 @@ steps:
 - task: NodeTool@0
   inputs:
     versionSpec: "12.13.0"
+
 - task: geeklearningio.gl-vsts-tasks-yarn.yarn-installer-task.YarnInstaller@2
   inputs:
     versionSpec: "1.x"
+
 - task: UsePythonVersion@0
   inputs:
     versionSpec: '2.x'
     addToPath: true
+
 - task: 1ESLighthouseEng.PipelineArtifactCaching.RestoreCacheV1.RestoreCache@1
   inputs:
     keyfile: '.yarnrc, remote/.yarnrc, **/yarn.lock, !**/node_modules/**/yarn.lock, !**/.*/**/yarn.lock'
     targetfolder: '**/node_modules, !**/node_modules/**/node_modules'
     vstsFeed: 'vscode-build-cache'
+
 - powershell: |
     yarn --frozen-lockfile
   env:
     CHILD_CONCURRENCY: "1"
   displayName: Install Dependencies
   condition: and(succeeded(), ne(variables['CacheRestored'], 'true'))
+
 - task: 1ESLighthouseEng.PipelineArtifactCaching.SaveCacheV1.SaveCache@1
   inputs:
     keyfile: '.yarnrc, remote/.yarnrc, **/yarn.lock, !**/node_modules/**/yarn.lock, !**/.*/**/yarn.lock'
     targetfolder: '**/node_modules, !**/node_modules/**/node_modules'
     vstsFeed: 'vscode-build-cache'
   condition: and(succeeded(), ne(variables['CacheRestored'], 'true'))
+
 - powershell: |
     yarn electron
+  displayName: Download Electron
+
 - script: |
     yarn gulp hygiene
   displayName: Run Hygiene Checks
+
 - powershell: |
     yarn monaco-compile-check
   displayName: Run Monaco Editor Checks
+
 - script: |
     yarn valid-layers-check
   displayName: Run Valid Layers Checks
+
 - powershell: |
     yarn compile
   displayName: Compile Sources
+
 - powershell: |
     yarn download-builtin-extensions
   displayName: Download Built-in Extensions
+
 - powershell: |
     .\scripts\test.bat --tfs "Unit Tests"
   displayName: Run Unit Tests (Electron)
+
 - powershell: |
     yarn test-browser --browser chromium --browser firefox
   displayName: Run Unit Tests (Browser)
+
 - powershell: |
     .\scripts\test-integration.bat --tfs "Integration Tests"
   displayName: Run Integration Tests (Electron)
+
+- task: PublishPipelineArtifact@0
+  displayName: 'Publish Crash Reports'
+  inputs:
+    artifactName: crash-dump-windows
+    targetPath: .build\crashes
+  condition: succeededOrFailed()
+
 - task: PublishTestResults@2
   displayName: Publish Tests Results
   inputs:

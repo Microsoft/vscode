@@ -6,13 +6,14 @@
 import { workspace, WorkspaceFoldersChangeEvent, Uri, window, Event, EventEmitter, QuickPickItem, Disposable, SourceControl, SourceControlResourceGroup, TextEditor, Memento, OutputChannel } from 'vscode';
 import { Repository, RepositoryState } from './repository';
 import { memoize, sequentialize, debounce } from './decorators';
-import { dispose, anyEvent, filterEvent, isDescendant, firstIndex, pathEquals } from './util';
+import { dispose, anyEvent, filterEvent, isDescendant, firstIndex, pathEquals, toDisposable } from './util';
 import { Git } from './git';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as nls from 'vscode-nls';
 import { fromGitUri } from './uri';
-import { GitErrorCodes, APIState as State } from './api/git';
+import { GitErrorCodes, APIState as State, RemoteSourceProvider, CredentialsProvider } from './api/git';
+import { Askpass } from './askpass';
 
 const localize = nls.loadMessageBundle();
 
@@ -74,9 +75,11 @@ export class Model {
 		this._onDidChangeState.fire(state);
 	}
 
+	private remoteProviders = new Set<RemoteSourceProvider>();
+
 	private disposables: Disposable[] = [];
 
-	constructor(readonly git: Git, private globalState: Memento, private outputChannel: OutputChannel) {
+	constructor(readonly git: Git, private readonly askpass: Askpass, private globalState: Memento, private outputChannel: OutputChannel) {
 		workspace.onDidChangeWorkspaceFolders(this.onDidChangeWorkspaceFolders, this, this.disposables);
 		window.onDidChangeVisibleTextEditors(this.onDidChangeVisibleTextEditors, this, this.disposables);
 		workspace.onDidChangeConfiguration(this.onDidChangeConfiguration, this, this.disposables);
@@ -445,6 +448,19 @@ export class Model {
 		}
 
 		return undefined;
+	}
+
+	registerRemoteSourceProvider(provider: RemoteSourceProvider): Disposable {
+		this.remoteProviders.add(provider);
+		return toDisposable(() => this.remoteProviders.delete(provider));
+	}
+
+	registerCredentialsProvider(provider: CredentialsProvider): Disposable {
+		return this.askpass.registerCredentialsProvider(provider);
+	}
+
+	getRemoteProviders(): RemoteSourceProvider[] {
+		return [...this.remoteProviders.values()];
 	}
 
 	dispose(): void {

@@ -9,19 +9,17 @@
 }
 
 .monaco-workbench .part > .drop-block-overlay.visible {
-	display: block;
-	backdrop-filter: brightness(97%) blur(2px);
-	opacity: 1;
-	z-index: 10;
+	visibility: visible;
 }
 
 .monaco-workbench .part > .drop-block-overlay {
-	display: none;
-	width: 100%;
-	height: 100%;
 	position: absolute;
 	top: 0;
-	pointer-events: none;
+	width: 100%;
+	height: 100%;
+	visibility: hidden;
+	opacity: 0;
+	z-index: 10;
 }
 
 .monaco-workbench .part > .title {

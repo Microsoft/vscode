@@ -5,16 +5,16 @@
 
 import { Emitter, Event } from 'vs/base/common/event';
 import * as UUID from 'vs/base/common/uuid';
+import * as editorCommon from 'vs/editor/common/editorCommon';
 import * as model from 'vs/editor/common/model';
 import { ITextModelService } from 'vs/editor/common/services/resolverService';
 import { PrefixSumComputer } from 'vs/editor/common/viewModel/prefixSumComputer';
-import { EDITOR_BOTTOM_PADDING, EDITOR_TOOLBAR_HEIGHT, EDITOR_TOP_PADDING, CELL_MARGIN, CELL_RUN_GUTTER, EDITOR_TOP_MARGIN, BOTTOM_CELL_TOOLBAR_HEIGHT, CELL_STATUSBAR_HEIGHT } from 'vs/workbench/contrib/notebook/browser/constants';
-import { CellEditState, ICellViewModel, CellFindMatch, CodeCellLayoutChangeEvent, CodeCellLayoutInfo, NotebookLayoutInfo } from 'vs/workbench/contrib/notebook/browser/notebookBrowser';
+import { BOTTOM_CELL_TOOLBAR_HEIGHT, CELL_MARGIN, CELL_RUN_GUTTER, CELL_STATUSBAR_HEIGHT, EDITOR_BOTTOM_PADDING, EDITOR_TOOLBAR_HEIGHT, EDITOR_TOP_MARGIN, EDITOR_TOP_PADDING } from 'vs/workbench/contrib/notebook/browser/constants';
+import { CellEditState, CellFindMatch, CodeCellLayoutChangeEvent, CodeCellLayoutInfo, ICellViewModel, NotebookLayoutInfo } from 'vs/workbench/contrib/notebook/browser/notebookBrowser';
+import { NotebookCellTextModel } from 'vs/workbench/contrib/notebook/common/model/notebookCellTextModel';
 import { CellKind, NotebookCellOutputsSplice } from 'vs/workbench/contrib/notebook/common/notebookCommon';
 import { BaseCellViewModel } from './baseCellViewModel';
 import { NotebookEventDispatcher } from 'vs/workbench/contrib/notebook/browser/viewModel/eventDispatcher';
-import * as editorCommon from 'vs/editor/common/editorCommon';
-import { NotebookCellTextModel } from 'vs/workbench/contrib/notebook/common/model/notebookCellTextModel';
 
 export class CodeCellViewModel extends BaseCellViewModel implements ICellViewModel {
 	cellKind: CellKind.Code = CellKind.Code;
@@ -35,9 +35,6 @@ export class CodeCellViewModel extends BaseCellViewModel implements ICellViewMod
 		return this.model.outputs;
 	}
 
-	private readonly _onDidChangeContent: Emitter<void> = this._register(new Emitter<void>());
-	public readonly onDidChangeContent: Event<void> = this._onDidChangeContent.event;
-
 	protected readonly _onDidChangeLayout = new Emitter<CodeCellLayoutChangeEvent>();
 	readonly onDidChangeLayout = this._onDidChangeLayout.event;
 
@@ -52,6 +49,16 @@ export class CodeCellViewModel extends BaseCellViewModel implements ICellViewMod
 		return this._editorHeight;
 	}
 
+	private _hoveringOutput: boolean = false;
+	public get outputIsHovered(): boolean {
+		return this._hoveringOutput;
+	}
+
+	public set outputIsHovered(v: boolean) {
+		this._hoveringOutput = v;
+		this._onDidChangeState.fire({ outputIsHoveredChanged: true });
+	}
+
 	private _layoutInfo: CodeCellLayoutInfo;
 
 	get layoutInfo() {
@@ -62,8 +69,8 @@ export class CodeCellViewModel extends BaseCellViewModel implements ICellViewMod
 		readonly viewType: string,
 		readonly notebookHandle: number,
 		readonly model: NotebookCellTextModel,
-		readonly eventDispatcher: NotebookEventDispatcher,
 		initialNotebookLayoutInfo: NotebookLayoutInfo | null,
+		readonly eventDispatcher: NotebookEventDispatcher,
 		@ITextModelService private readonly _modelService: ITextModelService,
 	) {
 		super(viewType, notebookHandle, model, UUID.generateUuid());
@@ -73,35 +80,22 @@ export class CodeCellViewModel extends BaseCellViewModel implements ICellViewMod
 			this._onDidChangeOutputs.fire(splices);
 		}));
 
-		this._register(this.model.onDidChangeMetadata(() => {
-			this._onDidChangeMetadata.fire();
-		}));
-
 		this._outputCollection = new Array(this.model.outputs.length);
-		this._buffer = null;
 
 		this._layoutInfo = {
 			fontInfo: initialNotebookLayoutInfo?.fontInfo || null,
 			editorHeight: 0,
-			editorWidth: initialNotebookLayoutInfo ? initialNotebookLayoutInfo!.width - CELL_MARGIN * 2 - CELL_RUN_GUTTER : 0,
+			editorWidth: initialNotebookLayoutInfo ? this.computeEditorWidth(initialNotebookLayoutInfo!.width) : 0,
 			outputContainerOffset: 0,
 			outputTotalHeight: 0,
 			totalHeight: 0,
 			indicatorHeight: 0,
 			bottomToolbarOffset: 0
 		};
+	}
 
-		this._register(eventDispatcher.onDidChangeLayout((e) => {
-			if (e.source.width !== undefined) {
-				this.layoutChange({ outerWidth: e.value.width, font: e.value.fontInfo });
-			}
-		}));
-
-		this._register(this.onDidChangeLanguage((e) => {
-			if (this._textModel && !this._textModel.isDisposed()) {
-
-			}
-		}));
+	private computeEditorWidth(outerWidth: number): number {
+		return outerWidth - (CELL_MARGIN * 2 + CELL_RUN_GUTTER);
 	}
 
 	layoutChange(state: CodeCellLayoutChangeEvent) {
@@ -112,7 +106,7 @@ export class CodeCellViewModel extends BaseCellViewModel implements ICellViewMod
 		const indicatorHeight = this.editorHeight + CELL_STATUSBAR_HEIGHT + outputTotalHeight;
 		const outputContainerOffset = EDITOR_TOOLBAR_HEIGHT + EDITOR_TOP_MARGIN + this.editorHeight + CELL_STATUSBAR_HEIGHT;
 		const bottomToolbarOffset = totalHeight - BOTTOM_CELL_TOOLBAR_HEIGHT;
-		const editorWidth = state.outerWidth !== undefined ? state.outerWidth - CELL_MARGIN * 2 - CELL_RUN_GUTTER : this._layoutInfo?.editorWidth;
+		const editorWidth = state.outerWidth !== undefined ? this.computeEditorWidth(state.outerWidth) : this._layoutInfo?.editorWidth;
 		this._layoutInfo = {
 			fontInfo: state.font || null,
 			editorHeight: this._editorHeight,
@@ -176,22 +170,17 @@ export class CodeCellViewModel extends BaseCellViewModel implements ICellViewMod
 		}
 	}
 
-	save() {
-		if (this._textModel && !this._textModel.isDisposed() && this.editState === CellEditState.Editing) {
-			let cnt = this._textModel.getLineCount();
-			this.model.source = this._textModel.getLinesContent().map((str, index) => str + (index !== cnt - 1 ? '\n' : ''));
-		}
-	}
-
+	/**
+	 * Text model is used for editing.
+	 */
 	async resolveTextModel(): Promise<model.ITextModel> {
 		if (!this._textModel) {
 			const ref = await this._modelService.createModelReference(this.model.uri);
 			this._textModel = ref.object.textEditorModel;
-			this._buffer = this._textModel.getTextBuffer();
 			this._register(ref);
 			this._register(this._textModel.onDidChangeContent(() => {
-				this.model.contentChange();
-				this._onDidChangeContent.fire();
+				this.editState = CellEditState.Editing;
+				this._onDidChangeState.fire({ contentChanged: true });
 			}));
 		}
 

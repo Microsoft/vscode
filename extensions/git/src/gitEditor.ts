@@ -6,33 +6,20 @@ import * as path from 'path';
 import { workspace, window, Uri, Position, Selection } from 'vscode';
 
 import { IIPCHandler, IIPCServer } from './ipc/ipcServer';
-import { IDisposable } from './util';
-
-export interface GitEditorEnvironment {
-	GIT_EDITOR: string;
-	ELECTRON_RUN_AS_NODE?: string;
-	VSCODE_GIT_EDITOR_NODE?: string;
-	VSCODE_GIT_EDITOR_MAIN?: string;
-}
+import { IDisposable, EmptyDisposable } from './util';
 
 interface GitEditorRequest {
 	commitMessagePath?: string;
 }
 
 export class GitEditor implements IIPCHandler {
-	private disposable: IDisposable;
 
-	static getDisabledEnv(): GitEditorEnvironment {
-		const fileType = process.platform === 'win32' ? 'bat' : 'sh';
-		const gitEditor = path.join(__dirname, `scripts/git-editor-empty.${fileType}`);
+	private disposable: IDisposable = EmptyDisposable;
 
-		return {
-			GIT_EDITOR: `'${gitEditor}'`,
-		};
-	}
-
-	constructor(ipc: IIPCServer) {
-		this.disposable = ipc.registerHandler('git-editor', this);
+	constructor(private ipc?: IIPCServer) {
+		if (ipc) {
+			this.disposable = ipc.registerHandler('git-editor', this);
+		}
 	}
 
 	async handle({ commitMessagePath }: GitEditorRequest): Promise<any> {
@@ -57,11 +44,16 @@ export class GitEditor implements IIPCHandler {
 		}
 	}
 
-	dispose(): void {
-		this.disposable.dispose();
-	}
+	getEnv(): { [key: string]: string; } {
+		if (!this.ipc) {
+			const fileType = process.platform === 'win32' ? 'bat' : 'sh';
+			const gitEditor = path.join(__dirname, `scripts/git-editor-empty.${fileType}`);
 
-	getEnv(): GitEditorEnvironment {
+			return {
+				GIT_EDITOR: `'${gitEditor}'`
+			};
+		}
+
 		const fileType = process.platform === 'win32' ? 'bat' : 'sh';
 		const gitEditor = path.join(__dirname, `scripts/git-editor.${fileType}`);
 
@@ -71,5 +63,9 @@ export class GitEditor implements IIPCHandler {
 			VSCODE_GIT_EDITOR_NODE: process.execPath,
 			VSCODE_GIT_EDITOR_MAIN: path.join(__dirname, 'git-editor-main.js')
 		};
+	}
+
+	dispose(): void {
+		this.disposable.dispose();
 	}
 }

@@ -36,7 +36,7 @@ import { IWorkingCopy, IWorkingCopyBackup, IWorkingCopyService, WorkingCopyCapab
 export type SearchConfiguration = {
 	query: string,
 	includes: string,
-	excludes: string
+	excludes: string,
 	contextLines: number,
 	wholeWord: boolean,
 	caseSensitive: boolean,
@@ -304,15 +304,15 @@ export const getOrMakeSearchEditorInput = (
 	const storageService = accessor.get(IStorageService);
 	const configurationService = accessor.get(IConfigurationService);
 
-	const reuseOldSettings = configurationService.getValue<ISearchConfigurationProperties>('search').searchEditor?.experimental?.reusePriorSearchConfiguration;
+	const reuseOldSettings = configurationService.getValue<ISearchConfigurationProperties>('search').searchEditor?.reusePriorSearchConfiguration;
 	const priorConfig: SearchConfiguration = reuseOldSettings ? new Memento(SearchEditorInput.ID, storageService).getMemento(StorageScope.WORKSPACE).searchConfig : {};
 	const defaultConfig = defaultSearchConfig();
 	let config = { ...defaultConfig, ...priorConfig, ...existingData.config };
 
 	const modelUri = existingData.modelUri ?? URI.from({ scheme: SearchEditorScheme, fragment: `${Math.random()}` });
 
-
-	const existing = inputs.get(modelUri.toString() + existingData.backingUri?.toString());
+	const cacheKey = existingData.backingUri?.toString() ?? modelUri.toString();
+	const existing = inputs.get(cacheKey);
 	if (existing) {
 		return existing;
 	}
@@ -341,8 +341,8 @@ export const getOrMakeSearchEditorInput = (
 
 	const input = instantiationService.createInstance(SearchEditorInput, modelUri, existingData.backingUri, config, getModel);
 
-	inputs.set(modelUri.toString(), input);
-	input.onDispose(() => inputs.delete(modelUri.toString()));
+	inputs.set(cacheKey, input);
+	input.onDispose(() => inputs.delete(cacheKey));
 
 	return input;
 };

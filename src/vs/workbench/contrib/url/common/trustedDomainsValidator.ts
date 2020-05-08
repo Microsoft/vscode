@@ -222,6 +222,10 @@ function pathMatches(open: string, rule: string) {
 		return true;
 	}
 
+	if (rule[rule.length - 1] === '/') {
+		rule = rule.slice(0, -1);
+	}
+
 	const openSegments = open.split('/');
 	const ruleSegments = rule.split('/');
 	for (let i = 0; i < ruleSegments.length; i++) {

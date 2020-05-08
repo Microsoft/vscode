@@ -7,7 +7,7 @@
 import * as assert from 'assert';
 import severity from 'vs/base/common/severity';
 import { DebugModel, StackFrame, Thread } from 'vs/workbench/contrib/debug/common/debugModel';
-import { MockRawSession, MockDebugAdapter } from 'vs/workbench/contrib/debug/test/common/mockDebug';
+import { MockRawSession, MockDebugAdapter, createMockDebugModel } from 'vs/workbench/contrib/debug/test/common/mockDebug';
 import { SimpleReplElement, RawObjectReplElement, ReplEvaluationInput, ReplModel, ReplEvaluationResult, ReplGroup } from 'vs/workbench/contrib/debug/common/replModel';
 import { RawDebugSession } from 'vs/workbench/contrib/debug/browser/rawDebugSession';
 import { timeout } from 'vs/base/common/async';
@@ -18,7 +18,7 @@ suite('Debug - REPL', () => {
 	let rawSession: MockRawSession;
 
 	setup(() => {
-		model = new DebugModel([], [], [], [], [], <any>{ isDirty: (e: any) => false });
+		model = createMockDebugModel();
 		rawSession = new MockRawSession();
 	});
 

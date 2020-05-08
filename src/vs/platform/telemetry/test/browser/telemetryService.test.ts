@@ -4,13 +4,14 @@
  *--------------------------------------------------------------------------------------------*/
 import * as assert from 'assert';
 import { Emitter } from 'vs/base/common/event';
-import { TelemetryService } from 'vs/platform/telemetry/common/telemetryService';
+import { TelemetryService, ITelemetryServiceConfig } from 'vs/platform/telemetry/common/telemetryService';
 import ErrorTelemetry from 'vs/platform/telemetry/browser/errorTelemetry';
 import { NullAppender, ITelemetryAppender } from 'vs/platform/telemetry/common/telemetryUtils';
 import * as Errors from 'vs/base/common/errors';
 import * as sinon from 'sinon';
 import { ITelemetryData } from 'vs/platform/telemetry/common/telemetry';
 import { TestConfigurationService } from 'vs/platform/configuration/test/common/testConfigurationService';
+import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 
 class TestTelemetryAppender implements ITelemetryAppender {
 
@@ -207,6 +208,10 @@ suite('TelemetryService', () => {
 	class JoinableTelemetryService extends TelemetryService {
 
 		private readonly promises: Promise<void>[] = [];
+
+		constructor(config: ITelemetryServiceConfig, configurationService: IConfigurationService) {
+			super({ ...config, sendErrorTelemetry: true }, configurationService);
+		}
 
 		join(): Promise<any> {
 			return Promise.all(this.promises);

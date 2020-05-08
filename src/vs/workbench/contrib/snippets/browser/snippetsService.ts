@@ -6,7 +6,7 @@
 import { IJSONSchema } from 'vs/base/common/jsonSchema';
 import { combinedDisposable, IDisposable, DisposableStore } from 'vs/base/common/lifecycle';
 import * as resources from 'vs/base/common/resources';
-import { endsWith, isFalsyOrWhitespace } from 'vs/base/common/strings';
+import { isFalsyOrWhitespace } from 'vs/base/common/strings';
 import { URI } from 'vs/base/common/uri';
 import { Position } from 'vs/editor/common/core/position';
 import { LanguageId } from 'vs/editor/common/modes';
@@ -49,7 +49,7 @@ namespace snippetExt {
 			return null;
 		}
 
-		if (isFalsyOrWhitespace(snippet.language) && !endsWith(snippet.path, '.code-snippets')) {
+		if (isFalsyOrWhitespace(snippet.language) && !snippet.path.endsWith('.code-snippets')) {
 			extension.collector.error(localize(
 				'invalid.language.0',
 				"When omitting the language, the value of `contributes.{0}.path` must be a `.code-snippets`-file. Provided value: {1}",

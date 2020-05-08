@@ -723,6 +723,23 @@ suite('SettingsMerge - Merge', () => {
 		assert.deepEqual(actual.conflictsSettings, expectedConflicts);
 		assert.ok(actual.hasConflicts);
 	});
+
+	test('merge when remote has comments and local is empty', async () => {
+		const localContent = `
+{
+
+}`;
+		const remoteContent = stringify`
+{
+	// this is a comment
+	"a": 1,
+}`;
+		const actual = merge(localContent, remoteContent, null, [], [], formattingOptions);
+		assert.equal(actual.localContent, remoteContent);
+		assert.equal(actual.remoteContent, null);
+		assert.equal(actual.conflictsSettings.length, 0);
+		assert.ok(!actual.hasConflicts);
+	});
 });
 
 suite('SettingsMerge - Compute Remote Content', () => {

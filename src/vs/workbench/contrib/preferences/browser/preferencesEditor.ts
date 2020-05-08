@@ -609,7 +609,7 @@ class PreferencesRenderersController extends Disposable {
 					const message = getErrorMessage(err).trim();
 					if (message && message !== 'Error') {
 						// "Error" = any generic network error
-						this.telemetryService.publicLog('defaultSettings.searchError', { message }, true);
+						this.telemetryService.publicLogError('defaultSettings.searchError', { message });
 						this.logService.info('Setting search error: ' + message);
 					}
 					return undefined;

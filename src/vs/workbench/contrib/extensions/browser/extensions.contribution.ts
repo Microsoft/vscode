@@ -85,73 +85,74 @@ Registry.as<IViewContainersRegistry>(ViewContainerExtensions.ViewContainersRegis
 		icon: 'codicon-extensions',
 		order: 4,
 		rejectAddedViews: true,
+		alwaysUseContainerInfo: true
 	}, ViewContainerLocation.Sidebar);
 
 
 // Global actions
 const actionRegistry = Registry.as<IWorkbenchActionRegistry>(WorkbenchActionExtensions.WorkbenchActions);
 
-const openViewletActionDescriptor = SyncActionDescriptor.create(OpenExtensionsViewletAction, OpenExtensionsViewletAction.ID, OpenExtensionsViewletAction.LABEL, { primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KEY_X });
+const openViewletActionDescriptor = SyncActionDescriptor.from(OpenExtensionsViewletAction, { primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KEY_X });
 actionRegistry.registerWorkbenchAction(openViewletActionDescriptor, 'View: Show Extensions', localize('view', "View"));
 
-const installActionDescriptor = SyncActionDescriptor.create(InstallExtensionsAction, InstallExtensionsAction.ID, InstallExtensionsAction.LABEL);
+const installActionDescriptor = SyncActionDescriptor.from(InstallExtensionsAction);
 actionRegistry.registerWorkbenchAction(installActionDescriptor, 'Extensions: Install Extensions', ExtensionsLabel);
 
-const listOutdatedActionDescriptor = SyncActionDescriptor.create(ShowOutdatedExtensionsAction, ShowOutdatedExtensionsAction.ID, ShowOutdatedExtensionsAction.LABEL);
+const listOutdatedActionDescriptor = SyncActionDescriptor.from(ShowOutdatedExtensionsAction);
 actionRegistry.registerWorkbenchAction(listOutdatedActionDescriptor, 'Extensions: Show Outdated Extensions', ExtensionsLabel);
 
-const recommendationsActionDescriptor = SyncActionDescriptor.create(ShowRecommendedExtensionsAction, ShowRecommendedExtensionsAction.ID, ShowRecommendedExtensionsAction.LABEL);
+const recommendationsActionDescriptor = SyncActionDescriptor.from(ShowRecommendedExtensionsAction);
 actionRegistry.registerWorkbenchAction(recommendationsActionDescriptor, 'Extensions: Show Recommended Extensions', ExtensionsLabel);
 
-const keymapRecommendationsActionDescriptor = SyncActionDescriptor.create(ShowRecommendedKeymapExtensionsAction, ShowRecommendedKeymapExtensionsAction.ID, ShowRecommendedKeymapExtensionsAction.SHORT_LABEL, { primary: KeyChord(KeyMod.CtrlCmd | KeyCode.KEY_K, KeyMod.CtrlCmd | KeyCode.KEY_M) });
+const keymapRecommendationsActionDescriptor = SyncActionDescriptor.from(ShowRecommendedKeymapExtensionsAction, { primary: KeyChord(KeyMod.CtrlCmd | KeyCode.KEY_K, KeyMod.CtrlCmd | KeyCode.KEY_M) });
 actionRegistry.registerWorkbenchAction(keymapRecommendationsActionDescriptor, 'Preferences: Keymaps', PreferencesLabel);
 
-const languageExtensionsActionDescriptor = SyncActionDescriptor.create(ShowLanguageExtensionsAction, ShowLanguageExtensionsAction.ID, ShowLanguageExtensionsAction.SHORT_LABEL);
+const languageExtensionsActionDescriptor = SyncActionDescriptor.from(ShowLanguageExtensionsAction);
 actionRegistry.registerWorkbenchAction(languageExtensionsActionDescriptor, 'Preferences: Language Extensions', PreferencesLabel);
 
-const azureExtensionsActionDescriptor = SyncActionDescriptor.create(ShowAzureExtensionsAction, ShowAzureExtensionsAction.ID, ShowAzureExtensionsAction.SHORT_LABEL);
+const azureExtensionsActionDescriptor = SyncActionDescriptor.from(ShowAzureExtensionsAction);
 actionRegistry.registerWorkbenchAction(azureExtensionsActionDescriptor, 'Preferences: Azure Extensions', PreferencesLabel);
 
-const popularActionDescriptor = SyncActionDescriptor.create(ShowPopularExtensionsAction, ShowPopularExtensionsAction.ID, ShowPopularExtensionsAction.LABEL);
+const popularActionDescriptor = SyncActionDescriptor.from(ShowPopularExtensionsAction);
 actionRegistry.registerWorkbenchAction(popularActionDescriptor, 'Extensions: Show Popular Extensions', ExtensionsLabel);
 
-const enabledActionDescriptor = SyncActionDescriptor.create(ShowEnabledExtensionsAction, ShowEnabledExtensionsAction.ID, ShowEnabledExtensionsAction.LABEL);
+const enabledActionDescriptor = SyncActionDescriptor.from(ShowEnabledExtensionsAction);
 actionRegistry.registerWorkbenchAction(enabledActionDescriptor, 'Extensions: Show Enabled Extensions', ExtensionsLabel);
 
-const installedActionDescriptor = SyncActionDescriptor.create(ShowInstalledExtensionsAction, ShowInstalledExtensionsAction.ID, ShowInstalledExtensionsAction.LABEL);
+const installedActionDescriptor = SyncActionDescriptor.from(ShowInstalledExtensionsAction);
 actionRegistry.registerWorkbenchAction(installedActionDescriptor, 'Extensions: Show Installed Extensions', ExtensionsLabel);
 
-const disabledActionDescriptor = SyncActionDescriptor.create(ShowDisabledExtensionsAction, ShowDisabledExtensionsAction.ID, ShowDisabledExtensionsAction.LABEL);
+const disabledActionDescriptor = SyncActionDescriptor.from(ShowDisabledExtensionsAction);
 actionRegistry.registerWorkbenchAction(disabledActionDescriptor, 'Extensions: Show Disabled Extensions', ExtensionsLabel);
 
-const builtinActionDescriptor = SyncActionDescriptor.create(ShowBuiltInExtensionsAction, ShowBuiltInExtensionsAction.ID, ShowBuiltInExtensionsAction.LABEL);
+const builtinActionDescriptor = SyncActionDescriptor.from(ShowBuiltInExtensionsAction);
 actionRegistry.registerWorkbenchAction(builtinActionDescriptor, 'Extensions: Show Built-in Extensions', ExtensionsLabel);
 
-const updateAllActionDescriptor = SyncActionDescriptor.create(UpdateAllAction, UpdateAllAction.ID, UpdateAllAction.LABEL);
+const updateAllActionDescriptor = SyncActionDescriptor.from(UpdateAllAction);
 actionRegistry.registerWorkbenchAction(updateAllActionDescriptor, 'Extensions: Update All Extensions', ExtensionsLabel);
 
-const installVSIXActionDescriptor = SyncActionDescriptor.create(InstallVSIXAction, InstallVSIXAction.ID, InstallVSIXAction.LABEL);
+const installVSIXActionDescriptor = SyncActionDescriptor.from(InstallVSIXAction);
 actionRegistry.registerWorkbenchAction(installVSIXActionDescriptor, 'Extensions: Install from VSIX...', ExtensionsLabel);
 
-const disableAllAction = SyncActionDescriptor.create(DisableAllAction, DisableAllAction.ID, DisableAllAction.LABEL);
+const disableAllAction = SyncActionDescriptor.from(DisableAllAction);
 actionRegistry.registerWorkbenchAction(disableAllAction, 'Extensions: Disable All Installed Extensions', ExtensionsLabel);
 
-const disableAllWorkspaceAction = SyncActionDescriptor.create(DisableAllWorkspaceAction, DisableAllWorkspaceAction.ID, DisableAllWorkspaceAction.LABEL);
+const disableAllWorkspaceAction = SyncActionDescriptor.from(DisableAllWorkspaceAction);
 actionRegistry.registerWorkbenchAction(disableAllWorkspaceAction, 'Extensions: Disable All Installed Extensions for this Workspace', ExtensionsLabel);
 
-const enableAllAction = SyncActionDescriptor.create(EnableAllAction, EnableAllAction.ID, EnableAllAction.LABEL);
+const enableAllAction = SyncActionDescriptor.from(EnableAllAction);
 actionRegistry.registerWorkbenchAction(enableAllAction, 'Extensions: Enable All Extensions', ExtensionsLabel);
 
-const enableAllWorkspaceAction = SyncActionDescriptor.create(EnableAllWorkspaceAction, EnableAllWorkspaceAction.ID, EnableAllWorkspaceAction.LABEL);
+const enableAllWorkspaceAction = SyncActionDescriptor.from(EnableAllWorkspaceAction);
 actionRegistry.registerWorkbenchAction(enableAllWorkspaceAction, 'Extensions: Enable All Extensions for this Workspace', ExtensionsLabel);
 
-const checkForUpdatesAction = SyncActionDescriptor.create(CheckForUpdatesAction, CheckForUpdatesAction.ID, CheckForUpdatesAction.LABEL);
+const checkForUpdatesAction = SyncActionDescriptor.from(CheckForUpdatesAction);
 actionRegistry.registerWorkbenchAction(checkForUpdatesAction, `Extensions: Check for Extension Updates`, ExtensionsLabel);
 
-actionRegistry.registerWorkbenchAction(SyncActionDescriptor.create(EnableAutoUpdateAction, EnableAutoUpdateAction.ID, EnableAutoUpdateAction.LABEL), `Extensions: Enable Auto Updating Extensions`, ExtensionsLabel);
-actionRegistry.registerWorkbenchAction(SyncActionDescriptor.create(DisableAutoUpdateAction, DisableAutoUpdateAction.ID, DisableAutoUpdateAction.LABEL), `Extensions: Disable Auto Updating Extensions`, ExtensionsLabel);
-actionRegistry.registerWorkbenchAction(SyncActionDescriptor.create(InstallSpecificVersionOfExtensionAction, InstallSpecificVersionOfExtensionAction.ID, InstallSpecificVersionOfExtensionAction.LABEL), 'Install Specific Version of Extension...', ExtensionsLabel);
-actionRegistry.registerWorkbenchAction(SyncActionDescriptor.create(ReinstallAction, ReinstallAction.ID, ReinstallAction.LABEL), 'Reinstall Extension...', localize('developer', "Developer"));
+actionRegistry.registerWorkbenchAction(SyncActionDescriptor.from(EnableAutoUpdateAction), `Extensions: Enable Auto Updating Extensions`, ExtensionsLabel);
+actionRegistry.registerWorkbenchAction(SyncActionDescriptor.from(DisableAutoUpdateAction), `Extensions: Disable Auto Updating Extensions`, ExtensionsLabel);
+actionRegistry.registerWorkbenchAction(SyncActionDescriptor.from(InstallSpecificVersionOfExtensionAction), 'Install Specific Version of Extension...', ExtensionsLabel);
+actionRegistry.registerWorkbenchAction(SyncActionDescriptor.from(ReinstallAction), 'Reinstall Extension...', localize('developer', "Developer"));
 
 Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration)
 	.registerConfiguration({

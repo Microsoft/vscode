@@ -548,6 +548,7 @@ function markNodes(languageService: ts.LanguageService, options: ITreeShakingOpt
 								|| ts.isIndexSignatureDeclaration(member)
 								|| ts.isCallSignatureDeclaration(member)
 								|| memberName === '[Symbol.iterator]'
+								|| memberName === '[Symbol.toStringTag]'
 								|| memberName === 'toJSON'
 								|| memberName === 'toString'
 								|| memberName === 'dispose'// TODO: keeping all `dispose` methods
@@ -795,8 +796,8 @@ function getRealNodeSymbol(checker: ts.TypeChecker, node: ts.Node): [ts.Symbol |
 
 	let symbol = (
 		ts.isShorthandPropertyAssignment(node)
-		? checker.getShorthandAssignmentValueSymbol(node)
-		: checker.getSymbolAtLocation(node)
+			? checker.getShorthandAssignmentValueSymbol(node)
+			: checker.getSymbolAtLocation(node)
 	);
 
 	let importNode: ts.Declaration | null = null;

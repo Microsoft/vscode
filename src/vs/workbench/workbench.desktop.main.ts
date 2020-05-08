@@ -52,7 +52,6 @@ import 'vs/workbench/services/workspaces/electron-browser/workspacesService';
 import 'vs/workbench/services/workspaces/electron-browser/workspaceEditingService';
 import 'vs/workbench/services/userDataSync/electron-browser/storageKeysSyncRegistryService';
 import 'vs/workbench/services/userDataSync/electron-browser/userDataSyncService';
-import 'vs/workbench/services/userDataSync/electron-browser/userDataAutoSyncService';
 import 'vs/workbench/services/authentication/electron-browser/authenticationTokenService';
 import 'vs/workbench/services/authentication/browser/authenticationService';
 import 'vs/workbench/services/host/electron-browser/desktopHostService';
@@ -73,9 +72,12 @@ import { ICredentialsService } from 'vs/platform/credentials/common/credentials'
 import { KeytarCredentialsService } from 'vs/platform/credentials/node/credentialsService';
 import { TitlebarPart } from 'vs/workbench/electron-browser/parts/titlebar/titlebarPart';
 import { ITitleService } from 'vs/workbench/services/title/common/titleService';
+import { IUserDataAutoSyncService } from 'vs/platform/userDataSync/common/userDataSync';
+import { UserDataAutoSyncService } from 'vs/workbench/contrib/userDataSync/electron-browser/userDataAutoSyncService';
 
 registerSingleton(ICredentialsService, KeytarCredentialsService, true);
 registerSingleton(ITitleService, TitlebarPart);
+registerSingleton(IUserDataAutoSyncService, UserDataAutoSyncService);
 
 //#endregion
 

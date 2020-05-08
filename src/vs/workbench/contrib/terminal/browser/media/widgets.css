@@ -3,27 +3,70 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-.monaco-workbench .terminal-widget-overlay {
+.monaco-workbench .terminal-widget-container {
 	position: absolute;
 	left: 0;
-	right: 0;
 	bottom: 0;
+	right: 0;
+	top: 0;
+	overflow: visible;
 }
 
-.monaco-workbench .terminal-message-widget {
-	font-size: 12px;
+.monaco-workbench .terminal-hover-widget {
+	position: fixed;
+	font-size: 14px;
 	line-height: 19px;
-	padding: 4px 8px;
 	animation: fadein 100ms linear;
-	white-space: nowrap;
-	/* Must be drawn on the top of the terminal's canvases */
-	z-index: 20;
+	/* Must be higher than sash's z-index and terminal canvases */
+	z-index: 40;
+	overflow: hidden;
 }
 
-.monaco-workbench .terminal-message-widget p {
-	margin: 0px;
-}
-
-.monaco-workbench .terminal-message-widget a {
+.monaco-workbench .terminal-hover-widget a {
 	color: #3794ff;
+}
+
+.monaco-workbench .terminal-hover-widget.right-aligned .hover-row.status-bar .actions {
+	flex-direction: row-reverse;
+}
+
+.monaco-workbench .terminal-hover-widget.right-aligned .hover-row.status-bar .actions .action-container {
+	margin-right: 0;
+	margin-left: 16px;
+}
+
+.monaco-workbench .terminal-overlay-widget {
+	position: absolute;
+	left: 0;
+	bottom: 0;
+	color: #3794ff;
+}
+
+.monaco-workbench .terminal-hover-target {
+	position: absolute;
+	z-index: 30;
+}
+
+.monaco-workbench .terminal-env-var-info {
+	position: absolute;
+	right: 2px;
+	top: 0;
+	width: 28px;
+	height: 28px;
+	text-align: center;
+	z-index: 10;
+	opacity: 0.5;
+}
+
+.monaco-workbench .pane-body.integrated-terminal .monaco-split-view2.horizontal .split-view-view:last-child .terminal-env-var-info {
+	/* Adjust for reduced margin in splits */
+	right: -8px;
+}
+
+.monaco-workbench .terminal-env-var-info:hover {
+	opacity: 1;
+}
+
+.monaco-workbench .terminal-env-var-info.codicon {
+	line-height: 28px;
 }

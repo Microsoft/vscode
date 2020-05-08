@@ -644,36 +644,36 @@ export abstract class BaseExtHostTerminalService implements IExtHostTerminalServ
 
 export class EnvironmentVariableCollection implements vscode.EnvironmentVariableCollection {
 	readonly map: Map<string, vscode.EnvironmentVariableMutator> = new Map();
+	private _persistent: boolean = true;
 
-	private _disposed = false;
+	public get persistent(): boolean { return this._persistent; }
+	public set persistent(value: boolean) {
+		this._persistent = value;
+		this._onDidChangeCollection.fire();
+	}
 
 	protected readonly _onDidChangeCollection: Emitter<void> = new Emitter<void>();
 	get onDidChangeCollection(): Event<void> { return this._onDidChangeCollection && this._onDidChangeCollection.event; }
 
 	constructor(
-		readonly persistent: boolean,
 		serialized?: ISerializableEnvironmentVariableCollection
 	) {
 		this.map = new Map(serialized);
 	}
 
 	get size(): number {
-		this._checkDisposed();
 		return this.map.size;
 	}
 
 	replace(variable: string, value: string): void {
-		this._checkDisposed();
 		this._setIfDiffers(variable, { value, type: EnvironmentVariableMutatorType.Replace });
 	}
 
 	append(variable: string, value: string): void {
-		this._checkDisposed();
 		this._setIfDiffers(variable, { value, type: EnvironmentVariableMutatorType.Append });
 	}
 
 	prepend(variable: string, value: string): void {
-		this._checkDisposed();
 		this._setIfDiffers(variable, { value, type: EnvironmentVariableMutatorType.Prepend });
 	}
 
@@ -686,39 +686,21 @@ export class EnvironmentVariableCollection implements vscode.EnvironmentVariable
 	}
 
 	get(variable: string): vscode.EnvironmentVariableMutator | undefined {
-		this._checkDisposed();
 		return this.map.get(variable);
 	}
 
 	forEach(callback: (variable: string, mutator: vscode.EnvironmentVariableMutator, collection: vscode.EnvironmentVariableCollection) => any, thisArg?: any): void {
-		this._checkDisposed();
 		this.map.forEach((value, key) => callback.call(thisArg, key, value, this));
 	}
 
 	delete(variable: string): void {
-		this._checkDisposed();
 		this.map.delete(variable);
 		this._onDidChangeCollection.fire();
 	}
 
 	clear(): void {
-		this._checkDisposed();
 		this.map.clear();
 		this._onDidChangeCollection.fire();
-	}
-
-	dispose(): void {
-		if (!this._disposed) {
-			this._disposed = true;
-			this.map.clear();
-			this._onDidChangeCollection.fire();
-		}
-	}
-
-	protected _checkDisposed() {
-		if (this._disposed) {
-			throw new Error('EnvironmentVariableCollection has already been disposed');
-		}
 	}
 }
 

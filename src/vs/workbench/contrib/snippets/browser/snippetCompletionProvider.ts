@@ -144,7 +144,7 @@ export class SnippetCompletionProvider implements CompletionItemProvider {
 		return { suggestions };
 	}
 
-	resolveCompletionItem(_model: ITextModel, _position: Position, item: CompletionItem): CompletionItem {
+	resolveCompletionItem(item: CompletionItem): CompletionItem {
 		return (item instanceof SnippetCompletion) ? item.resolve() : item;
 	}
 

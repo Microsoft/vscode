@@ -10,7 +10,7 @@ import { ViewPart } from 'vs/editor/browser/view/viewPart';
 import { Position } from 'vs/editor/common/core/position';
 import { IConfiguration } from 'vs/editor/common/editorCommon';
 import { TokenizationRegistry } from 'vs/editor/common/modes';
-import { editorCursorForeground, editorOverviewRulerBorder } from 'vs/editor/common/view/editorColorRegistry';
+import { editorCursorForeground, editorOverviewRulerBorder, editorOverviewRulerBackground } from 'vs/editor/common/view/editorColorRegistry';
 import { RenderingContext, RestrictedRenderingContext } from 'vs/editor/common/view/renderingContext';
 import { ViewContext, EditorTheme } from 'vs/editor/common/view/viewContext';
 import * as viewEvents from 'vs/editor/common/view/viewEvents';
@@ -60,7 +60,10 @@ class Settings {
 		const minimapOpts = options.get(EditorOption.minimap);
 		const minimapEnabled = minimapOpts.enabled;
 		const minimapSide = minimapOpts.side;
-		const backgroundColor = (minimapEnabled ? TokenizationRegistry.getDefaultBackground() : null);
+		const backgroundColor = minimapEnabled
+			? theme.getColor(editorOverviewRulerBackground) || TokenizationRegistry.getDefaultBackground()
+			: null;
+
 		if (backgroundColor === null || minimapSide === 'left') {
 			this.backgroundColor = null;
 		} else {

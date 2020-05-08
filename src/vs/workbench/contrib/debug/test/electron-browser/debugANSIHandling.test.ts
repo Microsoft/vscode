@@ -17,6 +17,7 @@ import { ansiColorMap } from 'vs/workbench/contrib/terminal/common/terminalColor
 import { DebugModel } from 'vs/workbench/contrib/debug/common/debugModel';
 import { DebugSession } from 'vs/workbench/contrib/debug/browser/debugSession';
 import { NullOpenerService } from 'vs/platform/opener/common/opener';
+import { createMockDebugModel } from 'vs/workbench/contrib/debug/test/common/mockDebug';
 
 suite('Debug - ANSI Handling', () => {
 
@@ -29,7 +30,7 @@ suite('Debug - ANSI Handling', () => {
 	 * Instantiate services for use by the functions being tested.
 	 */
 	setup(() => {
-		model = new DebugModel([], [], [], [], [], <any>{ isDirty: (e: any) => false });
+		model = createMockDebugModel();
 		session = new DebugSession(generateUuid(), { resolved: { name: 'test', type: 'node', request: 'launch' }, unresolved: undefined }, undefined!, model, undefined, undefined!, undefined!, undefined!, undefined!, undefined!, undefined!, undefined!, undefined!, NullOpenerService, undefined!, undefined!);
 
 		const instantiationService: TestInstantiationService = <TestInstantiationService>workbenchInstantiationService();

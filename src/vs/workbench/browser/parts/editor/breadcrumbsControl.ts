@@ -91,7 +91,7 @@ class Item extends BreadcrumbsItem {
 				fileKind: this.element.kind,
 				fileDecorations: { colors: this.options.showDecorationColors, badges: false },
 			});
-			dom.addClass(container, FileKind[this.element.kind].toLowerCase());
+			container.classList.add(FileKind[this.element.kind].toLowerCase());
 			this._disposables.add(label);
 
 		} else if (this.element instanceof OutlineModel) {
@@ -104,7 +104,7 @@ class Item extends BreadcrumbsItem {
 		} else if (this.element instanceof OutlineGroup) {
 			// provider
 			let label = new IconLabel(container);
-			label.setLabel(this.element.provider.displayName || '');
+			label.setLabel(this.element.label);
 			this._disposables.add(label);
 
 		} else if (this.element instanceof OutlineElement) {
@@ -113,7 +113,7 @@ class Item extends BreadcrumbsItem {
 				let icon = document.createElement('div');
 				icon.className = SymbolKinds.toCssClassName(this.element.symbol.kind);
 				container.appendChild(icon);
-				dom.addClass(container, 'shows-symbol-icon');
+				container.classList.add('shows-symbol-icon');
 			}
 			let label = new IconLabel(container);
 			let title = this.element.symbol.name.replace(/\r|\n|\r\n/g, '\u23CE');
@@ -183,7 +183,7 @@ export class BreadcrumbsControl {
 		@IBreadcrumbsService breadcrumbsService: IBreadcrumbsService,
 	) {
 		this.domNode = document.createElement('div');
-		dom.addClass(this.domNode, 'breadcrumbs-control');
+		this.domNode.classList.add('breadcrumbs-control');
 		dom.append(container, this.domNode);
 
 		this._cfUseQuickPick = BreadcrumbsConfig.UseQuickPick.bindTo(_configurationService);
@@ -221,13 +221,13 @@ export class BreadcrumbsControl {
 	}
 
 	isHidden(): boolean {
-		return dom.hasClass(this.domNode, 'hidden');
+		return this.domNode.classList.contains('hidden');
 	}
 
 	hide(): void {
 		this._breadcrumbsDisposables.clear();
 		this._ckBreadcrumbsVisible.set(false);
-		dom.toggleClass(this.domNode, 'hidden', true);
+		this.domNode.classList.toggle('hidden', true);
 	}
 
 	update(): boolean {
@@ -251,7 +251,7 @@ export class BreadcrumbsControl {
 			}
 		}
 
-		dom.toggleClass(this.domNode, 'hidden', false);
+		this.domNode.classList.toggle('hidden', false);
 		this._ckBreadcrumbsVisible.set(true);
 		this._ckBreadcrumbsPossible.set(true);
 
@@ -263,8 +263,8 @@ export class BreadcrumbsControl {
 			this._textResourceConfigurationService,
 			this._workspaceService
 		);
-		dom.toggleClass(this.domNode, 'relative-path', model.isRelative());
-		dom.toggleClass(this.domNode, 'backslash-path', this._labelService.getSeparator(uri.scheme, uri.authority) === '\\');
+		this.domNode.classList.toggle('relative-path', model.isRelative());
+		this.domNode.classList.toggle('backslash-path', this._labelService.getSeparator(uri.scheme, uri.authority) === '\\');
 
 		const updateBreadcrumbs = () => {
 			const showIcons = this._cfShowIcons.getValue();
@@ -504,7 +504,7 @@ export class BreadcrumbsControl {
 			const model = OutlineModel.get(element);
 			if (model) {
 				this._codeEditorService.openCodeEditor({
-					resource: model.textModel.uri,
+					resource: model.uri,
 					options: {
 						selection: Range.collapseToStart(element.symbol.selectionRange),
 						selectionRevealType: TextEditorSelectionRevealType.CenterIfOutsideViewport
@@ -751,7 +751,7 @@ KeybindingsRegistry.registerCommandAndKeybindingRule({
 
 			// open symbol in editor
 			return editors.openEditor({
-				resource: outlineElement.textModel.uri,
+				resource: outlineElement.uri,
 				options: { selection: Range.collapseToStart(element.symbol.selectionRange) }
 			}, SIDE_GROUP);
 

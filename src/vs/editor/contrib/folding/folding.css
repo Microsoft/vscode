@@ -3,8 +3,8 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-.monaco-editor .margin-view-overlays .codicon-chevron-right,
-.monaco-editor .margin-view-overlays .codicon-chevron-down {
+.monaco-editor .margin-view-overlays .codicon-folding-expanded,
+.monaco-editor .margin-view-overlays .codicon-folding-collapsed {
 	cursor: pointer;
 	opacity: 0;
 	transition: opacity 0.5s;
@@ -16,7 +16,7 @@
 }
 
 .monaco-editor .margin-view-overlays:hover .codicon,
-.monaco-editor .margin-view-overlays .codicon.codicon-chevron-right,
+.monaco-editor .margin-view-overlays .codicon.codicon-folding-collapsed,
 .monaco-editor .margin-view-overlays .codicon.alwaysShowFoldIcons {
 	opacity: 1;
 }

@@ -276,6 +276,10 @@ export class BulkEditAccessibilityProvider implements IListAccessibilityProvider
 
 	constructor(@ILabelService private readonly _labelService: ILabelService) { }
 
+	getWidgetAriaLabel(): string {
+		return localize('bulkEdit', "Bulk Edit");
+	}
+
 	getRole(_element: BulkEditElement): string {
 		return 'checkbox';
 	}

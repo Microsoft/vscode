@@ -233,7 +233,7 @@ export class WorkspaceRecommendations extends ExtensionRecommendations {
 	private async onWorkspaceFoldersChanged(event: IWorkspaceFoldersChangeEvent): Promise<void> {
 		if (event.added.length) {
 			const oldWorkspaceRecommended = this._recommendations;
-			await this.activate();
+			await this.fetch();
 			// Suggest only if at least one of the newly added recommendations was not suggested before
 			if (this._recommendations.some(current => oldWorkspaceRecommended.every(old => current.extensionId !== old.extensionId))) {
 				this.promptWorkspaceRecommendations();

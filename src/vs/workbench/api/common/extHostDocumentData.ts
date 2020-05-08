@@ -181,6 +181,10 @@ export class ExtHostDocumentData extends MirrorTextModel {
 			throw new Error('Invalid argument');
 		}
 
+		if (this._lines.length === 0) {
+			return position.with(0, 0);
+		}
+
 		let { line, character } = position;
 		let hasChanged = false;
 

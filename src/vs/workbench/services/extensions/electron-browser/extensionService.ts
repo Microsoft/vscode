@@ -682,4 +682,4 @@ class RestartExtensionHostAction extends Action {
 }
 
 const registry = Registry.as<IWorkbenchActionRegistry>(ActionExtensions.WorkbenchActions);
-registry.registerWorkbenchAction(SyncActionDescriptor.create(RestartExtensionHostAction, RestartExtensionHostAction.ID, RestartExtensionHostAction.LABEL), 'Developer: Restart Extension Host', nls.localize('developer', "Developer"));
+registry.registerWorkbenchAction(SyncActionDescriptor.from(RestartExtensionHostAction), 'Developer: Restart Extension Host', nls.localize('developer', "Developer"));

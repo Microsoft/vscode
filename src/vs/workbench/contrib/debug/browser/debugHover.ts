@@ -105,7 +105,6 @@ export class DebugHoverWidget implements IContentWidget {
 
 		this.tree = <WorkbenchAsyncDataTree<IExpression, IExpression, any>>this.instantiationService.createInstance(WorkbenchAsyncDataTree, 'DebugHover', this.treeContainer, new DebugHoverDelegate(), [this.instantiationService.createInstance(VariablesRenderer)],
 			dataSource, {
-			ariaLabel: nls.localize('treeAriaLabel', "Debug Hover"),
 			accessibilityProvider: new DebugHoverAccessibilityProvider(),
 			mouseSupport: false,
 			horizontalScrolling: true,
@@ -282,16 +281,16 @@ export class DebugHoverWidget implements IContentWidget {
 		}
 
 		this.valueContainer.hidden = true;
-		this.complexValueContainer.hidden = false;
 
+		await this.tree.setInput(expression);
 		this.complexValueTitle.textContent = expression.value;
 		this.complexValueTitle.title = expression.value;
 		this.layoutTreeAndContainer();
 		this.editor.layoutContentWidget(this);
 		this.scrollbar.scanDomNode();
-		await this.tree.setInput(expression);
 		this.tree.scrollTop = 0;
 		this.tree.scrollLeft = 0;
+		this.complexValueContainer.hidden = false;
 
 		if (focus) {
 			this.editor.render();
@@ -336,8 +335,13 @@ export class DebugHoverWidget implements IContentWidget {
 }
 
 class DebugHoverAccessibilityProvider implements IListAccessibilityProvider<IExpression> {
+
+	getWidgetAriaLabel(): string {
+		return nls.localize('treeAriaLabel', "Debug Hover");
+	}
+
 	getAriaLabel(element: IExpression): string {
-		return nls.localize('variableAriaLabel', "{0} value {1}, variables, debug", element.name, element.value);
+		return nls.localize('variableAriaLabel', "{0}, value {1}, variables, debug", element.name, element.value);
 	}
 }
 

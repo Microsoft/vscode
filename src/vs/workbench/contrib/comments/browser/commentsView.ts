@@ -129,6 +129,7 @@ export class CommentsPanel extends ViewPane {
 	}
 
 	public layoutBody(height: number, width: number): void {
+		super.layoutBody(height, width);
 		this.tree.layout(height, width);
 	}
 

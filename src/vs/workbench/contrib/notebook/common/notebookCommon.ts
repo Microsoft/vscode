@@ -10,9 +10,11 @@ import { isWindows } from 'vs/base/common/platform';
 import { ISplice } from 'vs/base/common/sequence';
 import { URI, UriComponents } from 'vs/base/common/uri';
 import * as editorCommon from 'vs/editor/common/editorCommon';
-import { PieceTreeTextBufferFactory } from 'vs/editor/common/model/pieceTreeTextBuffer/pieceTreeTextBufferBuilder';
 import { ExtensionIdentifier } from 'vs/platform/extensions/common/extensions';
 import { RawContextKey } from 'vs/platform/contextkey/common/contextkey';
+import { IEditorModel } from 'vs/platform/editor/common/editor';
+import { NotebookTextModel } from 'vs/workbench/contrib/notebook/common/model/notebookTextModel';
+import { GlobPattern } from 'vs/workbench/api/common/extHost.protocol';
 
 export enum CellKind {
 	Markdown = 1,
@@ -36,18 +38,32 @@ export const NOTEBOOK_DISPLAY_ORDER = [
 	'text/plain'
 ];
 
-export const notebookDocumentMetadataDefaults: NotebookDocumentMetadata = {
+export const ACCESSIBLE_NOTEBOOK_DISPLAY_ORDER = [
+	'text/markdown',
+	'application/json',
+	'text/plain',
+	'text/html',
+	'image/svg+xml',
+	'image/png',
+	'image/jpeg',
+];
+
+export const notebookDocumentMetadataDefaults: Required<NotebookDocumentMetadata> = {
 	editable: true,
+	runnable: true,
 	cellEditable: true,
 	cellRunnable: true,
-	hasExecutionOrder: true
+	hasExecutionOrder: true,
+	displayOrder: NOTEBOOK_DISPLAY_ORDER
 };
 
 export interface NotebookDocumentMetadata {
 	editable: boolean;
+	runnable: boolean;
 	cellEditable: boolean;
 	cellRunnable: boolean;
 	hasExecutionOrder: boolean;
+	displayOrder?: GlobPattern[];
 }
 
 export enum NotebookCellRunState {
@@ -147,7 +163,6 @@ export type IOutput = ITransformedDisplayOutputDto | IStreamOutput | IErrorOutpu
 export interface ICell {
 	readonly uri: URI;
 	handle: number;
-	source: string[];
 	language: string;
 	cellKind: CellKind;
 	outputs: IOutput[];
@@ -155,9 +170,6 @@ export interface ICell {
 	onDidChangeOutputs?: Event<NotebookCellOutputsSplice[]>;
 	onDidChangeLanguage: Event<string>;
 	onDidChangeMetadata: Event<void>;
-	resolveTextBufferFactory(): PieceTreeTextBufferFactory;
-	// TODO@rebornix it should be later on replaced by moving textmodel resolution into CellTextModel
-	contentChange(): void;
 }
 
 export interface LanguageInfo {
@@ -177,7 +189,7 @@ export interface INotebookTextModel {
 	languages: string[];
 	cells: ICell[];
 	renderers: Set<number>;
-	onDidChangeCells?: Event<NotebookCellsSplice[]>;
+	onDidChangeCells?: Event<NotebookCellTextModelSplice[]>;
 	onDidChangeContent: Event<void>;
 	onWillDispose(listener: () => void): IDisposable;
 }
@@ -187,9 +199,9 @@ export interface IRenderOutput {
 	hasDynamicHeight: boolean;
 }
 
-export type NotebookCellsSplice = [
+export type NotebookCellTextModelSplice = [
 	number /* start */,
-	number /* delete count */,
+	number,
 	ICell[]
 ];
 
@@ -215,18 +227,53 @@ export type NotebookCellsSplice2 = [
 	IMainCellDto[]
 ];
 
-export interface NotebookCellsChangedEvent {
+export enum NotebookCellsChangeType {
+	ModelChange = 1,
+	Move = 2,
+	CellClearOutput = 3,
+	CellsClearOutput = 4,
+	ChangeLanguage = 5
+}
+
+export interface NotebookCellsModelChangedEvent {
+	readonly kind: NotebookCellsChangeType.ModelChange;
 	readonly changes: NotebookCellsSplice2[];
 	readonly versionId: number;
 }
 
+export interface NotebookCellsModelMoveEvent {
+	readonly kind: NotebookCellsChangeType.Move;
+	readonly index: number;
+	readonly newIdx: number;
+	readonly versionId: number;
+}
+
+export interface NotebookCellClearOutputEvent {
+	readonly kind: NotebookCellsChangeType.CellClearOutput;
+	readonly index: number;
+	readonly versionId: number;
+}
+
+export interface NotebookCellsClearOutputEvent {
+	readonly kind: NotebookCellsChangeType.CellsClearOutput;
+	readonly versionId: number;
+}
+
+export interface NotebookCellsChangeLanguageEvent {
+	readonly kind: NotebookCellsChangeType.ChangeLanguage;
+	readonly versionId: number;
+	readonly index: number;
+	readonly language: string;
+}
+
+export type NotebookCellsChangedEvent = NotebookCellsModelChangedEvent | NotebookCellsModelMoveEvent | NotebookCellClearOutputEvent | NotebookCellsClearOutputEvent | NotebookCellsChangeLanguageEvent;
 export enum CellEditType {
 	Insert = 1,
 	Delete = 2
 }
 
 export interface ICellDto2 {
-	source: string[];
+	source: string | string[];
 	language: string;
 	cellKind: CellKind;
 	outputs: IOutput[];
@@ -252,6 +299,13 @@ export interface INotebookEditData {
 	edits: ICellEditOperation[];
 	renderers: number[];
 }
+
+export interface NotebookDataDto {
+	readonly cells: ICellDto2[];
+	readonly languages: string[];
+	readonly metadata: NotebookDocumentMetadata;
+}
+
 
 export namespace CellUri {
 
@@ -418,3 +472,10 @@ export interface ICellEditorViewState {
 }
 
 export const NOTEBOOK_EDITOR_CURSOR_BOUNDARY = new RawContextKey<'none' | 'top' | 'bottom' | 'both'>('notebookEditorCursorAtBoundary', 'none');
+
+
+export interface INotebookEditorModel extends IEditorModel {
+	notebook: NotebookTextModel;
+	isDirty(): boolean;
+	save(): Promise<boolean>;
+}

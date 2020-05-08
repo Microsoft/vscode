@@ -5,11 +5,12 @@
 
 import { Emitter } from 'vs/base/common/event';
 import { NotebookDocumentMetadata } from 'vs/workbench/contrib/notebook/common/notebookCommon';
-import { NotebookLayoutChangeEvent, NotebookLayoutInfo } from 'vs/workbench/contrib/notebook/browser/notebookBrowser';
+import { NotebookLayoutChangeEvent, NotebookLayoutInfo, CellViewModelStateChangeEvent, ICellViewModel } from 'vs/workbench/contrib/notebook/browser/notebookBrowser';
 
 export enum NotebookViewEventType {
 	LayoutChanged = 1,
-	MetadataChanged = 2
+	MetadataChanged = 2,
+	CellStateChanged = 3
 }
 
 export class NotebookLayoutChangedEvent {
@@ -29,14 +30,24 @@ export class NotebookMetadataChangedEvent {
 	}
 }
 
+export class NotebookCellStateChangedEvent {
+	public readonly type = NotebookViewEventType.CellStateChanged;
 
-export type NotebookViewEvent = NotebookLayoutChangedEvent | NotebookMetadataChangedEvent;
+	constructor(readonly source: CellViewModelStateChangeEvent, readonly cell: ICellViewModel) {
+
+	}
+}
+
+
+export type NotebookViewEvent = NotebookLayoutChangedEvent | NotebookMetadataChangedEvent | NotebookCellStateChangedEvent;
 
 export class NotebookEventDispatcher {
 	protected readonly _onDidChangeLayout = new Emitter<NotebookLayoutChangedEvent>();
 	readonly onDidChangeLayout = this._onDidChangeLayout.event;
 	protected readonly _onDidChangeMetadata = new Emitter<NotebookMetadataChangedEvent>();
 	readonly onDidChangeMetadata = this._onDidChangeMetadata.event;
+	protected readonly _onDidChangeCellState = new Emitter<NotebookCellStateChangedEvent>();
+	readonly onDidChangeCellState = this._onDidChangeCellState.event;
 
 	constructor() {
 	}
@@ -51,6 +62,9 @@ export class NotebookEventDispatcher {
 					break;
 				case NotebookViewEventType.MetadataChanged:
 					this._onDidChangeMetadata.fire(e);
+					break;
+				case NotebookViewEventType.CellStateChanged:
+					this._onDidChangeCellState.fire(e);
 					break;
 			}
 		}

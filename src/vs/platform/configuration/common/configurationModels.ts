@@ -231,7 +231,7 @@ export class ConfigurationModelParser {
 	}
 
 	public parseContent(content: string | null | undefined): void {
-		if (content) {
+		if (!types.isUndefinedOrNull(content)) {
 			const raw = this.doParseContent(content);
 			this.parseRaw(raw);
 		}
@@ -324,7 +324,8 @@ export class ConfigurationModelParser {
 				result[key] = this.filterByScope(properties[key], configurationProperties, false, scopes);
 			} else {
 				const scope = this.getScope(key, configurationProperties);
-				if (scopes.indexOf(scope) !== -1) {
+				// Load unregistered configurations always.
+				if (scope === undefined || scopes.indexOf(scope) !== -1) {
 					result[key] = properties[key];
 				}
 			}
@@ -332,9 +333,9 @@ export class ConfigurationModelParser {
 		return result;
 	}
 
-	private getScope(key: string, configurationProperties: { [qualifiedKey: string]: IConfigurationPropertySchema }): ConfigurationScope {
+	private getScope(key: string, configurationProperties: { [qualifiedKey: string]: IConfigurationPropertySchema }): ConfigurationScope | undefined {
 		const propertySchema = configurationProperties[key];
-		return propertySchema && typeof propertySchema.scope !== 'undefined' ? propertySchema.scope : ConfigurationScope.WINDOW;
+		return propertySchema ? typeof propertySchema.scope !== 'undefined' ? propertySchema.scope : ConfigurationScope.WINDOW : undefined;
 	}
 }
 
@@ -677,7 +678,7 @@ export class Configuration {
 				overrides: this._workspaceConfiguration.overrides,
 				keys: this._workspaceConfiguration.keys
 			},
-			folders: this._folderConfigurations.keys().reduce<[UriComponents, IConfigurationModel][]>((result, folder) => {
+			folders: [...this._folderConfigurations.keys()].reduce<[UriComponents, IConfigurationModel][]>((result, folder) => {
 				const { contents, overrides, keys } = this._folderConfigurations.get(folder)!;
 				result.push([folder, { contents, overrides, keys }]);
 				return result;

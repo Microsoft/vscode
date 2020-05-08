@@ -607,6 +607,9 @@ export class ModesContentHoverWidget extends ContentHoverWidget {
 					showing = true;
 					const controller = QuickFixController.get(this._editor);
 					const elementPosition = dom.getDomNodePagePosition(target);
+					// Hide the hover pre-emptively, otherwise the editor can close the code actions
+					// context menu as well when using keyboard navigation
+					this.hide();
 					controller.showCodeActions(markerCodeActionTrigger, actions, {
 						x: elementPosition.left + 6,
 						y: elementPosition.top + elementPosition.height + 6
@@ -633,6 +636,8 @@ export class ModesContentHoverWidget extends ContentHoverWidget {
 	private renderAction(parent: HTMLElement, actionOptions: { label: string, iconClass?: string, run: (target: HTMLElement) => void, commandId: string }): IDisposable {
 		const actionContainer = dom.append(parent, $('div.action-container'));
 		const action = dom.append(actionContainer, $('a.action'));
+		action.setAttribute('href', '#');
+		action.setAttribute('role', 'button');
 		if (actionOptions.iconClass) {
 			dom.append(action, $(`span.icon.${actionOptions.iconClass}`));
 		}

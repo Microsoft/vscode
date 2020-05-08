@@ -33,15 +33,9 @@ import { workbenchConfigurationNodeBase } from 'vs/workbench/common/configuratio
 				'default': true
 			},
 			'workbench.editor.scrollToSwitchTabs': {
-				'type': 'string',
-				'enum': ['off', 'natural', 'reverse'],
-				'enumDescriptions': [
-					nls.localize('workbench.editor.scrollToSwitchTabs.off', "Tabs will reveal when scrolling with the mouse but not open. You can press and hold the Shift-key to switch tabs while scrolling."),
-					nls.localize('workbench.editor.scrollToSwitchTabs.natural', "Tabs will open when scrolling with the mouse in natural scrolling direction (scroll up to switch to the tab on the left and down for the tab on the right). You can press and hold the Shift-key to disable this behaviour for that duration."),
-					nls.localize('workbench.editor.scrollToSwitchTabs.reverse', "Tabs will open when scrolling with the mouse in reverse scrolling direction (scroll down to switch to the tab on the left and up for the tab on the right). You can press and hold the Shift-key to disable this behaviour for that duration."),
-				],
-				'default': 'off',
-				'description': nls.localize({ comment: ['This is the description for a setting. Values surrounded by single quotes are not to be translated.'], key: 'scrollToSwitchTabs' }, "Controls wether scrolling over tabs will open them or not. By default tabs will only reveal upon scrolling, but not open. You can press and hold the Shift-key while scrolling to change this behaviour for that duration.")
+				'type': 'boolean',
+				'description': nls.localize({ comment: ['This is the description for a setting. Values surrounded by single quotes are not to be translated.'], key: 'scrollToSwitchTabs' }, "Controls wether scrolling over tabs will open them or not. By default tabs will only reveal upon scrolling, but not open. You can press and hold the Shift-key while scrolling to change this behaviour for that duration."),
+				'default': false
 			},
 			'workbench.editor.highlightModifiedTabs': {
 				'type': 'boolean',
@@ -109,17 +103,17 @@ import { workbenchConfigurationNodeBase } from 'vs/workbench/common/configuratio
 			},
 			'workbench.editor.showIcons': {
 				'type': 'boolean',
-				'description': nls.localize('showIcons', "Controls whether opened editors should show with an icon or not. This requires an file icon theme to be enabled as well."),
+				'description': nls.localize('showIcons', "Controls whether opened editors should show with an icon or not. This requires a file icon theme to be enabled as well."),
 				'default': true
 			},
 			'workbench.editor.enablePreview': {
 				'type': 'boolean',
-				'description': nls.localize('enablePreview', "Controls whether opened editors show as preview. Preview editors are reused until they are pinned (e.g. via double click or editing) and show up with an italic font style."),
+				'description': nls.localize('enablePreview', "Controls whether opened editors show as preview. Preview editors are reused until they are explicitly set to be kept open (e.g. via double click or editing) and show up with an italic font style."),
 				'default': true
 			},
 			'workbench.editor.enablePreviewFromQuickOpen': {
 				'type': 'boolean',
-				'description': nls.localize('enablePreviewFromQuickOpen', "Controls whether editors opened from Quick Open show as preview. Preview editors are reused until they are pinned (e.g. via double click or editing)."),
+				'description': nls.localize('enablePreviewFromQuickOpen', "Controls whether editors opened from Quick Open show as preview. Preview editors are reused until they are explicitly set to be kept open (e.g. via double click or editing)."),
 				'default': true
 			},
 			'workbench.editor.closeOnFileDelete': {

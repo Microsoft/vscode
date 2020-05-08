@@ -12,7 +12,7 @@ import * as nls from 'vs/nls';
 import { IQuickInputService, IQuickPickItem } from 'vs/platform/quickinput/common/quickInput';
 import { EDITOR_BOTTOM_PADDING, EDITOR_TOP_PADDING } from 'vs/workbench/contrib/notebook/browser/constants';
 import { CellFocusMode, CodeCellRenderTemplate, INotebookEditor } from 'vs/workbench/contrib/notebook/browser/notebookBrowser';
-import { INotebookService } from 'vs/workbench/contrib/notebook/browser/notebookService';
+import { INotebookService } from 'vs/workbench/contrib/notebook/common/notebookService';
 import { getResizesObserver } from 'vs/workbench/contrib/notebook/browser/view/renderers/sizeObserver';
 import { CodeCellViewModel } from 'vs/workbench/contrib/notebook/browser/viewModel/codeCellViewModel';
 import { CellOutputKind, IOutput, IRenderOutput, ITransformedDisplayOutputDto } from 'vs/workbench/contrib/notebook/common/notebookCommon';
@@ -40,7 +40,10 @@ export class CodeCell extends Disposable {
 		const width = this.viewCell.layoutInfo.editorWidth;
 		const lineNum = this.viewCell.lineCount;
 		const lineHeight = this.viewCell.layoutInfo.fontInfo?.lineHeight || 17;
-		const totalHeight = lineNum * lineHeight + EDITOR_TOP_PADDING + EDITOR_BOTTOM_PADDING;
+		const totalHeight = this.viewCell.layoutInfo.editorHeight === 0
+			? lineNum * lineHeight + EDITOR_TOP_PADDING + EDITOR_BOTTOM_PADDING
+			: this.viewCell.layoutInfo.editorHeight;
+
 		this.layoutEditor(
 			{
 				width: width,
@@ -59,18 +62,8 @@ export class CodeCell extends Disposable {
 				}
 
 				const realContentHeight = templateData.editor?.getContentHeight();
-				const width = this.viewCell.layoutInfo.editorWidth;
-
 				if (realContentHeight !== undefined && realContentHeight !== totalHeight) {
-					// TODO not redundant with content change event?
-					this.layoutEditor(
-						{
-							width: width,
-							height: realContentHeight
-						}
-					);
-
-					viewCell.editorHeight = realContentHeight;
+					this.onCellHeightChange(realContentHeight);
 				}
 
 				if (this.notebookEditor.getActiveCell() === this.viewCell && viewCell.focusMode === CellFocusMode.Editor) {
@@ -79,19 +72,35 @@ export class CodeCell extends Disposable {
 			}
 		});
 
-		this._register(viewCell.onDidChangeFocusMode(() => {
+		const updateForFocusMode = () => {
 			if (viewCell.focusMode === CellFocusMode.Editor) {
 				templateData.editor?.focus();
 			}
+
+			DOM.toggleClass(templateData.container, 'cell-editor-focus', viewCell.focusMode === CellFocusMode.Editor);
+		};
+		this._register(viewCell.onDidChangeState((e) => {
+			if (!e.focusModeChanged) {
+				return;
+			}
+
+			updateForFocusMode();
 		}));
+		updateForFocusMode();
 
 		templateData.editor?.updateOptions({ readOnly: !(viewCell.getEvaluatedMetadata(notebookEditor.viewModel?.metadata).editable) });
-		this._register(viewCell.onDidChangeMetadata(() => {
-			templateData.editor?.updateOptions({ readOnly: !(viewCell.getEvaluatedMetadata(notebookEditor.viewModel?.metadata).editable) });
+		this._register(viewCell.onDidChangeState((e) => {
+			if (e.metadataChanged) {
+				templateData.editor?.updateOptions({ readOnly: !(viewCell.getEvaluatedMetadata(notebookEditor.viewModel?.metadata).editable) });
+			}
 		}));
 
-		this._register(viewCell.onDidChangeLanguage((e) => {
-			const mode = this._modeService.create(e);
+		this._register(viewCell.onDidChangeState((e) => {
+			if (!e.languageChanged) {
+				return;
+			}
+
+			const mode = this._modeService.create(viewCell.language);
 			templateData.editor?.getModel()?.setMode(mode.languageIdentifier);
 		}));
 
@@ -191,6 +200,17 @@ export class CodeCell extends Disposable {
 			}
 		}));
 
+		const updateFocusMode = () => viewCell.focusMode = templateData.editor!.hasWidgetFocus() ? CellFocusMode.Editor : CellFocusMode.Container;
+		this._register(templateData.editor!.onDidFocusEditorWidget(() => {
+			updateFocusMode();
+		}));
+
+		this._register(templateData.editor!.onDidBlurEditorWidget(() => {
+			updateFocusMode();
+		}));
+
+		updateFocusMode();
+
 		if (viewCell.outputs.length > 0) {
 			let layoutCache = false;
 			if (this.viewCell.layoutInfo.totalHeight !== 0 && this.viewCell.layoutInfo.totalHeight > totalHeight) {
@@ -200,7 +220,7 @@ export class CodeCell extends Disposable {
 
 			this.templateData.outputContainer!.style.display = 'block';
 			// there are outputs, we need to calcualte their sizes and trigger relayout
-			// @todo, if there is no resizable output, we should not check their height individually, which hurts the performance
+			// @TODO@rebornix, if there is no resizable output, we should not check their height individually, which hurts the performance
 			for (let index = 0; index < this.viewCell.outputs.length; index++) {
 				const currOutput = this.viewCell.outputs[index];
 
@@ -269,7 +289,7 @@ export class CodeCell extends Disposable {
 				const mimeTypePicker = DOM.$('.multi-mimetype-output');
 				DOM.addClasses(mimeTypePicker, 'codicon', 'codicon-code');
 				mimeTypePicker.tabIndex = 0;
-				mimeTypePicker.title = nls.localize('mimeTypePicker', "Choose a different output mimetype");
+				mimeTypePicker.title = nls.localize('mimeTypePicker', "Choose a different output mimetype, available mimetypes: {0}", transformedDisplayOutput.orderedMimeTypes.map(mimeType => mimeType.mimeType).join(', '));
 				outputItemDiv.appendChild(mimeTypePicker);
 				this.outputResizeListeners.get(currOutput)!.add(DOM.addStandardDisposableListener(mimeTypePicker, 'mousedown', async e => {
 					if (e.leftButton) {
@@ -359,7 +379,7 @@ export class CodeCell extends Disposable {
 			} else {
 				// static output
 
-				// @TODO, if we stop checking output height, we need to evaluate it later when checking the height of output container
+				// @TODO@rebornix, if we stop checking output height, we need to evaluate it later when checking the height of output container
 				let clientHeight = outputItemDiv.clientHeight;
 				this.viewCell.updateOutputHeight(index, clientHeight);
 			}
@@ -442,7 +462,7 @@ export class CodeCell extends Disposable {
 		this._timer = setTimeout(() => {
 			this.notebookEditor.layoutNotebookCell(this.viewCell, this.viewCell.layoutInfo.totalHeight);
 			this._timer = null;
-		}, 500);
+		}, 200);
 	}
 
 	dispose() {

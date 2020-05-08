@@ -15,8 +15,6 @@ import { INotificationService } from 'vs/platform/notification/common/notificati
 import { basename } from 'vs/base/common/path';
 import { ExtensionRecommendationReason } from 'vs/workbench/services/extensionManagement/common/extensionManagement';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
-import { ShowRecommendationsOnlyOnDemandKey } from 'vs/workbench/contrib/extensions/common/extensions';
-import { ILifecycleService, LifecyclePhase } from 'vs/platform/lifecycle/common/lifecycle';
 import { IStorageService } from 'vs/platform/storage/common/storage';
 import { IStorageKeysSyncRegistryService } from 'vs/platform/userDataSync/common/storageKeys';
 
@@ -34,7 +32,6 @@ export class ExeBasedRecommendations extends ExtensionRecommendations {
 		isExtensionAllowedToBeRecommended: (extensionId: string) => boolean,
 		@IExtensionTipsService private readonly extensionTipsService: IExtensionTipsService,
 		@IExtensionManagementService private readonly extensionManagementService: IExtensionManagementService,
-		@ILifecycleService lifecycleService: ILifecycleService,
 		@IInstantiationService instantiationService: IInstantiationService,
 		@IConfigurationService configurationService: IConfigurationService,
 		@INotificationService notificationService: INotificationService,
@@ -49,10 +46,6 @@ export class ExeBasedRecommendations extends ExtensionRecommendations {
 			Also fetch important exe based recommendations for reporting telemetry
 		*/
 		timeout(3000).then(() => this.fetchAndPromptImportantExeBasedRecommendations());
-
-		if (!this.configurationService.getValue<boolean>(ShowRecommendationsOnlyOnDemandKey)) {
-			lifecycleService.when(LifecyclePhase.Eventually).then(() => this.activate());
-		}
 	}
 
 	protected async doActivate(): Promise<void> {

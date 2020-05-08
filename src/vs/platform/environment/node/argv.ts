@@ -36,6 +36,7 @@ export interface ParsedArgs {
 	log?: string;
 	logExtensionHostCommunication?: boolean;
 	'extensions-dir'?: string;
+	'extensions-download-dir'?: string;
 	'builtin-extensions-dir'?: string;
 	extensionDevelopmentPath?: string[]; // // undefined or array of 1 or more local paths or URIs
 	extensionTestsPath?: string; // either a local path or a URI
@@ -54,13 +55,14 @@ export interface ParsedArgs {
 	'locate-extension'?: string[]; // undefined or array of 1 or more
 	'enable-proposed-api'?: string[]; // undefined or array of 1 or more
 	'open-url'?: boolean;
-	'skip-getting-started'?: boolean;
+	'skip-release-notes'?: boolean;
 	'disable-restore-windows'?: boolean;
 	'disable-telemetry'?: boolean;
 	'export-default-configuration'?: string;
 	'install-source'?: string;
 	'disable-updates'?: boolean;
 	'disable-crash-reporter'?: boolean;
+	'crash-reporter-directory'?: string;
 	'skip-add-to-recently-opened'?: boolean;
 	'max-memory'?: string;
 	'file-write'?: boolean;
@@ -134,6 +136,7 @@ export const OPTIONS: OptionDescriptions<Required<ParsedArgs>> = {
 	'help': { type: 'boolean', cat: 'o', alias: 'h', description: localize('help', "Print usage.") },
 
 	'extensions-dir': { type: 'string', deprecates: 'extensionHomePath', cat: 'e', args: 'dir', description: localize('extensionHomePath', "Set the root path for extensions.") },
+	'extensions-download-dir': { type: 'string' },
 	'builtin-extensions-dir': { type: 'string' },
 	'list-extensions': { type: 'boolean', cat: 'e', description: localize('listExtensions', "List the installed extensions.") },
 	'show-versions': { type: 'boolean', cat: 'e', description: localize('showVersions', "Show versions of installed extensions, when using --list-extension.") },
@@ -170,11 +173,12 @@ export const OPTIONS: OptionDescriptions<Required<ParsedArgs>> = {
 	'install-source': { type: 'string' },
 	'driver': { type: 'string' },
 	'logExtensionHostCommunication': { type: 'boolean' },
-	'skip-getting-started': { type: 'boolean' },
+	'skip-release-notes': { type: 'boolean' },
 	'disable-restore-windows': { type: 'boolean' },
 	'disable-telemetry': { type: 'boolean' },
 	'disable-updates': { type: 'boolean' },
 	'disable-crash-reporter': { type: 'boolean' },
+	'crash-reporter-directory': { type: 'string' },
 	'disable-user-env-probe': { type: 'boolean' },
 	'skip-add-to-recently-opened': { type: 'boolean' },
 	'unity-launch': { type: 'boolean' },
@@ -247,23 +251,25 @@ export function parseArgs<T>(args: string[], options: OptionDescriptions<T>, err
 	const parsedArgs = minimist(args, { string, boolean, alias });
 
 	const cleanedArgs: any = {};
+	const remainingArgs: any = parsedArgs;
 
 	// https://github.com/microsoft/vscode/issues/58177
 	cleanedArgs._ = parsedArgs._.filter(arg => arg.length > 0);
-	delete parsedArgs._;
+
+	delete remainingArgs._;
 
 	for (let optionId in options) {
 		const o = options[optionId];
 		if (o.alias) {
-			delete parsedArgs[o.alias];
+			delete remainingArgs[o.alias];
 		}
 
-		let val = parsedArgs[optionId];
-		if (o.deprecates && parsedArgs.hasOwnProperty(o.deprecates)) {
+		let val = remainingArgs[optionId];
+		if (o.deprecates && remainingArgs.hasOwnProperty(o.deprecates)) {
 			if (!val) {
-				val = parsedArgs[o.deprecates];
+				val = remainingArgs[o.deprecates];
 			}
-			delete parsedArgs[o.deprecates];
+			delete remainingArgs[o.deprecates];
 		}
 
 		if (typeof val !== 'undefined') {
@@ -279,10 +285,10 @@ export function parseArgs<T>(args: string[], options: OptionDescriptions<T>, err
 			}
 			cleanedArgs[optionId] = val;
 		}
-		delete parsedArgs[optionId];
+		delete remainingArgs[optionId];
 	}
 
-	for (let key in parsedArgs) {
+	for (let key in remainingArgs) {
 		errorReporter.onUnknownOption(key);
 	}
 

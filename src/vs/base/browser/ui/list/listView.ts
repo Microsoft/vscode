@@ -59,6 +59,7 @@ export interface IListViewOptions<T> {
 	readonly horizontalScrolling?: boolean;
 	readonly accessibilityProvider?: IListViewAccessibilityProvider<T>;
 	readonly additionalScrollHeight?: number;
+	readonly transformOptimization?: boolean;
 }
 
 const DefaultOptions = {
@@ -74,7 +75,8 @@ const DefaultOptions = {
 		onDragOver() { return false; },
 		drop() { }
 	},
-	horizontalScrolling: false
+	horizontalScrolling: false,
+	transformOptimization: true
 };
 
 export class ElementsDragAndDropData<T, TContext = void> implements IDragAndDropData {
@@ -275,7 +277,11 @@ export class ListView<T> implements ISpliceable<T>, IDisposable {
 
 		this.rowsContainer = document.createElement('div');
 		this.rowsContainer.className = 'monaco-list-rows';
-		this.rowsContainer.style.transform = 'translate3d(0px, 0px, 0px)';
+
+		if (options.transformOptimization) {
+			this.rowsContainer.style.transform = 'translate3d(0px, 0px, 0px)';
+		}
+
 		this.disposables.add(Gesture.addTarget(this.rowsContainer));
 
 		this.scrollableElement = this.disposables.add(new ScrollableElement(this.rowsContainer, {

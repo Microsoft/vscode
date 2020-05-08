@@ -14,20 +14,9 @@
 	"activationEvents": [
 		"*"
 	],
+	"aiKey": "AIF-d9b70cd4-b9f9-4d70-929b-a071c400b217",
 	"main": "./out/extension.js",
 	"contributes": {
-		"commands": [
-			{
-				"command": "microsoft.signin",
-				"title": "%signIn%",
-				"category": "%displayName%"
-			},
-			{
-				"command": "microsoft.signout",
-				"title": "%signOut%",
-				"category": "%displayName%"
-			}
-		],
 		"configuration": {
 			"title": "Microsoft Account",
 			"properties": {
@@ -56,6 +45,7 @@
 	},
 	"dependencies": {
 		"uuid": "^3.3.3",
+		"vscode-extension-telemetry": "0.1.1",
 		"vscode-nls": "^4.1.1"
 	}
 }

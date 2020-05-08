@@ -150,7 +150,7 @@ export async function formatDocumentRangeWithProvider(
 	let cts: CancellationTokenSource;
 	if (isCodeEditor(editorOrModel)) {
 		model = editorOrModel.getModel();
-		cts = new EditorStateCancellationTokenSource(editorOrModel, CodeEditorStateFlag.Value | CodeEditorStateFlag.Position, token);
+		cts = new EditorStateCancellationTokenSource(editorOrModel, CodeEditorStateFlag.Value | CodeEditorStateFlag.Position, undefined, token);
 	} else {
 		model = editorOrModel;
 		cts = new TextModelCancellationTokenSource(editorOrModel, token);
@@ -238,7 +238,7 @@ export async function formatDocumentWithProvider(
 	let cts: CancellationTokenSource;
 	if (isCodeEditor(editorOrModel)) {
 		model = editorOrModel.getModel();
-		cts = new EditorStateCancellationTokenSource(editorOrModel, CodeEditorStateFlag.Value | CodeEditorStateFlag.Position, token);
+		cts = new EditorStateCancellationTokenSource(editorOrModel, CodeEditorStateFlag.Value | CodeEditorStateFlag.Position, undefined, token);
 	} else {
 		model = editorOrModel;
 		cts = new TextModelCancellationTokenSource(editorOrModel, token);

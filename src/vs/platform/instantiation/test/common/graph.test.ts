@@ -19,7 +19,7 @@ suite('Graph', () => {
 	test('inserts nodes when not there yet', function () {
 		assert.deepEqual(graph.lookup('ddd'), null);
 		assert.deepEqual(graph.lookupOrInsertNode('ddd').data, 'ddd');
-		assert.deepEqual(graph.lookup('ddd').data, 'ddd');
+		assert.deepEqual(graph.lookup('ddd')!.data, 'ddd');
 	});
 
 	test('can remove nodes and get length', function () {

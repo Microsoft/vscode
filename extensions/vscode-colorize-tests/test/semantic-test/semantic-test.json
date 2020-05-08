@@ -4,6 +4,6 @@
 				"variable.declaration", "parameterNames",
 		"function.member.declaration",
 	"interface.declaration",
-		"function.member.declaration", "testToken.testModifier"
+		"function.member.declaration", "function.notInLegend"
 
 ]

@@ -6,16 +6,31 @@
 import * as vscode from 'vscode';
 import * as uuid from 'uuid';
 import { keychain } from './common/keychain';
-import { GitHubServer } from './githubServer';
+import { GitHubServer, NETWORK_ERROR } from './githubServer';
 import Logger from './common/logger';
 
 export const onDidChangeSessions = new vscode.EventEmitter<vscode.AuthenticationSessionsChangeEvent>();
 
 interface SessionData {
 	id: string;
+	account?: {
+		displayName: string;
+		id: string;
+	}
+	scopes: string[];
+	accessToken: string;
+}
+
+// TODO remove
+interface OldSessionData {
+	id: string;
 	accountName: string;
 	scopes: string[];
 	accessToken: string;
+}
+
+function isOldSessionData(x: any): x is OldSessionData {
+	return !!x.accountName;
 }
 
 export class GitHubAuthenticationProvider {
@@ -23,13 +38,26 @@ export class GitHubAuthenticationProvider {
 	private _githubServer = new GitHubServer();
 
 	public async initialize(): Promise<void> {
-		this._sessions = await this.readSessions();
+		try {
+			this._sessions = await this.readSessions();
+		} catch (e) {
+			// Ignore, network request failed
+		}
+
+		// TODO revert Cannot validate tokens from auth server, no available clientId
+		// await this.validateSessions();
 		this.pollForChange();
 	}
 
 	private pollForChange() {
 		setTimeout(async () => {
-			const storedSessions = await this.readSessions();
+			let storedSessions: vscode.AuthenticationSession[];
+			try {
+				storedSessions = await this.readSessions();
+			} catch (e) {
+				// Ignore, network request failed
+				return;
+			}
 
 			const added: string[] = [];
 			const removed: string[] = [];
@@ -38,6 +66,7 @@ export class GitHubAuthenticationProvider {
 				const matchesExisting = this._sessions.some(s => s.id === session.id);
 				// Another window added a session to the keychain, add it to our state as well
 				if (!matchesExisting) {
+					Logger.info('Adding session found in keychain');
 					this._sessions.push(session);
 					added.push(session.id);
 				}
@@ -47,6 +76,7 @@ export class GitHubAuthenticationProvider {
 				const matchesExisting = storedSessions.some(s => s.id === session.id);
 				// Another window has logged out, remove from our state
 				if (!matchesExisting) {
+					Logger.info('Removing session no longer found in keychain');
 					const sessionIndex = this._sessions.findIndex(s => s.id === session.id);
 					if (sessionIndex > -1) {
 						this._sessions.splice(sessionIndex, 1);
@@ -68,17 +98,37 @@ export class GitHubAuthenticationProvider {
 		const storedSessions = await keychain.getToken();
 		if (storedSessions) {
 			try {
-				const sessionData: SessionData[] = JSON.parse(storedSessions);
-				return sessionData.map(session => {
+				const sessionData: (SessionData | OldSessionData)[] = JSON.parse(storedSessions);
+				const sessionPromises = sessionData.map(async (session: SessionData | OldSessionData): Promise<vscode.AuthenticationSession> => {
+					const needsUserInfo = isOldSessionData(session) || !session.account;
+					let userInfo: { id: string, accountName: string };
+					if (needsUserInfo) {
+						userInfo = await this._githubServer.getUserInfo(session.accessToken);
+					}
+
 					return {
 						id: session.id,
-						accountName: session.accountName,
+						account: {
+							displayName: isOldSessionData(session)
+								? session.accountName
+								: session.account?.displayName ?? userInfo!.accountName,
+							id: isOldSessionData(session)
+								? userInfo!.id
+								: session.account?.id ?? userInfo!.id
+						},
 						scopes: session.scopes,
 						getAccessToken: () => Promise.resolve(session.accessToken)
 					};
 				});
+
+				return Promise.all(sessionPromises);
 			} catch (e) {
+				if (e === NETWORK_ERROR) {
+					return [];
+				}
+
 				Logger.error(`Error reading sessions: ${e}`);
+				await keychain.deleteToken();
 			}
 		}
 
@@ -90,7 +140,7 @@ export class GitHubAuthenticationProvider {
 			const resolvedAccessToken = await session.getAccessToken();
 			return {
 				id: session.id,
-				accountName: session.accountName,
+				account: session.account,
 				scopes: session.scopes,
 				accessToken: resolvedAccessToken
 			};
@@ -120,12 +170,19 @@ export class GitHubAuthenticationProvider {
 		}
 	}
 
+	public async manuallyProvideToken(): Promise<void> {
+		this._githubServer.manuallyProvideToken();
+	}
+
 	private async tokenToSession(token: string, scopes: string[]): Promise<vscode.AuthenticationSession> {
 		const userInfo = await this._githubServer.getUserInfo(token);
 		return {
 			id: uuid(),
 			getAccessToken: () => Promise.resolve(token),
-			accountName: userInfo.accountName,
+			account: {
+				displayName: userInfo.accountName,
+				id: userInfo.id
+			},
 			scopes: scopes
 		};
 	}
@@ -137,17 +194,23 @@ export class GitHubAuthenticationProvider {
 			this._sessions.push(session);
 		}
 
-		this.storeSessions();
+		await this.storeSessions();
 	}
 
 	public async logout(id: string) {
 		const sessionIndex = this._sessions.findIndex(session => session.id === id);
 		if (sessionIndex > -1) {
-			const session = this._sessions.splice(sessionIndex, 1)[0];
-			const token = await session.getAccessToken();
-			await this._githubServer.revokeToken(token);
+			this._sessions.splice(sessionIndex, 1);
+			// TODO revert
+			// Cannot revoke tokens from auth server, no clientId available
+			// const token = await session.getAccessToken();
+			// try {
+			// 	await this._githubServer.revokeToken(token);
+			// } catch (_) {
+			// 	// ignore, should still remove from keychain
+			// }
 		}
 
-		this.storeSessions();
+		await this.storeSessions();
 	}
 }

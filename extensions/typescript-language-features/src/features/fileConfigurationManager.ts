@@ -179,9 +179,7 @@ export default class FileConfigurationManager extends Disposable {
 			isTypeScriptDocument(document) ? 'typescript.preferences' : 'javascript.preferences',
 			document.uri);
 
-		// `importModuleSpecifierEnding` added to `Proto.UserPreferences` in TypeScript 3.9:
-		// remove intersection type after upgrading TypeScript.
-		const preferences: Proto.UserPreferences & { importModuleSpecifierEnding?: string } = {
+		const preferences: Proto.UserPreferences = {
 			quotePreference: this.getQuoteStylePreference(config),
 			importModuleSpecifierPreference: getImportModuleSpecifierPreference(config),
 			importModuleSpecifierEnding: getImportModuleSpecifierEndingPreference(config),

@@ -13,7 +13,7 @@ import { Selection } from 'vs/editor/common/core/selection';
 import { createStringBuilder } from 'vs/editor/common/core/stringBuilder';
 import { DefaultEndOfLine } from 'vs/editor/common/model';
 import { createTextBuffer } from 'vs/editor/common/model/textModel';
-import { ModelServiceImpl, MAINTAIN_UNDO_REDO_STACK } from 'vs/editor/common/services/modelServiceImpl';
+import { ModelServiceImpl } from 'vs/editor/common/services/modelServiceImpl';
 import { ITextResourcePropertiesService } from 'vs/editor/common/services/textResourceConfigurationService';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { TestConfigurationService } from 'vs/platform/configuration/test/common/testConfigurationService';
@@ -35,7 +35,7 @@ suite('ModelService', () => {
 		configService.setUserConfiguration('files', { 'eol': '\r\n' }, URI.file(platform.isWindows ? 'c:\\myroot' : '/myroot'));
 
 		const dialogService = new TestDialogService();
-		modelService = new ModelServiceImpl(configService, new TestTextResourcePropertiesService(configService), new TestThemeService(), new NullLogService(), new UndoRedoService(dialogService, new TestNotificationService()), dialogService);
+		modelService = new ModelServiceImpl(configService, new TestTextResourcePropertiesService(configService), new TestThemeService(), new NullLogService(), new UndoRedoService(dialogService, new TestNotificationService()));
 	});
 
 	teardown(() => {
@@ -310,44 +310,42 @@ suite('ModelService', () => {
 		assertComputeEdits(file1, file2);
 	});
 
-	if (MAINTAIN_UNDO_REDO_STACK) {
-		test('maintains undo for same resource and same content', () => {
-			const resource = URI.parse('file://test.txt');
+	test('maintains undo for same resource and same content', () => {
+		const resource = URI.parse('file://test.txt');
 
-			// create a model
-			const model1 = modelService.createModel('text', null, resource);
-			// make an edit
-			model1.pushEditOperations(null, [{ range: new Range(1, 5, 1, 5), text: '1' }], () => [new Selection(1, 5, 1, 5)]);
-			assert.equal(model1.getValue(), 'text1');
-			// dispose it
-			modelService.destroyModel(resource);
+		// create a model
+		const model1 = modelService.createModel('text', null, resource);
+		// make an edit
+		model1.pushEditOperations(null, [{ range: new Range(1, 5, 1, 5), text: '1' }], () => [new Selection(1, 5, 1, 5)]);
+		assert.equal(model1.getValue(), 'text1');
+		// dispose it
+		modelService.destroyModel(resource);
 
-			// create a new model with the same content
-			const model2 = modelService.createModel('text1', null, resource);
-			// undo
-			model2.undo();
-			assert.equal(model2.getValue(), 'text');
-		});
+		// create a new model with the same content
+		const model2 = modelService.createModel('text1', null, resource);
+		// undo
+		model2.undo();
+		assert.equal(model2.getValue(), 'text');
+	});
 
-		test('maintains version id and alternative version id for same resource and same content', () => {
-			const resource = URI.parse('file://test.txt');
+	test('maintains version id and alternative version id for same resource and same content', () => {
+		const resource = URI.parse('file://test.txt');
 
-			// create a model
-			const model1 = modelService.createModel('text', null, resource);
-			// make an edit
-			model1.pushEditOperations(null, [{ range: new Range(1, 5, 1, 5), text: '1' }], () => [new Selection(1, 5, 1, 5)]);
-			assert.equal(model1.getValue(), 'text1');
-			const versionId = model1.getVersionId();
-			const alternativeVersionId = model1.getAlternativeVersionId();
-			// dispose it
-			modelService.destroyModel(resource);
+		// create a model
+		const model1 = modelService.createModel('text', null, resource);
+		// make an edit
+		model1.pushEditOperations(null, [{ range: new Range(1, 5, 1, 5), text: '1' }], () => [new Selection(1, 5, 1, 5)]);
+		assert.equal(model1.getValue(), 'text1');
+		const versionId = model1.getVersionId();
+		const alternativeVersionId = model1.getAlternativeVersionId();
+		// dispose it
+		modelService.destroyModel(resource);
 
-			// create a new model with the same content
-			const model2 = modelService.createModel('text1', null, resource);
-			assert.equal(model2.getVersionId(), versionId);
-			assert.equal(model2.getAlternativeVersionId(), alternativeVersionId);
-		});
-	}
+		// create a new model with the same content
+		const model2 = modelService.createModel('text1', null, resource);
+		assert.equal(model2.getVersionId(), versionId);
+		assert.equal(model2.getAlternativeVersionId(), alternativeVersionId);
+	});
 
 	test('does not maintain undo for same resource and different content', () => {
 		const resource = URI.parse('file://test.txt');

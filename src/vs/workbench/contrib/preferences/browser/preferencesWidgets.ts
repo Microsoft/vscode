@@ -35,6 +35,7 @@ import { IWorkbenchEnvironmentService } from 'vs/workbench/services/environment/
 import { ISettingsGroup } from 'vs/workbench/services/preferences/common/preferences';
 import { EditorOption } from 'vs/editor/common/config/editorOptions';
 import { isEqual } from 'vs/base/common/resources';
+import { registerIcon, Codicon } from 'vs/base/common/codicons';
 
 export class SettingsHeaderWidget extends Widget implements IViewZone {
 
@@ -736,9 +737,9 @@ export class SearchWidget extends Widget {
 	}
 }
 
-export class EditPreferenceWidget<T> extends Disposable {
+export const preferencesEditIcon = registerIcon('preferences-edit', Codicon.edit, localize('preferencesEditIcon', 'Icon for the edit action in preferences.'));
 
-	static readonly GLYPH_MARGIN_CLASS_NAME = 'codicon codicon-edit';
+export class EditPreferenceWidget<T> extends Disposable {
 
 	private _line: number = -1;
 	private _preferences: T[] = [];
@@ -775,7 +776,7 @@ export class EditPreferenceWidget<T> extends Disposable {
 		this._line = line;
 		newDecoration.push({
 			options: {
-				glyphMarginClassName: EditPreferenceWidget.GLYPH_MARGIN_CLASS_NAME,
+				glyphMarginClassName: preferencesEditIcon.classNames,
 				glyphMarginHoverMessage: new MarkdownString().appendText(hoverMessage),
 				stickiness: TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
 			},

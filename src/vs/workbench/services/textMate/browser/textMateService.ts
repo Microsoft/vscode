@@ -6,7 +6,6 @@
 import { ITextMateService } from 'vs/workbench/services/textMate/common/textMateService';
 import { registerSingleton } from 'vs/platform/instantiation/common/extensions';
 import { AbstractTextMateService } from 'vs/workbench/services/textMate/browser/abstractTextMateService';
-import { IOnigLib } from 'vscode-textmate';
 import { IModeService } from 'vs/editor/common/services/modeService';
 import { ILogService } from 'vs/platform/log/common/log';
 import { INotificationService } from 'vs/platform/notification/common/notification';
@@ -14,6 +13,7 @@ import { IWorkbenchThemeService } from 'vs/workbench/services/themes/common/work
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { IStorageService } from 'vs/platform/storage/common/storage';
 import { IExtensionResourceLoaderService } from 'vs/workbench/services/extensionResourceLoader/common/extensionResourceLoader';
+import { IProgressService } from 'vs/platform/progress/common/progress';
 
 export class TextMateService extends AbstractTextMateService {
 
@@ -24,46 +24,20 @@ export class TextMateService extends AbstractTextMateService {
 		@INotificationService notificationService: INotificationService,
 		@ILogService logService: ILogService,
 		@IConfigurationService configurationService: IConfigurationService,
-		@IStorageService storageService: IStorageService
+		@IStorageService storageService: IStorageService,
+		@IProgressService progressService: IProgressService
 	) {
-		super(modeService, themeService, extensionResourceLoaderService, notificationService, logService, configurationService, storageService);
+		super(modeService, themeService, extensionResourceLoaderService, notificationService, logService, configurationService, storageService, progressService);
 	}
 
-	protected _loadVSCodeTextmate(): Promise<typeof import('vscode-textmate')> {
-		return import('vscode-textmate');
+	protected async _loadVSCodeOnigurumWASM(): Promise<Response | ArrayBuffer> {
+		const wasmPath = require.toUrl('vscode-oniguruma/../onig.wasm');
+		const response = await fetch(wasmPath);
+		// Using the response directly only works if the server sets the MIME type 'application/wasm'.
+		// Otherwise, a TypeError is thrown when using the streaming compiler.
+		// We therefore use the non-streaming compiler :(.
+		return await response.arrayBuffer();
 	}
-
-	protected _loadOnigLib(): Promise<IOnigLib> | undefined {
-		return loadOnigasm();
-	}
-}
-
-let onigasmPromise: Promise<IOnigLib> | null = null;
-async function loadOnigasm(): Promise<IOnigLib> {
-	if (!onigasmPromise) {
-		onigasmPromise = doLoadOnigasm();
-	}
-	return onigasmPromise;
-}
-
-async function doLoadOnigasm(): Promise<IOnigLib> {
-	const [wasmBytes, onigasm] = await Promise.all([
-		loadOnigasmWASM(),
-		import('onigasm-umd')
-	]);
-
-	await onigasm.loadWASM(wasmBytes);
-	return {
-		createOnigScanner(patterns: string[]) { return new onigasm.OnigScanner(patterns); },
-		createOnigString(s: string) { return new onigasm.OnigString(s); }
-	};
-}
-
-async function loadOnigasmWASM(): Promise<ArrayBuffer> {
-	const wasmPath = require.toUrl('onigasm-umd/../onigasm.wasm');
-	const response = await fetch(wasmPath);
-	const bytes = await response.arrayBuffer();
-	return bytes;
 }
 
 registerSingleton(ITextMateService, TextMateService);

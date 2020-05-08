@@ -95,8 +95,8 @@ export function getLanguageModes(supportedLanguages: { [languageId: string]: boo
 		modes['css'] = getCSSMode(cssLanguageService, documentRegions, workspace);
 	}
 	if (supportedLanguages['javascript']) {
-		modes['javascript'] = getJavaScriptMode(documentRegions, 'javascript');
-		modes['typescript'] = getJavaScriptMode(documentRegions, 'typescript');
+		modes['javascript'] = getJavaScriptMode(documentRegions, 'javascript', workspace);
+		modes['typescript'] = getJavaScriptMode(documentRegions, 'typescript', workspace);
 	}
 	return {
 		getModeAtPosition(document: TextDocument, position: Position): LanguageMode | undefined {

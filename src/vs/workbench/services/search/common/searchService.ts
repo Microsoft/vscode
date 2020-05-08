@@ -74,7 +74,7 @@ export class SearchService extends Disposable implements ISearchService {
 		const localResults = this.getLocalResults(query);
 
 		if (onProgress) {
-			arrays.coalesce(localResults.results.values()).forEach(onProgress);
+			arrays.coalesce([...localResults.results.values()]).forEach(onProgress);
 		}
 
 		const onProviderProgress = (progress: ISearchProgressItem) => {
@@ -99,7 +99,7 @@ export class SearchService extends Disposable implements ISearchService {
 			...{
 				limitHit: otherResults.limitHit || localResults.limitHit
 			},
-			results: [...otherResults.results, ...arrays.coalesce(localResults.results.values())]
+			results: [...otherResults.results, ...arrays.coalesce([...localResults.results.values()])]
 		};
 	}
 

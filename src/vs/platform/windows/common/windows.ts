@@ -141,6 +141,9 @@ export interface IPathData {
 	// file exists, if false it does not. with
 	// undefined the state is unknown.
 	exists?: boolean;
+
+	// Specifies if the file should be only be opened if it exists
+	openOnlyIfExists?: boolean;
 }
 
 export interface IOpenFileRequest {

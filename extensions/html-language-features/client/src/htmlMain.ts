@@ -167,6 +167,16 @@ export function activate(context: ExtensionContext) {
 			}
 		});
 
+		disposable = languages.registerOnTypeRenameProvider(documentSelector, {
+			async provideOnTypeRenameRanges(document, position) {
+				const param = client.code2ProtocolConverter.asTextDocumentPositionParams(document, position);
+				const response = await client.sendRequest(OnTypeRenameRequest.type, param);
+
+				return response || [];
+			}
+		});
+		toDispose.push(disposable);
+
 	});
 
 	function updateFormatterRegistration() {
@@ -278,15 +288,6 @@ export function activate(context: ExtensionContext) {
 				results.push(snippetProposal);
 			}
 			return results;
-		}
-	});
-
-	languages.registerOnTypeRenameProvider(documentSelector, {
-		async provideOnTypeRenameRanges(document, position) {
-			const param = client.code2ProtocolConverter.asTextDocumentPositionParams(document, position);
-			const response = await client.sendRequest(OnTypeRenameRequest.type, param);
-
-			return response || [];
 		}
 	});
 }

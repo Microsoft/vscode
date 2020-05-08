@@ -13,12 +13,12 @@ import { toErrorMessage } from 'vs/base/common/errorMessage';
 import * as strings from 'vs/base/common/strings';
 import { Action } from 'vs/base/common/actions';
 import { dispose, IDisposable } from 'vs/base/common/lifecycle';
-import { VIEWLET_ID, IExplorerService, IFilesConfiguration } from 'vs/workbench/contrib/files/common/files';
+import { VIEWLET_ID, IExplorerService, IFilesConfiguration, VIEW_ID } from 'vs/workbench/contrib/files/common/files';
 import { ITextFileService } from 'vs/workbench/services/textfile/common/textfiles';
 import { IFileService } from 'vs/platform/files/common/files';
-import { toResource, SideBySideEditor, IEditorInput } from 'vs/workbench/common/editor';
+import { toResource, SideBySideEditor } from 'vs/workbench/common/editor';
 import { ExplorerViewPaneContainer } from 'vs/workbench/contrib/files/browser/explorerViewlet';
-import { IQuickInputService, ItemActivation, IQuickPickItem } from 'vs/platform/quickinput/common/quickInput';
+import { IQuickInputService, ItemActivation } from 'vs/platform/quickinput/common/quickInput';
 import { IViewletService } from 'vs/workbench/services/viewlet/browser/viewlet';
 import { IInstantiationService, ServicesAccessor } from 'vs/platform/instantiation/common/instantiation';
 import { ITextModel } from 'vs/editor/common/model';
@@ -34,7 +34,7 @@ import { RawContextKey } from 'vs/platform/contextkey/common/contextkey';
 import { Schemas } from 'vs/base/common/network';
 import { IDialogService, IConfirmationResult, getFileNamesMessage, IFileDialogService } from 'vs/platform/dialogs/common/dialogs';
 import { INotificationService, Severity } from 'vs/platform/notification/common/notification';
-import { IEditorService, IOpenEditorOverrideHandler } from 'vs/workbench/services/editor/common/editorService';
+import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
 import { Constants } from 'vs/base/common/uint';
 import { CLOSE_EDITORS_AND_GROUP_COMMAND_ID } from 'vs/workbench/browser/parts/editor/editorCommands';
 import { coalesce } from 'vs/base/common/arrays';
@@ -49,7 +49,9 @@ import { IWorkingCopyFileService } from 'vs/workbench/services/workingCopy/commo
 import { once } from 'vs/base/common/functional';
 import { IEditorOptions } from 'vs/platform/editor/common/editor';
 import { IEditorGroup } from 'vs/workbench/services/editor/common/editorGroupsService';
-import { FileEditorInput } from 'vs/workbench/contrib/files/common/editors/fileEditorInput';
+import { Codicon } from 'vs/base/common/codicons';
+import { IViewsService } from 'vs/workbench/common/views';
+import { openEditorWith, getAllAvailableEditors } from 'vs/workbench/contrib/files/common/openWith';
 
 export const NEW_FILE_COMMAND_ID = 'explorer.newFile';
 export const NEW_FILE_LABEL = nls.localize('newFile', "New File");
@@ -79,10 +81,10 @@ function onError(notificationService: INotificationService, error: any): void {
 	notificationService.error(toErrorMessage(error, false));
 }
 
-function refreshIfSeparator(value: string, explorerService: IExplorerService): void {
+async function refreshIfSeparator(value: string, explorerService: IExplorerService): Promise<void> {
 	if (value && ((value.indexOf('/') >= 0) || (value.indexOf('\\') >= 0))) {
 		// New input contains separator, multiple resources will get created workaround for #68204
-		explorerService.refresh();
+		await explorerService.refresh();
 	}
 }
 
@@ -92,15 +94,10 @@ export class NewFileAction extends Action {
 	static readonly LABEL = nls.localize('createNewFile', "New File");
 
 	constructor(
-		@IExplorerService explorerService: IExplorerService,
 		@ICommandService private commandService: ICommandService
 	) {
 		super('explorer.newFile', NEW_FILE_LABEL);
-		this.class = 'explorer-action codicon-new-file';
-		this._register(explorerService.onDidChangeEditable(e => {
-			const elementIsBeingEdited = explorerService.isEditable(e);
-			this.enabled = !elementIsBeingEdited;
-		}));
+		this.class = 'explorer-action ' + Codicon.newFile.classNames;
 	}
 
 	run(): Promise<void> {
@@ -114,15 +111,10 @@ export class NewFolderAction extends Action {
 	static readonly LABEL = nls.localize('createNewFolder', "New Folder");
 
 	constructor(
-		@IExplorerService explorerService: IExplorerService,
 		@ICommandService private commandService: ICommandService
 	) {
 		super('explorer.newFolder', NEW_FOLDER_LABEL);
-		this.class = 'explorer-action codicon-new-folder';
-		this._register(explorerService.onDidChangeEditable(e => {
-			const elementIsBeingEdited = explorerService.isEditable(e);
-			this.enabled = !elementIsBeingEdited;
-		}));
+		this.class = 'explorer-action ' + Codicon.newFolder.classNames;
 	}
 
 	run(): Promise<void> {
@@ -345,10 +337,10 @@ function getDeleteMessage(distinctElements: ExplorerItem[]): { message: string, 
 }
 
 function containsBothDirectoryAndFile(distinctElements: ExplorerItem[]): boolean {
-	const directories = distinctElements.filter(element => element.isDirectory);
-	const files = distinctElements.filter(element => !element.isDirectory);
+	const directory = distinctElements.find(element => element.isDirectory);
+	const file = distinctElements.find(element => !element.isDirectory);
 
-	return directories.length > 0 && files.length > 0;
+	return !!directory && !!file;
 }
 
 
@@ -484,7 +476,7 @@ export class GlobalCompareResourcesAction extends Action {
 
 			// Compare with next editor that opens
 			const toDispose = this.editorService.overrideOpenEditor({
-				getEditorOverrides: (editor: IEditorInput, options: IEditorOptions | undefined, group: IEditorGroup | undefined) => {
+				getEditorOverrides: (resource: URI, options: IEditorOptions | undefined, group: IEditorGroup | undefined) => {
 					return [];
 				},
 				open: editor => {
@@ -519,7 +511,6 @@ export class GlobalCompareResourcesAction extends Action {
 	}
 }
 
-const builtinProviderDisplayName = nls.localize('builtinProviderDisplayName', "Built-in");
 export class ReopenResourcesAction extends Action {
 
 	static readonly ID = 'workbench.files.action.reopenWithEditor';
@@ -530,6 +521,7 @@ export class ReopenResourcesAction extends Action {
 		label: string,
 		@IQuickInputService private readonly quickInputService: IQuickInputService,
 		@IEditorService private readonly editorService: IEditorService,
+		@IConfigurationService private readonly configurationService: IConfigurationService
 	) {
 		super(id, label);
 	}
@@ -547,59 +539,44 @@ export class ReopenResourcesAction extends Action {
 
 		const options = activeEditorPane.options;
 		const group = activeEditorPane.group;
-		const activeResource = activeInput.resource;
-		if (!activeResource) {
+		await openEditorWith(activeInput, undefined, options, group, this.editorService, this.configurationService, this.quickInputService);
+	}
+}
+
+export class ToggleEditorTypeCommand extends Action {
+
+	static readonly ID = 'workbench.files.action.toggleEditorType';
+	static readonly LABEL = nls.localize('workbench.files.action.toggleEditorType', "Toggle Editor Type");
+
+	constructor(
+		id: string,
+		label: string,
+		@IEditorService private readonly editorService: IEditorService,
+	) {
+		super(id, label);
+	}
+
+	async run(): Promise<void> {
+		const activeEditorPane = this.editorService.activeEditorPane;
+		if (!activeEditorPane) {
 			return;
 		}
 
-		const overrides = this.editorService.getEditorOverrides(activeInput, options, group);
-		const items: (IQuickPickItem & { handler?: IOpenEditorOverrideHandler })[] = overrides.map((override) => {
-			return {
-				handler: override[0],
-				id: override[1].id,
-				label: override[1].label,
-				description: override[1].active ? 'Currently Active' : undefined,
-				detail: override[1].detail
-			};
-		});
-
-		if (!items.length) {
+		const input = activeEditorPane.input;
+		if (!input.resource) {
 			return;
 		}
 
-		items.unshift({
-			id: 'default',
-			label: nls.localize('promptOpenWith.defaultEditor.displayName', "Text Editor"),
-			description: activeInput instanceof FileEditorInput ? 'Currently Active' : undefined,
-			detail: builtinProviderDisplayName
-		});
+		const options = activeEditorPane.options;
+		const group = activeEditorPane.group;
 
-		const picker = this.quickInputService.createQuickPick<(IQuickPickItem & { handler?: IOpenEditorOverrideHandler })>();
-		picker.items = items;
-		picker.placeholder = nls.localize('promptOpenWith.placeHolder', "Select editor to use for '{0}'...", resources.basename(activeResource));
-
-		const pickedItem = await new Promise<(IQuickPickItem & { handler?: IOpenEditorOverrideHandler }) | undefined>(resolve => {
-			picker.onDidAccept(() => {
-				resolve(picker.selectedItems.length === 1 ? picker.selectedItems[0] : undefined);
-				picker.dispose();
-			});
-
-			picker.show();
-		});
-
-		if (!pickedItem) {
+		const overrides = getAllAvailableEditors(input.resource, options, group, this.editorService);
+		const firstNonActiveOverride = overrides.find(([_, entry]) => !entry.active);
+		if (!firstNonActiveOverride) {
 			return;
 		}
 
-		if (pickedItem.id === 'default') {
-			const fileEditorInput = this.editorService.createEditorInput({ resource: activeResource!, forceFile: true });
-			const textOptions = options ? { ...options, ignoreOverrides: true } : { ignoreOverrides: true };
-
-			await this.editorService.openEditor(fileEditorInput, textOptions, group);
-			return;
-		}
-
-		await pickedItem.handler!.open(activeInput!, options, group, pickedItem.id);
+		await firstNonActiveOverride[0].open(input, options, group, firstNonActiveOverride[1].id)?.override;
 	}
 }
 
@@ -669,7 +646,7 @@ export class SaveAllAction extends BaseSaveAllAction {
 	static readonly LABEL = SAVE_ALL_LABEL;
 
 	get class(): string {
-		return 'explorer-action codicon-save-all';
+		return 'explorer-action ' + Codicon.saveAll.classNames;
 	}
 
 	protected doRun(): Promise<void> {
@@ -683,7 +660,7 @@ export class SaveAllInGroupAction extends BaseSaveAllAction {
 	static readonly LABEL = nls.localize('saveAllInGroup', "Save All in Group");
 
 	get class(): string {
-		return 'explorer-action codicon-save-all';
+		return 'explorer-action ' + Codicon.saveAll.classNames;
 	}
 
 	protected doRun(context: unknown): Promise<void> {
@@ -697,7 +674,7 @@ export class CloseGroupAction extends Action {
 	static readonly LABEL = nls.localize('closeGroup', "Close Group");
 
 	constructor(id: string, label: string, @ICommandService private readonly commandService: ICommandService) {
-		super(id, label, 'codicon-close-all');
+		super(id, label, Codicon.closeAll.classNames);
 	}
 
 	run(context?: unknown): Promise<void> {
@@ -758,11 +735,7 @@ export class CollapseExplorerView extends Action {
 		@IViewletService private readonly viewletService: IViewletService,
 		@IExplorerService readonly explorerService: IExplorerService
 	) {
-		super(id, label, 'explorer-action codicon-collapse-all');
-		this._register(explorerService.onDidChangeEditable(e => {
-			const elementIsBeingEdited = explorerService.isEditable(e);
-			this.enabled = !elementIsBeingEdited;
-		}));
+		super(id, label, 'explorer-action ' + Codicon.collapseAll.classNames);
 	}
 
 	async run(): Promise<void> {
@@ -785,16 +758,12 @@ export class RefreshExplorerView extends Action {
 		@IViewletService private readonly viewletService: IViewletService,
 		@IExplorerService private readonly explorerService: IExplorerService
 	) {
-		super(id, label, 'explorer-action codicon-refresh');
-		this._register(explorerService.onDidChangeEditable(e => {
-			const elementIsBeingEdited = explorerService.isEditable(e);
-			this.enabled = !elementIsBeingEdited;
-		}));
+		super(id, label, 'explorer-action ' + Codicon.refresh.classNames);
 	}
 
 	async run(): Promise<void> {
 		await this.viewletService.openViewlet(VIEWLET_ID);
-		this.explorerService.refresh();
+		await this.explorerService.refresh();
 	}
 }
 
@@ -982,10 +951,10 @@ async function openExplorerAndCreate(accessor: ServicesAccessor, isFolder: boole
 	const fileService = accessor.get(IFileService);
 	const textFileService = accessor.get(ITextFileService);
 	const editorService = accessor.get(IEditorService);
-	const viewletService = accessor.get(IViewletService);
+	const viewsService = accessor.get(IViewsService);
 	const notificationService = accessor.get(INotificationService);
 
-	await viewletService.openViewlet(VIEWLET_ID, true);
+	await viewsService.openView(VIEW_ID, true);
 
 	const stats = explorerService.getContext(false);
 	const stat = stats.length > 0 ? stats[0] : undefined;
@@ -1001,15 +970,12 @@ async function openExplorerAndCreate(accessor: ServicesAccessor, isFolder: boole
 	}
 
 	const newStat = new NewExplorerItem(fileService, folder, isFolder);
-	const sortOrder = explorerService.sortOrder;
-	await folder.fetchChildren(sortOrder);
-
 	folder.addChild(newStat);
 
 	const onSuccess = async (value: string): Promise<void> => {
 		try {
 			const created = isFolder ? await fileService.createFolder(resources.joinPath(folder.resource, value)) : await textFileService.create(resources.joinPath(folder.resource, value));
-			refreshIfSeparator(value, explorerService);
+			await refreshIfSeparator(value, explorerService);
 
 			isFolder ?
 				await explorerService.select(created.resource, true) :
@@ -1019,11 +985,11 @@ async function openExplorerAndCreate(accessor: ServicesAccessor, isFolder: boole
 		}
 	};
 
-	explorerService.setEditable(newStat, {
+	await explorerService.setEditable(newStat, {
 		validationMessage: value => validateFileName(newStat, value),
-		onFinish: (value, success) => {
+		onFinish: async (value, success) => {
 			folder.removeChild(newStat);
-			explorerService.setEditable(newStat, null);
+			await explorerService.setEditable(newStat, null);
 			if (success) {
 				onSuccess(value);
 			}
@@ -1045,7 +1011,7 @@ CommandsRegistry.registerCommand({
 	}
 });
 
-export const renameHandler = (accessor: ServicesAccessor) => {
+export const renameHandler = async (accessor: ServicesAccessor) => {
 	const explorerService = accessor.get(IExplorerService);
 	const workingCopyFileService = accessor.get(IWorkingCopyFileService);
 	const notificationService = accessor.get(INotificationService);
@@ -1056,7 +1022,7 @@ export const renameHandler = (accessor: ServicesAccessor) => {
 		return;
 	}
 
-	explorerService.setEditable(stat, {
+	await explorerService.setEditable(stat, {
 		validationMessage: value => validateFileName(stat, value),
 		onFinish: async (value, success) => {
 			if (success) {
@@ -1065,13 +1031,13 @@ export const renameHandler = (accessor: ServicesAccessor) => {
 				if (stat.resource.toString() !== targetResource.toString()) {
 					try {
 						await workingCopyFileService.move(stat.resource, targetResource);
-						refreshIfSeparator(value, explorerService);
+						await refreshIfSeparator(value, explorerService);
 					} catch (e) {
 						notificationService.error(e);
 					}
 				}
 			}
-			explorerService.setEditable(stat, null);
+			await explorerService.setEditable(stat, null);
 		}
 	});
 };

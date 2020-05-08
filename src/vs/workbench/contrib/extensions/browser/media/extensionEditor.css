@@ -135,11 +135,6 @@
 	padding-left: 14px;
 }
 
-.extension-editor > .header > .details > .subtitle .version {
-	font-size: 90%;
-	font-style: italic;
-}
-
 .extension-editor > .header > .details > .description {
 	margin-top: 10px;
 	white-space: nowrap;

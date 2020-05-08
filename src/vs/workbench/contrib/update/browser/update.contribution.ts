@@ -23,10 +23,10 @@ const actionRegistry = Registry.as<IWorkbenchActionRegistry>(ActionExtensions.Wo
 
 // Editor
 actionRegistry
-	.registerWorkbenchAction(SyncActionDescriptor.create(ShowCurrentReleaseNotesAction, ShowCurrentReleaseNotesAction.ID, ShowCurrentReleaseNotesAction.LABEL), `${product.nameShort}: Show Release Notes`, product.nameShort);
+	.registerWorkbenchAction(SyncActionDescriptor.from(ShowCurrentReleaseNotesAction), `${product.nameShort}: Show Release Notes`, product.nameShort);
 
 actionRegistry
-	.registerWorkbenchAction(SyncActionDescriptor.create(CheckForVSCodeUpdateAction, CheckForVSCodeUpdateAction.ID, CheckForVSCodeUpdateAction.LABEL), `${product.nameShort}: Check for Update`, product.nameShort, CONTEXT_UPDATE_STATE.isEqualTo(StateType.Idle));
+	.registerWorkbenchAction(SyncActionDescriptor.from(CheckForVSCodeUpdateAction), `${product.nameShort}: Check for Update`, product.nameShort, CONTEXT_UPDATE_STATE.isEqualTo(StateType.Idle));
 
 // Menu
 if (ShowCurrentReleaseNotesAction.AVAILABE) {

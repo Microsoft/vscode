@@ -42,8 +42,21 @@ function toResource(props: IResourceLabelProps | undefined): URI | undefined {
 }
 
 export interface IResourceLabelOptions extends IIconLabelValueOptions {
+
+	/**
+	 * A hint to the file kind of the resource.
+	 */
 	fileKind?: FileKind;
+
+	/**
+	 * File decorations to use for the label.
+	 */
 	fileDecorations?: { colors: boolean, badges: boolean };
+
+	/**
+	 * Will take the provided label as is and e.g. not override it for untitled files.
+	 */
+	forceLabel?: boolean;
 }
 
 export interface IFileLabelOptions extends IResourceLabelOptions {
@@ -368,7 +381,7 @@ class ResourceLabelWidget extends IconLabel {
 		const resource = toResource(label);
 		const isMasterDetail = label?.resource && !URI.isUri(label.resource);
 
-		if (!isMasterDetail && resource?.scheme === Schemas.untitled) {
+		if (!options.forceLabel && !isMasterDetail && resource?.scheme === Schemas.untitled) {
 			// Untitled labels are very dynamic because they may change
 			// whenever the content changes (unless a path is associated).
 			// As such we always ask the actual editor for it's name and
@@ -528,7 +541,6 @@ class ResourceLabelWidget extends IconLabel {
 			);
 
 			if (deco) {
-
 				this.renderDisposables.add(deco);
 
 				if (deco.tooltip) {

@@ -84,7 +84,7 @@ export class GotoLineAction extends Action {
 	}
 }
 
-Registry.as<IWorkbenchActionRegistry>(ActionExtensions.WorkbenchActions).registerWorkbenchAction(SyncActionDescriptor.create(GotoLineAction, GotoLineAction.ID, GotoLineAction.LABEL, {
+Registry.as<IWorkbenchActionRegistry>(ActionExtensions.WorkbenchActions).registerWorkbenchAction(SyncActionDescriptor.from(GotoLineAction, {
 	primary: KeyMod.CtrlCmd | KeyCode.KEY_G,
 	mac: { primary: KeyMod.WinCtrl | KeyCode.KEY_G }
 }), 'Go to Line/Column...');

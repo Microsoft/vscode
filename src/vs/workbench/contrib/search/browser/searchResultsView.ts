@@ -308,6 +308,10 @@ export class SearchAccessibilityProvider implements IListAccessibilityProvider<R
 	) {
 	}
 
+	getWidgetAriaLabel(): string {
+		return nls.localize('search', "Search");
+	}
+
 	getAriaLabel(element: RenderableMatch): string | null {
 		if (element instanceof FolderMatch) {
 			return element.resource ?
@@ -374,7 +378,7 @@ export class SearchDND implements ITreeDragAndDrop<RenderableMatch> {
 
 		if (resources.length) {
 			// Apply some datatransfer types to allow for dragging the element outside of the application
-			this.instantiationService.invokeFunction(fillResourceDataTransfers, resources, originalEvent);
+			this.instantiationService.invokeFunction(fillResourceDataTransfers, resources, undefined, originalEvent);
 		}
 	}
 

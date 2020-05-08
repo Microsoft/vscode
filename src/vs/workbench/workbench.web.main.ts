@@ -34,7 +34,6 @@ import 'vs/workbench/services/textfile/browser/browserTextFileService';
 import 'vs/workbench/services/keybinding/browser/keymapService';
 import 'vs/workbench/services/extensions/browser/extensionService';
 import 'vs/workbench/services/extensionManagement/common/extensionManagementServerService';
-import 'vs/workbench/services/extensionManagement/common/extensionTipsService';
 import 'vs/workbench/services/telemetry/browser/telemetryService';
 import 'vs/workbench/services/configurationResolver/browser/configurationResolverService';
 import 'vs/workbench/services/credentials/browser/credentialsService';
@@ -58,7 +57,8 @@ import { IContextMenuService } from 'vs/platform/contextview/browser/contextView
 import { ContextMenuService } from 'vs/platform/contextview/browser/contextMenuService';
 import { IBackupFileService } from 'vs/workbench/services/backup/common/backup';
 import { BackupFileService } from 'vs/workbench/services/backup/common/backupFileService';
-import { IExtensionManagementService } from 'vs/platform/extensionManagement/common/extensionManagement';
+import { IExtensionManagementService, IExtensionTipsService } from 'vs/platform/extensionManagement/common/extensionManagement';
+import { ExtensionTipsService } from 'vs/platform/extensionManagement/common/extensionTipsService';
 import { ExtensionManagementService } from 'vs/workbench/services/extensionManagement/common/extensionManagementService';
 import { ITunnelService } from 'vs/platform/remote/common/tunnel';
 import { TunnelService } from 'vs/workbench/services/remote/common/tunnelService';
@@ -92,6 +92,7 @@ registerSingleton(IAuthenticationTokenService, AuthenticationTokenService);
 registerSingleton(IUserDataAutoSyncService, UserDataAutoSyncService);
 registerSingleton(IUserDataSyncService, UserDataSyncService);
 registerSingleton(ITitleService, TitlebarPart);
+registerSingleton(IExtensionTipsService, ExtensionTipsService);
 
 //#endregion
 
@@ -115,6 +116,7 @@ import 'vs/workbench/contrib/webview/browser/webviewService';
 import 'vs/workbench/contrib/webview/browser/webviewWorkbenchService';
 
 // Terminal
+import 'vs/workbench/contrib/terminal/browser/terminal.web.contribution';
 import 'vs/workbench/contrib/terminal/browser/terminalInstanceService';
 
 // Tasks

@@ -21,6 +21,13 @@
 			"language": "dockerfile",
 			"scopeName": "source.dockerfile",
 			"path": "./syntaxes/docker.tmLanguage.json"
-		}]
+		}],
+		"configurationDefaults": {
+			"[dockerfile]": {
+				"editor.quickSuggestions": {
+					"strings": true
+				}
+			}
+		}
 	}
 }

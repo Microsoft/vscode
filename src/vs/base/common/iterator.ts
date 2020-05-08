@@ -10,6 +10,10 @@ export namespace Iterable {
 		return _empty;
 	}
 
+	export function* single<T>(element: T): Iterable<T> {
+		yield element;
+	}
+
 	export function from<T>(iterable: Iterable<T> | undefined | null): Iterable<T> {
 		return iterable || _empty;
 	}

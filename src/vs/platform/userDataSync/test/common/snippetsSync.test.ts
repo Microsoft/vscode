@@ -597,7 +597,7 @@ suite('SnippetsSync', () => {
 	});
 
 	test('sync global and language snippet', async () => {
-		await updateSnippet('global.code-snippet', globalSnippet, client2);
+		await updateSnippet('global.code-snippets', globalSnippet, client2);
 		await updateSnippet('html.json', htmlSnippet1, client2);
 		await client2.sync();
 
@@ -607,17 +607,17 @@ suite('SnippetsSync', () => {
 
 		const actual1 = await readSnippet('html.json', testClient);
 		assert.equal(actual1, htmlSnippet1);
-		const actual2 = await readSnippet('global.code-snippet', testClient);
+		const actual2 = await readSnippet('global.code-snippets', testClient);
 		assert.equal(actual2, globalSnippet);
 
 		const { content } = await testClient.read(testObject.resource);
 		assert.ok(content !== null);
 		const actual = parseSnippets(content!);
-		assert.deepEqual(actual, { 'html.json': htmlSnippet1, 'global.code-snippet': globalSnippet });
+		assert.deepEqual(actual, { 'html.json': htmlSnippet1, 'global.code-snippets': globalSnippet });
 	});
 
 	test('sync should ignore non snippets', async () => {
-		await updateSnippet('global.code-snippet', globalSnippet, client2);
+		await updateSnippet('global.code-snippets', globalSnippet, client2);
 		await updateSnippet('html.html', htmlSnippet1, client2);
 		await updateSnippet('typescript.json', tsSnippet1, client2);
 		await client2.sync();
@@ -628,7 +628,7 @@ suite('SnippetsSync', () => {
 
 		const actual1 = await readSnippet('typescript.json', testClient);
 		assert.equal(actual1, tsSnippet1);
-		const actual2 = await readSnippet('global.code-snippet', testClient);
+		const actual2 = await readSnippet('global.code-snippets', testClient);
 		assert.equal(actual2, globalSnippet);
 		const actual3 = await readSnippet('html.html', testClient);
 		assert.equal(actual3, null);
@@ -636,7 +636,7 @@ suite('SnippetsSync', () => {
 		const { content } = await testClient.read(testObject.resource);
 		assert.ok(content !== null);
 		const actual = parseSnippets(content!);
-		assert.deepEqual(actual, { 'typescript.json': tsSnippet1, 'global.code-snippet': globalSnippet });
+		assert.deepEqual(actual, { 'typescript.json': tsSnippet1, 'global.code-snippets': globalSnippet });
 	});
 
 	function parseSnippets(content: string): IStringDictionary<string> {

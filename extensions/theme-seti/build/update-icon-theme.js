@@ -10,8 +10,8 @@ let fs = require('fs');
 let https = require('https');
 let url = require('url');
 
-// list of languagesIs not shipped with VSCode. The information is used to associate an icon with a language association
-let nonBuiltInLanguages = { // { fileNames, extensions }
+// list of languagesId not shipped with VSCode. The information is used to associate an icon with a language association
+let nonBuiltInLanguages = { // { fileNames, extensions  }
 	"r": { extensions: ['r', 'rhistory', 'rprofile', 'rt'] },
 	"argdown": { extensions: ['ad', 'adown', 'argdown', 'argdn'] },
 	"elm": { extensions: ['elm'] },
@@ -32,9 +32,15 @@ let nonBuiltInLanguages = { // { fileNames, extensions }
 	"haml": { extensions: ['haml'] },
 	"stylus": { extensions: ['styl'] },
 	"vala": { extensions: ['vala'] },
-	"todo": { fileNames: ['todo'] },
-	"jsonc": { extensions: ['json'] }
+	"todo": { fileNames: ['todo'] }
 };
+
+// list of languagesId that inherit the icon from another language
+let inheritIconFromLanguage = {
+	"jsonc": 'json',
+	"postcss": 'css',
+	"django-html": 'html'
+}
 
 let FROM_DISK = true; // set to true to take content from a repo checked out next to the vscode repo
 
@@ -357,6 +363,16 @@ exports.update = function () {
 						}
 					}
 				}
+			}
+			for (let lang in inheritIconFromLanguage) {
+				let superLang = inheritIconFromLanguage[lang];
+				let def = lang2Def[superLang];
+				if (def) {
+					lang2Def[lang] = def;
+				} else {
+					console.log('skipping icon def for ' + lang + ': no icon for ' + superLang + ' defined');
+				}
+
 			}
 
 

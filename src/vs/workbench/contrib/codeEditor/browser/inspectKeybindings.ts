@@ -53,4 +53,4 @@ class InspectKeyMapJSON extends Action {
 }
 
 const registry = Registry.as<IWorkbenchActionRegistry>(ActionExtensions.WorkbenchActions);
-registry.registerWorkbenchAction(SyncActionDescriptor.create(InspectKeyMapJSON, InspectKeyMapJSON.ID, InspectKeyMapJSON.LABEL), 'Developer: Inspect Key Mappings (JSON)', nls.localize('developer', "Developer"));
+registry.registerWorkbenchAction(SyncActionDescriptor.from(InspectKeyMapJSON), 'Developer: Inspect Key Mappings (JSON)', nls.localize('developer', "Developer"));

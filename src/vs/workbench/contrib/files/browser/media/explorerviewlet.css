@@ -60,10 +60,9 @@
 }
 
 .dirty-count.monaco-count-badge {
-	padding: 1px 6px 2px;
+	padding: 2px 4px;
 	margin-left: 6px;
 	min-height: auto;
-	border-radius: 0; /* goes better when ellipsis shows up on narrow sidebar */
 }
 
 .explorer-viewlet .explorer-item.nonexistent-root {

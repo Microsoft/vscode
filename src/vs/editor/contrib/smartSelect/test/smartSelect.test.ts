@@ -51,7 +51,7 @@ suite('SmartSelect', () => {
 	setup(() => {
 		const configurationService = new TestConfigurationService();
 		const dialogService = new TestDialogService();
-		modelService = new ModelServiceImpl(configurationService, new TestTextResourcePropertiesService(configurationService), new TestThemeService(), new NullLogService(), new UndoRedoService(dialogService, new TestNotificationService()), dialogService);
+		modelService = new ModelServiceImpl(configurationService, new TestTextResourcePropertiesService(configurationService), new TestThemeService(), new NullLogService(), new UndoRedoService(dialogService, new TestNotificationService()));
 		mode = new MockJSMode();
 	});
 

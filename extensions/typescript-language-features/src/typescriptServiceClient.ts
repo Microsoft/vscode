@@ -140,7 +140,7 @@ export default class TypeScriptServiceClient extends Disposable implements IType
 		this._configuration = TypeScriptServiceConfiguration.loadFromWorkspace();
 		this.versionProvider = new TypeScriptVersionProvider(this._configuration);
 		this.pluginPathsProvider = new TypeScriptPluginPathsProvider(this._configuration);
-		this._versionManager = this._register(new TypeScriptVersionManager(this.versionProvider, this.workspaceState));
+		this._versionManager = this._register(new TypeScriptVersionManager(this._configuration, this.versionProvider, this.workspaceState));
 		this._register(this._versionManager.onDidPickNewVersion(() => {
 			this.restartTsServer();
 		}));
@@ -163,6 +163,7 @@ export default class TypeScriptServiceClient extends Disposable implements IType
 			this._configuration = TypeScriptServiceConfiguration.loadFromWorkspace();
 
 			this.versionProvider.updateConfiguration(this._configuration);
+			this._versionManager.updateConfiguration(this._configuration);
 			this.pluginPathsProvider.updateConfiguration(this._configuration);
 			this.tracer.updateConfiguration();
 
@@ -298,7 +299,7 @@ export default class TypeScriptServiceClient extends Disposable implements IType
 		if (newState.type === ServerState.Type.Running) {
 			return newState;
 		}
-		throw new Error('Could not create TS service');
+		throw new Error(`Could not create TS service. Service state:${JSON.stringify(newState)}`);
 	}
 
 	public ensureServiceStarted() {
@@ -309,7 +310,15 @@ export default class TypeScriptServiceClient extends Disposable implements IType
 
 	private token: number = 0;
 	private startService(resendModels: boolean = false): ServerState.State {
-		if (this.isDisposed || this.hasServerFatallyCrashedTooManyTimes) {
+		this.info(`Starting TS Server `);
+
+		if (this.isDisposed) {
+			this.info(`Not starting server. Disposed `);
+			return ServerState.None;
+		}
+
+		if (this.hasServerFatallyCrashedTooManyTimes) {
+			this.info(`Not starting server. Too many crashes.`);
 			return ServerState.None;
 		}
 
@@ -382,10 +391,12 @@ export default class TypeScriptServiceClient extends Disposable implements IType
 			if (code === null || typeof code === 'undefined') {
 				this.info('TSServer exited');
 			} else {
+				// In practice, the exit code is an integer with no ties to any identity,
+				// so it can be classified as SystemMetaData, rather than CallstackOrException.
 				this.error(`TSServer exited with code: ${code}`);
 				/* __GDPR__
 					"tsserver.exitWithCode" : {
-						"code" : { "classification": "CallstackOrException", "purpose": "PerformanceAndHealth" },
+						"code" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth" },
 						"${include}": [
 							"${TypeScriptCommonProperties}"
 						]

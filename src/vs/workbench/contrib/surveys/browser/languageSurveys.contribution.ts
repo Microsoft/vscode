@@ -10,6 +10,7 @@ import { IWorkbenchContributionsRegistry, IWorkbenchContribution, Extensions as 
 import { Registry } from 'vs/platform/registry/common/platform';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 import { IStorageService, StorageScope } from 'vs/platform/storage/common/storage';
+import { IStorageKeysSyncRegistryService } from 'vs/platform/userDataSync/common/storageKeys';
 import { ISurveyData, IProductService } from 'vs/platform/product/common/productService';
 import { LifecyclePhase } from 'vs/platform/lifecycle/common/lifecycle';
 import { Severity, INotificationService } from 'vs/platform/notification/common/notification';
@@ -25,6 +26,7 @@ class LanguageSurvey extends Disposable {
 	constructor(
 		data: ISurveyData,
 		storageService: IStorageService,
+		storageKeysSyncRegistryService: IStorageKeysSyncRegistryService,
 		notificationService: INotificationService,
 		telemetryService: ITelemetryService,
 		modelService: IModelService,
@@ -40,6 +42,14 @@ class LanguageSurvey extends Disposable {
 		const IS_CANDIDATE_KEY = `${data.surveyId}.isCandidate`;
 		const EDITED_LANGUAGE_COUNT_KEY = `${data.surveyId}.editedCount`;
 		const EDITED_LANGUAGE_DATE_KEY = `${data.surveyId}.editedDate`;
+
+		// opt-in to syncing
+		storageKeysSyncRegistryService.registerStorageKey({ key: SESSION_COUNT_KEY, version: 1 });
+		storageKeysSyncRegistryService.registerStorageKey({ key: LAST_SESSION_DATE_KEY, version: 1 });
+		storageKeysSyncRegistryService.registerStorageKey({ key: SKIP_VERSION_KEY, version: 1 });
+		storageKeysSyncRegistryService.registerStorageKey({ key: IS_CANDIDATE_KEY, version: 1 });
+		storageKeysSyncRegistryService.registerStorageKey({ key: EDITED_LANGUAGE_COUNT_KEY, version: 1 });
+		storageKeysSyncRegistryService.registerStorageKey({ key: EDITED_LANGUAGE_DATE_KEY, version: 1 });
 
 		const skipVersion = storageService.get(SKIP_VERSION_KEY, StorageScope.GLOBAL, '');
 		if (skipVersion) {
@@ -131,6 +141,7 @@ class LanguageSurveysContribution implements IWorkbenchContribution {
 
 	constructor(
 		@IStorageService storageService: IStorageService,
+		@IStorageKeysSyncRegistryService storageKeysSyncRegistryService: IStorageKeysSyncRegistryService,
 		@INotificationService notificationService: INotificationService,
 		@ITelemetryService telemetryService: ITelemetryService,
 		@IModelService modelService: IModelService,
@@ -144,7 +155,7 @@ class LanguageSurveysContribution implements IWorkbenchContribution {
 
 		productService.surveys
 			.filter(surveyData => surveyData.surveyId && surveyData.editCount && surveyData.languageId && surveyData.surveyUrl && surveyData.userProbability)
-			.map(surveyData => new LanguageSurvey(surveyData, storageService, notificationService, telemetryService, modelService, textFileService, openerService, productService));
+			.map(surveyData => new LanguageSurvey(surveyData, storageService, storageKeysSyncRegistryService, notificationService, telemetryService, modelService, textFileService, openerService, productService));
 	}
 }
 

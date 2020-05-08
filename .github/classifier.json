@@ -1,0 +1,16 @@
+{
+	"$schema": "https://raw.githubusercontent.com/microsoft/vscode-github-triage-actions/master/classifier/apply/apply-labels/classifier-config.schema.json",
+	"assignees": {
+		"JacksonKearl": {
+			"assign": true
+		}
+	},
+	"labels": {
+		"search-editor": {
+			"applyLabel": true,
+			"assign": [
+				"JacksonKearl"
+			]
+		}
+	}
+}

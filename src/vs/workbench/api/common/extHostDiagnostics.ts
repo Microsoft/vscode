@@ -13,25 +13,21 @@ import * as converter from './extHostTypeConverters';
 import { mergeSort } from 'vs/base/common/arrays';
 import { Event, Emitter } from 'vs/base/common/event';
 import { ILogService } from 'vs/platform/log/common/log';
+import { ResourceMap } from 'vs/base/common/map';
+import { ExtensionIdentifier } from 'vs/platform/extensions/common/extensions';
 
 export class DiagnosticCollection implements vscode.DiagnosticCollection {
 
-	private readonly _name: string;
-	private readonly _owner: string;
-	private readonly _maxDiagnosticsPerFile: number;
-	private readonly _onDidChangeDiagnostics: Emitter<(vscode.Uri | string)[]>;
-	private readonly _proxy: MainThreadDiagnosticsShape | undefined;
-
 	private _isDisposed = false;
-	private _data = new Map<string, vscode.Diagnostic[]>();
+	private _data = new ResourceMap<vscode.Diagnostic[]>();
 
-	constructor(name: string, owner: string, maxDiagnosticsPerFile: number, proxy: MainThreadDiagnosticsShape | undefined, onDidChangeDiagnostics: Emitter<(vscode.Uri | string)[]>) {
-		this._name = name;
-		this._owner = owner;
-		this._maxDiagnosticsPerFile = maxDiagnosticsPerFile;
-		this._proxy = proxy;
-		this._onDidChangeDiagnostics = onDidChangeDiagnostics;
-	}
+	constructor(
+		private readonly _name: string,
+		private readonly _owner: string,
+		private readonly _maxDiagnosticsPerFile: number,
+		private readonly _proxy: MainThreadDiagnosticsShape | undefined,
+		private readonly _onDidChangeDiagnostics: Emitter<vscode.Uri[]>
+	) { }
 
 	dispose(): void {
 		if (!this._isDisposed) {
@@ -73,7 +69,7 @@ export class DiagnosticCollection implements vscode.DiagnosticCollection {
 			}
 
 			// update single row
-			this._data.set(first.toString(), diagnostics.slice());
+			this._data.set(first, diagnostics.slice());
 			toSync = [first];
 
 		} else if (Array.isArray(first)) {
@@ -87,8 +83,8 @@ export class DiagnosticCollection implements vscode.DiagnosticCollection {
 			for (const tuple of first) {
 				const [uri, diagnostics] = tuple;
 				if (!lastUri || uri.toString() !== lastUri.toString()) {
-					if (lastUri && this._data.get(lastUri.toString())!.length === 0) {
-						this._data.delete(lastUri.toString());
+					if (lastUri && this._data.get(lastUri)!.length === 0) {
+						this._data.delete(lastUri);
 					}
 					lastUri = uri;
 					toSync.push(uri);
@@ -120,7 +116,7 @@ export class DiagnosticCollection implements vscode.DiagnosticCollection {
 		const entries: [URI, IMarkerData[]][] = [];
 		for (let uri of toSync) {
 			let marker: IMarkerData[] = [];
-			const diagnostics = this._data.get(uri.toString());
+			const diagnostics = this._data.get(uri);
 			if (diagnostics) {
 
 				// no more than N diagnostics per file
@@ -160,7 +156,7 @@ export class DiagnosticCollection implements vscode.DiagnosticCollection {
 	delete(uri: vscode.Uri): void {
 		this._checkDisposed();
 		this._onDidChangeDiagnostics.fire([uri]);
-		this._data.delete(uri.toString());
+		this._data.delete(uri);
 		if (this._proxy) {
 			this._proxy.$changeMany(this._owner, [[uri, undefined]]);
 		}
@@ -177,15 +173,14 @@ export class DiagnosticCollection implements vscode.DiagnosticCollection {
 
 	forEach(callback: (uri: URI, diagnostics: ReadonlyArray<vscode.Diagnostic>, collection: DiagnosticCollection) => any, thisArg?: any): void {
 		this._checkDisposed();
-		this._data.forEach((value, key) => {
-			const uri = URI.parse(key);
+		this._data.forEach((value, uri) => {
 			callback.apply(thisArg, [uri, this.get(uri), this]);
 		});
 	}
 
 	get(uri: URI): ReadonlyArray<vscode.Diagnostic> {
 		this._checkDisposed();
-		const result = this._data.get(uri.toString());
+		const result = this._data.get(uri);
 		if (Array.isArray(result)) {
 			return <ReadonlyArray<vscode.Diagnostic>>Object.freeze(result.slice(0));
 		}
@@ -194,7 +189,7 @@ export class DiagnosticCollection implements vscode.DiagnosticCollection {
 
 	has(uri: URI): boolean {
 		this._checkDisposed();
-		return Array.isArray(this._data.get(uri.toString()));
+		return Array.isArray(this._data.get(uri));
 	}
 
 	private _checkDisposed() {
@@ -221,7 +216,7 @@ export class ExtHostDiagnostics implements ExtHostDiagnosticsShape {
 
 	private readonly _proxy: MainThreadDiagnosticsShape;
 	private readonly _collections = new Map<string, DiagnosticCollection>();
-	private readonly _onDidChangeDiagnostics = new Emitter<(vscode.Uri | string)[]>();
+	private readonly _onDidChangeDiagnostics = new Emitter<vscode.Uri[]>();
 
 	static _debouncer(last: (vscode.Uri | string)[] | undefined, current: (vscode.Uri | string)[]): (vscode.Uri | string)[] {
 		if (!last) {
@@ -257,8 +252,25 @@ export class ExtHostDiagnostics implements ExtHostDiagnosticsShape {
 		this._proxy = mainContext.getProxy(MainContext.MainThreadDiagnostics);
 	}
 
-	createDiagnosticCollection(name?: string): vscode.DiagnosticCollection {
-		let { _collections, _proxy, _onDidChangeDiagnostics } = this;
+	createDiagnosticCollection(extensionId: ExtensionIdentifier, name?: string): vscode.DiagnosticCollection {
+
+		const { _collections, _proxy, _onDidChangeDiagnostics, _logService } = this;
+
+		const loggingProxy = new class implements MainThreadDiagnosticsShape {
+			$changeMany(owner: string, entries: [UriComponents, IMarkerData[] | undefined][]): void {
+				_proxy.$changeMany(owner, entries);
+				_logService.trace('[DiagnosticCollection] change many (extension, owner, uris)', extensionId.value, owner, entries.length === 0 ? 'CLEARING' : entries);
+			}
+			$clear(owner: string): void {
+				_proxy.$clear(owner);
+				_logService.trace('[DiagnosticCollection] remove all (extension, owner)', extensionId.value, owner);
+			}
+			dispose(): void {
+				_proxy.dispose();
+			}
+		};
+
+
 		let owner: string;
 		if (!name) {
 			name = '_generated_diagnostic_collection_name_#' + ExtHostDiagnostics._idPool++;
@@ -274,7 +286,7 @@ export class ExtHostDiagnostics implements ExtHostDiagnosticsShape {
 
 		const result = new class extends DiagnosticCollection {
 			constructor() {
-				super(name!, owner, ExtHostDiagnostics._maxDiagnosticsPerFile, _proxy, _onDidChangeDiagnostics);
+				super(name!, owner, ExtHostDiagnostics._maxDiagnosticsPerFile, loggingProxy, _onDidChangeDiagnostics);
 				_collections.set(owner, this);
 			}
 			dispose() {

@@ -9,6 +9,7 @@ if grep -qi Microsoft /proc/version && [ -z "$DONT_PROMPT_WSL_INSTALL" ]; then
 	read -e -p "Do you want to continue anyways ? [y/N] " YN
 
 	[[ $YN == "n" || $YN == "N" || $YN == "" ]] && exit 1
+	echo "To no longer see this prompt, start @@PRODNAME@@ with the environment variable DONT_PROMPT_WSL_INSTALL defined."
 fi
 
 

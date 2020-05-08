@@ -23,6 +23,7 @@ import { IProductService } from 'vs/platform/product/common/productService';
 import { IElectronService } from 'vs/platform/electron/node/electron';
 import { getTitleBarStyle } from 'vs/platform/windows/common/windows';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
+import { Codicon } from 'vs/base/common/codicons';
 
 export class TitlebarPart extends BrowserTitleBarPart {
 	private appIcon: HTMLElement | undefined;
@@ -63,11 +64,11 @@ export class TitlebarPart extends BrowserTitleBarPart {
 	private onDidChangeMaximized(maximized: boolean) {
 		if (this.maxRestoreControl) {
 			if (maximized) {
-				DOM.removeClass(this.maxRestoreControl, 'codicon-chrome-maximize');
-				DOM.addClass(this.maxRestoreControl, 'codicon-chrome-restore');
+				DOM.removeClasses(this.maxRestoreControl, Codicon.chromeMaximize.classNames);
+				DOM.addClasses(this.maxRestoreControl, Codicon.chromeRestore.classNames);
 			} else {
-				DOM.removeClass(this.maxRestoreControl, 'codicon-chrome-restore');
-				DOM.addClass(this.maxRestoreControl, 'codicon-chrome-maximize');
+				DOM.removeClasses(this.maxRestoreControl, Codicon.chromeRestore.classNames);
+				DOM.addClasses(this.maxRestoreControl, Codicon.chromeMaximize.classNames);
 			}
 		}
 
@@ -170,13 +171,13 @@ export class TitlebarPart extends BrowserTitleBarPart {
 			this.windowControls = DOM.append(this.element, DOM.$('div.window-controls-container'));
 
 			// Minimize
-			const minimizeIcon = DOM.append(this.windowControls, DOM.$('div.window-icon.window-minimize.codicon.codicon-chrome-minimize'));
+			const minimizeIcon = DOM.append(this.windowControls, DOM.$('div.window-icon.window-minimize' + Codicon.chromeMinimize.cssSelector));
 			this._register(DOM.addDisposableListener(minimizeIcon, DOM.EventType.CLICK, e => {
 				this.electronService.minimizeWindow();
 			}));
 
 			// Restore
-			this.maxRestoreControl = DOM.append(this.windowControls, DOM.$('div.window-icon.window-max-restore.codicon'));
+			this.maxRestoreControl = DOM.append(this.windowControls, DOM.$('div.window-icon.window-max-restore'));
 			this._register(DOM.addDisposableListener(this.maxRestoreControl, DOM.EventType.CLICK, async e => {
 				const maximized = await this.electronService.isMaximized();
 				if (maximized) {
@@ -187,7 +188,7 @@ export class TitlebarPart extends BrowserTitleBarPart {
 			}));
 
 			// Close
-			const closeIcon = DOM.append(this.windowControls, DOM.$('div.window-icon.window-close.codicon.codicon-chrome-close'));
+			const closeIcon = DOM.append(this.windowControls, DOM.$('div.window-icon.window-close' + Codicon.chromeClose.cssSelector));
 			this._register(DOM.addDisposableListener(closeIcon, DOM.EventType.CLICK, e => {
 				this.electronService.closeWindow();
 			}));

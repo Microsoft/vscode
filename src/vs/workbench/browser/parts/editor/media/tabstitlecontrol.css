@@ -63,8 +63,8 @@
 }
 
 .monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.sizing-shrink.has-icon-theme.close-button-right,
-.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.sizing-shrink.has-icon-theme.close-button-off {
-	padding-left: 5px; /* reduce padding when we show icons and are in shrinking mode and tab close button is not left */
+.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.sizing-shrink.has-icon-theme.close-button-off:not(.sticky) {
+	padding-left: 5px; /* reduce padding when we show icons and are in shrinking mode and tab close button is not left (unless sticky) */
 }
 
 .monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.sizing-fit {
@@ -80,6 +80,30 @@
 	flex-grow: 1; /* all tabs grow even */
 	max-width: fit-content;
 	max-width: -moz-fit-content;
+}
+
+.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.sizing-fit.sticky,
+.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.sizing-shrink.sticky {
+
+	/** Sticky tabs do not scroll in case of overflow and are always above unsticky tabs which scroll under */
+	position: sticky;
+	z-index: 1;
+
+	/** Sticky tabs are even and never grow */
+	flex-basis: 0;
+	flex-grow: 0;
+
+	/** Sticky tabs have a fixed width of 38px */
+	width: 38px;
+	min-width: 38px;
+	max-width: 38px;
+}
+
+.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container.disable-sticky-tabs > .tab.sizing-fit.sticky,
+.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container.disable-sticky-tabs > .tab.sizing-shrink.sticky {
+
+	/** Disable sticky positions for sticky tabs if the available space is too little */
+	position: static;
 }
 
 .monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.close-button-left .action-label {
@@ -174,6 +198,10 @@
 	opacity: 0; /* when tab has the focus this shade breaks the tab border (fixes https://github.com/Microsoft/vscode/issues/57819) */
 }
 
+.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.sticky:not(.has-icon-theme) .monaco-icon-label {
+	text-align: center; /* ensure that sticky tabs without icon have label centered */
+}
+
 .monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.sizing-fit .monaco-icon-label,
 .monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.sizing-fit .monaco-icon-label > .monaco-icon-label-container {
 	overflow: visible; /* fixes https://github.com/Microsoft/vscode/issues/20182 */
@@ -210,14 +238,15 @@
 	overflow: visible; /* ...but still show the close button on hover, focus and when dirty */
 }
 
-.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.close-button-off:not(.dirty) > .tab-close {
-	display: none; /* hide the close action bar when we are configured to hide it */
+.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.close-button-off:not(.dirty) > .tab-close,
+.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.close-button-off.sticky > .tab-close {
+	display: none; /* hide the close action bar when we are configured to hide it (unless dirty, but always when sticky) */
 }
 
 .monaco-workbench .part.editor > .content .editor-group-container.active > .title .tabs-container > .tab.active > .tab-close .action-label,			/* always show it for active tab */
 .monaco-workbench .part.editor > .content .editor-group-container.active > .title .tabs-container > .tab > .tab-close .action-label:focus,			/* always show it on focus */
 .monaco-workbench .part.editor > .content .editor-group-container.active > .title .tabs-container > .tab:hover > .tab-close .action-label,			/* always show it on hover */
-.monaco-workbench .part.editor > .content .editor-group-container.active > .title .tabs-container > .tab.active:hover > .tab-close .action-label,		/* always show it on hover */
+.monaco-workbench .part.editor > .content .editor-group-container.active > .title .tabs-container > .tab.active:hover > .tab-close .action-label,	/* always show it on hover */
 .monaco-workbench .part.editor > .content .editor-group-container.active > .title .tabs-container > .tab.dirty > .tab-close .action-label {			/* always show it for dirty tabs */
 	opacity: 1;
 }
@@ -233,10 +262,10 @@
 	content: "\ea71"; /* use `circle-filled` icon unicode */
 }
 
-.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.active > .tab-close .action-label,					/* show dimmed for inactive group */
+.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.active > .tab-close .action-label,				/* show dimmed for inactive group */
 .monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.active:hover > .tab-close .action-label,			/* show dimmed for inactive group */
 .monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.dirty > .tab-close .action-label,					/* show dimmed for inactive group */
-.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab:hover > .tab-close .action-label {					/* show dimmed for inactive group */
+.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab:hover > .tab-close .action-label {				/* show dimmed for inactive group */
 	opacity: 0.5;
 }
 
@@ -257,8 +286,8 @@
 	padding-right: 10px; /* give a little bit more room if close button is off */
 }
 
-.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.sizing-shrink.close-button-off {
-	padding-right: 5px; /* we need less room when sizing is shrink */
+.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.sizing-shrink.close-button-off:not(.sticky) {
+	padding-right: 5px; /* we need less room when sizing is shrink (unless tab is sticky) */
 }
 
 .monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.close-button-off.dirty-border-top > .tab-close,

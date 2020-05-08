@@ -8,10 +8,11 @@ import { addDisposableListener } from 'vs/base/browser/dom';
 import { ThrottledDelayer } from 'vs/base/common/async';
 import { Emitter, Event } from 'vs/base/common/event';
 import { once } from 'vs/base/common/functional';
-import { Disposable, IDisposable, toDisposable } from 'vs/base/common/lifecycle';
+import { Disposable, DisposableStore, IDisposable, toDisposable } from 'vs/base/common/lifecycle';
 import { isMacintosh } from 'vs/base/common/platform';
 import { URI } from 'vs/base/common/uri';
 import * as modes from 'vs/editor/common/modes';
+import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { IEnvironmentService } from 'vs/platform/environment/common/environment';
 import { IFileService } from 'vs/platform/files/common/files';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
@@ -99,7 +100,7 @@ class WebviewSession extends Disposable {
 						return;
 					}
 				}
-				callback({ cancel: false, responseHeaders: details.responseHeaders });
+				callback({ cancel: false });
 			});
 		}));
 	}
@@ -162,30 +163,31 @@ class WebviewPortMappingProvider extends Disposable {
 	}
 }
 
-class WebviewKeyboardHandler extends Disposable {
+class WebviewKeyboardHandler {
 
-	private _ignoreMenuShortcut = false;
+	private readonly _webviews = new Set<WebviewTagHandle>();
+	private readonly _isUsingNativeTitleBars: boolean;
 
-	constructor(
-		private readonly _webviewHandle: WebviewTagHandle
-	) {
-		super();
+	constructor(configurationService: IConfigurationService) {
+		this._isUsingNativeTitleBars = configurationService.getValue<string>('window.titleBarStyle') === 'native';
+	}
 
+	public add(
+		webviewHandle: WebviewTagHandle,
+	): IDisposable {
+		this._webviews.add(webviewHandle);
+
+		const disposables = new DisposableStore();
 		if (this.shouldToggleMenuShortcutsEnablement) {
-			this._register(_webviewHandle.onFirstLoad(contents => {
-				contents.on('before-input-event', (_event, input) => {
-					if (input.type === 'keyDown' && document.activeElement === this._webviewHandle.webview) {
-						this._ignoreMenuShortcut = input.control || input.meta;
-						this.setIgnoreMenuShortcuts(this._ignoreMenuShortcut);
-					}
-				});
+			disposables.add(webviewHandle.onFirstLoad(() => {
+				this.setIgnoreMenuShortcutsForWebview(webviewHandle, true);
 			}));
 		}
 
-		this._register(addDisposableListener(this._webviewHandle.webview, 'ipc-message', (event) => {
+		disposables.add(addDisposableListener(webviewHandle.webview, 'ipc-message', (event) => {
 			switch (event.channel) {
 				case 'did-focus':
-					this.setIgnoreMenuShortcuts(this._ignoreMenuShortcut);
+					this.setIgnoreMenuShortcuts(true);
 					break;
 
 				case 'did-blur':
@@ -193,24 +195,44 @@ class WebviewKeyboardHandler extends Disposable {
 					return;
 			}
 		}));
+
+		return toDisposable(() => {
+			disposables.dispose();
+			this._webviews.delete(webviewHandle);
+		});
 	}
 
 	private get shouldToggleMenuShortcutsEnablement() {
-		return isMacintosh;
+		return isMacintosh || this._isUsingNativeTitleBars;
 	}
 
 	private setIgnoreMenuShortcuts(value: boolean) {
-		if (!this.shouldToggleMenuShortcutsEnablement) {
-			return;
+		for (const webview of this._webviews) {
+			this.setIgnoreMenuShortcutsForWebview(webview, value);
 		}
-		const contents = this._webviewHandle.webContents;
-		if (contents) {
-			contents.setIgnoreMenuShortcuts(value);
+	}
+
+	private setIgnoreMenuShortcutsForWebview(webview: WebviewTagHandle, value: boolean) {
+		if (this.shouldToggleMenuShortcutsEnablement) {
+			const contents = webview.webContents;
+			if (!contents?.isDestroyed()) {
+				contents?.setIgnoreMenuShortcuts(value);
+			}
 		}
 	}
 }
 
 export class ElectronWebviewBasedWebview extends BaseWebview<WebviewTag> implements Webview, WebviewFindDelegate {
+
+	private static _webviewKeyboardHandler: WebviewKeyboardHandler | undefined;
+
+	private static getWebviewKeyboardHandler(configService: IConfigurationService) {
+		if (!this._webviewKeyboardHandler) {
+			this._webviewKeyboardHandler = new WebviewKeyboardHandler(configService);
+		}
+		return this._webviewKeyboardHandler;
+	}
+
 	private _webviewFindWidget: WebviewFindWidget | undefined;
 	private _findStarted: boolean = false;
 
@@ -219,6 +241,7 @@ export class ElectronWebviewBasedWebview extends BaseWebview<WebviewTag> impleme
 
 	private readonly _domReady: Promise<void>;
 	private readonly _focusDelayer = this._register(new ThrottledDelayer(10));
+	private _elementFocusImpl!: (options?: FocusOptions | undefined) => void;
 
 	constructor(
 		id: string,
@@ -231,6 +254,7 @@ export class ElectronWebviewBasedWebview extends BaseWebview<WebviewTag> impleme
 		@ITelemetryService telemetryService: ITelemetryService,
 		@IEnvironmentService environementService: IEnvironmentService,
 		@IWorkbenchEnvironmentService workbenchEnvironmentService: IWorkbenchEnvironmentService,
+		@IConfigurationService configurationService: IConfigurationService,
 	) {
 		super(id, options, contentOptions, _webviewThemeDataProvider, telemetryService, environementService, workbenchEnvironmentService);
 
@@ -250,7 +274,7 @@ export class ElectronWebviewBasedWebview extends BaseWebview<WebviewTag> impleme
 			tunnelService,
 		));
 
-		this._register(new WebviewKeyboardHandler(webviewAndContents));
+		this._register(ElectronWebviewBasedWebview.getWebviewKeyboardHandler(configurationService).add(webviewAndContents));
 
 		this._domReady = new Promise(resolve => {
 			const subscription = this._register(this.on(WebviewMessageChannels.webviewReady, () => {
@@ -316,6 +340,11 @@ export class ElectronWebviewBasedWebview extends BaseWebview<WebviewTag> impleme
 
 	protected createElement(options: WebviewOptions) {
 		const element = document.createElement('webview');
+
+		this._elementFocusImpl = element.focus.bind(element);
+		element.focus = () => {
+			this.doFocus();
+		};
 		element.setAttribute('partition', `webview${Date.now()}`);
 		element.setAttribute('webpreferences', 'contextIsolation=yes');
 		element.className = `webview ${options.customClasses || ''}`;
@@ -353,6 +382,13 @@ export class ElectronWebviewBasedWebview extends BaseWebview<WebviewTag> impleme
 	}
 
 	public focus(): void {
+		this.doFocus();
+
+		// Handle focus change programmatically (do not rely on event from <webview>)
+		this.handleFocusChange(true);
+	}
+
+	private doFocus() {
 		if (!this.element) {
 			return;
 		}
@@ -372,19 +408,17 @@ export class ElectronWebviewBasedWebview extends BaseWebview<WebviewTag> impleme
 			if (!this.focused || !this.element) {
 				return;
 			}
+
 			if (document.activeElement?.tagName === 'INPUT') {
 				return;
 			}
 			try {
-				this.element.focus();
+				this._elementFocusImpl();
 			} catch {
 				// noop
 			}
 			this._send('focus');
 		});
-
-		// Handle focus change programmatically (do not rely on event from <webview>)
-		this.handleFocusChange(true);
 	}
 
 	protected style(): void {

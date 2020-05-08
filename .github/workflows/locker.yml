@@ -13,7 +13,7 @@ jobs:
         with:
           repository: 'microsoft/vscode-github-triage-actions'
           path: ./actions
-          ref: v5
+          ref: v15
       - name: Install Actions
         run: npm install --production --prefix ./actions
       - name: Run Locker

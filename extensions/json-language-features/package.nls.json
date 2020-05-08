@@ -12,5 +12,6 @@
 	"json.colorDecorators.enable.deprecationMessage": "The setting `json.colorDecorators.enable` has been deprecated in favor of `editor.colorDecorators`.",
 	"json.schemaResolutionErrorMessage": "Unable to resolve schema.",
 	"json.clickToRetry": "Click to retry.",
-	"json.maxItemsComputed.desc": "The maximum number of outline symbols and folding regions computed (limited for performance reasons)."
+	"json.maxItemsComputed.desc": "The maximum number of outline symbols and folding regions computed (limited for performance reasons).",
+	"json.enableSchemaDownload.desc": "When enabled, JSON schemas can be fetched from http and https locations."
 }

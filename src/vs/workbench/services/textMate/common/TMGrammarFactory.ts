@@ -33,7 +33,7 @@ export class TMGrammarFactory extends Disposable {
 	private readonly _languageToScope2: string[];
 	private readonly _grammarRegistry: Registry;
 
-	constructor(host: ITMGrammarFactoryHost, grammarDefinitions: IValidGrammarDefinition[], vscodeTextmate: typeof import('vscode-textmate'), onigLib: Promise<IOnigLib> | undefined) {
+	constructor(host: ITMGrammarFactoryHost, grammarDefinitions: IValidGrammarDefinition[], vscodeTextmate: typeof import('vscode-textmate'), onigLib: Promise<IOnigLib>) {
 		super();
 		this._host = host;
 		this._initialState = vscodeTextmate.INITIAL;
@@ -41,8 +41,8 @@ export class TMGrammarFactory extends Disposable {
 		this._injections = {};
 		this._injectedEmbeddedLanguages = {};
 		this._languageToScope2 = [];
-		this._grammarRegistry = new vscodeTextmate.Registry({
-			getOnigLib: (typeof onigLib === 'undefined' ? undefined : () => onigLib),
+		this._grammarRegistry = this._register(new vscodeTextmate.Registry({
+			onigLib: onigLib,
 			loadGrammar: async (scopeName: string) => {
 				const grammarDefinition = this._scopeRegistry.getGrammarDefinition(scopeName);
 				if (!grammarDefinition) {
@@ -67,7 +67,7 @@ export class TMGrammarFactory extends Disposable {
 				}
 				return injections;
 			}
-		});
+		}));
 
 		for (const validGrammar of grammarDefinitions) {
 			this._scopeRegistry.register(validGrammar);

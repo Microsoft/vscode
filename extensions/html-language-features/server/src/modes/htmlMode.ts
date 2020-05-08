@@ -87,7 +87,7 @@ export function getHTMLMode(htmlLanguageService: HTMLLanguageService, workspace:
 		},
 		doOnTypeRename(document: TextDocument, position: Position) {
 			const htmlDocument = htmlDocuments.get(document);
-			return htmlLanguageService.findSyncedRegions(document, position, htmlDocument);
+			return htmlLanguageService.findOnTypeRenameRanges(document, position, htmlDocument);
 		},
 		dispose() {
 			htmlDocuments.dispose();

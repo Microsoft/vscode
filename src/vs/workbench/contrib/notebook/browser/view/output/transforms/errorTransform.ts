@@ -35,6 +35,7 @@ class ErrorTransform implements IOutputTransformContribution {
 			}
 		}
 		container.appendChild(traceback);
+		DOM.addClasses(container, 'error');
 		return {
 			hasDynamicHeight: false
 		};

@@ -18,6 +18,7 @@ export interface IIndexTreeNode<T, TFilterData = void> extends ITreeNode<T, TFil
 	collapsible: boolean;
 	collapsed: boolean;
 	renderNodeCount: number;
+	visibility: TreeVisibility;
 	visible: boolean;
 	filterData: TFilterData | undefined;
 }
@@ -95,6 +96,7 @@ export class IndexTreeModel<T extends Exclude<any, undefined>, TFilterData = voi
 			collapsible: false,
 			collapsed: false,
 			renderNodeCount: 0,
+			visibility: TreeVisibility.Visible,
 			visible: true,
 			filterData: undefined
 		};
@@ -185,6 +187,17 @@ export class IndexTreeModel<T extends Exclude<any, undefined>, TFilterData = voi
 		}
 
 		this._onDidSplice.fire({ insertedNodes: nodesToInsert, deletedNodes });
+
+		let node: IIndexTreeNode<T, TFilterData> | undefined = parentNode;
+
+		while (node) {
+			if (node.visibility === TreeVisibility.Recurse) {
+				this.refilter();
+				break;
+			}
+
+			node = node.parent;
+		}
 	}
 
 	rerender(location: number[]): void {
@@ -194,7 +207,7 @@ export class IndexTreeModel<T extends Exclude<any, undefined>, TFilterData = voi
 
 		const { node, listIndex, revealed } = this.getTreeNodeWithListIndex(location);
 
-		if (revealed) {
+		if (node.visible && revealed) {
 			this.list.splice(listIndex, 1, [node]);
 		}
 	}
@@ -355,11 +368,13 @@ export class IndexTreeModel<T extends Exclude<any, undefined>, TFilterData = voi
 			collapsible: typeof treeElement.collapsible === 'boolean' ? treeElement.collapsible : (typeof treeElement.collapsed !== 'undefined'),
 			collapsed: typeof treeElement.collapsed === 'undefined' ? this.collapseByDefault : treeElement.collapsed,
 			renderNodeCount: 1,
+			visibility: TreeVisibility.Visible,
 			visible: true,
 			filterData: undefined
 		};
 
 		const visibility = this._filterNode(node, parentVisibility);
+		node.visibility = visibility;
 
 		if (revealed) {
 			treeListElements.push(node);

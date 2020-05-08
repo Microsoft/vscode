@@ -184,7 +184,7 @@ export class OpenEditorsView extends ViewPane {
 		super.renderHeaderTitle(container, this.title);
 
 		const count = dom.append(container, $('.count'));
-		this.dirtyCountElement = dom.append(count, $('.dirty-count.monaco-count-badge'));
+		this.dirtyCountElement = dom.append(count, $('.dirty-count.monaco-count-badge.long'));
 
 		this._register((attachStylerCallback(this.themeService, { badgeBackground, badgeForeground, contrastBorder }, colors => {
 			const background = colors.badgeBackground ? colors.badgeBackground.toString() : '';
@@ -323,6 +323,7 @@ export class OpenEditorsView extends ViewPane {
 	}
 
 	protected layoutBody(height: number, width: number): void {
+		super.layoutBody(height, width);
 		if (this.list) {
 			this.list.layout(height, width);
 		}
@@ -659,7 +660,7 @@ class OpenEditorsDragAndDrop implements IListDragAndDrop<OpenEditor | IEditorGro
 
 		if (resources.length) {
 			// Apply some datatransfer types to allow for dragging the element outside of the application
-			this.instantiationService.invokeFunction(fillResourceDataTransfers, resources, originalEvent);
+			this.instantiationService.invokeFunction(fillResourceDataTransfers, resources, undefined, originalEvent);
 		}
 	}
 
@@ -692,9 +693,14 @@ class OpenEditorsDragAndDrop implements IListDragAndDrop<OpenEditor | IEditorGro
 }
 
 class OpenEditorsAccessibilityProvider implements IListAccessibilityProvider<OpenEditor | IEditorGroup> {
+
+	getWidgetAriaLabel(): string {
+		return nls.localize('openEditors', "Open Editors");
+	}
+
 	getAriaLabel(element: OpenEditor | IEditorGroup): string | null {
 		if (element instanceof OpenEditor) {
-			return `${element.editor.getName()} ${element.editor.getDescription()}`;
+			return `${element.editor.getName()}, ${element.editor.getDescription()}`;
 		}
 
 		return element.ariaLabel;

@@ -6,6 +6,7 @@
 import * as nls from 'vs/nls';
 import { ChildProcess, fork } from 'child_process';
 import { Server, Socket, createServer } from 'net';
+import { CrashReporterStartOptions } from 'electron';
 import { getPathFromAmdModule } from 'vs/base/common/amd';
 import { timeout } from 'vs/base/common/async';
 import { toErrorMessage } from 'vs/base/common/errorMessage';
@@ -170,8 +171,17 @@ export class ExtensionHostProcessWorker implements IExtensionHostStarter {
 					opts.execArgv = ['--inspect-port=0'];
 				}
 
-				const crashReporterOptions = undefined; // TODO@electron pass this in as options to the extension host after verifying this actually works
-				if (crashReporterOptions) {
+				// Enable the crash reporter depending on environment for local reporting
+				const crashesDirectory = this._environmentService.crashReporterDirectory;
+				if (crashesDirectory) {
+					const crashReporterOptions: CrashReporterStartOptions = {
+						companyName: product.crashReporter?.companyName || 'Microsoft',
+						productName: product.crashReporter?.productName || product.nameShort,
+						submitURL: '',
+						uploadToServer: false,
+						crashesDirectory
+					};
+
 					opts.env.CRASH_REPORTER_START_OPTIONS = JSON.stringify(crashReporterOptions);
 				}
 

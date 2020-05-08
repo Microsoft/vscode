@@ -11,7 +11,6 @@ import { ContextKeyExpr, RawContextKey } from 'vs/platform/contextkey/common/con
 import { ITextModelContentProvider } from 'vs/editor/common/services/resolverService';
 import { Disposable, MutableDisposable } from 'vs/base/common/lifecycle';
 import { ITextModel } from 'vs/editor/common/model';
-import { Event } from 'vs/base/common/event';
 import { IModelService } from 'vs/editor/common/services/modelService';
 import { IModeService, ILanguageSelection } from 'vs/editor/common/services/modeService';
 import { ITextFileService } from 'vs/workbench/services/textfile/common/textfiles';
@@ -29,24 +28,29 @@ import { IEditorService } from 'vs/workbench/services/editor/common/editorServic
  */
 export const VIEWLET_ID = 'workbench.view.explorer';
 
+/**
+ * Explorer file view id.
+ */
+export const VIEW_ID = 'workbench.explorer.fileView';
+
+/**
+ * Id of the default editor for open with.
+ */
+export const DEFAULT_EDITOR_ID = 'default';
+
 export interface IExplorerService {
 	_serviceBrand: undefined;
 	readonly roots: ExplorerItem[];
 	readonly sortOrder: SortOrder;
-	readonly onDidChangeRoots: Event<void>;
-	readonly onDidChangeItem: Event<{ item?: ExplorerItem, recursive: boolean }>;
-	readonly onDidChangeEditable: Event<ExplorerItem>;
-	readonly onDidSelectResource: Event<{ resource?: URI, reveal?: boolean }>;
-	readonly onDidCopyItems: Event<{ items: ExplorerItem[], cut: boolean, previouslyCutItems: ExplorerItem[] | undefined }>;
 
 	getContext(respectMultiSelection: boolean): ExplorerItem[];
-	setEditable(stat: ExplorerItem, data: IEditableData | null): void;
+	setEditable(stat: ExplorerItem, data: IEditableData | null): Promise<void>;
 	getEditable(): { stat: ExplorerItem, data: IEditableData } | undefined;
 	getEditableData(stat: ExplorerItem): IEditableData | undefined;
 	// If undefined is passed checks if any element is currently being edited.
 	isEditable(stat: ExplorerItem | undefined): boolean;
 	findClosest(resource: URI): ExplorerItem | null;
-	refresh(): void;
+	refresh(): Promise<void>;
 	setToCopy(stats: ExplorerItem[], cut: boolean): void;
 	isCut(stat: ExplorerItem): boolean;
 
@@ -56,11 +60,16 @@ export interface IExplorerService {
 	 */
 	select(resource: URI, reveal?: boolean): Promise<void>;
 
-	registerContextProvider(contextProvider: IContextProvider): void;
+	registerView(contextAndRefreshProvider: IExplorerView): void;
 }
 
-export interface IContextProvider {
+export interface IExplorerView {
 	getContext(respectMultiSelection: boolean): ExplorerItem[];
+	refresh(recursive: boolean, item?: ExplorerItem): Promise<void>;
+	selectResource(resource: URI | undefined, reveal?: boolean): Promise<void>;
+	setTreeInput(): Promise<void>;
+	itemsCopied(tats: ExplorerItem[], cut: boolean, previousCut: ExplorerItem[] | undefined): void;
+	setEditable(stat: ExplorerItem, isEditing: boolean): Promise<void>;
 }
 
 export const IExplorerService = createDecorator<IExplorerService>('explorerService');
@@ -72,6 +81,10 @@ export const ExplorerViewletVisibleContext = new RawContextKey<boolean>('explore
 export const ExplorerFolderContext = new RawContextKey<boolean>('explorerResourceIsFolder', false);
 export const ExplorerResourceReadonlyContext = new RawContextKey<boolean>('explorerResourceReadonly', false);
 export const ExplorerResourceNotReadonlyContext = ExplorerResourceReadonlyContext.toNegated();
+/**
+ * Comma separated list of editor ids that can be used for the selected explorer resource.
+ */
+export const ExplorerResourceAvailableEditorIdsContext = new RawContextKey<string>('explorerResourceAvailableEditorIds', '');
 export const ExplorerRootContext = new RawContextKey<boolean>('explorerResourceIsRoot', false);
 export const ExplorerResourceCut = new RawContextKey<boolean>('explorerResourceCut', false);
 export const ExplorerResourceMoveableToTrash = new RawContextKey<boolean>('explorerResourceMoveableToTrash', false);

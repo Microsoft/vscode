@@ -29,7 +29,7 @@ Registry.as<IEditorRegistry>(EditorExtensions.Editors)
 
 Registry.as<IWorkbenchActionRegistry>(Extensions.WorkbenchActions)
 	.registerWorkbenchAction(
-		SyncActionDescriptor.create(EditorWalkThroughAction, EditorWalkThroughAction.ID, EditorWalkThroughAction.LABEL),
+		SyncActionDescriptor.from(EditorWalkThroughAction),
 		'Help: Interactive Playground', localize('help', "Help"));
 
 Registry.as<IEditorInputFactoryRegistry>(EditorInputExtensions.EditorInputFactories).registerEditorInputFactory(EditorWalkThroughInputFactory.ID, EditorWalkThroughInputFactory);

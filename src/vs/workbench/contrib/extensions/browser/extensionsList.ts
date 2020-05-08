@@ -99,7 +99,7 @@ export class Renderer implements IPagedRenderer<IExtension, ITemplateData> {
 			this.instantiationService.createInstance(UpdateAction),
 			reloadAction,
 			this.instantiationService.createInstance(InstallAction),
-			this.instantiationService.createInstance(RemoteInstallAction),
+			this.instantiationService.createInstance(RemoteInstallAction, false),
 			this.instantiationService.createInstance(LocalInstallAction),
 			this.instantiationService.createInstance(MaliciousStatusLabelAction, false),
 			systemDisabledWarningAction,

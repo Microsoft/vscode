@@ -119,7 +119,7 @@ const testModules = (async function () {
 
 async function runTestsInBrowser(testModules, browserType) {
 	const args = process.platform === 'linux' && browserType === 'chromium' ? ['--no-sandbox'] : undefined; // disable sandbox to run chrome on certain Linux distros
-	const browser = await playwright[browserType].launch({ headless: !Boolean(argv.debug), dumpio: true, args });
+	const browser = await playwright[browserType].launch({ headless: !Boolean(argv.debug), args });
 	const context = await browser.newContext();
 	const page = await context.newPage();
 	const target = url.pathToFileURL(path.join(__dirname, 'renderer.html'));

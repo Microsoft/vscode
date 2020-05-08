@@ -318,7 +318,7 @@ export class WindowsMainService extends Disposable implements IWindowsMainServic
 		if (!currentWindowsState.lastActiveWindow) {
 			let activeWindow = this.getLastActiveWindow();
 			if (!activeWindow || activeWindow.isExtensionDevelopmentHost) {
-				activeWindow = WindowsMainService.WINDOWS.filter(window => !window.isExtensionDevelopmentHost)[0];
+				activeWindow = WindowsMainService.WINDOWS.find(window => !window.isExtensionDevelopmentHost);
 			}
 
 			if (activeWindow) {
@@ -327,7 +327,7 @@ export class WindowsMainService extends Disposable implements IWindowsMainServic
 		}
 
 		// 2.) Find extension host window
-		const extensionHostWindow = WindowsMainService.WINDOWS.filter(window => window.isExtensionDevelopmentHost && !window.isExtensionTestHost)[0];
+		const extensionHostWindow = WindowsMainService.WINDOWS.find(window => window.isExtensionDevelopmentHost && !window.isExtensionTestHost);
 		if (extensionHostWindow) {
 			currentWindowsState.lastPluginDevelopmentHostWindow = this.toWindowState(extensionHostWindow);
 		}

@@ -328,6 +328,11 @@ class ConfigurationRegistry implements IConfigurationRegistry {
 					this.configurationProperties[key] = properties[key];
 				}
 
+				if (!properties[key].deprecationMessage && properties[key].markdownDeprecationMessage) {
+					// If not set, default deprecationMessage to the markdown source
+					properties[key].deprecationMessage = properties[key].markdownDeprecationMessage;
+				}
+
 				propertyKeys.push(key);
 			}
 		}

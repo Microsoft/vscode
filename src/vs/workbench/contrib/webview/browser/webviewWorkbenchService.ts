@@ -267,13 +267,13 @@ export class WebviewEditorService implements IWebviewWorkbenchService {
 	public shouldPersist(
 		webview: WebviewInput
 	): boolean {
-		if (Iterable.some(this._revivers.values(), reviver => canRevive(reviver, webview))) {
+		// Revived webviews may not have an actively registered reviver but we still want to presist them
+		// since a reviver should exist when it is actually needed.
+		if (webview instanceof LazilyResolvedWebviewEditorInput) {
 			return true;
 		}
 
-		// Revived webviews may not have an actively registered reviver but we still want to presist them
-		// since a reviver should exist when it is actually needed.
-		return webview instanceof LazilyResolvedWebviewEditorInput;
+		return Iterable.some(this._revivers.values(), reviver => canRevive(reviver, webview));
 	}
 
 	private async tryRevive(

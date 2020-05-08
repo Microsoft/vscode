@@ -5,12 +5,14 @@
 
 .monaco-text-button {
 	box-sizing: border-box;
-	display: inline-block;
+	display: flex;
 	width: 100%;
 	padding: 4px;
 	text-align: center;
 	cursor: pointer;
 	outline-offset: 2px !important;
+	justify-content: center;
+	align-items: center;
 }
 
 .monaco-text-button:hover {
@@ -20,4 +22,9 @@
 .monaco-button.disabled {
 	opacity: 0.4;
 	cursor: default;
+}
+
+.monaco-button > .codicon {
+	margin: 0 0.2em;
+	color: inherit !important;
 }

@@ -45,6 +45,7 @@ import { InstantiationService } from 'vs/platform/instantiation/common/instantia
 import { Layout } from 'vs/workbench/browser/layout';
 import { IHostService } from 'vs/workbench/services/host/browser/host';
 import { Extensions as PanelExtensions, PanelRegistry } from 'vs/workbench/browser/panel';
+import { IViewDescriptorService, ViewContainerLocation } from 'vs/workbench/common/views';
 
 export class Workbench extends Layout {
 
@@ -163,7 +164,7 @@ export class Workbench extends Layout {
 
 				// Restore
 				try {
-					await this.restoreWorkbench(accessor.get(IEditorService), accessor.get(IEditorGroupsService), accessor.get(IViewletService), accessor.get(IPanelService), accessor.get(ILogService), lifecycleService);
+					await this.restoreWorkbench(accessor.get(IEditorService), accessor.get(IEditorGroupsService), accessor.get(IViewDescriptorService), accessor.get(IViewletService), accessor.get(IPanelService), accessor.get(ILogService), lifecycleService);
 				} catch (error) {
 					onUnexpectedError(error);
 				}
@@ -400,6 +401,7 @@ export class Workbench extends Layout {
 	private async restoreWorkbench(
 		editorService: IEditorService,
 		editorGroupService: IEditorGroupsService,
+		viewDescriptorService: IViewDescriptorService,
 		viewletService: IViewletService,
 		panelService: IPanelService,
 		logService: ILogService,
@@ -436,7 +438,7 @@ export class Workbench extends Layout {
 
 				const viewlet = await viewletService.openViewlet(this.state.sideBar.viewletToRestore);
 				if (!viewlet) {
-					await viewletService.openViewlet(viewletService.getDefaultViewletId()); // fallback to default viewlet as needed
+					await viewletService.openViewlet(viewDescriptorService.getDefaultViewContainer(ViewContainerLocation.Sidebar)?.id); // fallback to default viewlet as needed
 				}
 
 				mark('didRestoreViewlet');

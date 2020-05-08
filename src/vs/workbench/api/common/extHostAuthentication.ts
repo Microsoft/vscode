@@ -47,12 +47,12 @@ export class ExtHostAuthentication implements ExtHostAuthenticationShape {
 			.map(session => {
 				return {
 					id: session.id,
-					accountName: session.accountName,
+					account: session.account,
 					scopes: session.scopes,
 					getAccessToken: async () => {
 						const isAllowed = await this._proxy.$getSessionsPrompt(
 							provider.id,
-							session.accountName,
+							session.account.displayName,
 							provider.displayName,
 							extensionId,
 							requestingExtension.displayName || requestingExtension.name);
@@ -80,15 +80,15 @@ export class ExtHostAuthentication implements ExtHostAuthenticationShape {
 		}
 
 		const session = await provider.login(scopes);
-		await this._proxy.$setTrustedExtension(provider.id, session.accountName, ExtensionIdentifier.toKey(requestingExtension.identifier), extensionName);
+		await this._proxy.$setTrustedExtension(provider.id, session.account.displayName, ExtensionIdentifier.toKey(requestingExtension.identifier), extensionName);
 		return {
 			id: session.id,
-			accountName: session.accountName,
+			account: session.account,
 			scopes: session.scopes,
 			getAccessToken: async () => {
 				const isAllowed = await this._proxy.$getSessionsPrompt(
 					provider.id,
-					session.accountName,
+					session.account.displayName,
 					provider.displayName,
 					ExtensionIdentifier.toKey(requestingExtension.identifier),
 					requestingExtension.displayName || requestingExtension.name);
@@ -100,6 +100,15 @@ export class ExtHostAuthentication implements ExtHostAuthenticationShape {
 				return session.getAccessToken();
 			}
 		};
+	}
+
+	async logout(providerId: string, sessionId: string): Promise<void> {
+		const provider = this._authenticationProviders.get(providerId);
+		if (!provider) {
+			throw new Error(`No authentication provider with id '${providerId}' is currently registered.`);
+		}
+
+		return provider.logout(sessionId);
 	}
 
 	registerAuthenticationProvider(provider: vscode.AuthenticationProvider): vscode.Disposable {
@@ -114,7 +123,7 @@ export class ExtHostAuthentication implements ExtHostAuthenticationShape {
 			this._onDidChangeSessions.fire({ [provider.id]: e });
 		});
 
-		this._proxy.$registerAuthenticationProvider(provider.id, provider.displayName, provider.supportsMultipleAccounts);
+		this._proxy.$registerAuthenticationProvider(provider.id, provider.displayName);
 		this._onDidChangeAuthenticationProviders.fire({ added: [provider.id], removed: [] });
 
 		return new Disposable(() => {
@@ -125,7 +134,7 @@ export class ExtHostAuthentication implements ExtHostAuthenticationShape {
 		});
 	}
 
-	$login(providerId: string, scopes: string[] | undefined): Promise<modes.AuthenticationSession> {
+	$login(providerId: string, scopes: string[]): Promise<modes.AuthenticationSession> {
 		const authProvider = this._authenticationProviders.get(providerId);
 		if (authProvider) {
 			return Promise.resolve(authProvider.login(scopes));

@@ -67,6 +67,7 @@ suite('ExtensionsListView Tests', () => {
 
 	const workspaceRecommendationA = aGalleryExtension('workspace-recommendation-A');
 	const workspaceRecommendationB = aGalleryExtension('workspace-recommendation-B');
+	const configBasedRecommendationA = aGalleryExtension('configbased-recommendation-A');
 	const fileBasedRecommendationA = aGalleryExtension('filebased-recommendation-A');
 	const fileBasedRecommendationB = aGalleryExtension('filebased-recommendation-B');
 	const otherRecommendationA = aGalleryExtension('other-recommendation-A');
@@ -114,11 +115,17 @@ suite('ExtensionsListView Tests', () => {
 		reasons[fileBasedRecommendationA.identifier.id] = { reasonId: ExtensionRecommendationReason.File };
 		reasons[fileBasedRecommendationB.identifier.id] = { reasonId: ExtensionRecommendationReason.File };
 		reasons[otherRecommendationA.identifier.id] = { reasonId: ExtensionRecommendationReason.Executable };
+		reasons[configBasedRecommendationA.identifier.id] = { reasonId: ExtensionRecommendationReason.WorkspaceConfig };
 		instantiationService.stub(IExtensionRecommendationsService, <Partial<IExtensionRecommendationsService>>{
 			getWorkspaceRecommendations() {
 				return Promise.resolve([
 					{ extensionId: workspaceRecommendationA.identifier.id },
 					{ extensionId: workspaceRecommendationB.identifier.id }]);
+			},
+			getConfigBasedRecommendations() {
+				return Promise.resolve([
+					{ extensionId: configBasedRecommendationA.identifier.id }
+				]);
 			},
 			getFileBasedRecommendations() {
 				return [
@@ -145,7 +152,7 @@ suite('ExtensionsListView Tests', () => {
 		instantiationService.stubPromise(IExperimentService, 'getExperimentsByType', []);
 
 		instantiationService.stub(IViewDescriptorService, {
-			getViewLocation(): ViewContainerLocation {
+			getViewLocationById(): ViewContainerLocation {
 				return ViewContainerLocation.Sidebar;
 			}
 		});
@@ -341,6 +348,7 @@ suite('ExtensionsListView Tests', () => {
 
 	test('Test @recommended query', () => {
 		const allRecommendedExtensions = [
+			configBasedRecommendationA,
 			fileBasedRecommendationA,
 			fileBasedRecommendationB,
 			otherRecommendationA
@@ -365,6 +373,7 @@ suite('ExtensionsListView Tests', () => {
 		const allRecommendedExtensions = [
 			workspaceRecommendationA,
 			workspaceRecommendationB,
+			configBasedRecommendationA,
 			fileBasedRecommendationA,
 			fileBasedRecommendationB,
 			otherRecommendationA

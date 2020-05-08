@@ -243,9 +243,9 @@ class QuickAccessSelectPreviousAction extends BaseQuickAccessNavigateAction {
 }
 
 const registry = Registry.as<IWorkbenchActionRegistry>(ActionExtensions.WorkbenchActions);
-registry.registerWorkbenchAction(SyncActionDescriptor.create(QuickAccessSelectNextAction, QuickAccessSelectNextAction.ID, QuickAccessSelectNextAction.LABEL, { primary: 0, mac: { primary: KeyMod.WinCtrl | KeyCode.KEY_N } }, inQuickPickContext, KeybindingWeight.WorkbenchContrib + 50), 'Select Next in Quick Open');
-registry.registerWorkbenchAction(SyncActionDescriptor.create(QuickAccessSelectPreviousAction, QuickAccessSelectPreviousAction.ID, QuickAccessSelectPreviousAction.LABEL, { primary: 0, mac: { primary: KeyMod.WinCtrl | KeyCode.KEY_P } }, inQuickPickContext, KeybindingWeight.WorkbenchContrib + 50), 'Select Previous in Quick Open');
-registry.registerWorkbenchAction(SyncActionDescriptor.create(QuickAccessNavigateNextAction, QuickAccessNavigateNextAction.ID, QuickAccessNavigateNextAction.LABEL), 'Navigate Next in Quick Open');
-registry.registerWorkbenchAction(SyncActionDescriptor.create(QuickAccessNavigatePreviousAction, QuickAccessNavigatePreviousAction.ID, QuickAccessNavigatePreviousAction.LABEL), 'Navigate Previous in Quick Open');
+registry.registerWorkbenchAction(SyncActionDescriptor.from(QuickAccessSelectNextAction, { primary: 0, mac: { primary: KeyMod.WinCtrl | KeyCode.KEY_N } }, inQuickPickContext, KeybindingWeight.WorkbenchContrib + 50), 'Select Next in Quick Open');
+registry.registerWorkbenchAction(SyncActionDescriptor.from(QuickAccessSelectPreviousAction, { primary: 0, mac: { primary: KeyMod.WinCtrl | KeyCode.KEY_P } }, inQuickPickContext, KeybindingWeight.WorkbenchContrib + 50), 'Select Previous in Quick Open');
+registry.registerWorkbenchAction(SyncActionDescriptor.from(QuickAccessNavigateNextAction), 'Navigate Next in Quick Open');
+registry.registerWorkbenchAction(SyncActionDescriptor.from(QuickAccessNavigatePreviousAction), 'Navigate Previous in Quick Open');
 
 //#endregion

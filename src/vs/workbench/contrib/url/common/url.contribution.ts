@@ -43,7 +43,7 @@ export class OpenUrlAction extends Action {
 }
 
 Registry.as<IWorkbenchActionRegistry>(ActionExtensions.WorkbenchActions).registerWorkbenchAction(
-	SyncActionDescriptor.create(OpenUrlAction, OpenUrlAction.ID, OpenUrlAction.LABEL),
+	SyncActionDescriptor.from(OpenUrlAction),
 	'Open URL',
 	localize('developer', 'Developer')
 );

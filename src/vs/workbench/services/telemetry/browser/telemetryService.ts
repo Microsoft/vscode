@@ -50,7 +50,8 @@ export class TelemetryService extends Disposable implements ITelemetryService {
 		if (!!productService.enableTelemetry) {
 			const config: ITelemetryServiceConfig = {
 				appender: combinedAppender(new WebTelemetryAppender(logService, remoteAgentService), new LogAppender(logService)),
-				commonProperties: resolveWorkbenchCommonProperties(storageService, productService.commit, productService.version, environmentService.configuration.remoteAuthority, environmentService.options && environmentService.options.resolveCommonTelemetryProperties)
+				commonProperties: resolveWorkbenchCommonProperties(storageService, productService.commit, productService.version, environmentService.configuration.remoteAuthority, environmentService.options && environmentService.options.resolveCommonTelemetryProperties),
+				sendErrorTelemetry: false,
 			};
 
 			this.impl = this._register(new BaseTelemetryService(config, configurationService));
@@ -73,6 +74,14 @@ export class TelemetryService extends Disposable implements ITelemetryService {
 
 	publicLog2<E extends ClassifiedEvent<T> = never, T extends GDPRClassification<T> = never>(eventName: string, data?: StrictPropertyCheck<T, E>, anonymizeFilePaths?: boolean) {
 		return this.publicLog(eventName, data as ITelemetryData, anonymizeFilePaths);
+	}
+
+	publicLogError(errorEventName: string, data?: ITelemetryData): Promise<void> {
+		return this.impl.publicLog(errorEventName, data);
+	}
+
+	publicLogError2<E extends ClassifiedEvent<T> = never, T extends GDPRClassification<T> = never>(eventName: string, data?: StrictPropertyCheck<T, E>) {
+		return this.publicLogError(eventName, data as ITelemetryData);
 	}
 
 	getTelemetryInfo(): Promise<ITelemetryInfo> {

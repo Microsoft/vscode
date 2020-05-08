@@ -16,7 +16,7 @@ import { localize } from 'vs/nls';
 import { ScrollType } from 'vs/editor/common/editorCommon';
 import { IRange, Range } from 'vs/editor/common/core/range';
 import { SplitView, Orientation, Sizing } from 'vs/base/browser/ui/splitview/splitview';
-import { Dimension, addClass } from 'vs/base/browser/dom';
+import { Dimension } from 'vs/base/browser/dom';
 import { Event } from 'vs/base/common/event';
 import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
 import { EmbeddedCodeEditorWidget } from 'vs/editor/browser/widget/embeddedCodeEditorWidget';
@@ -152,23 +152,23 @@ export class CallHierarchyTreePeekWidget extends peekView.PeekViewWidget {
 		this._dim = { height: 0, width: 0 };
 
 		this._parent = parent;
-		addClass(parent, 'call-hierarchy');
+		parent.classList.add('call-hierarchy');
 
 		const message = document.createElement('div');
-		addClass(message, 'message');
+		message.classList.add('message');
 		parent.appendChild(message);
 		this._message = message;
 		this._message.tabIndex = 0;
 
 		const container = document.createElement('div');
-		addClass(container, 'results');
+		container.classList.add('results');
 		parent.appendChild(container);
 
 		this._splitView = new SplitView(container, { orientation: Orientation.HORIZONTAL });
 
 		// editor stuff
 		const editorContainer = document.createElement('div');
-		addClass(editorContainer, 'editor');
+		editorContainer.classList.add('editor');
 		container.appendChild(editorContainer);
 		let editorOptions: IEditorOptions = {
 			scrollBeyondLastLine: false,
@@ -195,13 +195,12 @@ export class CallHierarchyTreePeekWidget extends peekView.PeekViewWidget {
 
 		// tree stuff
 		const treeContainer = document.createElement('div');
-		addClass(treeContainer, 'tree');
+		treeContainer.classList.add('tree');
 		container.appendChild(treeContainer);
 		const options: IWorkbenchAsyncDataTreeOptions<callHTree.Call, FuzzyScore> = {
 			sorter: new callHTree.Sorter(),
 			accessibilityProvider: new callHTree.AccessibilityProvider(() => this._direction),
 			identityProvider: new callHTree.IdentityProvider(() => this._direction),
-			ariaLabel: localize('tree.aria', "Call Hierarchy"),
 			expandOnlyOnTwistieClick: true,
 			overrideStyles: {
 				listBackground: peekView.peekViewResultsBackground

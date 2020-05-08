@@ -15,12 +15,13 @@ import { Iterable } from 'vs/base/common/iterator';
 import { IDragAndDropData } from 'vs/base/browser/dnd';
 import { ElementsDragAndDropData } from 'vs/base/browser/ui/list/listView';
 import { isPromiseCanceledError, onUnexpectedError } from 'vs/base/common/errors';
-import { toggleClass } from 'vs/base/browser/dom';
+import { removeClasses, addClasses } from 'vs/base/browser/dom';
 import { values } from 'vs/base/common/map';
 import { ScrollEvent } from 'vs/base/common/scrollable';
 import { ICompressedTreeNode, ICompressedTreeElement } from 'vs/base/browser/ui/tree/compressedObjectTreeModel';
 import { IThemable } from 'vs/base/common/styler';
 import { isFilterResult, getVisibleState } from 'vs/base/browser/ui/tree/indexTreeModel';
+import { treeItemLoadingIcon } from 'vs/base/browser/ui/tree/treeIcons';
 
 interface IAsyncDataTreeNode<TInput, T> {
 	element: TInput | T;
@@ -109,7 +110,11 @@ class AsyncDataTreeRenderer<TInput, T, TFilterData, TTemplateData> implements IT
 	}
 
 	renderTwistie(element: IAsyncDataTreeNode<TInput, T>, twistieElement: HTMLElement): boolean {
-		toggleClass(twistieElement, 'codicon-loading', element.slow);
+		if (element.slow) {
+			addClasses(twistieElement, treeItemLoadingIcon.classNames);
+		} else {
+			removeClasses(twistieElement, treeItemLoadingIcon.classNames);
+		}
 		return false;
 	}
 
@@ -242,6 +247,10 @@ function asObjectTreeOptions<TInput, T, TFilterData>(options?: IAsyncDataTreeOpt
 			getAriaLabel(e) {
 				return options.accessibilityProvider!.getAriaLabel(e.element as T);
 			},
+			getWidgetAriaLabel() {
+				return options.accessibilityProvider!.getWidgetAriaLabel();
+			},
+			getWidgetRole: options.accessibilityProvider!.getWidgetRole ? () => options.accessibilityProvider!.getWidgetRole!() : () => 'tree',
 			getAriaLevel: options.accessibilityProvider!.getAriaLevel && (node => {
 				return options.accessibilityProvider!.getAriaLevel!(node.element as T);
 			}),
@@ -266,7 +275,6 @@ function asObjectTreeOptions<TInput, T, TFilterData>(options?: IAsyncDataTreeOpt
 				e => (options.expandOnlyOnTwistieClick as ((e: T) => boolean))(e.element as T)
 			)
 		),
-		ariaRole: 'tree',
 		additionalScrollHeight: options.additionalScrollHeight
 	};
 }
@@ -440,6 +448,14 @@ export class AsyncDataTree<TInput, T, TFilterData = void> implements IDisposable
 
 	get lastVisibleElement(): T {
 		return this.tree.lastVisibleElement!.element as T;
+	}
+
+	get ariaLabel(): string {
+		return this.tree.ariaLabel;
+	}
+
+	set ariaLabel(value: string) {
+		this.tree.ariaLabel = value;
 	}
 
 	domFocus(): void {
@@ -1038,7 +1054,11 @@ class CompressibleAsyncDataTreeRenderer<TInput, T, TFilterData, TTemplateData> i
 	}
 
 	renderTwistie(element: IAsyncDataTreeNode<TInput, T>, twistieElement: HTMLElement): boolean {
-		toggleClass(twistieElement, 'codicon-loading', element.slow);
+		if (element.slow) {
+			addClasses(twistieElement, treeItemLoadingIcon.classNames);
+		} else {
+			removeClasses(twistieElement, treeItemLoadingIcon.classNames);
+		}
 		return false;
 	}
 

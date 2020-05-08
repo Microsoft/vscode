@@ -240,7 +240,7 @@ registerEditorAction(class GoToDefinitionAction extends DefinitionAction {
 			alias: 'Go to Definition',
 			precondition: ContextKeyExpr.and(
 				EditorContextKeys.hasDefinitionProvider,
-				EditorContextKeys.isInEmbeddedEditor.toNegated()),
+				EditorContextKeys.isInWalkThroughSnippet.toNegated()),
 			kbOpts: {
 				kbExpr: EditorContextKeys.editorTextFocus,
 				primary: goToDefinitionKb,
@@ -276,7 +276,7 @@ registerEditorAction(class OpenDefinitionToSideAction extends DefinitionAction {
 			alias: 'Open Definition to the Side',
 			precondition: ContextKeyExpr.and(
 				EditorContextKeys.hasDefinitionProvider,
-				EditorContextKeys.isInEmbeddedEditor.toNegated()),
+				EditorContextKeys.isInWalkThroughSnippet.toNegated()),
 			kbOpts: {
 				kbExpr: EditorContextKeys.editorTextFocus,
 				primary: KeyChord(KeyMod.CtrlCmd | KeyCode.KEY_K, goToDefinitionKb),
@@ -303,7 +303,7 @@ registerEditorAction(class PeekDefinitionAction extends DefinitionAction {
 			precondition: ContextKeyExpr.and(
 				EditorContextKeys.hasDefinitionProvider,
 				PeekContext.notInPeekEditor,
-				EditorContextKeys.isInEmbeddedEditor.toNegated()
+				EditorContextKeys.isInWalkThroughSnippet.toNegated()
 			),
 			kbOpts: {
 				kbExpr: EditorContextKeys.editorTextFocus,
@@ -361,7 +361,7 @@ registerEditorAction(class GoToDeclarationAction extends DeclarationAction {
 			alias: 'Go to Declaration',
 			precondition: ContextKeyExpr.and(
 				EditorContextKeys.hasDeclarationProvider,
-				EditorContextKeys.isInEmbeddedEditor.toNegated()
+				EditorContextKeys.isInWalkThroughSnippet.toNegated()
 			),
 			contextMenuOpts: {
 				group: 'navigation',
@@ -396,7 +396,7 @@ registerEditorAction(class PeekDeclarationAction extends DeclarationAction {
 			precondition: ContextKeyExpr.and(
 				EditorContextKeys.hasDeclarationProvider,
 				PeekContext.notInPeekEditor,
-				EditorContextKeys.isInEmbeddedEditor.toNegated()
+				EditorContextKeys.isInWalkThroughSnippet.toNegated()
 			),
 			contextMenuOpts: {
 				menuId: MenuId.EditorContextPeek,
@@ -447,7 +447,7 @@ registerEditorAction(class GoToTypeDefinitionAction extends TypeDefinitionAction
 			alias: 'Go to Type Definition',
 			precondition: ContextKeyExpr.and(
 				EditorContextKeys.hasTypeDefinitionProvider,
-				EditorContextKeys.isInEmbeddedEditor.toNegated()),
+				EditorContextKeys.isInWalkThroughSnippet.toNegated()),
 			kbOpts: {
 				kbExpr: EditorContextKeys.editorTextFocus,
 				primary: 0,
@@ -483,7 +483,7 @@ registerEditorAction(class PeekTypeDefinitionAction extends TypeDefinitionAction
 			precondition: ContextKeyExpr.and(
 				EditorContextKeys.hasTypeDefinitionProvider,
 				PeekContext.notInPeekEditor,
-				EditorContextKeys.isInEmbeddedEditor.toNegated()
+				EditorContextKeys.isInWalkThroughSnippet.toNegated()
 			),
 			contextMenuOpts: {
 				menuId: MenuId.EditorContextPeek,
@@ -534,7 +534,7 @@ registerEditorAction(class GoToImplementationAction extends ImplementationAction
 			alias: 'Go to Implementations',
 			precondition: ContextKeyExpr.and(
 				EditorContextKeys.hasImplementationProvider,
-				EditorContextKeys.isInEmbeddedEditor.toNegated()),
+				EditorContextKeys.isInWalkThroughSnippet.toNegated()),
 			kbOpts: {
 				kbExpr: EditorContextKeys.editorTextFocus,
 				primary: KeyMod.CtrlCmd | KeyCode.F12,
@@ -570,7 +570,7 @@ registerEditorAction(class PeekImplementationAction extends ImplementationAction
 			precondition: ContextKeyExpr.and(
 				EditorContextKeys.hasImplementationProvider,
 				PeekContext.notInPeekEditor,
-				EditorContextKeys.isInEmbeddedEditor.toNegated()
+				EditorContextKeys.isInWalkThroughSnippet.toNegated()
 			),
 			kbOpts: {
 				kbExpr: EditorContextKeys.editorTextFocus,
@@ -621,7 +621,7 @@ registerEditorAction(class GoToReferencesAction extends ReferencesAction {
 			precondition: ContextKeyExpr.and(
 				EditorContextKeys.hasReferenceProvider,
 				PeekContext.notInPeekEditor,
-				EditorContextKeys.isInEmbeddedEditor.toNegated()
+				EditorContextKeys.isInWalkThroughSnippet.toNegated()
 			),
 			kbOpts: {
 				kbExpr: EditorContextKeys.editorTextFocus,
@@ -660,7 +660,7 @@ registerEditorAction(class PeekReferencesAction extends ReferencesAction {
 			precondition: ContextKeyExpr.and(
 				EditorContextKeys.hasReferenceProvider,
 				PeekContext.notInPeekEditor,
-				EditorContextKeys.isInEmbeddedEditor.toNegated()
+				EditorContextKeys.isInWalkThroughSnippet.toNegated()
 			),
 			contextMenuOpts: {
 				menuId: MenuId.EditorContextPeek,
@@ -693,7 +693,7 @@ class GenericGoToLocationAction extends SymbolNavigationAction {
 			alias: 'Go To Any Symbol',
 			precondition: ContextKeyExpr.and(
 				PeekContext.notInPeekEditor,
-				EditorContextKeys.isInEmbeddedEditor.toNegated()
+				EditorContextKeys.isInWalkThroughSnippet.toNegated()
 			),
 		});
 	}

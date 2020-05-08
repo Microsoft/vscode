@@ -481,7 +481,9 @@ export class TernarySearchTree<K, V> {
 	}
 }
 
-export class ResourceMap<T> {
+export class ResourceMap<T> implements Map<URI, T> {
+
+	readonly [Symbol.toStringTag] = 'ResourceMap';
 
 	protected readonly map: Map<string, T>;
 	protected readonly ignoreCase?: boolean;
@@ -491,8 +493,9 @@ export class ResourceMap<T> {
 		this.ignoreCase = false; // in the future this should be an uri-comparator
 	}
 
-	set(resource: URI, value: T): void {
+	set(resource: URI, value: T): this {
 		this.map.set(this.toKey(resource), value);
+		return this;
 	}
 
 	get(resource: URI): T | undefined {
@@ -515,12 +518,35 @@ export class ResourceMap<T> {
 		return this.map.delete(this.toKey(resource));
 	}
 
-	forEach(clb: (value: T, key: URI) => void): void {
-		this.map.forEach((value, index) => clb(value, URI.parse(index)));
+	forEach(clb: (value: T, key: URI, map: Map<URI, T>) => void, thisArg?: any): void {
+		if (typeof thisArg !== 'undefined') {
+			clb = clb.bind(thisArg);
+		}
+		for (let [index, value] of this.map) {
+			clb(value, URI.parse(index), <any>this);
+		}
 	}
 
-	values(): T[] {
-		return values(this.map);
+	values(): IterableIterator<T> {
+		return this.map.values();
+	}
+
+	*keys(): IterableIterator<URI> {
+		for (let key of this.map.keys()) {
+			yield URI.parse(key);
+		}
+	}
+
+	*entries(): IterableIterator<[URI, T]> {
+		for (let tuple of this.map.entries()) {
+			yield [URI.parse(tuple[0]), tuple[1]];
+		}
+	}
+
+	*[Symbol.iterator](): IterableIterator<[URI, T]> {
+		for (let item of this.map) {
+			yield [URI.parse(item[0]), item[1]];
+		}
 	}
 
 	private toKey(resource: URI): string {
@@ -530,10 +556,6 @@ export class ResourceMap<T> {
 		}
 
 		return key;
-	}
-
-	keys(): URI[] {
-		return keys(this.map).map(k => URI.parse(k));
 	}
 
 	clone(): ResourceMap<T> {

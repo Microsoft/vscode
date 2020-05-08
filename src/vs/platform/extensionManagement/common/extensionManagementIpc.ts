@@ -142,6 +142,7 @@ export class ExtensionTipsChannel implements IServerChannel {
 
 	call(context: any, command: string, args?: any): Promise<any> {
 		switch (command) {
+			case 'getConfigBasedTips': return this.service.getConfigBasedTips(URI.revive(args[0]));
 			case 'getImportantExecutableBasedTips': return this.service.getImportantExecutableBasedTips();
 			case 'getOtherExecutableBasedTips': return this.service.getOtherExecutableBasedTips();
 			case 'getAllWorkspacesTips': return this.service.getAllWorkspacesTips();

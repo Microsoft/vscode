@@ -14,7 +14,7 @@ jobs:
         with:
           repository: 'microsoft/vscode-github-triage-actions'
           path: ./actions
-          ref: v5
+          ref: v15
       - name: Install Actions
         if: contains(github.event.issue.labels.*.name, 'testplan-item') || contains(github.event.issue.labels.*.name, 'invalid-testplan-item')
         run: npm install --production --prefix ./actions

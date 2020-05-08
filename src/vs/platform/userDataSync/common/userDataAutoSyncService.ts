@@ -42,7 +42,7 @@ export class UserDataAutoSyncService extends Disposable implements IUserDataAuto
 	}
 
 	private async updateEnablement(stopIfDisabled: boolean, auto: boolean): Promise<void> {
-		const enabled = await this.isAutoSyncEnabled();
+		const { enabled, reason } = await this.isAutoSyncEnabled();
 		if (this.enabled === enabled) {
 			return;
 		}
@@ -56,7 +56,7 @@ export class UserDataAutoSyncService extends Disposable implements IUserDataAuto
 			this.resetFailures();
 			if (stopIfDisabled) {
 				this.userDataSyncService.stop();
-				this.logService.info('Auto Sync: stopped.');
+				this.logService.info('Auto Sync: stopped because', reason);
 			}
 		}
 
@@ -95,10 +95,18 @@ export class UserDataAutoSyncService extends Disposable implements IUserDataAuto
 		}
 	}
 
-	private async isAutoSyncEnabled(): Promise<boolean> {
-		return this.userDataSyncEnablementService.isEnabled()
-			&& this.userDataSyncService.status !== SyncStatus.Uninitialized
-			&& !!(await this.authTokenService.getToken());
+	private async isAutoSyncEnabled(): Promise<{ enabled: boolean, reason?: string }> {
+		if (!this.userDataSyncEnablementService.isEnabled()) {
+			return { enabled: false, reason: 'sync is disabled' };
+		}
+		if (this.userDataSyncService.status === SyncStatus.Uninitialized) {
+			return { enabled: false, reason: 'sync is not initialized' };
+		}
+		const token = await this.authTokenService.getToken();
+		if (!token) {
+			return { enabled: false, reason: 'token is not avaialable' };
+		}
+		return { enabled: true };
 	}
 
 	private resetFailures(): void {

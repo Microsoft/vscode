@@ -13,7 +13,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: 'microsoft/vscode-github-triage-actions'
-          ref: v5
+          ref: v15
           path: ./actions
       - name: Install Actions
         if: contains(github.event.issue.labels.*.name, '*english-please')

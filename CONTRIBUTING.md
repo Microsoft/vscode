@@ -87,7 +87,7 @@ Once submitted, your report will go into the [issue tracking](https://github.com
 
 ## Automated Issue Management
 
-We use GitHub Actions to help us manage issues. These Actions and their descriptions can be [viewed here](https://github.com/JacksonKearl/vscode-triage-github-actions/blob/master/README.md). Some examples of what these Actions do are:
+We use GitHub Actions to help us manage issues. These Actions and their descriptions can be [viewed here](https://github.com/microsoft/vscode-github-triage-actions). Some examples of what these Actions do are:
 
 * Automatically closes any issue marked `needs-more-info` if there has been no response in the past 7 days.
 * Automatically lock issues 45 days after they are closed.

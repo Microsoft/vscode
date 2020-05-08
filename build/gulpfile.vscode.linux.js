@@ -43,7 +43,7 @@ function prepareDebPackage(arch) {
 			.pipe(replace('@@NAME_SHORT@@', product.nameShort))
 			.pipe(replace('@@NAME@@', product.applicationName))
 			.pipe(replace('@@EXEC@@', `/usr/share/${product.applicationName}/${product.applicationName}`))
-			.pipe(replace('@@ICON@@', `/usr/share/pixmaps/${product.linuxIconName}.png`))
+			.pipe(replace('@@ICON@@', product.linuxIconName))
 			.pipe(replace('@@URLPROTOCOL@@', product.urlProtocol));
 
 		const appdata = gulp.src('resources/linux/code.appdata.xml', { base: '.' })

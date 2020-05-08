@@ -1,9 +1,19 @@
-# Query: \\w+\\?\\..+![(.[]
+# Query: \\w+\\?\\.\\w+![(.[]
 # Flags: RegExp
 # ContextLines: 2
+
+2 results - 2 files
+
 src/vs/base/browser/ui/tree/asyncDataTree.ts:
-  270  			} : undefined,
-  271  			isChecked: options.ariaProvider!.isChecked ? (e) => {
-  272: 				return options.ariaProvider?.isChecked!(e.element as T);
-  273  			} : undefined
-  274  		},
+  243  			} : () => 'treeitem',
+  244  			isChecked: options.accessibilityProvider!.isChecked ? (e) => {
+  245: 				return !!(options.accessibilityProvider?.isChecked!(e.element as T));
+  246  			} : undefined,
+  247  			getAriaLabel(e) {
+
+src/vs/workbench/contrib/debug/browser/debugConfigurationManager.ts:
+  254  
+  255  		return debugDynamicExtensions.map(e => {
+  256: 			const type = e.contributes?.debuggers![0].type!;
+  257  			return {
+  258  				label: this.getDebuggerLabel(type)!,

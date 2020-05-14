@@ -83,6 +83,7 @@
 }
 
 .monaco-editor-hover .monaco-tokenized-source {
+	tab-size: 4;
 	white-space: pre-wrap;
 	word-break: break-all;
 }

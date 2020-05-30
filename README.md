@@ -1,10 +1,17 @@
-# Visual Studio Code - Open Source ("Code - OSS")
+<p align="center">
+  <h1 align="center">Visual Studio Code - Open Source ("Code - OSS")</h1>
+</p>
+
 
 <!-- [![Build Status](https://dev.azure.com/vscode/VSCode/_apis/build/status/VS%20Code?branchName=master)](https://aka.ms/vscode-builds) -->
 [![Build Status](https://dev.azure.com/vscode/VSCode/_apis/build/status/VS%20Code?branchName=master)](https://dev.azure.com/vscode/VSCode/_build/latest?definitionId=12)
 [![Feature Requests](https://img.shields.io/github/issues/Microsoft/vscode/feature-request.svg)](https://github.com/Microsoft/vscode/issues?q=is%3Aopen+is%3Aissue+label%3Afeature-request+sort%3Areactions-%2B1-desc)
 [![Bugs](https://img.shields.io/github/issues/Microsoft/vscode/bug.svg)](https://github.com/Microsoft/vscode/issues?utf8=✓&q=is%3Aissue+is%3Aopen+label%3Abug)
 [![Gitter](https://img.shields.io/badge/chat-on%20gitter-yellow.svg)](https://gitter.im/Microsoft/vscode)
+[![Release](https://img.shields.io/github/release/microsoft/vscode.svg?label=Release)](https://github.com/microsoft/vscode/releases)
+[![Contributors](https://img.shields.io/github/contributors/microsoft/vscode?label=Contributors)](https://github.com/microsoft/vscode/graphs/contributors)
+
+
 
 ## The Repository
 

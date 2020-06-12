@@ -31,7 +31,7 @@ import { IContextKeyService, IContextKey, ContextKeyExpr } from 'vs/platform/con
 import { StandardKeyboardEvent, IKeyboardEvent } from 'vs/base/browser/keyboardEvent';
 import { KeyCode, ResolvedKeybinding } from 'vs/base/common/keyCodes';
 import { listHighlightForeground, badgeBackground, contrastBorder, badgeForeground, listActiveSelectionForeground, listInactiveSelectionForeground, listHoverForeground, listFocusForeground, editorBackground } from 'vs/platform/theme/common/colorRegistry';
-import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
+import { IEditorService, SIDE_GROUP } from 'vs/workbench/services/editor/common/editorService';
 import { EditorExtensionsRegistry } from 'vs/editor/browser/editorExtensions';
 import { WorkbenchList } from 'vs/platform/list/browser/listService';
 import { INotificationService } from 'vs/platform/notification/common/notification';
@@ -306,8 +306,19 @@ export class KeybindingsEditor extends BaseEditor implements IKeybindingsEditorP
 		this.overlayContainer.style.zIndex = '10';
 		this.defineKeybindingWidget = this._register(this.instantiationService.createInstance(DefineKeybindingWidget, this.overlayContainer));
 		this._register(this.defineKeybindingWidget.onDidChange(keybindingStr => this.defineKeybindingWidget.printExisting(this.keybindingsEditorModel!.fetch(`"${keybindingStr}"`).length)));
-		this._register(this.defineKeybindingWidget.onShowExistingKeybidings(keybindingStr => this.searchWidget.setValue(`"${keybindingStr}"`)));
+		this._register(this.defineKeybindingWidget.onShowExistingKeybidings(keybindingStr => this.openNewKeybindingsEditor(`"${keybindingStr}"`)));
 		this.hideOverlayContainer();
+	}
+
+	private openNewKeybindingsEditor(searchValue: string) {
+		const keybindingsEditorInput = this.instantiationService.createInstance(KeybindingsEditorInput);
+		keybindingsEditorInput.searchOptions = {
+			searchValue: searchValue,
+			recordKeybindings: false,
+			sortByPrecedence: false
+		};
+
+		return this.editorService.openEditor(keybindingsEditorInput, { forceReload: true }, SIDE_GROUP).then(() => undefined);
 	}
 
 	private showOverlayContainer() {

@@ -9,9 +9,10 @@ import { FileChangeType, FileChangesEvent } from 'vs/platform/files/common/files
 import { URI as uri } from 'vs/base/common/uri';
 import { IDiskFileChange, normalizeFileChanges, toFileChanges } from 'vs/platform/files/node/watcher/watcher';
 import { Event, Emitter } from 'vs/base/common/event';
+import { ExtUri } from 'vs/base/common/resources';
 
 function toFileChangesEvent(changes: IDiskFileChange[]): FileChangesEvent {
-	return new FileChangesEvent(toFileChanges(changes));
+	return new FileChangesEvent(toFileChanges(changes), new ExtUri(() => !platform.isLinux));
 }
 
 class TestFileWatcher {

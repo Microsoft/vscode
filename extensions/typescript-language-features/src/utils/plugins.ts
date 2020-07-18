@@ -12,6 +12,7 @@ export interface TypeScriptServerPlugin {
 	readonly name: string;
 	readonly enableForWorkspaceTypeScriptVersions: boolean;
 	readonly languages: ReadonlyArray<string>;
+	readonly configNamespace?: string
 }
 
 namespace TypeScriptServerPlugin {
@@ -77,6 +78,7 @@ export class PluginManager extends Disposable {
 						enableForWorkspaceTypeScriptVersions: !!plugin.enableForWorkspaceTypeScriptVersions,
 						path: extension.extensionPath,
 						languages: Array.isArray(plugin.languages) ? plugin.languages : [],
+						configNamespace: plugin.configNamespace,
 					});
 				}
 				if (plugins.length) {

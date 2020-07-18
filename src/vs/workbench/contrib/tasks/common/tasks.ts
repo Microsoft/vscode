@@ -12,7 +12,7 @@ import { UriComponents, URI } from 'vs/base/common/uri';
 
 import { ProblemMatcher } from 'vs/workbench/contrib/tasks/common/problemMatcher';
 import { IWorkspaceFolder, IWorkspace } from 'vs/platform/workspace/common/workspace';
-import { RawContextKey } from 'vs/platform/contextkey/common/contextkey';
+import { RawContextKey, ContextKeyExpression } from 'vs/platform/contextkey/common/contextkey';
 import { TaskDefinitionRegistry } from 'vs/workbench/contrib/tasks/common/taskDefinitionRegistry';
 import { IExtensionDescription } from 'vs/platform/extensions/common/extensions';
 import { ConfigurationTarget } from 'vs/platform/configuration/common/configuration';
@@ -601,7 +601,7 @@ export abstract class CommonTask {
 	}
 
 	public clone(): Task {
-		return this.fromObject(Objects.assign({}, <any>this));
+		return this.fromObject(Object.assign({}, <any>this));
 	}
 
 	protected abstract fromObject(object: any): Task;
@@ -1002,6 +1002,7 @@ export interface TaskDefinition {
 	taskType: string;
 	required: string[];
 	properties: IJSONSchemaMap;
+	when?: ContextKeyExpression;
 }
 
 export class TaskSorter {
@@ -1124,7 +1125,7 @@ export namespace KeyedTaskIdentifier {
 	export function create(value: TaskIdentifier): KeyedTaskIdentifier {
 		const resultKey = sortedStringify(value);
 		let result = { _key: resultKey, type: value.taskType };
-		Objects.assign(result, value);
+		Object.assign(result, value);
 		return result;
 	}
 }

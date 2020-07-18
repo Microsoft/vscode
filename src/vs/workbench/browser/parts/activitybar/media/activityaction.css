@@ -20,9 +20,8 @@
 	width: 48px;
 	height: 2px;
 	display: block;
-	background-color: var(--insert-border-color);
-	opacity: 0;
-	transition-property: opacity;
+	background-color: transparent;
+	transition-property: background-color;
 	transition-duration: 0ms;
 	transition-delay: 100ms;
 }
@@ -52,8 +51,9 @@
 
 .monaco-workbench .activitybar > .content > .composite-bar > .monaco-action-bar .action-item.top::before,
 .monaco-workbench .activitybar > .content > .composite-bar > .monaco-action-bar .action-item.bottom::after,
-.monaco-workbench .activitybar > .content.dragged-over > .composite-bar > .monaco-action-bar .action-item:last-of-type::after {
-	opacity: 1;
+.monaco-workbench .activitybar > .content.dragged-over-head > .composite-bar > .monaco-action-bar .action-item:first-of-type::before,
+.monaco-workbench .activitybar > .content.dragged-over-tail > .composite-bar > .monaco-action-bar .action-item:last-of-type::after {
+	background-color: var(--insert-border-color);
 }
 
 .monaco-workbench .activitybar > .content :not(.monaco-menu) > .monaco-action-bar .action-label {
@@ -101,7 +101,7 @@
 }
 
 /* Hides active elements in high contrast mode */
-.hc-black .monaco-workbench .activitybar > .content :not(.monaco-menu) > .monaco-action-bar .action-item.checked .active-item-indicator {
+.monaco-workbench.hc-black .activitybar > .content :not(.monaco-menu) > .monaco-action-bar .action-item.checked .active-item-indicator {
 	display: none;
 }
 
@@ -120,8 +120,8 @@
 }
 
 /* Hides outline on HC as focus is handled by border */
-.hc-black .monaco-workbench .activitybar.left > .content :not(.monaco-menu) > .monaco-action-bar .action-item:focus:before,
-.hc-black .monaco-workbench .activitybar.right > .content :not(.monaco-menu) > .monaco-action-bar .action-item:focus:before {
+.monaco-workbench.hc-black .activitybar.left > .content :not(.monaco-menu) > .monaco-action-bar .action-item:focus:before,
+.monaco-workbench.hc-black .activitybar.right > .content :not(.monaco-menu) > .monaco-action-bar .action-item:focus:before {
 	outline: none;
 }
 

@@ -68,20 +68,24 @@ export class TerminalLink extends DisposableStore implements ILink {
 			}
 		}));
 
-		const timeout = this._configurationService.getValue<number>('editor.hover.delay');
-		this._tooltipScheduler = new RunOnceScheduler(() => {
-			this._tooltipCallback(
-				this,
-				convertBufferRangeToViewport(this.range, this._viewportY),
-				this._isHighConfidenceLink ? () => this._enableDecorations() : undefined,
-				this._isHighConfidenceLink ? () => this._disableDecorations() : undefined
-			);
-			// Clear out scheduler until next hover event
-			this._tooltipScheduler?.dispose();
-			this._tooltipScheduler = undefined;
-		}, timeout);
-		this.add(this._tooltipScheduler);
-		this._tooltipScheduler.schedule();
+		// Only show the tooltip and highlight for high confidence links (not word/search workspace
+		// links). Feedback was that this makes using the terminal overly noisy.
+		if (this._isHighConfidenceLink) {
+			const timeout = this._configurationService.getValue<number>('editor.hover.delay');
+			this._tooltipScheduler = new RunOnceScheduler(() => {
+				this._tooltipCallback(
+					this,
+					convertBufferRangeToViewport(this.range, this._viewportY),
+					this._isHighConfidenceLink ? () => this._enableDecorations() : undefined,
+					this._isHighConfidenceLink ? () => this._disableDecorations() : undefined
+				);
+				// Clear out scheduler until next hover event
+				this._tooltipScheduler?.dispose();
+				this._tooltipScheduler = undefined;
+			}, timeout);
+			this.add(this._tooltipScheduler);
+			this._tooltipScheduler.schedule();
+		}
 
 		const origin = { x: event.pageX, y: event.pageY };
 		this._hoverListeners = new DisposableStore();

@@ -9,7 +9,7 @@ export const ISharedProcessMainService = createDecorator<ISharedProcessMainServi
 
 export interface ISharedProcessMainService {
 
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	whenSharedProcessReady(): Promise<void>;
 	toggleSharedProcessWindow(): Promise<void>;
@@ -22,7 +22,7 @@ export interface ISharedProcess {
 
 export class SharedProcessMainService implements ISharedProcessMainService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	constructor(private sharedProcess: ISharedProcess) { }
 

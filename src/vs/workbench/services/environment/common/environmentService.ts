@@ -17,7 +17,7 @@ export interface IEnvironmentConfiguration extends IWindowConfiguration {
 
 export interface IWorkbenchEnvironmentService extends IEnvironmentService {
 
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	readonly configuration: IEnvironmentConfiguration;
 

@@ -4,15 +4,12 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { localize } from 'vs/nls';
-import { Registry } from 'vs/platform/registry/common/platform';
-import { SyncActionDescriptor, MenuRegistry, MenuId } from 'vs/platform/actions/common/actions';
+import { MenuRegistry, MenuId, Action2, registerAction2, ILocalizedString } from 'vs/platform/actions/common/actions';
 import { KeyMod, KeyCode } from 'vs/base/common/keyCodes';
-import { IWorkbenchActionRegistry, Extensions as ActionExtensions } from 'vs/workbench/common/actions';
-import { KeybindingsRegistry, KeybindingWeight } from 'vs/platform/keybinding/common/keybindingsRegistry';
+import { KeybindingsRegistry, KeybindingWeight, IKeybindingRule } from 'vs/platform/keybinding/common/keybindingsRegistry';
 import { IQuickInputService, ItemActivation } from 'vs/platform/quickinput/common/quickInput';
 import { IKeybindingService } from 'vs/platform/keybinding/common/keybinding';
 import { CommandsRegistry } from 'vs/platform/commands/common/commands';
-import { Action } from 'vs/base/common/actions';
 import { ServicesAccessor } from 'vs/platform/instantiation/common/instantiation';
 import { inQuickPickContext, defaultQuickAccessContext, getQuickNavigateHandler } from 'vs/workbench/browser/quickaccess';
 
@@ -138,7 +135,7 @@ CommandsRegistry.registerCommand({
 	handler: async function (accessor: ServicesAccessor, prefix: unknown) {
 		const quickInputService = accessor.get(IQuickInputService);
 
-		quickInputService.quickAccess.show(typeof prefix === 'string' ? prefix : undefined);
+		quickInputService.quickAccess.show(typeof prefix === 'string' ? prefix : undefined, { preserveValue: typeof prefix === 'string' /* preserve as is if provided */ });
 	},
 	description: {
 		description: `Quick access`,
@@ -151,7 +148,7 @@ CommandsRegistry.registerCommand({
 	}
 });
 
-CommandsRegistry.registerCommand('workbench.action.quickOpenPreviousEditor', async function (accessor: ServicesAccessor, prefix: string | null = null) {
+CommandsRegistry.registerCommand('workbench.action.quickOpenPreviousEditor', async accessor => {
 	const quickInputService = accessor.get(IQuickInputService);
 
 	quickInputService.quickAccess.show('', { itemActivation: ItemActivation.SECOND });
@@ -161,91 +158,82 @@ CommandsRegistry.registerCommand('workbench.action.quickOpenPreviousEditor', asy
 
 //#region Workbench actions
 
-export class BaseQuickAccessNavigateAction extends Action {
+class BaseQuickAccessNavigateAction extends Action2 {
 
 	constructor(
-		id: string,
-		label: string,
+		private id: string,
+		title: ILocalizedString,
 		private next: boolean,
 		private quickNavigate: boolean,
-		@IQuickInputService private readonly quickInputService: IQuickInputService,
-		@IKeybindingService private readonly keybindingService: IKeybindingService
+		keybinding?: Omit<IKeybindingRule, 'id'>
 	) {
-		super(id, label);
+		super({ id, title, f1: true, keybinding });
 	}
 
-	async run(): Promise<void> {
-		const keys = this.keybindingService.lookupKeybindings(this.id);
+	async run(accessor: ServicesAccessor): Promise<void> {
+		const keybindingService = accessor.get(IKeybindingService);
+		const quickInputService = accessor.get(IQuickInputService);
+
+		const keys = keybindingService.lookupKeybindings(this.id);
 		const quickNavigate = this.quickNavigate ? { keybindings: keys } : undefined;
 
-		this.quickInputService.navigate(this.next, quickNavigate);
+		quickInputService.navigate(this.next, quickNavigate);
 	}
 }
 
-export class QuickAccessNavigateNextAction extends BaseQuickAccessNavigateAction {
+class QuickAccessNavigateNextAction extends BaseQuickAccessNavigateAction {
 
-	static readonly ID = 'workbench.action.quickOpenNavigateNext';
-	static readonly LABEL = localize('quickNavigateNext', "Navigate Next in Quick Open");
-
-	constructor(
-		id: string,
-		label: string,
-		@IQuickInputService quickInputService: IQuickInputService,
-		@IKeybindingService keybindingService: IKeybindingService
-	) {
-		super(id, label, true, true, quickInputService, keybindingService);
+	constructor() {
+		super('workbench.action.quickOpenNavigateNext', { value: localize('quickNavigateNext', "Navigate Next in Quick Open"), original: 'Navigate Next in Quick Open' }, true, true);
 	}
 }
 
 class QuickAccessNavigatePreviousAction extends BaseQuickAccessNavigateAction {
 
-	static readonly ID = 'workbench.action.quickOpenNavigatePrevious';
-	static readonly LABEL = localize('quickNavigatePrevious', "Navigate Previous in Quick Open");
-
-	constructor(
-		id: string,
-		label: string,
-		@IQuickInputService quickInputService: IQuickInputService,
-		@IKeybindingService keybindingService: IKeybindingService
-	) {
-		super(id, label, false, true, quickInputService, keybindingService);
+	constructor() {
+		super('workbench.action.quickOpenNavigatePrevious', { value: localize('quickNavigatePrevious', "Navigate Previous in Quick Open"), original: 'Navigate Previous in Quick Open' }, false, true);
 	}
 }
 
 class QuickAccessSelectNextAction extends BaseQuickAccessNavigateAction {
 
-	static readonly ID = 'workbench.action.quickOpenSelectNext';
-	static readonly LABEL = localize('quickSelectNext', "Select Next in Quick Open");
-
-	constructor(
-		id: string,
-		label: string,
-		@IQuickInputService quickInputService: IQuickInputService,
-		@IKeybindingService keybindingService: IKeybindingService
-	) {
-		super(id, label, true, false, quickInputService, keybindingService);
+	constructor() {
+		super(
+			'workbench.action.quickOpenSelectNext',
+			{ value: localize('quickSelectNext', "Select Next in Quick Open"), original: 'Select Next in Quick Open' },
+			true,
+			false,
+			{
+				weight: KeybindingWeight.WorkbenchContrib + 50,
+				when: inQuickPickContext,
+				primary: 0,
+				mac: { primary: KeyMod.WinCtrl | KeyCode.KEY_N }
+			}
+		);
 	}
 }
 
 class QuickAccessSelectPreviousAction extends BaseQuickAccessNavigateAction {
 
-	static readonly ID = 'workbench.action.quickOpenSelectPrevious';
-	static readonly LABEL = localize('quickSelectPrevious', "Select Previous in Quick Open");
-
-	constructor(
-		id: string,
-		label: string,
-		@IQuickInputService quickInputService: IQuickInputService,
-		@IKeybindingService keybindingService: IKeybindingService
-	) {
-		super(id, label, false, false, quickInputService, keybindingService);
+	constructor() {
+		super(
+			'workbench.action.quickOpenSelectPrevious',
+			{ value: localize('quickSelectPrevious', "Select Previous in Quick Open"), original: 'Select Previous in Quick Open' },
+			false,
+			false,
+			{
+				weight: KeybindingWeight.WorkbenchContrib + 50,
+				when: inQuickPickContext,
+				primary: 0,
+				mac: { primary: KeyMod.WinCtrl | KeyCode.KEY_P }
+			}
+		);
 	}
 }
 
-const registry = Registry.as<IWorkbenchActionRegistry>(ActionExtensions.WorkbenchActions);
-registry.registerWorkbenchAction(SyncActionDescriptor.from(QuickAccessSelectNextAction, { primary: 0, mac: { primary: KeyMod.WinCtrl | KeyCode.KEY_N } }, inQuickPickContext, KeybindingWeight.WorkbenchContrib + 50), 'Select Next in Quick Open');
-registry.registerWorkbenchAction(SyncActionDescriptor.from(QuickAccessSelectPreviousAction, { primary: 0, mac: { primary: KeyMod.WinCtrl | KeyCode.KEY_P } }, inQuickPickContext, KeybindingWeight.WorkbenchContrib + 50), 'Select Previous in Quick Open');
-registry.registerWorkbenchAction(SyncActionDescriptor.from(QuickAccessNavigateNextAction), 'Navigate Next in Quick Open');
-registry.registerWorkbenchAction(SyncActionDescriptor.from(QuickAccessNavigatePreviousAction), 'Navigate Previous in Quick Open');
+registerAction2(QuickAccessSelectNextAction);
+registerAction2(QuickAccessSelectPreviousAction);
+registerAction2(QuickAccessNavigateNextAction);
+registerAction2(QuickAccessNavigatePreviousAction);
 
 //#endregion

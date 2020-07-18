@@ -126,7 +126,7 @@ export class FileStorage {
 
 export class StateService implements IStateService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private static readonly STATE_FILE = 'storage.json';
 

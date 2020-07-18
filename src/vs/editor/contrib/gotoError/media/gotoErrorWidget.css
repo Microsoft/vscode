@@ -32,7 +32,7 @@
 	user-select: text;
 	-webkit-user-select: text;
 	-ms-user-select: text;
-	padding: 8px 12px 0px 20px;
+	padding: 8px 12px 0 20px;
 }
 
 .monaco-editor .marker-widget .descriptioncontainer .message {

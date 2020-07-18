@@ -28,11 +28,11 @@ export class ExtHostEditorInsets implements ExtHostEditorInsetsShape {
 		// dispose editor inset whenever the hosting editor goes away
 		this._disposables.add(_editors.onDidChangeVisibleTextEditors(() => {
 			const visibleEditor = _editors.getVisibleTextEditors();
-			this._insets.forEach(value => {
+			for (const value of this._insets.values()) {
 				if (visibleEditor.indexOf(value.editor) < 0) {
 					value.inset.dispose(); // will remove from `this._insets`
 				}
-			});
+			}
 		}));
 	}
 

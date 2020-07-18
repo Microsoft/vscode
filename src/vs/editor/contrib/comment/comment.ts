@@ -36,7 +36,13 @@ abstract class CommentLineAction extends EditorAction {
 		const commentsOptions = editor.getOption(EditorOption.comments);
 
 		for (const selection of selections) {
-			commands.push(new LineCommentCommand(selection, modelOptions.tabSize, this._type, commentsOptions.insertSpace));
+			commands.push(new LineCommentCommand(
+				selection,
+				modelOptions.tabSize,
+				this._type,
+				commentsOptions.insertSpace,
+				commentsOptions.ignoreEmptyLines
+			));
 		}
 
 		editor.pushUndoStop();

@@ -163,11 +163,9 @@ export class WordOperations {
 	public static moveWordLeft(wordSeparators: WordCharacterClassifier, model: ICursorSimpleModel, position: Position, wordNavigationType: WordNavigationType): Position {
 		let lineNumber = position.lineNumber;
 		let column = position.column;
-		let movedToPreviousLine = false;
 
 		if (column === 1) {
 			if (lineNumber > 1) {
-				movedToPreviousLine = true;
 				lineNumber = lineNumber - 1;
 				column = model.getLineMaxColumn(lineNumber);
 			}
@@ -176,17 +174,6 @@ export class WordOperations {
 		let prevWordOnLine = WordOperations._findPreviousWordOnLine(wordSeparators, model, new Position(lineNumber, column));
 
 		if (wordNavigationType === WordNavigationType.WordStart) {
-
-			if (prevWordOnLine && !movedToPreviousLine) {
-				// Special case for Visual Studio compatibility:
-				// when starting in the trim whitespace at the end of a line,
-				// go to the end of the last word
-				const lastWhitespaceColumn = model.getLineLastNonWhitespaceColumn(lineNumber);
-				if (lastWhitespaceColumn < column) {
-					return new Position(lineNumber, prevWordOnLine.end + 1);
-				}
-			}
-
 			return new Position(lineNumber, prevWordOnLine ? prevWordOnLine.start + 1 : 1);
 		}
 

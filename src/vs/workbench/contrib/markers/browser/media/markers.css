@@ -20,9 +20,13 @@
 	flex: 1;
 }
 
-.vs .monaco-action-bar .markers-panel-action-filter .monaco-inputbox {
+.pane-header .monaco-action-bar .markers-panel-action-filter .monaco-inputbox {
+	height: 20px;
+	line-height: 18px;
+}
+
+.monaco-workbench.vs .monaco-action-bar .markers-panel-action-filter .monaco-inputbox {
 	height: 25px;
-	border: 1px solid transparent;
 }
 
 .markers-panel-action-filter > .markers-panel-filter-controls {
@@ -45,11 +49,19 @@
 	display: none;
 }
 
-.markers-panel-action-filter > .markers-panel-filter-controls > .monaco-action-bar .action-label.markers-filters {
+.markers-panel-action-filter > .markers-panel-filter-controls > .monaco-action-bar .action-item .action-label.codicon.markers-filters {
 	line-height: 20px;
 	height: 20px;
 	min-width: 22px;
 	margin-left: 4px;
+}
+
+.pane-header .markers-panel-action-filter > .markers-panel-filter-controls > .monaco-action-bar .action-item .action-label.codicon.markers-filters {
+	line-height: 18px;
+	height: 18px;
+	width: 28px;
+	margin-right: 0px;
+	justify-content: center;
 }
 
 .panel > .title .monaco-action-bar .action-item.markers-panel-action-filter-container {
@@ -101,7 +113,7 @@
 	padding-right: 10px;
 }
 
-.hc-black .markers-panel .markers-panel-container .tree-container .monaco-tl-contents {
+.monaco-workbench.hc-black .markers-panel .markers-panel-container .tree-container .monaco-tl-contents {
 	line-height: 20px;
 }
 

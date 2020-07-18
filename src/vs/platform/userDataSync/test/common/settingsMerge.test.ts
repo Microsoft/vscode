@@ -1495,7 +1495,101 @@ suite('SettingsMerge - Add Setting', () => {
 
 		assert.equal(actual, sourceContent);
 	});
+
+	test('Insert after a comment with comma separator of previous setting and no next nodes ', () => {
+
+		const sourceContent = `
+{
+	"a": 1
+	// this is comment for a
+	,
+	"b": 2
+}`;
+		const targetContent = `
+{
+	"a": 1
+	// this is comment for a
+	,
+}`;
+
+		const expected = `
+{
+	"a": 1
+	// this is comment for a
+	,
+	"b": 2
+}`;
+
+		const actual = addSetting('b', sourceContent, targetContent, formattingOptions);
+
+		assert.equal(actual, expected);
+	});
+
+	test('Insert after a comment with comma separator of previous setting and there is a setting after ', () => {
+
+		const sourceContent = `
+{
+	"a": 1
+	// this is comment for a
+	,
+	"b": 2,
+	"c": 3
+}`;
+		const targetContent = `
+{
+	"a": 1
+	// this is comment for a
+	,
+	"c": 3
+}`;
+
+		const expected = `
+{
+	"a": 1
+	// this is comment for a
+	,
+	"b": 2,
+	"c": 3
+}`;
+
+		const actual = addSetting('b', sourceContent, targetContent, formattingOptions);
+
+		assert.equal(actual, expected);
+	});
+
+	test('Insert after a comment with comma separator of previous setting and there is a comment after ', () => {
+
+		const sourceContent = `
+{
+	"a": 1
+	// this is comment for a
+	,
+	"b": 2
+	// this is a comment
+}`;
+		const targetContent = `
+{
+	"a": 1
+	// this is comment for a
+	,
+	// this is a comment
+}`;
+
+		const expected = `
+{
+	"a": 1
+	// this is comment for a
+	,
+	"b": 2
+	// this is a comment
+}`;
+
+		const actual = addSetting('b', sourceContent, targetContent, formattingOptions);
+
+		assert.equal(actual, expected);
+	});
 });
+
 
 function stringify(value: any): string {
 	return JSON.stringify(value, null, '\t');

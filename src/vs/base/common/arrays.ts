@@ -489,12 +489,21 @@ export function index<T, R>(array: ReadonlyArray<T>, indexer: (t: T) => string, 
 export function insert<T>(array: T[], element: T): () => void {
 	array.push(element);
 
-	return () => {
-		const index = array.indexOf(element);
-		if (index > -1) {
-			array.splice(index, 1);
-		}
-	};
+	return () => remove(array, element);
+}
+
+/**
+ * Removes an element from an array if it can be found.
+ */
+export function remove<T>(array: T[], element: T): T | undefined {
+	const index = array.indexOf(element);
+	if (index > -1) {
+		array.splice(index, 1);
+
+		return element;
+	}
+
+	return undefined;
 }
 
 /**
@@ -580,6 +589,14 @@ export function mapArrayOrNot<T, U>(items: T | T[], fn: (_: T) => U): U | U[] {
 
 export function asArray<T>(x: T | T[]): T[] {
 	return Array.isArray(x) ? x : [x];
+}
+
+export function toArray<T>(iterable: IterableIterator<T>): T[] {
+	const result: T[] = [];
+	for (let element of iterable) {
+		result.push(element);
+	}
+	return result;
 }
 
 export function getRandomElement<T>(arr: T[]): T | undefined {

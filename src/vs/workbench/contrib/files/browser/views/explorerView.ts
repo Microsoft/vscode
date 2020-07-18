@@ -24,7 +24,7 @@ import { IContextMenuService } from 'vs/platform/contextview/browser/contextView
 import { IContextKeyService, IContextKey } from 'vs/platform/contextkey/common/contextkey';
 import { ResourceContextKey } from 'vs/workbench/common/resources';
 import { IDecorationsService } from 'vs/workbench/services/decorations/browser/decorations';
-import { TreeResourceNavigator, WorkbenchCompressibleAsyncDataTree } from 'vs/platform/list/browser/listService';
+import { WorkbenchCompressibleAsyncDataTree } from 'vs/platform/list/browser/listService';
 import { DelayedDragHandler } from 'vs/base/browser/dnd';
 import { IEditorService, SIDE_GROUP, ACTIVE_GROUP } from 'vs/workbench/services/editor/common/editorService';
 import { IViewPaneOptions, ViewPane } from 'vs/workbench/browser/parts/views/viewPaneContainer';
@@ -37,15 +37,11 @@ import { IMenuService, MenuId, IMenu } from 'vs/platform/actions/common/actions'
 import { createAndFillInContextMenuActions } from 'vs/platform/actions/browser/menuEntryActionViewItem';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 import { ExplorerItem, NewExplorerItem } from 'vs/workbench/contrib/files/common/explorerModel';
-import { onUnexpectedError } from 'vs/base/common/errors';
 import { ResourceLabels } from 'vs/workbench/browser/labels';
 import { IStorageService, StorageScope } from 'vs/platform/storage/common/storage';
 import { IAsyncDataTreeViewState } from 'vs/base/browser/ui/tree/asyncDataTree';
 import { FuzzyScore } from 'vs/base/common/filters';
 import { IClipboardService } from 'vs/platform/clipboard/common/clipboardService';
-import { isEqualOrParent } from 'vs/base/common/resources';
-import { values } from 'vs/base/common/map';
-import { first } from 'vs/base/common/arrays';
 import { withNullAsUndefined } from 'vs/base/common/types';
 import { IFileService, FileSystemProviderCapabilities } from 'vs/platform/files/common/files';
 import { DisposableStore, IDisposable } from 'vs/base/common/lifecycle';
@@ -56,6 +52,7 @@ import { Color } from 'vs/base/common/color';
 import { SIDE_BAR_BACKGROUND } from 'vs/workbench/common/theme';
 import { IViewDescriptorService } from 'vs/workbench/common/views';
 import { IOpenerService } from 'vs/platform/opener/common/opener';
+import { IUriIdentityService } from 'vs/workbench/services/uriIdentity/common/uriIdentity';
 
 interface IExplorerViewColors extends IColorMapping {
 	listDropBackground?: ColorValue | undefined;
@@ -143,10 +140,12 @@ export class ExplorerView extends ViewPane {
 	private compressedFocusFirstContext: IContextKey<boolean>;
 	private compressedFocusLastContext: IContextKey<boolean>;
 
+	private horizontalScrolling: boolean | undefined;
+
 	// Refresh is needed on the initial explorer open
 	private shouldRefresh = true;
 	private dragHandler!: DelayedDragHandler;
-	private autoReveal = false;
+	private autoReveal: boolean | 'focusNoScroll' = false;
 	private actions: IAction[] | undefined;
 	private decorationsProvider: ExplorerDecorationsProvider | undefined;
 
@@ -171,6 +170,7 @@ export class ExplorerView extends ViewPane {
 		@IStorageService private readonly storageService: IStorageService,
 		@IClipboardService private clipboardService: IClipboardService,
 		@IFileService private readonly fileService: IFileService,
+		@IUriIdentityService private readonly uriIdentityService: IUriIdentityService,
 		@IOpenerService openerService: IOpenerService,
 	) {
 		super(options, keybindingService, contextMenuService, configurationService, contextKeyService, viewDescriptorService, instantiationService, openerService, themeService, telemetryService);
@@ -311,8 +311,19 @@ export class ExplorerView extends ViewPane {
 
 	async setEditable(stat: ExplorerItem, isEditing: boolean): Promise<void> {
 		if (isEditing) {
+			this.horizontalScrolling = this.tree.options.horizontalScrolling;
+
+			if (this.horizontalScrolling) {
+				this.tree.updateOptions({ horizontalScrolling: false });
+			}
+
 			await this.tree.expand(stat.parent!);
 		} else {
+			if (this.horizontalScrolling !== undefined) {
+				this.tree.updateOptions({ horizontalScrolling: this.horizontalScrolling });
+			}
+
+			this.horizontalScrolling = undefined;
 			DOM.removeClass(this.treeContainer, 'highlight');
 		}
 
@@ -410,22 +421,23 @@ export class ExplorerView extends ViewPane {
 		// Update resource context based on focused element
 		this._register(this.tree.onDidChangeFocus(e => this.onFocusChanged(e.elements)));
 		this.onFocusChanged([]);
-		const explorerNavigator = new TreeResourceNavigator(this.tree);
-		this._register(explorerNavigator);
 		// Open when selecting via keyboard
-		this._register(explorerNavigator.onDidOpenResource(async e => {
-			const selection = this.tree.getSelection();
+		this._register(this.tree.onDidOpen(async e => {
+			const element = e.element;
+			if (!element) {
+				return;
+			}
 			// Do not react if the user is expanding selection via keyboard.
 			// Check if the item was previously also selected, if yes the user is simply expanding / collapsing current selection #66589.
 			const shiftDown = e.browserEvent instanceof KeyboardEvent && e.browserEvent.shiftKey;
-			if (selection.length === 1 && !shiftDown) {
-				if (selection[0].isDirectory || this.explorerService.isEditable(undefined)) {
+			if (!shiftDown) {
+				if (element.isDirectory || this.explorerService.isEditable(undefined)) {
 					// Do not react if user is clicking on explorer items while some are being edited #70276
 					// Do not react if clicking on directories
 					return;
 				}
 				this.telemetryService.publicLog2<WorkbenchActionExecutedEvent, WorkbenchActionExecutedClassification>('workbenchActionExecuted', { id: 'workbench.files.openFile', from: 'explorer' });
-				await this.editorService.openEditor({ resource: selection[0].resource, options: { preserveFocus: e.editorOptions.preserveFocus, pinned: e.editorOptions.pinned } }, e.sideBySide ? SIDE_GROUP : ACTIVE_GROUP);
+				await this.editorService.openEditor({ resource: element.resource, options: { preserveFocus: e.editorOptions.preserveFocus, pinned: e.editorOptions.pinned } }, e.sideBySide ? SIDE_GROUP : ACTIVE_GROUP);
 			}
 		}));
 
@@ -435,6 +447,16 @@ export class ExplorerView extends ViewPane {
 			let editable = this.explorerService.getEditable();
 			if (e.scrollTopChanged && editable && this.tree.getRelativeTop(editable.stat) === null) {
 				await editable.data.onFinish('', false);
+			}
+		}));
+
+		this._register(this.tree.onDidChangeCollapseState(e => {
+			const element = e.node.element?.element;
+			if (element) {
+				const navigationController = this.renderer.getCompressedNavigationController(element instanceof Array ? element[0] : element);
+				if (navigationController) {
+					navigationController.updateCollapsed(e.node.collapsed);
+				}
 			}
 		}));
 
@@ -471,7 +493,7 @@ export class ExplorerView extends ViewPane {
 		}
 	}
 
-	private onContextMenu(e: ITreeContextMenuEvent<ExplorerItem>): void {
+	private async onContextMenu(e: ITreeContextMenuEvent<ExplorerItem>): Promise<void> {
 		const disposables = new DisposableStore();
 		let stat = e.element;
 		let anchor = e.anchor;
@@ -490,7 +512,7 @@ export class ExplorerView extends ViewPane {
 		}
 
 		// update dynamic contexts
-		this.fileCopiedContextKey.set(this.clipboardService.hasResources());
+		this.fileCopiedContextKey.set(await this.clipboardService.hasResources());
 		this.setContextKeys(stat);
 
 		const selection = this.tree.getSelection();
@@ -605,11 +627,19 @@ export class ExplorerView extends ViewPane {
 			if (Array.isArray(input)) {
 				if (!viewState || previousInput instanceof ExplorerItem) {
 					// There is no view state for this workspace, expand all roots. Or we transitioned from a folder workspace.
-					input.forEach(item => this.tree.expand(item).then(undefined, onUnexpectedError));
+					input.forEach(async item => {
+						try {
+							await this.tree.expand(item);
+						} catch (e) { }
+					});
 				}
 				if (Array.isArray(previousInput) && previousInput.length < input.length) {
 					// Roots added to the explorer -> expand them.
-					input.slice(previousInput.length).forEach(item => this.tree.expand(item).then(undefined, onUnexpectedError));
+					input.slice(previousInput.length).forEach(async item => {
+						try {
+							await this.tree.expand(item);
+						} catch (e) { }
+					});
 				}
 			}
 			if (initialInputSetup) {
@@ -638,7 +668,7 @@ export class ExplorerView extends ViewPane {
 		}
 
 		// check for files
-		return withNullAsUndefined(toResource(input, { supportSideBySide: SideBySideEditor.MASTER }));
+		return withNullAsUndefined(toResource(input, { supportSideBySide: SideBySideEditor.PRIMARY }));
 	}
 
 	public async selectResource(resource: URI | undefined, reveal = this.autoReveal, retry = 0): Promise<void> {
@@ -652,8 +682,7 @@ export class ExplorerView extends ViewPane {
 		}
 
 		// Expand all stats in the parent chain.
-		const ignoreCase = !this.fileService.hasCapability(resource, FileSystemProviderCapabilities.PathCaseSensitive);
-		let item: ExplorerItem | undefined = this.explorerService.roots.filter(i => isEqualOrParent(resource, i.resource, ignoreCase))
+		let item: ExplorerItem | undefined = this.explorerService.roots.filter(i => this.uriIdentityService.extUri.isEqualOrParent(resource, i.resource))
 			// Take the root that is the closest to the stat #72299
 			.sort((first, second) => second.resource.path.length - first.resource.path.length)[0];
 
@@ -663,7 +692,14 @@ export class ExplorerView extends ViewPane {
 			} catch (e) {
 				return this.selectResource(resource, reveal, retry + 1);
 			}
-			item = first(values(item.children), i => isEqualOrParent(resource, i.resource, ignoreCase));
+
+			for (let child of item.children.values()) {
+				if (this.uriIdentityService.extUri.isEqualOrParent(resource, child.resource)) {
+					item = child;
+					break;
+				}
+				item = undefined;
+			}
 		}
 
 		if (item) {
@@ -674,11 +710,9 @@ export class ExplorerView extends ViewPane {
 			}
 
 			try {
-				if (reveal) {
-					// Don't scroll to the item if it's already visible
-					if (this.tree.getRelativeTop(item) === null) {
-						this.tree.reveal(item, 0.5);
-					}
+				if (reveal === true && this.tree.getRelativeTop(item) === null) {
+					// Don't scroll to the item if it's already visible, or if set not to.
+					this.tree.reveal(item, 0.5);
 				}
 
 				this.tree.setFocus([item]);

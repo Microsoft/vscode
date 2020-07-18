@@ -11,8 +11,8 @@ import { basename } from 'vs/base/common/resources';
 import { Action } from 'vs/base/common/actions';
 import { VIEWLET_ID, TEXT_FILE_EDITOR_ID, IExplorerService } from 'vs/workbench/contrib/files/common/files';
 import { ITextFileService, TextFileOperationError, TextFileOperationResult } from 'vs/workbench/services/textfile/common/textfiles';
-import { BaseTextEditor, IEditorConfiguration } from 'vs/workbench/browser/parts/editor/textEditor';
-import { EditorOptions, TextEditorOptions, IEditorCloseEvent, Verbosity } from 'vs/workbench/common/editor';
+import { BaseTextEditor } from 'vs/workbench/browser/parts/editor/textEditor';
+import { EditorOptions, TextEditorOptions, IEditorInput } from 'vs/workbench/common/editor';
 import { BinaryEditorModel } from 'vs/workbench/common/editor/binaryEditorModel';
 import { FileEditorInput } from 'vs/workbench/contrib/files/common/editors/fileEditorInput';
 import { IViewletService } from 'vs/workbench/services/viewlet/browser/viewlet';
@@ -25,13 +25,11 @@ import { IInstantiationService } from 'vs/platform/instantiation/common/instanti
 import { IThemeService } from 'vs/platform/theme/common/themeService';
 import { ScrollType } from 'vs/editor/common/editorCommon';
 import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
-import { IEditorGroupsService, IEditorGroup } from 'vs/workbench/services/editor/common/editorGroupsService';
+import { IEditorGroupsService } from 'vs/workbench/services/editor/common/editorGroupsService';
 import { CancellationToken } from 'vs/base/common/cancellation';
-import { IEditorGroupView } from 'vs/workbench/browser/parts/editor/editor';
 import { createErrorWithActions } from 'vs/base/common/errorsWithActions';
-import { MutableDisposable } from 'vs/base/common/lifecycle';
 import { EditorActivation, IEditorOptions } from 'vs/platform/editor/common/editor';
-import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
+import { IUriIdentityService } from 'vs/workbench/services/uriIdentity/common/uriIdentity';
 
 /**
  * An implementation of editor for file system resources.
@@ -39,9 +37,6 @@ import { IConfigurationService } from 'vs/platform/configuration/common/configur
 export class TextFileEditor extends BaseTextEditor {
 
 	static readonly ID = TEXT_FILE_EDITOR_ID;
-
-	private restoreViewState: boolean | undefined;
-	private readonly groupListener = this._register(new MutableDisposable());
 
 	constructor(
 		@ITelemetryService telemetryService: ITelemetryService,
@@ -56,11 +51,9 @@ export class TextFileEditor extends BaseTextEditor {
 		@IEditorGroupsService editorGroupService: IEditorGroupsService,
 		@ITextFileService private readonly textFileService: ITextFileService,
 		@IExplorerService private readonly explorerService: IExplorerService,
-		@IConfigurationService private readonly configurationService: IConfigurationService
+		@IUriIdentityService private readonly uriIdentityService: IUriIdentityService
 	) {
 		super(TextFileEditor.ID, telemetryService, instantiationService, storageService, textResourceConfigurationService, themeService, editorService, editorGroupService);
-
-		this.updateRestoreViewStateConfiguration();
 
 		// Clear view state for deleted files
 		this._register(this.fileService.onDidFilesChange(e => this.onDidFilesChange(e)));
@@ -78,18 +71,16 @@ export class TextFileEditor extends BaseTextEditor {
 
 	private onDidRunOperation(e: FileOperationEvent): void {
 		if (e.operation === FileOperation.MOVE && e.target) {
-			this.moveTextEditorViewState(e.resource, e.target.resource);
+			this.moveTextEditorViewState(e.resource, e.target.resource, this.uriIdentityService.extUri);
 		}
 	}
 
-	protected handleConfigurationChangeEvent(configuration?: IEditorConfiguration): void {
-		super.handleConfigurationChangeEvent(configuration);
+	protected onWillCloseEditorInGroup(editor: IEditorInput): void {
 
-		this.updateRestoreViewStateConfiguration();
-	}
-
-	private updateRestoreViewStateConfiguration(): void {
-		this.restoreViewState = this.configurationService.getValue('workbench.editor.restoreViewState') ?? true /* default */;
+		// React to editors closing to preserve or clear view state. This needs to happen
+		// in the onWillCloseEditor because at that time the editor has not yet
+		// been disposed and we can safely persist the view state still as needed.
+		this.doSaveOrClearTextEditorViewState(editor);
 	}
 
 	getTitle(): string {
@@ -98,30 +89,6 @@ export class TextFileEditor extends BaseTextEditor {
 
 	get input(): FileEditorInput | undefined {
 		return this._input as FileEditorInput;
-	}
-
-	setEditorVisible(visible: boolean, group: IEditorGroup | undefined): void {
-		super.setEditorVisible(visible, group);
-
-		// React to editors closing to preserve or clear view state. This needs to happen
-		// in the onWillCloseEditor because at that time the editor has not yet
-		// been disposed and we can safely persist the view state still as needed.
-		this.groupListener.value = ((group as IEditorGroupView).onWillCloseEditor(e => this.onWillCloseEditorInGroup(e)));
-	}
-
-	private onWillCloseEditorInGroup(e: IEditorCloseEvent): void {
-		const editor = e.editor;
-		if (!(editor instanceof FileEditorInput)) {
-			return; // only handle files
-		}
-
-		// If the editor is currently active we can always save or clear the view state.
-		// If the editor is not active, we can only clear the view state because it needs
-		// an active editor with the file opened, so we check for the restoreViewState flag
-		// being set.
-		if (editor === this.input || !this.restoreViewState) {
-			this.doSaveOrClearTextEditorViewState(editor);
-		}
 	}
 
 	async setInput(input: FileEditorInput, options: EditorOptions | undefined, token: CancellationToken): Promise<void> {
@@ -245,11 +212,6 @@ export class TextFileEditor extends BaseTextEditor {
 		}
 	}
 
-	protected getAriaLabel(): string {
-		const title = this.input?.getTitle(Verbosity.SHORT) || nls.localize('fileEditorAriaLabel', "editor");
-		return this.input?.isReadonly() ? nls.localize('readonlyEditor', "{0} readonly", title) : title;
-	}
-
 	clearInput(): void {
 
 		// Update/clear editor view state in settings
@@ -273,14 +235,14 @@ export class TextFileEditor extends BaseTextEditor {
 		super.saveState();
 	}
 
-	private doSaveOrClearTextEditorViewState(input: FileEditorInput | undefined): void {
-		if (!input) {
+	private doSaveOrClearTextEditorViewState(input: IEditorInput | undefined): void {
+		if (!(input instanceof FileEditorInput)) {
 			return; // ensure we have an input to handle view state for
 		}
 
 		// If the user configured to not restore view state, we clear the view
 		// state unless the editor is still opened in the group.
-		if (!this.restoreViewState && (!this.group || !this.group.isOpened(input))) {
+		if (!this.shouldRestoreViewState && (!this.group || !this.group.isOpened(input))) {
 			this.clearTextEditorViewState([input.resource], this.group);
 		}
 

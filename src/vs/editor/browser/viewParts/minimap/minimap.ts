@@ -1004,27 +1004,26 @@ export class Minimap extends ViewPart implements IMinimapModel {
 	}
 
 	public getOptions(): TextModelResolvedOptions {
-		return this._context.model.getOptions();
+		return this._context.model.getTextModelOptions();
 	}
 
 	public revealLineNumber(lineNumber: number): void {
 		if (this._samplingState) {
 			lineNumber = this._samplingState.minimapLines[lineNumber - 1];
 		}
-		this._context.privateViewEventBus.emit(new viewEvents.ViewRevealRangeRequestEvent(
+		this._context.model.revealRange(
 			'mouse',
-			new Range(lineNumber, 1, lineNumber, 1),
-			null,
-			viewEvents.VerticalRevealType.Center,
 			false,
+			new Range(lineNumber, 1, lineNumber, 1),
+			viewEvents.VerticalRevealType.Center,
 			ScrollType.Smooth
-		));
+		);
 	}
 
 	public setScrollTop(scrollTop: number): void {
-		this._context.viewLayout.setScrollPositionNow({
+		this._context.model.setScrollPosition({
 			scrollTop: scrollTop
-		});
+		}, ScrollType.Immediate);
 	}
 
 	//#endregion

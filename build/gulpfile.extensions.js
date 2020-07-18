@@ -8,9 +8,11 @@ require('events').EventEmitter.defaultMaxListeners = 100;
 
 const gulp = require('gulp');
 const path = require('path');
+const nodeUtil = require('util');
 const tsb = require('gulp-tsb');
 const es = require('event-stream');
 const filter = require('gulp-filter');
+const webpack = require('webpack');
 const util = require('./lib/util');
 const task = require('./lib/task');
 const watcher = require('./lib/watch');
@@ -21,6 +23,8 @@ const nlsDev = require('vscode-nls-dev');
 const root = path.dirname(__dirname);
 const commit = util.getVersion(root);
 const plumber = require('gulp-plumber');
+const fancyLog = require('fancy-log');
+const ansiColors = require('ansi-colors');
 const ext = require('./lib/extensions');
 
 const extensionsPath = path.join(path.dirname(__dirname), 'extensions');
@@ -167,3 +171,78 @@ const compileExtensionsBuildTask = task.define('compile-extensions-build', task.
 
 gulp.task(compileExtensionsBuildTask);
 exports.compileExtensionsBuildTask = compileExtensionsBuildTask;
+
+const compileWebExtensionsTask = task.define('compile-web', () => buildWebExtensions(false));
+gulp.task(compileWebExtensionsTask);
+exports.compileWebExtensionsTask = compileWebExtensionsTask;
+
+const watchWebExtensionsTask = task.define('watch-web', () => buildWebExtensions(true));
+gulp.task(watchWebExtensionsTask);
+exports.watchWebExtensionsTask = watchWebExtensionsTask;
+
+async function buildWebExtensions(isWatch) {
+
+	const webpackConfigLocations = await nodeUtil.promisify(glob)(
+		path.join(extensionsPath, '**', 'extension-browser.webpack.config.js'),
+		{ ignore: ['**/node_modules'] }
+	);
+
+	const webpackConfigs = [];
+
+	for (const webpackConfigPath of webpackConfigLocations) {
+		const configOrFnOrArray = require(webpackConfigPath);
+		function addConfig(configOrFn) {
+			if (typeof configOrFn === 'function') {
+				webpackConfigs.push(configOrFn({}, {}));
+			} else {
+				webpackConfigs.push(configOrFn);
+			}
+		}
+		addConfig(configOrFnOrArray);
+	}
+	function reporter(fullStats) {
+		if (Array.isArray(fullStats.children)) {
+			for (const stats of fullStats.children) {
+				const outputPath = stats.outputPath;
+				if (outputPath) {
+					const relativePath = path.relative(extensionsPath, outputPath).replace(/\\/g, '/');
+					const match = relativePath.match(/[^\/]+(\/server|\/client)?/);
+					fancyLog(`Finished ${ansiColors.green('packaging web extension')} ${ansiColors.cyan(match[0])} with ${stats.errors.length} errors.`);
+				}
+				if (Array.isArray(stats.errors)) {
+					stats.errors.forEach(error => {
+						fancyLog.error(error);
+					});
+				}
+				if (Array.isArray(stats.warnings)) {
+					stats.warnings.forEach(warning => {
+						fancyLog.warn(warning);
+					});
+				}
+			}
+		}
+	}
+	return new Promise((resolve, reject) => {
+		if (isWatch) {
+			webpack(webpackConfigs).watch({}, (err, stats) => {
+				if (err) {
+					reject();
+				} else {
+					reporter(stats.toJson());
+				}
+			});
+		} else {
+			webpack(webpackConfigs).run((err, stats) => {
+				if (err) {
+					fancyLog.error(err);
+					reject();
+				} else {
+					reporter(stats.toJson());
+					resolve();
+				}
+			});
+		}
+	});
+}
+
+

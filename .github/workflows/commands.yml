@@ -13,11 +13,12 @@ jobs:
         with:
           repository: 'microsoft/vscode-github-triage-actions'
           path: ./actions
-          ref: v15
+          ref: v31
       - name: Install Actions
         run: npm install --production --prefix ./actions
       - name: Run Commands
         uses: ./actions/commands
         with:
+          appInsightsKey: ${{secrets.TRIAGE_ACTIONS_APP_INSIGHTS}}
           token: ${{secrets.VSCODE_ISSUE_TRIAGE_BOT_PAT}}
           config-path: commands

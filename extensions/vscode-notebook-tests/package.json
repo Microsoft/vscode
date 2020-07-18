@@ -27,6 +27,17 @@
     "mocha": "^2.3.3"
   },
   "contributes": {
+    "commands": [
+      {
+        "command": "vscode-notebook-tests.createNewNotebook",
+        "title": "Create New Notebook"
+      },
+      {
+        "command": "vscode-notebook-tests.debugAction",
+        "title": "Debug Notebook Test Cell Action",
+        "icon": "$(debug)"
+      }
+    ],
     "notebookProvider": [
       {
         "viewType": "notebookCoreTest",
@@ -37,7 +48,35 @@
             "excludeFileNamePattern": ""
           }
         ]
+      },
+      {
+        "viewType": "notebookSmokeTest",
+        "displayName": "Notebook Smoke Test",
+        "selector": [
+          {
+            "filenamePattern": "*.smoke-nb",
+            "excludeFileNamePattern": ""
+          }
+        ]
       }
-    ]
+    ],
+    "notebookOutputRenderer": [
+      {
+        "viewType": "notebookCoreTestRenderer",
+        "displayName": "Notebook Core Test Renderer",
+        "mimeTypes": [
+          "text/custom"
+        ]
+      }
+    ],
+    "menus": {
+      "notebook/cell/title": [
+        {
+          "command": "vscode-notebook-tests.debugAction",
+          "when": "notebookViewType == notebookSmokeTest",
+          "group": "inline@1"
+        }
+      ]
+    }
   }
 }

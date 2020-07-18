@@ -48,7 +48,7 @@ export interface KeybindingsSchemaContribution {
 export const IKeybindingService = createDecorator<IKeybindingService>('keybindingService');
 
 export interface IKeybindingService {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	readonly inChordMode: boolean;
 

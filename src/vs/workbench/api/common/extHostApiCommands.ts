@@ -215,6 +215,20 @@ const newCommands: ApiCommand[] = [
 		[ApiCommandArgument.CallHierarchyItem],
 		new ApiCommandResult<IOutgoingCallDto[], types.CallHierarchyOutgoingCall[]>('A CallHierarchyItem or undefined', v => v.map(typeConverters.CallHierarchyOutgoingCall.to))
 	),
+	// --- rename
+	new ApiCommand(
+		'vscode.executeDocumentRenameProvider', '_executeDocumentRenameProvider', 'Execute rename provider.',
+		[ApiCommandArgument.Uri, ApiCommandArgument.Position, new ApiCommandArgument('newName', 'The new symbol name', v => typeof v === 'string', v => v)],
+		new ApiCommandResult<IWorkspaceEditDto, types.WorkspaceEdit | undefined>('A promise that resolves to a WorkspaceEdit.', value => {
+			if (!value) {
+				return undefined;
+			}
+			if (value.rejectReason) {
+				throw new Error(value.rejectReason);
+			}
+			return typeConverters.WorkspaceEdit.to(value);
+		})
+	)
 ];
 
 
@@ -238,15 +252,6 @@ export class ExtHostApiCommands {
 	}
 
 	registerCommands() {
-		this._register('vscode.executeDocumentRenameProvider', this._executeDocumentRenameProvider, {
-			description: 'Execute rename provider.',
-			args: [
-				{ name: 'uri', description: 'Uri of a text document', constraint: URI },
-				{ name: 'position', description: 'Position in a text document', constraint: types.Position },
-				{ name: 'newName', description: 'The new symbol name', constraint: String }
-			],
-			returns: 'A promise that resolves to a WorkspaceEdit.'
-		});
 		this._register('vscode.executeSignatureHelpProvider', this._executeSignatureHelpProvider, {
 			description: 'Execute signature help provider.',
 			args: [
@@ -374,23 +379,6 @@ export class ExtHostApiCommands {
 	private _register(id: string, handler: (...args: any[]) => any, description?: ICommandHandlerDescription): void {
 		const disposable = this._commands.registerCommand(false, id, handler, this, description);
 		this._disposables.add(disposable);
-	}
-
-	private _executeDocumentRenameProvider(resource: URI, position: types.Position, newName: string): Promise<types.WorkspaceEdit> {
-		const args = {
-			resource,
-			position: position && typeConverters.Position.from(position),
-			newName
-		};
-		return this._commands.executeCommand<IWorkspaceEditDto>('_executeDocumentRenameProvider', args).then(value => {
-			if (!value) {
-				return undefined;
-			}
-			if (value.rejectReason) {
-				return Promise.reject<any>(new Error(value.rejectReason));
-			}
-			return typeConverters.WorkspaceEdit.to(value);
-		});
 	}
 
 	private _executeSignatureHelpProvider(resource: URI, position: types.Position, triggerCharacter: string): Promise<types.SignatureHelp | undefined> {

@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as nls from 'vs/nls';
-import { IMenuService, MenuId, IMenu, SubmenuItemAction } from 'vs/platform/actions/common/actions';
+import { IMenuService, MenuId, IMenu, SubmenuItemAction, registerAction2, Action2 } from 'vs/platform/actions/common/actions';
 import { registerThemingParticipant, IColorTheme, ICssStyleCollector, IThemeService } from 'vs/platform/theme/common/themeService';
 import { MenuBarVisibility, getTitleBarStyle, IWindowOpenable, getMenuBarVisibility } from 'vs/platform/windows/common/windows';
 import { IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
@@ -35,6 +35,9 @@ import { IWorkbenchLayoutService } from 'vs/workbench/services/layout/browser/la
 import { isFullscreen } from 'vs/base/browser/browser';
 import { IHostService } from 'vs/workbench/services/host/browser/host';
 import { BrowserFeatures } from 'vs/base/browser/canIUse';
+import { KeyCode } from 'vs/base/common/keyCodes';
+import { KeybindingWeight } from 'vs/platform/keybinding/common/keybindingsRegistry';
+import { IsWebContext } from 'vs/platform/contextkey/common/contextkeys';
 
 export abstract class MenubarControl extends Disposable {
 
@@ -312,6 +315,8 @@ export class CustomMenubarControl extends MenubarControl {
 
 		this.registerListeners();
 
+		this.registerActions();
+
 		registerThemingParticipant((theme: IColorTheme, collector: ICssStyleCollector) => {
 			const menubarActiveWindowFgColor = theme.getColor(TITLE_BAR_ACTIVE_FOREGROUND);
 			if (menubarActiveWindowFgColor) {
@@ -409,6 +414,33 @@ export class CustomMenubarControl extends MenubarControl {
 
 	protected doUpdateMenubar(firstTime: boolean): void {
 		this.setupCustomMenubar(firstTime);
+	}
+
+	private registerActions(): void {
+		const that = this;
+
+		if (isWeb) {
+			this._register(registerAction2(class extends Action2 {
+				constructor() {
+					super({
+						id: `workbench.actions.menubar.focus`,
+						title: { value: nls.localize('focusMenu', "Focus Application Menu"), original: 'Focus Application Menu' },
+						keybinding: {
+							primary: KeyCode.F10,
+							weight: KeybindingWeight.WorkbenchContrib,
+							when: IsWebContext
+						},
+						f1: true
+					});
+				}
+
+				async run(): Promise<void> {
+					if (that.menubar) {
+						that.menubar.toggleFocus();
+					}
+				}
+			}));
+		}
 	}
 
 	private getUpdateAction(): IAction | null {
@@ -701,5 +733,11 @@ export class CustomMenubarControl extends MenubarControl {
 		}
 
 		this.menubar?.update(this.getMenuBarOptions());
+	}
+
+	toggleFocus() {
+		if (this.menubar) {
+			this.menubar.toggleFocus();
+		}
 	}
 }

@@ -22,6 +22,7 @@ import { regExpFlags } from 'vs/base/common/strings';
 import { isNonEmptyArray } from 'vs/base/common/arrays';
 import { ILogService } from 'vs/platform/log/common/log';
 import { StopWatch } from 'vs/base/common/stopwatch';
+import { canceled } from 'vs/base/common/errors';
 
 /**
  * Stop syncing a model to the worker if it was not needed for 1 min.
@@ -46,7 +47,7 @@ function canSyncModel(modelService: IModelService, resource: URI): boolean {
 
 export class EditorWorkerServiceImpl extends Disposable implements IEditorWorkerService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private readonly _modelService: IModelService;
 	private readonly _workerManager: WorkerManager;
@@ -380,6 +381,7 @@ export class EditorWorkerClient extends Disposable {
 	private _worker: IWorkerClient<EditorSimpleWorker> | null;
 	private readonly _workerFactory: DefaultWorkerFactory;
 	private _modelManager: EditorModelManager | null;
+	private _disposed = false;
 
 	constructor(modelService: IModelService, keepIdleModels: boolean, label: string | undefined) {
 		super();
@@ -427,6 +429,9 @@ export class EditorWorkerClient extends Disposable {
 	}
 
 	protected _withSyncedResources(resources: URI[]): Promise<EditorSimpleWorker> {
+		if (this._disposed) {
+			return Promise.reject(canceled());
+		}
 		return this._getProxy().then((proxy) => {
 			this._getOrCreateModelManager(proxy).ensureSyncedResources(resources);
 			return proxy;
@@ -494,5 +499,10 @@ export class EditorWorkerClient extends Disposable {
 			let wordDefFlags = regExpFlags(wordDefRegExp);
 			return proxy.navigateValueSet(resource.toString(), range, up, wordDef, wordDefFlags);
 		});
+	}
+
+	dispose(): void {
+		super.dispose();
+		this._disposed = true;
 	}
 }

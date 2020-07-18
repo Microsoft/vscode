@@ -14,7 +14,7 @@ import * as objects from 'vs/base/common/objects';
 import * as arrays from 'vs/base/common/arrays';
 import * as resources from 'vs/base/common/resources';
 import { Extensions as ColorRegistryExtensions, IColorRegistry, ColorIdentifier, editorBackground, editorForeground } from 'vs/platform/theme/common/colorRegistry';
-import { ThemeType, ITokenStyle } from 'vs/platform/theme/common/themeService';
+import { ThemeType, ITokenStyle, getThemeTypeSelector } from 'vs/platform/theme/common/themeService';
 import { Registry } from 'vs/platform/registry/common/platform';
 import { getParseErrorMessage } from 'vs/base/common/jsonErrorMessages';
 import { URI } from 'vs/base/common/uri';
@@ -549,6 +549,10 @@ export class ColorThemeData implements IWorkbenchColorTheme {
 	}
 
 	// constructors
+
+	static createUnloadedThemeForThemeType(themeType: ThemeType): ColorThemeData {
+		return ColorThemeData.createUnloadedTheme(getThemeTypeSelector(themeType));
+	}
 
 	static createUnloadedTheme(id: string): ColorThemeData {
 		let themeData = new ColorThemeData(id, '', '__' + id);

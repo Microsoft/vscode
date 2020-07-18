@@ -10,6 +10,7 @@ import { TextDocument, DocumentLink } from 'vscode-languageserver-types';
 import { WorkspaceFolder } from 'vscode-languageserver-protocol';
 import { getCSSLanguageService } from 'vscode-css-languageservice';
 import { getDocumentContext } from '../utils/documentContext';
+import { getNodeFSRequestService } from '../node/nodeFs';
 
 export interface ItemDescription {
 	offset: number;
@@ -18,7 +19,7 @@ export interface ItemDescription {
 }
 
 suite('Links', () => {
-	const cssLanguageService = getCSSLanguageService();
+	const cssLanguageService = getCSSLanguageService({ fileSystemProvider: getNodeFSRequestService() });
 
 	let assertLink = function (links: DocumentLink[], expected: ItemDescription, document: TextDocument) {
 		let matches = links.filter(link => {
@@ -31,7 +32,7 @@ suite('Links', () => {
 		assert.equal(match.target, expected.target);
 	};
 
-	function assertLinks(value: string, expected: ItemDescription[], testUri: string, workspaceFolders?: WorkspaceFolder[], lang: string = 'css'): void {
+	async function assertLinks(value: string, expected: ItemDescription[], testUri: string, workspaceFolders?: WorkspaceFolder[], lang: string = 'css'): Promise<void> {
 		const offset = value.indexOf('|');
 		value = value.substr(0, offset) + value.substr(offset + 1);
 
@@ -44,7 +45,7 @@ suite('Links', () => {
 		const context = getDocumentContext(testUri, workspaceFolders);
 
 		const stylesheet = cssLanguageService.parseStylesheet(document);
-		let links = cssLanguageService.findDocumentLinks(document, stylesheet, context)!;
+		let links = await cssLanguageService.findDocumentLinks2(document, stylesheet, context)!;
 
 		assert.equal(links.length, expected.length);
 
@@ -57,22 +58,32 @@ suite('Links', () => {
 		return URI.file(resolve(__dirname, '../../test/linksTestFixtures', path)).toString();
 	}
 
-	test('url links', function () {
+	test('url links', async function () {
 
 		let testUri = getTestResource('about.css');
 		let folders = [{ name: 'x', uri: getTestResource('') }];
 
-		assertLinks('html { background-image: url("hello.html|")',
+		await assertLinks('html { background-image: url("hello.html|")',
 			[{ offset: 29, value: '"hello.html"', target: getTestResource('hello.html') }], testUri, folders
 		);
 	});
 
-	test('node module resolving', function () {
+	test('node module resolving', async function () {
 
 		let testUri = getTestResource('about.css');
 		let folders = [{ name: 'x', uri: getTestResource('') }];
 
-		assertLinks('html { background-image: url("~foo/hello.html|")',
+		await assertLinks('html { background-image: url("~foo/hello.html|")',
+			[{ offset: 29, value: '"~foo/hello.html"', target: getTestResource('node_modules/foo/hello.html') }], testUri, folders
+		);
+	});
+
+	test('node module subfolder resolving', async function () {
+
+		let testUri = getTestResource('subdir/about.css');
+		let folders = [{ name: 'x', uri: getTestResource('') }];
+
+		await assertLinks('html { background-image: url("~foo/hello.html|")',
 			[{ offset: 29, value: '"~foo/hello.html"', target: getTestResource('node_modules/foo/hello.html') }], testUri, folders
 		);
 	});

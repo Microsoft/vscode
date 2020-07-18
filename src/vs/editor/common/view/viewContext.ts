@@ -4,7 +4,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { IConfiguration } from 'vs/editor/common/editorCommon';
-import { ViewEventDispatcher } from 'vs/editor/common/view/viewEventDispatcher';
 import { ViewEventHandler } from 'vs/editor/common/viewModel/viewEventHandler';
 import { IViewLayout, IViewModel } from 'vs/editor/common/viewModel/viewModel';
 import { IColorTheme, ThemeType } from 'vs/platform/theme/common/themeService';
@@ -37,27 +36,24 @@ export class ViewContext {
 	public readonly configuration: IConfiguration;
 	public readonly model: IViewModel;
 	public readonly viewLayout: IViewLayout;
-	public readonly privateViewEventBus: ViewEventDispatcher;
 	public readonly theme: EditorTheme;
 
 	constructor(
 		configuration: IConfiguration,
 		theme: IColorTheme,
-		model: IViewModel,
-		privateViewEventBus: ViewEventDispatcher
+		model: IViewModel
 	) {
 		this.configuration = configuration;
 		this.theme = new EditorTheme(theme);
 		this.model = model;
 		this.viewLayout = model.viewLayout;
-		this.privateViewEventBus = privateViewEventBus;
 	}
 
 	public addEventHandler(eventHandler: ViewEventHandler): void {
-		this.privateViewEventBus.addEventHandler(eventHandler);
+		this.model.addViewEventHandler(eventHandler);
 	}
 
 	public removeEventHandler(eventHandler: ViewEventHandler): void {
-		this.privateViewEventBus.removeEventHandler(eventHandler);
+		this.model.removeViewEventHandler(eventHandler);
 	}
 }

@@ -20,6 +20,7 @@ import { CancellationToken } from 'vs/base/common/cancellation';
 import { IEditorModel } from 'vs/platform/editor/common/editor';
 import { dispose } from 'vs/base/common/lifecycle';
 import { TestStorageService } from 'vs/workbench/test/common/workbenchTestServices';
+import { extUri } from 'vs/base/common/resources';
 
 const NullThemeService = new TestThemeService();
 
@@ -158,10 +159,10 @@ suite('Workbench base editor', () => {
 
 		let inst = workbenchInstantiationService();
 
-		const editor = EditorRegistry.getEditor(inst.createInstance(MyResourceEditorInput, 'fake', '', URI.file('/fake'), undefined))!.instantiate(inst);
+		const editor = EditorRegistry.getEditor(inst.createInstance(MyResourceEditorInput, URI.file('/fake'), 'fake', '', undefined))!.instantiate(inst);
 		assert.strictEqual(editor.getId(), 'myEditor');
 
-		const otherEditor = EditorRegistry.getEditor(inst.createInstance(ResourceEditorInput, 'fake', '', URI.file('/fake'), undefined))!.instantiate(inst);
+		const otherEditor = EditorRegistry.getEditor(inst.createInstance(ResourceEditorInput, URI.file('/fake'), 'fake', '', undefined))!.instantiate(inst);
 		assert.strictEqual(otherEditor.getId(), 'workbench.editors.textResourceEditor');
 
 		disposable.dispose();
@@ -170,7 +171,7 @@ suite('Workbench base editor', () => {
 	test('Editor Lookup favors specific class over superclass (match on super class)', function () {
 		let inst = workbenchInstantiationService();
 
-		const editor = EditorRegistry.getEditor(inst.createInstance(MyResourceEditorInput, 'fake', '', URI.file('/fake'), undefined))!.instantiate(inst);
+		const editor = EditorRegistry.getEditor(inst.createInstance(MyResourceEditorInput, URI.file('/fake'), 'fake', '', undefined))!.instantiate(inst);
 		assert.strictEqual('workbench.editors.textResourceEditor', editor.getId());
 	});
 
@@ -250,6 +251,9 @@ suite('Workbench base editor', () => {
 		assert.ok(!memento.loadEditorState(testGroup4, URI.file('/C')));
 		assert.ok(memento.loadEditorState(testGroup0, URI.file('/D')));
 		assert.ok(!memento.loadEditorState(testGroup0, URI.file('/E')));
+
+		// Use fallbackToOtherGroupState
+		assert.ok(memento.loadEditorState(testGroup4, URI.file('/C'), true));
 	});
 
 	test('EditorMemento - move', function () {
@@ -266,7 +270,7 @@ suite('Workbench base editor', () => {
 		memento.saveEditorState(testGroup0, URI.file('/some/folder/file-2.txt'), { line: 2 });
 		memento.saveEditorState(testGroup0, URI.file('/some/other/file.txt'), { line: 3 });
 
-		memento.moveEditorState(URI.file('/some/folder/file-1.txt'), URI.file('/some/folder/file-moved.txt'));
+		memento.moveEditorState(URI.file('/some/folder/file-1.txt'), URI.file('/some/folder/file-moved.txt'), extUri);
 
 		let res = memento.loadEditorState(testGroup0, URI.file('/some/folder/file-1.txt'));
 		assert.ok(!res);
@@ -274,7 +278,7 @@ suite('Workbench base editor', () => {
 		res = memento.loadEditorState(testGroup0, URI.file('/some/folder/file-moved.txt'));
 		assert.equal(res?.line, 1);
 
-		memento.moveEditorState(URI.file('/some/folder'), URI.file('/some/folder-moved'));
+		memento.moveEditorState(URI.file('/some/folder'), URI.file('/some/folder-moved'), extUri);
 
 		res = memento.loadEditorState(testGroup0, URI.file('/some/folder-moved/file-moved.txt'));
 		assert.equal(res?.line, 1);

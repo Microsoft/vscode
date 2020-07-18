@@ -6,7 +6,6 @@
 //@ts-check
 'use strict';
 
-// @ts-expect-error
 const pkg = require('../package.json');
 const path = require('path');
 const os = require('os');

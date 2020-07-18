@@ -8,7 +8,7 @@ import { URI, UriComponents } from 'vs/base/common/uri';
 /**
  * @returns whether the provided parameter is a JavaScript Array or not.
  */
-export function isArray(array: any): array is any[] {
+export function isArray<T>(array: T | {}): array is T extends readonly any[] ? (unknown extends T ? never : readonly any[]) : any[] {
 	return Array.isArray(array);
 }
 
@@ -62,6 +62,13 @@ export function isBoolean(obj: any): obj is boolean {
  */
 export function isUndefined(obj: any): obj is undefined {
 	return (typeof obj === 'undefined');
+}
+
+/**
+ * @returns whether the provided parameter is defined.
+ */
+export function isDefined<T>(arg: T | null | undefined): arg is T {
+	return !isUndefinedOrNull(arg);
 }
 
 /**
@@ -164,7 +171,7 @@ export function validateConstraint(arg: any, constraint: TypeConstraint | undefi
 			if (arg instanceof constraint) {
 				return;
 			}
-		} catch{
+		} catch {
 			// ignore
 		}
 		if (!isUndefinedOrNull(arg) && arg.constructor === constraint) {

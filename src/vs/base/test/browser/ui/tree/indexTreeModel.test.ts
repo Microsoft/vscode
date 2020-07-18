@@ -5,14 +5,14 @@
 
 import * as assert from 'assert';
 import { ITreeNode, ITreeFilter, TreeVisibility } from 'vs/base/browser/ui/tree/tree';
-import { ISpliceable } from 'vs/base/common/sequence';
-import { IndexTreeModel, IIndexTreeNode } from 'vs/base/browser/ui/tree/indexTreeModel';
+import { IndexTreeModel, IIndexTreeNode, IList } from 'vs/base/browser/ui/tree/indexTreeModel';
 
-function toSpliceable<T>(arr: T[]): ISpliceable<T> {
+function toList<T>(arr: T[]): IList<T> {
 	return {
 		splice(start: number, deleteCount: number, elements: T[]): void {
 			arr.splice(start, deleteCount, ...elements);
-		}
+		},
+		updateElementHeight() { }
 	};
 }
 
@@ -24,14 +24,14 @@ suite('IndexTreeModel', function () {
 
 	test('ctor', () => {
 		const list: ITreeNode<number>[] = [];
-		const model = new IndexTreeModel<number>('test', toSpliceable(list), -1);
+		const model = new IndexTreeModel<number>('test', toList(list), -1);
 		assert(model);
 		assert.equal(list.length, 0);
 	});
 
 	test('insert', () => {
 		const list: ITreeNode<number>[] = [];
-		const model = new IndexTreeModel<number>('test', toSpliceable(list), -1);
+		const model = new IndexTreeModel<number>('test', toList(list), -1);
 
 		model.splice([0], 0, [
 			{ element: 0 },
@@ -53,7 +53,7 @@ suite('IndexTreeModel', function () {
 
 	test('deep insert', function () {
 		const list: ITreeNode<number>[] = [];
-		const model = new IndexTreeModel<number>('test', toSpliceable(list), -1);
+		const model = new IndexTreeModel<number>('test', toList(list), -1);
 
 		model.splice([0], 0, [
 			{
@@ -90,7 +90,7 @@ suite('IndexTreeModel', function () {
 
 	test('deep insert collapsed', function () {
 		const list: ITreeNode<number>[] = [];
-		const model = new IndexTreeModel<number>('test', toSpliceable(list), -1);
+		const model = new IndexTreeModel<number>('test', toList(list), -1);
 
 		model.splice([0], 0, [
 			{
@@ -118,7 +118,7 @@ suite('IndexTreeModel', function () {
 
 	test('delete', () => {
 		const list: ITreeNode<number>[] = [];
-		const model = new IndexTreeModel<number>('test', toSpliceable(list), -1);
+		const model = new IndexTreeModel<number>('test', toList(list), -1);
 
 		model.splice([0], 0, [
 			{ element: 0 },
@@ -143,7 +143,7 @@ suite('IndexTreeModel', function () {
 
 	test('nested delete', function () {
 		const list: ITreeNode<number>[] = [];
-		const model = new IndexTreeModel<number>('test', toSpliceable(list), -1);
+		const model = new IndexTreeModel<number>('test', toList(list), -1);
 
 		model.splice([0], 0, [
 			{
@@ -177,7 +177,7 @@ suite('IndexTreeModel', function () {
 
 	test('deep delete', function () {
 		const list: ITreeNode<number>[] = [];
-		const model = new IndexTreeModel<number>('test', toSpliceable(list), -1);
+		const model = new IndexTreeModel<number>('test', toList(list), -1);
 
 		model.splice([0], 0, [
 			{
@@ -205,7 +205,7 @@ suite('IndexTreeModel', function () {
 
 	test('hidden delete', function () {
 		const list: ITreeNode<number>[] = [];
-		const model = new IndexTreeModel<number>('test', toSpliceable(list), -1);
+		const model = new IndexTreeModel<number>('test', toList(list), -1);
 
 		model.splice([0], 0, [
 			{
@@ -230,7 +230,7 @@ suite('IndexTreeModel', function () {
 
 	test('collapse', () => {
 		const list: ITreeNode<number>[] = [];
-		const model = new IndexTreeModel<number>('test', toSpliceable(list), -1);
+		const model = new IndexTreeModel<number>('test', toList(list), -1);
 
 		model.splice([0], 0, [
 			{
@@ -261,7 +261,7 @@ suite('IndexTreeModel', function () {
 
 	test('expand', () => {
 		const list: ITreeNode<number>[] = [];
-		const model = new IndexTreeModel<number>('test', toSpliceable(list), -1);
+		const model = new IndexTreeModel<number>('test', toList(list), -1);
 
 		model.splice([0], 0, [
 			{
@@ -301,7 +301,7 @@ suite('IndexTreeModel', function () {
 
 	test('collapse should recursively adjust visible count', function () {
 		const list: ITreeNode<number>[] = [];
-		const model = new IndexTreeModel<number>('test', toSpliceable(list), -1);
+		const model = new IndexTreeModel<number>('test', toList(list), -1);
 
 		model.splice([0], 0, [
 			{
@@ -334,7 +334,7 @@ suite('IndexTreeModel', function () {
 
 	test('setCollapsible', () => {
 		const list: ITreeNode<number>[] = [];
-		const model = new IndexTreeModel<number>('test', toSpliceable(list), -1);
+		const model = new IndexTreeModel<number>('test', toList(list), -1);
 
 		model.splice([0], 0, [
 			{
@@ -403,7 +403,7 @@ suite('IndexTreeModel', function () {
 			}
 		};
 
-		const model = new IndexTreeModel<number>('test', toSpliceable(list), -1, { filter });
+		const model = new IndexTreeModel<number>('test', toList(list), -1, { filter });
 
 		model.splice([0], 0, [
 			{
@@ -437,7 +437,7 @@ suite('IndexTreeModel', function () {
 			}
 		};
 
-		const model = new IndexTreeModel<number>('test', toSpliceable(list), -1, { filter });
+		const model = new IndexTreeModel<number>('test', toList(list), -1, { filter });
 
 		model.splice([0], 0, [
 			{
@@ -460,7 +460,7 @@ suite('IndexTreeModel', function () {
 			}
 		};
 
-		const model = new IndexTreeModel<number>('test', toSpliceable(list), -1, { filter });
+		const model = new IndexTreeModel<number>('test', toList(list), -1, { filter });
 
 		model.splice([0], 0, [
 			{
@@ -499,7 +499,7 @@ suite('IndexTreeModel', function () {
 			}
 		};
 
-		const model = new IndexTreeModel<string>('test', toSpliceable(list), 'root', { filter });
+		const model = new IndexTreeModel<string>('test', toList(list), 'root', { filter });
 
 		model.splice([0], 0, [
 			{
@@ -545,7 +545,7 @@ suite('IndexTreeModel', function () {
 			}
 		};
 
-		const model = new IndexTreeModel<string>('test', toSpliceable(list), 'root', { filter });
+		const model = new IndexTreeModel<string>('test', toList(list), 'root', { filter });
 
 		model.splice([0], 0, [
 			{
@@ -591,7 +591,7 @@ suite('IndexTreeModel', function () {
 			}
 		};
 
-		const model = new IndexTreeModel<string>('test', toSpliceable(list), 'root', { filter });
+		const model = new IndexTreeModel<string>('test', toList(list), 'root', { filter });
 
 		model.splice([0], 0, [
 			{
@@ -639,7 +639,7 @@ suite('IndexTreeModel', function () {
 
 		test('simple', function () {
 			const list: IIndexTreeNode<number>[] = [];
-			const model = new IndexTreeModel<number>('test', toSpliceable(list), -1);
+			const model = new IndexTreeModel<number>('test', toList(list), -1);
 
 			model.splice([0], 0, [
 				{
@@ -669,7 +669,7 @@ suite('IndexTreeModel', function () {
 				}
 			};
 
-			const model = new IndexTreeModel<number>('test', toSpliceable(list), -1, { filter });
+			const model = new IndexTreeModel<number>('test', toList(list), -1, { filter });
 
 			model.splice([0], 0, [
 				{
@@ -701,7 +701,7 @@ suite('IndexTreeModel', function () {
 			}
 		};
 
-		const model = new IndexTreeModel<string>('test', toSpliceable(list), 'root', { filter });
+		const model = new IndexTreeModel<string>('test', toList(list), 'root', { filter });
 
 		model.splice([0], 0, [
 			{ element: 'silver' },
@@ -735,7 +735,7 @@ suite('IndexTreeModel', function () {
 			}
 		};
 
-		const model = new IndexTreeModel<string>('test', toSpliceable(list), 'root', { filter });
+		const model = new IndexTreeModel<string>('test', toList(list), 'root', { filter });
 
 		model.splice([0], 0, [
 			{ element: 'a', children: [{ element: 'aa' }] },

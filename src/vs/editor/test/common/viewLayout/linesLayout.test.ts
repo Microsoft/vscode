@@ -8,9 +8,11 @@ import { LinesLayout, EditorWhitespace } from 'vs/editor/common/viewLayout/lines
 suite('Editor ViewLayout - LinesLayout', () => {
 
 	function insertWhitespace(linesLayout: LinesLayout, afterLineNumber: number, ordinal: number, heightInPx: number, minWidth: number): string {
-		return linesLayout.changeWhitespace((accessor) => {
-			return accessor.insertWhitespace(afterLineNumber, ordinal, heightInPx, minWidth);
+		let id: string;
+		linesLayout.changeWhitespace((accessor) => {
+			id = accessor.insertWhitespace(afterLineNumber, ordinal, heightInPx, minWidth);
 		});
+		return id!;
 	}
 
 	function changeOneWhitespace(linesLayout: LinesLayout, id: string, newAfterLineNumber: number, newHeight: number): void {

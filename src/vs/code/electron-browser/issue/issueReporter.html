@@ -1,17 +1,23 @@
 <!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
 <!DOCTYPE html>
 <html>
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' https: data:; media-src 'none'; child-src 'self'; object-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https:; font-src 'self' https:;">
+		<style>
+			body {
+				display: none
+			}
+		</style>
+	</head>
+	<body aria-label="">
+	</body>
 
-<head>
-	<meta charset="utf-8" />
-	<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' https: data:; media-src 'none'; child-src 'self'; object-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https:; font-src 'self' https:;">
-	<style>body{display: none}</style>
-</head>
+	<!-- Init Bootstrap Helpers -->
+	<script src="../../../../bootstrap.js"></script>
+	<script src="../../../../vs/loader.js"></script>
+	<script src="../../../../bootstrap-window.js"></script>
 
-<body>
-</body>
-
-<!-- Startup via issueReporter.js -->
-<script src="issueReporter.js"></script>
-
+	<!-- Startup via issueReporter.js -->
+	<script src="issueReporter.js"></script>
 </html>

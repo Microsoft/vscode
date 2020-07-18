@@ -32,13 +32,13 @@ function log(prefix: string, message: string): void {
 	fancyLog(ansiColors.cyan('[' + prefix + ']'), message);
 }
 
-export function loaderConfig(emptyPaths?: string[]) {
+export function loaderConfig() {
 	const result: any = {
 		paths: {
 			'vs': 'out-build/vs',
 			'vscode': 'empty:'
 		},
-		nodeModules: emptyPaths || []
+		amdModulesPattern: /^vs\//
 	};
 
 	result['vs/css'] = { inlineResources: true };

@@ -5,6 +5,7 @@
 
 import { IRelativePattern, match as matchGlobPattern } from 'vs/base/common/glob';
 import { URI } from 'vs/base/common/uri'; // TODO@Alex
+import { normalize } from 'vs/base/common/path';
 
 export interface LanguageFilter {
 	language?: string;
@@ -83,7 +84,19 @@ export function score(selector: LanguageSelector | undefined, candidateUri: URI,
 		}
 
 		if (pattern) {
-			if (pattern === candidateUri.fsPath || matchGlobPattern(pattern, candidateUri.fsPath)) {
+			let normalizedPattern: string | IRelativePattern;
+			if (typeof pattern === 'string') {
+				normalizedPattern = pattern;
+			} else {
+				// Since this pattern has a `base` property, we need
+				// to normalize this path first before passing it on
+				// because we will compare it against `Uri.fsPath`
+				// which uses platform specific separators.
+				// Refs: https://github.com/microsoft/vscode/issues/99938
+				normalizedPattern = { ...pattern, base: normalize(pattern.base) };
+			}
+
+			if (normalizedPattern === candidateUri.fsPath || matchGlobPattern(normalizedPattern, candidateUri.fsPath)) {
 				ret = 10;
 			} else {
 				return 0;

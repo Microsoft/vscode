@@ -8,7 +8,7 @@ import type * as Proto from '../protocol';
 import { ITypeScriptServiceClient } from '../typescriptService';
 import API from '../utils/api';
 import { coalesce } from '../utils/arrays';
-import { VersionDependentRegistration } from '../utils/dependentRegistration';
+import { conditionalRegistration, requireMinVersion } from '../utils/dependentRegistration';
 import * as typeConverters from '../utils/typeConverters';
 
 class TypeScriptFoldingProvider implements vscode.FoldingRangeProvider {
@@ -76,7 +76,9 @@ export function register(
 	selector: vscode.DocumentSelector,
 	client: ITypeScriptServiceClient,
 ): vscode.Disposable {
-	return new VersionDependentRegistration(client, TypeScriptFoldingProvider.minVersion, () => {
+	return conditionalRegistration([
+		requireMinVersion(client, TypeScriptFoldingProvider.minVersion),
+	], () => {
 		return vscode.languages.registerFoldingRangeProvider(selector,
 			new TypeScriptFoldingProvider(client));
 	});

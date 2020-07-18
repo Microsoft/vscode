@@ -7,6 +7,8 @@ import { isMacintosh, isLinux, isWeb } from 'vs/base/common/platform';
 import { IEnvironmentService } from 'vs/platform/environment/common/environment';
 import { URI, UriComponents } from 'vs/base/common/uri';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
+import { ThemeType } from 'vs/platform/theme/common/themeService';
+import { IWorkspaceIdentifier, ISingleFolderWorkspaceIdentifier } from 'vs/platform/workspaces/common/workspaces';
 
 export interface IBaseOpenWindowsOptions {
 	forceReuseWindow?: boolean;
@@ -17,6 +19,26 @@ export interface IOpenWindowOptions extends IBaseOpenWindowsOptions {
 	preferNewWindow?: boolean;
 
 	noRecentEntry?: boolean;
+
+	addMode?: boolean;
+
+	diffMode?: boolean;
+	gotoLineMode?: boolean;
+
+	waitMarkerFileURI?: URI;
+}
+
+export interface IAddFoldersRequest {
+	foldersToAdd: UriComponents[];
+}
+
+export interface IOpenedWindow {
+	id: number;
+	workspace?: IWorkspaceIdentifier;
+	folderUri?: ISingleFolderWorkspaceIdentifier;
+	title: string;
+	filename?: string;
+	dirty: boolean;
 }
 
 export interface IOpenEmptyWindowOptions extends IBaseOpenWindowsOptions {
@@ -144,6 +166,9 @@ export interface IPathData {
 
 	// Specifies if the file should be only be opened if it exists
 	openOnlyIfExists?: boolean;
+
+	// Specifies an optional id to override the editor used to edit the resource, e.g. custom editor.
+	overrideId?: string;
 }
 
 export interface IOpenFileRequest {
@@ -157,7 +182,16 @@ export interface IWindowConfiguration {
 	remoteAuthority?: string;
 
 	highContrast?: boolean;
+	defaultThemeType?: ThemeType;
 
 	filesToOpenOrCreate?: IPath[];
 	filesToDiff?: IPath[];
+}
+
+/**
+ * According to Electron docs: `scale := 1.2 ^ level`.
+ * https://github.com/electron/electron/blob/master/docs/api/web-contents.md#contentssetzoomlevellevel
+ */
+export function zoomLevelToZoomFactor(zoomLevel = 0): number {
+	return Math.pow(1.2, zoomLevel);
 }

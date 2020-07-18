@@ -38,7 +38,7 @@ export interface IURLCallbackProvider {
 
 export class BrowserURLService extends AbstractURLService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private provider: IURLCallbackProvider | undefined;
 

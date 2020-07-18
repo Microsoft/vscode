@@ -11,8 +11,10 @@
 	"win32RegValueName": "CodeOSS",
 	"win32AppId": "{{E34003BB-9E10-4501-8C11-BE3FAA83F23F}",
 	"win32x64AppId": "{{D77B7E06-80BA-4137-BCF4-654B95CCEBC5}",
+	"win32arm64AppId": "{{D1ACE434-89C5-48D1-88D3-E2991DF85475}",
 	"win32UserAppId": "{{C6065F05-9603-4FC4-8101-B9781A25D88E}",
-	"win32x64UserAppId": "{{C6065F05-9603-4FC4-8101-B9781A25D88E}",
+	"win32x64UserAppId": "{{CC6B787D-37A0-49E8-AE24-8559A032BE0C}",
+	"win32arm64UserAppId": "{{3AEBF0C8-F733-4AD4-BADE-FDB816D53D7B}",
 	"win32AppUserModelId": "Microsoft.CodeOSS",
 	"win32ShellNameShort": "C&ode - OSS",
 	"darwinBundleIdentifier": "com.visualstudio.code.oss",
@@ -21,13 +23,14 @@
 	"reportIssueUrl": "https://github.com/Microsoft/vscode/issues/new",
 	"urlProtocol": "code-oss",
 	"extensionAllowedProposedApi": [
+		"ms-vscode.vscode-js-profile-flame",
 		"ms-vscode.vscode-js-profile-table",
 		"ms-vscode.references-view"
 	],
 	"builtInExtensions": [
 		{
 			"name": "ms-vscode.node-debug",
-			"version": "1.44.5",
+			"version": "1.44.7",
 			"repo": "https://github.com/Microsoft/vscode-node-debug",
 			"metadata": {
 				"id": "b6ded8fb-a0a0-4c1c-acbd-ab2a3bc995a6",
@@ -42,7 +45,7 @@
 		},
 		{
 			"name": "ms-vscode.node-debug2",
-			"version": "1.42.2",
+			"version": "1.42.5",
 			"repo": "https://github.com/Microsoft/vscode-node-debug2",
 			"metadata": {
 				"id": "36d19e17-7569-4841-a001-947eb18602b2",
@@ -57,7 +60,7 @@
 		},
 		{
 			"name": "ms-vscode.references-view",
-			"version": "0.0.51",
+			"version": "0.0.61",
 			"repo": "https://github.com/Microsoft/vscode-reference-view",
 			"metadata": {
 				"id": "dc489f46-520d-4556-ae85-1f9eab3c412d",
@@ -72,7 +75,7 @@
 		},
 		{
 			"name": "ms-vscode.js-debug-companion",
-			"version": "1.0.0",
+			"version": "1.0.2",
 			"repo": "https://github.com/microsoft/vscode-js-debug-companion",
 			"metadata": {
 				"id": "99cb0b7f-7354-4278-b8da-6cc79972169d",
@@ -86,11 +89,11 @@
 			}
 		},
 		{
-			"name": "ms-vscode.js-debug-nightly",
-			"version": "2020.5.417",
+			"name": "ms-vscode.js-debug",
+			"version": "1.48.0",
 			"repo": "https://github.com/Microsoft/vscode-js-debug",
 			"metadata": {
-				"id": "7acbb4ce-c85a-49d4-8d95-a8054406ae97",
+				"id": "25629058-ddac-4e17-abba-74678e126c5d",
 				"publisherId": {
 					"publisherId": "5f5636e7-69ed-4afe-b5d6-8d231fb3d3ee",
 					"publisherName": "ms-vscode",
@@ -102,7 +105,7 @@
 		},
 		{
 			"name": "ms-vscode.vscode-js-profile-table",
-			"version": "0.0.2",
+			"version": "0.0.6",
 			"repo": "https://github.com/Microsoft/vscode-js-debug",
 			"metadata": {
 				"id": "7e52b41b-71ad-457b-ab7e-0620f1fc4feb",

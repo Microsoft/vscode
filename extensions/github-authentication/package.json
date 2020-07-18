@@ -32,20 +32,25 @@
   },
   "aiKey": "AIF-d9b70cd4-b9f9-4d70-929b-a071c400b217",
   "main": "./out/extension.js",
+  "browser": "./dist/browser/extension.js",
   "scripts": {
-    "vscode:prepublish": "npm run compile",
     "compile": "gulp compile-extension:github-authentication",
-    "watch": "gulp watch-extension:github-authentication"
+    "compile-web": "npx webpack-cli --config extension-browser.webpack.config --mode none",
+    "watch": "gulp watch-extension:github-authentication",
+    "watch-web": "npx webpack-cli --config extension-browser.webpack.config --mode none --watch --info-verbosity verbose",
+    "vscode:prepublish": "npm run compile"
   },
   "dependencies": {
-    "uuid": "^3.3.3",
+    "node-fetch": "2.6.0",
+    "uuid": "8.1.0",
     "vscode-extension-telemetry": "0.1.1",
     "vscode-nls": "^4.1.2"
   },
   "devDependencies": {
     "@types/keytar": "^4.4.2",
     "@types/node": "^10.12.21",
-    "@types/uuid": "^3.4.6",
+    "@types/node-fetch": "2.5.7",
+    "@types/uuid": "8.0.0",
     "typescript": "^3.7.5"
   }
 }

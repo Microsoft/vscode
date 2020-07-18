@@ -8,6 +8,7 @@ import { ViewModel } from 'vs/workbench/contrib/debug/common/debugViewModel';
 import { StackFrame, Expression, Thread } from 'vs/workbench/contrib/debug/common/debugModel';
 import { MockSession } from 'vs/workbench/contrib/debug/test/common/mockDebug';
 import { MockContextKeyService } from 'vs/platform/keybinding/test/common/mockKeybindingService';
+import { Source } from 'vs/workbench/contrib/debug/common/debugSource';
 
 suite('Debug - View Model', () => {
 	let model: ViewModel;
@@ -21,7 +22,12 @@ suite('Debug - View Model', () => {
 		assert.equal(model.focusedThread, null);
 		const session = new MockSession();
 		const thread = new Thread(session, 'myThread', 1);
-		const frame = new StackFrame(thread, 1, undefined!, 'app.js', 'normal', { startColumn: 1, startLineNumber: 1, endColumn: 1, endLineNumber: 1 }, 0);
+		const source = new Source({
+			name: 'internalModule.js',
+			sourceReference: 11,
+			presentationHint: 'deemphasize'
+		}, 'aDebugSessionId');
+		const frame = new StackFrame(thread, 1, source, 'app.js', 'normal', { startColumn: 1, startLineNumber: 1, endColumn: 1, endLineNumber: 1 }, 0);
 		model.setFocus(frame, thread, session, false);
 
 		assert.equal(model.focusedStackFrame!.getId(), frame.getId());

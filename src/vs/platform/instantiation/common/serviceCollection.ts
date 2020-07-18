@@ -22,10 +22,6 @@ export class ServiceCollection {
 		return result;
 	}
 
-	forEach(callback: (id: ServiceIdentifier<any>, instanceOrDescriptor: any) => any): void {
-		this._entries.forEach((value, key) => callback(key, value));
-	}
-
 	has(id: ServiceIdentifier<any>): boolean {
 		return this._entries.has(id);
 	}

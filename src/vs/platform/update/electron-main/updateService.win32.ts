@@ -50,7 +50,7 @@ function getUpdateType(): UpdateType {
 
 export class Win32UpdateService extends AbstractUpdateService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private availableUpdate: IAvailableUpdate | undefined;
 
@@ -93,8 +93,8 @@ export class Win32UpdateService extends AbstractUpdateService {
 	protected buildUpdateFeedUrl(quality: string): string | undefined {
 		let platform = 'win32';
 
-		if (process.arch === 'x64') {
-			platform += '-x64';
+		if (process.arch !== 'ia32') {
+			platform += `-${process.arch}`;
 		}
 
 		if (getUpdateType() === UpdateType.Archive) {

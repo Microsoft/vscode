@@ -4,7 +4,7 @@
 		"If you want to provide a fix or improvement, please create a pull request against the original repository.",
 		"Once accepted there, we are happy to receive an update request."
 	],
-	"version": "https://github.com/Microsoft/vscode-mssql/commit/a542fe96780e6b274adb281810d419a512fb5bb4",
+	"version": "https://github.com/Microsoft/vscode-mssql/commit/750d30dc48c4c0317b63bb5f1ed3e71487bb84a1",
 	"name": "SQL",
 	"scopeName": "source.sql",
 	"patterns": [
@@ -404,7 +404,7 @@
 						}
 					},
 					"comment": "this is faster than the next begin/end rule since sub-pattern will match till end-of-line and SQL files tend to have very long lines.",
-					"match": "(N)?(')(?:[^'\\\\]|\\\\.)*(')",
+					"match": "(N)?(')[^']*(')",
 					"name": "string.quoted.single.sql"
 				},
 				{
@@ -437,7 +437,7 @@
 						}
 					},
 					"comment": "this is faster than the next begin/end rule since sub-pattern will match till end-of-line and SQL files tend to have very long lines.",
-					"match": "(`)(?:[^`\\\\]|\\\\.)*(`)",
+					"match": "(`)[^`\\\\]*(`)",
 					"name": "string.quoted.other.backtick.sql"
 				},
 				{
@@ -470,7 +470,7 @@
 						}
 					},
 					"comment": "this is faster than the next begin/end rule since sub-pattern will match till end-of-line and SQL files tend to have very long lines.",
-					"match": "(\")(?:[^\"#\\\\]|\\\\.)*(\")",
+					"match": "(\")[^\"#]*(\")",
 					"name": "string.quoted.double.sql"
 				},
 				{

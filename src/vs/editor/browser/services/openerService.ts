@@ -85,7 +85,7 @@ class EditorOpener implements IOpener {
 
 export class OpenerService implements IOpenerService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private readonly _openers = new LinkedList<IOpener>();
 	private readonly _validators = new LinkedList<IValidator>();

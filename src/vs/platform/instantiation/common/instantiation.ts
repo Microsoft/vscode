@@ -85,7 +85,7 @@ type GetLeadingNonServiceArgs<Args> =
 
 export interface IInstantiationService {
 
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	/**
 	 * Synchronously creates an instance that is denoted by

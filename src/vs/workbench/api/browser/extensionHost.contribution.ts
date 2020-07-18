@@ -41,6 +41,7 @@ import './mainThreadMessageService';
 import './mainThreadOutputService';
 import './mainThreadProgress';
 import './mainThreadQuickOpen';
+import './mainThreadRemoteConnectionData';
 import './mainThreadSaveParticipant';
 import './mainThreadSCM';
 import './mainThreadSearch';

@@ -32,25 +32,6 @@ export function values<T>(from: IStringDictionary<T> | INumberDictionary<T>): T[
 	return result;
 }
 
-export function size<T>(from: IStringDictionary<T> | INumberDictionary<T>): number {
-	let count = 0;
-	for (let key in from) {
-		if (hasOwnProperty.call(from, key)) {
-			count += 1;
-		}
-	}
-	return count;
-}
-
-export function first<T>(from: IStringDictionary<T> | INumberDictionary<T>): T | undefined {
-	for (const key in from) {
-		if (hasOwnProperty.call(from, key)) {
-			return (from as any)[key];
-		}
-	}
-	return undefined;
-}
-
 /**
  * Iterates over each entry in the provided dictionary. The iterator allows
  * to remove elements and will stop when the callback returns {{false}}.

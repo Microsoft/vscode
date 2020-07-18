@@ -4,15 +4,15 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
-import { MemFS } from './memfs';
+import { TestFS } from './memfs';
 import * as assert from 'assert';
 
 export function rndName() {
 	return Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 10);
 }
 
-export const testFs = new MemFS();
-vscode.workspace.registerFileSystemProvider(testFs.scheme, testFs);
+export const testFs = new TestFS('fake-fs', true);
+vscode.workspace.registerFileSystemProvider(testFs.scheme, testFs, { isCaseSensitive: testFs.isCaseSensitive });
 
 export async function createRandomFile(contents = '', dir: vscode.Uri | undefined = undefined, ext = ''): Promise<vscode.Uri> {
 	let fakeFile: vscode.Uri;
@@ -48,23 +48,12 @@ export function closeAllEditors(): Thenable<any> {
 	return vscode.commands.executeCommand('workbench.action.closeAllEditors');
 }
 
+export async function revertAllDirty(): Promise<void> {
+	return vscode.commands.executeCommand('_workbench.revertAllDirty');
+}
+
 export function disposeAll(disposables: vscode.Disposable[]) {
 	vscode.Disposable.from(...disposables).dispose();
-}
-
-export function conditionalTest(name: string, testCallback: (done: MochaDone) => void | Thenable<any>) {
-	if (isTestTypeActive()) {
-		const async = !!testCallback.length;
-		if (async) {
-			test(name, (done) => testCallback(done));
-		} else {
-			test(name, () => (<() => void | Thenable<any>>testCallback)());
-		}
-	}
-}
-
-function isTestTypeActive(): boolean {
-	return !!vscode.extensions.getExtension('vscode-resolver-test');
 }
 
 export function delay(ms: number) {

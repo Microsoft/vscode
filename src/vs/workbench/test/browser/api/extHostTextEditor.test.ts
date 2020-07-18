@@ -9,7 +9,7 @@ import { MainThreadTextEditorsShape, IResolvedTextEditorConfiguration, ITextEdit
 import { ExtHostTextEditorOptions, ExtHostTextEditor } from 'vs/workbench/api/common/extHostTextEditor';
 import { ExtHostDocumentData } from 'vs/workbench/api/common/extHostDocumentData';
 import { URI } from 'vs/base/common/uri';
-import { mock } from 'vs/workbench/test/browser/api/mock';
+import { mock } from 'vs/base/test/common/mock';
 import { NullLogService } from 'vs/platform/log/common/log';
 
 suite('ExtHostTextEditor', () => {

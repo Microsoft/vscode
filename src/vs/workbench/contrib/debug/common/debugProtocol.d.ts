@@ -120,14 +120,14 @@ declare module DebugProtocol {
 
 	/** Event message for 'stopped' event type.
 		The event indicates that the execution of the debuggee has stopped due to some condition.
-		This can be caused by a break point previously set, a stepping action has completed, by executing a debugger statement etc.
+		This can be caused by a break point previously set, a stepping request has completed, by executing a debugger statement etc.
 	*/
 	export interface StoppedEvent extends Event {
 		// event: 'stopped';
 		body: {
 			/** The reason for the event.
 				For backward compatibility this string is shown in the UI if the 'description' attribute is missing (but it must not be translated).
-				Values: 'step', 'breakpoint', 'exception', 'pause', 'entry', 'goto', 'function breakpoint', 'data breakpoint', etc.
+				Values: 'step', 'breakpoint', 'exception', 'pause', 'entry', 'goto', 'function breakpoint', 'data breakpoint', 'instruction breakpoint', etc.
 			*/
 			reason: string;
 			/** The full reason for the event, e.g. 'Paused on exception'. This string is shown in the UI as is and must be translated. */
@@ -765,6 +765,31 @@ declare module DebugProtocol {
 		};
 	}
 
+	/** SetInstructionBreakpoints request; value of command field is 'setInstructionBreakpoints'.
+		Replaces all existing instruction breakpoints. Typically, instruction breakpoints would be set from a diassembly window.
+		To clear all instruction breakpoints, specify an empty array.
+		When an instruction breakpoint is hit, a 'stopped' event (with reason 'instruction breakpoint') is generated.
+		Clients should only call this request if the capability 'supportsInstructionBreakpoints' is true.
+	*/
+	export interface SetInstructionBreakpointsRequest extends Request {
+		// command: 'setInstructionBreakpoints';
+		arguments: SetInstructionBreakpointsArguments;
+	}
+
+	/** Arguments for 'setInstructionBreakpoints' request */
+	export interface SetInstructionBreakpointsArguments {
+		/** The instruction references of the breakpoints */
+		breakpoints: InstructionBreakpoint[];
+	}
+
+	/** Response to 'setInstructionBreakpoints' request */
+	export interface SetInstructionBreakpointsResponse extends Response {
+		body: {
+			/** Information about the breakpoints. The array elements correspond to the elements of the 'breakpoints' array. */
+			breakpoints: Breakpoint[];
+		};
+	}
+
 	/** Continue request; value of command field is 'continue'.
 		The request starts the debuggee to run again.
 	*/
@@ -804,6 +829,8 @@ declare module DebugProtocol {
 	export interface NextArguments {
 		/** Execute 'next' for this thread. */
 		threadId: number;
+		/** Optional granularity to step. If no granularity is specified, a granularity of 'statement' is assumed. */
+		granularity?: SteppingGranularity;
 	}
 
 	/** Response to 'next' request. This is just an acknowledgement, so no body field is required. */
@@ -829,6 +856,8 @@ declare module DebugProtocol {
 		threadId: number;
 		/** Optional id of the target to step into. */
 		targetId?: number;
+		/** Optional granularity to step. If no granularity is specified, a granularity of 'statement' is assumed. */
+		granularity?: SteppingGranularity;
 	}
 
 	/** Response to 'stepIn' request. This is just an acknowledgement, so no body field is required. */
@@ -848,6 +877,8 @@ declare module DebugProtocol {
 	export interface StepOutArguments {
 		/** Execute 'stepOut' for this thread. */
 		threadId: number;
+		/** Optional granularity to step. If no granularity is specified, a granularity of 'statement' is assumed. */
+		granularity?: SteppingGranularity;
 	}
 
 	/** Response to 'stepOut' request. This is just an acknowledgement, so no body field is required. */
@@ -868,6 +899,8 @@ declare module DebugProtocol {
 	export interface StepBackArguments {
 		/** Execute 'stepBack' for this thread. */
 		threadId: number;
+		/** Optional granularity to step. If no granularity is specified, a granularity of 'statement' is assumed. */
+		granularity?: SteppingGranularity;
 	}
 
 	/** Response to 'stepBack' request. This is just an acknowledgement, so no body field is required. */
@@ -1560,6 +1593,10 @@ declare module DebugProtocol {
 		supportsBreakpointLocationsRequest?: boolean;
 		/** The debug adapter supports the 'clipboard' context value in the 'evaluate' request. */
 		supportsClipboardContext?: boolean;
+		/** The debug adapter supports stepping granularities (argument 'granularity') for the stepping requests. */
+		supportsSteppingGranularity?: boolean;
+		/** The debug adapter supports adding breakpoints based on instruction references. */
+		supportsInstructionBreakpoints?: boolean;
 	}
 
 	/** An ExceptionBreakpointsFilter is shown in the UI as an option for configuring how exceptions are dealt with. */
@@ -1896,7 +1933,28 @@ declare module DebugProtocol {
 		hitCondition?: string;
 	}
 
-	/** Information about a Breakpoint created in setBreakpoints or setFunctionBreakpoints. */
+	/** Properties of a breakpoint passed to the setInstructionBreakpoints request */
+	export interface InstructionBreakpoint {
+		/** The instruction reference of the breakpoint.
+			This should be a memory or instruction pointer reference from an EvaluateResponse, Variable, StackFrame, GotoTarget, or Breakpoint.
+		*/
+		instructionReference: string;
+		/** An optional offset from the instruction reference.
+			This can be negative.
+		*/
+		offset?: number;
+		/** An optional expression for conditional breakpoints.
+			It is only honored by a debug adapter if the capability 'supportsConditionalBreakpoints' is true.
+		*/
+		condition?: string;
+		/** An optional expression that controls how many hits of the breakpoint are ignored.
+			The backend is expected to interpret the expression as needed.
+			The attribute is only honored by a debug adapter if the capability 'supportsHitConditionalBreakpoints' is true.
+		*/
+		hitCondition?: string;
+	}
+
+	/** Information about a Breakpoint created in setBreakpoints, setFunctionBreakpoints, setInstructionBreakpoints, or setDataBreakpoints. */
 	export interface Breakpoint {
 		/** An optional identifier for the breakpoint. It is needed if breakpoint events are used to update or remove breakpoints. */
 		id?: number;
@@ -1918,7 +1976,22 @@ declare module DebugProtocol {
 			If no end line is given, then the end column is assumed to be in the start line.
 		*/
 		endColumn?: number;
+		/** An optional memory reference to where the breakpoint is set. */
+		instructionReference?: string;
+		/** An optional offset from the instruction reference.
+			This can be negative.
+		*/
+		offset?: number;
 	}
+
+	/** The granularity of one 'step' in the stepping requests 'next', 'stepIn', 'stepOut', and 'stepBack'.
+		'statement': The step should allow the program to run until the current statement has finished executing.
+		The meaning of a statement is determined by the adapter and it may be considered equivalent to a line.
+		For example 'for(int i = 0; i < 10; i++) could be considered to have 3 statements 'int i = 0', 'i < 10', and 'i++'.
+		'line': The step should allow the program to run until the current source line has executed.
+		'instruction': The step should allow one instruction to execute (e.g. one x86 instruction).
+	*/
+	export type SteppingGranularity = 'statement' | 'line' | 'instruction';
 
 	/** A StepInTarget can be used in the 'stepIn' request and determines into which single target the stepIn request should step. */
 	export interface StepInTarget {

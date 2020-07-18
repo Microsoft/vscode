@@ -46,6 +46,7 @@ import { IPanelService } from 'vs/workbench/services/panel/common/panelService';
 import { IPathService } from 'vs/workbench/services/path/common/pathService';
 import { env as processEnv, cwd as processCwd } from 'vs/base/common/process';
 import { IViewsService, IViewDescriptorService, ViewContainerLocation } from 'vs/workbench/common/views';
+import { ILogService } from 'vs/platform/log/common/log';
 
 interface TerminalData {
 	terminal: ITerminalInstance;
@@ -202,6 +203,7 @@ export class TerminalTaskSystem implements ITaskSystem {
 		private terminalInstanceService: ITerminalInstanceService,
 		private pathService: IPathService,
 		private viewDescriptorService: IViewDescriptorService,
+		private logService: ILogService,
 		taskSystemInfoResolver: TaskSystemInfoResolver,
 	) {
 
@@ -494,12 +496,15 @@ export class TerminalTaskSystem implements ITaskSystem {
 		}
 	}
 
-	private resolveAndFindExecutable(workspaceFolder: IWorkspaceFolder | undefined, task: CustomTask | ContributedTask, cwd: string | undefined, envPath: string | undefined): Promise<string> {
-		return this.findExecutable(
-			this.configurationResolverService.resolve(workspaceFolder, CommandString.value(task.command.name!)),
-			cwd ? this.configurationResolverService.resolve(workspaceFolder, cwd) : undefined,
-			envPath ? envPath.split(path.delimiter).map(p => this.configurationResolverService.resolve(workspaceFolder, p)) : undefined
-		);
+	private async resolveAndFindExecutable(systemInfo: TaskSystemInfo | undefined, workspaceFolder: IWorkspaceFolder | undefined, task: CustomTask | ContributedTask, cwd: string | undefined, envPath: string | undefined): Promise<string> {
+		const command = this.configurationResolverService.resolve(workspaceFolder, CommandString.value(task.command.name!));
+		cwd = cwd ? this.configurationResolverService.resolve(workspaceFolder, cwd) : undefined;
+		const paths = envPath ? envPath.split(path.delimiter).map(p => this.configurationResolverService.resolve(workspaceFolder, p)) : undefined;
+		let foundExecutable = await systemInfo?.findExecutable(command, cwd, paths);
+		if (!foundExecutable) {
+			foundExecutable = await this.findExecutable(command, cwd, paths);
+		}
+		return foundExecutable;
 	}
 
 	private findUnresolvedVariables(variables: Set<string>, alreadyResolved: Map<string, string>): Set<string> {
@@ -560,7 +565,7 @@ export class TerminalTaskSystem implements ITaskSystem {
 				if (isProcess) {
 					let process = CommandString.value(task.command.name!);
 					if (taskSystemInfo.platform === Platform.Platform.Windows) {
-						process = await this.resolveAndFindExecutable(workspaceFolder, task, cwd, envPath);
+						process = await this.resolveAndFindExecutable(taskSystemInfo, workspaceFolder, task, cwd, envPath);
 					}
 					resolved.variables.set(TerminalTaskSystem.ProcessVarName, process);
 				}
@@ -579,7 +584,7 @@ export class TerminalTaskSystem implements ITaskSystem {
 						if (isProcess) {
 							let processVarValue: string;
 							if (Platform.isWindows) {
-								processVarValue = await this.resolveAndFindExecutable(workspaceFolder, task, cwd, envPath);
+								processVarValue = await this.resolveAndFindExecutable(taskSystemInfo, workspaceFolder, task, cwd, envPath);
 							} else {
 								processVarValue = this.configurationResolverService.resolve(workspaceFolder, CommandString.value(task.command.name!));
 							}
@@ -722,10 +727,9 @@ export class TerminalTaskSystem implements ITaskSystem {
 					processStartedSignaled = true;
 				}
 			}, (_error) => {
-				// The process never got ready. Need to think how to handle this.
+				this.logService.error('Task terminal process never got ready');
 			});
 			this._onDidStateChange.fire(TaskEvent.create(TaskEventKind.Start, task, terminal.id));
-			const registeredLinkMatchers = this.registerLinkMatchers(terminal, problemMatchers);
 			let skipLine: boolean = (!!task.command.presentation && task.command.presentation.echo);
 			const onData = terminal.onLineData((line) => {
 				if (skipLine) {
@@ -765,12 +769,16 @@ export class TerminalTaskSystem implements ITaskSystem {
 					let reveal = task.command.presentation!.reveal;
 					if ((reveal === RevealKind.Silent) && ((exitCode !== 0) || (watchingProblemMatcher.numberOfMatches > 0) && watchingProblemMatcher.maxMarkerSeverity &&
 						(watchingProblemMatcher.maxMarkerSeverity >= MarkerSeverity.Error))) {
-						this.terminalService.setActiveInstance(terminal!);
-						this.terminalService.showPanel(false);
+						try {
+							this.terminalService.setActiveInstance(terminal!);
+							this.terminalService.showPanel(false);
+						} catch (e) {
+							// If the terminal has already been disposed, then setting the active instance will fail. #99828
+							// There is nothing else to do here.
+						}
 					}
 					watchingProblemMatcher.done();
 					watchingProblemMatcher.dispose();
-					registeredLinkMatchers.forEach(handle => terminal!.deregisterLinkMatcher(handle));
 					if (!processStartedSignaled) {
 						this._onDidStateChange.fire(TaskEvent.create(TaskEventKind.ProcessStarted, task, terminal!.processId!));
 						processStartedSignaled = true;
@@ -813,7 +821,6 @@ export class TerminalTaskSystem implements ITaskSystem {
 			this._onDidStateChange.fire(TaskEvent.create(TaskEventKind.Active, task));
 			let problemMatchers = this.resolveMatchers(resolver, task.configurationProperties.problemMatchers);
 			let startStopProblemMatcher = new StartStopProblemCollector(problemMatchers, this.markerService, this.modelService, ProblemHandlingStrategy.Clean, this.fileService);
-			const registeredLinkMatchers = this.registerLinkMatchers(terminal, problemMatchers);
 			let skipLine: boolean = (!!task.command.presentation && task.command.presentation.echo);
 			const onData = terminal.onLineData((line) => {
 				if (skipLine) {
@@ -824,7 +831,6 @@ export class TerminalTaskSystem implements ITaskSystem {
 			});
 			promise = new Promise<ITaskSummary>((resolve, reject) => {
 				const onExit = terminal!.onExit((exitCode) => {
-					onData.dispose();
 					onExit.dispose();
 					let key = task.getMapKey();
 					this.removeFromActiveTasks(task);
@@ -847,16 +853,20 @@ export class TerminalTaskSystem implements ITaskSystem {
 						this.viewsService.openView(Constants.MARKERS_VIEW_ID);
 					} else if (terminal && (reveal === RevealKind.Silent) && ((exitCode !== 0) || (startStopProblemMatcher.numberOfMatches > 0) && startStopProblemMatcher.maxMarkerSeverity &&
 						(startStopProblemMatcher.maxMarkerSeverity >= MarkerSeverity.Error))) {
-						this.terminalService.setActiveInstance(terminal);
-						this.terminalService.showPanel(false);
-					}
-					startStopProblemMatcher.done();
-					startStopProblemMatcher.dispose();
-					registeredLinkMatchers.forEach(handle => {
-						if (terminal) {
-							terminal.deregisterLinkMatcher(handle);
+						try {
+							this.terminalService.setActiveInstance(terminal);
+							this.terminalService.showPanel(false);
+						} catch (e) {
+							// If the terminal has already been disposed, then setting the active instance will fail. #99828
+							// There is nothing else to do here.
 						}
-					});
+					}
+					// Hack to work around #92868 until terminal is fixed.
+					setTimeout(() => {
+						onData.dispose();
+						startStopProblemMatcher.done();
+						startStopProblemMatcher.dispose();
+					}, 100);
 					if (!processStartedSignaled && terminal) {
 						this._onDidStateChange.fire(TaskEvent.create(TaskEventKind.ProcessStarted, task, terminal.processId!));
 						processStartedSignaled = true;
@@ -961,7 +971,7 @@ export class TerminalTaskSystem implements ITaskSystem {
 				windowsShellArgs = true;
 				let basename = path.basename(shellLaunchConfig.executable!).toLowerCase();
 				// If we don't have a cwd, then the terminal uses the home dir.
-				const userHome = await this.pathService.userHome;
+				const userHome = await this.pathService.userHome();
 				if (basename === 'cmd.exe' && ((options.cwd && isUNC(options.cwd)) || (!options.cwd && isUNC(userHome.fsPath)))) {
 					return undefined;
 				}
@@ -1048,7 +1058,7 @@ export class TerminalTaskSystem implements ITaskSystem {
 				}
 			}
 			// This must be normalized to the OS
-			shellLaunchConfig.cwd = resources.toLocalResource(URI.from({ scheme: Schemas.file, path: cwd }), this.environmentService.configuration.remoteAuthority);
+			shellLaunchConfig.cwd = isUNC(cwd) ? cwd : resources.toLocalResource(URI.from({ scheme: Schemas.file, path: cwd }), this.environmentService.configuration.remoteAuthority);
 		}
 		if (options.env) {
 			shellLaunchConfig.env = options.env;
@@ -1279,14 +1289,11 @@ export class TerminalTaskSystem implements ITaskSystem {
 		if (platform === Platform.Platform.Windows) {
 			if (basename === 'cmd' && commandQuoted && argQuoted) {
 				commandLine = '"' + commandLine + '"';
-			} else if (basename === 'powershell' && commandQuoted) {
+			} else if ((basename === 'powershell' || basename === 'pwsh') && commandQuoted) {
 				commandLine = '& ' + commandLine;
 			}
 		}
 
-		if (basename === 'cmd' && platform === Platform.Platform.Windows && commandQuoted && argQuoted) {
-			commandLine = '"' + commandLine + '"';
-		}
 		return commandLine;
 	}
 
@@ -1474,35 +1481,6 @@ export class TerminalTaskSystem implements ITaskSystem {
 				}
 			});
 		}
-		return result;
-	}
-
-	private registerLinkMatchers(terminal: ITerminalInstance, problemMatchers: ProblemMatcher[]): number[] {
-		let result: number[] = [];
-		/*
-		let handlePattern = (matcher: ProblemMatcher, pattern: ProblemPattern): void => {
-			if (pattern.regexp instanceof RegExp && Types.isNumber(pattern.file)) {
-				result.push(terminal.registerLinkMatcher(pattern.regexp, (match: string) => {
-					let resource: URI = getResource(match, matcher);
-					if (resource) {
-						this.workbenchEditorService.openEditor({
-							resource: resource
-						});
-					}
-				}, 0));
-			}
-		};
-
-		for (let problemMatcher of problemMatchers) {
-			if (Array.isArray(problemMatcher.pattern)) {
-				for (let pattern of problemMatcher.pattern) {
-					handlePattern(problemMatcher, pattern);
-				}
-			} else if (problemMatcher.pattern) {
-				handlePattern(problemMatcher, problemMatcher.pattern);
-			}
-		}
-		*/
 		return result;
 	}
 

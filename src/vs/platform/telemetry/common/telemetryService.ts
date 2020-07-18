@@ -20,7 +20,6 @@ export interface ITelemetryServiceConfig {
 	sendErrorTelemetry?: boolean;
 	commonProperties?: Promise<{ [name: string]: any }>;
 	piiPaths?: string[];
-	trueMachineId?: string;
 }
 
 export class TelemetryService implements ITelemetryService {
@@ -28,14 +27,14 @@ export class TelemetryService implements ITelemetryService {
 	static readonly IDLE_START_EVENT_NAME = 'UserIdleStart';
 	static readonly IDLE_STOP_EVENT_NAME = 'UserIdleStop';
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private _appender: ITelemetryAppender;
 	private _commonProperties: Promise<{ [name: string]: any; }>;
 	private _piiPaths: string[];
 	private _userOptIn: boolean;
 	private _enabled: boolean;
-	private _sendErrorTelemetry: boolean;
+	public readonly sendErrorTelemetry: boolean;
 
 	private readonly _disposables = new DisposableStore();
 	private _cleanupPatterns: RegExp[] = [];
@@ -49,7 +48,7 @@ export class TelemetryService implements ITelemetryService {
 		this._piiPaths = config.piiPaths || [];
 		this._userOptIn = true;
 		this._enabled = true;
-		this._sendErrorTelemetry = !!config.sendErrorTelemetry;
+		this.sendErrorTelemetry = !!config.sendErrorTelemetry;
 
 		// static cleanup pattern for: `file:///DANGEROUS/PATH/resources/app/Useful/Information`
 		this._cleanupPatterns = [/file:\/\/\/.*?\/resources\/app\//gi];
@@ -76,13 +75,6 @@ export class TelemetryService implements ITelemetryService {
 					usingFallbackGuid: { classification: 'SystemMetaData', purpose: 'BusinessInsight', isMeasurement: true };
 				};
 				this.publicLog2<{ usingFallbackGuid: boolean }, MachineIdFallbackClassification>('machineIdFallback', { usingFallbackGuid: !isHashedId });
-
-				if (config.trueMachineId) {
-					type MachineIdDisambiguationClassification = {
-						correctedMachineId: { endPoint: 'MacAddressHash', classification: 'EndUserPseudonymizedInformation', purpose: 'FeatureInsight' };
-					};
-					this.publicLog2<{ correctedMachineId: string }, MachineIdDisambiguationClassification>('machineIdDisambiguation', { correctedMachineId: config.trueMachineId });
-				}
 			});
 		}
 	}
@@ -148,7 +140,7 @@ export class TelemetryService implements ITelemetryService {
 	}
 
 	publicLogError(errorEventName: string, data?: ITelemetryData): Promise<any> {
-		if (!this._sendErrorTelemetry) {
+		if (!this.sendErrorTelemetry) {
 			return Promise.resolve(undefined);
 		}
 

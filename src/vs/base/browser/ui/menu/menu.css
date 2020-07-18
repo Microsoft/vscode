@@ -88,6 +88,9 @@
 	padding: 0.5em 0 0 0;
 	margin-bottom: 0.5em;
 	width: 100%;
+	height: 0px !important;
+	margin-left: .8em !important;
+	margin-right: .8em !important;
 }
 
 .monaco-menu .monaco-action-bar.vertical .action-label.separator.text {

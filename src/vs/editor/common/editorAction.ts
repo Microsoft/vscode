@@ -41,7 +41,6 @@ export class InternalEditorAction implements IEditorAction {
 			return Promise.resolve(undefined);
 		}
 
-		const r = this._run();
-		return r ? r : Promise.resolve(undefined);
+		return this._run();
 	}
 }

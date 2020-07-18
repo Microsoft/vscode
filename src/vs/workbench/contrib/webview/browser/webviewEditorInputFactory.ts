@@ -78,6 +78,7 @@ export class WebviewEditorInputFactory implements IEditorInputFactory {
 			extension: reviveWebviewExtensionDescription(data.extensionId, data.extensionLocation),
 			iconPath: reviveIconPath(data.iconPath),
 			state: reviveState(data.state),
+			options: reviveOptions(data.options)
 		};
 	}
 
@@ -125,6 +126,8 @@ function reviveIconPath(data: SerializedIconPath | undefined) {
 	return light && dark ? { light, dark } : undefined;
 }
 
+function reviveUri(data: string | UriComponents): URI;
+function reviveUri(data: string | UriComponents | undefined): URI | undefined;
 function reviveUri(data: string | UriComponents | undefined): URI | undefined {
 	if (!data) {
 		return undefined;
@@ -142,4 +145,11 @@ function reviveUri(data: string | UriComponents | undefined): URI | undefined {
 
 function reviveState(state: unknown | undefined): undefined | string {
 	return typeof state === 'string' ? state : undefined;
+}
+
+function reviveOptions(options: WebviewInputOptions): WebviewInputOptions {
+	return {
+		...options,
+		localResourceRoots: options.localResourceRoots?.map(uri => reviveUri(uri)),
+	};
 }

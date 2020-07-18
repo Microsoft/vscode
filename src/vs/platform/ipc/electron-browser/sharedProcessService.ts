@@ -10,7 +10,7 @@ export const ISharedProcessService = createDecorator<ISharedProcessService>('sha
 
 export interface ISharedProcessService {
 
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	getChannel(channelName: string): IChannel;
 	registerChannel(channelName: string, channel: IServerChannel<string>): void;

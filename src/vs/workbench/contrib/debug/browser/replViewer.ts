@@ -23,7 +23,6 @@ import { IReplElementSource, IDebugService, IExpression, IReplElement, IDebugCon
 import { IDisposable, dispose } from 'vs/base/common/lifecycle';
 import { IThemeService } from 'vs/platform/theme/common/themeService';
 import { localize } from 'vs/nls';
-import { Codicon } from 'vs/base/common/codicons';
 
 const $ = dom.$;
 
@@ -37,7 +36,6 @@ interface IReplGroupTemplateData {
 
 interface IReplEvaluationResultTemplateData {
 	value: HTMLElement;
-	annotation: HTMLElement;
 }
 
 interface ISimpleReplElementTemplateData {
@@ -53,7 +51,6 @@ interface IRawObjectReplTemplateData {
 	expression: HTMLElement;
 	name: HTMLElement;
 	value: HTMLElement;
-	annotation: HTMLElement;
 	label: HighlightedLabel;
 }
 
@@ -116,9 +113,8 @@ export class ReplEvaluationResultsRenderer implements ITreeRenderer<ReplEvaluati
 	renderTemplate(container: HTMLElement): IReplEvaluationResultTemplateData {
 		const output = dom.append(container, $('.evaluation-result.expression'));
 		const value = dom.append(output, $('span.value'));
-		const annotation = dom.append(output, $('span'));
 
-		return { value, annotation };
+		return { value };
 	}
 
 	renderElement(element: ITreeNode<ReplEvaluationResult, FuzzyScore>, index: number, templateData: IReplEvaluationResultTemplateData): void {
@@ -128,10 +124,6 @@ export class ReplEvaluationResultsRenderer implements ITreeRenderer<ReplEvaluati
 			colorize: true,
 			linkDetector: this.linkDetector
 		});
-		if (expression.hasChildren) {
-			templateData.annotation.className = 'annotation ' + Codicon.info.classNames;
-			templateData.annotation.title = localize('stateCapture', "Object state is captured from first evaluation");
-		}
 	}
 
 	disposeTemplate(templateData: IReplEvaluationResultTemplateData): void {
@@ -240,9 +232,8 @@ export class ReplRawObjectsRenderer implements ITreeRenderer<RawObjectReplElemen
 		const name = dom.append(expression, $('span.name'));
 		const label = new HighlightedLabel(name, false);
 		const value = dom.append(expression, $('span.value'));
-		const annotation = dom.append(expression, $('span'));
 
-		return { container, expression, name, label, value, annotation };
+		return { container, expression, name, label, value };
 	}
 
 	renderElement(node: ITreeNode<RawObjectReplElement, FuzzyScore>, index: number, templateData: IRawObjectReplTemplateData): void {
@@ -260,15 +251,6 @@ export class ReplRawObjectsRenderer implements ITreeRenderer<RawObjectReplElemen
 			showHover: false,
 			linkDetector: this.linkDetector
 		});
-
-		// annotation if any
-		if (element.annotation) {
-			templateData.annotation.className = 'annotation ' + Codicon.info.classNames;
-			templateData.annotation.title = element.annotation;
-		} else {
-			templateData.annotation.className = '';
-			templateData.annotation.title = '';
-		}
 	}
 
 	disposeTemplate(templateData: IRawObjectReplTemplateData): void {
@@ -380,10 +362,10 @@ export class ReplAccessibilityProvider implements IListAccessibilityProvider<IRe
 			return localize('replValueOutputAriaLabel', "{0}", element.value);
 		}
 		if (element instanceof RawObjectReplElement) {
-			return localize('replRawObjectAriaLabel', "Repl variable {0}, value {1}", element.name, element.value);
+			return localize('replRawObjectAriaLabel', "Debug console variable {0}, value {1}", element.name, element.value);
 		}
 		if (element instanceof ReplGroup) {
-			return localize('replGroup', "Repl group {0}, read eval print loop, debug", element.name);
+			return localize('replGroup', "Debug console group {0}, read eval print loop, debug", element.name);
 		}
 
 		return '';

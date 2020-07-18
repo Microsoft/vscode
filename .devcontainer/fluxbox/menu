@@ -1,0 +1,16 @@
+[begin] (  Code - OSS Development Container  )
+	[exec] (File Manager) { nautilus ~ } <>
+	[exec] (Terminal) {/usr/bin/gnome-terminal --working-directory=~ } <>
+	[exec] (Start Code - OSS) { x-terminal-emulator -T "Code - OSS Build" -e bash /workspaces/vscode*/scripts/code.sh } <>
+	[submenu] (System >) {}
+		[exec] (Set Resolution) { x-terminal-emulator -T "Set Resolution" -e bash /usr/local/bin/set-resolution } <>
+		[exec] (Passwords and Keys) { seahorse } <>
+		[exec] (Top) { x-terminal-emulator -T "Top" -e /usr/bin/top } <>
+		[exec] (Editres) {editres} <>
+		[exec] (Xfontsel) {xfontsel} <>
+		[exec] (Xkill) {xkill} <>
+		[exec] (Xrefresh) {xrefresh} <>
+	[end]
+	[config] (Configuration >)
+	[workspaces] (Workspaces >)
+[end]

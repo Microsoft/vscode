@@ -1,0 +1,9 @@
+[app] (name=code-oss-dev)
+  [Position]	(CENTER)	{0 0}
+	[Maximized]	{yes}
+  [Dimensions]	{100% 100%}
+[end]
+[transient] (role=GtkFileChooserDialog)
+  [Position]	(CENTER)	{0 0}
+  [Dimensions]	{70% 70%}
+[end]

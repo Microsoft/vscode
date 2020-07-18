@@ -283,6 +283,9 @@ export abstract class CommonEditorConfiguration extends Disposable implements IC
 	private _onDidChange = this._register(new Emitter<ConfigurationChangedEvent>());
 	public readonly onDidChange: Event<ConfigurationChangedEvent> = this._onDidChange.event;
 
+	private _onDidChangeFast = this._register(new Emitter<ConfigurationChangedEvent>());
+	public readonly onDidChangeFast: Event<ConfigurationChangedEvent> = this._onDidChangeFast.event;
+
 	public readonly isSimpleWidget: boolean;
 	private _computeOptionsMemory: ComputeOptionsMemory;
 	public options!: ComputedEditorOptions;
@@ -334,6 +337,7 @@ export abstract class CommonEditorConfiguration extends Disposable implements IC
 			}
 
 			this.options = newOptions;
+			this._onDidChangeFast.fire(changeEvent);
 			this._onDidChange.fire(changeEvent);
 		}
 	}
@@ -499,8 +503,13 @@ const editorConfiguration: IConfigurationNode = {
 			description: nls.localize('wordBasedSuggestions', "Controls whether completions should be computed based on words in the document.")
 		},
 		'editor.semanticHighlighting.enabled': {
-			type: 'boolean',
-			default: true,
+			enum: [true, false, 'configuredByTheme'],
+			enumDescriptions: [
+				nls.localize('semanticHighlighting.true', 'Semantic highlighting enabled for all color themes.'),
+				nls.localize('semanticHighlighting.false', 'Semantic highlighting disabled for all color themes.'),
+				nls.localize('semanticHighlighting.configuredByTheme', 'Semantic highlighting is configured by the current color theme\'s `semanticHighlighting` setting.')
+			],
+			default: 'configuredByTheme',
 			description: nls.localize('semanticHighlighting.enabled', "Controls whether the semanticHighlighting is shown for the languages that support it.")
 		},
 		'editor.stablePeek': {
@@ -532,6 +541,11 @@ const editorConfiguration: IConfigurationNode = {
 			type: 'boolean',
 			default: true,
 			description: nls.localize('renderIndicators', "Controls whether the diff editor shows +/- indicators for added/removed changes.")
+		},
+		'diffEditor.codeLens': {
+			type: 'boolean',
+			default: false,
+			description: nls.localize('codeLens', "Controls whether the editor shows CodeLens.")
 		}
 	}
 };

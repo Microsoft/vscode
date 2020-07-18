@@ -55,7 +55,7 @@
 	padding: 0 10px;
 }
 
-.monaco-dialog-box .dialog-message-row > .codicon {
+.monaco-dialog-box .dialog-message-row > .dialog-icon.codicon {
 	flex: 0 0 48px;
 	height: 48px;
 	align-self: baseline;

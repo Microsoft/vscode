@@ -18,7 +18,9 @@ import { assertIsDefined, assertAllDefined } from 'vs/base/common/types';
 
 export class BrowserStorageService extends Disposable implements IStorageService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
+
+	private static readonly WORKSPACE_IS_NEW_KEY = '__$__isNewStorageMarker';
 
 	private readonly _onDidChangeStorage = this._register(new Emitter<IWorkspaceStorageChangeEvent>());
 	readonly onDidChangeStorage = this._onDidChangeStorage.event;
@@ -63,6 +65,7 @@ export class BrowserStorageService extends Disposable implements IStorageService
 
 		// Workspace Storage
 		this.workspaceStorageFile = joinPath(stateRoot, `${payload.id}.json`);
+
 		this.workspaceStorageDatabase = this._register(new FileStorageDatabase(this.workspaceStorageFile, false /* do not watch for external changes */, this.fileService));
 		this.workspaceStorage = this._register(new Storage(this.workspaceStorageDatabase));
 		this._register(this.workspaceStorage.onDidChangeStorage(key => this._onDidChangeStorage.fire({ key, scope: StorageScope.WORKSPACE })));
@@ -78,6 +81,14 @@ export class BrowserStorageService extends Disposable implements IStorageService
 			this.workspaceStorage.init(),
 			this.globalStorage.init()
 		]);
+
+		// Check to see if this is the first time we are "opening" this workspace
+		const firstOpen = this.workspaceStorage.getBoolean(BrowserStorageService.WORKSPACE_IS_NEW_KEY);
+		if (firstOpen === undefined) {
+			this.workspaceStorage.set(BrowserStorageService.WORKSPACE_IS_NEW_KEY, true);
+		} else if (firstOpen) {
+			this.workspaceStorage.set(BrowserStorageService.WORKSPACE_IS_NEW_KEY, false);
+		}
 
 		// In the browser we do not have support for long running unload sequences. As such,
 		// we cannot ask for saving state in that moment, because that would result in a
@@ -176,6 +187,10 @@ export class BrowserStorageService extends Disposable implements IStorageService
 		// Instead we trigger dispose() to ensure that no timeouts or callbacks
 		// get triggered in this phase.
 		this.dispose();
+	}
+
+	isNew(scope: StorageScope.WORKSPACE): boolean {
+		return this.getBoolean(BrowserStorageService.WORKSPACE_IS_NEW_KEY, scope) === true;
 	}
 
 	dispose(): void {

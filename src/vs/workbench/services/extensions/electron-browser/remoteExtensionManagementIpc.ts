@@ -12,8 +12,7 @@ import { areSameExtensions } from 'vs/platform/extensionManagement/common/extens
 import { ILogService } from 'vs/platform/log/common/log';
 import { toErrorMessage } from 'vs/base/common/errorMessage';
 import { prefersExecuteOnUI } from 'vs/workbench/services/extensions/common/extensionsUtil';
-import { isNonEmptyArray } from 'vs/base/common/arrays';
-import { values } from 'vs/base/common/map';
+import { isNonEmptyArray, toArray } from 'vs/base/common/arrays';
 import { CancellationToken } from 'vs/base/common/cancellation';
 import { localize } from 'vs/nls';
 import { IProductService } from 'vs/platform/product/common/productService';
@@ -24,7 +23,7 @@ import { joinPath } from 'vs/base/common/resources';
 
 export class RemoteExtensionManagementChannelClient extends ExtensionManagementChannelClient {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	constructor(
 		channel: IChannel,
@@ -102,14 +101,14 @@ export class RemoteExtensionManagementChannelClient extends ExtensionManagementC
 		const result = new Map<string, IGalleryExtension>();
 		const extensions = [...(manifest.extensionPack || []), ...(manifest.extensionDependencies || [])];
 		await this.getDependenciesAndPackedExtensionsRecursively(extensions, result, true, token);
-		return values(result);
+		return toArray(result.values());
 	}
 
 	private async getAllWorkspaceDependenciesAndPackedExtensions(manifest: IExtensionManifest, token: CancellationToken): Promise<IGalleryExtension[]> {
 		const result = new Map<string, IGalleryExtension>();
 		const extensions = [...(manifest.extensionPack || []), ...(manifest.extensionDependencies || [])];
 		await this.getDependenciesAndPackedExtensionsRecursively(extensions, result, false, token);
-		return values(result);
+		return toArray(result.values());
 	}
 
 	private async getDependenciesAndPackedExtensionsRecursively(toGet: string[], result: Map<string, IGalleryExtension>, uiExtension: boolean, token: CancellationToken): Promise<void> {

@@ -13,9 +13,17 @@ export const enum ScrollbarVisibility {
 }
 
 export interface ScrollEvent {
+	oldWidth: number;
+	oldScrollWidth: number;
+	oldScrollLeft: number;
+
 	width: number;
 	scrollWidth: number;
 	scrollLeft: number;
+
+	oldHeight: number;
+	oldScrollHeight: number;
+	oldScrollTop: number;
 
 	height: number;
 	scrollHeight: number;
@@ -134,9 +142,17 @@ export class ScrollState implements IScrollDimensions, IScrollPosition {
 		const scrollTopChanged = (this.scrollTop !== previous.scrollTop);
 
 		return {
+			oldWidth: previous.width,
+			oldScrollWidth: previous.scrollWidth,
+			oldScrollLeft: previous.scrollLeft,
+
 			width: this.width,
 			scrollWidth: this.scrollWidth,
 			scrollLeft: this.scrollLeft,
+
+			oldHeight: previous.height,
+			oldScrollHeight: previous.scrollHeight,
+			oldScrollTop: previous.scrollTop,
 
 			height: this.height,
 			scrollHeight: this.scrollHeight,

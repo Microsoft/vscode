@@ -3,6 +3,7 @@ on:
   schedule:
     - cron: 20 23 * * * # 4:20pm Redmond
   repository_dispatch:
+    types: [trigger-locker]
 
 jobs:
   main:
@@ -13,12 +14,13 @@ jobs:
         with:
           repository: 'microsoft/vscode-github-triage-actions'
           path: ./actions
-          ref: v15
+          ref: v31
       - name: Install Actions
         run: npm install --production --prefix ./actions
       - name: Run Locker
         uses: ./actions/locker
         with:
           daysSinceClose: 45
+          appInsightsKey: ${{secrets.TRIAGE_ACTIONS_APP_INSIGHTS}}
           daysSinceUpdate: 3
           ignoredLabel: "*out-of-scope"

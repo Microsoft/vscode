@@ -62,14 +62,14 @@ The server supports the following settings:
 - json
   - `format`
     - `enable`: Whether the server should register the formatting support. This option is only applicable if the client supports *dynamicRegistration* for *rangeFormatting* and `initializationOptions.provideFormatter` is not defined.
-    - `schema`: Configures association of file names to schema URL or schemas and/or associations of schema URL to schema content.
-	  - `fileMatch`: an array of file names or paths (separated by `/`). `*` can be used as a wildcard. Exclusion patterns can also be defined and start with '!'. A file matches when there at least one matching pattern and the last matching pattern is not an exclusion pattern.
-	  - `url`: The URL of the schema, optional when also a schema is provided.
-	  - `schema`: The schema content.
-    - `resultLimit`: The max number foldig ranges and otline symbols to be computed (for performance reasons)
+  - `schemas`: Configures association of file names to schema URL or schemas and/or associations of schema URL to schema content.
+    - `fileMatch`: an array of file names or paths (separated by `/`). `*` can be used as a wildcard. Exclusion patterns can also be defined and start with '!'. A file matches when there is at least one matching pattern and the last matching pattern is not an exclusion pattern.
+    - `url`: The URL of the schema, optional when also a schema is provided.
+    - `schema`: The schema content.
+  - `resultLimit`: The max number folding ranges and outline symbols to be computed (for performance reasons)
 
 ```json
-	{
+    {
         "http": {
             "proxy": "",
             "proxyStrictSSL": true
@@ -86,7 +86,7 @@ The server supports the following settings:
                     ],
                     "url": "http://json.schemastore.org/foo",
                     "schema": {
-                    	"type": "array"
+                        "type": "array"
                     }
                 }
             ]
@@ -160,7 +160,7 @@ Notification:
 ### Item Limit
 
 If the setting `resultLimit` is set, the JSON language server will limit the number of folding ranges and document symbols computed.
-When the limit is reached, a notification `json/resultLimitReached` is sent that can be shown that camn be shown to the user.
+When the limit is reached, a notification `json/resultLimitReached` is sent that can be shown that can be shown to the user.
 
 Notification:
 - method: 'json/resultLimitReached'
@@ -180,7 +180,7 @@ For that, install the `json-language-server` npm module:
 
 `npm install -g json-language-server`
 
-Start the language server with the `json-language-server` command. Use a command line argument to specify the prefered communication channel:
+Start the language server with the `json-language-server` command. Use a command line argument to specify the preferred communication channel:
 
 ```
 json-language-server --node-ipc

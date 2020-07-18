@@ -14,7 +14,8 @@
         "onLanguage:json",
         "onLanguage:jsonc"
     ],
-    "main": "./client/out/jsonMain",
+    "main": "./client/out/node/jsonClientMain",
+    "browser": "./client/dist/browser/jsonClientMain",
     "enableProposedApi": true,
     "scripts": {
         "compile": "gulp compile-extension:json-language-features-client compile-extension:json-language-features-server",
@@ -128,7 +129,7 @@
     "dependencies": {
         "request-light": "^0.3.0",
         "vscode-extension-telemetry": "0.1.1",
-        "vscode-languageclient": "^6.1.3",
+        "vscode-languageclient": "7.0.0-next.5.1",
         "vscode-nls": "^4.1.2"
     },
     "devDependencies": {

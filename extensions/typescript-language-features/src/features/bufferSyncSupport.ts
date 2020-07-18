@@ -5,7 +5,7 @@
 
 import * as vscode from 'vscode';
 import type * as Proto from '../protocol';
-import { ITypeScriptServiceClient } from '../typescriptService';
+import { ITypeScriptServiceClient, ClientCapability } from '../typescriptService';
 import API from '../utils/api';
 import { coalesce } from '../utils/arrays';
 import { Delayer } from '../utils/async';
@@ -302,9 +302,9 @@ class GetErrRequest {
 		onDone: () => void
 	) {
 		const allFiles = coalesce(Array.from(files.entries).map(entry => client.normalizedPath(entry.resource)));
-		if (!allFiles.length) {
+		if (!allFiles.length || !client.capabilities.has(ClientCapability.Semantic)) {
 			this._done = true;
-			onDone();
+			setImmediate(onDone);
 		} else {
 			const request = client.configuration.enableProjectDiagnostics
 				// Note that geterrForProject is almost certainly not the api we want here as it ends up computing far

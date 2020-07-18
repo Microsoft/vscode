@@ -3,224 +3,248 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Action } from 'vs/base/common/actions';
 import * as nls from 'vs/nls';
 import product from 'vs/platform/product/common/product';
 import { isMacintosh, isLinux, language } from 'vs/base/common/platform';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 import { IOpenerService } from 'vs/platform/opener/common/opener';
 import { URI } from 'vs/base/common/uri';
-import { Registry } from 'vs/platform/registry/common/platform';
-import { IWorkbenchActionRegistry, Extensions } from 'vs/workbench/common/actions';
-import { SyncActionDescriptor, MenuRegistry, MenuId } from 'vs/platform/actions/common/actions';
+import { MenuId, Action2, registerAction2, MenuRegistry } from 'vs/platform/actions/common/actions';
 import { KeyChord, KeyMod, KeyCode } from 'vs/base/common/keyCodes';
 import { IProductService } from 'vs/platform/product/common/productService';
+import { ServicesAccessor } from 'vs/platform/instantiation/common/instantiation';
+import { KeybindingWeight } from 'vs/platform/keybinding/common/keybindingsRegistry';
 
-class KeybindingsReferenceAction extends Action {
+const helpCategory = { value: nls.localize('help', "Help"), original: 'Help' };
+
+class KeybindingsReferenceAction extends Action2 {
 
 	static readonly ID = 'workbench.action.keybindingsReference';
-	static readonly LABEL = nls.localize('keybindingsReference', "Keyboard Shortcuts Reference");
 	static readonly AVAILABLE = !!(isLinux ? product.keyboardShortcutsUrlLinux : isMacintosh ? product.keyboardShortcutsUrlMac : product.keyboardShortcutsUrlWin);
 
-	constructor(
-		id: string,
-		label: string,
-		@IOpenerService private readonly openerService: IOpenerService,
-		@IProductService private readonly productService: IProductService
-	) {
-		super(id, label);
+	constructor() {
+		super({
+			id: KeybindingsReferenceAction.ID,
+			title: { value: nls.localize('keybindingsReference', "Keyboard Shortcuts Reference"), original: 'Keyboard Shortcuts Reference' },
+			category: helpCategory,
+			f1: true,
+			keybinding: {
+				weight: KeybindingWeight.WorkbenchContrib,
+				when: null,
+				primary: KeyChord(KeyMod.CtrlCmd | KeyCode.KEY_K, KeyMod.CtrlCmd | KeyCode.KEY_R)
+			}
+		});
 	}
 
-	async run(): Promise<void> {
-		const url = isLinux ? this.productService.keyboardShortcutsUrlLinux : isMacintosh ? this.productService.keyboardShortcutsUrlMac : this.productService.keyboardShortcutsUrlWin;
+	run(accessor: ServicesAccessor): void {
+		const productService = accessor.get(IProductService);
+		const openerService = accessor.get(IOpenerService);
+
+		const url = isLinux ? productService.keyboardShortcutsUrlLinux : isMacintosh ? productService.keyboardShortcutsUrlMac : productService.keyboardShortcutsUrlWin;
 		if (url) {
-			this.openerService.open(URI.parse(url));
+			openerService.open(URI.parse(url));
 		}
 	}
 }
 
-class OpenDocumentationUrlAction extends Action {
+class OpenDocumentationUrlAction extends Action2 {
 
 	static readonly ID = 'workbench.action.openDocumentationUrl';
-	static readonly LABEL = nls.localize('openDocumentationUrl', "Documentation");
 	static readonly AVAILABLE = !!product.documentationUrl;
 
-	constructor(
-		id: string,
-		label: string,
-		@IOpenerService private readonly openerService: IOpenerService,
-		@IProductService private readonly productService: IProductService
-	) {
-		super(id, label);
+	constructor() {
+		super({
+			id: OpenDocumentationUrlAction.ID,
+			title: { value: nls.localize('openDocumentationUrl', "Documentation"), original: 'Documentation' },
+			category: helpCategory,
+			f1: true
+		});
 	}
 
-	async run(): Promise<void> {
-		if (this.productService.documentationUrl) {
-			this.openerService.open(URI.parse(this.productService.documentationUrl));
+	run(accessor: ServicesAccessor): void {
+		const productService = accessor.get(IProductService);
+		const openerService = accessor.get(IOpenerService);
+
+		if (productService.documentationUrl) {
+			openerService.open(URI.parse(productService.documentationUrl));
 		}
 	}
 }
 
-class OpenIntroductoryVideosUrlAction extends Action {
+class OpenIntroductoryVideosUrlAction extends Action2 {
 
 	static readonly ID = 'workbench.action.openIntroductoryVideosUrl';
-	static readonly LABEL = nls.localize('openIntroductoryVideosUrl', "Introductory Videos");
 	static readonly AVAILABLE = !!product.introductoryVideosUrl;
 
-	constructor(
-		id: string,
-		label: string,
-		@IOpenerService private readonly openerService: IOpenerService,
-		@IProductService private readonly productService: IProductService
-	) {
-		super(id, label);
+	constructor() {
+		super({
+			id: OpenIntroductoryVideosUrlAction.ID,
+			title: { value: nls.localize('openIntroductoryVideosUrl', "Introductory Videos"), original: 'Introductory Videos' },
+			category: helpCategory,
+			f1: true
+		});
 	}
 
-	async run(): Promise<void> {
-		if (this.productService.introductoryVideosUrl) {
-			this.openerService.open(URI.parse(this.productService.introductoryVideosUrl));
+	run(accessor: ServicesAccessor): void {
+		const productService = accessor.get(IProductService);
+		const openerService = accessor.get(IOpenerService);
+
+		if (productService.introductoryVideosUrl) {
+			openerService.open(URI.parse(productService.introductoryVideosUrl));
 		}
 	}
 }
 
-class OpenTipsAndTricksUrlAction extends Action {
+class OpenTipsAndTricksUrlAction extends Action2 {
 
 	static readonly ID = 'workbench.action.openTipsAndTricksUrl';
-	static readonly LABEL = nls.localize('openTipsAndTricksUrl', "Tips and Tricks");
 	static readonly AVAILABLE = !!product.tipsAndTricksUrl;
 
-	constructor(
-		id: string,
-		label: string,
-		@IOpenerService private readonly openerService: IOpenerService,
-		@IProductService private readonly productService: IProductService
-	) {
-		super(id, label);
+	constructor() {
+		super({
+			id: OpenTipsAndTricksUrlAction.ID,
+			title: { value: nls.localize('openTipsAndTricksUrl', "Tips and Tricks"), original: 'Tips and Tricks' },
+			category: helpCategory,
+			f1: true
+		});
 	}
 
-	async run(): Promise<void> {
-		if (this.productService.tipsAndTricksUrl) {
-			this.openerService.open(URI.parse(this.productService.tipsAndTricksUrl));
+	run(accessor: ServicesAccessor): void {
+		const productService = accessor.get(IProductService);
+		const openerService = accessor.get(IOpenerService);
+
+		if (productService.tipsAndTricksUrl) {
+			openerService.open(URI.parse(productService.tipsAndTricksUrl));
 		}
 	}
 }
 
-class OpenNewsletterSignupUrlAction extends Action {
+class OpenNewsletterSignupUrlAction extends Action2 {
 
 	static readonly ID = 'workbench.action.openNewsletterSignupUrl';
-	static readonly LABEL = nls.localize('newsletterSignup', "Signup for the VS Code Newsletter");
 	static readonly AVAILABLE = !!product.newsletterSignupUrl;
 
-	constructor(
-		id: string,
-		label: string,
-		@IOpenerService private readonly openerService: IOpenerService,
-		@ITelemetryService private readonly telemetryService: ITelemetryService,
-		@IProductService private readonly productService: IProductService
-	) {
-		super(id, label);
+	constructor() {
+		super({
+			id: OpenNewsletterSignupUrlAction.ID,
+			title: { value: nls.localize('newsletterSignup', "Signup for the VS Code Newsletter"), original: 'Signup for the VS Code Newsletter' },
+			category: helpCategory,
+			f1: true
+		});
 	}
 
-	async run(): Promise<void> {
-		const info = await this.telemetryService.getTelemetryInfo();
+	async run(accessor: ServicesAccessor): Promise<void> {
+		const productService = accessor.get(IProductService);
+		const openerService = accessor.get(IOpenerService);
+		const telemetryService = accessor.get(ITelemetryService);
 
-		this.openerService.open(URI.parse(`${this.productService.newsletterSignupUrl}?machineId=${encodeURIComponent(info.machineId)}`));
+		const info = await telemetryService.getTelemetryInfo();
+
+		openerService.open(URI.parse(`${productService.newsletterSignupUrl}?machineId=${encodeURIComponent(info.machineId)}`));
 	}
 }
 
-class OpenTwitterUrlAction extends Action {
+class OpenTwitterUrlAction extends Action2 {
 
 	static readonly ID = 'workbench.action.openTwitterUrl';
-	static readonly LABEL = nls.localize('openTwitterUrl', "Join Us on Twitter");
 	static readonly AVAILABLE = !!product.twitterUrl;
 
-	constructor(
-		id: string,
-		label: string,
-		@IOpenerService private readonly openerService: IOpenerService,
-		@IProductService private readonly productService: IProductService
-	) {
-		super(id, label);
+	constructor() {
+		super({
+			id: OpenTwitterUrlAction.ID,
+			title: { value: nls.localize('openTwitterUrl', "Join Us on Twitter"), original: 'Join Us on Twitter' },
+			category: helpCategory,
+			f1: true
+		});
 	}
 
-	async run(): Promise<void> {
-		if (this.productService.twitterUrl) {
-			this.openerService.open(URI.parse(this.productService.twitterUrl));
+	run(accessor: ServicesAccessor): void {
+		const productService = accessor.get(IProductService);
+		const openerService = accessor.get(IOpenerService);
+
+		if (productService.twitterUrl) {
+			openerService.open(URI.parse(productService.twitterUrl));
 		}
 	}
 }
 
-class OpenRequestFeatureUrlAction extends Action {
+class OpenRequestFeatureUrlAction extends Action2 {
 
 	static readonly ID = 'workbench.action.openRequestFeatureUrl';
-	static readonly LABEL = nls.localize('openUserVoiceUrl', "Search Feature Requests");
 	static readonly AVAILABLE = !!product.requestFeatureUrl;
 
-	constructor(
-		id: string,
-		label: string,
-		@IOpenerService private readonly openerService: IOpenerService,
-		@IProductService private readonly productService: IProductService
-	) {
-		super(id, label);
+	constructor() {
+		super({
+			id: OpenRequestFeatureUrlAction.ID,
+			title: { value: nls.localize('openUserVoiceUrl', "Search Feature Requests"), original: 'Search Feature Requests' },
+			category: helpCategory,
+			f1: true
+		});
 	}
 
-	async run(): Promise<void> {
-		if (this.productService.requestFeatureUrl) {
-			this.openerService.open(URI.parse(this.productService.requestFeatureUrl));
+	run(accessor: ServicesAccessor): void {
+		const productService = accessor.get(IProductService);
+		const openerService = accessor.get(IOpenerService);
+
+		if (productService.requestFeatureUrl) {
+			openerService.open(URI.parse(productService.requestFeatureUrl));
 		}
 	}
 }
 
-class OpenLicenseUrlAction extends Action {
+class OpenLicenseUrlAction extends Action2 {
 
 	static readonly ID = 'workbench.action.openLicenseUrl';
-	static readonly LABEL = nls.localize('openLicenseUrl', "View License");
 	static readonly AVAILABLE = !!product.licenseUrl;
 
-	constructor(
-		id: string,
-		label: string,
-		@IOpenerService private readonly openerService: IOpenerService,
-		@IProductService private readonly productService: IProductService
-	) {
-		super(id, label);
+	constructor() {
+		super({
+			id: OpenLicenseUrlAction.ID,
+			title: { value: nls.localize('openLicenseUrl', "View License"), original: 'View License' },
+			category: helpCategory,
+			f1: true
+		});
 	}
 
-	async run(): Promise<void> {
-		if (this.productService.licenseUrl) {
+	run(accessor: ServicesAccessor): void {
+		const productService = accessor.get(IProductService);
+		const openerService = accessor.get(IOpenerService);
+
+		if (productService.licenseUrl) {
 			if (language) {
-				const queryArgChar = this.productService.licenseUrl.indexOf('?') > 0 ? '&' : '?';
-				this.openerService.open(URI.parse(`${this.productService.licenseUrl}${queryArgChar}lang=${language}`));
+				const queryArgChar = productService.licenseUrl.indexOf('?') > 0 ? '&' : '?';
+				openerService.open(URI.parse(`${productService.licenseUrl}${queryArgChar}lang=${language}`));
 			} else {
-				this.openerService.open(URI.parse(this.productService.licenseUrl));
+				openerService.open(URI.parse(productService.licenseUrl));
 			}
 		}
 	}
 }
 
-class OpenPrivacyStatementUrlAction extends Action {
+class OpenPrivacyStatementUrlAction extends Action2 {
 
 	static readonly ID = 'workbench.action.openPrivacyStatementUrl';
-	static readonly LABEL = nls.localize('openPrivacyStatement', "Privacy Statement");
 	static readonly AVAILABE = !!product.privacyStatementUrl;
 
-	constructor(
-		id: string,
-		label: string,
-		@IOpenerService private readonly openerService: IOpenerService,
-		@IProductService private readonly productService: IProductService
-	) {
-		super(id, label);
+	constructor() {
+		super({
+			id: OpenPrivacyStatementUrlAction.ID,
+			title: { value: nls.localize('openPrivacyStatement', "Privacy Statement"), original: 'Privacy Statement' },
+			category: helpCategory,
+			f1: true
+		});
 	}
 
-	async run(): Promise<void> {
-		if (this.productService.privacyStatementUrl) {
+	run(accessor: ServicesAccessor): void {
+		const productService = accessor.get(IProductService);
+		const openerService = accessor.get(IOpenerService);
+
+		if (productService.privacyStatementUrl) {
 			if (language) {
-				const queryArgChar = this.productService.privacyStatementUrl.indexOf('?') > 0 ? '&' : '?';
-				this.openerService.open(URI.parse(`${this.productService.privacyStatementUrl}${queryArgChar}lang=${language}`));
+				const queryArgChar = productService.privacyStatementUrl.indexOf('?') > 0 ? '&' : '?';
+				openerService.open(URI.parse(`${productService.privacyStatementUrl}${queryArgChar}lang=${language}`));
 			} else {
-				this.openerService.open(URI.parse(this.productService.privacyStatementUrl));
+				openerService.open(URI.parse(productService.privacyStatementUrl));
 			}
 		}
 	}
@@ -228,43 +252,40 @@ class OpenPrivacyStatementUrlAction extends Action {
 
 // --- Actions Registration
 
-const registry = Registry.as<IWorkbenchActionRegistry>(Extensions.WorkbenchActions);
-const helpCategory = nls.localize('help', "Help");
-
 if (KeybindingsReferenceAction.AVAILABLE) {
-	registry.registerWorkbenchAction(SyncActionDescriptor.from(KeybindingsReferenceAction, { primary: KeyChord(KeyMod.CtrlCmd | KeyCode.KEY_K, KeyMod.CtrlCmd | KeyCode.KEY_R) }), 'Help: Keyboard Shortcuts Reference', helpCategory);
+	registerAction2(KeybindingsReferenceAction);
 }
 
 if (OpenDocumentationUrlAction.AVAILABLE) {
-	registry.registerWorkbenchAction(SyncActionDescriptor.from(OpenDocumentationUrlAction), 'Help: Documentation', helpCategory);
+	registerAction2(OpenDocumentationUrlAction);
 }
 
 if (OpenIntroductoryVideosUrlAction.AVAILABLE) {
-	registry.registerWorkbenchAction(SyncActionDescriptor.from(OpenIntroductoryVideosUrlAction), 'Help: Introductory Videos', helpCategory);
+	registerAction2(OpenIntroductoryVideosUrlAction);
 }
 
 if (OpenTipsAndTricksUrlAction.AVAILABLE) {
-	registry.registerWorkbenchAction(SyncActionDescriptor.from(OpenTipsAndTricksUrlAction), 'Help: Tips and Tricks', helpCategory);
+	registerAction2(OpenTipsAndTricksUrlAction);
 }
 
 if (OpenNewsletterSignupUrlAction.AVAILABLE) {
-	registry.registerWorkbenchAction(SyncActionDescriptor.from(OpenNewsletterSignupUrlAction), 'Help: Tips and Tricks', helpCategory);
+	registerAction2(OpenNewsletterSignupUrlAction);
 }
 
 if (OpenTwitterUrlAction.AVAILABLE) {
-	registry.registerWorkbenchAction(SyncActionDescriptor.from(OpenTwitterUrlAction), 'Help: Join Us on Twitter', helpCategory);
+	registerAction2(OpenTwitterUrlAction);
 }
 
 if (OpenRequestFeatureUrlAction.AVAILABLE) {
-	registry.registerWorkbenchAction(SyncActionDescriptor.from(OpenRequestFeatureUrlAction), 'Help: Search Feature Requests', helpCategory);
+	registerAction2(OpenRequestFeatureUrlAction);
 }
 
 if (OpenLicenseUrlAction.AVAILABLE) {
-	registry.registerWorkbenchAction(SyncActionDescriptor.from(OpenLicenseUrlAction), 'Help: View License', helpCategory);
+	registerAction2(OpenLicenseUrlAction);
 }
 
 if (OpenPrivacyStatementUrlAction.AVAILABE) {
-	registry.registerWorkbenchAction(SyncActionDescriptor.from(OpenPrivacyStatementUrlAction), 'Help: Privacy Statement', helpCategory);
+	registerAction2(OpenPrivacyStatementUrlAction);
 }
 
 // --- Menu Registration

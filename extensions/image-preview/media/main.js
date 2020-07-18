@@ -279,6 +279,9 @@
 	image.classList.add('scale-to-fit');
 
 	image.addEventListener('load', () => {
+		if (hasLoadedImage) {
+			return;
+		}
 		hasLoadedImage = true;
 
 		vscode.postMessage({
@@ -297,7 +300,11 @@
 		}
 	});
 
-	image.addEventListener('error', () => {
+	image.addEventListener('error', e => {
+		if (hasLoadedImage) {
+			return;
+		}
+
 		hasLoadedImage = true;
 		document.body.classList.add('error');
 		document.body.classList.remove('loading');

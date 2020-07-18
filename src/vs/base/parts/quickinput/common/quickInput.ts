@@ -307,7 +307,7 @@ export interface IQuickInputButton {
 	iconClass?: string;
 	tooltip?: string;
 	/**
-	 * Wether to always show the button. By default buttons
+	 * Whether to always show the button. By default buttons
 	 * are only visible when hovering over them with the mouse
 	 */
 	alwaysVisible?: boolean;

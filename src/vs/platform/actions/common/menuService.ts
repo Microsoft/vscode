@@ -11,7 +11,7 @@ import { IContextKeyService, IContextKeyChangeEvent, ContextKeyExpression } from
 
 export class MenuService implements IMenuService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	constructor(
 		@ICommandService private readonly _commandService: ICommandService

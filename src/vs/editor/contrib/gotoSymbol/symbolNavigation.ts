@@ -26,7 +26,7 @@ export const ctxHasSymbols = new RawContextKey('hasSymbols', false);
 export const ISymbolNavigationService = createDecorator<ISymbolNavigationService>('ISymbolNavigationService');
 
 export interface ISymbolNavigationService {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 	reset(): void;
 	put(anchor: OneReference): void;
 	revealNext(source: ICodeEditor): Promise<any>;
@@ -34,7 +34,7 @@ export interface ISymbolNavigationService {
 
 class SymbolNavigationService implements ISymbolNavigationService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private readonly _ctxHasSymbols: IContextKey<boolean>;
 
@@ -198,7 +198,7 @@ class EditorState {
 	dispose(): void {
 		this._disposables.dispose();
 		this._onDidChange.dispose();
-		this._listener.forEach(dispose);
+		dispose(this._listener.values());
 	}
 
 	private _onDidAddEditor(editor: ICodeEditor): void {

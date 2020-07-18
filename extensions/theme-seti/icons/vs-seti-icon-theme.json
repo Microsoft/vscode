@@ -1030,12 +1030,6 @@
 			"fontCharacter": "\\E074",
 			"fontColor": "#cc3e44"
 		},
-		"_rmd_light": {
-			"fontColor": "#498ba7"
-		},
-		"_rmd": {
-			"fontColor": "#519aba"
-		},
 		"_rollup_light": {
 			"fontCharacter": "\\E075",
 			"fontColor": "#b8383d"
@@ -1483,7 +1477,7 @@
 		"test.tsx": "_react_2",
 		"re": "_reasonml",
 		"r": "_R",
-		"rmd": "_rmd",
+		"rmd": "_R",
 		"erb": "_html_erb",
 		"erb.html": "_html_erb",
 		"html.erb": "_html_erb",
@@ -1678,7 +1672,7 @@
 		"sql": "_db",
 		"swift": "_swift",
 		"typescript": "_typescript",
-		"typescriptreact": "_react",
+		"typescriptreact": "_typescript",
 		"xml": "_xml",
 		"yaml": "_yml",
 		"argdown": "_argdown",
@@ -1811,7 +1805,7 @@
 			"test.tsx": "_react_2_light",
 			"re": "_reasonml_light",
 			"r": "_R_light",
-			"rmd": "_rmd_light",
+			"rmd": "_R_light",
 			"erb": "_html_erb_light",
 			"erb.html": "_html_erb_light",
 			"html.erb": "_html_erb_light",
@@ -1949,7 +1943,7 @@
 			"sql": "_db_light",
 			"swift": "_swift_light",
 			"typescript": "_typescript_light",
-			"typescriptreact": "_react_light",
+			"typescriptreact": "_typescript_light",
 			"xml": "_xml_light",
 			"yaml": "_yml_light",
 			"argdown": "_argdown_light",
@@ -2030,5 +2024,5 @@
 			"npm-debug.log": "_npm_ignored_light"
 		}
 	},
-	"version": "https://github.com/jesseweed/seti-ui/commit/8f22764c37feb7f706465f5186132111a2401b6b"
+	"version": "https://github.com/jesseweed/seti-ui/commit/f3b2775662b0075aab56e5f0c03269f21f3f0f30"
 }

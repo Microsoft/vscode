@@ -2,7 +2,10 @@
   "name": "image-preview",
   "displayName": "%displayName%",
   "description": "%description%",
-  "extensionKind": ["ui", "workspace"],
+  "extensionKind": [
+    "ui",
+    "workspace"
+  ],
   "version": "1.0.0",
   "publisher": "vscode",
   "icon": "icon.png",
@@ -13,6 +16,7 @@
     "vscode": "^1.39.0"
   },
   "main": "./out/extension",
+  "browser": "./dist/browser/extension.js",
   "categories": [
     "Other"
   ],
@@ -65,7 +69,9 @@
     "compile": "gulp compile-extension:image-preview",
     "watch": "npm run build-preview && gulp watch-extension:image-preview",
     "vscode:prepublish": "npm run build-ext",
-    "build-ext": "node ../../node_modules/gulp/bin/gulp.js --gulpfile ../../build/gulpfile.extensions.js compile-extension:image-preview ./tsconfig.json"
+    "build-ext": "node ../../node_modules/gulp/bin/gulp.js --gulpfile ../../build/gulpfile.extensions.js compile-extension:image-preview ./tsconfig.json",
+    "compile-web": "npx webpack-cli --config extension-browser.webpack.config --mode none",
+    "watch-web": "npx webpack-cli --config extension-browser.webpack.config --mode none --watch --info-verbosity verbose"
   },
   "dependencies": {
     "vscode-extension-telemetry": "0.1.1",

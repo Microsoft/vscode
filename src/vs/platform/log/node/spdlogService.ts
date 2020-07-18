@@ -44,7 +44,7 @@ function log(logger: spdlog.RotatingLogger, level: LogLevel, message: string): v
 
 export class SpdLogService extends AbstractLogService implements ILogService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private buffer: ILog[] = [];
 	private _loggerCreationPromise: Promise<void> | undefined = undefined;

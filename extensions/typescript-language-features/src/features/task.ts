@@ -35,7 +35,7 @@ interface TypeScriptTaskDefinition extends vscode.TaskDefinition {
 /**
  * Provides tasks for building `tsconfig.json` files in a project.
  */
-export default class TscTaskProvider implements vscode.TaskProvider {
+class TscTaskProvider implements vscode.TaskProvider {
 
 	private readonly projectInfoRequestTimeout = 2000;
 	private autoDetect: AutoDetect = 'on';
@@ -290,4 +290,10 @@ export default class TscTaskProvider implements vscode.TaskProvider {
 		const type = vscode.workspace.getConfiguration('typescript.tsc').get<AutoDetect>('autoDetect');
 		this.autoDetect = typeof type === 'undefined' ? 'on' : type;
 	}
+}
+
+export function register(
+	lazyClient: Lazy<ITypeScriptServiceClient>,
+) {
+	return vscode.tasks.registerTaskProvider('typescript', new TscTaskProvider(lazyClient));
 }

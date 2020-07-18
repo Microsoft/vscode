@@ -1252,7 +1252,7 @@ export class MarkdownString {
 		// escape markdown syntax tokens: http://daringfireball.net/projects/markdown/syntax#backslash
 		this.value += (this.supportThemeIcons ? escapeCodicons(value) : value)
 			.replace(/[\\`*_{}[\]()#+\-.!]/g, '\\$&')
-			.replace('\n', '\n\n');
+			.replace(/\n/, '\n\n');
 
 		return this;
 	}
@@ -1270,6 +1270,13 @@ export class MarkdownString {
 		this.value += code;
 		this.value += '\n```\n';
 		return this;
+	}
+
+	static isMarkdownString(thing: any): thing is vscode.MarkdownString {
+		if (thing instanceof MarkdownString) {
+			return true;
+		}
+		return thing && thing.appendCodeblock && thing.appendMarkdown && thing.appendText && (thing.value !== undefined);
 	}
 }
 
@@ -2101,7 +2108,7 @@ export class TreeItem {
 	iconPath?: string | URI | { light: string | URI; dark: string | URI; };
 	command?: vscode.Command;
 	contextValue?: string;
-	tooltip?: string;
+	tooltip?: string | vscode.MarkdownString;
 
 	constructor(label: string | vscode.TreeItemLabel, collapsibleState?: vscode.TreeItemCollapsibleState);
 	constructor(resourceUri: URI, collapsibleState?: vscode.TreeItemCollapsibleState);
@@ -2750,7 +2757,7 @@ export enum ExtensionMode {
 	 * The extension is installed normally (for example, from the marketplace
 	 * or VSIX) in VS Code.
 	 */
-	Release = 1,
+	Production = 1,
 
 	/**
 	 * The extension is running from an `--extensionDevelopmentPath` provided
@@ -2766,3 +2773,10 @@ export enum ExtensionMode {
 }
 
 //#endregion ExtensionContext
+
+export enum StandardTokenType {
+	Other = 0,
+	Comment = 1,
+	String = 2,
+	RegEx = 4
+}

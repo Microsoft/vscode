@@ -36,7 +36,7 @@ export class DataSource implements IAsyncDataSource<ReferencesModel | FileRefere
 		if (element instanceof ReferencesModel) {
 			return true;
 		}
-		if (element instanceof FileReferences && !element.failure) {
+		if (element instanceof FileReferences) {
 			return true;
 		}
 		return false;
@@ -83,8 +83,7 @@ export class StringRepresentationProvider implements IKeyboardNavigationLabelPro
 
 	getKeyboardNavigationLabel(element: TreeElement): { toString(): string; } {
 		if (element instanceof OneReference) {
-			const { preview } = element.parent;
-			const parts = preview && preview.preview(element.range);
+			const parts = element.parent.getPreview(element)?.preview(element.range);
 			if (parts) {
 				return parts.value;
 			}
@@ -133,9 +132,7 @@ class FileReferencesTemplate extends Disposable {
 		this.file.setLabel(getBaseLabel(element.uri), this._uriLabel.getUriLabel(parent, { relative: true }), { title: this._uriLabel.getUriLabel(element.uri), matches });
 		const len = element.children.length;
 		this.badge.setCount(len);
-		if (element.failure) {
-			this.badge.setTitleFormat(localize('referencesFailre', "Failed to resolve file."));
-		} else if (len > 1) {
+		if (len > 1) {
 			this.badge.setTitleFormat(localize('referencesCount', "{0} references", len));
 		} else {
 			this.badge.setTitleFormat(localize('referenceCount', "{0} reference", len));
@@ -174,10 +171,9 @@ class OneReferenceTemplate {
 	}
 
 	set(element: OneReference, score?: FuzzyScore): void {
-		const filePreview = element.parent.preview;
-		const preview = filePreview && filePreview.preview(element.range);
-		if (!preview) {
-			// this means we FAILED to resolve the document...
+		const preview = element.parent.getPreview(element)?.preview(element.range);
+		if (!preview || !preview.value) {
+			// this means we FAILED to resolve the document or the value is the empty string
 			this.label.set(`${basename(element.uri)}:${element.range.startLineNumber + 1}:${element.range.startColumn + 1}`);
 		} else {
 			// render search match as highlight unless

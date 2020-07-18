@@ -28,16 +28,15 @@ export interface IVariableResolveContext {
 export class AbstractVariableResolverService implements IConfigurationResolverService {
 
 	static readonly VARIABLE_REGEXP = /\$\{(.*?)\}/g;
-	static readonly VARIABLE_REGEXP_SINGLE = /\$\{(.*?)\}/;
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private _context: IVariableResolveContext;
 	private _envVariables?: IProcessEnvironment;
 	protected _contributedVariables: Map<string, () => Promise<string | undefined>> = new Map();
 
 
-	constructor(_context: IVariableResolveContext, _envVariables?: IProcessEnvironment) {
+	constructor(_context: IVariableResolveContext, _envVariables?: IProcessEnvironment, private _ignoreEditorVariables = false) {
 		this._context = _context;
 		if (_envVariables) {
 			if (isWindows) {
@@ -232,6 +231,9 @@ export class AbstractVariableResolverService implements IConfigurationResolverSe
 						return paths.basename(getFolderUri().fsPath);
 
 					case 'lineNumber':
+						if (this._ignoreEditorVariables) {
+							return match;
+						}
 						const lineNumber = this._context.getLineNumber();
 						if (lineNumber) {
 							return lineNumber;
@@ -239,6 +241,9 @@ export class AbstractVariableResolverService implements IConfigurationResolverSe
 						throw new Error(localize('canNotResolveLineNumber', "'{0}' can not be resolved. Make sure to have a line selected in the active editor.", match));
 
 					case 'selectedText':
+						if (this._ignoreEditorVariables) {
+							return match;
+						}
 						const selectedText = this._context.getSelectedText();
 						if (selectedText) {
 							return selectedText;
@@ -246,15 +251,24 @@ export class AbstractVariableResolverService implements IConfigurationResolverSe
 						throw new Error(localize('canNotResolveSelectedText', "'{0}' can not be resolved. Make sure to have some text selected in the active editor.", match));
 
 					case 'file':
+						if (this._ignoreEditorVariables) {
+							return match;
+						}
 						return getFilePath();
 
 					case 'relativeFile':
+						if (this._ignoreEditorVariables) {
+							return match;
+						}
 						if (folderUri || argument) {
 							return paths.normalize(paths.relative(getFolderUri().fsPath, getFilePath()));
 						}
 						return getFilePath();
 
 					case 'relativeFileDirname':
+						if (this._ignoreEditorVariables) {
+							return match;
+						}
 						const dirname = paths.dirname(getFilePath());
 						if (folderUri || argument) {
 							return paths.normalize(paths.relative(getFolderUri().fsPath, dirname));
@@ -262,15 +276,27 @@ export class AbstractVariableResolverService implements IConfigurationResolverSe
 						return dirname;
 
 					case 'fileDirname':
+						if (this._ignoreEditorVariables) {
+							return match;
+						}
 						return paths.dirname(getFilePath());
 
 					case 'fileExtname':
+						if (this._ignoreEditorVariables) {
+							return match;
+						}
 						return paths.extname(getFilePath());
 
 					case 'fileBasename':
+						if (this._ignoreEditorVariables) {
+							return match;
+						}
 						return paths.basename(getFilePath());
 
 					case 'fileBasenameNoExtension':
+						if (this._ignoreEditorVariables) {
+							return match;
+						}
 						const basename = paths.basename(getFilePath());
 						return (basename.slice(0, basename.length - paths.extname(basename).length));
 

@@ -27,7 +27,7 @@ export class RemoteAgentService extends AbstractRemoteAgentService implements IR
 		@ISignService signService: ISignService,
 		@ILogService logService: ILogService
 	) {
-		super(environmentService);
+		super(environmentService, remoteAuthorityResolverService);
 
 		this.socketFactory = new BrowserSocketFactory(webSocketFactory);
 		const remoteAuthority = environmentService.configuration.remoteAuthority;

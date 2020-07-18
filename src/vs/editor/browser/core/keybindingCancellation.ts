@@ -17,7 +17,7 @@ import { registerSingleton } from 'vs/platform/instantiation/common/extensions';
 const IEditorCancellationTokens = createDecorator<IEditorCancellationTokens>('IEditorCancelService');
 
 interface IEditorCancellationTokens {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 	add(editor: ICodeEditor, cts: CancellationTokenSource): () => void;
 	cancel(editor: ICodeEditor): void;
 }
@@ -26,7 +26,7 @@ const ctxCancellableOperation = new RawContextKey('cancellableOperation', false)
 
 registerSingleton(IEditorCancellationTokens, class implements IEditorCancellationTokens {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private readonly _tokens = new WeakMap<ICodeEditor, { key: IContextKey<boolean>, tokens: LinkedList<CancellationTokenSource> }>();
 

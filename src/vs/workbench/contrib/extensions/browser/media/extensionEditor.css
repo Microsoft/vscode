@@ -91,7 +91,7 @@
 	margin-left: 10px;
 }
 
-.vs .extension-editor > .header > .details > .title > .preview {
+.monaco-workbench.vs .extension-editor > .header > .details > .title > .preview {
 	color: white;
 }
 
@@ -113,7 +113,7 @@
 	line-height: 20px;
 }
 
-.extension-editor > .header > .details > .subtitle > .publisher {
+.extension-editor > .header > .details > .subtitle .publisher {
 	font-size: 18px;
 }
 
@@ -124,12 +124,11 @@
 	align-items: center;
 }
 
-.extension-editor > .header > .details > .subtitle > .install > .count {
+.extension-editor > .header > .details > .subtitle .install > .count {
 	margin-left: 6px;
 }
 
-.extension-editor > .header > .details > .subtitle > span:not(:first-child):not(:empty),
-.extension-editor > .header > .details > .subtitle > a:not(:first-child):not(:empty) {
+.extension-editor > .header > .details > .subtitle > div:not(:first-child):not(:empty) {
 	border-left: 1px solid rgba(128, 128, 128, 0.7);
 	margin-left: 14px;
 	padding-left: 14px;
@@ -408,8 +407,8 @@
 	vertical-align: middle;
 }
 
-.vs-dark .extension-editor > .body > .content table .colorBox,
-.hc-black .extension-editor > .body > .content table .colorBox {
+.monaco-workbench.vs-dark .extension-editor > .body > .content table .colorBox,
+.monaco-workbench.hc-black .extension-editor > .body > .content table .colorBox {
 	border-color: rgb(238, 238, 238);
 }
 

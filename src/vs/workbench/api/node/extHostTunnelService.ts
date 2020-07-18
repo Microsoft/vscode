@@ -181,7 +181,7 @@ export class ExtHostTunnelService extends Disposable implements IExtHostTunnelSe
 
 		connections.filter((connection => socketMap[connection.socket])).forEach(({ socket, ip, port }) => {
 			const command = processMap[socketMap[socket].pid].cmd;
-			if (!command.match('.*\.vscode\-server\-[a-zA-Z]+\/bin.*') && (command.indexOf('out/vs/server/main.js') === -1)) {
+			if (!command.match(/.*\.vscode-server-[a-zA-Z]+\/bin.*/) && (command.indexOf('out/vs/server/main.js') === -1)) {
 				ports.push({ host: ip, port, detail: processMap[socketMap[socket].pid].cmd });
 			}
 		});

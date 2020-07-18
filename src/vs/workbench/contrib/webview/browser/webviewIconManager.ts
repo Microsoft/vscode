@@ -53,8 +53,8 @@ export class WebviewIconManager {
 				const webviewSelector = `.show-file-icons .webview-${key}-name-file-icon::before`;
 				try {
 					cssRules.push(
-						`.vs ${webviewSelector} { content: ""; background-image: ${dom.asCSSUrl(value.light)}; }`,
-						`.vs-dark ${webviewSelector} { content: ""; background-image: ${dom.asCSSUrl(value.dark)}; }`
+						`.monaco-workbench.vs ${webviewSelector} { content: ""; background-image: ${dom.asCSSUrl(value.light)}; }`,
+						`.monaco-workbench.vs-dark ${webviewSelector} { content: ""; background-image: ${dom.asCSSUrl(value.dark)}; }`
 					);
 				} catch {
 					// noop

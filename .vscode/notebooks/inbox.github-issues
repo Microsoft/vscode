@@ -1,0 +1,38 @@
+[
+  {
+    "kind": 1,
+    "language": "markdown",
+    "value": "##### `Config`: defines the inbox query",
+    "editable": true
+  },
+  {
+    "kind": 2,
+    "language": "github-issues",
+    "value": "$inbox=repo:microsoft/vscode is:open no:assignee -label:feature-request -label:testplan-item -label:plan-item ",
+    "editable": true
+  },
+  {
+    "kind": 1,
+    "language": "markdown",
+    "value": "## Triage Inbox\n\nAll inbox issues but not those that need more information. These issues need to be triaged, e.g assigned to a user or ask for more information",
+    "editable": true
+  },
+  {
+    "kind": 2,
+    "language": "github-issues",
+    "value": "$inbox -label:\"needs more info\" -label:emmet",
+    "editable": true
+  },
+  {
+    "kind": 1,
+    "language": "markdown",
+    "value": "## Inbox\n\nAll issues that have no assignee and that have neither **feature requests** nor **test plan items** nor **plan items**.",
+    "editable": true
+  },
+  {
+    "kind": 2,
+    "language": "github-issues",
+    "value": "$inbox",
+    "editable": false
+  }
+]

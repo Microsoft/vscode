@@ -29,11 +29,11 @@ export class BinaryResourceDiffEditor extends SideBySideEditor {
 	}
 
 	getMetadata(): string | undefined {
-		const master = this.masterEditorPane;
-		const details = this.detailsEditorPane;
+		const primary = this.primaryEditorPane;
+		const secondary = this.secondaryEditorPane;
 
-		if (master instanceof BaseBinaryResourceEditor && details instanceof BaseBinaryResourceEditor) {
-			return nls.localize('metadataDiff', "{0} ↔ {1}", details.getMetadata(), master.getMetadata());
+		if (primary instanceof BaseBinaryResourceEditor && secondary instanceof BaseBinaryResourceEditor) {
+			return nls.localize('metadataDiff', "{0} ↔ {1}", secondary.getMetadata(), primary.getMetadata());
 		}
 
 		return undefined;

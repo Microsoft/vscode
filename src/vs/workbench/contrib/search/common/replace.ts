@@ -11,7 +11,7 @@ export const IReplaceService = createDecorator<IReplaceService>('replaceService'
 
 export interface IReplaceService {
 
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	/**
 	 * Replaces the given match in the file that match belongs to

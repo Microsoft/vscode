@@ -44,7 +44,7 @@ suite('NotebookConcatDocument', function () {
 		});
 		extHostDocumentsAndEditors = new ExtHostDocumentsAndEditors(rpcProtocol, new NullLogService());
 		extHostDocuments = new ExtHostDocuments(rpcProtocol, extHostDocumentsAndEditors);
-		extHostNotebooks = new ExtHostNotebookController(rpcProtocol, new ExtHostCommands(rpcProtocol, new NullLogService()), extHostDocumentsAndEditors);
+		extHostNotebooks = new ExtHostNotebookController(rpcProtocol, new ExtHostCommands(rpcProtocol, new NullLogService()), extHostDocumentsAndEditors, { isExtensionDevelopmentDebug: false, webviewCspSource: '', webviewResourceRoot: '' });
 		let reg = extHostNotebooks.registerNotebookContentProvider(nullExtensionDescription, 'test', new class extends mock<vscode.NotebookContentProvider>() {
 			// async openNotebook() { }
 		});
@@ -52,24 +52,29 @@ suite('NotebookConcatDocument', function () {
 			addedDocuments: [{
 				handle: 0,
 				uri: notebookUri,
-				viewType: 'test'
-			}]
+				viewType: 'test',
+				cells: [{
+					handle: 0,
+					uri: CellUri.generate(notebookUri, 0),
+					source: ['### Heading'],
+					eol: '\n',
+					language: 'markdown',
+					cellKind: CellKind.Markdown,
+					outputs: [],
+				}],
+				versionId: 0
+			}],
+			addedEditors: [
+				{
+					documentUri: notebookUri,
+					id: '_notebook_editor_0',
+					selections: [0]
+				}
+			]
 		});
-		extHostNotebooks.$acceptModelChanged(notebookUri, {
-			kind: NotebookCellsChangeType.ModelChange,
-			versionId: 0,
-			changes: [[0, 0, [{
-				handle: 0,
-				uri: CellUri.generate(notebookUri, 0),
-				source: ['### Heading'],
-				language: 'markdown',
-				cellKind: CellKind.Markdown,
-				outputs: [],
-			}]]]
-		});
-		await extHostNotebooks.$acceptDocumentAndEditorsDelta({ newActiveEditor: notebookUri });
+		await extHostNotebooks.$acceptDocumentAndEditorsDelta({ newActiveEditor: '_notebook_editor_0' });
 
-		notebook = extHostNotebooks.activeNotebookDocument!;
+		notebook = extHostNotebooks.notebookDocuments[0]!;
 
 		disposables.add(reg);
 		disposables.add(notebook);
@@ -107,6 +112,43 @@ suite('NotebookConcatDocument', function () {
 		assert.deepStrictEqual(actual, lines);
 	}
 
+	test('contains', function () {
+
+		const cellUri1 = CellUri.generate(notebook.uri, 1);
+		const cellUri2 = CellUri.generate(notebook.uri, 2);
+
+		extHostNotebooks.$acceptModelChanged(notebookUri, {
+			kind: NotebookCellsChangeType.ModelChange,
+			versionId: notebook.versionId + 1,
+			changes: [[0, 0, [{
+				handle: 1,
+				uri: cellUri1,
+				source: ['Hello', 'World', 'Hello World!'],
+				eol: '\n',
+				language: 'test',
+				cellKind: CellKind.Code,
+				outputs: [],
+			}, {
+				handle: 2,
+				uri: cellUri2,
+				source: ['Hallo', 'Welt', 'Hallo Welt!'],
+				eol: '\n',
+				language: 'test',
+				cellKind: CellKind.Code,
+				outputs: [],
+			}]]]
+		});
+
+
+		assert.equal(notebook.cells.length, 1 + 2); // markdown and code
+
+		let doc = new ExtHostNotebookConcatDocument(extHostNotebooks, extHostDocuments, notebook, undefined);
+
+		assert.equal(doc.contains(cellUri1), true);
+		assert.equal(doc.contains(cellUri2), true);
+		assert.equal(doc.contains(URI.parse('some://miss/path')), false);
+	});
+
 	test('location, position mapping', function () {
 
 		extHostNotebooks.$acceptModelChanged(notebookUri, {
@@ -116,6 +158,7 @@ suite('NotebookConcatDocument', function () {
 				handle: 1,
 				uri: CellUri.generate(notebook.uri, 1),
 				source: ['Hello', 'World', 'Hello World!'],
+				eol: '\n',
 				language: 'test',
 				cellKind: CellKind.Code,
 				outputs: [],
@@ -123,6 +166,7 @@ suite('NotebookConcatDocument', function () {
 				handle: 2,
 				uri: CellUri.generate(notebook.uri, 2),
 				source: ['Hallo', 'Welt', 'Hallo Welt!'],
+				eol: '\n',
 				language: 'test',
 				cellKind: CellKind.Code,
 				outputs: [],
@@ -155,6 +199,7 @@ suite('NotebookConcatDocument', function () {
 				handle: 1,
 				uri: CellUri.generate(notebook.uri, 1),
 				source: ['Hello', 'World', 'Hello World!'],
+				eol: '\n',
 				language: 'test',
 				cellKind: CellKind.Code,
 				outputs: [],
@@ -177,6 +222,7 @@ suite('NotebookConcatDocument', function () {
 				handle: 2,
 				uri: CellUri.generate(notebook.uri, 2),
 				source: ['Hallo', 'Welt', 'Hallo Welt!'],
+				eol: '\n',
 				language: 'test',
 				cellKind: CellKind.Code,
 				outputs: [],
@@ -218,6 +264,7 @@ suite('NotebookConcatDocument', function () {
 				handle: 1,
 				uri: CellUri.generate(notebook.uri, 1),
 				source: ['Hello', 'World', 'Hello World!'],
+				eol: '\n',
 				language: 'test',
 				cellKind: CellKind.Code,
 				outputs: [],
@@ -225,6 +272,7 @@ suite('NotebookConcatDocument', function () {
 				handle: 2,
 				uri: CellUri.generate(notebook.uri, 2),
 				source: ['Hallo', 'Welt', 'Hallo Welt!'],
+				eol: '\n',
 				language: 'test',
 				cellKind: CellKind.Code,
 				outputs: [],
@@ -281,6 +329,7 @@ suite('NotebookConcatDocument', function () {
 				handle: 1,
 				uri: CellUri.generate(notebook.uri, 1),
 				source: ['fooLang-document'],
+				eol: '\n',
 				language: 'fooLang',
 				cellKind: CellKind.Code,
 				outputs: [],
@@ -288,6 +337,7 @@ suite('NotebookConcatDocument', function () {
 				handle: 2,
 				uri: CellUri.generate(notebook.uri, 2),
 				source: ['barLang-document'],
+				eol: '\n',
 				language: 'barLang',
 				cellKind: CellKind.Code,
 				outputs: [],
@@ -309,6 +359,7 @@ suite('NotebookConcatDocument', function () {
 				handle: 3,
 				uri: CellUri.generate(notebook.uri, 3),
 				source: ['barLang-document2'],
+				eol: '\n',
 				language: 'barLang',
 				cellKind: CellKind.Code,
 				outputs: [],
@@ -342,6 +393,7 @@ suite('NotebookConcatDocument', function () {
 				handle: 1,
 				uri: CellUri.generate(notebook.uri, 1),
 				source: ['Hello', 'World', 'Hello World!'],
+				eol: '\n',
 				language: 'test',
 				cellKind: CellKind.Code,
 				outputs: [],
@@ -349,6 +401,7 @@ suite('NotebookConcatDocument', function () {
 				handle: 2,
 				uri: CellUri.generate(notebook.uri, 2),
 				source: ['Hallo', 'Welt', 'Hallo Welt!'],
+				eol: '\n',
 				language: 'test',
 				cellKind: CellKind.Code,
 				outputs: [],
@@ -393,6 +446,7 @@ suite('NotebookConcatDocument', function () {
 				handle: 1,
 				uri: CellUri.generate(notebook.uri, 1),
 				source: ['Hello', 'World', 'Hello World!'],
+				eol: '\n',
 				language: 'test',
 				cellKind: CellKind.Code,
 				outputs: [],
@@ -400,6 +454,7 @@ suite('NotebookConcatDocument', function () {
 				handle: 2,
 				uri: CellUri.generate(notebook.uri, 2),
 				source: ['Hallo', 'Welt', 'Hallo Welt!'],
+				eol: '\n',
 				language: 'test',
 				cellKind: CellKind.Code,
 				outputs: [],
@@ -428,6 +483,7 @@ suite('NotebookConcatDocument', function () {
 				handle: 1,
 				uri: CellUri.generate(notebook.uri, 1),
 				source: ['Hello', 'World', 'Hello World!'],
+				eol: '\n',
 				language: 'test',
 				cellKind: CellKind.Code,
 				outputs: [],
@@ -435,6 +491,7 @@ suite('NotebookConcatDocument', function () {
 				handle: 2,
 				uri: CellUri.generate(notebook.uri, 2),
 				source: ['Hallo', 'Welt', 'Hallo Welt!'],
+				eol: '\n',
 				language: 'test',
 				cellKind: CellKind.Code,
 				outputs: [],
@@ -449,5 +506,56 @@ suite('NotebookConcatDocument', function () {
 		assert.equal(doc.getText(new Range(0, 0, 0, 0)), '');
 		assert.equal(doc.getText(new Range(0, 0, 1, 0)), 'Hello\n');
 		assert.equal(doc.getText(new Range(2, 0, 4, 0)), 'Hello World!\nHallo\n');
+	});
+
+	test('validateRange/Position', function () {
+
+		extHostNotebooks.$acceptModelChanged(notebookUri, {
+			kind: NotebookCellsChangeType.ModelChange,
+			versionId: notebook.versionId + 1,
+			changes: [[0, 0, [{
+				handle: 1,
+				uri: CellUri.generate(notebook.uri, 1),
+				source: ['Hello', 'World', 'Hello World!'],
+				eol: '\n',
+				language: 'test',
+				cellKind: CellKind.Code,
+				outputs: [],
+			}, {
+				handle: 2,
+				uri: CellUri.generate(notebook.uri, 2),
+				source: ['Hallo', 'Welt', 'Hallo Welt!'],
+				eol: '\n',
+				language: 'test',
+				cellKind: CellKind.Code,
+				outputs: [],
+			}]]]
+		});
+
+		assert.equal(notebook.cells.length, 1 + 2); // markdown and code
+
+		let doc = new ExtHostNotebookConcatDocument(extHostNotebooks, extHostDocuments, notebook, undefined);
+		assertLines(doc, 'Hello', 'World', 'Hello World!', 'Hallo', 'Welt', 'Hallo Welt!');
+
+
+		function assertPosition(actual: vscode.Position, expectedLine: number, expectedCh: number) {
+			assert.equal(actual.line, expectedLine);
+			assert.equal(actual.character, expectedCh);
+		}
+
+
+		// "fixed"
+		assertPosition(doc.validatePosition(new Position(0, 1000)), 0, 5);
+		assertPosition(doc.validatePosition(new Position(2, 1000)), 2, 12);
+		assertPosition(doc.validatePosition(new Position(5, 1000)), 5, 11);
+		assertPosition(doc.validatePosition(new Position(5000, 1000)), 5, 11);
+
+		// "good"
+		assertPosition(doc.validatePosition(new Position(0, 1)), 0, 1);
+		assertPosition(doc.validatePosition(new Position(0, 5)), 0, 5);
+		assertPosition(doc.validatePosition(new Position(2, 8)), 2, 8);
+		assertPosition(doc.validatePosition(new Position(2, 12)), 2, 12);
+		assertPosition(doc.validatePosition(new Position(5, 11)), 5, 11);
+
 	});
 });

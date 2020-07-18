@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as json from 'vs/base/common/json';
-import { ResourceMap, values, getOrSet } from 'vs/base/common/map';
+import { ResourceMap, getOrSet } from 'vs/base/common/map';
 import * as arrays from 'vs/base/common/arrays';
 import * as types from 'vs/base/common/types';
 import * as objects from 'vs/base/common/objects';
@@ -692,7 +692,7 @@ export class Configuration {
 		this.userConfiguration.freeze().keys.forEach(key => keys.add(key));
 		this._workspaceConfiguration.freeze().keys.forEach(key => keys.add(key));
 		this._folderConfigurations.forEach(folderConfiguraiton => folderConfiguraiton.freeze().keys.forEach(key => keys.add(key)));
-		return values(keys);
+		return [...keys.values()];
 	}
 
 	protected getAllKeysForOverrideIdentifier(overrideIdentifier: string): string[] {
@@ -701,7 +701,7 @@ export class Configuration {
 		this.userConfiguration.getKeysForOverrideIdentifier(overrideIdentifier).forEach(key => keys.add(key));
 		this._workspaceConfiguration.getKeysForOverrideIdentifier(overrideIdentifier).forEach(key => keys.add(key));
 		this._folderConfigurations.forEach(folderConfiguraiton => folderConfiguraiton.getKeysForOverrideIdentifier(overrideIdentifier).forEach(key => keys.add(key)));
-		return values(keys);
+		return [...keys.values()];
 	}
 
 	static parse(data: IConfigurationData): Configuration {
@@ -738,8 +738,8 @@ export function mergeChanges(...changes: IConfigurationChange[]): IConfiguration
 		});
 	}
 	const overrides: [string, string[]][] = [];
-	overridesMap.forEach((keys, identifier) => overrides.push([identifier, values(keys)]));
-	return { keys: values(keysSet), overrides };
+	overridesMap.forEach((keys, identifier) => overrides.push([identifier, [...keys.values()]]));
+	return { keys: [...keysSet.values()], overrides };
 }
 
 export class ConfigurationChangeEvent implements IConfigurationChangeEvent {
@@ -753,7 +753,7 @@ export class ConfigurationChangeEvent implements IConfigurationChangeEvent {
 		const keysSet = new Set<string>();
 		change.keys.forEach(key => keysSet.add(key));
 		change.overrides.forEach(([, keys]) => keys.forEach(key => keysSet.add(key)));
-		this.affectedKeys = values(keysSet);
+		this.affectedKeys = [...keysSet.values()];
 
 		const configurationModel = new ConfigurationModel();
 		this.affectedKeys.forEach(key => configurationModel.setValue(key, {}));

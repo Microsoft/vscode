@@ -202,9 +202,9 @@ class NavigateDownAction extends BaseNavigationAction {
 }
 
 function findVisibleNeighbour(layoutService: IWorkbenchLayoutService, part: Parts, next: boolean): Parts {
-	const neighbour = part === Parts.EDITOR_PART ? (next ? Parts.STATUSBAR_PART : Parts.PANEL_PART) : part === Parts.STATUSBAR_PART ? (next ? Parts.ACTIVITYBAR_PART : Parts.EDITOR_PART) :
-		part === Parts.ACTIVITYBAR_PART ? (next ? Parts.SIDEBAR_PART : Parts.STATUSBAR_PART) : part === Parts.SIDEBAR_PART ? (next ? Parts.PANEL_PART : Parts.ACTIVITYBAR_PART) :
-			part === Parts.PANEL_PART ? (next ? Parts.EDITOR_PART : Parts.SIDEBAR_PART) : Parts.EDITOR_PART;
+	const neighbour = part === Parts.EDITOR_PART ? (next ? Parts.PANEL_PART : Parts.SIDEBAR_PART) : part === Parts.PANEL_PART ? (next ? Parts.STATUSBAR_PART : Parts.EDITOR_PART) :
+		part === Parts.STATUSBAR_PART ? (next ? Parts.ACTIVITYBAR_PART : Parts.PANEL_PART) : part === Parts.ACTIVITYBAR_PART ? (next ? Parts.SIDEBAR_PART : Parts.STATUSBAR_PART) :
+			part === Parts.SIDEBAR_PART ? (next ? Parts.EDITOR_PART : Parts.ACTIVITYBAR_PART) : Parts.EDITOR_PART;
 	if (layoutService.isVisible(neighbour) || neighbour === Parts.EDITOR_PART) {
 		return neighbour;
 	}

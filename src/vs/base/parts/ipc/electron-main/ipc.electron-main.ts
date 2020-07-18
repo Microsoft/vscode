@@ -5,7 +5,7 @@
 
 import { Event, Emitter } from 'vs/base/common/event';
 import { IPCServer, ClientConnectionEvent } from 'vs/base/parts/ipc/common/ipc';
-import { Protocol } from 'vs/base/parts/ipc/node/ipc.electron';
+import { Protocol } from 'vs/base/parts/ipc/common/ipc.electron';
 import { ipcMain, WebContents } from 'electron';
 import { IDisposable, toDisposable } from 'vs/base/common/lifecycle';
 import { VSBuffer } from 'vs/base/common/buffer';
@@ -26,7 +26,7 @@ export class Server extends IPCServer {
 	private static readonly Clients = new Map<number, IDisposable>();
 
 	private static getOnDidClientConnect(): Event<ClientConnectionEvent> {
-		const onHello = Event.fromNodeEventEmitter<WebContents>(ipcMain, 'ipc:hello', ({ sender }) => sender);
+		const onHello = Event.fromNodeEventEmitter<WebContents>(ipcMain, 'vscode:hello', ({ sender }) => sender);
 
 		return Event.map(onHello, webContents => {
 			const id = webContents.id;
@@ -39,8 +39,8 @@ export class Server extends IPCServer {
 			const onDidClientReconnect = new Emitter<void>();
 			Server.Clients.set(id, toDisposable(() => onDidClientReconnect.fire()));
 
-			const onMessage = createScopedOnMessageEvent(id, 'ipc:message') as Event<VSBuffer>;
-			const onDidClientDisconnect = Event.any(Event.signal(createScopedOnMessageEvent(id, 'ipc:disconnect')), onDidClientReconnect.event);
+			const onMessage = createScopedOnMessageEvent(id, 'vscode:message') as Event<VSBuffer>;
+			const onDidClientDisconnect = Event.any(Event.signal(createScopedOnMessageEvent(id, 'vscode:disconnect')), onDidClientReconnect.event);
 			const protocol = new Protocol(webContents, onMessage);
 
 			return { protocol, onDidClientDisconnect };

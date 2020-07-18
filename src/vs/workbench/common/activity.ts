@@ -14,3 +14,4 @@ export interface IActivity {
 }
 
 export const GLOBAL_ACTIVITY_ID = 'workbench.action.globalActivity';
+export const ACCOUNTS_ACTIIVTY_ID = 'workbench.action.accountsActivity';

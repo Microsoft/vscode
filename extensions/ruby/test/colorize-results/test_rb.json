@@ -432,8 +432,8 @@
 		"c": "Models",
 		"t": "source.ruby variable.other.constant.ruby",
 		"r": {
-			"dark_plus": "variable.other.constant: #51B6C4",
-			"light_plus": "variable.other.constant: #328267",
+			"dark_plus": "variable.other.constant: #4FC1FF",
+			"light_plus": "variable.other.constant: #0070C1",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
 			"hc_black": "variable: #9CDCFE"
@@ -476,8 +476,8 @@
 		"c": "MsRestAzure",
 		"t": "source.ruby variable.other.constant.ruby",
 		"r": {
-			"dark_plus": "variable.other.constant: #51B6C4",
-			"light_plus": "variable.other.constant: #328267",
+			"dark_plus": "variable.other.constant: #4FC1FF",
+			"light_plus": "variable.other.constant: #0070C1",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
 			"hc_black": "variable: #9CDCFE"
@@ -1191,8 +1191,8 @@
 		"c": "ArgumentError",
 		"t": "source.ruby variable.other.constant.ruby",
 		"r": {
-			"dark_plus": "variable.other.constant: #51B6C4",
-			"light_plus": "variable.other.constant: #328267",
+			"dark_plus": "variable.other.constant: #4FC1FF",
+			"light_plus": "variable.other.constant: #0070C1",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
 			"hc_black": "variable: #9CDCFE"
@@ -1345,8 +1345,8 @@
 		"c": "ArgumentError",
 		"t": "source.ruby variable.other.constant.ruby",
 		"r": {
-			"dark_plus": "variable.other.constant: #51B6C4",
-			"light_plus": "variable.other.constant: #328267",
+			"dark_plus": "variable.other.constant: #4FC1FF",
+			"light_plus": "variable.other.constant: #0070C1",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
 			"hc_black": "variable: #9CDCFE"
@@ -1499,8 +1499,8 @@
 		"c": "ServiceClientCredentials",
 		"t": "source.ruby variable.other.constant.ruby",
 		"r": {
-			"dark_plus": "variable.other.constant: #51B6C4",
-			"light_plus": "variable.other.constant: #328267",
+			"dark_plus": "variable.other.constant: #4FC1FF",
+			"light_plus": "variable.other.constant: #0070C1",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
 			"hc_black": "variable: #9CDCFE"
@@ -2269,8 +2269,8 @@
 		"c": "MAVERICKS_PKG_PATH",
 		"t": "source.ruby string.interpolated.ruby meta.embedded.line.ruby source.ruby variable.other.constant.ruby",
 		"r": {
-			"dark_plus": "variable.other.constant: #51B6C4",
-			"light_plus": "variable.other.constant: #328267",
+			"dark_plus": "variable.other.constant: #4FC1FF",
+			"light_plus": "variable.other.constant: #0070C1",
 			"dark_vs": "meta.embedded: #D4D4D4",
 			"light_vs": "meta.embedded: #000000",
 			"hc_black": "variable: #9CDCFE"
@@ -2501,7 +2501,7 @@
 		"t": "source.ruby string.regexp.classic.ruby meta.group.regexp.ruby constant.character.escape.ruby",
 		"r": {
 			"dark_plus": "constant.character.escape: #D7BA7D",
-			"light_plus": "constant.character.escape: #FF0000",
+			"light_plus": "constant.character.escape: #EE0000",
 			"dark_vs": "string.regexp: #D16969",
 			"light_vs": "string.regexp: #811F3F",
 			"hc_black": "constant.character: #569CD6"
@@ -2523,7 +2523,7 @@
 		"t": "source.ruby string.regexp.classic.ruby meta.group.regexp.ruby constant.character.escape.ruby",
 		"r": {
 			"dark_plus": "constant.character.escape: #D7BA7D",
-			"light_plus": "constant.character.escape: #FF0000",
+			"light_plus": "constant.character.escape: #EE0000",
 			"dark_vs": "string.regexp: #D16969",
 			"light_vs": "string.regexp: #811F3F",
 			"hc_black": "constant.character: #569CD6"
@@ -2545,7 +2545,7 @@
 		"t": "source.ruby string.regexp.classic.ruby meta.group.regexp.ruby constant.character.escape.ruby",
 		"r": {
 			"dark_plus": "constant.character.escape: #D7BA7D",
-			"light_plus": "constant.character.escape: #FF0000",
+			"light_plus": "constant.character.escape: #EE0000",
 			"dark_vs": "string.regexp: #D16969",
 			"light_vs": "string.regexp: #811F3F",
 			"hc_black": "constant.character: #569CD6"
@@ -2578,7 +2578,7 @@
 		"t": "source.ruby string.regexp.classic.ruby meta.group.regexp.ruby meta.group.regexp.ruby constant.character.escape.ruby",
 		"r": {
 			"dark_plus": "constant.character.escape: #D7BA7D",
-			"light_plus": "constant.character.escape: #FF0000",
+			"light_plus": "constant.character.escape: #EE0000",
 			"dark_vs": "string.regexp: #D16969",
 			"light_vs": "string.regexp: #811F3F",
 			"hc_black": "constant.character: #569CD6"

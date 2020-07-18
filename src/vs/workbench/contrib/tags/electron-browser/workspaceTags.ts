@@ -16,7 +16,7 @@ import { IWorkspaceTagsService, Tags } from 'vs/workbench/contrib/tags/common/wo
 import { IWorkspaceInformation } from 'vs/platform/diagnostics/common/diagnostics';
 import { IRequestService } from 'vs/platform/request/common/request';
 import { isWindows } from 'vs/base/common/platform';
-import { getRemotes, SecondLevelDomainWhitelist, getDomainsOfRemotes } from 'vs/platform/extensionManagement/common/configRemotes';
+import { getRemotes, AllowedSecondLevelDomains, getDomainsOfRemotes } from 'vs/platform/extensionManagement/common/configRemotes';
 
 export function getHashedRemotesFromConfig(text: string, stripEndingDotGit: boolean = false): string[] {
 	return getRemotes(text, stripEndingDotGit).map(r => {
@@ -111,7 +111,7 @@ export class WorkspaceTags implements IWorkbenchContribution {
 					return [];
 				}
 				return this.textFileService.read(uri, { acceptTextOnly: true }).then(
-					content => getDomainsOfRemotes(content.value, SecondLevelDomainWhitelist),
+					content => getDomainsOfRemotes(content.value, AllowedSecondLevelDomains),
 					err => [] // ignore missing or binary file
 				);
 			});

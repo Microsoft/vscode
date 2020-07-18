@@ -25,7 +25,7 @@ export class MainThreadFileSystem implements MainThreadFileSystemShape {
 	}
 
 	dispose(): void {
-		this._fileProvider.forEach(value => value.dispose());
+		dispose(this._fileProvider.values());
 		this._fileProvider.clear();
 	}
 

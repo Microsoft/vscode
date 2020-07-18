@@ -6,10 +6,11 @@ import 'mocha';
 import * as assert from 'assert';
 import * as path from 'path';
 import { URI } from 'vscode-uri';
-import { TextDocument, CompletionList } from 'vscode-languageserver-types';
+import { TextDocument, CompletionList, TextEdit } from 'vscode-languageserver-types';
 import { WorkspaceFolder } from 'vscode-languageserver-protocol';
-import { getPathCompletionParticipant } from '../pathCompletion';
-import { getCSSLanguageService } from 'vscode-css-languageservice';
+import { getCSSLanguageService, LanguageServiceOptions, getSCSSLanguageService } from 'vscode-css-languageservice';
+import { getNodeFSRequestService } from '../node/nodeFs';
+import { getDocumentContext } from '../utils/documentContext';
 
 export interface ItemDescription {
 	label: string;
@@ -17,7 +18,6 @@ export interface ItemDescription {
 }
 
 suite('Completions', () => {
-	const cssLanguageService = getCSSLanguageService();
 
 	let assertCompletion = function (completions: CompletionList, expected: ItemDescription, document: TextDocument, _offset: number) {
 		let matches = completions.items.filter(completion => {
@@ -26,12 +26,12 @@ suite('Completions', () => {
 
 		assert.equal(matches.length, 1, `${expected.label} should only existing once: Actual: ${completions.items.map(c => c.label).join(', ')}`);
 		let match = matches[0];
-		if (expected.resultText && match.textEdit) {
+		if (expected.resultText && TextEdit.is(match.textEdit)) {
 			assert.equal(TextDocument.applyEdits(document, [match.textEdit]), expected.resultText);
 		}
 	};
 
-	function assertCompletions(value: string, expected: { count?: number, items?: ItemDescription[] }, testUri: string, workspaceFolders?: WorkspaceFolder[], lang: string = 'css'): void {
+	async function assertCompletions(value: string, expected: { count?: number, items?: ItemDescription[] }, testUri: string, workspaceFolders?: WorkspaceFolder[], lang: string = 'css'): Promise<any> {
 		const offset = value.indexOf('|');
 		value = value.substr(0, offset) + value.substr(offset + 1);
 
@@ -42,12 +42,12 @@ suite('Completions', () => {
 			workspaceFolders = [{ name: 'x', uri: testUri.substr(0, testUri.lastIndexOf('/')) }];
 		}
 
-		let participantResult = CompletionList.create([]);
-		cssLanguageService.setCompletionParticipants([getPathCompletionParticipant(document, workspaceFolders, participantResult)]);
+		const lsOptions: LanguageServiceOptions = { fileSystemProvider: getNodeFSRequestService() };
+		const cssLanguageService = lang === 'scss' ? getSCSSLanguageService(lsOptions) : getCSSLanguageService(lsOptions);
 
+		const context = getDocumentContext(testUri, workspaceFolders);
 		const stylesheet = cssLanguageService.parseStylesheet(document);
-		let list = cssLanguageService.doComplete(document, position, stylesheet)!;
-		list.items = list.items.concat(participantResult.items);
+		let list = await cssLanguageService.doComplete2(document, position, stylesheet, context);
 
 		if (expected.count) {
 			assert.equal(list.items.length, expected.count);
@@ -59,17 +59,17 @@ suite('Completions', () => {
 		}
 	}
 
-	test('CSS url() Path completion', function () {
+	test('CSS url() Path completion', async function () {
 		let testUri = URI.file(path.resolve(__dirname, '../../test/pathCompletionFixtures/about/about.css')).toString();
 		let folders = [{ name: 'x', uri: URI.file(path.resolve(__dirname, '../../test')).toString() }];
 
-		assertCompletions('html { background-image: url("./|")', {
+		await assertCompletions('html { background-image: url("./|")', {
 			items: [
 				{ label: 'about.html', resultText: 'html { background-image: url("./about.html")' }
 			]
 		}, testUri, folders);
 
-		assertCompletions(`html { background-image: url('../|')`, {
+		await assertCompletions(`html { background-image: url('../|')`, {
 			items: [
 				{ label: 'about/', resultText: `html { background-image: url('../about/')` },
 				{ label: 'index.html', resultText: `html { background-image: url('../index.html')` },
@@ -77,7 +77,7 @@ suite('Completions', () => {
 			]
 		}, testUri, folders);
 
-		assertCompletions(`html { background-image: url('../src/a|')`, {
+		await assertCompletions(`html { background-image: url('../src/a|')`, {
 			items: [
 				{ label: 'feature.js', resultText: `html { background-image: url('../src/feature.js')` },
 				{ label: 'data/', resultText: `html { background-image: url('../src/data/')` },
@@ -85,25 +85,25 @@ suite('Completions', () => {
 			]
 		}, testUri, folders);
 
-		assertCompletions(`html { background-image: url('../src/data/f|.asar')`, {
+		await assertCompletions(`html { background-image: url('../src/data/f|.asar')`, {
 			items: [
 				{ label: 'foo.asar', resultText: `html { background-image: url('../src/data/foo.asar')` }
 			]
 		}, testUri, folders);
 
-		assertCompletions(`html { background-image: url('|')`, {
+		await assertCompletions(`html { background-image: url('|')`, {
 			items: [
 				{ label: 'about.html', resultText: `html { background-image: url('about.html')` },
 			]
 		}, testUri, folders);
 
-		assertCompletions(`html { background-image: url('/|')`, {
+		await assertCompletions(`html { background-image: url('/|')`, {
 			items: [
 				{ label: 'pathCompletionFixtures/', resultText: `html { background-image: url('/pathCompletionFixtures/')` }
 			]
 		}, testUri, folders);
 
-		assertCompletions(`html { background-image: url('/pathCompletionFixtures/|')`, {
+		await assertCompletions(`html { background-image: url('/pathCompletionFixtures/|')`, {
 			items: [
 				{ label: 'about/', resultText: `html { background-image: url('/pathCompletionFixtures/about/')` },
 				{ label: 'index.html', resultText: `html { background-image: url('/pathCompletionFixtures/index.html')` },
@@ -111,53 +111,53 @@ suite('Completions', () => {
 			]
 		}, testUri, folders);
 
-		assertCompletions(`html { background-image: url("/|")`, {
+		await assertCompletions(`html { background-image: url("/|")`, {
 			items: [
 				{ label: 'pathCompletionFixtures/', resultText: `html { background-image: url("/pathCompletionFixtures/")` }
 			]
 		}, testUri, folders);
 	});
 
-	test('CSS url() Path Completion - Unquoted url', function () {
+	test('CSS url() Path Completion - Unquoted url', async function () {
 		let testUri = URI.file(path.resolve(__dirname, '../../test/pathCompletionFixtures/about/about.css')).toString();
 		let folders = [{ name: 'x', uri: URI.file(path.resolve(__dirname, '../../test')).toString() }];
 
-		assertCompletions('html { background-image: url(./|)', {
+		await assertCompletions('html { background-image: url(./|)', {
 			items: [
 				{ label: 'about.html', resultText: 'html { background-image: url(./about.html)' }
 			]
 		}, testUri, folders);
 
-		assertCompletions('html { background-image: url(./a|)', {
+		await assertCompletions('html { background-image: url(./a|)', {
 			items: [
 				{ label: 'about.html', resultText: 'html { background-image: url(./about.html)' }
 			]
 		}, testUri, folders);
 
-		assertCompletions('html { background-image: url(../|src/)', {
+		await assertCompletions('html { background-image: url(../|src/)', {
 			items: [
 				{ label: 'about/', resultText: 'html { background-image: url(../about/)' }
 			]
 		}, testUri, folders);
 
-		assertCompletions('html { background-image: url(../s|rc/)', {
+		await assertCompletions('html { background-image: url(../s|rc/)', {
 			items: [
 				{ label: 'about/', resultText: 'html { background-image: url(../about/)' }
 			]
 		}, testUri, folders);
 	});
 
-	test('CSS @import Path completion', function () {
+	test('CSS @import Path completion', async function () {
 		let testUri = URI.file(path.resolve(__dirname, '../../test/pathCompletionFixtures/about/about.css')).toString();
 		let folders = [{ name: 'x', uri: URI.file(path.resolve(__dirname, '../../test')).toString() }];
 
-		assertCompletions(`@import './|'`, {
+		await assertCompletions(`@import './|'`, {
 			items: [
 				{ label: 'about.html', resultText: `@import './about.html'` },
 			]
 		}, testUri, folders);
 
-		assertCompletions(`@import '../|'`, {
+		await assertCompletions(`@import '../|'`, {
 			items: [
 				{ label: 'about/', resultText: `@import '../about/'` },
 				{ label: 'scss/', resultText: `@import '../scss/'` },
@@ -170,14 +170,14 @@ suite('Completions', () => {
 	/**
 	 * For SCSS, `@import 'foo';` can be used for importing partial file `_foo.scss`
 	 */
-	test('SCSS @import Path completion', function () {
+	test('SCSS @import Path completion', async function () {
 		let testCSSUri = URI.file(path.resolve(__dirname, '../../test/pathCompletionFixtures/about/about.css')).toString();
 		let folders = [{ name: 'x', uri: URI.file(path.resolve(__dirname, '../../test')).toString() }];
 
 		/**
 		 * We are in a CSS file, so no special treatment for SCSS partial files
 		*/
-		assertCompletions(`@import '../scss/|'`, {
+		await assertCompletions(`@import '../scss/|'`, {
 			items: [
 				{ label: 'main.scss', resultText: `@import '../scss/main.scss'` },
 				{ label: '_foo.scss', resultText: `@import '../scss/_foo.scss'` }
@@ -185,18 +185,18 @@ suite('Completions', () => {
 		}, testCSSUri, folders);
 
 		let testSCSSUri = URI.file(path.resolve(__dirname, '../../test/pathCompletionFixtures/scss/main.scss')).toString();
-		assertCompletions(`@import './|'`, {
+		await assertCompletions(`@import './|'`, {
 			items: [
 				{ label: '_foo.scss', resultText: `@import './foo'` }
 			]
 		}, testSCSSUri, folders, 'scss');
 	});
 
-	test('Completion should ignore files/folders starting with dot', function () {
+	test('Completion should ignore files/folders starting with dot', async function () {
 		let testUri = URI.file(path.resolve(__dirname, '../../test/pathCompletionFixtures/about/about.css')).toString();
 		let folders = [{ name: 'x', uri: URI.file(path.resolve(__dirname, '../../test')).toString() }];
 
-		assertCompletions('html { background-image: url("../|")', {
+		await assertCompletions('html { background-image: url("../|")', {
 			count: 4
 		}, testUri, folders);
 

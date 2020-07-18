@@ -284,7 +284,7 @@ export enum NotificationsFilter {
  */
 export interface INotificationService {
 
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	/**
 	 * Show the provided notification to the user. The returned `INotificationHandle`

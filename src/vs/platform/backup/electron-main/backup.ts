@@ -22,7 +22,7 @@ export function isWorkspaceBackupInfo(obj: unknown): obj is IWorkspaceBackupInfo
 }
 
 export interface IBackupMainService {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	isHotExitEnabled(): boolean;
 

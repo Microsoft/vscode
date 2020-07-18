@@ -60,15 +60,15 @@
 	color: rgba(0,0,0,.68);
 }
 
-.vs-dark .monaco-workbench .part.editor > .content.empty > .watermark dt,
-.vs-dark .monaco-workbench .part.editor > .content.empty > .watermark dl {
+.monaco-workbench.vs-dark .part.editor > .content.empty > .watermark dt,
+.monaco-workbench.vs-dark .part.editor > .content.empty > .watermark dl {
 	color: rgba(255,255,255,.6);
 }
 
-.hc-black .monaco-workbench .part.editor > .content.empty > .watermark dt {
+.monaco-workbench.hc-black .part.editor > .content.empty > .watermark dt {
 	color: #FFF;
 }
-.hc-black .monaco-workbench .part.editor > .content.empty > .watermark dl {
+.monaco-workbench.hc-black .part.editor > .content.empty > .watermark dl {
 	color: #FFF;
 	opacity: 1;
 }

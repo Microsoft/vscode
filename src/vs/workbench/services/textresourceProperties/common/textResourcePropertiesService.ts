@@ -16,7 +16,7 @@ import { IRemoteAgentService } from 'vs/workbench/services/remote/common/remoteA
 
 export class TextResourcePropertiesService implements ITextResourcePropertiesService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private remoteEnvironment: IRemoteAgentEnvironment | null = null;
 

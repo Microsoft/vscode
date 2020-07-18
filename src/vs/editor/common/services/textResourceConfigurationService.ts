@@ -31,7 +31,7 @@ export interface ITextResourceConfigurationChangeEvent {
 
 export interface ITextResourceConfigurationService {
 
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	/**
 	 * Event that fires when the configuration changes.
@@ -70,7 +70,7 @@ export const ITextResourcePropertiesService = createDecorator<ITextResourcePrope
 
 export interface ITextResourcePropertiesService {
 
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	/**
 	 * Returns the End of Line characters for the given resource

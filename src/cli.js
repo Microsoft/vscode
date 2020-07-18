@@ -7,12 +7,13 @@
 'use strict';
 
 const bootstrap = require('./bootstrap');
+const product = require('../product.json');
 
 // Avoid Monkey Patches from Application Insights
 bootstrap.avoidMonkeyPatchFromAppInsights();
 
 // Enable portable support
-bootstrap.configurePortable();
+bootstrap.configurePortable(product);
 
 // Enable ASAR support
 bootstrap.enableASARSupport();

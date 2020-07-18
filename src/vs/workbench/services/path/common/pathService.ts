@@ -18,7 +18,7 @@ export const IPathService = createDecorator<IPathService>('path');
  */
 export interface IPathService {
 
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	/**
 	 * The correct path library to use for the target environment. If
@@ -40,41 +40,50 @@ export interface IPathService {
 	/**
 	 * Resolves the user-home directory for the target environment.
 	 * If the envrionment is connected to a remote, this will be the
-	 * remote's user home directory, otherwise the local one.
+	 * remote's user home directory, otherwise the local one unless
+	 * `preferLocal` is set to `true`.
 	 */
-	readonly userHome: Promise<URI>;
+	userHome(options?: { preferLocal: boolean }): Promise<URI>;
 
 	/**
-	 * Access to `userHome` in a sync fashion. This may be `undefined`
-	 * as long as the remote environment was not resolved.
+	 * @deprecated use `userHome` instead.
 	 */
 	readonly resolvedUserHome: URI | undefined;
 }
 
 export abstract class AbstractPathService implements IPathService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
-	private remoteOS: Promise<OperatingSystem>;
+	private resolveOS: Promise<OperatingSystem>;
 
 	private resolveUserHome: Promise<URI>;
 	private maybeUnresolvedUserHome: URI | undefined;
 
 	constructor(
-		fallbackUserHome: () => URI,
+		private localUserHome: URI,
 		@IRemoteAgentService private readonly remoteAgentService: IRemoteAgentService
 	) {
-		this.remoteOS = this.remoteAgentService.getEnvironment().then(env => env?.os || OS);
 
-		this.resolveUserHome = this.remoteAgentService.getEnvironment().then(env => {
-			const userHome = this.maybeUnresolvedUserHome = env?.userHome || fallbackUserHome();
+		// OS
+		this.resolveOS = (async () => {
+			const env = await this.remoteAgentService.getEnvironment();
+
+			return env?.os || OS;
+		})();
+
+		// User Home
+		this.resolveUserHome = (async () => {
+			const env = await this.remoteAgentService.getEnvironment();
+			const userHome = this.maybeUnresolvedUserHome = env?.userHome || localUserHome;
+
 
 			return userHome;
-		});
+		})();
 	}
 
-	get userHome(): Promise<URI> {
-		return this.resolveUserHome;
+	async userHome(options?: { preferLocal: boolean }): Promise<URI> {
+		return options?.preferLocal ? this.localUserHome : this.resolveUserHome;
 	}
 
 	get resolvedUserHome(): URI | undefined {
@@ -82,7 +91,7 @@ export abstract class AbstractPathService implements IPathService {
 	}
 
 	get path(): Promise<IPath> {
-		return this.remoteOS.then(os => {
+		return this.resolveOS.then(os => {
 			return os === OperatingSystem.Windows ?
 				win32 :
 				posix;
@@ -95,7 +104,8 @@ export abstract class AbstractPathService implements IPathService {
 		// normalize to fwd-slashes on windows,
 		// on other systems bwd-slashes are valid
 		// filename character, eg /f\oo/ba\r.txt
-		if ((await this.remoteOS) === OperatingSystem.Windows) {
+		const os = await this.resolveOS;
+		if (os === OperatingSystem.Windows) {
 			_path = _path.replace(/\\/g, '/');
 		}
 

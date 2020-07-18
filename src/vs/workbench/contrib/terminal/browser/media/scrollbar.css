@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 .monaco-workbench .pane-body.integrated-terminal .xterm-viewport {
-	/* Use the hack presented in http://stackoverflow.com/a/38748186/1156119 to get opacity transitions working on the scrollbar */
+	/* Use the hack presented in https://stackoverflow.com/a/38748186/1156119 to get opacity transitions working on the scrollbar */
 	-webkit-background-clip: text;
 	background-clip: text;
 	-webkit-text-fill-color: transparent;

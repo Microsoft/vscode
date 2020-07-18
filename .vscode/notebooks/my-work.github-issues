@@ -1,0 +1,98 @@
+[
+  {
+    "kind": 1,
+    "language": "markdown",
+    "value": "##### `Config`: This should be changed every month/milestone",
+    "editable": true
+  },
+  {
+    "kind": 2,
+    "language": "github-issues",
+    "value": "// list of repos we work in\n$repos=repo:microsoft/vscode repo:microsoft/vscode-remote-release repo:microsoft/vscode-js-debug repo:microsoft/vscode-pull-request-github repo:microsoft/vscode-github-issue-notebooks\n\n// current milestone name\n$milestone=milestone:\"June 2020\"",
+    "editable": true
+  },
+  {
+    "kind": 1,
+    "language": "github-issues",
+    "value": "## Milestone Work",
+    "editable": true
+  },
+  {
+    "kind": 2,
+    "language": "github-issues",
+    "value": "$repos $milestone assignee:@me is:open",
+    "editable": false
+  },
+  {
+    "kind": 1,
+    "language": "github-issues",
+    "value": "## Bugs, Debt, Features...",
+    "editable": true
+  },
+  {
+    "kind": 1,
+    "language": "markdown",
+    "value": "#### My Bugs",
+    "editable": true
+  },
+  {
+    "kind": 2,
+    "language": "github-issues",
+    "value": "$repos assignee:@me is:open label:bug",
+    "editable": true
+  },
+  {
+    "kind": 1,
+    "language": "markdown",
+    "value": "#### Debt & Engineering",
+    "editable": true
+  },
+  {
+    "kind": 2,
+    "language": "github-issues",
+    "value": "$repos assignee:@me is:open label:debt OR $repos assignee:@me is:open label:engineering",
+    "editable": true
+  },
+  {
+    "kind": 1,
+    "language": "markdown",
+    "value": "#### Performance 🐌 🔜 🏎",
+    "editable": true
+  },
+  {
+    "kind": 2,
+    "language": "github-issues",
+    "value": "$repos assignee:@me is:open label:perf OR $repos assignee:@me is:open label:perf-startup OR $repos assignee:@me is:open label:perf-bloat OR $repos assignee:@me is:open label:freeze-slow-crash-leak",
+    "editable": true
+  },
+  {
+    "kind": 1,
+    "language": "markdown",
+    "value": "#### Feature Requests",
+    "editable": true
+  },
+  {
+    "kind": 2,
+    "language": "github-issues",
+    "value": "$repos assignee:@me is:open label:feature-request milestone:Backlog sort:reactions-+1-desc",
+    "editable": true
+  },
+  {
+    "kind": 2,
+    "language": "github-issues",
+    "value": "$repos assignee:@me is:open milestone:\"Backlog Candidates\"",
+    "editable": false
+  },
+  {
+    "kind": 1,
+    "language": "markdown",
+    "value": "#### Not Actionable",
+    "editable": true
+  },
+  {
+    "kind": 2,
+    "language": "github-issues",
+    "value": "$repos assignee:@me is:open label:\"needs more info\"",
+    "editable": false
+  }
+]

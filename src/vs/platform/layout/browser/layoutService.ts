@@ -11,7 +11,7 @@ export const ILayoutService = createDecorator<ILayoutService>('layoutService');
 
 export interface ILayoutService {
 
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	/**
 	 * The dimensions of the container.

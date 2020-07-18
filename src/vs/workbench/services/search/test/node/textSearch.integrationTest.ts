@@ -46,7 +46,7 @@ function doSearchTest(query: ITextQuery, expectedResultCount: number | Function)
 	});
 }
 
-suite('Search-integration', function () {
+suite('TextSearch-integration', function () {
 	this.timeout(1000 * 60); // increase timeout for this suite
 
 	test('Text: GameOfLife', () => {
@@ -370,7 +370,7 @@ suite('Search-integration', function () {
 			return doSearchTest(config, 0).then(() => {
 				throw new Error('expected fail');
 			}, err => {
-				const searchError = deserializeSearchError(err.message);
+				const searchError = deserializeSearchError(err);
 				assert.equal(searchError.message, 'Unknown encoding: invalidEncoding');
 				assert.equal(searchError.code, SearchErrorCode.unknownEncoding);
 			});
@@ -386,7 +386,7 @@ suite('Search-integration', function () {
 			return doSearchTest(config, 0).then(() => {
 				throw new Error('expected fail');
 			}, err => {
-				const searchError = deserializeSearchError(err.message);
+				const searchError = deserializeSearchError(err);
 				let regexParseErrorForUnclosedParenthesis = 'Regex parse error: unmatched closing parenthesis';
 				assert.equal(searchError.message, regexParseErrorForUnclosedParenthesis);
 				assert.equal(searchError.code, SearchErrorCode.regexParseError);
@@ -403,7 +403,7 @@ suite('Search-integration', function () {
 			return doSearchTest(config, 0).then(() => {
 				throw new Error('expected fail');
 			}, err => {
-				const searchError = deserializeSearchError(err.message);
+				const searchError = deserializeSearchError(err);
 				let regexParseErrorForLookAround = 'Regex parse error: lookbehind assertion is not fixed length';
 				assert.equal(searchError.message, regexParseErrorForLookAround);
 				assert.equal(searchError.code, SearchErrorCode.regexParseError);
@@ -424,7 +424,7 @@ suite('Search-integration', function () {
 			return doSearchTest(config, 0).then(() => {
 				throw new Error('expected fail');
 			}, err => {
-				const searchError = deserializeSearchError(err.message);
+				const searchError = deserializeSearchError(err);
 				assert.equal(searchError.message, 'Error parsing glob \'/{{}\': nested alternate groups are not allowed');
 				assert.equal(searchError.code, SearchErrorCode.globParseError);
 			});

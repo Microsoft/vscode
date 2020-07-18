@@ -3,13 +3,12 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { ICodeEditor } from 'vs/editor/browser/editorBrowser';
+import { ICodeEditor, IActiveCodeEditor, IEditorConstructionOptions } from 'vs/editor/browser/editorBrowser';
 import { IEditorContributionCtor } from 'vs/editor/browser/editorExtensions';
 import { ICodeEditorService } from 'vs/editor/browser/services/codeEditorService';
 import { View } from 'vs/editor/browser/view/viewImpl';
 import { CodeEditorWidget, ICodeEditorWidgetOptions } from 'vs/editor/browser/widget/codeEditorWidget';
 import * as editorOptions from 'vs/editor/common/config/editorOptions';
-import { Cursor } from 'vs/editor/common/controller/cursor';
 import { IConfiguration, IEditorContribution } from 'vs/editor/common/editorCommon';
 import { ITextModel } from 'vs/editor/common/model';
 import { ViewModel } from 'vs/editor/common/viewModel/viewModelImpl';
@@ -27,21 +26,26 @@ import { TestNotificationService } from 'vs/platform/notification/test/common/te
 import { IThemeService } from 'vs/platform/theme/common/themeService';
 import { TestThemeService } from 'vs/platform/theme/test/common/testThemeService';
 
-export class TestCodeEditor extends CodeEditorWidget implements ICodeEditor {
+export interface ITestCodeEditor extends IActiveCodeEditor {
+	getViewModel(): ViewModel | undefined;
+	registerAndInstantiateContribution<T extends IEditorContribution, Services extends BrandedService[]>(id: string, ctor: new (editor: ICodeEditor, ...services: Services) => T): T;
+}
+
+class TestCodeEditor extends CodeEditorWidget implements ICodeEditor {
 
 	//#region testing overrides
-	protected _createConfiguration(options: editorOptions.IEditorConstructionOptions): IConfiguration {
+	protected _createConfiguration(options: IEditorConstructionOptions): IConfiguration {
 		return new TestConfiguration(options);
 	}
-	protected _createView(viewModel: ViewModel, cursor: Cursor): [View, boolean] {
+	protected _createView(viewModel: ViewModel): [View, boolean] {
 		// Never create a view
 		return [null! as View, false];
 	}
 	//#endregion
 
 	//#region Testing utils
-	public getCursor(): Cursor | undefined {
-		return this._modelData ? this._modelData.cursor : undefined;
+	public getViewModel(): ViewModel | undefined {
+		return this._modelData ? this._modelData.viewModel : undefined;
 	}
 	public registerAndInstantiateContribution<T extends IEditorContribution, Services extends BrandedService[]>(id: string, ctor: new (editor: ICodeEditor, ...services: Services) => T): T {
 		const r: T = this._instantiationService.createInstance(ctor as IEditorContributionCtor, this);
@@ -74,7 +78,7 @@ export interface TestCodeEditorCreationOptions extends editorOptions.IEditorOpti
 	serviceCollection?: ServiceCollection;
 }
 
-export function withTestCodeEditor(text: string | string[] | null, options: TestCodeEditorCreationOptions, callback: (editor: TestCodeEditor, cursor: Cursor) => void): void {
+export function withTestCodeEditor(text: string | string[] | null, options: TestCodeEditorCreationOptions, callback: (editor: ITestCodeEditor, viewModel: ViewModel) => void): void {
 	// create a model if necessary and remember it in order to dispose it.
 	if (!options.model) {
 		if (typeof text === 'string') {
@@ -84,14 +88,33 @@ export function withTestCodeEditor(text: string | string[] | null, options: Test
 		}
 	}
 
-	let editor = <TestCodeEditor>createTestCodeEditor(options);
-	editor.getCursor()!.setHasFocus(true);
-	callback(editor, editor.getCursor()!);
+	const editor = createTestCodeEditor(options);
+	const viewModel = editor.getViewModel()!;
+	viewModel.setHasFocus(true);
+	callback(<ITestCodeEditor>editor, editor.getViewModel()!);
 
 	editor.dispose();
 }
 
-export function createTestCodeEditor(options: TestCodeEditorCreationOptions): TestCodeEditor {
+export async function withAsyncTestCodeEditor(text: string | string[] | null, options: TestCodeEditorCreationOptions, callback: (editor: ITestCodeEditor, viewModel: ViewModel) => Promise<void>): Promise<void> {
+	// create a model if necessary and remember it in order to dispose it.
+	if (!options.model) {
+		if (typeof text === 'string') {
+			options.model = createTextModel(text);
+		} else if (text) {
+			options.model = createTextModel(text.join('\n'));
+		}
+	}
+
+	const editor = createTestCodeEditor(options);
+	const viewModel = editor.getViewModel()!;
+	viewModel.setHasFocus(true);
+	await callback(<ITestCodeEditor>editor, editor.getViewModel()!);
+
+	editor.dispose();
+}
+
+export function createTestCodeEditor(options: TestCodeEditorCreationOptions): ITestCodeEditor {
 
 	const model = options.model;
 	delete options.model;
@@ -127,5 +150,5 @@ export function createTestCodeEditor(options: TestCodeEditorCreationOptions): Te
 		codeEditorWidgetOptions
 	);
 	editor.setModel(model);
-	return editor;
+	return <ITestCodeEditor>editor;
 }

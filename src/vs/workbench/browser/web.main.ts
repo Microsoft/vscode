@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { mark } from 'vs/base/common/performance';
-import { domContentLoaded, addDisposableListener, EventType, addClass, EventHelper } from 'vs/base/browser/dom';
+import { domContentLoaded, addDisposableListener, EventType, EventHelper } from 'vs/base/browser/dom';
 import { ServiceCollection } from 'vs/platform/instantiation/common/serviceCollection';
 import { ILogService, ConsoleLogService, MultiplexLogService } from 'vs/platform/log/common/log';
 import { ConsoleLogInAutomationService } from 'vs/platform/log/browser/log';
@@ -19,7 +19,7 @@ import { RemoteAgentService } from 'vs/workbench/services/remote/browser/remoteA
 import { RemoteAuthorityResolverService } from 'vs/platform/remote/browser/remoteAuthorityResolverService';
 import { IRemoteAuthorityResolverService } from 'vs/platform/remote/common/remoteAuthorityResolver';
 import { IRemoteAgentService } from 'vs/workbench/services/remote/common/remoteAgentService';
-import { IFileService } from 'vs/platform/files/common/files';
+import { IFileService, IFileSystemProvider } from 'vs/platform/files/common/files';
 import { FileService } from 'vs/platform/files/common/fileService';
 import { Schemas } from 'vs/base/common/network';
 import { IWorkspaceContextService } from 'vs/platform/workspace/common/workspace';
@@ -38,21 +38,18 @@ import { FileUserDataProvider } from 'vs/workbench/services/userData/common/file
 import { BACKUPS } from 'vs/platform/environment/common/environment';
 import { joinPath } from 'vs/base/common/resources';
 import { BrowserStorageService } from 'vs/platform/storage/browser/storageService';
-import { IStorageService, StorageScope } from 'vs/platform/storage/common/storage';
-import { getThemeTypeSelector, DARK, HIGH_CONTRAST, LIGHT } from 'vs/platform/theme/common/themeService';
+import { IStorageService } from 'vs/platform/storage/common/storage';
 import { registerWindowDriver } from 'vs/platform/driver/browser/driver';
 import { BufferLogService } from 'vs/platform/log/common/bufferLog';
 import { FileLogService } from 'vs/platform/log/common/fileLogService';
 import { toLocalISOString } from 'vs/base/common/date';
-import { IndexedDBLogProvider } from 'vs/workbench/services/log/browser/indexedDBLogProvider';
-import { InMemoryLogProvider } from 'vs/workbench/services/log/common/inMemoryLogProvider';
 import { isWorkspaceToOpen, isFolderToOpen } from 'vs/platform/windows/common/windows';
 import { getWorkspaceIdentifier } from 'vs/workbench/services/workspaces/browser/workspaces';
 import { coalesce } from 'vs/base/common/arrays';
 import { InMemoryFileSystemProvider } from 'vs/platform/files/common/inMemoryFilesystemProvider';
 import { WebResourceIdentityService, IResourceIdentityService } from 'vs/platform/resource/common/resourceIdentityService';
 import { ICommandService } from 'vs/platform/commands/common/commands';
-import { Settings } from 'vs/workbench/browser/layout';
+import { IndexedDB, INDEXEDDB_LOGS_OBJECT_STORE, INDEXEDDB_USERDATA_OBJECT_STORE } from 'vs/platform/files/browser/indexedDBFileSystemProvider';
 
 class BrowserMain extends Disposable {
 
@@ -66,16 +63,8 @@ class BrowserMain extends Disposable {
 	async open(): Promise<IWorkbench> {
 		const services = await this.initServices();
 
-		const firstOpen = services.storageService.getBoolean(Settings.WORKSPACE_FIRST_OPEN, StorageScope.WORKSPACE);
-		if (firstOpen === undefined || firstOpen) {
-			services.storageService.store(Settings.WORKSPACE_FIRST_OPEN, !(firstOpen ?? false), StorageScope.WORKSPACE);
-		}
-
 		await domContentLoaded();
 		mark('willStartWorkbench');
-
-		// Base Theme
-		this.restoreBaseTheme();
 
 		// Create Workbench
 		const workbench = new Workbench(
@@ -131,7 +120,6 @@ class BrowserMain extends Disposable {
 		}));
 		this._register(workbench.onWillShutdown(() => {
 			storageService.close();
-			this.saveBaseTheme();
 		}));
 		this._register(workbench.onShutdown(() => this.dispose()));
 
@@ -145,21 +133,6 @@ class BrowserMain extends Disposable {
 				}
 			}));
 		});
-	}
-
-	private restoreBaseTheme(): void {
-		addClass(this.domElement, window.localStorage.getItem('vscode.baseTheme') || getThemeTypeSelector(LIGHT) /* Fallback to a light theme by default on web */);
-	}
-
-	private saveBaseTheme(): void {
-		const classes = this.domElement.className;
-		const baseThemes = [DARK, LIGHT, HIGH_CONTRAST].map(baseTheme => getThemeTypeSelector(baseTheme));
-		for (const baseTheme of baseThemes) {
-			if (classes.indexOf(baseTheme) >= 0) {
-				window.localStorage.setItem('vscode.baseTheme', baseTheme);
-				break;
-			}
-		}
 	}
 
 	private async initServices(): Promise<{ serviceCollection: ServiceCollection, logService: ILogService, storageService: BrowserStorageService }> {
@@ -186,10 +159,7 @@ class BrowserMain extends Disposable {
 		serviceCollection.set(IWorkbenchEnvironmentService, environmentService);
 
 		// Product
-		const productService = {
-			_serviceBrand: undefined,
-			...product
-		};
+		const productService: IProductService = { _serviceBrand: undefined, ...product, ...this.configuration.productConfiguration };
 		serviceCollection.set(IProductService, productService);
 
 		// Remote
@@ -207,7 +177,7 @@ class BrowserMain extends Disposable {
 		// Files
 		const fileService = this._register(new FileService(logService));
 		serviceCollection.set(IFileService, fileService);
-		this.registerFileSystemProviders(environmentService, fileService, remoteAgentService, logService, logsPath);
+		await this.registerFileSystemProviders(environmentService, fileService, remoteAgentService, logService, logsPath);
 
 		// Long running services (workspace, config, storage)
 		const services = await Promise.all([
@@ -234,24 +204,21 @@ class BrowserMain extends Disposable {
 		return { serviceCollection, logService, storageService: services[1] };
 	}
 
-	private registerFileSystemProviders(environmentService: IWorkbenchEnvironmentService, fileService: IFileService, remoteAgentService: IRemoteAgentService, logService: BufferLogService, logsPath: URI): void {
+	private async registerFileSystemProviders(environmentService: IWorkbenchEnvironmentService, fileService: IFileService, remoteAgentService: IRemoteAgentService, logService: BufferLogService, logsPath: URI): Promise<void> {
+		const indexedDB = new IndexedDB();
 
 		// Logger
 		(async () => {
-			if (browser.isEdge) {
-				fileService.registerProvider(logsPath.scheme, new InMemoryLogProvider(logsPath.scheme));
+			let indexedDBLogProvider: IFileSystemProvider | null = null;
+			try {
+				indexedDBLogProvider = await indexedDB.createFileSystemProvider(logsPath.scheme, INDEXEDDB_LOGS_OBJECT_STORE);
+			} catch (error) {
+				console.error(error);
+			}
+			if (indexedDBLogProvider) {
+				fileService.registerProvider(logsPath.scheme, indexedDBLogProvider);
 			} else {
-				try {
-					const indexedDBLogProvider = new IndexedDBLogProvider(logsPath.scheme);
-					await indexedDBLogProvider.database;
-
-					fileService.registerProvider(logsPath.scheme, indexedDBLogProvider);
-				} catch (error) {
-					logService.info('Error while creating indexedDB log provider. Falling back to in-memory log provider.');
-					logService.error(error);
-
-					fileService.registerProvider(logsPath.scheme, new InMemoryLogProvider(logsPath.scheme));
-				}
+				fileService.registerProvider(logsPath.scheme, new InMemoryFileSystemProvider());
 			}
 
 			logService.logger = new MultiplexLogService(coalesce([
@@ -279,8 +246,19 @@ class BrowserMain extends Disposable {
 
 		// User data
 		if (!this.configuration.userDataProvider) {
-			this.configuration.userDataProvider = this._register(new InMemoryFileSystemProvider());
+			let indexedDBUserDataProvider: IFileSystemProvider | null = null;
+			try {
+				indexedDBUserDataProvider = await indexedDB.createFileSystemProvider(Schemas.userData, INDEXEDDB_USERDATA_OBJECT_STORE);
+			} catch (error) {
+				console.error(error);
+			}
+			if (indexedDBUserDataProvider) {
+				this.configuration.userDataProvider = indexedDBUserDataProvider;
+			} else {
+				this.configuration.userDataProvider = new InMemoryFileSystemProvider();
+			}
 		}
+
 		fileService.registerProvider(Schemas.userData, this.configuration.userDataProvider);
 	}
 

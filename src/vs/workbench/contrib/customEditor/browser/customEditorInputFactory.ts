@@ -8,7 +8,7 @@ import { URI, UriComponents } from 'vs/base/common/uri';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { IEditorInput } from 'vs/workbench/common/editor';
 import { CustomEditorInput } from 'vs/workbench/contrib/customEditor/browser/customEditorInput';
-import { IWebviewService, WebviewExtensionDescription } from 'vs/workbench/contrib/webview/browser/webview';
+import { IWebviewService, WebviewExtensionDescription, WebviewContentPurpose } from 'vs/workbench/contrib/webview/browser/webview';
 import { reviveWebviewExtensionDescription, SerializedWebview, WebviewEditorInputFactory, DeserializedWebview } from 'vs/workbench/contrib/webview/browser/webviewEditorInputFactory';
 import { IWebviewWorkbenchService, WebviewInputOptions } from 'vs/workbench/contrib/webview/browser/webviewWorkbenchService';
 import { IBackupFileService } from 'vs/workbench/services/backup/common/backup';
@@ -57,11 +57,12 @@ export class CustomEditorInputFactory extends WebviewEditorInputFactory {
 	}
 
 	public serialize(input: CustomEditorInput): string | undefined {
+		const dirty = input.isDirty();
 		const data: SerializedCustomEditor = {
 			...this.toJson(input),
 			editorResource: input.resource.toJSON(),
-			dirty: input.isDirty(),
-			backupId: input.backupId,
+			dirty,
+			backupId: dirty ? input.backupId : undefined,
 		};
 
 		try {
@@ -95,11 +96,11 @@ export class CustomEditorInputFactory extends WebviewEditorInputFactory {
 	private static reviveWebview(data: { id: string, state: any, options: WebviewInputOptions, extension?: WebviewExtensionDescription, }, webviewService: IWebviewService) {
 		return new Lazy(() => {
 			const webview = webviewService.createWebviewOverlay(data.id, {
+				purpose: WebviewContentPurpose.CustomEditor,
 				enableFindWidget: data.options.enableFindWidget,
 				retainContextWhenHidden: data.options.retainContextWhenHidden
-			}, data.options);
+			}, data.options, data.extension);
 			webview.state = data.state;
-			webview.extension = data.extension;
 			return webview;
 		});
 	}
@@ -123,5 +124,15 @@ export class CustomEditorInputFactory extends WebviewEditorInputFactory {
 			editor.updateGroup(0);
 			return editor;
 		});
+	}
+
+	public static canResolveBackup(editorInput: IEditorInput, backupResource: URI): boolean {
+		if (editorInput instanceof CustomEditorInput) {
+			if (editorInput.resource.path === backupResource.path && backupResource.authority === editorInput.viewType) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

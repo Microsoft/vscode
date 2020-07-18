@@ -195,9 +195,9 @@ export class OnTypeRenameContribution extends Disposable implements IEditorContr
 
 		try {
 			this._ignoreChangeEvent = true;
-			const prevEditOperationType = this._editor._getCursors().getPrevEditOperationType();
+			const prevEditOperationType = this._editor._getViewModel().getPrevEditOperationType();
 			this._editor.executeEdits('onTypeRename', edits);
-			this._editor._getCursors().setPrevEditOperationType(prevEditOperationType);
+			this._editor._getViewModel().setPrevEditOperationType(prevEditOperationType);
 		} finally {
 			this._ignoreChangeEvent = false;
 		}

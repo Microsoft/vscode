@@ -3,6 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import 'vs/css!./media/releasenoteseditor';
 import { onUnexpectedError } from 'vs/base/common/errors';
 import { OS } from 'vs/base/common/platform';
 import { URI } from 'vs/base/common/uri';
@@ -74,7 +75,7 @@ export class ReleaseNotesManager {
 			this._webviewWorkbenchService.revealWebview(this._currentReleaseNotes, activeEditorPane ? activeEditorPane.group : this._editorGroupService.activeGroup, false);
 		} else {
 			this._currentReleaseNotes = this._webviewWorkbenchService.createWebview(
-				generateUuid(),
+				'vs_code_release_notes',
 				'releaseNotes',
 				title,
 				{ group: ACTIVE_GROUP, preserveFocus: false },
@@ -88,21 +89,16 @@ export class ReleaseNotesManager {
 			this._currentReleaseNotes.webview.onDidClickLink(uri => this.onDidClickLink(URI.parse(uri)));
 			this._currentReleaseNotes.onDispose(() => { this._currentReleaseNotes = undefined; });
 
-			const iconPath = URI.parse(require.toUrl('vs/workbench/browser/media/code-icon.svg'));
-			this._currentReleaseNotes.iconPath = {
-				light: iconPath,
-				dark: iconPath
-			};
 			this._currentReleaseNotes.webview.html = html;
 		}
 
 		return true;
 	}
 
-	private loadReleaseNotes(version: string): Promise<string> {
+	private async loadReleaseNotes(version: string): Promise<string> {
 		const match = /^(\d+\.\d+)\./.exec(version);
 		if (!match) {
-			return Promise.reject(new Error('not found'));
+			throw new Error('not found');
 		}
 
 		const versionLabel = match[1].replace(/\./g, '_');
@@ -142,17 +138,30 @@ export class ReleaseNotesManager {
 				.replace(/kbstyle\(([^\)]+)\)/gi, kbstyle);
 		};
 
-		if (!this._releaseNotesCache.has(version)) {
-			this._releaseNotesCache.set(version, this._requestService.request({ url }, CancellationToken.None)
-				.then(asText)
-				.then(text => {
-					if (!text || !/^#\s/.test(text)) { // release notes always starts with `#` followed by whitespace
-						return Promise.reject(new Error('Invalid release notes'));
-					}
+		const fetchReleaseNotes = async () => {
+			let text;
+			try {
+				text = await asText(await this._requestService.request({ url }, CancellationToken.None));
+			} catch {
+				throw new Error('Failed to fetch release notes');
+			}
 
-					return Promise.resolve(text);
-				})
-				.then(text => patchKeybindings(text)));
+			if (!text || !/^#\s/.test(text)) { // release notes always starts with `#` followed by whitespace
+				throw new Error('Invalid release notes');
+			}
+
+			return patchKeybindings(text);
+		};
+
+		if (!this._releaseNotesCache.has(version)) {
+			this._releaseNotesCache.set(version, (async () => {
+				try {
+					return await fetchReleaseNotes();
+				} catch (err) {
+					this._releaseNotesCache.delete(version);
+					throw err;
+				}
+			})());
 		}
 
 		return this._releaseNotesCache.get(version)!;
@@ -261,8 +270,9 @@ export class ReleaseNotesManager {
 					}
 
 					code {
-						font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
-						font-size: 14px;
+						font-family: var(--vscode-editor-font-family);
+						font-weight: var(--vscode-editor-font-weight);
+						font-size: var(--vscode-editor-font-size);
 						line-height: 19px;
 					}
 

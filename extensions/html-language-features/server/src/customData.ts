@@ -4,26 +4,35 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { IHTMLDataProvider, newHTMLDataProvider } from 'vscode-html-languageservice';
-import * as fs from 'fs';
+import { RequestService } from './requests';
 
-export function getDataProviders(dataPaths?: string[]): IHTMLDataProvider[] {
-	if (!dataPaths) {
-		return [];
-	}
-
-	const providers: IHTMLDataProvider[] = [];
-
-	dataPaths.forEach((path, i) => {
+export function fetchHTMLDataProviders(dataPaths: string[], requestService: RequestService): Promise<IHTMLDataProvider[]> {
+	const providers = dataPaths.map(async p => {
 		try {
-			if (fs.existsSync(path)) {
-				const htmlData = JSON.parse(fs.readFileSync(path, 'utf-8'));
-
-				providers.push(newHTMLDataProvider(`customProvider${i}`, htmlData));
-			}
-		} catch (err) {
-			console.log(`Failed to load tag from ${path}`);
+			const content = await requestService.getContent(p);
+			return parseHTMLData(p, content);
+		} catch (e) {
+			return newHTMLDataProvider(p, { version: 1 });
 		}
 	});
 
-	return providers;
+	return Promise.all(providers);
 }
+
+function parseHTMLData(id: string, source: string): IHTMLDataProvider {
+	let rawData: any;
+
+	try {
+		rawData = JSON.parse(source);
+	} catch (err) {
+		return newHTMLDataProvider(id, { version: 1 });
+	}
+
+	return newHTMLDataProvider(id, {
+		version: rawData.version || 1,
+		tags: rawData.tags || [],
+		globalAttributes: rawData.globalAttributes || [],
+		valueSets: rawData.valueSets || []
+	});
+}
+

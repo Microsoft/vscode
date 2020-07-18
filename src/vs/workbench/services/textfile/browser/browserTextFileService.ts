@@ -4,17 +4,11 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { AbstractTextFileService } from 'vs/workbench/services/textfile/browser/textFileService';
-import { ITextFileService, IResourceEncodings, IResourceEncoding, TextFileEditorModelState } from 'vs/workbench/services/textfile/common/textfiles';
+import { ITextFileService, TextFileEditorModelState } from 'vs/workbench/services/textfile/common/textfiles';
 import { registerSingleton } from 'vs/platform/instantiation/common/extensions';
 import { ShutdownReason } from 'vs/platform/lifecycle/common/lifecycle';
 
 export class BrowserTextFileService extends AbstractTextFileService {
-
-	readonly encoding: IResourceEncodings = {
-		getPreferredWriteEncoding(): IResourceEncoding {
-			return { encoding: 'utf8', hasBOM: false };
-		}
-	};
 
 	protected registerListeners(): void {
 		super.registerListeners();

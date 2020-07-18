@@ -130,4 +130,41 @@ suite('Paths', () => {
 		assert.equal(extpath.indexOfPath('/some/long/path', '/some/long', false), 0);
 		assert.equal(extpath.indexOfPath('/some/long/path', '/PATH', true), 10);
 	});
+
+	test('parseLineAndColumnAware', () => {
+		let res = extpath.parseLineAndColumnAware('/foo/bar');
+		assert.equal(res.path, '/foo/bar');
+		assert.equal(res.line, undefined);
+		assert.equal(res.column, undefined);
+
+		res = extpath.parseLineAndColumnAware('/foo/bar:33');
+		assert.equal(res.path, '/foo/bar');
+		assert.equal(res.line, 33);
+		assert.equal(res.column, 1);
+
+		res = extpath.parseLineAndColumnAware('/foo/bar:33:34');
+		assert.equal(res.path, '/foo/bar');
+		assert.equal(res.line, 33);
+		assert.equal(res.column, 34);
+
+		res = extpath.parseLineAndColumnAware('C:\\foo\\bar');
+		assert.equal(res.path, 'C:\\foo\\bar');
+		assert.equal(res.line, undefined);
+		assert.equal(res.column, undefined);
+
+		res = extpath.parseLineAndColumnAware('C:\\foo\\bar:33');
+		assert.equal(res.path, 'C:\\foo\\bar');
+		assert.equal(res.line, 33);
+		assert.equal(res.column, 1);
+
+		res = extpath.parseLineAndColumnAware('C:\\foo\\bar:33:34');
+		assert.equal(res.path, 'C:\\foo\\bar');
+		assert.equal(res.line, 33);
+		assert.equal(res.column, 34);
+
+		res = extpath.parseLineAndColumnAware('/foo/bar:abb');
+		assert.equal(res.path, '/foo/bar:abb');
+		assert.equal(res.line, undefined);
+		assert.equal(res.column, undefined);
+	});
 });

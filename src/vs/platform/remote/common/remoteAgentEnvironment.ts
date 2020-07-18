@@ -11,12 +11,12 @@ export interface IRemoteAgentEnvironment {
 	pid: number;
 	connectionToken: string;
 	appRoot: URI;
-	appSettingsHome: URI;
 	settingsPath: URI;
 	logsPath: URI;
 	extensionsPath: URI;
 	extensionHostLogsPath: URI;
 	globalStorageHome: URI;
+	workspaceStorageHome: URI;
 	userHome: URI;
 	extensions: IExtensionDescription[];
 	os: OperatingSystem;

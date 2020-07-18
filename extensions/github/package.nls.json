@@ -1,0 +1,7 @@
+{
+	"displayName": "GitHub",
+	"description": "GitHub",
+	"config.gitAuthentication": "Controls whether to enable automatic GitHub authentication for git commands within VS Code.",
+	"welcome.publishFolder": "You can also directly publish this folder to a GitHub repository.\n[$(github) Publish to GitHub](command:github.publish)",
+	"welcome.publishWorkspaceFolder": "You can also directly publish a workspace folder to a GitHub repository.\n[$(github) Publish to GitHub](command:github.publish)"
+}

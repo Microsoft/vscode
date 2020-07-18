@@ -117,7 +117,7 @@ export const IWorkingCopyService = createDecorator<IWorkingCopyService>('working
 
 export interface IWorkingCopyService {
 
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 
 	//#region Events
@@ -163,7 +163,7 @@ export interface IWorkingCopyService {
 
 export class WorkingCopyService extends Disposable implements IWorkingCopyService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	//#region Events
 
@@ -191,7 +191,7 @@ export class WorkingCopyService extends Disposable implements IWorkingCopyServic
 
 	registerWorkingCopy(workingCopy: IWorkingCopy): IDisposable {
 		if (this.mapResourceToWorkingCopy.has(workingCopy.resource)) {
-			throw new Error(`Cannot register more than one working copy with the same resource ${workingCopy.resource.toString()}.`);
+			throw new Error(`Cannot register more than one working copy with the same resource ${workingCopy.resource.toString(true)}.`);
 		}
 
 		const disposables = new DisposableStore();

@@ -25,15 +25,12 @@
 	position: absolute;
 	background-color: rgba(0, 0, 0 ,0.5);
 	width: 100%;
-	height: 100px;
-	bottom: 20%;
 	left: 0;
 	z-index: 100000;
 	pointer-events: none;
 	color: #eee;
-	line-height: 100px;
+	line-height: 1.75em;
 	text-align: center;
-	font-size: 56px;
 	transition: opacity 0.3s ease-out;
 	white-space: nowrap;
 	overflow: hidden;

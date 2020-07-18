@@ -14,7 +14,7 @@ import { SpdLogService } from 'vs/platform/log/node/spdlogService';
 
 export class LoggerService extends Disposable implements ILoggerService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private readonly loggers = new Map<string, ILogger>();
 

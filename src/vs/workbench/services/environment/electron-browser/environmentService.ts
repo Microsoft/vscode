@@ -24,15 +24,13 @@ export interface INativeWorkbenchEnvironmentService extends IWorkbenchEnvironmen
 
 	readonly log?: string;
 	readonly extHostLogsPath: URI;
-
-	readonly userHome: URI;
 }
 
 export interface INativeEnvironmentConfiguration extends IEnvironmentConfiguration, INativeWindowConfiguration { }
 
 export class NativeWorkbenchEnvironmentService extends EnvironmentService implements INativeWorkbenchEnvironmentService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	@memoize
 	get webviewExternalEndpoint(): string {
@@ -42,10 +40,10 @@ export class NativeWorkbenchEnvironmentService extends EnvironmentService implem
 	}
 
 	@memoize
-	get webviewResourceRoot(): string { return 'vscode-resource://{{resource}}'; }
+	get webviewResourceRoot(): string { return `${Schemas.vscodeWebviewResource}://{{uuid}}/{{resource}}`; }
 
 	@memoize
-	get webviewCspSource(): string { return 'vscode-resource:'; }
+	get webviewCspSource(): string { return `${Schemas.vscodeWebviewResource}:`; }
 
 	@memoize
 	get userRoamingDataHome(): URI { return this.appSettingsHome.with({ scheme: Schemas.userData }); }

@@ -1,0 +1,45 @@
+{
+	"name": "Code - OSS",
+	"build": {
+		"dockerfile": "Dockerfile",
+		"args": {
+			"MAX_VNC_RESOLUTION": "1920x1080x16",
+			"TARGET_VNC_RESOLUTION": "1280x768",
+			"TARGET_VNC_PORT": "5901",
+			"TARGET_NOVNC_PORT": "6080",
+			"VNC_PASSWORD": "vscode",
+			"INSTALL_FIREFOX": "true"
+		}
+	},
+	"overrideCommand": false,
+	"runArgs": [
+		"--init",
+		// seccomp=unconfined is required for Chrome sandboxing
+		"--security-opt", "seccomp=unconfined"
+	],
+
+	"settings": {
+		// zsh is also available
+		"terminal.integrated.shell.linux": "/bin/bash",
+		"resmon.show.battery": false,
+		"resmon.show.cpufreq": false,
+		"remote.extensionKind": {
+			"ms-vscode.js-debug-nightly": "workspace",
+			"msjsdiag.debugger-for-chrome": "workspace"
+		},
+		"debug.chrome.useV3": true
+	},
+
+	// noVNC, VNC ports
+	"forwardPorts": [6080, 5901],
+
+	"extensions": [
+		"dbaeumer.vscode-eslint",
+		"EditorConfig.EditorConfig",
+		"msjsdiag.debugger-for-chrome",
+		"mutantdino.resourcemonitor",
+		"GitHub.vscode-pull-request-github"
+	],
+
+	"remoteUser": "node"
+}

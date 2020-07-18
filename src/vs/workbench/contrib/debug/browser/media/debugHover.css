@@ -12,6 +12,7 @@
 	user-select: text;
 	-webkit-user-select: text;
 	word-break: break-all;
+	white-space: pre;
 }
 
 .monaco-editor .debug-hover-widget .complex-value {
@@ -39,6 +40,7 @@
 .monaco-editor .debug-hover-widget .debug-hover-tree .monaco-list-row .monaco-tl-contents {
 	user-select: text;
 	-webkit-user-select: text;
+	white-space: pre;
 }
 
 /* Disable tree highlight in debug hover tree. */
@@ -56,7 +58,6 @@
 }
 
 .monaco-editor .debug-hover-widget .value {
-	white-space: pre-wrap;
 	color: rgba(108, 108, 108, 0.8);
 	overflow: auto;
 	font-family: var(--monaco-monospace-font);

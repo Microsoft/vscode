@@ -52,7 +52,7 @@ export class EditorScopedQuickInputServiceImpl extends QuickInputService {
 
 export class StandaloneQuickInputServiceImpl implements IQuickInputService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private mapEditorToService = new Map<ICodeEditor, EditorScopedQuickInputServiceImpl>();
 	private get activeService(): IQuickInputService {

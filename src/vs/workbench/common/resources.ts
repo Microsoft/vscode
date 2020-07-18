@@ -39,19 +39,19 @@ export class ResourceContextKey extends Disposable implements IContextKey<URI> {
 	private readonly _isFileSystemResource: IContextKey<boolean>;
 
 	constructor(
-		@IContextKeyService contextKeyService: IContextKeyService,
+		@IContextKeyService private readonly _contextKeyService: IContextKeyService,
 		@IFileService private readonly _fileService: IFileService,
 		@IModeService private readonly _modeService: IModeService
 	) {
 		super();
 
-		this._schemeKey = ResourceContextKey.Scheme.bindTo(contextKeyService);
-		this._filenameKey = ResourceContextKey.Filename.bindTo(contextKeyService);
-		this._langIdKey = ResourceContextKey.LangId.bindTo(contextKeyService);
-		this._resourceKey = ResourceContextKey.Resource.bindTo(contextKeyService);
-		this._extensionKey = ResourceContextKey.Extension.bindTo(contextKeyService);
-		this._hasResource = ResourceContextKey.HasResource.bindTo(contextKeyService);
-		this._isFileSystemResource = ResourceContextKey.IsFileSystemResource.bindTo(contextKeyService);
+		this._schemeKey = ResourceContextKey.Scheme.bindTo(this._contextKeyService);
+		this._filenameKey = ResourceContextKey.Filename.bindTo(this._contextKeyService);
+		this._langIdKey = ResourceContextKey.LangId.bindTo(this._contextKeyService);
+		this._resourceKey = ResourceContextKey.Resource.bindTo(this._contextKeyService);
+		this._extensionKey = ResourceContextKey.Extension.bindTo(this._contextKeyService);
+		this._hasResource = ResourceContextKey.HasResource.bindTo(this._contextKeyService);
+		this._isFileSystemResource = ResourceContextKey.IsFileSystemResource.bindTo(this._contextKeyService);
 
 		this._register(_fileService.onDidChangeFileSystemProviderRegistrations(() => {
 			const resource = this._resourceKey.get();
@@ -66,24 +66,28 @@ export class ResourceContextKey extends Disposable implements IContextKey<URI> {
 
 	set(value: URI | null) {
 		if (!ResourceContextKey._uriEquals(this._resourceKey.get(), value)) {
-			this._resourceKey.set(value);
-			this._schemeKey.set(value ? value.scheme : null);
-			this._filenameKey.set(value ? basename(value) : null);
-			this._langIdKey.set(value ? this._modeService.getModeIdByFilepathOrFirstLine(value) : null);
-			this._extensionKey.set(value ? extname(value) : null);
-			this._hasResource.set(!!value);
-			this._isFileSystemResource.set(value ? this._fileService.canHandleResource(value) : false);
+			this._contextKeyService.bufferChangeEvents(() => {
+				this._resourceKey.set(value);
+				this._schemeKey.set(value ? value.scheme : null);
+				this._filenameKey.set(value ? basename(value) : null);
+				this._langIdKey.set(value ? this._modeService.getModeIdByFilepathOrFirstLine(value) : null);
+				this._extensionKey.set(value ? extname(value) : null);
+				this._hasResource.set(!!value);
+				this._isFileSystemResource.set(value ? this._fileService.canHandleResource(value) : false);
+			});
 		}
 	}
 
 	reset(): void {
-		this._schemeKey.reset();
-		this._langIdKey.reset();
-		this._resourceKey.reset();
-		this._langIdKey.reset();
-		this._extensionKey.reset();
-		this._hasResource.reset();
-		this._isFileSystemResource.reset();
+		this._contextKeyService.bufferChangeEvents(() => {
+			this._schemeKey.reset();
+			this._langIdKey.reset();
+			this._resourceKey.reset();
+			this._langIdKey.reset();
+			this._extensionKey.reset();
+			this._hasResource.reset();
+			this._isFileSystemResource.reset();
+		});
 	}
 
 	get(): URI | undefined {

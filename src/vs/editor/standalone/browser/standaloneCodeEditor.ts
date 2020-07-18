@@ -5,11 +5,11 @@
 
 import * as aria from 'vs/base/browser/ui/aria/aria';
 import { Disposable, IDisposable, toDisposable, DisposableStore } from 'vs/base/common/lifecycle';
-import { ICodeEditor, IDiffEditor } from 'vs/editor/browser/editorBrowser';
+import { ICodeEditor, IDiffEditor, IEditorConstructionOptions } from 'vs/editor/browser/editorBrowser';
 import { ICodeEditorService } from 'vs/editor/browser/services/codeEditorService';
 import { CodeEditorWidget } from 'vs/editor/browser/widget/codeEditorWidget';
 import { DiffEditorWidget } from 'vs/editor/browser/widget/diffEditorWidget';
-import { IDiffEditorOptions, IEditorOptions, IEditorConstructionOptions } from 'vs/editor/common/config/editorOptions';
+import { IDiffEditorOptions, IEditorOptions } from 'vs/editor/common/config/editorOptions';
 import { InternalEditorAction } from 'vs/editor/common/editorAction';
 import { IModelChangedEvent } from 'vs/editor/common/editorCommon';
 import { ITextModel } from 'vs/editor/common/model';
@@ -115,9 +115,12 @@ export interface IGlobalEditorOptions {
 	wordBasedSuggestions?: boolean;
 	/**
 	 * Controls whether the semanticHighlighting is shown for the languages that support it.
-	 * Defaults to true.
+	 * true: semanticHighlighting is enabled for all themes
+	 * false: semanticHighlighting is disabled for all themes
+	 * 'configuredByTheme': semanticHighlighting is controlled by the current color theme's semanticHighlighting setting.
+	 * Defaults to 'byTheme'.
 	 */
-	'semanticHighlighting.enabled'?: boolean;
+	'semanticHighlighting.enabled'?: true | false | 'configuredByTheme';
 	/**
 	 * Keep peek editors open even when double clicking their content or when hitting `Escape`.
 	 * Defaults to false.

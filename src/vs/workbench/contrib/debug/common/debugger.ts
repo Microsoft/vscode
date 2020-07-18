@@ -58,19 +58,21 @@ export class Debugger implements IDebugger {
 
 			if (isObject(source)) {
 				Object.keys(source).forEach(key => {
-					if (isObject(destination[key]) && isObject(source[key])) {
-						mixin(destination[key], source[key], overwrite, level + 1);
-					} else {
-						if (key in destination) {
-							if (overwrite) {
-								if (level === 0 && key === 'type') {
-									// don't merge the 'type' property
-								} else {
-									destination[key] = source[key];
-								}
-							}
+					if (key !== '__proto__') {
+						if (isObject(destination[key]) && isObject(source[key])) {
+							mixin(destination[key], source[key], overwrite, level + 1);
 						} else {
-							destination[key] = source[key];
+							if (key in destination) {
+								if (overwrite) {
+									if (level === 0 && key === 'type') {
+										// don't merge the 'type' property
+									} else {
+										destination[key] = source[key];
+									}
+								}
+							} else {
+								destination[key] = source[key];
+							}
 						}
 					}
 				});

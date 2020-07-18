@@ -7,14 +7,17 @@
 	width: 100%;
 }
 
-.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-value {
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-value,
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-object-widget .setting-list-object-key {
 	margin-right: 3px;
 	margin-left: 2px;
 }
 
 /* Deal with overflow */
 .settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-value,
-.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-sibling {
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-sibling,
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-object-widget .setting-list-object-key,
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-object-widget .setting-list-object-value {
 	white-space: pre;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -25,9 +28,28 @@
 .settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-sibling {
 	max-width: 10%;
 }
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-object-widget .setting-list-object-key,
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-object-widget .setting-list-object-input-key {
+	margin-left: 4px;
+	min-width: 40%;
+}
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-object-widget .setting-list-object-input-key {
+	margin-left: 0;
+}
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-object-widget .setting-list-object-input-value,
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-object-widget .setting-list-object-value {
+	width: 100%;
+}
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-object-widget .setting-list-row:hover .setting-list-object-value,
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-object-widget .setting-list-row:focus .setting-list-object-value,
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-object-widget .setting-list-row.selected .setting-list-object-value {
+	margin-right: 44px;
+}
 
 .settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-value,
-.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-sibling {
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-sibling,
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-object-widget .setting-list-object-key,
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-object-widget .setting-list-object-value {
 	display: inline-block;
 	line-height: 24px;
 }
@@ -49,11 +71,29 @@
 	display: none;
 	position: absolute;
 	right: 0px;
+	top: 0px;
 }
 
-.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-row {
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-row,
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-row-header {
 	position: relative;
 	max-height: 24px;
+}
+
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-row-header {
+	font-weight: bold;
+}
+
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-object-widget .setting-list-row,
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-object-widget .setting-list-row-header {
+	display: flex;
+	padding-right: 4px;
+}
+
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-object-widget .setting-list-row-header,
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-object-widget .setting-list-object-row:nth-child(odd):not(:hover):not(:focus):not(.selected),
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-object-widget .setting-list-edit-row.setting-list-object-row:nth-child(odd):hover {
+	background-color: rgba(130, 130, 130, 0.04);
 }
 
 .settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-row:focus {
@@ -84,14 +124,14 @@
 	padding: 2px 14px;
 }
 
-.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-item-control.setting-list-new-mode .setting-list-new-row {
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-item-control.setting-list-hide-add-button .setting-list-new-row {
 	display: none;
 }
 
 .settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .monaco-text-button.setting-list-addButton {
 	display: inline-block;
 	margin-top: 4px;
-	margin-right: 10px;
+	margin-right: 4px;
 }
 
 .settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-edit-row {
@@ -99,19 +139,32 @@
 }
 
 .settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-valueInput,
-.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-siblingInput {
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-siblingInput,
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-object-widget .setting-list-object-input {
 	height: 24px;
 	max-width: 320px;
-	flex: 1;
-	margin-right: 10px;
+	margin-right: 4px;
+}
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-object-widget .setting-list-object-input {
+	max-width: unset;
+}
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-object-widget .setting-list-object-value-container .setting-list-object-input {
+	margin-right: 0;
 }
 
-.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-okButton {
-	margin-right: 10px;
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-ok-button {
+	margin: 0 4px;
 }
 
 .settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-widget,
-.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-exclude-widget {
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-exclude-widget,
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-object-widget {
 	margin-bottom: 1px;
 	padding: 1px;
+}
+
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-object-widget .setting-list-object-value-container,
+.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-object-widget .setting-list-object-input select {
+	width: 100%;
+	height: 24px;
 }

@@ -33,9 +33,6 @@ export abstract class Composite extends Component implements IComposite {
 	private readonly _onTitleAreaUpdate = this._register(new Emitter<void>());
 	readonly onTitleAreaUpdate = this._onTitleAreaUpdate.event;
 
-	private readonly _onDidChangeVisibility = this._register(new Emitter<boolean>());
-	readonly onDidChangeVisibility = this._onDidChangeVisibility.event;
-
 	private _onDidFocus: Emitter<void> | undefined;
 	get onDidFocus(): Event<void> {
 		if (!this._onDidFocus) {
@@ -135,8 +132,6 @@ export abstract class Composite extends Component implements IComposite {
 	setVisible(visible: boolean): void {
 		if (this.visible !== !!visible) {
 			this.visible = visible;
-
-			this._onDidChangeVisibility.fire(visible);
 		}
 	}
 
@@ -239,6 +234,7 @@ export abstract class CompositeDescriptor<T extends Composite> {
 		readonly name: string,
 		readonly cssClass?: string,
 		readonly order?: number,
+		readonly requestedIndex?: number,
 		readonly keybindingId?: string,
 	) { }
 

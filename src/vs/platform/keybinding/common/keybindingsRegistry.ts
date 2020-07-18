@@ -39,7 +39,7 @@ export interface IKeybindingRule extends IKeybindings {
 	id: string;
 	weight: number;
 	args?: any;
-	when: ContextKeyExpression | null | undefined;
+	when?: ContextKeyExpression | null | undefined;
 }
 
 export interface IKeybindingRule2 {

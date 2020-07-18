@@ -14,7 +14,7 @@ import { ResourceMap } from 'vs/base/common/map';
 
 export class NativeResourceIdentityService extends Disposable implements IResourceIdentityService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private readonly cache: ResourceMap<Promise<string>> = new ResourceMap<Promise<string>>();
 

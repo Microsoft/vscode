@@ -14,6 +14,8 @@ import { IWorkbenchConstructionOptions } from 'vs/workbench/workbench.web.api';
 import product from 'vs/platform/product/common/product';
 import { memoize } from 'vs/base/common/decorators';
 import { onUnexpectedError } from 'vs/base/common/errors';
+import { LIGHT } from 'vs/platform/theme/common/themeService';
+import { parseLineAndColumnAware } from 'vs/base/common/extpath';
 
 export class BrowserEnvironmentConfiguration implements IEnvironmentConfiguration {
 
@@ -37,7 +39,20 @@ export class BrowserEnvironmentConfiguration implements IEnvironmentConfiguratio
 		if (this.payload) {
 			const fileToOpen = this.payload.get('openFile');
 			if (fileToOpen) {
-				return [{ fileUri: URI.parse(fileToOpen) }];
+				const fileUri = URI.parse(fileToOpen);
+
+				// Support: --goto parameter to open on line/col
+				if (this.payload.has('gotoLineMode')) {
+					const pathColumnAware = parseLineAndColumnAware(fileUri.path);
+
+					return [{
+						fileUri: fileUri.with({ path: pathColumnAware.path }),
+						lineNumber: pathColumnAware.line,
+						columnNumber: pathColumnAware.column
+					}];
+				}
+
+				return [{ fileUri }];
 			}
 		}
 
@@ -47,12 +62,12 @@ export class BrowserEnvironmentConfiguration implements IEnvironmentConfiguratio
 	@memoize
 	get filesToDiff(): IPath[] | undefined {
 		if (this.payload) {
-			const fileToDiffDetail = this.payload.get('diffFileDetail');
-			const fileToDiffMaster = this.payload.get('diffFileMaster');
-			if (fileToDiffDetail && fileToDiffMaster) {
+			const fileToDiffPrimary = this.payload.get('diffFilePrimary');
+			const fileToDiffSecondary = this.payload.get('diffFileSecondary');
+			if (fileToDiffPrimary && fileToDiffSecondary) {
 				return [
-					{ fileUri: URI.parse(fileToDiffDetail) },
-					{ fileUri: URI.parse(fileToDiffMaster) }
+					{ fileUri: URI.parse(fileToDiffSecondary) },
+					{ fileUri: URI.parse(fileToDiffPrimary) }
 				];
 			}
 		}
@@ -62,6 +77,10 @@ export class BrowserEnvironmentConfiguration implements IEnvironmentConfiguratio
 
 	get highContrast() {
 		return false; // could investigate to detect high contrast theme automatically
+	}
+
+	get defaultThemeType() {
+		return LIGHT;
 	}
 }
 
@@ -80,7 +99,7 @@ interface IExtensionHostDebugEnvironment {
 
 export class BrowserWorkbenchEnvironmentService implements IWorkbenchEnvironmentService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private _configuration: IEnvironmentConfiguration | undefined = undefined;
 	get configuration(): IEnvironmentConfiguration {
@@ -113,6 +132,12 @@ export class BrowserWorkbenchEnvironmentService implements IWorkbenchEnvironment
 
 	@memoize
 	get snippetsHome(): URI { return joinPath(this.userRoamingDataHome, 'snippets'); }
+
+	@memoize
+	get globalStorageHome(): URI { return URI.joinPath(this.userRoamingDataHome, 'globalStorage'); }
+
+	@memoize
+	get workspaceStorageHome(): URI { return URI.joinPath(this.userRoamingDataHome, 'workspaceStorage'); }
 
 	/*
 	 * In Web every workspace can potentially have scoped user-data and/or extensions and if Sync state is shared then it can make
@@ -189,10 +214,14 @@ export class BrowserWorkbenchEnvironmentService implements IWorkbenchEnvironment
 
 	get disableExtensions() { return this.payload?.get('disableExtensions') === 'true'; }
 
+	private get webviewEndpoint(): string {
+		// TODO@matt: get fallback from product.json
+		return this.options.webviewEndpoint || 'https://{{uuid}}.vscode-webview-test.com/{{commit}}';
+	}
+
 	@memoize
 	get webviewExternalEndpoint(): string {
-		// TODO@matt: get fallback from product.json
-		return (this.options.webviewEndpoint || 'https://{{uuid}}.vscode-webview-test.com/{{commit}}').replace('{{commit}}', product.commit || '0d728c31ebdf03869d2687d9be0b017667c9ff37');
+		return (this.webviewEndpoint).replace('{{commit}}', product.commit || '0d728c31ebdf03869d2687d9be0b017667c9ff37');
 	}
 
 	@memoize
@@ -202,7 +231,8 @@ export class BrowserWorkbenchEnvironmentService implements IWorkbenchEnvironment
 
 	@memoize
 	get webviewCspSource(): string {
-		return this.webviewExternalEndpoint.replace('{{uuid}}', '*');
+		const uri = URI.parse(this.webviewEndpoint.replace('{{uuid}}', '*'));
+		return `${uri.scheme}://${uri.authority}`;
 	}
 
 	get disableTelemetry(): boolean { return false; }
@@ -249,6 +279,9 @@ export class BrowserWorkbenchEnvironmentService implements IWorkbenchEnvironment
 					case 'inspect-brk-extensions':
 						extensionHostDebugEnvironment.params.port = parseInt(value);
 						extensionHostDebugEnvironment.params.break = true;
+						break;
+					case 'inspect-extensions':
+						extensionHostDebugEnvironment.params.port = parseInt(value);
 						break;
 					case 'enableProposedApi':
 						extensionHostDebugEnvironment.extensionEnabledProposedApi = [];

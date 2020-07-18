@@ -12,7 +12,7 @@ import { Schemas } from 'vs/base/common/network';
 
 class ExtensionResourceLoaderService implements IExtensionResourceLoaderService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	constructor(
 		@IFileService private readonly _fileService: IFileService

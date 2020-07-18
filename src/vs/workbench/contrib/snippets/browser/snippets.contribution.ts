@@ -15,7 +15,7 @@ export const ISnippetsService = createDecorator<ISnippetsService>('snippetServic
 
 export interface ISnippetsService {
 
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	getSnippetFiles(): Promise<Iterable<SnippetFile>>;
 
@@ -28,7 +28,7 @@ const languageScopeSchemaId = 'vscode://schemas/snippets';
 
 const snippetSchemaProperties: IJSONSchemaMap = {
 	prefix: {
-		description: nls.localize('snippetSchema.json.prefix', 'The prefix to used when selecting the snippet in intellisense'),
+		description: nls.localize('snippetSchema.json.prefix', 'The prefix to use when selecting the snippet in intellisense'),
 		type: ['string', 'array']
 	},
 	body: {

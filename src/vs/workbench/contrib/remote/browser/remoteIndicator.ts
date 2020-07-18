@@ -55,7 +55,7 @@ export class RemoteWindowActiveIndicator extends Disposable implements IWorkbenc
 		this.windowCommandMenu = this.menuService.createMenu(MenuId.StatusBarWindowIndicatorMenu, this.contextKeyService);
 		this._register(this.windowCommandMenu);
 
-		const category = nls.localize('remote.category', "Remote");
+		const category = { value: nls.localize('remote.category', "Remote"), original: 'Remote' };
 		const that = this;
 		registerAction2(class extends Action2 {
 			constructor() {

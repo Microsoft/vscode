@@ -10,12 +10,12 @@ import { Disposable } from 'vs/base/common/lifecycle';
 
 export const IResourceIdentityService = createDecorator<IResourceIdentityService>('IResourceIdentityService');
 export interface IResourceIdentityService {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 	resolveResourceIdentity(resource: URI): Promise<string>;
 }
 
 export class WebResourceIdentityService extends Disposable implements IResourceIdentityService {
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 	async resolveResourceIdentity(resource: URI): Promise<string> {
 		return hash(resource.toString()).toString(16);
 	}

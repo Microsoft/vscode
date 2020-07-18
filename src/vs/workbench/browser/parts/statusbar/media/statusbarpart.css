@@ -98,6 +98,7 @@
 	align-items: center;
 	text-overflow: ellipsis;
 	overflow: hidden;
+	outline-width: 0px; /* do not render focus outline, we already have background */
 }
 
 .monaco-workbench .part.statusbar > .items-container > .statusbar-item > a:hover {

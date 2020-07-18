@@ -84,13 +84,6 @@
 	display: flex;
 }
 
-.keybindings-editor > .keybindings-body > .keybindings-list-header,
-.keybindings-editor > .keybindings-body > .keybindings-list-container .monaco-list-row.odd:not(.focused):not(.selected):not(:hover),
-.keybindings-editor > .keybindings-body > .keybindings-list-container .monaco-list:not(:focus) .monaco-list-row.focused.odd:not(.selected):not(:hover),
-.keybindings-editor > .keybindings-body > .keybindings-list-container .monaco-list:not(.focused) .monaco-list-row.focused.odd:not(.selected):not(:hover) {
-	background-color: rgba(130, 130, 130, 0.04);
-}
-
 .keybindings-editor > .keybindings-body > .keybindings-list-header > .header {
 	text-align: left;
 	font-weight: bold;
@@ -147,7 +140,6 @@
 .keybindings-editor > .keybindings-body > .keybindings-list-container .monaco-list-row > .column > .code {
 	font-family: var(--monaco-monospace-font);
 	font-size: 90%;
-	opacity: 0.8;
 	display: flex;
 	overflow: hidden;
 }

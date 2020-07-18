@@ -6,7 +6,7 @@
 				"git": {
 					"name": "chromium",
 					"repositoryUrl": "https://chromium.googlesource.com/chromium/src",
-					"commitHash": "e4745133a1d3745f066e068b8033c6a269b59caf"
+					"commitHash": "052d3b44972e6d94ef40054d46c150b7cdd7a5d8"
 				}
 			},
 			"licenseDetail": [
@@ -40,7 +40,7 @@
 				"SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
 			],
 			"isOnlyProductionDependency": true,
-			"version": "78.0.3904.130"
+			"version": "80.0.3987.165"
 		},
 		{
 			"component": {
@@ -48,11 +48,11 @@
 				"git": {
 					"name": "nodejs",
 					"repositoryUrl": "https://github.com/nodejs/node",
-					"commitHash": "787378879acfb212ed4ff824bf9f767a24a5cb43a"
+					"commitHash": "42cce5a9d0fd905bf4ad7a2528c36572dfb8b5ad"
 				}
 			},
 			"isOnlyProductionDependency": true,
-			"version": "12.8.1"
+			"version": "12.13.0"
 		},
 		{
 			"component": {
@@ -60,12 +60,12 @@
 				"git": {
 					"name": "electron",
 					"repositoryUrl": "https://github.com/electron/electron",
-					"commitHash": "0552e0d5de46ffa3b481d741f1db5c779e201565"
+					"commitHash": "87fd06bc96bce8f46ca05b8315657fd230bcac85"
 				}
 			},
 			"isOnlyProductionDependency": true,
 			"license": "MIT",
-			"version": "7.2.4"
+			"version": "8.3.3"
 		},
 		{
 			"component": {
@@ -77,6 +77,40 @@
 				}
 			},
 			"isOnlyProductionDependency": true,
+			"licenseDetail": [
+				"Inno Setup License",
+				"==================",
+				"",
+				"Except where otherwise noted, all of the documentation and software included in the Inno Setup",
+				"package is copyrighted by Jordan Russell.",
+				"",
+				"Copyright (C) 1997-2020 Jordan Russell. All rights reserved.",
+				"Portions Copyright (C) 2000-2020 Martijn Laan. All rights reserved.",
+				"",
+				"This software is provided \"as-is,\" without any express or implied warranty. In no event shall the",
+				"author be held liable for any damages arising from the use of this software.",
+				"",
+				"Permission is granted to anyone to use this software for any purpose, including commercial",
+				"applications, and to alter and redistribute it, provided that the following conditions are met:",
+				"",
+				"1. All redistributions of source code files must retain all copyright notices that are currently in",
+				"   place, and this list of conditions without modification.",
+				"",
+				"2. All redistributions in binary form must retain all occurrences of the above copyright notice and",
+				"   web site addresses that are currently in place (for example, in the About boxes).",
+				"",
+				"3. The origin of this software must not be misrepresented; you must not claim that you wrote the",
+				"   original software. If you use this software to distribute a product, an acknowledgment in the",
+				"   product documentation would be appreciated but is not required.",
+				"",
+				"4. Modified versions in source or binary form must be plainly marked as such, and must not be",
+				"   misrepresented as being the original software.",
+				"",
+				"",
+				"Jordan Russell",
+				"jr-2010 AT jrsoftware.org",
+				"https://jrsoftware.org/"
+			],
 			"version": "5.5.6"
 		},
 		{
@@ -499,7 +533,7 @@
 				"git": {
 					"name": "ripgrep",
 					"repositoryUrl": "https://github.com/BurntSushi/ripgrep",
-					"commitHash": "8a7db1a918e969b85cd933d8ed9fa5285b281ba4"
+					"commitHash": "973de50c9ef451da2cfcdfa86f2b2711d8d6ff48"
 				}
 			},
 			"isOnlyProductionDependency": true,

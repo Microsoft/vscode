@@ -4,7 +4,7 @@
 		"If you want to provide a fix or improvement, please create a pull request against the original repository.",
 		"Once accepted there, we are happy to receive an update request."
 	],
-	"version": "https://github.com/fadeevab/make.tmbundle/commit/fd57c0552dbe5e4d0c1e6765daea4b296d9bfc59",
+	"version": "https://github.com/fadeevab/make.tmbundle/commit/e36e02becd20730259b0115d9ca5c419f65023a9",
 	"name": "Makefile",
 	"scopeName": "source.makefile",
 	"patterns": [
@@ -18,13 +18,13 @@
 			"include": "#variable-assignment"
 		},
 		{
-			"include": "#target"
+			"include": "#directives"
 		},
 		{
 			"include": "#recipe"
 		},
 		{
-			"include": "#directives"
+			"include": "#target"
 		}
 	],
 	"repository": {

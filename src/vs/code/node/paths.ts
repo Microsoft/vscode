@@ -33,9 +33,9 @@ function doValidatePaths(args: string[], gotoLineMode?: boolean): string[] {
 	const result = args.map(arg => {
 		let pathCandidate = String(arg);
 
-		let parsedPath: IPathWithLineAndColumn | undefined = undefined;
+		let parsedPath: extpath.IPathWithLineAndColumn | undefined = undefined;
 		if (gotoLineMode) {
-			parsedPath = parseLineAndColumnAware(pathCandidate);
+			parsedPath = extpath.parseLineAndColumnAware(pathCandidate);
 			pathCandidate = parsedPath.path;
 		}
 
@@ -87,42 +87,7 @@ function preparePath(cwd: string, p: string): string {
 	return p;
 }
 
-export interface IPathWithLineAndColumn {
-	path: string;
-	line?: number;
-	column?: number;
-}
-
-export function parseLineAndColumnAware(rawPath: string): IPathWithLineAndColumn {
-	const segments = rawPath.split(':'); // C:\file.txt:<line>:<column>
-
-	let path: string | null = null;
-	let line: number | null = null;
-	let column: number | null = null;
-
-	segments.forEach(segment => {
-		const segmentAsNumber = Number(segment);
-		if (!types.isNumber(segmentAsNumber)) {
-			path = !!path ? [path, segment].join(':') : segment; // a colon can well be part of a path (e.g. C:\...)
-		} else if (line === null) {
-			line = segmentAsNumber;
-		} else if (column === null) {
-			column = segmentAsNumber;
-		}
-	});
-
-	if (!path) {
-		throw new Error('Format for `--goto` should be: `FILE:LINE(:COLUMN)`');
-	}
-
-	return {
-		path: path,
-		line: line !== null ? line : undefined,
-		column: column !== null ? column : line !== null ? 1 : undefined // if we have a line, make sure column is also set
-	};
-}
-
-function toPath(p: IPathWithLineAndColumn): string {
+function toPath(p: extpath.IPathWithLineAndColumn): string {
 	const segments = [p.path];
 
 	if (types.isNumber(p.line)) {

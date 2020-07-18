@@ -353,10 +353,12 @@ class QuickInput extends Disposable implements IQuickInput {
 		this.ui.inputBox.showDecoration(severity);
 		if (severity === Severity.Error) {
 			const styles = this.ui.inputBox.stylesForType(severity);
+			this.ui.message.style.color = styles.foreground ? `${styles.foreground}` : '';
 			this.ui.message.style.backgroundColor = styles.background ? `${styles.background}` : '';
 			this.ui.message.style.border = styles.border ? `1px solid ${styles.border}` : '';
 			this.ui.message.style.paddingBottom = '4px';
 		} else {
+			this.ui.message.style.color = '';
 			this.ui.message.style.backgroundColor = '';
 			this.ui.message.style.border = '';
 			this.ui.message.style.paddingBottom = '';
@@ -719,13 +721,13 @@ class QuickPick<T extends IQuickPickItem> extends QuickInput implements IQuickPi
 
 						break;
 					case KeyCode.Home:
-						if (event.ctrlKey && !event.shiftKey && !event.altKey && !event.metaKey) {
+						if ((event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey) {
 							this.ui.list.focus(QuickInputListFocus.First);
 							dom.EventHelper.stop(event, true);
 						}
 						break;
 					case KeyCode.End:
-						if (event.ctrlKey && !event.shiftKey && !event.altKey && !event.metaKey) {
+						if ((event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey) {
 							this.ui.list.focus(QuickInputListFocus.Last);
 							dom.EventHelper.stop(event, true);
 						}
@@ -1228,10 +1230,10 @@ export class QuickInputController extends Disposable {
 			this.previousFocusElement = e.relatedTarget instanceof HTMLElement ? e.relatedTarget : undefined;
 		}, true));
 		this._register(focusTracker.onDidBlur(() => {
-			this.previousFocusElement = undefined;
 			if (!this.getUI().ignoreFocusOut && !this.options.ignoreFocusOut()) {
-				this.hide(true);
+				this.hide();
 			}
+			this.previousFocusElement = undefined;
 		}));
 		this._register(dom.addDisposableListener(container, dom.EventType.FOCUS, (e: FocusEvent) => {
 			inputBox.setFocus();
@@ -1572,13 +1574,14 @@ export class QuickInputController extends Disposable {
 		}
 	}
 
-	hide(focusLost?: boolean) {
+	hide() {
 		const controller = this.controller;
 		if (controller) {
+			const focusChanged = !this.ui?.container.contains(document.activeElement);
 			this.controller = null;
 			this.onHideEmitter.fire();
 			this.getUI().container.style.display = 'none';
-			if (!focusLost) {
+			if (!focusChanged) {
 				if (this.previousFocusElement && this.previousFocusElement.offsetParent) {
 					this.previousFocusElement.focus();
 					this.previousFocusElement = undefined;

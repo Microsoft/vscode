@@ -5,7 +5,7 @@
 
 import { IRemoteAgentConnection, IRemoteAgentService } from 'vs/workbench/services/remote/common/remoteAgentService';
 import { IRemoteAuthorityResolverService } from 'vs/platform/remote/common/remoteAuthorityResolver';
-import product from 'vs/platform/product/common/product';
+import { IProductService } from 'vs/platform/product/common/productService';
 import { nodeSocketFactory } from 'vs/platform/remote/node/nodeSocketFactory';
 import { AbstractRemoteAgentService, RemoteAgentConnection } from 'vs/workbench/services/remote/common/abstractRemoteAgentService';
 import { ISignService } from 'vs/platform/sign/common/sign';
@@ -23,12 +23,13 @@ export class RemoteAgentService extends AbstractRemoteAgentService implements IR
 		@IWorkbenchEnvironmentService environmentService: IWorkbenchEnvironmentService,
 		@IRemoteAuthorityResolverService remoteAuthorityResolverService: IRemoteAuthorityResolverService,
 		@ISignService signService: ISignService,
-		@ILogService logService: ILogService
+		@ILogService logService: ILogService,
+		@IProductService productService: IProductService
 	) {
-		super(environmentService);
+		super(environmentService, remoteAuthorityResolverService);
 		this.socketFactory = nodeSocketFactory;
 		if (environmentService.configuration.remoteAuthority) {
-			this._connection = this._register(new RemoteAgentConnection(environmentService.configuration.remoteAuthority, product.commit, nodeSocketFactory, remoteAuthorityResolverService, signService, logService));
+			this._connection = this._register(new RemoteAgentConnection(environmentService.configuration.remoteAuthority, productService.commit, nodeSocketFactory, remoteAuthorityResolverService, signService, logService));
 		}
 	}
 

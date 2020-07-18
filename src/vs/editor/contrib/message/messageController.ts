@@ -29,8 +29,6 @@ export class MessageController extends Disposable implements IEditorContribution
 		return editor.getContribution<MessageController>(MessageController.ID);
 	}
 
-	private readonly closeTimeout = 3000; // close after 3s
-
 	private readonly _editor: ICodeEditor;
 	private readonly _visible: IContextKey<boolean>;
 	private readonly _messageWidget = this._register(new MutableDisposable<MessageWidget>());
@@ -70,7 +68,8 @@ export class MessageController extends Disposable implements IEditorContribution
 		this._messageListeners.add(this._editor.onDidDispose(() => this.closeMessage()));
 		this._messageListeners.add(this._editor.onDidChangeModel(() => this.closeMessage()));
 
-		this._messageListeners.add(new TimeoutTimer(() => this.closeMessage(), this.closeTimeout));
+		// 3sec
+		this._messageListeners.add(new TimeoutTimer(() => this.closeMessage(), 3000));
 
 		// close on mouse move
 		let bounds: Range;

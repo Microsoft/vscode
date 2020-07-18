@@ -19,10 +19,11 @@ import { AbstractWorkspaceEditingService } from 'vs/workbench/services/workspace
 import { IWorkspaceEditingService } from 'vs/workbench/services/workspaces/common/workspaceEditing';
 import { registerSingleton } from 'vs/platform/instantiation/common/extensions';
 import { URI } from 'vs/base/common/uri';
+import { IUriIdentityService } from 'vs/workbench/services/uriIdentity/common/uriIdentity';
 
 export class BrowserWorkspaceEditingService extends AbstractWorkspaceEditingService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	constructor(
 		@IJSONEditingService jsonEditingService: IJSONEditingService,
@@ -36,9 +37,10 @@ export class BrowserWorkspaceEditingService extends AbstractWorkspaceEditingServ
 		@IWorkbenchEnvironmentService environmentService: IWorkbenchEnvironmentService,
 		@IFileDialogService fileDialogService: IFileDialogService,
 		@IDialogService dialogService: IDialogService,
-		@IHostService hostService: IHostService
+		@IHostService hostService: IHostService,
+		@IUriIdentityService uriIdentityService: IUriIdentityService
 	) {
-		super(jsonEditingService, contextService, configurationService, notificationService, commandService, fileService, textFileService, workspacesService, environmentService, fileDialogService, dialogService, hostService);
+		super(jsonEditingService, contextService, configurationService, notificationService, commandService, fileService, textFileService, workspacesService, environmentService, fileDialogService, dialogService, hostService, uriIdentityService);
 	}
 
 	async enterWorkspace(path: URI): Promise<void> {

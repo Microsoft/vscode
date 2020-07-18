@@ -69,6 +69,38 @@ suite('Replace Pattern test', () => {
 		testParse('hello$\'', [ReplacePiece.staticValue('hello$\'')]);
 	});
 
+	test('parse replace string with case modifiers', () => {
+		let testParse = (input: string, expectedPieces: ReplacePiece[]) => {
+			let actual = parseReplaceString(input);
+			let expected = new ReplacePattern(expectedPieces);
+			assert.deepEqual(actual, expected, 'Parsing ' + input);
+		};
+		function assertReplace(target: string, search: RegExp, replaceString: string, expected: string): void {
+			let replacePattern = parseReplaceString(replaceString);
+			let m = search.exec(target);
+			let actual = replacePattern.buildReplaceString(m);
+
+			assert.equal(actual, expected, `${target}.replace(${search}, ${replaceString}) === ${expected}`);
+		}
+
+		// \U, \u => uppercase  \L, \l => lowercase  \E => cancel
+
+		testParse('hello\\U$1', [ReplacePiece.staticValue('hello'), ReplacePiece.caseOps(1, ['U'])]);
+		assertReplace('func privateFunc(', /func (\w+)\(/, 'func \\U$1(', 'func PRIVATEFUNC(');
+
+		testParse('hello\\u$1', [ReplacePiece.staticValue('hello'), ReplacePiece.caseOps(1, ['u'])]);
+		assertReplace('func privateFunc(', /func (\w+)\(/, 'func \\u$1(', 'func PrivateFunc(');
+
+		testParse('hello\\L$1', [ReplacePiece.staticValue('hello'), ReplacePiece.caseOps(1, ['L'])]);
+		assertReplace('func privateFunc(', /func (\w+)\(/, 'func \\L$1(', 'func privatefunc(');
+
+		testParse('hello\\l$1', [ReplacePiece.staticValue('hello'), ReplacePiece.caseOps(1, ['l'])]);
+		assertReplace('func PrivateFunc(', /func (\w+)\(/, 'func \\l$1(', 'func privateFunc(');
+
+		testParse('hello$1\\u\\u\\U$4goodbye', [ReplacePiece.staticValue('hello'), ReplacePiece.matchIndex(1), ReplacePiece.caseOps(4, ['u', 'u', 'U']), ReplacePiece.staticValue('goodbye')]);
+		assertReplace('hellogooDbye', /hello(\w+)/, 'hello\\u\\u\\l\\l\\U$1', 'helloGOodBYE');
+	});
+
 	test('replace has JavaScript semantics', () => {
 		let testJSReplaceSemantics = (target: string, search: RegExp, replaceString: string, expected: string) => {
 			let replacePattern = parseReplaceString(replaceString);

@@ -48,7 +48,7 @@ export class EditorsObserver extends Disposable {
 	}
 
 	get editors(): IEditorIdentifier[] {
-		return this.mostRecentEditorsMap.values();
+		return [...this.mostRecentEditorsMap.values()];
 	}
 
 	hasEditor(resource: URI): boolean {
@@ -185,7 +185,7 @@ export class EditorsObserver extends Disposable {
 	}
 
 	private updateEditorResourcesMap(editor: IEditorInput, add: boolean): void {
-		const resource = toResource(editor, { supportSideBySide: SideBySideEditor.MASTER });
+		const resource = toResource(editor, { supportSideBySide: SideBySideEditor.PRIMARY });
 		if (!resource) {
 			return; // require a resource
 		}
@@ -283,7 +283,7 @@ export class EditorsObserver extends Disposable {
 
 		// Across all editor groups
 		else {
-			await this.doEnsureOpenedEditorsLimit(limit, this.mostRecentEditorsMap.values(), exclude);
+			await this.doEnsureOpenedEditorsLimit(limit, [...this.mostRecentEditorsMap.values()], exclude);
 		}
 	}
 
@@ -346,7 +346,7 @@ export class EditorsObserver extends Disposable {
 	private serialize(): ISerializedEditorsList {
 		const registry = Registry.as<IEditorInputFactoryRegistry>(Extensions.EditorInputFactories);
 
-		const entries = this.mostRecentEditorsMap.values();
+		const entries = [...this.mostRecentEditorsMap.values()];
 		const mapGroupToSerializableEditorsOfGroup = new Map<IEditorGroup, IEditorInput[]>();
 
 		return {

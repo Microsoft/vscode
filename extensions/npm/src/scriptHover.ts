@@ -32,6 +32,9 @@ export class NpmScriptHoverProvider implements HoverProvider {
 	constructor(context: ExtensionContext) {
 		context.subscriptions.push(commands.registerCommand('npm.runScriptFromHover', this.runScriptFromHover, this));
 		context.subscriptions.push(commands.registerCommand('npm.debugScriptFromHover', this.debugScriptFromHover, this));
+		context.subscriptions.push(workspace.onDidChangeTextDocument((e) => {
+			invalidateHoverScriptsCache(e.document);
+		}));
 	}
 
 	public provideHover(document: TextDocument, position: Position, _token: CancellationToken): ProviderResult<Hover> {

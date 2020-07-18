@@ -134,6 +134,18 @@
 		"addLabel": "~needs more info"
 	},
 	{
+		"type": "comment",
+		"name": "closedWith",
+		"allowUsers": [
+			"cleidigh",
+			"usernamehw",
+			"gjsjohnmurray",
+			"IllusionMH"
+		],
+		"action": "close",
+		"addLabel": "unreleased"
+	},
+	{
 		"type": "label",
 		"name": "~needs more info",
 		"action": "updateLabels",
@@ -211,6 +223,19 @@
 	},
 	{
 		"type": "comment",
+		"name": "extCpp",
+		"allowUsers": [
+			"cleidigh",
+			"usernamehw",
+			"gjsjohnmurray",
+			"IllusionMH"
+		],
+		"action": "close",
+		"addLabel": "*caused-by-extension",
+		"comment": "It looks like this is caused by the C++ extension. Please file it with the repository [here](https://github.com/Microsoft/vscode-cpptools). Make sure to check their issue reporting template and provide them relevant information such as the extension version you're using. See also our [issue reporting](https://aka.ms/vscodeissuereporting) guidelines for more information.\n\nHappy Coding!"
+	},
+	{
+		"type": "comment",
 		"name": "extTS",
 		"allowUsers": [
 			"cleidigh",
@@ -259,7 +284,7 @@
 		],
 		"action": "close",
 		"addLabel": "*caused-by-extension",
-		"comment": "It looks like this is caused by the Go extension. Please file it with the repository [here](https://github.com/microsoft/vscode-go). Make sure to check their [contributing guidelines](https://github.com/microsoft/vscode-go/blob/master/CONTRIBUTING.md) and provide relevant information such as the extension version you're using. See also our [issue reporting](https://aka.ms/vscodeissuereporting) guidelines for more information.\n\nHappy Coding!"
+		"comment": "It looks like this is caused by the Go extension. Please file it with the repository [here](https://github.com/golang/vscode-go). Make sure to check their issue reporting template and provide them relevant information such as the extension version you're using. See also our [issue reporting](https://aka.ms/vscodeissuereporting) guidelines for more information.\n\nHappy Coding!"
 	},
 	{
 		"type": "comment",
@@ -325,6 +350,18 @@
 		"action": "close",
 		"addLabel": "*caused-by-extension",
 		"comment": "It looks like this is caused by the Java Debugger extension. Please file it with the repository [here](https://github.com/Microsoft/vscode-java-debug). Make sure to check their issue reporting template and provide them relevant information such as the extension version you're using. See also our [issue reporting](https://aka.ms/vscodeissuereporting) guidelines for more information.\n\nHappy Coding!"
+	},
+	{
+		"type": "comment",
+		"name": "gifPlease",
+		"allowUsers": [
+			"cleidigh",
+			"usernamehw",
+			"gjsjohnmurray",
+			"IllusionMH"
+		],
+		"action": "comment",
+		"comment": "Thanks for reporting this issue! Unfortunately, it's hard for us to understand what issue you're seeing. Please help us out by providing a gif showing exactly what isn't working as expected. You may find https://gifcap.dev helpful as a browser-based gif recording tool.\n\nHappy coding!"
 	},
 	{
 		"type": "comment",

@@ -22,6 +22,7 @@ import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 import { registerSingleton } from 'vs/platform/instantiation/common/extensions';
 import { Emitter, Event } from 'vs/base/common/event';
 import { INativeWorkbenchEnvironmentService } from 'vs/workbench/services/environment/electron-browser/environmentService';
+import { IElectronService } from 'vs/platform/electron/electron-sandbox/electron';
 
 class OutputChannelBackedByFile extends AbstractFileOutputChannelModel implements IOutputChannelModel {
 
@@ -199,12 +200,13 @@ class DelegatedOutputChannelModel extends Disposable implements IOutputChannelMo
 
 export class OutputChannelModelService extends AsbtractOutputChannelModelService implements IOutputChannelModelService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	constructor(
 		@IInstantiationService instantiationService: IInstantiationService,
 		@IWorkbenchEnvironmentService private readonly environmentService: INativeWorkbenchEnvironmentService,
-		@IFileService private readonly fileService: IFileService
+		@IFileService private readonly fileService: IFileService,
+		@IElectronService private readonly electronService: IElectronService
 	) {
 		super(instantiationService);
 	}
@@ -217,7 +219,7 @@ export class OutputChannelModelService extends AsbtractOutputChannelModelService
 	private _outputDir: Promise<URI> | null = null;
 	private get outputDir(): Promise<URI> {
 		if (!this._outputDir) {
-			const outputDir = URI.file(join(this.environmentService.logsPath, `output_${this.environmentService.configuration.windowId}_${toLocalISOString(new Date()).replace(/-|:|\.\d+Z$/g, '')}`));
+			const outputDir = URI.file(join(this.environmentService.logsPath, `output_${this.electronService.windowId}_${toLocalISOString(new Date()).replace(/-|:|\.\d+Z$/g, '')}`));
 			this._outputDir = this.fileService.createFolder(outputDir).then(() => outputDir);
 		}
 		return this._outputDir;

@@ -12,29 +12,6 @@
 	overflow: visible;
 }
 
-.monaco-workbench .terminal-hover-widget {
-	position: fixed;
-	font-size: 14px;
-	line-height: 19px;
-	animation: fadein 100ms linear;
-	/* Must be higher than sash's z-index and terminal canvases */
-	z-index: 40;
-	overflow: hidden;
-}
-
-.monaco-workbench .terminal-hover-widget a {
-	color: #3794ff;
-}
-
-.monaco-workbench .terminal-hover-widget.right-aligned .hover-row.status-bar .actions {
-	flex-direction: row-reverse;
-}
-
-.monaco-workbench .terminal-hover-widget.right-aligned .hover-row.status-bar .actions .action-container {
-	margin-right: 0;
-	margin-left: 16px;
-}
-
 .monaco-workbench .terminal-overlay-widget {
 	position: absolute;
 	left: 0;
@@ -58,13 +35,14 @@
 	opacity: 0.5;
 }
 
+.monaco-workbench .terminal-env-var-info:hover,
+.monaco-workbench .terminal-env-var-info.requires-action {
+	opacity: 1;
+}
+
 .monaco-workbench .pane-body.integrated-terminal .monaco-split-view2.horizontal .split-view-view:last-child .terminal-env-var-info {
 	/* Adjust for reduced margin in splits */
 	right: -8px;
-}
-
-.monaco-workbench .terminal-env-var-info:hover {
-	opacity: 1;
 }
 
 .monaco-workbench .terminal-env-var-info.codicon {

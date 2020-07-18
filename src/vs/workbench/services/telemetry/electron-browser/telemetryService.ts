@@ -21,9 +21,10 @@ import { INativeWorkbenchEnvironmentService } from 'vs/workbench/services/enviro
 
 export class TelemetryService extends Disposable implements ITelemetryService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private impl: ITelemetryService;
+	public readonly sendErrorTelemetry: boolean;
 
 	constructor(
 		@IWorkbenchEnvironmentService environmentService: INativeWorkbenchEnvironmentService,
@@ -48,6 +49,8 @@ export class TelemetryService extends Disposable implements ITelemetryService {
 		} else {
 			this.impl = NullTelemetryService;
 		}
+
+		this.sendErrorTelemetry = this.impl.sendErrorTelemetry;
 	}
 
 	setEnabled(value: boolean): void {

@@ -39,7 +39,7 @@
 					],
 					"default": null,
 					"description": "%configuration.validate.executablePath%",
-					"scope": "machine"
+					"scope": "machine-overridable"
 				},
 				"php.validate.run": {
 					"type": "string",

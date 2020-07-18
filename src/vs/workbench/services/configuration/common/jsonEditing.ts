@@ -5,6 +5,7 @@
 
 import { URI } from 'vs/base/common/uri';
 import { createDecorator } from 'vs/platform/instantiation/common/instantiation';
+import { JSONPath } from 'vs/base/common/json';
 
 export const IJSONEditingService = createDecorator<IJSONEditingService>('jsonEditingService');
 
@@ -28,13 +29,13 @@ export class JSONEditingError extends Error {
 }
 
 export interface IJSONValue {
-	key: string;
+	path: JSONPath;
 	value: any;
 }
 
 export interface IJSONEditingService {
 
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	write(resource: URI, values: IJSONValue[], save: boolean): Promise<void>;
 }

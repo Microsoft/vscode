@@ -1,0 +1,55 @@
+[
+  {
+    "kind": 1,
+    "language": "markdown",
+    "value": "### Bug Verification Queries\n\nBefore shipping we want to verify _all_ bugs. That means when a bug is fixed we check that the fix actually works. It's always best to start with bugs that you have filed and the proceed with bugs that have been filed from users outside the development team. ",
+    "editable": true
+  },
+  {
+    "kind": 1,
+    "language": "markdown",
+    "value": "#### Config: update list of `repos` and the `milestone`",
+    "editable": true
+  },
+  {
+    "kind": 2,
+    "language": "github-issues",
+    "value": "$repos=repo:microsoft/vscode repo:microsoft/vscode-internalbacklog repo:microsoft/vscode-remote-release repo:microsoft/vscode-js-debug repo:microsoft/vscode-pull-request-github repo:microsoft/vscode-github-issue-notebooks \n$milestone=milestone:\"June 2020\"",
+    "editable": true
+  },
+  {
+    "kind": 1,
+    "language": "markdown",
+    "value": "### Bugs You Filed",
+    "editable": true
+  },
+  {
+    "kind": 2,
+    "language": "github-issues",
+    "value": "$repos $milestone is:closed -assignee:@me label:bug -label:verified -label:*duplicate author:@me",
+    "editable": false
+  },
+  {
+    "kind": 1,
+    "language": "markdown",
+    "value": "### Bugs From Outside",
+    "editable": true
+  },
+  {
+    "kind": 2,
+    "language": "github-issues",
+    "value": "$repos $milestone is:closed  -assignee:@me label:bug -label:verified -label:*duplicate -author:@me -assignee:@me label:bug -label:verified -author:@me -author:aeschli -author:alexdima -author:alexr00 -author:bpasero -author:chrisdias -author:chrmarti -author:connor4312 -author:dbaeumer -author:deepak1556 -author:eamodio -author:egamma -author:gregvanl  -author:isidorn -author:JacksonKearl -author:joaomoreno -author:jrieken -author:lramos15 -author:lszomoru -author:misolori -author:mjbvz -author:rebornix -author:RMacfarlane -author:roblourens -author:sana-ajani -author:sandy081 -author:sbatten -author:Tyriar -author:weinand",
+    "editable": false
+  },
+  {
+    "kind": 1,
+    "language": "markdown",
+    "value": "### All"
+  },
+  {
+    "kind": 2,
+    "language": "github-issues",
+    "value": "$repos $milestone is:closed -assignee:@me label:bug -label:verified -label:*duplicate",
+    "editable": false
+  }
+]

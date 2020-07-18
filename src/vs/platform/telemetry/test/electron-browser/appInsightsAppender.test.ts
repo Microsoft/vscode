@@ -28,7 +28,7 @@ class AppInsightsMock extends TelemetryClient {
 }
 
 class TestableLogService extends AbstractLogService implements ILogService {
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	public logs: string[] = [];
 

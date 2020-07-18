@@ -6,7 +6,7 @@
 import * as assert from 'assert';
 import { IRange } from 'vs/editor/common/core/range';
 import { Selection, ISelection } from 'vs/editor/common/core/selection';
-import { ICommand, Handler, IEditOperationBuilder } from 'vs/editor/common/editorCommon';
+import { ICommand, IEditOperationBuilder } from 'vs/editor/common/editorCommon';
 import { IIdentifiedSingleEditOperation, ITextModel } from 'vs/editor/common/model';
 import { createTextModel } from 'vs/editor/test/common/editorTestUtils';
 import { LanguageIdentifier } from 'vs/editor/common/modes';
@@ -33,7 +33,7 @@ export function testCommand(
 
 		cursor.setSelections('tests', [selection]);
 
-		cursor.trigger('tests', Handler.ExecuteCommand, commandFactory(cursor.getSelection()));
+		cursor.executeCommand(commandFactory(cursor.getSelection()), 'tests');
 
 		assert.deepEqual(model.getLinesContent(), expectedLines);
 

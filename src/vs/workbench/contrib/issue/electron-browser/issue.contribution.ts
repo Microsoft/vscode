@@ -13,7 +13,8 @@ import { registerSingleton } from 'vs/platform/instantiation/common/extensions';
 import { IWorkbenchIssueService } from 'vs/workbench/contrib/issue/electron-browser/issue';
 import { WorkbenchIssueService } from 'vs/workbench/contrib/issue/electron-browser/issueService';
 import { CommandsRegistry } from 'vs/platform/commands/common/commands';
-import { IIssueService, IssueReporterData } from 'vs/platform/issue/node/issue';
+import { IssueReporterData } from 'vs/platform/issue/common/issue';
+import { IIssueService } from 'vs/platform/issue/electron-sandbox/issue';
 import { OpenIssueReporterArgs, OpenIssueReporterActionId } from 'vs/workbench/contrib/issue/common/commands';
 
 const helpCategory = { value: nls.localize('help', "Help"), original: 'Help' };
@@ -41,7 +42,7 @@ if (!!product.reportIssueUrl) {
 	MenuRegistry.appendMenuItem(MenuId.CommandPalette, { command });
 }
 
-const developerCategory = nls.localize('developer', "Developer");
+const developerCategory = nls.localize({ key: 'developer', comment: ['A developer on Code itself or someone diagnosing issues in Code'] }, "Developer");
 workbenchActionsRegistry.registerWorkbenchAction(SyncActionDescriptor.from(OpenProcessExplorer), 'Developer: Open Process Explorer', developerCategory);
 
 registerSingleton(IWorkbenchIssueService, WorkbenchIssueService, true);

@@ -30,10 +30,6 @@ steps:
   displayName: Download Electron
 
 - script: |
-    yarn gulp hygiene
-  displayName: Run Hygiene Checks
-
-- script: |
     yarn monaco-compile-check
   displayName: Run Monaco Editor Checks
 
@@ -66,7 +62,8 @@ steps:
     artifactName: crash-dump-macos
     targetPath: .build/crashes
   displayName: 'Publish Crash Reports'
-  condition: succeededOrFailed()
+  continueOnError: true
+  condition: failed()
 
 - task: PublishTestResults@2
   displayName: Publish Tests Results

@@ -12,6 +12,7 @@ import { IUndoRedoService, IResourceUndoRedoElement, UndoRedoElementType, IWorks
 import { URI } from 'vs/base/common/uri';
 import { TextChange, compressConsecutiveTextChanges } from 'vs/editor/common/model/textChange';
 import * as buffer from 'vs/base/common/buffer';
+import { IDisposable } from 'vs/base/common/lifecycle';
 
 function uriGetComparisonKey(resource: URI): string {
 	return resource.toString();
@@ -138,6 +139,10 @@ class SingleModelEditStackData {
 	}
 }
 
+export interface IUndoRedoDelegate {
+	prepareUndoRedo(element: MultiModelEditStackElement): Promise<IDisposable> | IDisposable | void;
+}
+
 export class SingleModelEditStackElement implements IResourceUndoRedoElement {
 
 	public model: ITextModel | URI;
@@ -161,6 +166,16 @@ export class SingleModelEditStackElement implements IResourceUndoRedoElement {
 	constructor(model: ITextModel, beforeCursorState: Selection[] | null) {
 		this.model = model;
 		this._data = SingleModelEditStackData.create(model, beforeCursorState);
+	}
+
+	public toString(): string {
+		const data = (this._data instanceof SingleModelEditStackData ? this._data : SingleModelEditStackData.deserialize(this._data));
+		return data.changes.map(change => change.toString()).join(', ');
+	}
+
+	public matchesResource(resource: URI): boolean {
+		const uri = (URI.isUri(this.model) ? this.model : this.model.uri);
+		return (uri.toString() === resource.toString());
 	}
 
 	public setModel(model: ITextModel | URI): void {
@@ -224,6 +239,8 @@ export class MultiModelEditStackElement implements IWorkspaceUndoRedoElement {
 	private readonly _editStackElementsArr: SingleModelEditStackElement[];
 	private readonly _editStackElementsMap: Map<string, SingleModelEditStackElement>;
 
+	private _delegate: IUndoRedoDelegate | null;
+
 	public get resources(): readonly URI[] {
 		return this._editStackElementsArr.map(editStackElement => editStackElement.resource);
 	}
@@ -240,6 +257,32 @@ export class MultiModelEditStackElement implements IWorkspaceUndoRedoElement {
 			const key = uriGetComparisonKey(editStackElement.resource);
 			this._editStackElementsMap.set(key, editStackElement);
 		}
+		this._delegate = null;
+	}
+
+	public setDelegate(delegate: IUndoRedoDelegate): void {
+		this._delegate = delegate;
+	}
+
+	public prepareUndoRedo(): Promise<IDisposable> | IDisposable | void {
+		if (this._delegate) {
+			return this._delegate.prepareUndoRedo(this);
+		}
+	}
+
+	public getMissingModels(): URI[] {
+		const result: URI[] = [];
+		for (const editStackElement of this._editStackElementsArr) {
+			if (URI.isUri(editStackElement.model)) {
+				result.push(editStackElement.model);
+			}
+		}
+		return result;
+	}
+
+	public matchesResource(resource: URI): boolean {
+		const key = uriGetComparisonKey(resource);
+		return (this._editStackElementsMap.has(key));
 	}
 
 	public setModel(model: ITextModel | URI): void {
@@ -310,7 +353,7 @@ function getModelEOL(model: ITextModel): EndOfLineSequence {
 	}
 }
 
-function isKnownStackElement(element: IResourceUndoRedoElement | IWorkspaceUndoRedoElement | null): element is EditStackElement {
+export function isEditStackElement(element: IResourceUndoRedoElement | IWorkspaceUndoRedoElement | null): element is EditStackElement {
 	if (!element) {
 		return false;
 	}
@@ -329,7 +372,7 @@ export class EditStack {
 
 	public pushStackElement(): void {
 		const lastElement = this._undoRedoService.getLastElement(this._model.uri);
-		if (isKnownStackElement(lastElement)) {
+		if (isEditStackElement(lastElement)) {
 			lastElement.close();
 		}
 	}
@@ -340,7 +383,7 @@ export class EditStack {
 
 	private _getOrCreateEditStackElement(beforeCursorState: Selection[] | null): EditStackElement {
 		const lastElement = this._undoRedoService.getLastElement(this._model.uri);
-		if (isKnownStackElement(lastElement) && lastElement.canAppend(this._model)) {
+		if (isEditStackElement(lastElement) && lastElement.canAppend(this._model)) {
 			return lastElement;
 		}
 		const newElement = new SingleModelEditStackElement(this._model, beforeCursorState);

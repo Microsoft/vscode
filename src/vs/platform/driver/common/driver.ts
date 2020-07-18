@@ -19,7 +19,7 @@ export interface IElement {
 }
 
 export interface IDriver {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	getWindowIds(): Promise<number[]>;
 	capturePage(windowId: number): Promise<string>;

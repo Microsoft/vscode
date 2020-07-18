@@ -1,0 +1,27 @@
+# cleanup rules for web node modules, .gitignore style
+
+**/*.txt
+**/*.json
+**/*.md
+**/*.d.ts
+**/*.js.map
+**/LICENSE
+**/CONTRIBUTORS
+
+jschardet/index.js
+jschardet/src/**
+jschardet/dist/jschardet.js
+
+vscode-textmate/webpack.config.js
+
+xterm/src/**
+
+xterm-addon-search/src/**
+xterm-addon-search/out/**
+xterm-addon-search/fixtures/**
+
+xterm-addon-unicode11/src/**
+xterm-addon-unicode11/out/**
+
+xterm-addon-webgl/src/**
+xterm-addon-webgl/out/**

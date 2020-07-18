@@ -18,7 +18,13 @@ const settings = getSettings();
 
 const vscode = acquireVsCodeApi();
 
-const state = { ...vscode.getState(), ...getData<any>('data-state') };
+const originalState = vscode.getState();
+
+const state = {
+	...(typeof originalState === 'object' ? originalState : {}),
+	...getData<any>('data-state')
+};
+
 // Make sure to sync VS Code state here
 vscode.setState(state);
 

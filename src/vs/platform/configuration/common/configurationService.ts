@@ -15,7 +15,7 @@ import { RunOnceScheduler } from 'vs/base/common/async';
 
 export class ConfigurationService extends Disposable implements IConfigurationService, IDisposable {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private configuration: Configuration;
 	private userConfiguration: UserSettings;

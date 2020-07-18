@@ -93,15 +93,15 @@ export class Snippet {
 	}
 
 	get codeSnippet(): string {
-		return this._bodyInsights.getValue().codeSnippet;
+		return this._bodyInsights.value.codeSnippet;
 	}
 
 	get isBogous(): boolean {
-		return this._bodyInsights.getValue().isBogous;
+		return this._bodyInsights.value.isBogous;
 	}
 
 	get needsClipboard(): boolean {
-		return this._bodyInsights.getValue().needsClipboard;
+		return this._bodyInsights.value.needsClipboard;
 	}
 
 	static compare(a: Snippet, b: Snippet): number {

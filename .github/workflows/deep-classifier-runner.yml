@@ -1,0 +1,50 @@
+name: "Deep Classifier: Runner"
+on:
+  schedule:
+    - cron: 0/30 * * * *
+  repository_dispatch:
+    types: [trigger-deep-classifier-runner]
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Actions
+        uses: actions/checkout@v2
+        with:
+          repository: 'microsoft/vscode-github-triage-actions'
+          ref: v31
+          path: ./actions
+      - name: Install Actions
+        run: npm install --production --prefix ./actions
+      - name: Install Additional Dependencies
+        # Pulls in a bunch of other packages that arent needed for the rest of the actions
+        run: npm install @azure/storage-blob@12
+      - name: "Run Classifier: Scraper"
+        uses: ./actions/classifier-deep/apply/fetch-sources
+        with:
+          # slightly overlapping to protect against issues slipping through the cracks if a run is delayed
+          from: 40
+          until: 5
+          configPath: classifier
+          blobContainerName: vscode-issue-classifier
+          blobStorageKey: ${{secrets.AZURE_BLOB_STORAGE_CONNECTION_STRING}}
+          token: ${{secrets.VSCODE_ISSUE_TRIAGE_BOT_PAT}}
+          appInsightsKey: ${{secrets.TRIAGE_ACTIONS_APP_INSIGHTS}}
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install --upgrade numpy scipy scikit-learn joblib nltk simpletransformers torch torchvision
+      - name: "Run Classifier: Generator"
+        run: python ./actions/classifier-deep/apply/generate-labels/main.py
+      - name: "Run Classifier: Labeler"
+        uses: ./actions/classifier-deep/apply/apply-labels
+        with:
+          configPath: classifier
+          allowLabels: "needs more info|new release"
+          appInsightsKey: ${{secrets.TRIAGE_ACTIONS_APP_INSIGHTS}}
+          token: ${{secrets.VSCODE_ISSUE_TRIAGE_BOT_PAT}}

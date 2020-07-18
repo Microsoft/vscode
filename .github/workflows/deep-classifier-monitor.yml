@@ -1,0 +1,23 @@
+name: "Deep Classifier: Monitor"
+on:
+  issues:
+    types: [unassigned]
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Actions
+        uses: actions/checkout@v2
+        with:
+          repository: 'microsoft/vscode-github-triage-actions'
+          ref: v31
+          path: ./actions
+      - name: Install Actions
+        run: npm install --production --prefix ./actions
+      - name: "Run Classifier: Monitor"
+        uses: ./actions/classifier-deep/monitor
+        with:
+          botName: vscode-triage-bot
+          token: ${{secrets.VSCODE_ISSUE_TRIAGE_BOT_PAT}}
+          appInsightsKey: ${{secrets.TRIAGE_ACTIONS_APP_INSIGHTS}}

@@ -380,7 +380,7 @@ class BranchNode implements ISplitView<ILayoutContext>, IDisposable {
 			throw new Error('Invalid index');
 		}
 
-		this.splitview.addView(node, size, index);
+		this.splitview.addView(node, size, index, skipLayout);
 		this._addChild(node, index);
 		this.onDidChildrenChange();
 	}
@@ -791,7 +791,7 @@ function flipNode<T extends Node>(node: T, size: number, orthogonalSize: number)
 				newSize += size - totalSize;
 			}
 
-			result.addChild(flipNode(child, orthogonalSize, newSize), newSize, 0);
+			result.addChild(flipNode(child, orthogonalSize, newSize), newSize, 0, true);
 		}
 
 		return result as T;

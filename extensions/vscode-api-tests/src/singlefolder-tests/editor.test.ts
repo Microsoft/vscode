@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as assert from 'assert';
-import { workspace, window, Position, Range, commands, TextEditor, TextDocument, TextEditorCursorStyle, TextEditorLineNumbersStyle, SnippetString, Selection, Uri } from 'vscode';
+import { workspace, window, Position, Range, commands, TextEditor, TextDocument, TextEditorCursorStyle, TextEditorLineNumbersStyle, SnippetString, Selection, Uri, env } from 'vscode';
 import { createRandomFile, deleteFile, closeAllEditors } from '../utils';
 
 suite('vscode API - editors', () => {
@@ -45,6 +45,32 @@ suite('vscode API - editors', () => {
 				assert.ok(doc.isDirty);
 			});
 		});
+	});
+
+	test('insert snippet with clipboard variables', async function () {
+		const old = await env.clipboard.readText();
+
+		const newValue = 'INTEGRATION-TESTS';
+		await env.clipboard.writeText(newValue);
+
+		const actualValue = await env.clipboard.readText();
+
+		if (actualValue !== newValue) {
+			// clipboard not working?!?
+			this.skip();
+			return;
+		}
+
+		const snippetString = new SnippetString('running: $CLIPBOARD');
+
+		await withRandomFileEditor('', async (editor, doc) => {
+			const inserted = await editor.insertSnippet(snippetString);
+			assert.ok(inserted);
+			assert.equal(doc.getText(), 'running: INTEGRATION-TESTS');
+			assert.ok(doc.isDirty);
+		});
+
+		await env.clipboard.writeText(old);
 	});
 
 	test('insert snippet with replacement, editor selection', () => {

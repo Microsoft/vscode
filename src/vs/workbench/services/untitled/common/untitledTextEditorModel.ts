@@ -40,12 +40,12 @@ export interface IUntitledTextEditorModel extends ITextEditorModel, IModeSupport
 	readonly onDidRevert: Event<void>;
 
 	/**
-	 * Wether this untitled text model has an associated file path.
+	 * Whether this untitled text model has an associated file path.
 	 */
 	readonly hasAssociatedFilePath: boolean;
 
 	/**
-	 * Wether this model has an explicit language mode or not.
+	 * Whether this model has an explicit language mode or not.
 	 */
 	readonly hasModeSetExplicitly: boolean;
 

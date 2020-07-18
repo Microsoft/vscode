@@ -7,13 +7,13 @@
   "engines": {
     "node": "*"
   },
-  "main": "./out/htmlServerMain",
+  "main": "./out/node/htmlServerMain",
   "dependencies": {
-    "vscode-css-languageservice": "^4.1.2",
-    "vscode-html-languageservice": "^3.1.0-next.0",
-    "vscode-languageserver": "^6.1.1",
+    "vscode-css-languageservice": "^4.3.0",
+    "vscode-html-languageservice": "^3.1.0",
+    "vscode-languageserver": "7.0.0-next.3",
     "vscode-nls": "^4.1.2",
-    "vscode-uri": "^2.1.1"
+    "vscode-uri": "^2.1.2"
   },
   "devDependencies": {
     "@types/mocha": "7.0.2",

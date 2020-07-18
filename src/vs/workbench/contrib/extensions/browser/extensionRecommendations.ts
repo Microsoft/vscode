@@ -8,12 +8,13 @@ import { INotificationService, Severity } from 'vs/platform/notification/common/
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { localize } from 'vs/nls';
-import { InstallRecommendedExtensionAction, ShowRecommendedExtensionsAction } from 'vs/workbench/contrib/extensions/browser/extensionsActions';
+import { InstallRecommendedExtensionAction, ShowRecommendedExtensionAction } from 'vs/workbench/contrib/extensions/browser/extensionsActions';
 import { ExtensionRecommendationSource, IExtensionRecommendationReson } from 'vs/workbench/services/extensionManagement/common/extensionManagement';
 import { IExtensionsConfiguration, ConfigurationKey } from 'vs/workbench/contrib/extensions/common/extensions';
 import { IConfigurationService, ConfigurationTarget } from 'vs/platform/configuration/common/configuration';
 import { IStorageService, StorageScope } from 'vs/platform/storage/common/storage';
 import { IStorageKeysSyncRegistryService } from 'vs/platform/userDataSync/common/storageKeys';
+import { IAction } from 'vs/base/common/actions';
 
 type ExtensionRecommendationsNotificationClassification = {
 	userReaction: { classification: 'SystemMetaData', purpose: 'FeatureInsight' };
@@ -56,22 +57,27 @@ export abstract class ExtensionRecommendations extends Disposable {
 		return this._activationPromise;
 	}
 
+	private runAction(action: IAction) {
+		try {
+			action.run();
+		} finally {
+			action.dispose();
+		}
+	}
+
 	protected promptImportantExtensionInstallNotification(extensionId: string, message: string): void {
 		this.notificationService.prompt(Severity.Info, message,
 			[{
 				label: localize('install', 'Install'),
 				run: () => {
 					this.telemetryService.publicLog2<{ userReaction: string, extensionId: string }, ExtensionRecommendationsNotificationClassification>('extensionRecommendations:popup', { userReaction: 'install', extensionId });
-					this.instantiationService.createInstance(InstallRecommendedExtensionAction, extensionId).run();
+					this.runAction(this.instantiationService.createInstance(InstallRecommendedExtensionAction, extensionId));
 				}
 			}, {
-				label: localize('showRecommendations', "Show Recommendations"),
+				label: localize('moreInformation', "More Information"),
 				run: () => {
 					this.telemetryService.publicLog2<{ userReaction: string, extensionId: string }, ExtensionRecommendationsNotificationClassification>('extensionRecommendations:popup', { userReaction: 'show', extensionId });
-
-					const recommendationsAction = this.instantiationService.createInstance(ShowRecommendedExtensionsAction, ShowRecommendedExtensionsAction.ID, localize('showRecommendations', "Show Recommendations"));
-					recommendationsAction.run();
-					recommendationsAction.dispose();
+					this.runAction(this.instantiationService.createInstance(ShowRecommendedExtensionAction, extensionId));
 				}
 			}, {
 				label: choiceNever,

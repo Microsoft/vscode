@@ -13,6 +13,7 @@ import { ExtensionsRegistry, ExtensionMessageCollector } from 'vs/workbench/serv
 
 import * as Tasks from 'vs/workbench/contrib/tasks/common/tasks';
 import { ExtensionIdentifier } from 'vs/platform/extensions/common/extensions';
+import { ContextKeyExpr } from 'vs/platform/contextkey/common/contextkey';
 
 
 const taskDefinitionSchema: IJSONSchema = {
@@ -35,6 +36,10 @@ const taskDefinitionSchema: IJSONSchema = {
 			additionalProperties: {
 				$ref: 'http://json-schema.org/draft-07/schema#'
 			}
+		},
+		when: {
+			type: 'string',
+			markdownDescription: nls.localize('TaskDefinition.when', 'Condition when the task definition is valid. Consider using `shellExecutionSupported`, `processExecutionSupported`, and `customExecutionSupported` as appropriate for this task definition.')
 		}
 	}
 };
@@ -44,6 +49,7 @@ namespace Configuration {
 		type?: string;
 		required?: string[];
 		properties?: IJSONSchemaMap;
+		when?: string;
 	}
 
 	export function from(value: TaskDefinition, extensionId: ExtensionIdentifier, messageCollector: ExtensionMessageCollector): Tasks.TaskDefinition | undefined {
@@ -63,7 +69,12 @@ namespace Configuration {
 				}
 			}
 		}
-		return { extensionId: extensionId.value, taskType, required: required, properties: value.properties ? Objects.deepClone(value.properties) : {} };
+		return {
+			extensionId: extensionId.value,
+			taskType, required: required,
+			properties: value.properties ? Objects.deepClone(value.properties) : {},
+			when: value.when ? ContextKeyExpr.deserialize(value.when) : undefined
+		};
 	}
 }
 

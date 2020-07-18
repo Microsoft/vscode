@@ -4,7 +4,7 @@
 		"If you want to provide a fix or improvement, please create a pull request against the original repository.",
 		"Once accepted there, we are happy to receive an update request."
 	],
-	"version": "https://github.com/Microsoft/TypeScript-TmLanguage/commit/84422d92e164c379ed817ef8e1d6c35b61de233e",
+	"version": "https://github.com/Microsoft/TypeScript-TmLanguage/commit/fa4e0d3a918db0eab8e5c5be952f3bd649968456",
 	"name": "TypeScriptReact",
 	"scopeName": "source.tsx",
 	"patterns": [
@@ -3533,23 +3533,6 @@
 					}
 				},
 				{
-					"match": "(?x)(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(console)(?:\\s*(?:(\\.)|(\\?\\.(?!\\s*[[:digit:]])))\\s*(\n  assert|clear|count|debug|dir|error|group|groupCollapsed|groupEnd|info|log\n  |profile|profileEnd|table|time|timeEnd|timeStamp|trace|warn))?\\b(?!\\$)",
-					"captures": {
-						"1": {
-							"name": "support.class.console.tsx"
-						},
-						"2": {
-							"name": "punctuation.accessor.tsx"
-						},
-						"3": {
-							"name": "punctuation.accessor.optional.tsx"
-						},
-						"4": {
-							"name": "support.function.console.tsx"
-						}
-					}
-				},
-				{
 					"match": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(JSON)(?:\\s*(?:(\\.)|(\\?\\.(?!\\s*[[:digit:]])))\\s*(parse|stringify))?\\b(?!\\$)",
 					"captures": {
 						"1": {
@@ -4039,6 +4022,24 @@
 				}
 			},
 			"patterns": [
+				{
+					"name": "keyword.operator.rest.tsx",
+					"match": "\\.\\.\\."
+				},
+				{
+					"match": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))([_$[:alpha:]][_$[:alnum:]]*)\\s*(\\?)?\\s*(:)",
+					"captures": {
+						"1": {
+							"name": "entity.name.label.tsx"
+						},
+						"2": {
+							"name": "keyword.operator.optional.tsx"
+						},
+						"3": {
+							"name": "punctuation.separator.label.tsx"
+						}
+					}
+				},
 				{
 					"include": "#type"
 				},

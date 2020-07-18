@@ -5,7 +5,7 @@
 
 import { localize } from 'vs/nls';
 import { Event, Emitter } from 'vs/base/common/event';
-import { basename } from 'vs/base/common/resources';
+import { basename, extUri } from 'vs/base/common/resources';
 import { IDisposable, dispose, IReference, DisposableStore } from 'vs/base/common/lifecycle';
 import * as strings from 'vs/base/common/strings';
 import { URI } from 'vs/base/common/uri';
@@ -16,6 +16,8 @@ import { ITextModelService, ITextEditorModel } from 'vs/editor/common/services/r
 import { Position } from 'vs/editor/common/core/position';
 import { IMatch } from 'vs/base/common/filters';
 import { Constants } from 'vs/base/common/uint';
+import { ResourceMap } from 'vs/base/common/map';
+import { onUnexpectedError } from 'vs/base/common/errors';
 
 export class OneReference {
 
@@ -24,13 +26,10 @@ export class OneReference {
 	constructor(
 		readonly isProviderFirst: boolean,
 		readonly parent: FileReferences,
+		readonly uri: URI,
 		private _range: IRange,
 		private _rangeCallback: (ref: OneReference) => void
 	) { }
-
-	get uri(): URI {
-		return this.parent.uri;
-	}
 
 	get range(): IRange {
 		return this._range;
@@ -86,9 +85,7 @@ export class FileReferences implements IDisposable {
 
 	readonly children: OneReference[] = [];
 
-	private _preview?: FilePreview;
-	private _resolved?: boolean;
-	private _loadFailure?: any;
+	private _previews = new ResourceMap<FilePreview>();
 
 	constructor(
 		readonly parent: ReferencesModel,
@@ -96,16 +93,12 @@ export class FileReferences implements IDisposable {
 	) { }
 
 	dispose(): void {
-		dispose(this._preview);
-		this._preview = undefined;
+		dispose(this._previews.values());
+		this._previews.clear();
 	}
 
-	get preview(): FilePreview | undefined {
-		return this._preview;
-	}
-
-	get failure(): any {
-		return this._loadFailure;
+	getPreview(child: OneReference): FilePreview | undefined {
+		return this._previews.get(child.uri);
 	}
 
 	get ariaMessage(): string {
@@ -117,31 +110,22 @@ export class FileReferences implements IDisposable {
 		}
 	}
 
-	resolve(textModelResolverService: ITextModelService): Promise<FileReferences> {
-
-		if (this._resolved) {
-			return Promise.resolve(this);
+	async resolve(textModelResolverService: ITextModelService): Promise<FileReferences> {
+		if (this._previews.size !== 0) {
+			return this;
 		}
-
-		return Promise.resolve(textModelResolverService.createModelReference(this.uri).then(modelReference => {
-			const model = modelReference.object;
-
-			if (!model) {
-				modelReference.dispose();
-				throw new Error();
+		for (let child of this.children) {
+			if (this._previews.has(child.uri)) {
+				continue;
 			}
-
-			this._preview = new FilePreview(modelReference);
-			this._resolved = true;
-			return this;
-
-		}, err => {
-			// something wrong here
-			this.children.length = 0;
-			this._resolved = true;
-			this._loadFailure = err;
-			return this;
-		}));
+			try {
+				const ref = await textModelResolverService.createModelReference(child.uri);
+				this._previews.set(child.uri, new FilePreview(ref));
+			} catch (err) {
+				onUnexpectedError(err);
+			}
+		}
+		return this;
 	}
 }
 
@@ -167,17 +151,20 @@ export class ReferencesModel implements IDisposable {
 
 		let current: FileReferences | undefined;
 		for (let link of links) {
-			if (!current || current.uri.toString() !== link.uri.toString()) {
+			if (!current || !extUri.isEqual(current.uri, link.uri, true)) {
 				// new group
 				current = new FileReferences(this, link.uri);
 				this.groups.push(current);
 			}
 
 			// append, check for equality first!
-			if (current.children.length === 0 || !Range.equalsRange(link.range, current.children[current.children.length - 1].range)) {
+			if (current.children.length === 0 || ReferencesModel._compareReferences(link, current.children[current.children.length - 1]) !== 0) {
 
 				const oneRef = new OneReference(
-					providersFirst === link, current, link.targetSelectionRange || link.range,
+					providersFirst === link,
+					current,
+					link.uri,
+					link.targetSelectionRange || link.range,
 					ref => this._onDidChangeReferenceRange.fire(ref)
 				);
 				this.references.push(oneRef);
@@ -294,6 +281,6 @@ export class ReferencesModel implements IDisposable {
 	}
 
 	private static _compareReferences(a: Location, b: Location): number {
-		return strings.compare(a.uri.toString(), b.uri.toString()) || Range.compareRangesUsingStarts(a.range, b.range);
+		return extUri.compare(a.uri, b.uri) || Range.compareRangesUsingStarts(a.range, b.range);
 	}
 }

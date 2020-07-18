@@ -17,11 +17,3 @@ node build/azure-pipelines/common/createAsset.js \
 	archive-unsigned \
 	"vscode-server-darwin.zip" \
 	../vscode-server-darwin.zip
-
-# publish hockeyapp symbols
-# node build/azure-pipelines/common/symbols.js "$VSCODE_MIXIN_PASSWORD" "$VSCODE_HOCKEYAPP_TOKEN" x64 "$VSCODE_HOCKEYAPP_ID_MACOS"
-# Skip hockey app because build failure.
-# https://github.com/microsoft/vscode/issues/90491
-
-# upload configuration
-yarn gulp upload-vscode-configuration

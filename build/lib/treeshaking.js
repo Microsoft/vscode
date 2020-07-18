@@ -420,7 +420,7 @@ function markNodes(languageService, options) {
                         // (they can be the declaration of a module import)
                         continue;
                     }
-                    if (options.shakeLevel === 2 /* ClassMembers */ && (ts.isClassDeclaration(declaration) || ts.isInterfaceDeclaration(declaration))) {
+                    if (options.shakeLevel === 2 /* ClassMembers */ && (ts.isClassDeclaration(declaration) || ts.isInterfaceDeclaration(declaration)) && !isLocalCodeExtendingOrInheritingFromDefaultLibSymbol(program, checker, declaration)) {
                         enqueue_black(declaration.name);
                         for (let j = 0; j < declaration.members.length; j++) {
                             const member = declaration.members[j];
@@ -614,6 +614,34 @@ function generateResult(languageService, shakeLevel) {
 }
 //#endregion
 //#region Utils
+function isLocalCodeExtendingOrInheritingFromDefaultLibSymbol(program, checker, declaration) {
+    if (!program.isSourceFileDefaultLibrary(declaration.getSourceFile()) && declaration.heritageClauses) {
+        for (const heritageClause of declaration.heritageClauses) {
+            for (const type of heritageClause.types) {
+                const symbol = findSymbolFromHeritageType(checker, type);
+                if (symbol) {
+                    const decl = symbol.valueDeclaration || (symbol.declarations && symbol.declarations[0]);
+                    if (decl && program.isSourceFileDefaultLibrary(decl.getSourceFile())) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+function findSymbolFromHeritageType(checker, type) {
+    if (ts.isExpressionWithTypeArguments(type)) {
+        return findSymbolFromHeritageType(checker, type.expression);
+    }
+    if (ts.isIdentifier(type)) {
+        return getRealNodeSymbol(checker, type)[0];
+    }
+    if (ts.isPropertyAccessExpression(type)) {
+        return findSymbolFromHeritageType(checker, type.name);
+    }
+    return null;
+}
 /**
  * Returns the node's symbol and the `import` node (if the symbol resolved from a different module)
  */

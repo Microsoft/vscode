@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { onUnexpectedError } from 'vs/base/common/errors';
-import { IDisposable } from 'vs/base/common/lifecycle';
+import { IDisposable, dispose } from 'vs/base/common/lifecycle';
 import { URI, UriComponents } from 'vs/base/common/uri';
 import { EditOperation } from 'vs/editor/common/core/editOperation';
 import { Range } from 'vs/editor/common/core/range';
@@ -35,8 +35,8 @@ export class MainThreadDocumentContentProviders implements MainThreadDocumentCon
 	}
 
 	dispose(): void {
-		this._resourceContentProvider.forEach(p => p.dispose());
-		this._pendingUpdate.forEach(source => source.dispose());
+		dispose(this._resourceContentProvider.values());
+		dispose(this._pendingUpdate.values());
 	}
 
 	$registerTextContentProvider(handle: number, scheme: string): void {

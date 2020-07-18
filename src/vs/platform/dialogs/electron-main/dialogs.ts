@@ -11,7 +11,7 @@ import { isMacintosh } from 'vs/base/common/platform';
 import { dirname } from 'vs/base/common/path';
 import { normalizeNFC } from 'vs/base/common/normalization';
 import { exists } from 'vs/base/node/pfs';
-import { INativeOpenDialogOptions } from 'vs/platform/dialogs/node/dialogs';
+import { INativeOpenDialogOptions } from 'vs/platform/dialogs/common/dialogs';
 import { withNullAsUndefined } from 'vs/base/common/types';
 import { localize } from 'vs/nls';
 import { WORKSPACE_FILTER } from 'vs/platform/workspaces/common/workspaces';
@@ -21,7 +21,7 @@ export const IDialogMainService = createDecorator<IDialogMainService>('dialogMai
 
 export interface IDialogMainService {
 
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	pickFileFolder(options: INativeOpenDialogOptions, window?: BrowserWindow): Promise<string[] | undefined>;
 	pickFolder(options: INativeOpenDialogOptions, window?: BrowserWindow): Promise<string[] | undefined>;
@@ -44,7 +44,7 @@ interface IInternalNativeOpenDialogOptions extends INativeOpenDialogOptions {
 
 export class DialogMainService implements IDialogMainService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private static readonly workingDirPickerStorageKey = 'pickerWorkingDir';
 

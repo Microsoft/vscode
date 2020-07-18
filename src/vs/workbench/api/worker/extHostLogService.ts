@@ -11,7 +11,7 @@ import { UriComponents } from 'vs/base/common/uri';
 
 export class ExtHostLogService extends AbstractLogService implements ILogService, ExtHostLogServiceShape {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private readonly _proxy: MainThreadLogShape;
 	private readonly _logFile: UriComponents;

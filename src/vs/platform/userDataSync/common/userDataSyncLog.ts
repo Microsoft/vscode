@@ -9,7 +9,7 @@ import { IEnvironmentService } from 'vs/platform/environment/common/environment'
 
 export class UserDataSyncLogService extends AbstractLogService implements IUserDataSyncLogService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 	private readonly logger: ILogger;
 
 	constructor(

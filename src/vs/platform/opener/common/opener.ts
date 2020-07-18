@@ -53,7 +53,7 @@ export interface IExternalUriResolver {
 
 export interface IOpenerService {
 
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	/**
 	 * Register a participant that can handle the open() call.

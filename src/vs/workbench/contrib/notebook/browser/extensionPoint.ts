@@ -7,17 +7,20 @@ import { IJSONSchema } from 'vs/base/common/jsonSchema';
 import * as nls from 'vs/nls';
 import { ExtensionsRegistry } from 'vs/workbench/services/extensions/common/extensionsRegistry';
 import { NotebookSelector } from 'vs/workbench/contrib/notebook/common/notebookProvider';
+import { NotebookEditorPriority } from 'vs/workbench/contrib/notebook/common/notebookCommon';
 
 namespace NotebookEditorContribution {
 	export const viewType = 'viewType';
 	export const displayName = 'displayName';
 	export const selector = 'selector';
+	export const priority = 'priority';
 }
 
-interface INotebookEditorContribution {
+export interface INotebookEditorContribution {
 	readonly [NotebookEditorContribution.viewType]: string;
 	readonly [NotebookEditorContribution.displayName]: string;
 	readonly [NotebookEditorContribution.selector]?: readonly NotebookSelector[];
+	readonly [NotebookEditorContribution.priority]?: string;
 }
 
 namespace NotebookRendererContribution {
@@ -31,8 +34,6 @@ interface INotebookRendererContribution {
 	readonly [NotebookRendererContribution.displayName]: string;
 	readonly [NotebookRendererContribution.mimeTypes]?: readonly string[];
 }
-
-
 
 const notebookProviderContribution: IJSONSchema = {
 	description: nls.localize('contributes.notebook.provider', 'Contributes notebook document provider.'),
@@ -70,6 +71,19 @@ const notebookProviderContribution: IJSONSchema = {
 						}
 					}
 				}
+			},
+			[NotebookEditorContribution.priority]: {
+				type: 'string',
+				markdownDeprecationMessage: nls.localize('contributes.priority', 'Controls if the custom editor is enabled automatically when the user opens a file. This may be overridden by users using the `workbench.editorAssociations` setting.'),
+				enum: [
+					NotebookEditorPriority.default,
+					NotebookEditorPriority.option,
+				],
+				markdownEnumDescriptions: [
+					nls.localize('contributes.priority.default', 'The editor is automatically used when the user opens a resource, provided that no other default custom editors are registered for that resource.'),
+					nls.localize('contributes.priority.option', 'The editor is not automatically used when the user opens a resource, but a user can switch to the editor using the `Reopen With` command.'),
+				],
+				default: 'default'
 			}
 		}
 	}

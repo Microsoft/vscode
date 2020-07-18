@@ -6,7 +6,7 @@
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import { ITypeScriptServiceClient } from '../typescriptService';
-import { ConfigurationDependentRegistration } from '../utils/dependentRegistration';
+import { conditionalRegistration, requireConfiguration } from '../utils/dependentRegistration';
 import * as typeConverters from '../utils/typeConverters';
 
 
@@ -114,7 +114,9 @@ export function register(
 	modeId: string,
 	client: ITypeScriptServiceClient,
 ): vscode.Disposable {
-	return new ConfigurationDependentRegistration(modeId, 'suggest.completeJSDocs', () => {
+	return conditionalRegistration([
+		requireConfiguration(modeId, 'suggest.completeJSDocs')
+	], () => {
 		return vscode.languages.registerCompletionItemProvider(selector,
 			new JsDocCompletionProvider(client),
 			'*');

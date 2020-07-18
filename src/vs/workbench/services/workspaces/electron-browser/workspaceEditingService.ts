@@ -15,7 +15,7 @@ import { IExtensionService } from 'vs/workbench/services/extensions/common/exten
 import { IBackupFileService } from 'vs/workbench/services/backup/common/backup';
 import { toBackupWorkspaceResource } from 'vs/workbench/services/backup/electron-browser/backup';
 import { ICommandService } from 'vs/platform/commands/common/commands';
-import { isEqual, basename } from 'vs/base/common/resources';
+import { basename } from 'vs/base/common/resources';
 import { INotificationService, Severity } from 'vs/platform/notification/common/notification';
 import { IFileService } from 'vs/platform/files/common/files';
 import { IWorkbenchEnvironmentService } from 'vs/workbench/services/environment/common/environmentService';
@@ -27,15 +27,16 @@ import { ILabelService } from 'vs/platform/label/common/label';
 import { ITextFileService } from 'vs/workbench/services/textfile/common/textfiles';
 import { IHostService } from 'vs/workbench/services/host/browser/host';
 import { AbstractWorkspaceEditingService } from 'vs/workbench/services/workspaces/browser/abstractWorkspaceEditingService';
-import { IElectronService } from 'vs/platform/electron/node/electron';
+import { IElectronService } from 'vs/platform/electron/electron-sandbox/electron';
 import { isMacintosh } from 'vs/base/common/platform';
 import { mnemonicButtonLabel } from 'vs/base/common/labels';
 import { BackupFileService } from 'vs/workbench/services/backup/common/backupFileService';
 import { INativeWorkbenchEnvironmentService } from 'vs/workbench/services/environment/electron-browser/environmentService';
+import { IUriIdentityService } from 'vs/workbench/services/uriIdentity/common/uriIdentity';
 
 export class NativeWorkspaceEditingService extends AbstractWorkspaceEditingService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	constructor(
 		@IJSONEditingService jsonEditingService: IJSONEditingService,
@@ -56,22 +57,23 @@ export class NativeWorkspaceEditingService extends AbstractWorkspaceEditingServi
 		@ILifecycleService private readonly lifecycleService: ILifecycleService,
 		@ILabelService private readonly labelService: ILabelService,
 		@IHostService hostService: IHostService,
+		@IUriIdentityService uriIdentityService: IUriIdentityService
 	) {
-		super(jsonEditingService, contextService, configurationService, notificationService, commandService, fileService, textFileService, workspacesService, environmentService, fileDialogService, dialogService, hostService);
+		super(jsonEditingService, contextService, configurationService, notificationService, commandService, fileService, textFileService, workspacesService, environmentService, fileDialogService, dialogService, hostService, uriIdentityService);
 
 		this.registerListeners();
 	}
 
 	private registerListeners(): void {
 		this.lifecycleService.onBeforeShutdown(e => {
-			const saveOperation = this.saveUntitedBeforeShutdown(e.reason);
+			const saveOperation = this.saveUntitledBeforeShutdown(e.reason);
 			if (saveOperation) {
 				e.veto(saveOperation);
 			}
 		});
 	}
 
-	private async saveUntitedBeforeShutdown(reason: ShutdownReason): Promise<boolean> {
+	private async saveUntitledBeforeShutdown(reason: ShutdownReason): Promise<boolean> {
 		if (reason !== ShutdownReason.LOAD && reason !== ShutdownReason.CLOSE) {
 			return false; // only interested when window is closing or loading
 		}
@@ -146,7 +148,7 @@ export class NativeWorkspaceEditingService extends AbstractWorkspaceEditingServi
 		const windows = await this.electronService.getWindows();
 
 		// Prevent overwriting a workspace that is currently opened in another window
-		if (windows.some(window => !!window.workspace && isEqual(window.workspace.configPath, path))) {
+		if (windows.some(window => !!window.workspace && this.uriIdentityService.extUri.isEqual(window.workspace.configPath, path))) {
 			await this.dialogService.show(
 				Severity.Info,
 				nls.localize('workspaceOpenedMessage', "Unable to save workspace '{0}'", basename(path)),

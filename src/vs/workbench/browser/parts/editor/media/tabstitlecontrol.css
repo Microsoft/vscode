@@ -62,8 +62,8 @@
 	padding-left: 10px;
 }
 
-.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.sizing-shrink.has-icon-theme.close-button-right,
-.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.sizing-shrink.has-icon-theme.close-button-off:not(.sticky) {
+.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.sizing-shrink.has-icon.close-button-right,
+.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.sizing-shrink.has-icon.close-button-off:not(.sticky) {
 	padding-left: 5px; /* reduce padding when we show icons and are in shrinking mode and tab close button is not left (unless sticky) */
 }
 
@@ -198,7 +198,7 @@
 	opacity: 0; /* when tab has the focus this shade breaks the tab border (fixes https://github.com/Microsoft/vscode/issues/57819) */
 }
 
-.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.sticky:not(.has-icon-theme) .monaco-icon-label {
+.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.sticky:not(.has-icon) .monaco-icon-label {
 	text-align: center; /* ensure that sticky tabs without icon have label centered */
 }
 
@@ -211,7 +211,7 @@
 	text-overflow: clip;
 }
 
-.hc-black .monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.sizing-shrink > .monaco-icon-label > .monaco-icon-label-container {
+.monaco-workbench.hc-black .part.editor > .content .editor-group-container > .title .tabs-container > .tab.sizing-shrink > .monaco-icon-label > .monaco-icon-label-container {
 	text-overflow: ellipsis;
 }
 
@@ -290,13 +290,12 @@
 	padding-right: 5px; /* we need less room when sizing is shrink (unless tab is sticky) */
 }
 
-.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.close-button-off.dirty-border-top > .tab-close,
 .monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.close-button-off.dirty-border-top > .tab-close {
 	display: none; /* hide dirty state when highlightModifiedTabs is enabled and when running without close button */
 }
 
-.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.close-button-off.dirty:not(.dirty-border-top) {
-	padding-right: 0; /* remove extra padding when we are running without close button */
+.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.close-button-off.dirty:not(.dirty-border-top):not(.sticky) {
+	padding-right: 0; /* remove extra padding when we are running without close button (unless tab is sticky) */
 }
 
 .monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.close-button-off > .tab-close {

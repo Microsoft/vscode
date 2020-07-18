@@ -764,7 +764,7 @@ export class IdleValue<T> {
 		this._handle.dispose();
 	}
 
-	getValue(): T {
+	get value(): T {
 		if (!this._didRun) {
 			this._handle.dispose();
 			this._executor();

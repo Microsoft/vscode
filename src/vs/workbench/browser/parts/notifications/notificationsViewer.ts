@@ -307,9 +307,9 @@ export class NotificationTemplateRenderer extends Disposable {
 
 		// Container
 		toggleClass(this.template.container, 'expanded', notification.expanded);
-		this.inputDisposables.add(addDisposableListener(this.template.container, EventType.MOUSE_UP, e => {
+		this.inputDisposables.add(addDisposableListener(this.template.container, EventType.AUXCLICK, e => {
 			if (!notification.hasProgress && e.button === 1 /* Middle Button */) {
-				EventHelper.stop(e);
+				EventHelper.stop(e, true);
 
 				notification.close();
 			}

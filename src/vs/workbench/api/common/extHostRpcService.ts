@@ -9,7 +9,7 @@ import { createDecorator } from 'vs/platform/instantiation/common/instantiation'
 export const IExtHostRpcService = createDecorator<IExtHostRpcService>('IExtHostRpcService');
 
 export interface IExtHostRpcService extends IRPCProtocol {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 }
 
 export class ExtHostRpcService implements IExtHostRpcService {

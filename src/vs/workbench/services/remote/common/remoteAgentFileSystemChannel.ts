@@ -51,8 +51,12 @@ export class RemoteFileSystemProvider extends Disposable implements
 		const connection = remoteAgentService.getConnection()!;
 		this.channel = connection.getChannel<IChannel>(REMOTE_FILE_SYSTEM_CHANNEL_NAME);
 
+		// Initially assume case sensitivity until remote environment is resolved
 		this.setCaseSensitive(true);
-		remoteAgentService.getEnvironment().then(remoteAgentEnvironment => this.setCaseSensitive(!!(remoteAgentEnvironment && remoteAgentEnvironment.os === OperatingSystem.Linux)));
+		(async () => {
+			const remoteAgentEnvironment = await remoteAgentService.getEnvironment();
+			this.setCaseSensitive(remoteAgentEnvironment?.os === OperatingSystem.Linux);
+		})();
 
 		this.registerListeners();
 	}
@@ -117,7 +121,7 @@ export class RemoteFileSystemProvider extends Disposable implements
 		return buff.buffer;
 	}
 
-	readFileStream(resource: URI, opts: FileReadStreamOptions, token?: CancellationToken): ReadableStreamEvents<Uint8Array> {
+	readFileStream(resource: URI, opts: FileReadStreamOptions, token: CancellationToken): ReadableStreamEvents<Uint8Array> {
 		const stream = newWriteableStream<Uint8Array>(data => VSBuffer.concat(data.map(data => VSBuffer.wrap(data))).buffer);
 
 		// Reading as file stream goes through an event to the remote side
@@ -152,19 +156,17 @@ export class RemoteFileSystemProvider extends Disposable implements
 		});
 
 		// Support cancellation
-		if (token) {
-			token.onCancellationRequested(() => {
+		token.onCancellationRequested(() => {
 
-				// Ensure to end the stream properly with an error
-				// to indicate the cancellation.
-				stream.end(canceled());
+			// Ensure to end the stream properly with an error
+			// to indicate the cancellation.
+			stream.end(canceled());
 
-				// Ensure to dispose the listener upon cancellation. This will
-				// bubble through the remote side as event and allows to stop
-				// reading the file.
-				listener.dispose();
-			});
-		}
+			// Ensure to dispose the listener upon cancellation. This will
+			// bubble through the remote side as event and allows to stop
+			// reading the file.
+			listener.dispose();
+		});
 
 		return stream;
 	}

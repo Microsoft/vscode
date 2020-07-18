@@ -503,10 +503,18 @@ export class WorkspaceService extends Disposable implements IConfigurationServic
 				this._configuration.updateRemoteUserConfiguration(this.remoteUserConfiguration.reprocess());
 			}
 			if (this.getWorkbenchState() === WorkbenchState.FOLDER) {
-				this._configuration.updateWorkspaceConfiguration(this.cachedFolderConfigs.get(this.workspace.folders[0].uri)!.reprocess());
+				const folderConfiguration = this.cachedFolderConfigs.get(this.workspace.folders[0].uri);
+				if (folderConfiguration) {
+					this._configuration.updateWorkspaceConfiguration(folderConfiguration.reprocess());
+				}
 			} else {
 				this._configuration.updateWorkspaceConfiguration(this.workspaceConfiguration.reprocessWorkspaceSettings());
-				this.workspace.folders.forEach(folder => this._configuration.updateFolderConfiguration(folder.uri, this.cachedFolderConfigs.get(folder.uri)!.reprocess()));
+				for (const folder of this.workspace.folders) {
+					const folderConfiguration = this.cachedFolderConfigs.get(folder.uri);
+					if (folderConfiguration) {
+						this._configuration.updateFolderConfiguration(folder.uri, folderConfiguration.reprocess());
+					}
+				}
 			}
 			this.triggerConfigurationChange(change, { data: previousData, workspace: this.workspace }, ConfigurationTarget.DEFAULT);
 		}

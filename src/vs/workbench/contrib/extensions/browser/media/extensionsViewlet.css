@@ -103,25 +103,14 @@
 	display: none;
 }
 
-.extensions-viewlet > .extensions .selected .extension-list-item > .details > .footer > .author,
-.extensions-viewlet > .extensions .selected.focused .extension-list-item > .details > .footer > .author {
-	opacity: 1;
-}
-
 .extensions-viewlet.narrow > .extensions .extension-list-item > .details > .footer > .monaco-action-bar > .actions-container .extension-action {
 	max-width: 100px;
 }
 
-.vs .extensions-viewlet > .extensions .monaco-list-row.disabled > .bookmark,
-.vs-dark  .extensions-viewlet > .extensions .monaco-list-row.disabled > .bookmark,
-.vs .extensions-viewlet > .extensions .monaco-list-row.disabled > .extension-list-item > .icon-container > .icon,
-.vs-dark .extensions-viewlet > .extensions .monaco-list-row.disabled > .extension-list-item > .icon-container > .icon,
-.vs .extensions-viewlet > .extensions .monaco-list-row.disabled > .extension-list-item > .details > .header-container,
-.vs-dark .extensions-viewlet > .extensions .monaco-list-row.disabled > .extension-list-item > .details > .header-container,
-.vs .extensions-viewlet > .extensions .monaco-list-row.disabled > .extension-list-item > .details > .description,
-.vs-dark .extensions-viewlet > .extensions .monaco-list-row.disabled > .extension-list-item > .details > .description,
-.vs .extensions-viewlet > .extensions .monaco-list-row.disabled > .extension-list-item > .details > .footer > .author,
-.vs-dark .extensions-viewlet > .extensions .monaco-list-row.disabled > .extension-list-item > .details > .footer > .author {
+.monaco-workbench.vs .extensions-viewlet > .extensions .monaco-list-row.disabled > .extension-list-item > .icon-container > .icon,
+.monaco-workbench.vs-dark .extensions-viewlet > .extensions .monaco-list-row.disabled > .extension-list-item > .icon-container > .icon,
+.monaco-workbench.vs .extensions-viewlet > .extensions .monaco-list-row.disabled > .extension-list-item > .details > .header-container .codicon,
+.monaco-workbench.vs-dark .extensions-viewlet > .extensions .monaco-list-row.disabled > .extension-list-item > .details > .header-container .codicon {
 	opacity: 0.5;
 }
 

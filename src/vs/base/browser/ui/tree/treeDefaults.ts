@@ -13,7 +13,7 @@ export class CollapseAllAction<TInput, T, TFilterData = void> extends Action {
 		super('vs.tree.collapse', nls.localize('collapse all', "Collapse All"), 'collapse-all', enabled);
 	}
 
-	async run(context?: any): Promise<any> {
+	async run(): Promise<any> {
 		this.viewer.collapseAll();
 		this.viewer.setSelection([]);
 		this.viewer.setFocus([]);

@@ -9,9 +9,8 @@ import { Registry } from 'vs/platform/registry/common/platform';
 import { HelpQuickAccessProvider } from 'vs/platform/quickinput/browser/helpQuickAccess';
 import { ViewQuickAccessProvider, OpenViewPickerAction, QuickAccessViewPickerAction } from 'vs/workbench/contrib/quickaccess/browser/viewQuickAccess';
 import { CommandsQuickAccessProvider, ShowAllCommandsAction, ClearCommandHistoryAction } from 'vs/workbench/contrib/quickaccess/browser/commandsQuickAccess';
-import { MenuRegistry, MenuId, SyncActionDescriptor } from 'vs/platform/actions/common/actions';
-import { IWorkbenchActionRegistry, Extensions as ActionExtensions } from 'vs/workbench/common/actions';
-import { KeyMod, KeyCode } from 'vs/base/common/keyCodes';
+import { MenuRegistry, MenuId, registerAction2 } from 'vs/platform/actions/common/actions';
+import { KeyMod } from 'vs/base/common/keyCodes';
 import { ContextKeyExpr } from 'vs/platform/contextkey/common/contextkey';
 import { inQuickPickContext, getQuickNavigateHandler } from 'vs/workbench/browser/quickaccess';
 import { KeybindingsRegistry, KeybindingWeight } from 'vs/platform/keybinding/common/keybindingsRegistry';
@@ -109,21 +108,14 @@ MenuRegistry.appendMenuItem(MenuId.EditorContext, {
 
 //#region Workbench actions and commands
 
-const registry = Registry.as<IWorkbenchActionRegistry>(ActionExtensions.WorkbenchActions);
-registry.registerWorkbenchAction(SyncActionDescriptor.from(ClearCommandHistoryAction), 'Clear Command History');
-registry.registerWorkbenchAction(SyncActionDescriptor.from(ShowAllCommandsAction, {
-	primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KEY_P,
-	secondary: [KeyCode.F1]
-}), 'Show All Commands');
+registerAction2(ClearCommandHistoryAction);
+registerAction2(ShowAllCommandsAction);
+registerAction2(OpenViewPickerAction);
+registerAction2(QuickAccessViewPickerAction);
 
 const inViewsPickerContextKey = 'inViewsPicker';
 const inViewsPickerContext = ContextKeyExpr.and(inQuickPickContext, ContextKeyExpr.has(inViewsPickerContextKey));
-
-const viewPickerKeybinding = { primary: KeyMod.CtrlCmd | KeyCode.KEY_Q, mac: { primary: KeyMod.WinCtrl | KeyCode.KEY_Q }, linux: { primary: 0 } };
-
-const viewCategory = localize('view', "View");
-registry.registerWorkbenchAction(SyncActionDescriptor.from(OpenViewPickerAction), 'View: Open View', viewCategory);
-registry.registerWorkbenchAction(SyncActionDescriptor.from(QuickAccessViewPickerAction, viewPickerKeybinding), 'View: Quick Open View', viewCategory);
+const viewPickerKeybinding = QuickAccessViewPickerAction.KEYBINDING;
 
 const quickAccessNavigateNextInViewPickerId = 'workbench.action.quickOpenNavigateNextInViewPicker';
 KeybindingsRegistry.registerCommandAndKeybindingRule({

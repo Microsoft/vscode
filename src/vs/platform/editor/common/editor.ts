@@ -197,9 +197,12 @@ export interface IEditorOptions {
 	readonly ignoreError?: boolean;
 
 	/**
-	 * Does not use editor overrides while opening the editor
+	 * Allows to override the editor that should be used to display the input:
+	 * - `undefined`: let the editor decide for itself
+	 * - `false`: disable overrides
+	 * - `string`: specific override by id
 	 */
-	readonly ignoreOverrides?: boolean;
+	readonly override?: false | string;
 
 	/**
 	 * A optional hint to signal in which context the editor opens.

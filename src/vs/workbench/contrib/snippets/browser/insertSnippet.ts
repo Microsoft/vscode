@@ -80,20 +80,21 @@ class InsertSnippetAction extends EditorAction {
 		});
 	}
 
-	run(accessor: ServicesAccessor, editor: ICodeEditor, arg: any): Promise<void> | undefined {
+	async run(accessor: ServicesAccessor, editor: ICodeEditor, arg: any): Promise<void> {
 		const modeService = accessor.get(IModeService);
 		const snippetService = accessor.get(ISnippetsService);
 
 		if (!editor.hasModel()) {
-			return undefined;
+			return;
 		}
 
 		const clipboardService = accessor.get(IClipboardService);
 		const quickInputService = accessor.get(IQuickInputService);
-		const { lineNumber, column } = editor.getPosition();
-		let { snippet, name, langId } = Args.fromUser(arg);
 
-		return new Promise<Snippet>(async (resolve, reject) => {
+		const snippet = await new Promise<Snippet>(async (resolve, reject) => {
+
+			const { lineNumber, column } = editor.getPosition();
+			let { snippet, name, langId } = Args.fromUser(arg);
 
 			if (snippet) {
 				return resolve(new Snippet(
@@ -167,16 +168,16 @@ class InsertSnippetAction extends EditorAction {
 				}
 				return quickInputService.pick(picks, { matchOnDetail: true }).then(pick => resolve(pick && pick.snippet), reject);
 			}
-		}).then(async snippet => {
-			if (!snippet) {
-				return;
-			}
-			let clipboardText: string | undefined;
-			if (snippet.needsClipboard) {
-				clipboardText = await clipboardService.readText();
-			}
-			SnippetController2.get(editor).insert(snippet.codeSnippet, { clipboardText });
 		});
+
+		if (!snippet) {
+			return;
+		}
+		let clipboardText: string | undefined;
+		if (snippet.needsClipboard) {
+			clipboardText = await clipboardService.readText();
+		}
+		SnippetController2.get(editor).insert(snippet.codeSnippet, { clipboardText });
 	}
 }
 

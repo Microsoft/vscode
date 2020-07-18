@@ -70,7 +70,7 @@ export interface IExperiment {
 }
 
 export interface IExperimentService {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 	getExperimentById(id: string): Promise<IExperiment>;
 	getExperimentsByType(type: ExperimentActionType): Promise<IExperiment[]>;
 	getCuratedExtensionsList(curatedExtensionsKey: string): Promise<string[]>;
@@ -163,7 +163,7 @@ export const getCurrentActivationRecord = (previous?: IActivationEventRecord, da
 };
 
 export class ExperimentService extends Disposable implements IExperimentService {
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 	private _experiments: IExperiment[] = [];
 	private _loadExperimentsPromise: Promise<void>;
 	private _curatedMapping = Object.create(null);

@@ -55,6 +55,10 @@
 	white-space: pre; /* enable to show labels that include multiple whitespaces */
 }
 
+.vs .monaco-icon-label > .monaco-icon-label-container > .monaco-icon-description-container > .label-description {
+	opacity: .95;
+}
+
 .monaco-icon-label.italic > .monaco-icon-label-container > .monaco-icon-name-container > .label-name,
 .monaco-icon-label.italic > .monaco-icon-description-container > .label-description {
 	font-style: italic;

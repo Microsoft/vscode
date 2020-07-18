@@ -283,17 +283,49 @@ export const PANEL_ACTIVE_TITLE_BORDER = registerColor('panelTitle.activeBorder'
 	hc: contrastBorder
 }, nls.localize('panelActiveTitleBorder', "Border color for the active panel title. Panels are shown below the editor area and contain views like output and integrated terminal."));
 
-export const PANEL_DRAG_AND_DROP_BACKGROUND = registerColor('panel.dropBackground', {
-	dark: Color.white.transparent(0.12),
-	light: Color.fromHex('#2677CB').transparent(0.18),
-	hc: Color.white.transparent(0.12)
-}, nls.localize('panelDragAndDropBackground', "Drag and drop feedback color for the panel title items. The color should have transparency so that the panel entries can still shine through. Panels are shown below the editor area and contain views like output and integrated terminal."));
-
 export const PANEL_INPUT_BORDER = registerColor('panelInput.border', {
 	dark: null,
 	light: Color.fromHex('#ddd'),
 	hc: null
 }, nls.localize('panelInputBorder', "Input box border for inputs in the panel."));
+
+export const PANEL_DRAG_AND_DROP_BORDER = registerColor('panel.dropBorder', {
+	dark: PANEL_ACTIVE_TITLE_FOREGROUND,
+	light: PANEL_ACTIVE_TITLE_FOREGROUND,
+	hc: PANEL_ACTIVE_TITLE_FOREGROUND,
+}, nls.localize('panelDragAndDropBorder', "Drag and drop feedback color for the panel titles. Panels are shown below the editor area and contain views like output and integrated terminal."));
+
+
+export const PANEL_SECTION_DRAG_AND_DROP_BACKGROUND = registerColor('panelSection.dropBackground', {
+	dark: EDITOR_DRAG_AND_DROP_BACKGROUND,
+	light: EDITOR_DRAG_AND_DROP_BACKGROUND,
+	hc: EDITOR_DRAG_AND_DROP_BACKGROUND,
+}, nls.localize('panelSectionDragAndDropBackground', "Drag and drop feedback color for the panel sections. The color should have transparency so that the panel sections can still shine through. Panels are shown below the editor area and contain views like output and integrated terminal."));
+
+export const PANEL_SECTION_HEADER_BACKGROUND = registerColor('panelSectionHeader.background', {
+	dark: Color.fromHex('#808080').transparent(0.2),
+	light: Color.fromHex('#808080').transparent(0.2),
+	hc: null
+}, nls.localize('panelSectionHeaderBackground', "Panel section header background color. Panels are shown below the editor area and contain views like output and integrated terminal."));
+
+export const PANEL_SECTION_HEADER_FOREGROUND = registerColor('panelSectionHeader.foreground', {
+	dark: null,
+	light: null,
+	hc: null
+}, nls.localize('panelSectionHeaderForeground', "Panel section header foreground color. Panels are shown below the editor area and contain views like output and integrated terminal."));
+
+export const PANEL_SECTION_HEADER_BORDER = registerColor('panelSectionHeader.border', {
+	dark: contrastBorder,
+	light: contrastBorder,
+	hc: contrastBorder
+}, nls.localize('panelSectionHeaderBorder', "Panel section header border color used when multiple views are stacked vertically in the panel. Panels are shown below the editor area and contain views like output and integrated terminal."));
+
+export const PANEL_SECTION_BORDER = registerColor('panelSection.border', {
+	dark: PANEL_BORDER,
+	light: PANEL_BORDER,
+	hc: PANEL_BORDER
+}, nls.localize('panelSectionBorder', "Panel section border color used when multiple views are stacked horizontally in the panel. Panels are shown below the editor area and contain views like output and integrated terminal."));
+
 
 // < --- Status --- >
 
@@ -407,11 +439,11 @@ export const ACTIVITY_BAR_ACTIVE_BACKGROUND = registerColor('activityBar.activeB
 	hc: null
 }, nls.localize('activityBarActiveBackground', "Activity bar background color for the active item. The activity bar is showing on the far left or right and allows to switch between views of the side bar."));
 
-export const ACTIVITY_BAR_DRAG_AND_DROP_BACKGROUND = registerColor('activityBar.dropBackground', {
-	dark: Color.white.transparent(0.12),
-	light: Color.white.transparent(0.12),
-	hc: Color.white.transparent(0.12),
-}, nls.localize('activityBarDragAndDropBackground', "Drag and drop feedback color for the activity bar items. The color should have transparency so that the activity bar entries can still shine through. The activity bar is showing on the far left or right and allows to switch between views of the side bar."));
+export const ACTIVITY_BAR_DRAG_AND_DROP_BORDER = registerColor('activityBar.dropBorder', {
+	dark: ACTIVITY_BAR_FOREGROUND,
+	light: ACTIVITY_BAR_FOREGROUND,
+	hc: ACTIVITY_BAR_FOREGROUND,
+}, nls.localize('activityBarDragAndDropBorder', "Drag and drop feedback color for the activity bar items. The activity bar is showing on the far left or right and allows to switch between views of the side bar."));
 
 export const ACTIVITY_BAR_BADGE_BACKGROUND = registerColor('activityBarBadge.background', {
 	dark: '#007ACC',
@@ -480,9 +512,9 @@ export const SIDE_BAR_TITLE_FOREGROUND = registerColor('sideBarTitle.foreground'
 }, nls.localize('sideBarTitleForeground', "Side bar title foreground color. The side bar is the container for views like explorer and search."));
 
 export const SIDE_BAR_DRAG_AND_DROP_BACKGROUND = registerColor('sideBar.dropBackground', {
-	dark: Color.white.transparent(0.12),
-	light: Color.black.transparent(0.1),
-	hc: Color.white.transparent(0.3),
+	dark: EDITOR_DRAG_AND_DROP_BACKGROUND,
+	light: EDITOR_DRAG_AND_DROP_BACKGROUND,
+	hc: EDITOR_DRAG_AND_DROP_BACKGROUND,
 }, nls.localize('sideBarDragAndDropBackground', "Drag and drop feedback color for the side bar sections. The color should have transparency so that the side bar sections can still shine through. The side bar is the container for views like explorer and search."));
 
 export const SIDE_BAR_SECTION_HEADER_BACKGROUND = registerColor('sideBarSectionHeader.background', {
@@ -510,31 +542,31 @@ export const TITLE_BAR_ACTIVE_FOREGROUND = registerColor('titleBar.activeForegro
 	dark: '#CCCCCC',
 	light: '#333333',
 	hc: '#FFFFFF'
-}, nls.localize('titleBarActiveForeground', "Title bar foreground when the window is active. Note that this color is currently only supported on macOS."));
+}, nls.localize('titleBarActiveForeground', "Title bar foreground when the window is active."));
 
 export const TITLE_BAR_INACTIVE_FOREGROUND = registerColor('titleBar.inactiveForeground', {
 	dark: transparent(TITLE_BAR_ACTIVE_FOREGROUND, 0.6),
 	light: transparent(TITLE_BAR_ACTIVE_FOREGROUND, 0.6),
 	hc: null
-}, nls.localize('titleBarInactiveForeground', "Title bar foreground when the window is inactive. Note that this color is currently only supported on macOS."));
+}, nls.localize('titleBarInactiveForeground', "Title bar foreground when the window is inactive."));
 
 export const TITLE_BAR_ACTIVE_BACKGROUND = registerColor('titleBar.activeBackground', {
 	dark: '#3C3C3C',
 	light: '#DDDDDD',
 	hc: '#000000'
-}, nls.localize('titleBarActiveBackground', "Title bar background when the window is active. Note that this color is currently only supported on macOS."));
+}, nls.localize('titleBarActiveBackground', "Title bar background when the window is active."));
 
 export const TITLE_BAR_INACTIVE_BACKGROUND = registerColor('titleBar.inactiveBackground', {
 	dark: transparent(TITLE_BAR_ACTIVE_BACKGROUND, 0.6),
 	light: transparent(TITLE_BAR_ACTIVE_BACKGROUND, 0.6),
 	hc: null
-}, nls.localize('titleBarInactiveBackground', "Title bar background when the window is inactive. Note that this color is currently only supported on macOS."));
+}, nls.localize('titleBarInactiveBackground', "Title bar background when the window is inactive."));
 
 export const TITLE_BAR_BORDER = registerColor('titleBar.border', {
 	dark: null,
 	light: null,
 	hc: contrastBorder
-}, nls.localize('titleBarBorder', "Title bar border color. Note that this color is currently only supported on macOS."));
+}, nls.localize('titleBarBorder', "Title bar border color."));
 
 // < --- Menubar --- >
 

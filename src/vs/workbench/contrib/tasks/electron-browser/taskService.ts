@@ -25,6 +25,10 @@ interface WorkspaceFolderConfigurationResult {
 export class TaskService extends AbstractTaskService {
 	private _configHasErrors: boolean = false;
 
+	protected setExecutionContexts(): void {
+		super.setExecutionContexts(true, true, true);
+	}
+
 	protected getTaskSystem(): ITaskSystem {
 		if (this._taskSystem) {
 			return this._taskSystem;

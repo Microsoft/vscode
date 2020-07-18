@@ -12,7 +12,6 @@ import { ExtensionRecommendationSource, ExtensionRecommendationReason } from 'vs
 import { IExtensionsViewPaneContainer, IExtensionsWorkbenchService } from 'vs/workbench/contrib/extensions/common/extensions';
 import { CancellationToken } from 'vs/base/common/cancellation';
 import { localize } from 'vs/nls';
-import { ExtensionType } from 'vs/platform/extensions/common/extensions';
 import { StorageScope, IStorageService } from 'vs/platform/storage/common/storage';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { IProductService } from 'vs/platform/product/common/productService';
@@ -161,7 +160,9 @@ export class FileBasedRecommendations extends ExtensionRecommendations {
 			if (match(pattern, uri.toString())) {
 				for (const extensionId of extensionIds) {
 					// Add to recommendation to prompt if it is an important tip
-					if (this.importantExtensionTips[extensionId]) {
+					// Only prompt if the pattern matches the extensionImportantTips pattern
+					// Otherwise, assume pattern is from extensionTips, which means it should be a file based "passive" recommendation
+					if (this.importantExtensionTips[extensionId]?.pattern === pattern) {
 						recommendationsToPrompt.push(extensionId);
 					}
 					// Update file based recommendations
@@ -181,7 +182,7 @@ export class FileBasedRecommendations extends ExtensionRecommendations {
 			return;
 		}
 
-		const installed = await this.extensionManagementService.getInstalled(ExtensionType.User);
+		const installed = await this.extensionManagementService.getInstalled();
 		if (await this.promptRecommendedExtensionForFileType(recommendationsToPrompt, installed)) {
 			return;
 		}

@@ -48,9 +48,12 @@ class Directory implements vscode.FileStat {
 
 export type Entry = File | Directory;
 
-export class MemFS implements vscode.FileSystemProvider {
+export class TestFS implements vscode.FileSystemProvider {
 
-	readonly scheme = 'fake-fs';
+	constructor(
+		readonly scheme: string,
+		readonly isCaseSensitive: boolean
+	) { }
 
 	readonly root = new Directory('');
 
@@ -161,12 +164,22 @@ export class MemFS implements vscode.FileSystemProvider {
 		let parts = uri.path.split('/');
 		let entry: Entry = this.root;
 		for (const part of parts) {
+			const partLow = part.toLowerCase();
 			if (!part) {
 				continue;
 			}
 			let child: Entry | undefined;
 			if (entry instanceof Directory) {
-				child = entry.entries.get(part);
+				if (this.isCaseSensitive) {
+					child = entry.entries.get(part);
+				} else {
+					for (let [key, value] of entry.entries) {
+						if (key.toLowerCase() === partLow) {
+							child = value;
+							break;
+						}
+					}
+				}
 			}
 			if (!child) {
 				if (!silent) {

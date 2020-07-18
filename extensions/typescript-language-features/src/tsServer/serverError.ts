@@ -79,7 +79,7 @@ export class TypeScriptServerError extends Error {
 		if (!message) {
 			return '';
 		}
-		const regex = /(tsserver)?(\.(?:ts|tsx|js|jsx)(?::\d+(?::\d+)?)?)\)?$/igm;
+		const regex = /(\btsserver)?(\.(?:ts|tsx|js|jsx)(?::\d+(?::\d+)?)?)\)?$/igm;
 		let serverStack = '';
 		while (true) {
 			const match = regex.exec(message);

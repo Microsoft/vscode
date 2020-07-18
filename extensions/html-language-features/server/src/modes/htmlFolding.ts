@@ -6,21 +6,21 @@
 import { TextDocument, FoldingRange, Position, Range, LanguageModes, LanguageMode } from './languageModes';
 import { CancellationToken } from 'vscode-languageserver';
 
-export function getFoldingRanges(languageModes: LanguageModes, document: TextDocument, maxRanges: number | undefined, _cancellationToken: CancellationToken | null): FoldingRange[] {
+export async function getFoldingRanges(languageModes: LanguageModes, document: TextDocument, maxRanges: number | undefined, _cancellationToken: CancellationToken | null): Promise<FoldingRange[]> {
 	let htmlMode = languageModes.getMode('html');
 	let range = Range.create(Position.create(0, 0), Position.create(document.lineCount, 0));
 	let result: FoldingRange[] = [];
 	if (htmlMode && htmlMode.getFoldingRanges) {
-		result.push(...htmlMode.getFoldingRanges(document));
+		result.push(... await htmlMode.getFoldingRanges(document));
 	}
 
 	// cache folding ranges per mode
 	let rangesPerMode: { [mode: string]: FoldingRange[] } = Object.create(null);
-	let getRangesForMode = (mode: LanguageMode) => {
+	let getRangesForMode = async (mode: LanguageMode) => {
 		if (mode.getFoldingRanges) {
 			let ranges = rangesPerMode[mode.getId()];
 			if (!Array.isArray(ranges)) {
-				ranges = mode.getFoldingRanges(document) || [];
+				ranges = await mode.getFoldingRanges(document) || [];
 				rangesPerMode[mode.getId()] = ranges;
 			}
 			return ranges;
@@ -32,7 +32,7 @@ export function getFoldingRanges(languageModes: LanguageModes, document: TextDoc
 	for (let modeRange of modeRanges) {
 		let mode = modeRange.mode;
 		if (mode && mode !== htmlMode && !modeRange.attributeValue) {
-			const ranges = getRangesForMode(mode);
+			const ranges = await getRangesForMode(mode);
 			result.push(...ranges.filter(r => r.startLine >= modeRange.start.line && r.endLine < modeRange.end.line));
 		}
 	}

@@ -8,6 +8,9 @@ import { IModeService } from 'vs/editor/common/services/modeService';
 import { IModelService } from 'vs/editor/common/services/modelService';
 import { MainThreadLanguagesShape, MainContext, IExtHostContext } from '../common/extHost.protocol';
 import { extHostNamedCustomer } from 'vs/workbench/api/common/extHostCustomers';
+import { IPosition } from 'vs/editor/common/core/position';
+import { IRange, Range } from 'vs/editor/common/core/range';
+import { StandardTokenType } from 'vs/editor/common/modes';
 
 @extHostNamedCustomer(MainContext.MainThreadLanguages)
 export class MainThreadLanguages implements MainThreadLanguagesShape {
@@ -39,5 +42,20 @@ export class MainThreadLanguages implements MainThreadLanguagesShape {
 		}
 		this._modelService.setMode(model, this._modeService.create(languageId));
 		return Promise.resolve(undefined);
+	}
+
+	async $tokensAtPosition(resource: UriComponents, position: IPosition): Promise<undefined | { type: StandardTokenType, range: IRange }> {
+		const uri = URI.revive(resource);
+		const model = this._modelService.getModel(uri);
+		if (!model) {
+			return undefined;
+		}
+		model.tokenizeIfCheap(position.lineNumber);
+		const tokens = model.getLineTokens(position.lineNumber);
+		const idx = tokens.findTokenIndexAtOffset(position.column - 1);
+		return {
+			type: tokens.getStandardTokenType(idx),
+			range: new Range(position.lineNumber, 1 + tokens.getStartOffset(idx), position.lineNumber, 1 + tokens.getEndOffset(idx))
+		};
 	}
 }

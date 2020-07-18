@@ -13,7 +13,6 @@ import { getSystemShell } from 'vs/workbench/contrib/terminal/node/terminal';
 import { Terminal as XTermTerminal } from 'xterm';
 import { SearchAddon as XTermSearchAddon } from 'xterm-addon-search';
 import { Unicode11Addon as XTermUnicode11Addon } from 'xterm-addon-unicode11';
-import { WebLinksAddon as XTermWebLinksAddon } from 'xterm-addon-web-links';
 import { WebglAddon as XTermWebglAddon } from 'xterm-addon-webgl';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { getDefaultShell, getDefaultShellArgs } from 'vs/workbench/contrib/terminal/common/terminalEnvironment';
@@ -27,7 +26,6 @@ import { ILogService } from 'vs/platform/log/common/log';
 let Terminal: typeof XTermTerminal;
 let SearchAddon: typeof XTermSearchAddon;
 let Unicode11Addon: typeof XTermUnicode11Addon;
-let WebLinksAddon: typeof XTermWebLinksAddon;
 let WebglAddon: typeof XTermWebglAddon;
 
 export class TerminalInstanceService implements ITerminalInstanceService {
@@ -49,13 +47,6 @@ export class TerminalInstanceService implements ITerminalInstanceService {
 			Terminal = (await import('xterm')).Terminal;
 		}
 		return Terminal;
-	}
-
-	public async getXtermWebLinksConstructor(): Promise<typeof XTermWebLinksAddon> {
-		if (!WebLinksAddon) {
-			WebLinksAddon = (await import('xterm-addon-web-links')).WebLinksAddon;
-		}
-		return WebLinksAddon;
 	}
 
 	public async getXtermSearchConstructor(): Promise<typeof XTermSearchAddon> {

@@ -5,19 +5,19 @@
 
 import * as cp from 'child_process';
 import { EventEmitter } from 'events';
-import * as path from 'vs/base/common/path';
 import { StringDecoder } from 'string_decoder';
-import { createRegExp, startsWith, startsWithUTF8BOM, stripUTF8BOM, escapeRegExpCharacters, endsWith } from 'vs/base/common/strings';
+import { coalesce } from 'vs/base/common/arrays';
+import { CancellationToken } from 'vs/base/common/cancellation';
+import { groupBy } from 'vs/base/common/collections';
+import { splitGlobAware } from 'vs/base/common/glob';
+import * as path from 'vs/base/common/path';
+import { createRegExp, escapeRegExpCharacters, startsWithUTF8BOM, stripUTF8BOM } from 'vs/base/common/strings';
 import { URI } from 'vs/base/common/uri';
+import { Progress } from 'vs/platform/progress/common/progress';
 import { IExtendedExtensionSearchOptions, SearchError, SearchErrorCode, serializeSearchError } from 'vs/workbench/services/search/common/search';
+import { Range, TextSearchComplete, TextSearchContext, TextSearchMatch, TextSearchOptions, TextSearchPreviewOptions, TextSearchQuery, TextSearchResult } from 'vs/workbench/services/search/common/searchExtTypes';
 import { rgPath } from 'vscode-ripgrep';
 import { anchorGlob, createTextSearchResult, IOutputChannel, Maybe } from './ripgrepSearchUtils';
-import { coalesce } from 'vs/base/common/arrays';
-import { splitGlobAware } from 'vs/base/common/glob';
-import { groupBy } from 'vs/base/common/collections';
-import { TextSearchQuery, TextSearchOptions, TextSearchResult, TextSearchComplete, TextSearchPreviewOptions, TextSearchContext, TextSearchMatch, Range } from 'vs/workbench/services/search/common/searchExtTypes';
-import { Progress } from 'vs/platform/progress/common/progress';
-import { CancellationToken } from 'vs/base/common/cancellation';
 
 // If vscode-ripgrep is in an .asar file, then the binary is unpacked.
 const rgDiskPath = rgPath.replace(/\bnode_modules\.asar\b/, 'node_modules.asar.unpacked');
@@ -116,7 +116,8 @@ export class RipgrepTextSearchEngine {
 }
 
 /**
- * Read the first line of stderr and return an error for display or undefined, based on a whitelist.
+ * Read the first line of stderr and return an error for display or undefined, based on a list of
+ * allowed properties.
  * Ripgrep produces stderr output which is not from a fatal error, and we only want the search to be
  * "failed" when a fatal error was produced.
  */
@@ -124,7 +125,7 @@ export function rgErrorMsgForDisplay(msg: string): Maybe<SearchError> {
 	const lines = msg.split('\n');
 	const firstLine = lines[0].trim();
 
-	if (lines.some(l => startsWith(l, 'regex parse error'))) {
+	if (lines.some(l => l.startsWith('regex parse error'))) {
 		return new SearchError(buildRegexParseError(lines), SearchErrorCode.regexParseError);
 	}
 
@@ -133,17 +134,17 @@ export function rgErrorMsgForDisplay(msg: string): Maybe<SearchError> {
 		return new SearchError(`Unknown encoding: ${match[1]}`, SearchErrorCode.unknownEncoding);
 	}
 
-	if (startsWith(firstLine, 'error parsing glob')) {
+	if (firstLine.startsWith('error parsing glob')) {
 		// Uppercase first letter
 		return new SearchError(firstLine.charAt(0).toUpperCase() + firstLine.substr(1), SearchErrorCode.globParseError);
 	}
 
-	if (startsWith(firstLine, 'the literal')) {
+	if (firstLine.startsWith('the literal')) {
 		// Uppercase first letter
 		return new SearchError(firstLine.charAt(0).toUpperCase() + firstLine.substr(1), SearchErrorCode.invalidLiteral);
 	}
 
-	if (startsWith(firstLine, 'PCRE2: error compiling pattern')) {
+	if (firstLine.startsWith('PCRE2: error compiling pattern')) {
 		return new SearchError(firstLine, SearchErrorCode.regexParseError);
 	}
 
@@ -152,7 +153,7 @@ export function rgErrorMsgForDisplay(msg: string): Maybe<SearchError> {
 
 export function buildRegexParseError(lines: string[]): string {
 	let errorMessage: string[] = ['Regex parse error'];
-	let pcre2ErrorLine = lines.filter(l => (startsWith(l, 'PCRE2:')));
+	let pcre2ErrorLine = lines.filter(l => (l.startsWith('PCRE2:')));
 	if (pcre2ErrorLine.length >= 1) {
 		let pcre2ErrorMessage = pcre2ErrorLine[0].replace('PCRE2:', '');
 		if (pcre2ErrorMessage.indexOf(':') !== -1 && pcre2ErrorMessage.split(':').length >= 2) {
@@ -357,12 +358,12 @@ function getRgArgs(query: TextSearchQuery, options: TextSearchOptions): string[]
 
 	const { doubleStarIncludes, otherIncludes } = groupBy(
 		options.includes,
-		(include: string) => startsWith(include, '**') ? 'doubleStarIncludes' : 'otherIncludes');
+		(include: string) => include.startsWith('**') ? 'doubleStarIncludes' : 'otherIncludes');
 
 	if (otherIncludes && otherIncludes.length) {
 		const uniqueOthers = new Set<string>();
 		otherIncludes.forEach(other => {
-			if (!endsWith(other, '/**')) {
+			if (!other.endsWith('/**')) {
 				other += '/**';
 			}
 

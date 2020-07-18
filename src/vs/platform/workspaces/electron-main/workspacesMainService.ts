@@ -18,7 +18,7 @@ import { toWorkspaceFolders } from 'vs/platform/workspace/common/workspace';
 import { URI } from 'vs/base/common/uri';
 import { Schemas } from 'vs/base/common/network';
 import { Disposable } from 'vs/base/common/lifecycle';
-import { originalFSPath, joinPath, isEqual, basename } from 'vs/base/common/resources';
+import { originalFSPath, joinPath, basename, extUriBiasedIgnorePathCase } from 'vs/base/common/resources';
 import { createDecorator } from 'vs/platform/instantiation/common/instantiation';
 import { ICodeWindow } from 'vs/platform/windows/electron-main/windows';
 import { localize } from 'vs/nls';
@@ -38,7 +38,7 @@ export interface IWorkspaceEnteredEvent {
 
 export interface IWorkspacesMainService {
 
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	readonly onUntitledWorkspaceDeleted: Event<IWorkspaceIdentifier>;
 	readonly onWorkspaceEntered: Event<IWorkspaceEnteredEvent>;
@@ -65,7 +65,7 @@ export interface IStoredWorkspace {
 
 export class WorkspacesMainService extends Disposable implements IWorkspacesMainService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private readonly untitledWorkspacesHome: URI; // local URI that contains all untitled workspaces
 
@@ -134,7 +134,7 @@ export class WorkspacesMainService extends Disposable implements IWorkspacesMain
 		if (storedWorkspace && Array.isArray(storedWorkspace.folders)) {
 			storedWorkspace.folders = storedWorkspace.folders.filter(folder => isStoredWorkspaceFolder(folder));
 		} else {
-			throw new Error(`${path.toString()} looks like an invalid workspace file.`);
+			throw new Error(`${path.toString(true)} looks like an invalid workspace file.`);
 		}
 
 		return storedWorkspace;
@@ -185,8 +185,8 @@ export class WorkspacesMainService extends Disposable implements IWorkspacesMain
 		};
 	}
 
-	getWorkspaceIdentifier(configPath: URI): Promise<IWorkspaceIdentifier> {
-		return Promise.resolve(getWorkspaceIdentifier(configPath));
+	async getWorkspaceIdentifier(configPath: URI): Promise<IWorkspaceIdentifier> {
+		return getWorkspaceIdentifier(configPath);
 	}
 
 	isUntitledWorkspace(workspace: IWorkspaceIdentifier): boolean {
@@ -205,9 +205,8 @@ export class WorkspacesMainService extends Disposable implements IWorkspacesMain
 		this._onUntitledWorkspaceDeleted.fire(workspace);
 	}
 
-	deleteUntitledWorkspace(workspace: IWorkspaceIdentifier): Promise<void> {
+	async deleteUntitledWorkspace(workspace: IWorkspaceIdentifier): Promise<void> {
 		this.deleteUntitledWorkspaceSync(workspace);
-		return Promise.resolve();
 	}
 
 	private doDeleteUntitledWorkspaceSync(workspace: IWorkspaceIdentifier): void {
@@ -218,7 +217,7 @@ export class WorkspacesMainService extends Disposable implements IWorkspacesMain
 			rimrafSync(dirname(configPath));
 
 			// Mark Workspace Storage to be deleted
-			const workspaceStoragePath = join(this.environmentService.workspaceStorageHome, workspace.id);
+			const workspaceStoragePath = join(this.environmentService.workspaceStorageHome.fsPath, workspace.id);
 			if (existsSync(workspaceStoragePath)) {
 				writeFileSync(join(workspaceStoragePath, 'obsolete'), '');
 			}
@@ -274,7 +273,7 @@ export class WorkspacesMainService extends Disposable implements IWorkspacesMain
 			return true;
 		}
 
-		if (window.openedWorkspace && isEqual(window.openedWorkspace.configPath, path)) {
+		if (window.openedWorkspace && extUriBiasedIgnorePathCase.isEqual(window.openedWorkspace.configPath, path)) {
 			return false; // window is already opened on a workspace with that path
 		}
 

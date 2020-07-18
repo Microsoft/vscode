@@ -3,18 +3,21 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import 'vs/css!./media/scmViewlet';
+import 'vs/css!./media/scm';
 import { Event, Emitter } from 'vs/base/common/event';
 import { IDisposable, Disposable, DisposableStore, combinedDisposable } from 'vs/base/common/lifecycle';
 import { IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
 import { IMenuService, MenuId, IMenu } from 'vs/platform/actions/common/actions';
-import { IAction } from 'vs/base/common/actions';
+import { IAction, Action } from 'vs/base/common/actions';
 import { createAndFillInContextMenuActions, createAndFillInActionBarActions } from 'vs/platform/actions/browser/menuEntryActionViewItem';
-import { ISCMProvider, ISCMResource, ISCMResourceGroup } from 'vs/workbench/contrib/scm/common/scm';
+import { ISCMResource, ISCMResourceGroup, ISCMProvider, ISCMRepository } from 'vs/workbench/contrib/scm/common/scm';
 import { isSCMResource } from './util';
 import { IContextMenuService } from 'vs/platform/contextview/browser/contextView';
 import { equals } from 'vs/base/common/arrays';
-import { ISplice } from 'vs/base/common/sequence';
+import { ISplice, ISequence } from 'vs/base/common/sequence';
+import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
+import { localize } from 'vs/nls';
+import { ICommandService } from 'vs/platform/commands/common/commands';
 
 function actionEquals(a: IAction, b: IAction): boolean {
 	return a.id === b.id;
@@ -35,11 +38,11 @@ export function getSCMResourceContextKey(resource: ISCMResourceGroup | ISCMResou
 	return isSCMResource(resource) ? resource.resourceGroup.id : resource.id;
 }
 
-export class SCMMenus implements IDisposable {
+export class SCMRepositoryMenus implements IDisposable {
 
 	private contextKeyService: IContextKeyService;
-	private titleMenu: IMenu;
 
+	readonly titleMenu: IMenu;
 	private titleActionDisposable: IDisposable = Disposable.None;
 	private titleActions: IAction[] = [];
 	private titleSecondaryActions: IAction[] = [];
@@ -53,8 +56,9 @@ export class SCMMenus implements IDisposable {
 	private readonly disposables = new DisposableStore();
 
 	constructor(
-		provider: ISCMProvider | undefined,
+		readonly provider: ISCMProvider | undefined,
 		@IContextKeyService contextKeyService: IContextKeyService,
+		@ICommandService private readonly commandService: ICommandService,
 		@IMenuService private readonly menuService: IMenuService,
 		@IContextMenuService private readonly contextMenuService: IContextMenuService
 	) {
@@ -63,15 +67,14 @@ export class SCMMenus implements IDisposable {
 
 		if (provider) {
 			scmProviderKey.set(provider.contextValue);
-			this.onDidSpliceGroups({ start: 0, deleteCount: 0, toInsert: provider.groups.elements });
 			provider.groups.onDidSplice(this.onDidSpliceGroups, this, this.disposables);
+			this.onDidSpliceGroups({ start: 0, deleteCount: 0, toInsert: provider.groups.elements });
 		} else {
 			scmProviderKey.set('');
 		}
 
 		this.titleMenu = this.menuService.createMenu(MenuId.SCMTitle, this.contextKeyService);
 		this.disposables.add(this.titleMenu);
-
 		this.titleMenu.onDidChange(this.updateTitleActions, this, this.disposables);
 		this.updateTitleActions();
 	}
@@ -101,6 +104,34 @@ export class SCMMenus implements IDisposable {
 
 	getTitleSecondaryActions(): IAction[] {
 		return this.titleSecondaryActions;
+	}
+
+	getRepositoryContextActions(): IAction[] {
+		if (!this.provider) {
+			return [];
+		}
+
+		const contextKeyService = this.contextKeyService.createScoped();
+		const scmProviderKey = contextKeyService.createKey<string | undefined>('scmProvider', undefined);
+		scmProviderKey.set(this.provider.contextValue);
+
+		const menu = this.menuService.createMenu(MenuId.SCMSourceControl, contextKeyService);
+		const primary: IAction[] = [];
+		const secondary: IAction[] = [];
+		const result = { primary, secondary };
+		const disposable = createAndFillInContextMenuActions(menu, { shouldForwardArgs: true }, result, this.contextMenuService, g => g === 'inline');
+
+		disposable.dispose();
+		menu.dispose();
+		contextKeyService.dispose();
+
+		if (this.provider.rootUri) {
+			secondary.push(new Action('_openInTerminal', localize('open in terminal', "Open In Terminal"), undefined, true, async () => {
+				await this.commandService.executeCommand('openInTerminal', this.provider!.rootUri);
+			}));
+		}
+
+		return secondary;
 	}
 
 	getResourceGroupContextActions(group: ISCMResourceGroup): IAction[] {
@@ -181,5 +212,51 @@ export class SCMMenus implements IDisposable {
 	dispose(): void {
 		this.disposables.dispose();
 		this.resourceGroupMenuEntries.forEach(e => e.disposable.dispose());
+	}
+}
+
+export class SCMMenus {
+
+	private readonly disposables = new DisposableStore();
+	private readonly entries: { repository: ISCMRepository, dispose: () => void }[] = [];
+	private readonly menus = new Map<ISCMProvider, SCMRepositoryMenus>();
+
+	constructor(
+		repositories: ISequence<ISCMRepository>,
+		@IInstantiationService private instantiationService: IInstantiationService
+	) {
+		repositories.onDidSplice(this.onDidSplice, this, this.disposables);
+		this.onDidSplice({ start: 0, deleteCount: 0, toInsert: repositories.elements });
+	}
+
+	getRepositoryMenus(provider: ISCMProvider): SCMRepositoryMenus {
+		if (!this.menus.has(provider)) {
+			throw new Error('SCM Repository menu not found');
+		}
+
+		return this.menus.get(provider)!;
+	}
+
+	private onDidSplice({ start, deleteCount, toInsert }: ISplice<ISCMRepository>): void {
+		const entriesToInsert = toInsert.map(repository => {
+			const menus = this.instantiationService.createInstance(SCMRepositoryMenus, repository.provider);
+			const dispose = () => {
+				menus.dispose();
+				this.menus.delete(repository.provider);
+			};
+
+			this.menus.set(repository.provider, menus);
+			return { repository, dispose };
+		});
+
+		const deletedEntries = this.entries.splice(start, deleteCount, ...entriesToInsert);
+
+		for (const entry of deletedEntries) {
+			entry.dispose();
+		}
+	}
+
+	dispose(): void {
+		this.disposables.dispose();
 	}
 }

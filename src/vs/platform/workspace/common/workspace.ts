@@ -14,7 +14,7 @@ import { IWorkspaceFolderProvider } from 'vs/base/common/labels';
 export const IWorkspaceContextService = createDecorator<IWorkspaceContextService>('contextService');
 
 export interface IWorkspaceContextService extends IWorkspaceFolderProvider {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	/**
 	 * An event which fires on workbench state changes.

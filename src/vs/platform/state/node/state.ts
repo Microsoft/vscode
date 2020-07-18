@@ -8,7 +8,7 @@ import { createDecorator } from 'vs/platform/instantiation/common/instantiation'
 export const IStateService = createDecorator<IStateService>('stateService');
 
 export interface IStateService {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	getItem<T>(key: string, defaultValue: T): T;
 	getItem<T>(key: string, defaultValue?: T): T | undefined;

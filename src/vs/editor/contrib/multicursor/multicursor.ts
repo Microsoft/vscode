@@ -9,7 +9,6 @@ import { KeyChord, KeyCode, KeyMod } from 'vs/base/common/keyCodes';
 import { Disposable, DisposableStore } from 'vs/base/common/lifecycle';
 import { ICodeEditor } from 'vs/editor/browser/editorBrowser';
 import { EditorAction, ServicesAccessor, registerEditorAction, registerEditorContribution } from 'vs/editor/browser/editorExtensions';
-import { RevealTarget } from 'vs/editor/common/controller/cursorCommon';
 import { CursorChangeReason, ICursorSelectionChangedEvent } from 'vs/editor/common/controller/cursorEvents';
 import { CursorMoveCommands } from 'vs/editor/common/controller/cursorMoveCommands';
 import { Range } from 'vs/editor/common/core/range';
@@ -61,20 +60,19 @@ export class InsertCursorAbove extends EditorAction {
 		}
 
 		const useLogicalLine = (args && args.logicalLine === true);
-		const cursors = editor._getCursors();
-		const context = cursors.context;
+		const viewModel = editor._getViewModel();
 
-		if (context.config.readOnly) {
+		if (viewModel.cursorConfig.readOnly) {
 			return;
 		}
 
-		context.model.pushStackElement();
-		cursors.setStates(
+		viewModel.pushStackElement();
+		viewModel.setCursorStates(
 			args.source,
 			CursorChangeReason.Explicit,
-			CursorMoveCommands.addCursorUp(context, cursors.getAll(), useLogicalLine)
+			CursorMoveCommands.addCursorUp(viewModel, viewModel.getCursorStates(), useLogicalLine)
 		);
-		cursors.reveal(args.source, true, RevealTarget.TopMost, ScrollType.Smooth);
+		viewModel.revealTopMostCursor(args.source);
 	}
 }
 
@@ -110,20 +108,19 @@ export class InsertCursorBelow extends EditorAction {
 		}
 
 		const useLogicalLine = (args && args.logicalLine === true);
-		const cursors = editor._getCursors();
-		const context = cursors.context;
+		const viewModel = editor._getViewModel();
 
-		if (context.config.readOnly) {
+		if (viewModel.cursorConfig.readOnly) {
 			return;
 		}
 
-		context.model.pushStackElement();
-		cursors.setStates(
+		viewModel.pushStackElement();
+		viewModel.setCursorStates(
 			args.source,
 			CursorChangeReason.Explicit,
-			CursorMoveCommands.addCursorDown(context, cursors.getAll(), useLogicalLine)
+			CursorMoveCommands.addCursorDown(viewModel, viewModel.getCursorStates(), useLogicalLine)
 		);
-		cursors.reveal(args.source, true, RevealTarget.BottomMost, ScrollType.Smooth);
+		viewModel.revealBottomMostCursor(args.source);
 	}
 }
 

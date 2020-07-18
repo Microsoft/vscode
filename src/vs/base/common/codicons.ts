@@ -52,6 +52,8 @@ export class Codicon {
 		_registry.add(this);
 	}
 	public get classNames() { return 'codicon codicon-' + this.id; }
+	// classNamesArray is useful for migrating to ES6 classlist
+	public get classNamesArray() { return ['codicon', 'codicon-' + this.id]; }
 	public get cssSelector() { return '.codicon.codicon-' + this.id; }
 }
 
@@ -244,7 +246,7 @@ export namespace Codicon {
 	export const collapseAll = new Codicon('collapse-all', { character: '\\eac5' });
 	export const colorMode = new Codicon('color-mode', { character: '\\eac6' });
 	export const commentDiscussion = new Codicon('comment-discussion', { character: '\\eac7' });
-	export const compareChanges = new Codicon('compare-changes', { character: '\\eac8' });
+	export const compareChanges = new Codicon('compare-changes', { character: '\\eafd' });
 	export const creditCard = new Codicon('credit-card', { character: '\\eac9' });
 	export const dash = new Codicon('dash', { character: '\\eacc' });
 	export const dashboard = new Codicon('dashboard', { character: '\\eacd' });
@@ -448,7 +450,6 @@ export namespace Codicon {
 	export const debugReverseContinue = new Codicon('debug-reverse-continue', { character: '\\eb8e' });
 	export const debugStepBack = new Codicon('debug-step-back', { character: '\\eb8f' });
 	export const debugRestartFrame = new Codicon('debug-restart-frame', { character: '\\eb90' });
-	export const debugAlternate = new Codicon('debug-alternate', { character: '\\eb91' });
 	export const callIncoming = new Codicon('call-incoming', { character: '\\eb92' });
 	export const callOutgoing = new Codicon('call-outgoing', { character: '\\eb93' });
 	export const menu = new Codicon('menu', { character: '\\eb94' });
@@ -465,8 +466,16 @@ export namespace Codicon {
 	export const syncIgnored = new Codicon('sync-ignored', { character: '\\eb9f' });
 	export const pinned = new Codicon('pinned', { character: '\\eba0' });
 	export const githubInverted = new Codicon('github-inverted', { character: '\\eba1' });
-	export const debugAlt2 = new Codicon('debug-alt-2', { character: '\\f101' });
-	export const debugAlt = new Codicon('debug-alt', { character: '\\f102' });
+	export const debugAlt = new Codicon('debug-alt', { character: '\\eb91' });
+	export const serverProcess = new Codicon('server-process', { character: '\\eba2' });
+	export const serverEnvironment = new Codicon('server-environment', { character: '\\eba3' });
+	export const pass = new Codicon('pass', { character: '\\eba4' });
+	export const stopCircle = new Codicon('stop-circle', { character: '\\eba5' });
+	export const playCircle = new Codicon('play-circle', { character: '\\eba6' });
+	export const record = new Codicon('record', { character: '\\eba7' });
+	export const debugAltSmall = new Codicon('debug-alt-small', { character: '\\eba8' });
+	export const vmConnect = new Codicon('vm-connect', { character: '\\eba9' });
+	export const cloud = new Codicon('cloud', { character: '\\ebaa' });
 }
 
 
@@ -491,6 +500,7 @@ export function markdownUnescapeCodicons(text: string): string {
 const renderCodiconsRegex = /(\\)?\$\((([a-z0-9\-]+?)(?:~([a-z0-9\-]*?))?)\)/gi;
 export function renderCodicons(text: string): string {
 	return text.replace(renderCodiconsRegex, (_, escaped, codicon, name, animation) => {
+		// If the class for codicons is changed, it should also be updated in src\vs\base\browser\markdownRenderer.ts
 		return escaped
 			? `$(${codicon})`
 			: `<span class="codicon codicon-${name}${animation ? ` codicon-animation-${animation}` : ''}"></span>`;

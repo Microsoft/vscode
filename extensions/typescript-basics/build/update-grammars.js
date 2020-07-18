@@ -25,7 +25,10 @@ function removeNodeTypes(grammar) {
 			}
 		}
 		if (pattern.captures) {
-			if (Object.values(pattern.captures).some(capture => capture.name && capture.name.startsWith('support.variable.object.process'))) {
+			if (Object.values(pattern.captures).some(capture =>
+				capture.name  && (capture.name.startsWith('support.variable.object.process')
+				|| capture.name.startsWith('support.class.console'))
+			)) {
 				return false;
 			}
 		}

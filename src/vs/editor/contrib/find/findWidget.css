@@ -126,10 +126,6 @@
 	justify-content: center;
 }
 
-.monaco-editor .find-widget .button:not(.disabled):hover {
-	background-color: rgba(0, 0, 0, 0.1);
-}
-
 .monaco-editor .find-widget .button.left {
 	margin-left: 0;
 	margin-right: 3px;
@@ -207,13 +203,7 @@
 }
 
 .monaco-editor .find-widget .monaco-sash {
-	width: 2px !important;
-	margin-left: -4px;
-}
-
-.monaco-editor.hc-black .find-widget .button:not(.disabled):hover,
-.monaco-editor.vs-dark .find-widget .button:not(.disabled):hover {
-	background-color: rgba(255, 255, 255, 0.1);
+	left: 0 !important;
 }
 
 .monaco-editor.hc-black .find-widget .button:before {

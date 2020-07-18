@@ -61,22 +61,22 @@ export class FileElement implements ICheckable {
 		}
 
 		// multiple file edits -> reflect single state
-		this.edit.originalEdits.forEach(edit => {
+		for (let edit of this.edit.originalEdits.values()) {
 			if (WorkspaceFileEdit.is(edit)) {
 				checked = checked && model.checked.isChecked(edit);
 			}
-		});
+		}
 
 		// multiple categories and text change -> read all elements
 		if (this.parent instanceof CategoryElement && this.edit.type === BulkFileOperationType.TextEdit) {
 			for (let category of model.categories) {
 				for (let file of category.fileOperations) {
 					if (file.uri.toString() === this.edit.uri.toString()) {
-						file.originalEdits.forEach(edit => {
+						for (const edit of file.originalEdits.values()) {
 							if (WorkspaceFileEdit.is(edit)) {
 								checked = checked && model.checked.isChecked(edit);
 							}
-						});
+						}
 					}
 				}
 			}
@@ -87,18 +87,18 @@ export class FileElement implements ICheckable {
 
 	setChecked(value: boolean): void {
 		let model = this.parent instanceof CategoryElement ? this.parent.parent : this.parent;
-		this.edit.originalEdits.forEach(edit => {
+		for (const edit of this.edit.originalEdits.values()) {
 			model.checked.updateChecked(edit, value);
-		});
+		}
 
 		// multiple categories and file change -> update all elements
 		if (this.parent instanceof CategoryElement && this.edit.type !== BulkFileOperationType.TextEdit) {
 			for (let category of model.categories) {
 				for (let file of category.fileOperations) {
 					if (file.uri.toString() === this.edit.uri.toString()) {
-						file.originalEdits.forEach(edit => {
+						for (const edit of file.originalEdits.values()) {
 							model.checked.updateChecked(edit, value);
-						});
+						}
 					}
 				}
 			}
@@ -112,11 +112,11 @@ export class FileElement implements ICheckable {
 			for (let category of model.categories) {
 				for (let file of category.fileOperations) {
 					if (file.uri.toString() === this.edit.uri.toString()) {
-						file.originalEdits.forEach(edit => {
+						for (const edit of file.originalEdits.values()) {
 							if (WorkspaceFileEdit.is(edit)) {
 								checked = checked && model.checked.isChecked(edit);
 							}
-						});
+						}
 					}
 				}
 			}
@@ -154,11 +154,11 @@ export class TextEditElement implements ICheckable {
 
 		// make sure parent is checked when this element is checked...
 		if (value) {
-			this.parent.edit.originalEdits.forEach(edit => {
+			for (const edit of this.parent.edit.originalEdits.values()) {
 				if (WorkspaceFileEdit.is(edit)) {
 					(<BulkFileOperations>model).checked.updateChecked(edit, value);
 				}
-			});
+			}
 		}
 	}
 

@@ -36,6 +36,8 @@ export namespace EditorContextKeys {
 	export const canUndo = new RawContextKey<boolean>('canUndo', false);
 	export const canRedo = new RawContextKey<boolean>('canRedo', false);
 
+	export const hoverVisible = new RawContextKey<boolean>('editorHoverVisible', false);
+
 	/**
 	 * A context key that is set when an editor is part of a larger editor, like notebooks or
 	 * (future) a diff editor

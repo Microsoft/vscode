@@ -71,7 +71,7 @@ export const SERVICE_ID = 'extensionsWorkbenchService';
 export const IExtensionsWorkbenchService = createDecorator<IExtensionsWorkbenchService>(SERVICE_ID);
 
 export interface IExtensionsWorkbenchService {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 	onChange: Event<IExtension | undefined>;
 	local: IExtension[];
 	installed: IExtension[];
@@ -88,6 +88,10 @@ export interface IExtensionsWorkbenchService {
 	setEnablement(extensions: IExtension | IExtension[], enablementState: EnablementState): Promise<void>;
 	open(extension: IExtension, options?: { sideByside?: boolean, preserveFocus?: boolean, pinned?: boolean }): Promise<any>;
 	checkForUpdates(): Promise<void>;
+
+	// Sync APIs
+	isExtensionIgnoredToSync(extension: IExtension): boolean;
+	toggleExtensionIgnoredToSync(extension: IExtension): Promise<void>;
 }
 
 export const ConfigurationKey = 'extensions';

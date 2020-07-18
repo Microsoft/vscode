@@ -12,7 +12,9 @@ import { safeStringify } from 'vs/base/common/objects';
 import { isObject } from 'vs/base/common/types';
 
 export const NullTelemetryService = new class implements ITelemetryService {
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
+	readonly sendErrorTelemetry = false;
+
 	publicLog(eventName: string, data?: ITelemetryData) {
 		return Promise.resolve(undefined);
 	}
@@ -154,8 +156,8 @@ export function cleanRemoteAuthority(remoteAuthority?: string): string {
 	}
 
 	let ret = 'other';
-	// Whitelisted remote authorities
-	['ssh-remote', 'dev-container', 'attached-container', 'wsl'].forEach((res: string) => {
+	const allowedAuthorities = ['ssh-remote', 'dev-container', 'attached-container', 'wsl'];
+	allowedAuthorities.forEach((res: string) => {
 		if (remoteAuthority!.indexOf(`${res}+`) === 0) {
 			ret = res;
 		}

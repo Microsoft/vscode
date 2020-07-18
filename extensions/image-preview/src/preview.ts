@@ -179,7 +179,7 @@ class Preview extends Disposable {
 
 	private async render() {
 		if (this._previewState !== PreviewState.Disposed) {
-			this.webviewEditor.webview.html = await this.getWebiewContents();
+			this.webviewEditor.webview.html = await this.getWebviewContents();
 		}
 	}
 
@@ -203,7 +203,7 @@ class Preview extends Disposable {
 		}
 	}
 
-	private async getWebiewContents(): Promise<string> {
+	private async getWebviewContents(): Promise<string> {
 		const version = Date.now().toString();
 		const settings = {
 			isMac: process.platform === 'darwin',
@@ -249,9 +249,9 @@ class Preview extends Disposable {
 
 		// Avoid adding cache busting if there is already a query string
 		if (resource.query) {
-			return webviewEditor.webview.asWebviewUri(resource).toString(true);
+			return webviewEditor.webview.asWebviewUri(resource).toString();
 		}
-		return webviewEditor.webview.asWebviewUri(resource).with({ query: `version=${version}` }).toString(true);
+		return webviewEditor.webview.asWebviewUri(resource).with({ query: `version=${version}` }).toString();
 	}
 
 	private extensionResource(path: string) {

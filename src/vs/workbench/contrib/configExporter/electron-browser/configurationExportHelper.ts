@@ -61,7 +61,8 @@ export class DefaultConfigurationExportHelper {
 
 		const processProperty = (name: string, prop: IConfigurationPropertySchema) => {
 			if (processedNames.has(name)) {
-				throw new Error('Setting is registered twice: ' + name);
+				console.warn('Setting is registered twice: ' + name);
+				return;
 			}
 
 			processedNames.add(name);

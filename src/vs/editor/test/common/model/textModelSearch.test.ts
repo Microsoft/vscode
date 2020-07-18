@@ -781,4 +781,29 @@ suite('TextModelSearch', () => {
 
 		model.dispose();
 	});
+
+	test('issue #100134. Zero-length matches should properly step over surrogate pairs', () => {
+		// 1[Laptop]1 - there shoud be no matches inside of [Laptop] emoji
+		assertFindMatches('1\uD83D\uDCBB1', '()', true, false, null,
+			[
+				[1, 1, 1, 1],
+				[1, 2, 1, 2],
+				[1, 4, 1, 4],
+				[1, 5, 1, 5],
+
+			]
+		);
+		// 1[Hacker Cat]1 = 1[Cat Face][ZWJ][Laptop]1 - there shoud be matches between emoji and ZWJ
+		// there shoud be no matches inside of [Cat Face] and [Laptop] emoji
+		assertFindMatches('1\uD83D\uDC31\u200D\uD83D\uDCBB1', '()', true, false, null,
+			[
+				[1, 1, 1, 1],
+				[1, 2, 1, 2],
+				[1, 4, 1, 4],
+				[1, 5, 1, 5],
+				[1, 7, 1, 7],
+				[1, 8, 1, 8]
+			]
+		);
+	});
 });

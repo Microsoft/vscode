@@ -10,7 +10,7 @@ import { tail2 as tail, equals } from 'vs/base/common/arrays';
 import { orthogonal, IView as IGridViewView, GridView, Sizing as GridViewSizing, Box, IGridViewStyles, IViewSize, IGridViewOptions, IBoundarySashes } from './gridview';
 import { Event } from 'vs/base/common/event';
 
-export { Orientation, Sizing as GridViewSizing, IViewSize, orthogonal, LayoutPriority } from './gridview';
+export { Orientation, IViewSize, orthogonal, LayoutPriority } from './gridview';
 
 export const enum Direction {
 	Up,

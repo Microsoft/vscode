@@ -223,4 +223,11 @@ suite('Editor Modes - Link Computer', () => {
 			'    https://foo.bar/[this is foo site]    '
 		);
 	});
+
+	test('issue #100353: Link detection stops at ＆(double-byte)', () => {
+		assertLink(
+			'aa  http://tree-mark.chips.jp/レーズン＆ベリーミックス  aa',
+			'    http://tree-mark.chips.jp/レーズン＆ベリーミックス    '
+		);
+	});
 });

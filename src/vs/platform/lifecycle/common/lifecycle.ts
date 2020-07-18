@@ -123,7 +123,7 @@ export function LifecyclePhaseToString(phase: LifecyclePhase) {
  */
 export interface ILifecycleService {
 
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	/**
 	 * Value indicates how this window got loaded.

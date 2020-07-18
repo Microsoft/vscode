@@ -15,7 +15,7 @@ export class NativePathService extends AbstractPathService {
 		@IRemoteAgentService remoteAgentService: IRemoteAgentService,
 		@IWorkbenchEnvironmentService environmentService: INativeWorkbenchEnvironmentService
 	) {
-		super(() => environmentService.userHome, remoteAgentService);
+		super(environmentService.userHome, remoteAgentService);
 	}
 }
 

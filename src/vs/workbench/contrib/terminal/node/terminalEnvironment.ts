@@ -48,7 +48,7 @@ export async function getMainProcessParentEnv(): Promise<IProcessEnvironment> {
 	// For macOS we want the "root" environment as shells by default run as login shells. It
 	// doesn't appear to be possible to get the "root" environment as `ps eww -o command` for
 	// PID 1 (the parent of the main process when launched from the dock/finder) returns no
-	// environment, because of this we will fill in the root environment using a whitelist of
+	// environment, because of this we will fill in the root environment using a allowlist of
 	// environment variables that we have.
 	if (isMacintosh) {
 		mainProcessParentEnv = {};

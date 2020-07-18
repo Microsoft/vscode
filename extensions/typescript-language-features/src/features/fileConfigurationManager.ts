@@ -10,17 +10,14 @@ import API from '../utils/api';
 import { Disposable } from '../utils/dispose';
 import * as fileSchemes from '../utils/fileSchemes';
 import { isTypeScriptDocument } from '../utils/languageModeIds';
+import { equals } from '../utils/objects';
 import { ResourceMap } from '../utils/resourceMap';
 
-
-function objsAreEqual<T>(a: T, b: T): boolean {
-	let keys = Object.keys(a);
-	for (const key of keys) {
-		if ((a as any)[key] !== (b as any)[key]) {
-			return false;
-		}
+namespace Experimental {
+	// https://github.com/microsoft/TypeScript/pull/37871/
+	export interface UserPreferences extends Proto.UserPreferences {
+		readonly provideRefactorNotApplicableReason?: boolean;
 	}
-	return true;
 }
 
 interface FileConfiguration {
@@ -29,10 +26,7 @@ interface FileConfiguration {
 }
 
 function areFileConfigurationsEqual(a: FileConfiguration, b: FileConfiguration): boolean {
-	return (
-		objsAreEqual(a.formatOptions, b.formatOptions)
-		&& objsAreEqual(a.preferences, b.preferences)
-	);
+	return equals(a, b);
 }
 
 export default class FileConfigurationManager extends Disposable {
@@ -176,16 +170,22 @@ export default class FileConfigurationManager extends Disposable {
 		}
 
 		const config = vscode.workspace.getConfiguration(
+			isTypeScriptDocument(document) ? 'typescript' : 'javascript',
+			document.uri);
+
+		const preferencesConfig = vscode.workspace.getConfiguration(
 			isTypeScriptDocument(document) ? 'typescript.preferences' : 'javascript.preferences',
 			document.uri);
 
-		const preferences: Proto.UserPreferences = {
-			quotePreference: this.getQuoteStylePreference(config),
-			importModuleSpecifierPreference: getImportModuleSpecifierPreference(config),
-			importModuleSpecifierEnding: getImportModuleSpecifierEndingPreference(config),
+		const preferences: Experimental.UserPreferences = {
+			quotePreference: this.getQuoteStylePreference(preferencesConfig),
+			importModuleSpecifierPreference: getImportModuleSpecifierPreference(preferencesConfig),
+			importModuleSpecifierEnding: getImportModuleSpecifierEndingPreference(preferencesConfig),
 			allowTextChangesInNewFiles: document.uri.scheme === fileSchemes.file,
-			providePrefixAndSuffixTextForRename: config.get<boolean>('renameShorthandProperties', true) === false ? false : config.get<boolean>('useAliasesForRenames', true),
+			providePrefixAndSuffixTextForRename: preferencesConfig.get<boolean>('renameShorthandProperties', true) === false ? false : preferencesConfig.get<boolean>('useAliasesForRenames', true),
 			allowRenameOfImportPath: true,
+			includeAutomaticOptionalChainCompletions: config.get<boolean>('suggest.includeAutomaticOptionalChainCompletions', true),
+			provideRefactorNotApplicableReason: true,
 		};
 
 		return preferences;

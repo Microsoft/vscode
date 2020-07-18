@@ -13,7 +13,7 @@ export const IViewletService = createDecorator<IViewletService>('viewletService'
 
 export interface IViewletService {
 
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	readonly onDidViewletRegister: Event<ViewletDescriptor>;
 	readonly onDidViewletDeregister: Event<ViewletDescriptor>;

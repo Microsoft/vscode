@@ -16,7 +16,7 @@ suite('Find', () => {
 		withTestCodeEditor([
 			'ABC DEF',
 			'0123 456'
-		], {}, (editor, cursor) => {
+		], {}, (editor) => {
 
 			// The cursor is at the very top, of the file, at the first ABC
 			let searchStringAtTop = getSelectionSearchString(editor);
@@ -39,7 +39,7 @@ suite('Find', () => {
 		withTestCodeEditor([
 			'ABC DEF',
 			'0123 456'
-		], {}, (editor, cursor) => {
+		], {}, (editor) => {
 
 			// Select A of ABC
 			editor.setSelection(new Range(1, 1, 1, 2));
@@ -63,7 +63,7 @@ suite('Find', () => {
 		withTestCodeEditor([
 			'ABC DEF',
 			'0123 456'
-		], {}, (editor, cursor) => {
+		], {}, (editor) => {
 
 			// Select first line and newline
 			editor.setSelection(new Range(1, 1, 2, 1));

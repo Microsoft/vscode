@@ -154,7 +154,8 @@ steps:
     artifactName: crash-dump-windows-$(VSCODE_ARCH)
     targetPath: .build\crashes
   displayName: 'Publish Crash Reports'
-  condition: succeededOrFailed()
+  continueOnError: true
+  condition: failed()
 
 - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@1
   inputs:
@@ -217,7 +218,7 @@ steps:
     restoreSolution: 'build\azure-pipelines\win32\ESRPClient\packages.config'
     feedsToUse: config
     nugetConfigPath: 'build\azure-pipelines\win32\ESRPClient\NuGet.config'
-    externalFeedCredentials: 3fc0b7f7-da09-4ae7-a9c8-d69824b1819b
+    externalFeedCredentials: 'ESRP Nuget'
     restoreDirectory: packages
 
 - task: ESRPImportCertTask@1
@@ -235,7 +236,6 @@ steps:
     $ErrorActionPreference = "Stop"
     $env:AZURE_STORAGE_ACCESS_KEY_2 = "$(vscode-storage-key)"
     $env:AZURE_DOCUMENTDB_MASTERKEY = "$(builds-docdb-key-readwrite)"
-    $env:VSCODE_HOCKEYAPP_TOKEN = "$(vscode-hockeyapp-token)"
     $env:VSCODE_MIXIN_PASSWORD="$(github-distro-mixin-password)"
     .\build\azure-pipelines\win32\publish.ps1
   displayName: Publish

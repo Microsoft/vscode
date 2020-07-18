@@ -31,6 +31,16 @@ export class TextChange {
 		public readonly newText: string
 	) { }
 
+	public toString(): string {
+		if (this.oldText.length === 0) {
+			return `(insert@${this.oldPosition} "${this.newText}")`;
+		}
+		if (this.newText.length === 0) {
+			return `(delete@${this.oldPosition} "${this.oldText}")`;
+		}
+		return `(replace@${this.oldPosition} "${this.oldText}" with "${this.newText}")`;
+	}
+
 	private static _writeStringSize(str: string): number {
 		return (
 			4 + 2 * str.length

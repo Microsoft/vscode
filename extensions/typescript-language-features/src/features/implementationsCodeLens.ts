@@ -7,11 +7,11 @@ import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import type * as Proto from '../protocol';
 import * as PConst from '../protocol.const';
-import { ITypeScriptServiceClient } from '../typescriptService';
-import { ConfigurationDependentRegistration } from '../utils/dependentRegistration';
-import { TypeScriptBaseCodeLensProvider, ReferencesCodeLens, getSymbolRange } from './baseCodeLensProvider';
 import { CachedResponse } from '../tsServer/cachedResponse';
+import { ClientCapability, ITypeScriptServiceClient } from '../typescriptService';
+import { conditionalRegistration, requireCapability, requireConfiguration } from '../utils/dependentRegistration';
 import * as typeConverters from '../utils/typeConverters';
+import { getSymbolRange, ReferencesCodeLens, TypeScriptBaseCodeLensProvider } from './baseCodeLensProvider';
 
 const localize = nls.loadMessageBundle();
 
@@ -94,7 +94,10 @@ export function register(
 	client: ITypeScriptServiceClient,
 	cachedResponse: CachedResponse<Proto.NavTreeResponse>,
 ) {
-	return new ConfigurationDependentRegistration(modeId, 'implementationsCodeLens.enabled', () => {
+	return conditionalRegistration([
+		requireConfiguration(modeId, 'implementationsCodeLens.enabled'),
+		requireCapability(client, ClientCapability.Semantic),
+	], () => {
 		return vscode.languages.registerCodeLensProvider(selector,
 			new TypeScriptImplementationsCodeLensProvider(client, cachedResponse));
 	});

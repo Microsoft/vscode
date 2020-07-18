@@ -591,7 +591,7 @@ class MockCommandService implements ICommandService {
 }
 
 class MockQuickInputService implements IQuickInputService {
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	readonly onShow = Event.None;
 	readonly onHide = Event.None;

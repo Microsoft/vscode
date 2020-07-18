@@ -1,7 +1,12 @@
 {
 	"extends": "../shared.tsconfig.json",
 	"compilerOptions": {
-		"outDir": "./out"
+		"outDir": "./out",
+		"lib": [
+			"dom",
+			"dom.iterable",
+			"es2018"
+		]
 	},
 	"include": [
 		"src/**/*"

@@ -6,7 +6,7 @@
 import * as assert from 'assert';
 import 'mocha';
 import * as vscode from 'vscode';
-import { CURSOR, withRandomFileEditor } from './testUtils';
+import { CURSOR, withRandomFileEditor, wait, joinLines } from './testUtils';
 
 const onDocumentChange = (doc: vscode.TextDocument): Promise<vscode.TextDocument> => {
 	return new Promise<vscode.TextDocument>(resolve => {
@@ -31,28 +31,24 @@ suite('OnEnter', () => {
 	test('should indent after if block with braces', () => {
 		return withRandomFileEditor(`if (true) {${CURSOR}`, 'js', async (_editor, document) => {
 			await type(document, '\nx');
-			assert.strictEqual(document.getText(), `if (true) {\n    x`);
+			assert.strictEqual(
+				document.getText(),
+				joinLines(
+					`if (true) {`,
+					`    x`));
 		});
 	});
 
 	test('should indent within empty object literal', () => {
 		return withRandomFileEditor(`({${CURSOR}})`, 'js', async (_editor, document) => {
 			await type(document, '\nx');
-			assert.strictEqual(document.getText(), `({\n    x\n})`);
-		});
-	});
+			await wait(500);
 
-	test('should indent after simple jsx tag with attributes', () => {
-		return withRandomFileEditor(`const a = <div onclick={bla}>${CURSOR}`, 'jsx', async (_editor, document) => {
-			await type(document, '\nx');
-			assert.strictEqual(document.getText(), `const a = <div onclick={bla}>\n    x`);
-		});
-	});
-
-	test('should indent after simple jsx tag with attributes', () => {
-		return withRandomFileEditor(`const a = <div onclick={bla}>${CURSOR}`, 'jsx', async (_editor, document) => {
-			await type(document, '\nx');
-			assert.strictEqual(document.getText(), `const a = <div onclick={bla}>\n    x`);
+			assert.strictEqual(
+				document.getText(),
+				joinLines(`({`,
+					`    x`,
+					`})`));
 		});
 	});
 });

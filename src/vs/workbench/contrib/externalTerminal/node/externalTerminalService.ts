@@ -13,14 +13,10 @@ import { assign } from 'vs/base/common/objects';
 import { IExternalTerminalService, IExternalTerminalConfiguration, IExternalTerminalSettings } from 'vs/workbench/contrib/externalTerminal/common/externalTerminal';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { getPathFromAmdModule } from 'vs/base/common/amd';
-import { IConfigurationRegistry, Extensions, ConfigurationScope } from 'vs/platform/configuration/common/configurationRegistry';
-import { registerSingleton } from 'vs/platform/instantiation/common/extensions';
-import { Registry } from 'vs/platform/registry/common/platform';
 import { optional } from 'vs/platform/instantiation/common/instantiation';
-
+import { DEFAULT_TERMINAL_OSX } from 'vs/workbench/contrib/externalTerminal/node/externalTerminal';
 
 const TERMINAL_TITLE = nls.localize('console.title', "VS Code Console");
-export const DEFAULT_TERMINAL_OSX = 'Terminal.app';
 
 export class WindowsExternalTerminalService implements IExternalTerminalService {
 	public _serviceBrand: undefined;
@@ -358,54 +354,3 @@ function quote(args: string[]): string {
 	}
 	return r;
 }
-
-if (env.isWindows) {
-	registerSingleton(IExternalTerminalService, WindowsExternalTerminalService, true);
-} else if (env.isMacintosh) {
-	registerSingleton(IExternalTerminalService, MacExternalTerminalService, true);
-} else if (env.isLinux) {
-	registerSingleton(IExternalTerminalService, LinuxExternalTerminalService, true);
-}
-
-LinuxExternalTerminalService.getDefaultTerminalLinuxReady().then(defaultTerminalLinux => {
-	let configurationRegistry = Registry.as<IConfigurationRegistry>(Extensions.Configuration);
-	configurationRegistry.registerConfiguration({
-		id: 'externalTerminal',
-		order: 100,
-		title: nls.localize('terminalConfigurationTitle', "External Terminal"),
-		type: 'object',
-		properties: {
-			'terminal.explorerKind': {
-				type: 'string',
-				enum: [
-					'integrated',
-					'external'
-				],
-				enumDescriptions: [
-					nls.localize('terminal.explorerKind.integrated', "Use VS Code's integrated terminal."),
-					nls.localize('terminal.explorerKind.external', "Use the configured external terminal.")
-				],
-				description: nls.localize('explorer.openInTerminalKind', "Customizes what kind of terminal to launch."),
-				default: 'integrated'
-			},
-			'terminal.external.windowsExec': {
-				type: 'string',
-				description: nls.localize('terminal.external.windowsExec', "Customizes which terminal to run on Windows."),
-				default: WindowsExternalTerminalService.getDefaultTerminalWindows(),
-				scope: ConfigurationScope.APPLICATION
-			},
-			'terminal.external.osxExec': {
-				type: 'string',
-				description: nls.localize('terminal.external.osxExec', "Customizes which terminal application to run on macOS."),
-				default: DEFAULT_TERMINAL_OSX,
-				scope: ConfigurationScope.APPLICATION
-			},
-			'terminal.external.linuxExec': {
-				type: 'string',
-				description: nls.localize('terminal.external.linuxExec', "Customizes which terminal to run on Linux."),
-				default: defaultTerminalLinux,
-				scope: ConfigurationScope.APPLICATION
-			}
-		}
-	});
-});

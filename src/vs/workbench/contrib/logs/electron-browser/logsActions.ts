@@ -7,7 +7,7 @@ import { Action } from 'vs/base/common/actions';
 import { join } from 'vs/base/common/path';
 import { URI } from 'vs/base/common/uri';
 import * as nls from 'vs/nls';
-import { IElectronService } from 'vs/platform/electron/node/electron';
+import { IElectronService } from 'vs/platform/electron/electron-sandbox/electron';
 import { IEnvironmentService } from 'vs/platform/environment/common/environment';
 import { IWorkbenchEnvironmentService } from 'vs/workbench/services/environment/common/environmentService';
 import { IFileService } from 'vs/platform/files/common/files';

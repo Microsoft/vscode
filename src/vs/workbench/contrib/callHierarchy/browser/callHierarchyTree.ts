@@ -9,7 +9,7 @@ import { CancellationToken } from 'vs/base/common/cancellation';
 import { IIdentityProvider, IListVirtualDelegate } from 'vs/base/browser/ui/list/list';
 import { FuzzyScore, createMatches } from 'vs/base/common/filters';
 import { IconLabel } from 'vs/base/browser/ui/iconLabel/iconLabel';
-import { SymbolKinds, Location } from 'vs/editor/common/modes';
+import { SymbolKinds, Location, SymbolTag } from 'vs/editor/common/modes';
 import { compare } from 'vs/base/common/strings';
 import { Range } from 'vs/editor/common/core/range';
 import { IListAccessibilityProvider } from 'vs/base/browser/ui/list/listWidget';
@@ -117,11 +117,12 @@ export class CallRenderer implements ITreeRenderer<Call, FuzzyScore, CallRenderi
 
 	renderElement(node: ITreeNode<Call, FuzzyScore>, _index: number, template: CallRenderingTemplate): void {
 		const { element, filterData } = node;
+		const deprecated = element.item.tags?.includes(SymbolTag.Deprecated);
 		template.icon.className = SymbolKinds.toCssClassName(element.item.kind, true);
 		template.label.setLabel(
 			element.item.name,
 			element.item.detail,
-			{ labelEscapeNewLines: true, matches: createMatches(filterData) }
+			{ labelEscapeNewLines: true, matches: createMatches(filterData), strikethrough: deprecated }
 		);
 	}
 	disposeTemplate(template: CallRenderingTemplate): void {
@@ -154,7 +155,7 @@ export class AccessibilityProvider implements IListAccessibilityProvider<Call> {
 		if (this.getDirection() === CallHierarchyDirection.CallsFrom) {
 			return localize('from', "calls from {0}", element.item.name);
 		} else {
-			return localize('to', "callers fo {0}", element.item.name);
+			return localize('to', "callers of {0}", element.item.name);
 		}
 	}
 }

@@ -341,7 +341,7 @@ class DebugHoverAccessibilityProvider implements IListAccessibilityProvider<IExp
 	}
 
 	getAriaLabel(element: IExpression): string {
-		return nls.localize('variableAriaLabel', "{0}, value {1}, variables, debug", element.name, element.value);
+		return nls.localize({ key: 'variableAriaLabel', comment: ['Do not translate placholders. Placeholders are name and value of a variable.'] }, "{0}, value {1}, variables, debug", element.name, element.value);
 	}
 }
 

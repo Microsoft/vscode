@@ -254,13 +254,13 @@
 	},
 	{
 		"c": "in",
-		"t": "source.python keyword.operator.logical.python",
+		"t": "source.python keyword.control.flow.python",
 		"r": {
-			"dark_plus": "keyword.operator.logical.python: #569CD6",
-			"light_plus": "keyword.operator.logical.python: #0000FF",
-			"dark_vs": "keyword.operator.logical.python: #569CD6",
-			"light_vs": "keyword.operator.logical.python: #0000FF",
-			"hc_black": "keyword.operator.logical.python: #569CD6"
+			"dark_plus": "keyword.control: #C586C0",
+			"light_plus": "keyword.control: #AF00DB",
+			"dark_vs": "keyword.control: #569CD6",
+			"light_vs": "keyword.control: #0000FF",
+			"hc_black": "keyword.control: #C586C0"
 		}
 	},
 	{
@@ -298,7 +298,7 @@
 	},
 	{
 		"c": "request",
-		"t": "source.python meta.member.access.python",
+		"t": "source.python meta.member.access.python meta.attribute.python",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -565,7 +565,7 @@
 		"t": "source.python string.quoted.single.python constant.character.escape.python",
 		"r": {
 			"dark_plus": "constant.character.escape: #D7BA7D",
-			"light_plus": "constant.character.escape: #FF0000",
+			"light_plus": "constant.character.escape: #EE0000",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
 			"hc_black": "constant.character: #569CD6"

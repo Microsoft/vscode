@@ -109,7 +109,7 @@ suite('Replace Pattern test', () => {
 		actual = testObject.getReplaceString('bla');
 		assert.equal('hellobla', actual);
 
-		testObject = new ReplacePattern('import * as $1 from \'$2\';', { pattern: 'let\\s+(\\w+)\\s*=\\s*require\\s*\\(\\s*[\'\"]([\\w\.\\-/]+)\\s*[\'\"]\\s*\\)\\s*', isRegExp: true });
+		testObject = new ReplacePattern('import * as $1 from \'$2\';', { pattern: 'let\\s+(\\w+)\\s*=\\s*require\\s*\\(\\s*[\'\"]([\\w.\\-/]+)\\s*[\'\"]\\s*\\)\\s*', isRegExp: true });
 		actual = testObject.getReplaceString('let fs = require(\'fs\')');
 		assert.equal('import * as fs from \'fs\';', actual);
 
@@ -119,19 +119,19 @@ suite('Replace Pattern test', () => {
 		actual = testObject.getReplaceString('let require(\'fs\')');
 		assert.equal(null, actual);
 
-		testObject = new ReplacePattern('import * as $1 from \'$1\';', { pattern: 'let\\s+(\\w+)\\s*=\\s*require\\s*\\(\\s*[\'\"]([\\w\.\\-/]+)\\s*[\'\"]\\s*\\)\\s*', isRegExp: true });
+		testObject = new ReplacePattern('import * as $1 from \'$1\';', { pattern: 'let\\s+(\\w+)\\s*=\\s*require\\s*\\(\\s*[\'\"]([\\w.\\-/]+)\\s*[\'\"]\\s*\\)\\s*', isRegExp: true });
 		actual = testObject.getReplaceString('let something = require(\'fs\')');
 		assert.equal('import * as something from \'something\';', actual);
 
-		testObject = new ReplacePattern('import * as $2 from \'$1\';', { pattern: 'let\\s+(\\w+)\\s*=\\s*require\\s*\\(\\s*[\'\"]([\\w\.\\-/]+)\\s*[\'\"]\\s*\\)\\s*', isRegExp: true });
+		testObject = new ReplacePattern('import * as $2 from \'$1\';', { pattern: 'let\\s+(\\w+)\\s*=\\s*require\\s*\\(\\s*[\'\"]([\\w.\\-/]+)\\s*[\'\"]\\s*\\)\\s*', isRegExp: true });
 		actual = testObject.getReplaceString('let something = require(\'fs\')');
 		assert.equal('import * as fs from \'something\';', actual);
 
-		testObject = new ReplacePattern('import * as $0 from \'$0\';', { pattern: 'let\\s+(\\w+)\\s*=\\s*require\\s*\\(\\s*[\'\"]([\\w\.\\-/]+)\\s*[\'\"]\\s*\\)\\s*', isRegExp: true });
+		testObject = new ReplacePattern('import * as $0 from \'$0\';', { pattern: 'let\\s+(\\w+)\\s*=\\s*require\\s*\\(\\s*[\'\"]([\\w.\\-/]+)\\s*[\'\"]\\s*\\)\\s*', isRegExp: true });
 		actual = testObject.getReplaceString('let something = require(\'fs\');');
 		assert.equal('import * as let something = require(\'fs\') from \'let something = require(\'fs\')\';', actual);
 
-		testObject = new ReplacePattern('import * as $1 from \'$2\';', { pattern: 'let\\s+(\\w+)\\s*=\\s*require\\s*\\(\\s*[\'\"]([\\w\.\\-/]+)\\s*[\'\"]\\s*\\)\\s*', isRegExp: false });
+		testObject = new ReplacePattern('import * as $1 from \'$2\';', { pattern: 'let\\s+(\\w+)\\s*=\\s*require\\s*\\(\\s*[\'\"]([\\w.\\-/]+)\\s*[\'\"]\\s*\\)\\s*', isRegExp: false });
 		actual = testObject.getReplaceString('let fs = require(\'fs\');');
 		assert.equal(null, actual);
 

@@ -4,13 +4,12 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as assert from 'assert';
-import { IUserDataSyncStoreService, IUserDataSyncService, SyncResource, SyncStatus, IGlobalState } from 'vs/platform/userDataSync/common/userDataSync';
+import { IUserDataSyncStoreService, IUserDataSyncService, SyncResource, SyncStatus, IGlobalState, ISyncData } from 'vs/platform/userDataSync/common/userDataSync';
 import { UserDataSyncClient, UserDataSyncTestServer } from 'vs/platform/userDataSync/test/common/userDataSyncClient';
 import { DisposableStore, toDisposable } from 'vs/base/common/lifecycle';
 import { UserDataSyncService } from 'vs/platform/userDataSync/common/userDataSyncService';
 import { IFileService } from 'vs/platform/files/common/files';
 import { IEnvironmentService } from 'vs/platform/environment/common/environment';
-import { ISyncData } from 'vs/platform/userDataSync/common/abstractSynchronizer';
 import { IStorageService, StorageScope } from 'vs/platform/storage/common/storage';
 import { GlobalStateSynchroniser } from 'vs/platform/userDataSync/common/globalStateSync';
 import { VSBuffer } from 'vs/base/common/buffer';
@@ -44,11 +43,58 @@ suite('GlobalStateSync', () => {
 
 	teardown(() => disposableStore.clear());
 
+	test('when global state does not exist', async () => {
+		assert.deepEqual(await testObject.getLastSyncUserData(), null);
+		let manifest = await testClient.manifest();
+		server.reset();
+		await testObject.sync(manifest);
+
+		assert.deepEqual(server.requests, [
+			{ type: 'GET', url: `${server.url}/v1/resource/${testObject.resource}/latest`, headers: {} },
+		]);
+
+		const lastSyncUserData = await testObject.getLastSyncUserData();
+		const remoteUserData = await testObject.getRemoteUserData(null);
+		assert.deepEqual(lastSyncUserData!.ref, remoteUserData.ref);
+		assert.deepEqual(lastSyncUserData!.syncData, remoteUserData.syncData);
+		assert.equal(lastSyncUserData!.syncData, null);
+
+		manifest = await testClient.manifest();
+		server.reset();
+		await testObject.sync(manifest);
+		assert.deepEqual(server.requests, []);
+
+		manifest = await testClient.manifest();
+		server.reset();
+		await testObject.sync(manifest);
+		assert.deepEqual(server.requests, []);
+	});
+
+	test('when global state is created after first sync', async () => {
+		await testObject.sync(await testClient.manifest());
+		updateStorage('a', 'value1', testClient);
+
+		let lastSyncUserData = await testObject.getLastSyncUserData();
+		const manifest = await testClient.manifest();
+		server.reset();
+		await testObject.sync(manifest);
+
+		assert.deepEqual(server.requests, [
+			{ type: 'POST', url: `${server.url}/v1/resource/${testObject.resource}`, headers: { 'If-Match': lastSyncUserData?.ref } },
+		]);
+
+		lastSyncUserData = await testObject.getLastSyncUserData();
+		const remoteUserData = await testObject.getRemoteUserData(null);
+		assert.deepEqual(lastSyncUserData!.ref, remoteUserData.ref);
+		assert.deepEqual(lastSyncUserData!.syncData, remoteUserData.syncData);
+		assert.deepEqual(JSON.parse(lastSyncUserData!.syncData!.content).storage, { 'a': { version: 1, value: 'value1' } });
+	});
+
 	test('first time sync - outgoing to server (no state)', async () => {
 		updateStorage('a', 'value1', testClient);
 		await updateLocale(testClient);
 
-		await testObject.sync();
+		await testObject.sync(await testClient.manifest());
 		assert.equal(testObject.status, SyncStatus.Idle);
 		assert.deepEqual(testObject.conflicts, []);
 
@@ -63,7 +109,7 @@ suite('GlobalStateSync', () => {
 		await updateLocale(client2);
 		await client2.sync();
 
-		await testObject.sync();
+		await testObject.sync(await testClient.manifest());
 		assert.equal(testObject.status, SyncStatus.Idle);
 		assert.deepEqual(testObject.conflicts, []);
 
@@ -76,7 +122,7 @@ suite('GlobalStateSync', () => {
 		await client2.sync();
 
 		updateStorage('b', 'value2', testClient);
-		await testObject.sync();
+		await testObject.sync(await testClient.manifest());
 		assert.equal(testObject.status, SyncStatus.Idle);
 		assert.deepEqual(testObject.conflicts, []);
 
@@ -94,7 +140,7 @@ suite('GlobalStateSync', () => {
 		await client2.sync();
 
 		updateStorage('a', 'value2', client2);
-		await testObject.sync();
+		await testObject.sync(await testClient.manifest());
 
 		assert.equal(testObject.status, SyncStatus.Idle);
 		assert.deepEqual(testObject.conflicts, []);
@@ -109,10 +155,10 @@ suite('GlobalStateSync', () => {
 
 	test('sync adding a storage value', async () => {
 		updateStorage('a', 'value1', testClient);
-		await testObject.sync();
+		await testObject.sync(await testClient.manifest());
 
 		updateStorage('b', 'value2', testClient);
-		await testObject.sync();
+		await testObject.sync(await testClient.manifest());
 		assert.equal(testObject.status, SyncStatus.Idle);
 		assert.deepEqual(testObject.conflicts, []);
 
@@ -127,10 +173,10 @@ suite('GlobalStateSync', () => {
 
 	test('sync updating a storage value', async () => {
 		updateStorage('a', 'value1', testClient);
-		await testObject.sync();
+		await testObject.sync(await testClient.manifest());
 
 		updateStorage('a', 'value2', testClient);
-		await testObject.sync();
+		await testObject.sync(await testClient.manifest());
 		assert.equal(testObject.status, SyncStatus.Idle);
 		assert.deepEqual(testObject.conflicts, []);
 
@@ -145,10 +191,10 @@ suite('GlobalStateSync', () => {
 	test('sync removing a storage value', async () => {
 		updateStorage('a', 'value1', testClient);
 		updateStorage('b', 'value2', testClient);
-		await testObject.sync();
+		await testObject.sync(await testClient.manifest());
 
 		removeStorage('b', testClient);
-		await testObject.sync();
+		await testObject.sync(await testClient.manifest());
 		assert.equal(testObject.status, SyncStatus.Idle);
 		assert.deepEqual(testObject.conflicts, []);
 

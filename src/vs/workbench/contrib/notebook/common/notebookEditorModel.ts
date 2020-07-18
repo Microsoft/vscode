@@ -3,44 +3,47 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import * as nls from 'vs/nls';
 import { EditorModel, IRevertOptions } from 'vs/workbench/common/editor';
 import { Emitter, Event } from 'vs/base/common/event';
-import { INotebookEditorModel } from 'vs/workbench/contrib/notebook/common/notebookCommon';
+import { INotebookEditorModel, NotebookDocumentBackupData } from 'vs/workbench/contrib/notebook/common/notebookCommon';
 import { NotebookTextModel } from 'vs/workbench/contrib/notebook/common/model/notebookTextModel';
-import { Disposable, IDisposable, dispose } from 'vs/base/common/lifecycle';
-import { ResourceMap } from 'vs/base/common/map';
-import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { INotebookService } from 'vs/workbench/contrib/notebook/common/notebookService';
 import { URI } from 'vs/base/common/uri';
-import { IWorkingCopyService, IWorkingCopy, IWorkingCopyBackup } from 'vs/workbench/services/workingCopy/common/workingCopyService';
+import { IWorkingCopyService, IWorkingCopy, IWorkingCopyBackup, WorkingCopyCapabilities } from 'vs/workbench/services/workingCopy/common/workingCopyService';
 import { basename } from 'vs/base/common/resources';
 import { CancellationTokenSource } from 'vs/base/common/cancellation';
 import { IBackupFileService } from 'vs/workbench/services/backup/common/backup';
 import { DefaultEndOfLine, ITextBuffer, EndOfLinePreference } from 'vs/editor/common/model';
+import { Schemas } from 'vs/base/common/network';
+import { IFileStatWithMetadata, IFileService } from 'vs/platform/files/common/files';
+import { INotificationService, Severity } from 'vs/platform/notification/common/notification';
 
 export interface INotebookEditorModelManager {
 	models: NotebookEditorModel[];
 
-	resolve(resource: URI, viewType: string): Promise<NotebookEditorModel>;
+	resolve(resource: URI, viewType: string, editorId?: string): Promise<NotebookEditorModel>;
 
 	get(resource: URI): NotebookEditorModel | undefined;
 }
 
-export interface INotebookRevertOptions {
+export interface INotebookLoadOptions {
 	/**
 	 * Go to disk bypassing any cache of the model if any.
 	 */
 	forceReadFromDisk?: boolean;
+
+	editorId?: string;
 }
 
 
 export class NotebookEditorModel extends EditorModel implements IWorkingCopy, INotebookEditorModel {
-	private _dirty = false;
 	protected readonly _onDidChangeDirty = this._register(new Emitter<void>());
 	readonly onDidChangeDirty = this._onDidChangeDirty.event;
 	private readonly _onDidChangeContent = this._register(new Emitter<void>());
 	readonly onDidChangeContent: Event<void> = this._onDidChangeContent.event;
 	private _notebook!: NotebookTextModel;
+	private _lastResolvedFileStat: IFileStatWithMetadata | undefined;
 
 	get notebook() {
 		return this._notebook;
@@ -52,90 +55,150 @@ export class NotebookEditorModel extends EditorModel implements IWorkingCopy, IN
 		return this._name;
 	}
 
+	private _workingCopyResource: URI;
+
 	constructor(
 		public readonly resource: URI,
 		public readonly viewType: string,
-		@INotebookService private readonly notebookService: INotebookService,
-		@IWorkingCopyService private readonly workingCopyService: IWorkingCopyService,
-		@IBackupFileService private readonly backupFileService: IBackupFileService
+		@INotebookService private readonly _notebookService: INotebookService,
+		@IWorkingCopyService private readonly _workingCopyService: IWorkingCopyService,
+		@IBackupFileService private readonly _backupFileService: IBackupFileService,
+		@IFileService private readonly _fileService: IFileService,
+		@INotificationService private readonly _notificationService: INotificationService
 	) {
 		super();
-		this._register(this.workingCopyService.registerWorkingCopy(this));
+
+		const input = this;
+		this._workingCopyResource = resource.with({ scheme: Schemas.vscodeNotebook });
+		const workingCopyAdapter = new class implements IWorkingCopy {
+			readonly resource = input._workingCopyResource;
+			get name() { return input.name; }
+			readonly capabilities = input.isUntitled() ? WorkingCopyCapabilities.Untitled : input.capabilities;
+			readonly onDidChangeDirty = input.onDidChangeDirty;
+			readonly onDidChangeContent = input.onDidChangeContent;
+			isDirty(): boolean { return input.isDirty(); }
+			backup(): Promise<IWorkingCopyBackup> { return input.backup(); }
+			save(): Promise<boolean> { return input.save(); }
+			revert(options?: IRevertOptions): Promise<void> { return input.revert(options); }
+		};
+
+		this._register(this._workingCopyService.registerWorkingCopy(workingCopyAdapter));
 	}
 
 	capabilities = 0;
 
-	async backup(): Promise<IWorkingCopyBackup> {
-		return { content: this._notebook.createSnapshot(true) };
+	async backup(): Promise<IWorkingCopyBackup<NotebookDocumentBackupData>> {
+		if (this._notebook.supportBackup) {
+			const tokenSource = new CancellationTokenSource();
+			const backupId = await this._notebookService.backup(this.viewType, this.resource, tokenSource.token);
+			const stats = await this._resolveStats(this.resource);
+
+			return {
+				meta: {
+					mtime: stats?.mtime || new Date().getTime(),
+					name: this._name,
+					viewType: this._notebook.viewType,
+					backupId: backupId
+				}
+			};
+		} else {
+			return {
+				meta: {
+					mtime: new Date().getTime(),
+					name: this._name,
+					viewType: this._notebook.viewType
+				},
+				content: this._notebook.createSnapshot(true)
+			};
+		}
 	}
 
 	async revert(options?: IRevertOptions | undefined): Promise<void> {
 		if (options?.soft) {
-			await this.backupFileService.discardBackup(this.resource);
+			await this._backupFileService.discardBackup(this.resource);
 			return;
 		}
 
 		await this.load({ forceReadFromDisk: true });
-		this._dirty = false;
+		const newStats = await this._resolveStats(this.resource);
+		this._lastResolvedFileStat = newStats;
+
+		this._notebook.setDirty(false);
 		this._onDidChangeDirty.fire();
-		return;
 	}
 
-	async load(options?: INotebookRevertOptions): Promise<NotebookEditorModel> {
+	async load(options?: INotebookLoadOptions): Promise<NotebookEditorModel> {
 		if (options?.forceReadFromDisk) {
-			return this.loadFromProvider(true);
+			return this.loadFromProvider(true, undefined, undefined);
 		}
+
 		if (this.isResolved()) {
 			return this;
 		}
 
-		const backup = await this.backupFileService.resolve(this.resource);
+		const backup = await this._backupFileService.resolve<NotebookDocumentBackupData>(this._workingCopyResource);
 
 		if (this.isResolved()) {
 			return this; // Make sure meanwhile someone else did not succeed in loading
 		}
 
-		if (backup) {
+		if (backup && backup.meta?.backupId === undefined) {
 			try {
-				return await this.loadFromBackup(backup.value.create(DefaultEndOfLine.LF));
+				return await this.loadFromBackup(backup.value.create(DefaultEndOfLine.LF), options?.editorId);
 			} catch (error) {
 				// this.logService.error('[text file model] load() from backup', error); // ignore error and continue to load as file below
 			}
 		}
 
-		return this.loadFromProvider(false);
+		return this.loadFromProvider(false, options?.editorId, backup?.meta?.backupId);
 	}
 
-	private async loadFromBackup(content: ITextBuffer): Promise<NotebookEditorModel> {
+	private async loadFromBackup(content: ITextBuffer, editorId?: string): Promise<NotebookEditorModel> {
 		const fullRange = content.getRangeAt(0, content.getLength());
 		const data = JSON.parse(content.getValueInRange(fullRange, EndOfLinePreference.LF));
 
-		const notebook = await this.notebookService.createNotebookFromBackup(this.viewType!, this.resource, data.metadata, data.languages, data.cells);
+		const notebook = await this._notebookService.createNotebookFromBackup(this.viewType!, this.resource, data.metadata, data.languages, data.cells, editorId);
 		this._notebook = notebook!;
+		const newStats = await this._resolveStats(this.resource);
+		this._lastResolvedFileStat = newStats;
+		this._register(this._notebook);
 
 		this._name = basename(this._notebook!.uri);
 
 		this._register(this._notebook.onDidChangeContent(() => {
-			this.setDirty(true);
 			this._onDidChangeContent.fire();
 		}));
+		this._register(this._notebook.onDidChangeDirty(() => {
+			this._onDidChangeDirty.fire();
+		}));
 
-		await this.backupFileService.discardBackup(this.resource);
-		this.setDirty(true);
+		await this._backupFileService.discardBackup(this._workingCopyResource);
+		this._notebook.setDirty(true);
 
 		return this;
 	}
 
-	private async loadFromProvider(forceReloadFromDisk: boolean) {
-		const notebook = await this.notebookService.resolveNotebook(this.viewType!, this.resource, forceReloadFromDisk);
+	private async loadFromProvider(forceReloadFromDisk: boolean, editorId: string | undefined, backupId: string | undefined) {
+		const notebook = await this._notebookService.resolveNotebook(this.viewType!, this.resource, forceReloadFromDisk, editorId, backupId);
 		this._notebook = notebook!;
+		const newStats = await this._resolveStats(this.resource);
+		this._lastResolvedFileStat = newStats;
+
+		this._register(this._notebook);
 
 		this._name = basename(this._notebook!.uri);
 
 		this._register(this._notebook.onDidChangeContent(() => {
-			this.setDirty(true);
 			this._onDidChangeContent.fire();
 		}));
+		this._register(this._notebook.onDidChangeDirty(() => {
+			this._onDidChangeDirty.fire();
+		}));
+
+		if (backupId) {
+			await this._backupFileService.discardBackup(this._workingCopyResource);
+			this._notebook.setDirty(true);
+		}
 
 		return this;
 	}
@@ -144,146 +207,98 @@ export class NotebookEditorModel extends EditorModel implements IWorkingCopy, IN
 		return !!this._notebook;
 	}
 
-	setDirty(newState: boolean) {
-		if (this._dirty !== newState) {
-			this._dirty = newState;
-			this._onDidChangeDirty.fire();
-		}
+	isDirty() {
+		return this._notebook?.isDirty;
 	}
 
-	isDirty() {
-		return this._dirty;
+	isUntitled() {
+		return this.resource.scheme === Schemas.untitled;
+	}
+
+	private async _assertStat() {
+		const stats = await this._resolveStats(this.resource);
+		if (this._lastResolvedFileStat && stats && stats.mtime > this._lastResolvedFileStat.mtime) {
+			return new Promise<'overwrite' | 'revert' | 'none'>(resolve => {
+				const handle = this._notificationService.prompt(
+					Severity.Info,
+					nls.localize('notebook.staleSaveError', "The content of the file is newer. Please revert your version with the file contents or overwrite the content of the file with your changes"),
+					[{
+						label: nls.localize('notebook.staleSaveError.revert', "Revert"),
+						run: () => {
+							resolve('revert');
+						}
+					}, {
+						label: nls.localize('notebook.staleSaveError.overwrite.', "Overwrite"),
+						run: () => {
+							resolve('overwrite');
+						}
+					}],
+					{ sticky: true }
+				);
+
+				Event.once(handle.onDidClose)(() => {
+					resolve('none');
+				});
+			});
+		}
+
+		return 'overwrite';
 	}
 
 	async save(): Promise<boolean> {
+		const result = await this._assertStat();
+		if (result === 'none') {
+			return false;
+		}
+
+		if (result === 'revert') {
+			await this.revert();
+			return true;
+		}
+
 		const tokenSource = new CancellationTokenSource();
-		await this.notebookService.save(this.notebook.viewType, this.notebook.uri, tokenSource.token);
-		this._dirty = false;
-		this._onDidChangeDirty.fire();
+		await this._notebookService.save(this.notebook.viewType, this.notebook.uri, tokenSource.token);
+		const newStats = await this._resolveStats(this.resource);
+		this._lastResolvedFileStat = newStats;
+		this._notebook.setDirty(false);
 		return true;
 	}
 
 	async saveAs(targetResource: URI): Promise<boolean> {
+		const result = await this._assertStat();
+
+		if (result === 'none') {
+			return false;
+		}
+
+		if (result === 'revert') {
+			await this.revert();
+			return true;
+		}
+
 		const tokenSource = new CancellationTokenSource();
-		await this.notebookService.saveAs(this.notebook.viewType, this.notebook.uri, targetResource, tokenSource.token);
-		this._dirty = false;
-		this._onDidChangeDirty.fire();
+		await this._notebookService.saveAs(this.notebook.viewType, this.notebook.uri, targetResource, tokenSource.token);
+		const newStats = await this._resolveStats(this.resource);
+		this._lastResolvedFileStat = newStats;
+		this._notebook.setDirty(false);
 		return true;
 	}
-}
 
-export class NotebookEditorModelManager extends Disposable implements INotebookEditorModelManager {
-
-	private readonly mapResourceToModel = new ResourceMap<NotebookEditorModel>();
-	private readonly mapResourceToModelListeners = new ResourceMap<IDisposable>();
-	private readonly mapResourceToDisposeListener = new ResourceMap<IDisposable>();
-	private readonly mapResourceToPendingModelLoaders = new ResourceMap<Promise<NotebookEditorModel>>();
-
-	// private readonly modelLoadQueue = this._register(new ResourceQueue());
-
-	get models(): NotebookEditorModel[] {
-		return [...this.mapResourceToModel.values()];
-	}
-	constructor(
-		@IInstantiationService readonly instantiationService: IInstantiationService
-	) {
-		super();
-	}
-
-	async resolve(resource: URI, viewType: string): Promise<NotebookEditorModel> {
-		// Return early if model is currently being loaded
-		const pendingLoad = this.mapResourceToPendingModelLoaders.get(resource);
-		if (pendingLoad) {
-			return pendingLoad;
+	private async _resolveStats(resource: URI) {
+		if (resource.scheme === Schemas.untitled) {
+			return undefined;
 		}
-
-		let modelPromise: Promise<NotebookEditorModel>;
-		let model = this.get(resource);
-		// let didCreateModel = false;
-
-		// Model exists
-		if (model) {
-			// if (options?.reload) {
-			// } else {
-			modelPromise = Promise.resolve(model);
-			// }
-		}
-
-		// Model does not exist
-		else {
-			// didCreateModel = true;
-			const newModel = model = this.instantiationService.createInstance(NotebookEditorModel, resource, viewType);
-			modelPromise = model.load();
-
-			this.registerModel(newModel);
-		}
-
-		// Store pending loads to avoid race conditions
-		this.mapResourceToPendingModelLoaders.set(resource, modelPromise);
-
-		// Make known to manager (if not already known)
-		this.add(resource, model);
-
-		// dispose and bind new listeners
 
 		try {
-			const resolvedModel = await modelPromise;
-
-			// Remove from pending loads
-			this.mapResourceToPendingModelLoaders.delete(resource);
-			return resolvedModel;
-		} catch (error) {
-			// Free resources of this invalid model
-			if (model) {
-				model.dispose();
-			}
-
-			// Remove from pending loads
-			this.mapResourceToPendingModelLoaders.delete(resource);
-
-			throw error;
+			const newStats = await this._fileService.resolve(this.resource, { resolveMetadata: true });
+			return newStats;
+		} catch (e) {
+			return undefined;
 		}
-	}
-
-	add(resource: URI, model: NotebookEditorModel): void {
-		const knownModel = this.mapResourceToModel.get(resource);
-		if (knownModel === model) {
-			return; // already cached
-		}
-
-		// dispose any previously stored dispose listener for this resource
-		const disposeListener = this.mapResourceToDisposeListener.get(resource);
-		if (disposeListener) {
-			disposeListener.dispose();
-		}
-
-		// store in cache but remove when model gets disposed
-		this.mapResourceToModel.set(resource, model);
-		this.mapResourceToDisposeListener.set(resource, model.onDispose(() => this.remove(resource)));
-	}
-
-	remove(resource: URI): void {
-		this.mapResourceToModel.delete(resource);
-
-		const disposeListener = this.mapResourceToDisposeListener.get(resource);
-		if (disposeListener) {
-			dispose(disposeListener);
-			this.mapResourceToDisposeListener.delete(resource);
-		}
-
-		const modelListener = this.mapResourceToModelListeners.get(resource);
-		if (modelListener) {
-			dispose(modelListener);
-			this.mapResourceToModelListeners.delete(resource);
-		}
-	}
-
-
-	private registerModel(model: NotebookEditorModel): void {
 
 	}
 
-	get(resource: URI): NotebookEditorModel | undefined {
-		return this.mapResourceToModel.get(resource);
+	dispose() {
+		super.dispose();
 	}
 }

@@ -4,7 +4,7 @@
 		"If you want to provide a fix or improvement, please create a pull request against the original repository.",
 		"Once accepted there, we are happy to receive an update request."
 	],
-	"version": "https://github.com/emilast/vscode-logfile-highlighter/commit/fbe9797ea7889ee55def6da8dee86ba625ca9759",
+	"version": "https://github.com/emilast/vscode-logfile-highlighter/commit/5dcab1c304110b605041824cde3810c6ef305477",
 	"name": "Log file",
 	"scopeName": "text.log",
 	"patterns": [
@@ -17,7 +17,7 @@
 			"name": "comment log.verbose"
 		},
 		{
-			"match": "\\bV/",
+			"match": "(?<=^[\\s\\d\\p]*)\\bV\\b",
 			"name": "comment log.verbose"
 		},
 		{
@@ -29,7 +29,7 @@
 			"name": "markup.changed log.debug"
 		},
 		{
-			"match": "\\bD/",
+			"match": "(?<=^[\\s\\d\\p]*)\\bD\\b",
 			"name": "markup.changed log.debug"
 		},
 		{
@@ -41,7 +41,7 @@
 			"name": "markup.inserted log.info"
 		},
 		{
-			"match": "\\bI/",
+			"match": "(?<=^[\\s\\d\\p]*)\\bI\\b",
 			"name": "markup.inserted log.info"
 		},
 		{
@@ -53,7 +53,7 @@
 			"name": "markup.deleted log.warning"
 		},
 		{
-			"match": "\\bW/",
+			"match": "(?<=^[\\s\\d\\p]*)\\bW\\b",
 			"name": "markup.deleted log.warning"
 		},
 		{
@@ -65,7 +65,7 @@
 			"name": "string.regexp, strong log.error"
 		},
 		{
-			"match": "\\bE/",
+			"match": "(?<=^[\\s\\d\\p]*)\\bE\\b",
 			"name": "string.regexp, strong log.error"
 		},
 		{
@@ -86,6 +86,10 @@
 		},
 		{
 			"match": "[0-9a-fA-F]{8}[-]?([0-9a-fA-F]{4}[-]?){3}[0-9a-fA-F]{12}",
+			"name": "constant.language log.constant"
+		},
+		{
+			"match": "([0-9a-fA-F]+[:-])+[0-9a-fA-F]+",
 			"name": "constant.language log.constant"
 		},
 		{

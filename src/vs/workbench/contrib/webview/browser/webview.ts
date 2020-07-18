@@ -34,24 +34,33 @@ export interface WebviewIcons {
  * Handles the creation of webview elements.
  */
 export interface IWebviewService {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	createWebviewElement(
 		id: string,
 		options: WebviewOptions,
 		contentOptions: WebviewContentOptions,
+		extension: WebviewExtensionDescription | undefined,
 	): WebviewElement;
 
 	createWebviewOverlay(
 		id: string,
 		options: WebviewOptions,
 		contentOptions: WebviewContentOptions,
+		extension: WebviewExtensionDescription | undefined,
 	): WebviewOverlay;
 
 	setIcons(id: string, value: WebviewIcons | undefined): void;
 }
 
+export const enum WebviewContentPurpose {
+	NotebookRenderer = 'notebookRenderer',
+	CustomEditor = 'customEditor',
+}
+
 export interface WebviewOptions {
+	// The purpose of the webview; this is (currently) only used for filtering in js-debug
+	readonly purpose?: WebviewContentPurpose;
 	readonly customClasses?: string;
 	readonly enableFindWidget?: boolean;
 	readonly tryRestoreScrollPosition?: boolean;
@@ -71,9 +80,15 @@ export interface WebviewExtensionDescription {
 	readonly id: ExtensionIdentifier;
 }
 
+export interface IDataLinkClickEvent {
+	dataURL: string;
+	downloadName?: string;
+}
+
 export interface Webview extends IDisposable {
 	html: string;
 	contentOptions: WebviewContentOptions;
+	localResourcesRoot: URI[];
 	extension: WebviewExtensionDescription | undefined;
 	initialScrollProgress: number;
 	state: string | undefined;
@@ -84,10 +99,11 @@ export interface Webview extends IDisposable {
 	readonly onDidScroll: Event<{ scrollYPercentage: number }>;
 	readonly onDidWheel: Event<IMouseWheelEvent>;
 	readonly onDidUpdateState: Event<string | undefined>;
+	readonly onDidReload: Event<void>;
 	readonly onMessage: Event<any>;
 	readonly onMissingCsp: Event<ExtensionIdentifier>;
 
-	sendMessage(data: any): void;
+	postMessage(data: any): void;
 
 	focus(): void;
 	reload(): void;
@@ -97,6 +113,11 @@ export interface Webview extends IDisposable {
 	runFindAction(previous: boolean): void;
 
 	selectAll(): void;
+	copy(): void;
+	paste(): void;
+	cut(): void;
+	undo(): void;
+	redo(): void;
 
 	windowDidDragStart(): void;
 	windowDidDragEnd(): void;
@@ -126,4 +147,4 @@ export interface WebviewOverlay extends Webview {
 	layoutWebviewOverElement(element: HTMLElement, dimension?: Dimension): void;
 }
 
-export const webviewDeveloperCategory = nls.localize('developer', "Developer");
+export const webviewDeveloperCategory = { value: nls.localize({ key: 'developer', comment: ['A developer on Code itself or someone diagnosing issues in Code'] }, "Developer"), original: 'Developer' };

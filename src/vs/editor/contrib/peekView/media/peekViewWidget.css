@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 .monaco-editor .peekview-widget .head {
-	box-sizing:	border-box;
+	box-sizing: border-box;
 	display: flex;
 }
 
@@ -14,6 +14,7 @@
 	font-size: 13px;
 	margin-left: 20px;
 	cursor: pointer;
+	min-width: 0;
 }
 
 .monaco-editor .peekview-widget .head .peekview-title .dirname:not(:empty) {
@@ -23,6 +24,15 @@
 
 .monaco-editor .peekview-widget .head .peekview-title .meta {
 	white-space: nowrap;
+}
+
+.monaco-editor .peekview-widget .head .peekview-title .dirname {
+	white-space: nowrap;
+}
+
+.monaco-editor .peekview-widget .head .peekview-title .filename {
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .monaco-editor .peekview-widget .head .peekview-title .meta:not(:empty)::before {

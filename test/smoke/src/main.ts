@@ -25,6 +25,7 @@ import { setup as setupDataMigrationTests } from './areas/workbench/data-migrati
 import { setup as setupDataLossTests } from './areas/workbench/data-loss.test';
 import { setup as setupDataPreferencesTests } from './areas/preferences/preferences.test';
 import { setup as setupDataSearchTests } from './areas/search/search.test';
+import { setup as setupDataNotebookTests } from './areas/notebook/notebook.test';
 import { setup as setupDataLanguagesTests } from './areas/languages/languages.test';
 import { setup as setupDataEditorTests } from './areas/editor/editor.test';
 import { setup as setupDataStatusbarTests } from './areas/statusbar/statusbar.test';
@@ -154,6 +155,8 @@ if (!opts.web) {
 	} else {
 		quality = Quality.Stable;
 	}
+
+	console.log(`Running desktop smoke tests against ${electronPath}`);
 }
 
 //
@@ -162,14 +165,20 @@ if (!opts.web) {
 else {
 	const testCodeServerPath = opts.build || process.env.VSCODE_REMOTE_SERVER_PATH;
 
-	if (typeof testCodeServerPath === 'string' && !fs.existsSync(testCodeServerPath)) {
-		fail(`Can't find Code server at ${testCodeServerPath}.`);
+	if (typeof testCodeServerPath === 'string') {
+		if (!fs.existsSync(testCodeServerPath)) {
+			fail(`Can't find Code server at ${testCodeServerPath}.`);
+		} else {
+			console.log(`Running web smoke tests against ${testCodeServerPath}`);
+		}
 	}
 
 	if (!testCodeServerPath) {
 		process.env.VSCODE_REPOSITORY = repoPath;
 		process.env.VSCODE_DEV = '1';
 		process.env.VSCODE_CLI = '1';
+
+		console.log(`Running web smoke out of sources`);
 	}
 
 	if (process.env.VSCODE_DEV === '1') {
@@ -307,6 +316,7 @@ describe(`VSCode Smoke Tests (${opts.web ? 'Web' : 'Electron'})`, () => {
 		if (!opts.web) { setupDataLossTests(); }
 		if (!opts.web) { setupDataPreferencesTests(); }
 		setupDataSearchTests();
+		setupDataNotebookTests();
 		setupDataLanguagesTests();
 		setupDataEditorTests();
 		setupDataStatusbarTests(!!opts.web);

@@ -51,6 +51,8 @@
 	margin-top: 0px;
 	cursor: pointer;
 	line-height: inherit;
+	padding-top: 0;
+	padding-bottom: 0;
 }
 
 .monaco-workbench .monaco-action-bar .start-debug-action-item .configuration.disabled .monaco-select-box {
@@ -75,14 +77,18 @@
 	cursor: initial;
 }
 
-/* Make icons the same color as the list foreground on focus selection */
+/* Make icons and text the same color as the list foreground on focus selection */
+.debug-pane .monaco-list:focus .monaco-list-row.selected .state > .label,
+.debug-pane .monaco-list:focus .monaco-list-row.selected.focused .state > .label,
+.debug-pane .monaco-list:focus .monaco-list-row.selected .codicon,
 .debug-pane .monaco-list:focus .monaco-list-row.selected.focused .codicon {
 	color: inherit !important;
 }
 
 /* Call stack */
 
-.debug-pane .debug-call-stack-title {
+.debug-pane.expanded .debug-call-stack-title,
+.debug-pane.vertical .debug-call-stack-title {
 	display: flex;
 	width: 100%;
 }
@@ -136,6 +142,7 @@
 .debug-pane .debug-call-stack .monaco-list-row .monaco-action-bar {
 	display: none;
 	flex-shrink: 0;
+	margin-right: 1px;
 }
 
 .debug-pane .debug-call-stack .monaco-list-row:hover .monaco-action-bar {

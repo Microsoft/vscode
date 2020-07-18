@@ -14,10 +14,11 @@ export class TunnelFactoryContribution extends Disposable implements IWorkbenchC
 		@IWorkbenchEnvironmentService workbenchEnvironmentService: IWorkbenchEnvironmentService,
 	) {
 		super();
-		if (workbenchEnvironmentService.options && workbenchEnvironmentService.options.tunnelFactory) {
+		const tunnelFactory = workbenchEnvironmentService.options?.tunnelProvider?.tunnelFactory;
+		if (tunnelFactory) {
 			this._register(tunnelService.setTunnelProvider({
 				forwardPort: (tunnelOptions: TunnelOptions): Promise<RemoteTunnel> | undefined => {
-					const tunnelPromise = workbenchEnvironmentService.options!.tunnelFactory!(tunnelOptions);
+					const tunnelPromise = tunnelFactory(tunnelOptions);
 					if (!tunnelPromise) {
 						return undefined;
 					}

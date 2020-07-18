@@ -14,8 +14,9 @@ import { ICodeEditor } from 'vs/editor/browser/editorBrowser';
 import { CancellationToken } from 'vs/base/common/cancellation';
 import { Range } from 'vs/editor/common/core/range';
 import { FuzzyScore } from 'vs/base/common/filters';
-import { isDisposable, DisposableStore } from 'vs/base/common/lifecycle';
+import { isDisposable, DisposableStore, IDisposable } from 'vs/base/common/lifecycle';
 import { MenuId } from 'vs/platform/actions/common/actions';
+import { SnippetParser } from 'vs/editor/contrib/snippet/snippetParser';
 
 export const Context = {
 	Visible: new RawContextKey<boolean>('suggestWidgetVisible', false),
@@ -55,12 +56,15 @@ export class CompletionItem {
 	idx?: number;
 	word?: string;
 
+	// resolving
+	private _isResolved?: boolean;
+	private _resolveCache?: Promise<void>;
+
 	constructor(
 		readonly position: IPosition,
 		readonly completion: modes.CompletionItem,
 		readonly container: modes.CompletionList,
 		readonly provider: modes.CompletionItemProvider,
-		model: ITextModel
 	) {
 		this.textLabel = typeof completion.label === 'string'
 			? completion.label
@@ -94,35 +98,38 @@ export class CompletionItem {
 			this.isInvalid = this.isInvalid
 				|| Range.spansMultipleLines(completion.range.insert) || Range.spansMultipleLines(completion.range.replace)
 				|| completion.range.insert.startLineNumber !== position.lineNumber || completion.range.replace.startLineNumber !== position.lineNumber
-				|| Range.compareRangesUsingStarts(completion.range.insert, completion.range.replace) !== 0;
+				|| completion.range.insert.startColumn !== completion.range.replace.startColumn;
 		}
 
 		// create the suggestion resolver
 		if (typeof provider.resolveCompletionItem !== 'function') {
 			this._resolveCache = Promise.resolve();
+			this._isResolved = true;
 		}
 	}
 
-	// resolving
-	get isResolved() {
-		return Boolean(this._resolveCache);
-	}
+	// ---- resolving
 
-	private _resolveCache?: Promise<void>;
+	get isResolved(): boolean {
+		return !!this._isResolved;
+	}
 
 	async resolve(token: CancellationToken) {
 		if (!this._resolveCache) {
 			const sub = token.onCancellationRequested(() => {
 				this._resolveCache = undefined;
+				this._isResolved = false;
 			});
 			this._resolveCache = Promise.resolve(this.provider.resolveCompletionItem!(this.completion, token)).then(value => {
 				Object.assign(this.completion, value);
+				this._isResolved = true;
 				sub.dispose();
 			}, err => {
 				if (isPromiseCanceledError(err)) {
 					// the IPC queue will reject the request with the
 					// cancellation error -> reset cached
 					this._resolveCache = undefined;
+					this._isResolved = false;
 				}
 			});
 		}
@@ -157,13 +164,21 @@ export function setSnippetSuggestSupport(support: modes.CompletionItemProvider):
 	return old;
 }
 
+class CompletionItemModel {
+	constructor(
+		readonly items: CompletionItem[],
+		readonly needsClipboard: boolean,
+		readonly dispoables: IDisposable,
+	) { }
+}
+
 export async function provideSuggestionItems(
 	model: ITextModel,
 	position: Position,
 	options: CompletionOptions = CompletionOptions.default,
 	context: modes.CompletionContext = { triggerKind: modes.CompletionTriggerKind.Invoke },
 	token: CancellationToken = CancellationToken.None
-): Promise<CompletionItem[]> {
+): Promise<CompletionItemModel> {
 
 	// const t1 = Date.now();
 	position = position.clone();
@@ -174,12 +189,13 @@ export async function provideSuggestionItems(
 
 	const result: CompletionItem[] = [];
 	const disposables = new DisposableStore();
+	let needsClipboard = false;
 
 	const onCompletionList = (provider: modes.CompletionItemProvider, container: modes.CompletionList | null | undefined) => {
 		if (!container) {
 			return;
 		}
-		for (let suggestion of container.suggestions || []) {
+		for (let suggestion of container.suggestions) {
 			if (!options.kindFilter.has(suggestion.kind)) {
 				// fill in default range when missing
 				if (!suggestion.range) {
@@ -189,7 +205,10 @@ export async function provideSuggestionItems(
 				if (!suggestion.sortText) {
 					suggestion.sortText = typeof suggestion.label === 'string' ? suggestion.label : suggestion.label.name;
 				}
-				result.push(new CompletionItem(position, suggestion, container, provider, model));
+				if (!needsClipboard && suggestion.insertTextRules && suggestion.insertTextRules & modes.CompletionItemInsertTextRule.InsertAsSnippet) {
+					needsClipboard = SnippetParser.guessNeedsClipboard(suggestion.insertText);
+				}
+				result.push(new CompletionItem(position, suggestion, container, provider));
 			}
 		}
 		if (isDisposable(container)) {
@@ -199,18 +218,16 @@ export async function provideSuggestionItems(
 
 	// ask for snippets in parallel to asking "real" providers. Only do something if configured to
 	// do so - no snippet filter, no special-providers-only request
-	const snippetCompletions = new Promise<void>((resolve, reject) => {
+	const snippetCompletions = (async () => {
 		if (!_snippetSuggestSupport || options.kindFilter.has(modes.CompletionItemKind.Snippet)) {
-			resolve();
+			return;
 		}
 		if (options.providerFilter.size > 0 && !options.providerFilter.has(_snippetSuggestSupport)) {
-			resolve();
+			return;
 		}
-		Promise.resolve(_snippetSuggestSupport.provideCompletionItems(model, position, context, token)).then(list => {
-			onCompletionList(_snippetSuggestSupport, list);
-			resolve();
-		}, reject);
-	});
+		const list = await _snippetSuggestSupport.provideCompletionItems(model, position, context, token);
+		onCompletionList(_snippetSuggestSupport, list);
+	})();
 
 	// add suggestions from contributed providers - providers are ordered in groups of
 	// equal score and once a group produces a result the process stops
@@ -244,7 +261,11 @@ export async function provideSuggestionItems(
 		return Promise.reject<any>(canceled());
 	}
 	// console.log(`${result.length} items AFTER ${Date.now() - t1}ms`);
-	return result.sort(getSuggestionComparator(options.snippetSortOrder));
+	return new CompletionItemModel(
+		result.sort(getSuggestionComparator(options.snippetSortOrder)),
+		needsClipboard,
+		disposables
+	);
 }
 
 
@@ -306,27 +327,23 @@ registerDefaultLanguageCommand('_executeCompletionItemProvider', async (model, p
 		suggestions: []
 	};
 
-	const disposables = new DisposableStore();
 	const resolving: Promise<any>[] = [];
 	const maxItemsToResolve = args['maxItemsToResolve'] || 0;
 
-	const items = await provideSuggestionItems(model, position);
-	for (const item of items) {
+	const completions = await provideSuggestionItems(model, position);
+	for (const item of completions.items) {
 		if (resolving.length < maxItemsToResolve) {
 			resolving.push(item.resolve(CancellationToken.None));
 		}
 		result.incomplete = result.incomplete || item.container.incomplete;
 		result.suggestions.push(item.completion);
-		if (isDisposable(item.container)) {
-			disposables.add(item.container);
-		}
 	}
 
 	try {
 		await Promise.all(resolving);
 		return result;
 	} finally {
-		setTimeout(() => disposables.dispose(), 100);
+		setTimeout(() => completions.dispoables.dispose(), 100);
 	}
 });
 

@@ -9,6 +9,7 @@ export const Schemes = {
 	http: 'http:',
 	https: 'https:',
 	file: 'file:',
+	untitled: 'untitled',
 	mailto: 'mailto:',
 	data: 'data:',
 	vscode: 'vscode:',

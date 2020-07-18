@@ -4,29 +4,24 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as assert from 'assert';
-import { Cursor } from 'vs/editor/common/controller/cursor';
 import { EditOperation } from 'vs/editor/common/core/editOperation';
 import { Position } from 'vs/editor/common/core/position';
 import { Range } from 'vs/editor/common/core/range';
 import { Selection } from 'vs/editor/common/core/selection';
 import { IIdentifiedSingleEditOperation } from 'vs/editor/common/model';
-import { createTextModel } from 'vs/editor/test/common/editorTestUtils';
-import { ViewModel } from 'vs/editor/common/viewModel/viewModelImpl';
 import { withTestCodeEditor } from 'vs/editor/test/browser/testCodeEditor';
-import { TestConfiguration } from 'vs/editor/test/common/mocks/testConfiguration';
-import { MonospaceLineBreaksComputerFactory } from 'vs/editor/common/viewModel/monospaceLineBreaksComputer';
 
 function testCommand(lines: string[], selections: Selection[], edits: IIdentifiedSingleEditOperation[], expectedLines: string[], expectedSelections: Selection[]): void {
-	withTestCodeEditor(lines, {}, (editor, cursor) => {
+	withTestCodeEditor(lines, {}, (editor, viewModel) => {
 		const model = editor.getModel()!;
 
-		cursor.setSelections('tests', selections);
+		viewModel.setSelections('tests', selections);
 
 		model.applyEdits(edits);
 
 		assert.deepEqual(model.getLinesContent(), expectedLines);
 
-		let actualSelections = cursor.getSelections();
+		let actualSelections = viewModel.getSelections();
 		assert.deepEqual(actualSelections.map(s => s.toString()), expectedSelections.map(s => s.toString()));
 
 	});
@@ -199,25 +194,16 @@ suite('SideEditing', () => {
 	];
 
 	function _runTest(selection: Selection, editRange: Range, editText: string, editForceMoveMarkers: boolean, expected: Selection, msg: string): void {
-		const model = createTextModel(LINES.join('\n'));
-		const config = new TestConfiguration({});
-		const monospaceLineBreaksComputerFactory = MonospaceLineBreaksComputerFactory.create(config.options);
-		const viewModel = new ViewModel(0, config, model, monospaceLineBreaksComputerFactory, monospaceLineBreaksComputerFactory, null!);
-		const cursor = new Cursor(config, model, viewModel);
-
-		cursor.setSelections('tests', [selection]);
-		model.applyEdits([{
-			range: editRange,
-			text: editText,
-			forceMoveMarkers: editForceMoveMarkers
-		}]);
-		const actual = cursor.getSelection();
-		assert.deepEqual(actual.toString(), expected.toString(), msg);
-
-		cursor.dispose();
-		viewModel.dispose();
-		config.dispose();
-		model.dispose();
+		withTestCodeEditor(LINES.join('\n'), {}, (editor, viewModel) => {
+			viewModel.setSelections('tests', [selection]);
+			editor.getModel().applyEdits([{
+				range: editRange,
+				text: editText,
+				forceMoveMarkers: editForceMoveMarkers
+			}]);
+			const actual = viewModel.getSelection();
+			assert.deepEqual(actual.toString(), expected.toString(), msg);
+		});
 	}
 
 	function runTest(selection: Range, editRange: Range, editText: string, expected: Selection[][]): void {

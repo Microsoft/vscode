@@ -36,6 +36,17 @@ jobs:
   steps:
   - template: win32/product-build-win32.yml
 
+- job: WindowsARM64
+  condition: and(succeeded(), eq(variables['VSCODE_COMPILE_ONLY'], 'false'), eq(variables['VSCODE_BUILD_WIN32_ARM64'], 'true'))
+  pool:
+    vmImage: VS2017-Win2016
+  variables:
+    VSCODE_ARCH: arm64
+  dependsOn:
+  - Compile
+  steps:
+  - template: win32/product-build-win32-arm64.yml
+
 - job: Linux
   condition: and(succeeded(), eq(variables['VSCODE_COMPILE_ONLY'], 'false'), eq(variables['VSCODE_BUILD_LINUX'], 'true'))
   pool:

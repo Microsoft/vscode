@@ -18,7 +18,6 @@ import { getIconClasses } from 'vs/editor/common/services/getIconClasses';
 import { IModelService } from 'vs/editor/common/services/modelService';
 import { IModeService } from 'vs/editor/common/services/modeService';
 import { IFileDialogService } from 'vs/platform/dialogs/common/dialogs';
-import { IViewDescriptorService, IViewsService, ViewContainerLocation } from 'vs/workbench/common/views';
 
 export const ADD_ROOT_FOLDER_COMMAND_ID = 'addRootFolder';
 export const ADD_ROOT_FOLDER_LABEL = nls.localize('addFolderToWorkspace', "Add Folder to Workspace...");
@@ -55,8 +54,6 @@ CommandsRegistry.registerCommand({
 CommandsRegistry.registerCommand({
 	id: ADD_ROOT_FOLDER_COMMAND_ID,
 	handler: async (accessor) => {
-		const viewDescriptorService = accessor.get(IViewDescriptorService);
-		const viewsService = accessor.get(IViewsService);
 		const workspaceEditingService = accessor.get(IWorkspaceEditingService);
 		const dialogsService = accessor.get(IFileDialogService);
 		const folders = await dialogsService.showOpenDialog({
@@ -72,7 +69,6 @@ CommandsRegistry.registerCommand({
 		}
 
 		await workspaceEditingService.addFolders(folders.map(folder => ({ uri: resources.removeTrailingPathSeparator(folder) })));
-		await viewsService.openViewContainer(viewDescriptorService.getDefaultViewContainer(ViewContainerLocation.Sidebar)!.id, true);
 	}
 });
 

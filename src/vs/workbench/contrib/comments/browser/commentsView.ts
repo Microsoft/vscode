@@ -6,6 +6,7 @@
 import 'vs/css!./media/panel';
 import * as nls from 'vs/nls';
 import * as dom from 'vs/base/browser/dom';
+import { basename } from 'vs/base/common/resources';
 import { IAction, Action } from 'vs/base/common/actions';
 import { CollapseAllAction } from 'vs/base/browser/ui/tree/treeDefaults';
 import { isCodeEditor } from 'vs/editor/browser/editorBrowser';
@@ -27,8 +28,6 @@ import { IContextMenuService } from 'vs/platform/contextview/browser/contextView
 import { IKeybindingService } from 'vs/platform/keybinding/common/keybinding';
 import { IOpenerService } from 'vs/platform/opener/common/opener';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
-import { TreeResourceNavigator } from 'vs/platform/list/browser/listService';
-
 
 export class CommentsPanel extends ViewPane {
 	private treeLabels!: ResourceLabels;
@@ -150,10 +149,36 @@ export class CommentsPanel extends ViewPane {
 
 	private createTree(): void {
 		this.treeLabels = this._register(this.instantiationService.createInstance(ResourceLabels, this));
-		this.tree = this._register(this.instantiationService.createInstance(CommentsList, this.treeLabels, this.treeContainer, { overrideStyles: { listBackground: this.getBackgroundColor() } }));
+		this.tree = this._register(this.instantiationService.createInstance(CommentsList, this.treeLabels, this.treeContainer, {
+			overrideStyles: { listBackground: this.getBackgroundColor() },
+			openOnFocus: true,
+			accessibilityProvider: {
+				getAriaLabel(element: any): string {
+					if (element instanceof CommentsModel) {
+						return nls.localize('rootCommentsLabel', "Comments for current workspace");
+					}
+					if (element instanceof ResourceWithCommentThreads) {
+						return nls.localize('resourceWithCommentThreadsLabel', "Comments in {0}, full path {1}", basename(element.resource), element.resource.fsPath);
+					}
+					if (element instanceof CommentNode) {
+						return nls.localize('resourceWithCommentLabel',
+							"Comment from ${0} at line {1} column {2} in {3}, source: {4}",
+							element.comment.userName,
+							element.range.startLineNumber,
+							element.range.startColumn,
+							basename(element.resource),
+							element.comment.body.value
+						);
+					}
+					return '';
+				},
+				getWidgetAriaLabel(): string {
+					return COMMENTS_VIEW_TITLE;
+				}
+			}
+		}));
 
-		const commentsNavigator = this._register(new TreeResourceNavigator(this.tree, { openOnFocus: true }));
-		this._register(commentsNavigator.onDidOpenResource(e => {
+		this._register(this.tree.onDidOpen(e => {
 			this.openFile(e.element, e.editorOptions.pinned, e.editorOptions.preserveFocus, e.sideBySide);
 		}));
 	}

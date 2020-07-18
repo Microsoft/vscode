@@ -39,9 +39,9 @@ export class LogViewerInput extends ResourceEditorInput {
 		@IFilesConfigurationService filesConfigurationService: IFilesConfigurationService
 	) {
 		super(
+			URI.from({ scheme: LOG_SCHEME, path: outputChannelDescriptor.id }),
 			basename(outputChannelDescriptor.file.path),
 			dirname(outputChannelDescriptor.file.path),
-			URI.from({ scheme: LOG_SCHEME, path: outputChannelDescriptor.id }),
 			undefined,
 			textModelResolverService,
 			textFileService,

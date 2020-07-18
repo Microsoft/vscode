@@ -26,7 +26,7 @@ export interface IStandaloneTheme extends IColorTheme {
 }
 
 export interface IStandaloneThemeService extends IThemeService {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	setTheme(themeName: string): string;
 

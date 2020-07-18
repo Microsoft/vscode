@@ -123,7 +123,7 @@
 	height: 30px;
 }
 
-.vs .settings-header-widget > .settings-search-container > .settings-search-input > .monaco-inputbox {
+.monaco-workbench.vs .settings-header-widget > .settings-search-container > .settings-search-input > .monaco-inputbox {
 	border: 1px solid #ddd;
 }
 

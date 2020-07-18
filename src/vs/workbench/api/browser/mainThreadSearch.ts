@@ -5,7 +5,6 @@
 
 import { CancellationToken } from 'vs/base/common/cancellation';
 import { dispose, IDisposable, DisposableStore } from 'vs/base/common/lifecycle';
-import { values } from 'vs/base/common/map';
 import { URI, UriComponents } from 'vs/base/common/uri';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 import { extHostNamedCustomer } from 'vs/workbench/api/common/extHostCustomers';
@@ -139,7 +138,7 @@ class RemoteSearchProvider implements ISearchResultProvider, IDisposable {
 
 		return Promise.resolve(searchP).then((result: ISearchCompleteStats) => {
 			this._searches.delete(search.id);
-			return { results: values(search.matches), stats: result.stats, limitHit: result.limitHit };
+			return { results: Array.from(search.matches.values()), stats: result.stats, limitHit: result.limitHit };
 		}, err => {
 			this._searches.delete(search.id);
 			return Promise.reject(err);

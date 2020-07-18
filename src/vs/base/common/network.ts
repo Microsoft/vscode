@@ -56,9 +56,26 @@ export namespace Schemas {
 
 	export const vscodeCustomEditor = 'vscode-custom-editor';
 
+	export const vscodeNotebook = 'vscode-notebook';
+
 	export const vscodeSettings = 'vscode-settings';
 
 	export const webviewPanel = 'webview-panel';
+
+	/**
+	 * Scheme used for loading the wrapper html and script in webviews.
+	 */
+	export const vscodeWebview = 'vscode-webview';
+
+	/**
+	 * Scheme used for loading resources inside of webviews.
+	 */
+	export const vscodeWebviewResource = 'vscode-webview-resource';
+
+	/**
+	 * Scheme used for extension pages
+	 */
+	export const extension = 'extension';
 }
 
 class RemoteAuthoritiesImpl {

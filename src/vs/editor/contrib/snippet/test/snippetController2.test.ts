@@ -439,4 +439,13 @@ suite('SnippetController2', function () {
 		ctrl.insert('\nfoo');
 		assertSelections(editor, new Selection(2, 8, 2, 8));
 	});
+
+	test('leading TAB by snippets won\'t replace by spaces #101870', function () {
+		this.skip();
+		const ctrl = new SnippetController2(editor, logService, contextKeys);
+		model.setValue('');
+		model.updateOptions({ insertSpaces: true, tabSize: 4 });
+		ctrl.insert('\tHello World\n\tNew Line');
+		assert.strictEqual(model.getValue(), '    Hello World\n    New Line');
+	});
 });

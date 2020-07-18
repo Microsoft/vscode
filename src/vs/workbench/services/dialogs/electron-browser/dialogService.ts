@@ -5,7 +5,6 @@
 
 import * as nls from 'vs/nls';
 import * as os from 'os';
-import product from 'vs/platform/product/common/product';
 import Severity from 'vs/base/common/severity';
 import { isLinux, isWindows } from 'vs/base/common/platform';
 import { mnemonicButtonLabel } from 'vs/base/common/labels';
@@ -21,8 +20,8 @@ import { IThemeService } from 'vs/platform/theme/common/themeService';
 import { IKeybindingService } from 'vs/platform/keybinding/common/keybinding';
 import { IProductService } from 'vs/platform/product/common/productService';
 import { IClipboardService } from 'vs/platform/clipboard/common/clipboardService';
-import { IElectronService } from 'vs/platform/electron/node/electron';
-import { MessageBoxOptions } from 'electron';
+import { IElectronService } from 'vs/platform/electron/electron-sandbox/electron';
+import { MessageBoxOptions } from 'vs/base/parts/sandbox/common/electronTypes';
 import { fromNow } from 'vs/base/common/date';
 
 interface IMassagedMessageBoxOptions {
@@ -42,7 +41,7 @@ interface IMassagedMessageBoxOptions {
 
 export class DialogService implements IDialogService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private nativeImpl: IDialogService;
 	private customImpl: IDialogService;
@@ -59,7 +58,7 @@ export class DialogService implements IDialogService {
 		@IElectronService electronService: IElectronService
 	) {
 		this.customImpl = new HTMLDialogService(logService, layoutService, themeService, keybindingService, productService, clipboardService);
-		this.nativeImpl = new NativeDialogService(logService, sharedProcessService, electronService, clipboardService);
+		this.nativeImpl = new NativeDialogService(logService, sharedProcessService, electronService, productService, clipboardService);
 	}
 
 	private get useCustomDialog(): boolean {
@@ -89,12 +88,13 @@ export class DialogService implements IDialogService {
 
 class NativeDialogService implements IDialogService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	constructor(
 		@ILogService private readonly logService: ILogService,
 		@ISharedProcessService sharedProcessService: ISharedProcessService,
 		@IElectronService private readonly electronService: IElectronService,
+		@IProductService private readonly productService: IProductService,
 		@IClipboardService private readonly clipboardService: IClipboardService
 	) {
 		sharedProcessService.registerChannel('dialog', new DialogChannel(this));
@@ -205,15 +205,15 @@ class NativeDialogService implements IDialogService {
 		options.buttons = buttons;
 		options.cancelId = cancelId;
 		options.noLink = true;
-		options.title = options.title || product.nameLong;
+		options.title = options.title || this.productService.nameLong;
 
 		return { options, buttonIndexMap };
 	}
 
 	async about(): Promise<void> {
-		let version = product.version;
-		if (product.target) {
-			version = `${version} (${product.target} setup)`;
+		let version = this.productService.version;
+		if (this.productService.target) {
+			version = `${version} (${this.productService.target} setup)`;
 		}
 
 		const isSnap = process.platform === 'linux' && process.env.SNAP && process.env.SNAP_REVISION;
@@ -222,8 +222,8 @@ class NativeDialogService implements IDialogService {
 			return nls.localize('aboutDetail',
 				"Version: {0}\nCommit: {1}\nDate: {2}\nElectron: {3}\nChrome: {4}\nNode.js: {5}\nV8: {6}\nOS: {7}",
 				version,
-				product.commit || 'Unknown',
-				product.date ? `${product.date}${useAgo ? ' (' + fromNow(new Date(product.date), true) + ')' : ''}` : 'Unknown',
+				this.productService.commit || 'Unknown',
+				this.productService.date ? `${this.productService.date}${useAgo ? ' (' + fromNow(new Date(this.productService.date), true) + ')' : ''}` : 'Unknown',
 				process.versions['electron'],
 				process.versions['chrome'],
 				process.versions['node'],
@@ -245,9 +245,9 @@ class NativeDialogService implements IDialogService {
 		}
 
 		const result = await this.electronService.showMessageBox({
-			title: product.nameLong,
+			title: this.productService.nameLong,
 			type: 'info',
-			message: product.nameLong,
+			message: this.productService.nameLong,
 			detail: `\n${detail}`,
 			buttons,
 			noLink: true,

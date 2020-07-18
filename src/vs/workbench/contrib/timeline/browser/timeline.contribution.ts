@@ -43,19 +43,22 @@ configurationRegistry.registerConfiguration({
 	type: 'object',
 	properties: {
 		'timeline.excludeSources': {
-			type: 'array',
+			type: [
+				'array',
+				'null'
+			],
+			default: null,
 			description: localize('timeline.excludeSources', "An array of Timeline sources that should be excluded from the Timeline view"),
-			default: null
 		},
 		'timeline.pageSize': {
-			type: 'number',
+			type: ['number', 'null'],
+			default: null,
 			markdownDescription: localize('timeline.pageSize', "The number of items to show in the Timeline view by default and when loading more items. Setting to `null` (the default) will automatically choose a page size based on the visible area of the Timeline view"),
-			default: null
 		},
 		'timeline.pageOnScroll': {
 			type: 'boolean',
+			default: false,
 			description: localize('timeline.pageOnScroll', "Experimental. Controls whether the Timeline view will load the next page of items when you scroll to the end of the list"),
-			default: false
 		},
 	}
 });

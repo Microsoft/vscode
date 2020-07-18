@@ -1,0 +1,27 @@
+name: Latest Release Monitor
+on:
+  schedule:
+    - cron: 0/5 * * * *
+  repository_dispatch:
+    types: [trigger-latest-release-monitor]
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Actions
+        uses: actions/checkout@v2
+        with:
+          repository: 'microsoft/vscode-github-triage-actions'
+          path: ./actions
+          ref: v31
+      - name: Install Actions
+        run: npm install --production --prefix ./actions
+      - name: Install Storage Module
+        run: npm install @azure/storage-blob
+      - name: Run Latest Release Monitor
+        uses: ./actions/latest-release-monitor
+        with:
+          storageKey: ${{secrets.AZURE_BLOB_STORAGE_CONNECTION_STRING}}
+          appInsightsKey: ${{secrets.TRIAGE_ACTIONS_APP_INSIGHTS}}
+          token: ${{secrets.VSCODE_ISSUE_TRIAGE_BOT_PAT}}

@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { IRenderOutput, CellOutputKind, IErrorOutput } from 'vs/workbench/contrib/notebook/common/notebookCommon';
-import { registerOutputTransform } from 'vs/workbench/contrib/notebook/browser/notebookRegistry';
+import { NotebookRegistry } from 'vs/workbench/contrib/notebook/browser/notebookRegistry';
 import * as DOM from 'vs/base/browser/dom';
 import { RGBA, Color } from 'vs/base/common/color';
 import { ansiColorIdentifiers } from 'vs/workbench/contrib/terminal/common/terminalColorRegistry';
@@ -45,7 +45,7 @@ class ErrorTransform implements IOutputTransformContribution {
 	}
 }
 
-registerOutputTransform('notebook.output.error', CellOutputKind.Error, ErrorTransform);
+NotebookRegistry.registerOutputTransform('notebook.output.error', CellOutputKind.Error, ErrorTransform);
 
 /**
  * @param text The content to stylize.

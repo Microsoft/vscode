@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { toCanonicalName } from 'vs/base/node/encoding';
+import { toCanonicalName } from 'vs/workbench/services/textfile/common/encoding';
 import * as pfs from 'vs/base/node/pfs';
 import { ITextQuery } from 'vs/workbench/services/search/common/search';
 import { TextSearchProvider } from 'vs/workbench/services/search/common/searchExtTypes';

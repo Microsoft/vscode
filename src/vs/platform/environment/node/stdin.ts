@@ -46,13 +46,22 @@ export async function readFromStdin(targetPath: string, verbose: boolean): Promi
 
 	let encoding = await resolveTerminalEncoding(verbose);
 
-	const iconv = await import('iconv-lite');
+	const iconv = await import('iconv-lite-umd');
 	if (!iconv.encodingExists(encoding)) {
 		console.log(`Unsupported terminal encoding: ${encoding}, falling back to UTF-8.`);
 		encoding = 'utf8';
 	}
 
 	// Pipe into tmp file using terminals encoding
-	const converterStream = iconv.decodeStream(encoding);
-	process.stdin.pipe(converterStream).pipe(stdinFileStream);
+	const decoder = iconv.getDecoder(encoding);
+	process.stdin.on('data', chunk => stdinFileStream.write(decoder.write(chunk)));
+	process.stdin.on('end', () => {
+		const end = decoder.end();
+		if (typeof end === 'string') {
+			stdinFileStream.write(end);
+		}
+		stdinFileStream.end();
+	});
+	process.stdin.on('error', error => stdinFileStream.destroy(error));
+	process.stdin.on('close', () => stdinFileStream.close());
 }

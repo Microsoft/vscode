@@ -109,7 +109,7 @@ export class BackupFilesModel implements IBackupFilesModel {
 
 export class BackupFileService implements IBackupFileService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private impl: BackupFileServiceImpl | InMemoryBackupFileService;
 
@@ -188,7 +188,7 @@ class BackupFileServiceImpl extends Disposable implements IBackupFileService {
 	private static readonly PREAMBLE_META_SEPARATOR = ' '; // using a character that is know to be escaped in a URI as separator
 	private static readonly PREAMBLE_MAX_LENGTH = 10000;
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private backupWorkspacePath!: URI;
 
@@ -322,15 +322,16 @@ class BackupFileServiceImpl extends Disposable implements IBackupFileService {
 		return coalesce(backups);
 	}
 
-	private async readToMatchingString(file: URI, matchingString: string, maximumBytesToRead: number): Promise<string> {
+	private async readToMatchingString(file: URI, matchingString: string, maximumBytesToRead: number): Promise<string | undefined> {
 		const contents = (await this.fileService.readFile(file, { length: maximumBytesToRead })).value.toString();
 
-		const newLineIndex = contents.indexOf(matchingString);
-		if (newLineIndex >= 0) {
-			return contents.substr(0, newLineIndex);
+		const matchingStringIndex = contents.indexOf(matchingString);
+		if (matchingStringIndex >= 0) {
+			return contents.substr(0, matchingStringIndex);
 		}
 
-		throw new Error(`Backup: Could not find ${JSON.stringify(matchingString)} in first ${maximumBytesToRead} bytes of ${file}`);
+		// Unable to find matching string in file
+		return undefined;
 	}
 
 	async resolve<T extends object>(resource: URI): Promise<IResolvedBackup<T> | undefined> {
@@ -387,7 +388,7 @@ class BackupFileServiceImpl extends Disposable implements IBackupFileService {
 		// the meta-end marker ('\n') and as such the backup can only be invalid. We bail out
 		// here if that is the case.
 		if (!metaEndFound) {
-			this.logService.error(`Backup: Could not find meta end marker in ${backupResource}. The file is probably corrupt.`);
+			this.logService.trace(`Backup: Could not find meta end marker in ${backupResource}. The file is probably corrupt (filesize: ${content.size}).`);
 
 			return undefined;
 		}
@@ -402,7 +403,7 @@ class BackupFileServiceImpl extends Disposable implements IBackupFileService {
 
 export class InMemoryBackupFileService implements IBackupFileService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private backups: Map<string, ITextSnapshot> = new Map();
 

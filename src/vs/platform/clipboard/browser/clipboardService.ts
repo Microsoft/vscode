@@ -9,13 +9,17 @@ import { $ } from 'vs/base/browser/dom';
 
 export class BrowserClipboardService implements IClipboardService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
-	private _internalResourcesClipboard: URI[] | undefined;
+	private readonly mapTextToType = new Map<string, string>(); // unsupported in web (only in-memory)
 
 	async writeText(text: string, type?: string): Promise<void> {
+
+		// With type: only in-memory is supported
 		if (type) {
-			return; // TODO@sbatten support for writing a specific type into clipboard is unsupported
+			this.mapTextToType.set(type, text);
+
+			return;
 		}
 
 		// Guard access to navigator.clipboard with try/catch
@@ -52,8 +56,10 @@ export class BrowserClipboardService implements IClipboardService {
 	}
 
 	async readText(type?: string): Promise<string> {
+
+		// With type: only in-memory is supported
 		if (type) {
-			return ''; // TODO@sbatten support for reading a specific type from clipboard is unsupported
+			return this.mapTextToType.get(type) || '';
 		}
 
 		// Guard access to navigator.clipboard with try/catch
@@ -68,26 +74,27 @@ export class BrowserClipboardService implements IClipboardService {
 		}
 	}
 
-	readTextSync(): string | undefined {
-		return undefined;
+	private findText = ''; // unsupported in web (only in-memory)
+
+	async readFindText(): Promise<string> {
+		return this.findText;
 	}
 
-	readFindText(): string {
-		// @ts-expect-error
-		return undefined;
+	async writeFindText(text: string): Promise<void> {
+		this.findText = text;
 	}
 
-	writeFindText(text: string): void { }
+	private resources: URI[] = []; // unsupported in web (only in-memory)
 
-	writeResources(resources: URI[]): void {
-		this._internalResourcesClipboard = resources;
+	async writeResources(resources: URI[]): Promise<void> {
+		this.resources = resources;
 	}
 
-	readResources(): URI[] {
-		return this._internalResourcesClipboard || [];
+	async readResources(): Promise<URI[]> {
+		return this.resources;
 	}
 
-	hasResources(): boolean {
-		return this._internalResourcesClipboard !== undefined && this._internalResourcesClipboard.length > 0;
+	async hasResources(): Promise<boolean> {
+		return this.resources.length > 0;
 	}
 }

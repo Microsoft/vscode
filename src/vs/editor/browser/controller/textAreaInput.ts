@@ -380,7 +380,7 @@ export class TextAreaInput extends Disposable {
 	}
 
 	private _installSelectionChangeListener(): IDisposable {
-		// See https://github.com/Microsoft/vscode/issues/27216
+		// See https://github.com/Microsoft/vscode/issues/27216 and https://github.com/microsoft/vscode/issues/98256
 		// When using a Braille display, it is possible for users to reposition the
 		// system caret. This is reflected in Chrome as a `selectionchange` event.
 		//
@@ -406,8 +406,8 @@ export class TextAreaInput extends Disposable {
 			if (this._isDoingComposition) {
 				return;
 			}
-			if (!browser.isChrome || !platform.isWindows) {
-				// Support only for Chrome on Windows until testing happens on other browsers + OS configurations
+			if (!browser.isChrome) {
+				// Support only for Chrome until testing happens on other browsers
 				return;
 			}
 

@@ -36,10 +36,6 @@ steps:
     yarn electron
   displayName: Download Electron
 
-- script: |
-    yarn gulp hygiene
-  displayName: Run Hygiene Checks
-
 - powershell: |
     yarn monaco-compile-check
   displayName: Run Monaco Editor Checks
@@ -73,7 +69,8 @@ steps:
   inputs:
     artifactName: crash-dump-windows
     targetPath: .build\crashes
-  condition: succeededOrFailed()
+  continueOnError: true
+  condition: failed()
 
 - task: PublishTestResults@2
   displayName: Publish Tests Results

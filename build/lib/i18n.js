@@ -16,7 +16,7 @@ const https = require("https");
 const gulp = require("gulp");
 const fancyLog = require("fancy-log");
 const ansiColors = require("ansi-colors");
-const iconv = require("iconv-lite");
+const iconv = require("iconv-lite-umd");
 const NUMBER_OF_CONCURRENT_DOWNLOADS = 4;
 function log(message, ...rest) {
     fancyLog(ansiColors.green('[i18n]'), message, ...rest);
@@ -101,161 +101,158 @@ class TextModel {
         return this._lines;
     }
 }
-let XLF = /** @class */ (() => {
-    class XLF {
-        constructor(project) {
-            this.project = project;
-            this.buffer = [];
-            this.files = Object.create(null);
-            this.numberOfMessages = 0;
+class XLF {
+    constructor(project) {
+        this.project = project;
+        this.buffer = [];
+        this.files = Object.create(null);
+        this.numberOfMessages = 0;
+    }
+    toString() {
+        this.appendHeader();
+        for (let file in this.files) {
+            this.appendNewLine(`<file original="${file}" source-language="en" datatype="plaintext"><body>`, 2);
+            for (let item of this.files[file]) {
+                this.addStringItem(file, item);
+            }
+            this.appendNewLine('</body></file>', 2);
         }
-        toString() {
-            this.appendHeader();
-            for (let file in this.files) {
-                this.appendNewLine(`<file original="${file}" source-language="en" datatype="plaintext"><body>`, 2);
-                for (let item of this.files[file]) {
-                    this.addStringItem(file, item);
+        this.appendFooter();
+        return this.buffer.join('\r\n');
+    }
+    addFile(original, keys, messages) {
+        if (keys.length === 0) {
+            console.log('No keys in ' + original);
+            return;
+        }
+        if (keys.length !== messages.length) {
+            throw new Error(`Unmatching keys(${keys.length}) and messages(${messages.length}).`);
+        }
+        this.numberOfMessages += keys.length;
+        this.files[original] = [];
+        let existingKeys = new Set();
+        for (let i = 0; i < keys.length; i++) {
+            let key = keys[i];
+            let realKey;
+            let comment;
+            if (Is.string(key)) {
+                realKey = key;
+                comment = undefined;
+            }
+            else if (LocalizeInfo.is(key)) {
+                realKey = key.key;
+                if (key.comment && key.comment.length > 0) {
+                    comment = key.comment.map(comment => encodeEntities(comment)).join('\r\n');
                 }
-                this.appendNewLine('</body></file>', 2);
             }
-            this.appendFooter();
-            return this.buffer.join('\r\n');
-        }
-        addFile(original, keys, messages) {
-            if (keys.length === 0) {
-                console.log('No keys in ' + original);
-                return;
+            if (!realKey || existingKeys.has(realKey)) {
+                continue;
             }
-            if (keys.length !== messages.length) {
-                throw new Error(`Unmatching keys(${keys.length}) and messages(${messages.length}).`);
-            }
-            this.numberOfMessages += keys.length;
-            this.files[original] = [];
-            let existingKeys = new Set();
-            for (let i = 0; i < keys.length; i++) {
-                let key = keys[i];
-                let realKey;
-                let comment;
-                if (Is.string(key)) {
-                    realKey = key;
-                    comment = undefined;
-                }
-                else if (LocalizeInfo.is(key)) {
-                    realKey = key.key;
-                    if (key.comment && key.comment.length > 0) {
-                        comment = key.comment.map(comment => encodeEntities(comment)).join('\r\n');
-                    }
-                }
-                if (!realKey || existingKeys.has(realKey)) {
-                    continue;
-                }
-                existingKeys.add(realKey);
-                let message = encodeEntities(messages[i]);
-                this.files[original].push({ id: realKey, message: message, comment: comment });
-            }
-        }
-        addStringItem(file, item) {
-            if (!item.id || item.message === undefined || item.message === null) {
-                throw new Error(`No item ID or value specified: ${JSON.stringify(item)}. File: ${file}`);
-            }
-            if (item.message.length === 0) {
-                log(`Item with id ${item.id} in file ${file} has an empty message.`);
-            }
-            this.appendNewLine(`<trans-unit id="${item.id}">`, 4);
-            this.appendNewLine(`<source xml:lang="en">${item.message}</source>`, 6);
-            if (item.comment) {
-                this.appendNewLine(`<note>${item.comment}</note>`, 6);
-            }
-            this.appendNewLine('</trans-unit>', 4);
-        }
-        appendHeader() {
-            this.appendNewLine('<?xml version="1.0" encoding="utf-8"?>', 0);
-            this.appendNewLine('<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">', 0);
-        }
-        appendFooter() {
-            this.appendNewLine('</xliff>', 0);
-        }
-        appendNewLine(content, indent) {
-            let line = new Line(indent);
-            line.append(content);
-            this.buffer.push(line.toString());
+            existingKeys.add(realKey);
+            let message = encodeEntities(messages[i]);
+            this.files[original].push({ id: realKey, message: message, comment: comment });
         }
     }
-    XLF.parsePseudo = function (xlfString) {
-        return new Promise((resolve) => {
-            let parser = new xml2js.Parser();
-            let files = [];
-            parser.parseString(xlfString, function (_err, result) {
-                const fileNodes = result['xliff']['file'];
-                fileNodes.forEach(file => {
-                    const originalFilePath = file.$.original;
-                    const messages = {};
-                    const transUnits = file.body[0]['trans-unit'];
-                    if (transUnits) {
-                        transUnits.forEach((unit) => {
-                            const key = unit.$.id;
-                            const val = pseudify(unit.source[0]['_'].toString());
-                            if (key && val) {
-                                messages[key] = decodeEntities(val);
-                            }
-                        });
-                        files.push({ messages: messages, originalFilePath: originalFilePath, language: 'ps' });
-                    }
-                });
-                resolve(files);
-            });
-        });
-    };
-    XLF.parse = function (xlfString) {
-        return new Promise((resolve, reject) => {
-            let parser = new xml2js.Parser();
-            let files = [];
-            parser.parseString(xlfString, function (err, result) {
-                if (err) {
-                    reject(new Error(`XLF parsing error: Failed to parse XLIFF string. ${err}`));
-                }
-                const fileNodes = result['xliff']['file'];
-                if (!fileNodes) {
-                    reject(new Error(`XLF parsing error: XLIFF file does not contain "xliff" or "file" node(s) required for parsing.`));
-                }
-                fileNodes.forEach((file) => {
-                    const originalFilePath = file.$.original;
-                    if (!originalFilePath) {
-                        reject(new Error(`XLF parsing error: XLIFF file node does not contain original attribute to determine the original location of the resource file.`));
-                    }
-                    let language = file.$['target-language'];
-                    if (!language) {
-                        reject(new Error(`XLF parsing error: XLIFF file node does not contain target-language attribute to determine translated language.`));
-                    }
-                    const messages = {};
-                    const transUnits = file.body[0]['trans-unit'];
-                    if (transUnits) {
-                        transUnits.forEach((unit) => {
-                            const key = unit.$.id;
-                            if (!unit.target) {
-                                return; // No translation available
-                            }
-                            let val = unit.target[0];
-                            if (typeof val !== 'string') {
-                                val = val._;
-                            }
-                            if (key && val) {
-                                messages[key] = decodeEntities(val);
-                            }
-                            else {
-                                reject(new Error(`XLF parsing error: XLIFF file ${originalFilePath} does not contain full localization data. ID or target translation for one of the trans-unit nodes is not present.`));
-                            }
-                        });
-                        files.push({ messages: messages, originalFilePath: originalFilePath, language: language.toLowerCase() });
-                    }
-                });
-                resolve(files);
-            });
-        });
-    };
-    return XLF;
-})();
+    addStringItem(file, item) {
+        if (!item.id || item.message === undefined || item.message === null) {
+            throw new Error(`No item ID or value specified: ${JSON.stringify(item)}. File: ${file}`);
+        }
+        if (item.message.length === 0) {
+            log(`Item with id ${item.id} in file ${file} has an empty message.`);
+        }
+        this.appendNewLine(`<trans-unit id="${item.id}">`, 4);
+        this.appendNewLine(`<source xml:lang="en">${item.message}</source>`, 6);
+        if (item.comment) {
+            this.appendNewLine(`<note>${item.comment}</note>`, 6);
+        }
+        this.appendNewLine('</trans-unit>', 4);
+    }
+    appendHeader() {
+        this.appendNewLine('<?xml version="1.0" encoding="utf-8"?>', 0);
+        this.appendNewLine('<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">', 0);
+    }
+    appendFooter() {
+        this.appendNewLine('</xliff>', 0);
+    }
+    appendNewLine(content, indent) {
+        let line = new Line(indent);
+        line.append(content);
+        this.buffer.push(line.toString());
+    }
+}
 exports.XLF = XLF;
+XLF.parsePseudo = function (xlfString) {
+    return new Promise((resolve) => {
+        let parser = new xml2js.Parser();
+        let files = [];
+        parser.parseString(xlfString, function (_err, result) {
+            const fileNodes = result['xliff']['file'];
+            fileNodes.forEach(file => {
+                const originalFilePath = file.$.original;
+                const messages = {};
+                const transUnits = file.body[0]['trans-unit'];
+                if (transUnits) {
+                    transUnits.forEach((unit) => {
+                        const key = unit.$.id;
+                        const val = pseudify(unit.source[0]['_'].toString());
+                        if (key && val) {
+                            messages[key] = decodeEntities(val);
+                        }
+                    });
+                    files.push({ messages: messages, originalFilePath: originalFilePath, language: 'ps' });
+                }
+            });
+            resolve(files);
+        });
+    });
+};
+XLF.parse = function (xlfString) {
+    return new Promise((resolve, reject) => {
+        let parser = new xml2js.Parser();
+        let files = [];
+        parser.parseString(xlfString, function (err, result) {
+            if (err) {
+                reject(new Error(`XLF parsing error: Failed to parse XLIFF string. ${err}`));
+            }
+            const fileNodes = result['xliff']['file'];
+            if (!fileNodes) {
+                reject(new Error(`XLF parsing error: XLIFF file does not contain "xliff" or "file" node(s) required for parsing.`));
+            }
+            fileNodes.forEach((file) => {
+                const originalFilePath = file.$.original;
+                if (!originalFilePath) {
+                    reject(new Error(`XLF parsing error: XLIFF file node does not contain original attribute to determine the original location of the resource file.`));
+                }
+                let language = file.$['target-language'];
+                if (!language) {
+                    reject(new Error(`XLF parsing error: XLIFF file node does not contain target-language attribute to determine translated language.`));
+                }
+                const messages = {};
+                const transUnits = file.body[0]['trans-unit'];
+                if (transUnits) {
+                    transUnits.forEach((unit) => {
+                        const key = unit.$.id;
+                        if (!unit.target) {
+                            return; // No translation available
+                        }
+                        let val = unit.target[0];
+                        if (typeof val !== 'string') {
+                            val = val._;
+                        }
+                        if (key && val) {
+                            messages[key] = decodeEntities(val);
+                        }
+                        else {
+                            reject(new Error(`XLF parsing error: XLIFF file ${originalFilePath} does not contain full localization data. ID or target translation for one of the trans-unit nodes is not present.`));
+                        }
+                    });
+                    files.push({ messages: messages, originalFilePath: originalFilePath, language: language.toLowerCase() });
+                }
+            });
+            resolve(files);
+        });
+    });
+};
 class Limiter {
     constructor(maxDegreeOfParalellism) {
         this.maxDegreeOfParalellism = maxDegreeOfParalellism;
@@ -1144,12 +1141,7 @@ function createIslFile(originalFilePath, messages, language, innoSetup) {
         if (line.length > 0) {
             let firstChar = line.charAt(0);
             if (firstChar === '[' || firstChar === ';') {
-                if (line === '; *** Inno Setup version 5.5.3+ English messages ***') {
-                    content.push(`; *** Inno Setup version 5.5.3+ ${innoSetup.defaultInfo.name} messages ***`);
-                }
-                else {
-                    content.push(line);
-                }
+                content.push(line);
             }
             else {
                 let sections = line.split('=');
@@ -1178,9 +1170,10 @@ function createIslFile(originalFilePath, messages, language, innoSetup) {
     });
     const basename = path.basename(originalFilePath);
     const filePath = `${basename}.${language.id}.isl`;
+    const encoded = iconv.encode(Buffer.from(content.join('\r\n'), 'utf8').toString(), innoSetup.codePage);
     return new File({
         path: filePath,
-        contents: iconv.encode(Buffer.from(content.join('\r\n'), 'utf8').toString(), innoSetup.codePage)
+        contents: Buffer.from(encoded),
     });
 }
 function encodeEntities(value) {

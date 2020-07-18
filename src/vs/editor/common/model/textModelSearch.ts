@@ -548,8 +548,12 @@ export class Searcher {
 			if (matchStartIndex === this._prevMatchStartIndex && matchLength === this._prevMatchLength) {
 				if (matchLength === 0) {
 					// the search result is an empty string and won't advance `regex.lastIndex`, so `regex.exec` will stuck here
-					// we attempt to recover from that by advancing by one
-					this._searchRegex.lastIndex += 1;
+					// we attempt to recover from that by advancing by two if surrogate pair found and by one otherwise
+					if (strings.getNextCodePoint(text, textLength, this._searchRegex.lastIndex) > 0xFFFF) {
+						this._searchRegex.lastIndex += 2;
+					} else {
+						this._searchRegex.lastIndex += 1;
+					}
 					continue;
 				}
 				// Exit early if the regex matches the same range twice

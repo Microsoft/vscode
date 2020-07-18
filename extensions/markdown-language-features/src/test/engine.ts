@@ -10,7 +10,7 @@ import { githubSlugifier } from '../slugify';
 import { Disposable } from '../util/dispose';
 
 const emptyContributions = new class extends Disposable implements MarkdownContributionProvider {
-	readonly extensionPath = '';
+	readonly extensionUri = vscode.Uri.file('/');
 	readonly contributions = MarkdownContributions.Empty;
 	readonly onContributionsChanged = this._register(new vscode.EventEmitter<this>()).event;
 };

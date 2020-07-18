@@ -11,7 +11,7 @@ import { Range } from 'vs/editor/common/core/range';
 import { Handler } from 'vs/editor/common/editorCommon';
 import * as modes from 'vs/editor/common/modes';
 import { OnTypeRenameContribution } from 'vs/editor/contrib/rename/onTypeRename';
-import { createTestCodeEditor, TestCodeEditor } from 'vs/editor/test/browser/testCodeEditor';
+import { createTestCodeEditor, ITestCodeEditor } from 'vs/editor/test/browser/testCodeEditor';
 import { createTextModel } from 'vs/editor/test/common/editorTestUtils';
 import { CoreEditingCommands } from 'vs/editor/browser/controller/coreCommands';
 
@@ -30,7 +30,7 @@ suite('On type rename', () => {
 		disposables.clear();
 	});
 
-	function createMockEditor(text: string | string[]) {
+	function createMockEditor(text: string | string[]): ITestCodeEditor {
 		const model = typeof text === 'string'
 			? createTextModel(text, undefined, undefined, mockFile)
 			: createTextModel(text.join('\n'), undefined, undefined, mockFile);
@@ -46,7 +46,7 @@ suite('On type rename', () => {
 	function testCase(
 		name: string,
 		initialState: { text: string | string[], ranges: Range[], stopPattern?: RegExp },
-		operations: (editor: TestCodeEditor, contrib: OnTypeRenameContribution) => Promise<void>,
+		operations: (editor: ITestCodeEditor, contrib: OnTypeRenameContribution) => Promise<void>,
 		expectedEndText: string | string[]
 	) {
 		test(name, async () => {

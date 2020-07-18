@@ -20,7 +20,7 @@ if (isWeb) {
 	// Running out of sources
 	if (Object.keys(product).length === 0) {
 		Object.assign(product, {
-			version: '1.45.0-dev',
+			version: '1.48.0-dev',
 			nameLong: 'Visual Studio Code Web Dev',
 			nameShort: 'VSCode Web Dev',
 			urlProtocol: 'code-oss'

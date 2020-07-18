@@ -379,7 +379,7 @@ class ExtensionManifestValidator extends ExtensionManifestHandler {
 				notices.push(nls.localize('extensionDescription.activationEvents1', "property `{0}` can be omitted or must be of type `string[]`", 'activationEvents'));
 				return false;
 			}
-			if (typeof extensionDescription.main === 'undefined') {
+			if (typeof extensionDescription.main === 'undefined' && typeof extensionDescription.browser === 'undefined') {
 				notices.push(nls.localize('extensionDescription.activationEvents2', "properties `{0}` and `{1}` must both be specified or must both be omitted", 'activationEvents', 'main'));
 				return false;
 			}

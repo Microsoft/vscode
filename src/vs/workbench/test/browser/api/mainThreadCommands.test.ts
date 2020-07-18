@@ -8,7 +8,7 @@ import { MainThreadCommands } from 'vs/workbench/api/browser/mainThreadCommands'
 import { CommandsRegistry, ICommandService } from 'vs/platform/commands/common/commands';
 import { SingleProxyRPCProtocol } from './testRPCProtocol';
 import { IExtensionService } from 'vs/workbench/services/extensions/common/extensions';
-import { mock } from 'vs/workbench/test/browser/api/mock';
+import { mock } from 'vs/base/test/common/mock';
 
 suite('MainThreadCommands', function () {
 

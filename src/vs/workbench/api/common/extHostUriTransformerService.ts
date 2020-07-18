@@ -8,13 +8,13 @@ import { createDecorator } from 'vs/platform/instantiation/common/instantiation'
 import { URI, UriComponents } from 'vs/base/common/uri';
 
 export interface IURITransformerService extends IURITransformer {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 }
 
 export const IURITransformerService = createDecorator<IURITransformerService>('IURITransformerService');
 
 export class URITransformerService implements IURITransformerService {
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	transformIncoming: (uri: UriComponents) => UriComponents;
 	transformOutgoing: (uri: UriComponents) => UriComponents;

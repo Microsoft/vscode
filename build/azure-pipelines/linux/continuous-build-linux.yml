@@ -75,8 +75,9 @@ steps:
     artifactName: crash-dump-linux
     targetPath: .build/crashes
   displayName: 'Publish Crash Reports'
-  condition: succeededOrFailed()
-  
+  continueOnError: true
+  condition: failed()
+
 - task: PublishTestResults@2
   displayName: Publish Tests Results
   inputs:

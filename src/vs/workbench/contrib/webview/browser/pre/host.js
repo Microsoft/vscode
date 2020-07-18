@@ -5,6 +5,7 @@
 // @ts-check
 (function () {
 	const id = document.location.search.match(/\bid=([\w-]+)/)[1];
+	const onElectron = /platform=electron/.test(document.location.search);
 
 	const hostMessaging = new class HostMessaging {
 		constructor() {
@@ -36,6 +37,10 @@
 	}();
 
 	const workerReady = new Promise(async (resolveWorkerReady) => {
+		if (onElectron) {
+			return resolveWorkerReady();
+		}
+
 		if (!areServiceWorkersEnabled()) {
 			console.log('Service Workers are not enabled. Webviews will not work properly');
 			return resolveWorkerReady();
@@ -90,10 +95,21 @@
 		}
 	}
 
-	window.createWebviewManager({
+	/** @type {import('./main').WebviewHost} */
+	const host = {
 		postMessage: hostMessaging.postMessage.bind(hostMessaging),
 		onMessage: hostMessaging.onMessage.bind(hostMessaging),
 		ready: workerReady,
-		fakeLoad: true
-	});
+		fakeLoad: !onElectron,
+		rewriteCSP: onElectron
+			? (csp) => {
+				return csp.replace(/vscode-resource:(?=(\s|;|$))/g, 'vscode-webview-resource:');
+			}
+			: (csp, endpoint) => {
+				const endpointUrl = new URL(endpoint);
+				return csp.replace(/(vscode-webview-resource|vscode-resource):(?=(\s|;|$))/g, endpointUrl.origin);
+			}
+	};
+
+	(/** @type {any} */ (window)).createWebviewManager(host);
 }());

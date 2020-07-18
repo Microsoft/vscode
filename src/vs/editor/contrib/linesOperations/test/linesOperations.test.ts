@@ -4,7 +4,6 @@
  *--------------------------------------------------------------------------------------------*/
 import * as assert from 'assert';
 import { CoreEditingCommands } from 'vs/editor/browser/controller/coreCommands';
-import { Cursor } from 'vs/editor/common/controller/cursor';
 import { Position } from 'vs/editor/common/core/position';
 import { Selection } from 'vs/editor/common/core/selection';
 import { Handler } from 'vs/editor/common/editorCommon';
@@ -14,6 +13,7 @@ import { withTestCodeEditor } from 'vs/editor/test/browser/testCodeEditor';
 import { createTextModel } from 'vs/editor/test/common/editorTestUtils';
 import type { ICodeEditor } from 'vs/editor/browser/editorBrowser';
 import { EditorAction } from 'vs/editor/browser/editorExtensions';
+import { ViewModel } from 'vs/editor/common/viewModel/viewModelImpl';
 
 function assertSelection(editor: ICodeEditor, expected: Selection | Selection[]): void {
 	if (!Array.isArray(expected)) {
@@ -831,39 +831,39 @@ suite('Editor Contrib - Line Operations', () => {
 	});
 
 	test('InsertLineBeforeAction', () => {
-		function testInsertLineBefore(lineNumber: number, column: number, callback: (model: ITextModel, cursor: Cursor) => void): void {
+		function testInsertLineBefore(lineNumber: number, column: number, callback: (model: ITextModel, viewModel: ViewModel) => void): void {
 			const TEXT = [
 				'First line',
 				'Second line',
 				'Third line'
 			];
-			withTestCodeEditor(TEXT, {}, (editor, cursor) => {
+			withTestCodeEditor(TEXT, {}, (editor, viewModel) => {
 				editor.setPosition(new Position(lineNumber, column));
 				let insertLineBeforeAction = new InsertLineBeforeAction();
 
 				executeAction(insertLineBeforeAction, editor);
-				callback(editor.getModel()!, cursor);
+				callback(editor.getModel()!, viewModel);
 			});
 		}
 
-		testInsertLineBefore(1, 3, (model, cursor) => {
-			assert.deepEqual(cursor.getSelection(), new Selection(1, 1, 1, 1));
+		testInsertLineBefore(1, 3, (model, viewModel) => {
+			assert.deepEqual(viewModel.getSelection(), new Selection(1, 1, 1, 1));
 			assert.equal(model.getLineContent(1), '');
 			assert.equal(model.getLineContent(2), 'First line');
 			assert.equal(model.getLineContent(3), 'Second line');
 			assert.equal(model.getLineContent(4), 'Third line');
 		});
 
-		testInsertLineBefore(2, 3, (model, cursor) => {
-			assert.deepEqual(cursor.getSelection(), new Selection(2, 1, 2, 1));
+		testInsertLineBefore(2, 3, (model, viewModel) => {
+			assert.deepEqual(viewModel.getSelection(), new Selection(2, 1, 2, 1));
 			assert.equal(model.getLineContent(1), 'First line');
 			assert.equal(model.getLineContent(2), '');
 			assert.equal(model.getLineContent(3), 'Second line');
 			assert.equal(model.getLineContent(4), 'Third line');
 		});
 
-		testInsertLineBefore(3, 3, (model, cursor) => {
-			assert.deepEqual(cursor.getSelection(), new Selection(3, 1, 3, 1));
+		testInsertLineBefore(3, 3, (model, viewModel) => {
+			assert.deepEqual(viewModel.getSelection(), new Selection(3, 1, 3, 1));
 			assert.equal(model.getLineContent(1), 'First line');
 			assert.equal(model.getLineContent(2), 'Second line');
 			assert.equal(model.getLineContent(3), '');
@@ -872,39 +872,39 @@ suite('Editor Contrib - Line Operations', () => {
 	});
 
 	test('InsertLineAfterAction', () => {
-		function testInsertLineAfter(lineNumber: number, column: number, callback: (model: ITextModel, cursor: Cursor) => void): void {
+		function testInsertLineAfter(lineNumber: number, column: number, callback: (model: ITextModel, viewModel: ViewModel) => void): void {
 			const TEXT = [
 				'First line',
 				'Second line',
 				'Third line'
 			];
-			withTestCodeEditor(TEXT, {}, (editor, cursor) => {
+			withTestCodeEditor(TEXT, {}, (editor, viewModel) => {
 				editor.setPosition(new Position(lineNumber, column));
 				let insertLineAfterAction = new InsertLineAfterAction();
 
 				executeAction(insertLineAfterAction, editor);
-				callback(editor.getModel()!, cursor);
+				callback(editor.getModel()!, viewModel);
 			});
 		}
 
-		testInsertLineAfter(1, 3, (model, cursor) => {
-			assert.deepEqual(cursor.getSelection(), new Selection(2, 1, 2, 1));
+		testInsertLineAfter(1, 3, (model, viewModel) => {
+			assert.deepEqual(viewModel.getSelection(), new Selection(2, 1, 2, 1));
 			assert.equal(model.getLineContent(1), 'First line');
 			assert.equal(model.getLineContent(2), '');
 			assert.equal(model.getLineContent(3), 'Second line');
 			assert.equal(model.getLineContent(4), 'Third line');
 		});
 
-		testInsertLineAfter(2, 3, (model, cursor) => {
-			assert.deepEqual(cursor.getSelection(), new Selection(3, 1, 3, 1));
+		testInsertLineAfter(2, 3, (model, viewModel) => {
+			assert.deepEqual(viewModel.getSelection(), new Selection(3, 1, 3, 1));
 			assert.equal(model.getLineContent(1), 'First line');
 			assert.equal(model.getLineContent(2), 'Second line');
 			assert.equal(model.getLineContent(3), '');
 			assert.equal(model.getLineContent(4), 'Third line');
 		});
 
-		testInsertLineAfter(3, 3, (model, cursor) => {
-			assert.deepEqual(cursor.getSelection(), new Selection(4, 1, 4, 1));
+		testInsertLineAfter(3, 3, (model, viewModel) => {
+			assert.deepEqual(viewModel.getSelection(), new Selection(4, 1, 4, 1));
 			assert.equal(model.getLineContent(1), 'First line');
 			assert.equal(model.getLineContent(2), 'Second line');
 			assert.equal(model.getLineContent(3), 'Third line');

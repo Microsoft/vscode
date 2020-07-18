@@ -141,6 +141,9 @@ function registerSendSequenceKeybinding(text: string, rule: { when?: ContextKeyE
 	});
 }
 
+// The text representation of `^<letter>` is `'A'.charCodeAt(0) + 1`.
+const CTRL_LETTER_OFFSET = 64;
+
 if (BrowserFeatures.clipboard.readText) {
 	actionRegistry.registerWorkbenchAction(SyncActionDescriptor.from(TerminalPasteAction, {
 		primary: KeyMod.CtrlCmd | KeyCode.KEY_V,
@@ -152,7 +155,7 @@ if (BrowserFeatures.clipboard.readText) {
 	// disabled in accessibility mode as PowerShell does not run PSReadLine when it detects a screen
 	// reader.
 	if (platform.isWindows) {
-		registerSendSequenceKeybinding(String.fromCharCode('V'.charCodeAt(0) - 64), { // ctrl+v
+		registerSendSequenceKeybinding(String.fromCharCode('V'.charCodeAt(0) - CTRL_LETTER_OFFSET), { // ctrl+v
 			when: ContextKeyExpr.and(KEYBINDING_CONTEXT_TERMINAL_FOCUS, ContextKeyExpr.equals(KEYBINDING_CONTEXT_TERMINAL_SHELL_TYPE_KEY, WindowsShellType.PowerShell), CONTEXT_ACCESSIBILITY_MODE_ENABLED.negate()),
 			primary: KeyMod.CtrlCmd | KeyCode.KEY_V
 		});
@@ -160,10 +163,18 @@ if (BrowserFeatures.clipboard.readText) {
 }
 
 // Delete word left: ctrl+w
-registerSendSequenceKeybinding(String.fromCharCode('W'.charCodeAt(0) - 64), {
+registerSendSequenceKeybinding(String.fromCharCode('W'.charCodeAt(0) - CTRL_LETTER_OFFSET), {
 	primary: KeyMod.CtrlCmd | KeyCode.Backspace,
 	mac: { primary: KeyMod.Alt | KeyCode.Backspace }
 });
+if (platform.isWindows) {
+	// Delete word left: ctrl+h
+	// Windows cmd.exe requires ^H to delete full word left
+	registerSendSequenceKeybinding(String.fromCharCode('H'.charCodeAt(0) - CTRL_LETTER_OFFSET), {
+		when: ContextKeyExpr.and(KEYBINDING_CONTEXT_TERMINAL_FOCUS, ContextKeyExpr.equals(KEYBINDING_CONTEXT_TERMINAL_SHELL_TYPE_KEY, WindowsShellType.CommandPrompt)),
+		primary: KeyMod.CtrlCmd | KeyCode.Backspace,
+	});
+}
 // Delete word right: alt+d
 registerSendSequenceKeybinding('\x1bd', {
 	primary: KeyMod.CtrlCmd | KeyCode.Delete,

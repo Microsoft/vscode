@@ -24,6 +24,7 @@ parts:
     plugin: dump
     source: .
     stage-packages:
+      - ibus-gtk3
       - fcitx-frontend-gtk3
       - gvfs-libs
       - libasound2

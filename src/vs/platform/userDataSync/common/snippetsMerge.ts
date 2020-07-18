@@ -3,30 +3,32 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { values } from 'vs/base/common/map';
 import { IStringDictionary } from 'vs/base/common/collections';
-import { deepClone } from 'vs/base/common/objects';
 
 export interface IMergeResult {
-	added: IStringDictionary<string>;
-	updated: IStringDictionary<string>;
-	removed: string[];
+	local: {
+		added: IStringDictionary<string>;
+		updated: IStringDictionary<string>;
+		removed: string[];
+	};
+	remote: {
+		added: IStringDictionary<string>;
+		updated: IStringDictionary<string>;
+		removed: string[];
+	};
 	conflicts: string[];
-	remote: IStringDictionary<string> | null;
 }
 
-export function merge(local: IStringDictionary<string>, remote: IStringDictionary<string> | null, base: IStringDictionary<string> | null, resolvedConflicts: IStringDictionary<string | null> = {}): IMergeResult {
-	const added: IStringDictionary<string> = {};
-	const updated: IStringDictionary<string> = {};
-	const removed: Set<string> = new Set<string>();
+export function merge(local: IStringDictionary<string>, remote: IStringDictionary<string> | null, base: IStringDictionary<string> | null): IMergeResult {
+	const localAdded: IStringDictionary<string> = {};
+	const localUpdated: IStringDictionary<string> = {};
+	const localRemoved: Set<string> = new Set<string>();
 
 	if (!remote) {
 		return {
-			added,
-			removed: values(removed),
-			updated,
-			conflicts: [],
-			remote: local
+			local: { added: localAdded, updated: localUpdated, removed: [...localRemoved.values()] },
+			remote: { added: local, updated: {}, removed: [] },
+			conflicts: []
 		};
 	}
 
@@ -34,145 +36,118 @@ export function merge(local: IStringDictionary<string>, remote: IStringDictionar
 	if (localToRemote.added.size === 0 && localToRemote.removed.size === 0 && localToRemote.updated.size === 0) {
 		// No changes found between local and remote.
 		return {
-			added,
-			removed: values(removed),
-			updated,
-			conflicts: [],
-			remote: null
+			local: { added: localAdded, updated: localUpdated, removed: [...localRemoved.values()] },
+			remote: { added: {}, updated: {}, removed: [] },
+			conflicts: []
 		};
 	}
 
 	const baseToLocal = compare(base, local);
 	const baseToRemote = compare(base, remote);
-	const remoteContent: IStringDictionary<string> = deepClone(remote);
+
+	const remoteAdded: IStringDictionary<string> = {};
+	const remoteUpdated: IStringDictionary<string> = {};
+	const remoteRemoved: Set<string> = new Set<string>();
+
 	const conflicts: Set<string> = new Set<string>();
-	const handledConflicts: Set<string> = new Set<string>();
-	const handleConflict = (key: string): void => {
-		if (handledConflicts.has(key)) {
-			return;
-		}
-		handledConflicts.add(key);
-		const conflictContent = resolvedConflicts[key];
-
-		// add to conflicts
-		if (conflictContent === undefined) {
-			conflicts.add(key);
-		}
-
-		// remove the snippet
-		else if (conflictContent === null) {
-			delete remote[key];
-			if (local[key]) {
-				removed.add(key);
-			}
-		}
-
-		// add/update the snippet
-		else {
-			if (local[key]) {
-				if (local[key] !== conflictContent) {
-					updated[key] = conflictContent;
-				}
-			} else {
-				added[key] = conflictContent;
-			}
-			remoteContent[key] = conflictContent;
-		}
-	};
 
 	// Removed snippets in Local
-	for (const key of values(baseToLocal.removed)) {
+	for (const key of baseToLocal.removed.values()) {
 		// Conflict - Got updated in remote.
 		if (baseToRemote.updated.has(key)) {
 			// Add to local
-			added[key] = remote[key];
+			localAdded[key] = remote[key];
 		}
 		// Remove it in remote
 		else {
-			delete remoteContent[key];
+			remoteRemoved.add(key);
 		}
 	}
 
 	// Removed snippets in Remote
-	for (const key of values(baseToRemote.removed)) {
-		if (handledConflicts.has(key)) {
+	for (const key of baseToRemote.removed.values()) {
+		if (conflicts.has(key)) {
 			continue;
 		}
 		// Conflict - Got updated in local
 		if (baseToLocal.updated.has(key)) {
-			handleConflict(key);
+			conflicts.add(key);
 		}
 		// Also remove in Local
 		else {
-			removed.add(key);
+			localRemoved.add(key);
 		}
 	}
 
 	// Updated snippets in Local
-	for (const key of values(baseToLocal.updated)) {
-		if (handledConflicts.has(key)) {
+	for (const key of baseToLocal.updated.values()) {
+		if (conflicts.has(key)) {
 			continue;
 		}
 		// Got updated in remote
 		if (baseToRemote.updated.has(key)) {
 			// Has different value
 			if (localToRemote.updated.has(key)) {
-				handleConflict(key);
+				conflicts.add(key);
 			}
 		} else {
-			remoteContent[key] = local[key];
+			remoteUpdated[key] = local[key];
 		}
 	}
 
 	// Updated snippets in Remote
-	for (const key of values(baseToRemote.updated)) {
-		if (handledConflicts.has(key)) {
+	for (const key of baseToRemote.updated.values()) {
+		if (conflicts.has(key)) {
 			continue;
 		}
 		// Got updated in local
 		if (baseToLocal.updated.has(key)) {
 			// Has different value
 			if (localToRemote.updated.has(key)) {
-				handleConflict(key);
+				conflicts.add(key);
 			}
 		} else if (local[key] !== undefined) {
-			updated[key] = remote[key];
+			localUpdated[key] = remote[key];
 		}
 	}
 
 	// Added snippets in Local
-	for (const key of values(baseToLocal.added)) {
-		if (handledConflicts.has(key)) {
+	for (const key of baseToLocal.added.values()) {
+		if (conflicts.has(key)) {
 			continue;
 		}
 		// Got added in remote
 		if (baseToRemote.added.has(key)) {
 			// Has different value
 			if (localToRemote.updated.has(key)) {
-				handleConflict(key);
+				conflicts.add(key);
 			}
 		} else {
-			remoteContent[key] = local[key];
+			remoteAdded[key] = local[key];
 		}
 	}
 
 	// Added snippets in remote
-	for (const key of values(baseToRemote.added)) {
-		if (handledConflicts.has(key)) {
+	for (const key of baseToRemote.added.values()) {
+		if (conflicts.has(key)) {
 			continue;
 		}
 		// Got added in local
 		if (baseToLocal.added.has(key)) {
 			// Has different value
 			if (localToRemote.updated.has(key)) {
-				handleConflict(key);
+				conflicts.add(key);
 			}
 		} else {
-			added[key] = remote[key];
+			localAdded[key] = remote[key];
 		}
 	}
 
-	return { added, removed: values(removed), updated, conflicts: values(conflicts), remote: areSame(remote, remoteContent) ? null : remoteContent };
+	return {
+		local: { added: localAdded, removed: [...localRemoved.values()], updated: localUpdated },
+		remote: { added: remoteAdded, removed: [...remoteRemoved.values()], updated: remoteUpdated },
+		conflicts: [...conflicts.values()],
+	};
 }
 
 function compare(from: IStringDictionary<string> | null, to: IStringDictionary<string> | null): { added: Set<string>, removed: Set<string>, updated: Set<string> } {
@@ -196,7 +171,7 @@ function compare(from: IStringDictionary<string> | null, to: IStringDictionary<s
 	return { added, removed, updated };
 }
 
-function areSame(a: IStringDictionary<string>, b: IStringDictionary<string>): boolean {
+export function areSame(a: IStringDictionary<string>, b: IStringDictionary<string>): boolean {
 	const { added, removed, updated } = compare(a, b);
 	return added.size === 0 && removed.size === 0 && updated.size === 0;
 }

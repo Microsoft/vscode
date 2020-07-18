@@ -14,20 +14,15 @@ import { IInstantiationService, IConstructorSignature0, ServicesAccessor, Brande
 import { RawContextKey } from 'vs/platform/contextkey/common/contextkey';
 import { Registry } from 'vs/platform/registry/common/platform';
 import { ITextModel } from 'vs/editor/common/model';
-import { IEditorGroup, IEditorGroupsService } from 'vs/workbench/services/editor/common/editorGroupsService';
+import { IEditorGroup } from 'vs/workbench/services/editor/common/editorGroupsService';
 import { ICompositeControl, IComposite } from 'vs/workbench/common/composite';
 import { ActionRunner, IAction } from 'vs/base/common/actions';
-import { IFileService, FileSystemProviderCapabilities } from 'vs/platform/files/common/files';
+import { IFileService } from 'vs/platform/files/common/files';
 import { IPathData } from 'vs/platform/windows/common/windows';
 import { coalesce, firstOrDefault } from 'vs/base/common/arrays';
-import { ITextFileSaveOptions, ITextFileService } from 'vs/workbench/services/textfile/common/textfiles';
-import { IEditorService, IResourceEditorInputType } from 'vs/workbench/services/editor/common/editorService';
-import { isEqual, dirname } from 'vs/base/common/resources';
+import { IResourceEditorInputType } from 'vs/workbench/services/editor/common/editorService';
 import { IRange } from 'vs/editor/common/core/range';
-import { createMemoizer } from 'vs/base/common/decorators';
-import { ILabelService } from 'vs/platform/label/common/label';
-import { Schemas } from 'vs/base/common/network';
-import { IFilesConfigurationService, AutoSaveMode } from 'vs/workbench/services/filesConfiguration/common/filesConfigurationService';
+import { IExtUri } from 'vs/base/common/resources';
 
 export const DirtyWorkingCopiesContext = new RawContextKey<boolean>('dirtyWorkingCopies', false);
 export const ActiveEditorContext = new RawContextKey<string | null>('activeEditor', null);
@@ -169,13 +164,20 @@ export interface IEditorControl extends ICompositeControl { }
 
 export interface IFileEditorInputFactory {
 
-	createFileEditorInput(resource: URI, encoding: string | undefined, mode: string | undefined, instantiationService: IInstantiationService): IFileEditorInput;
+	/**
+	 * Creates new new editor input capable of showing files.
+	 */
+	createFileEditorInput(resource: URI, preferredResource: URI | undefined, encoding: string | undefined, mode: string | undefined, instantiationService: IInstantiationService): IFileEditorInput;
 
+	/**
+	 * Check if the provided object is a file editor input.
+	 */
 	isFileEditorInput(obj: unknown): obj is IFileEditorInput;
 }
 
 interface ICustomEditorInputFactory {
 	createCustomEditorInput(resource: URI, instantiationService: IInstantiationService): Promise<IEditorInput>;
+	canResolveBackup(editorInput: IEditorInput, backupResource: URI): boolean;
 }
 
 export interface IEditorInputFactoryRegistry {
@@ -193,12 +195,12 @@ export interface IEditorInputFactoryRegistry {
 	/**
 	 * Registers the custom editor input factory to use for custom inputs.
 	 */
-	registerCustomEditorInputFactory(factory: ICustomEditorInputFactory): void;
+	registerCustomEditorInputFactory(scheme: string, factory: ICustomEditorInputFactory): void;
 
 	/**
 	 * Returns the custom editor input factory to use for custom inputs.
 	 */
-	getCustomEditorInputFactory(): ICustomEditorInputFactory;
+	getCustomEditorInputFactory(scheme: string): ICustomEditorInputFactory | undefined;
 
 	/**
 	 * Registers a editor input factory for the given editor input to the registry. An editor input factory
@@ -233,7 +235,7 @@ export interface IEditorInputFactory {
 	 * Returns a string representation of the provided editor input that contains enough information
 	 * to deserialize back to the original editor input from the deserialize() method.
 	 */
-	serialize(editorInput: EditorInput): string | undefined;
+	serialize(editorInput: IEditorInput): string | undefined;
 
 	/**
 	 * Returns an editor input from the provided serialized form of the editor input. This form matches
@@ -404,7 +406,14 @@ export interface IEditorInput extends IDisposable {
 	getTitle(verbosity?: Verbosity): string | undefined;
 
 	/**
-	 * Resolves the input.
+	 * Returns the aria label to be read out by a screen reader.
+	 */
+	getAriaLabel(): string;
+
+	/**
+	 * Returns a type of `IEditorModel` that represents the resolved input.
+	 * Subclasses should override to provide a meaningful model or return
+	 * `null` if the editor does not require a model.
 	 */
 	resolve(): Promise<IEditorModel | null>;
 
@@ -459,14 +468,19 @@ export interface IEditorInput extends IDisposable {
 	revert(group: GroupIdentifier, options?: IRevertOptions): Promise<void>;
 
 	/**
-	 * Called to determine how to handle a resource that is moved that matches
+	 * Called to determine how to handle a resource that is renamed that matches
 	 * the editors resource (or is a child of).
 	 *
 	 * Implementors are free to not implement this method to signal no intent
 	 * to participate. If an editor is returned though, it will replace the
 	 * current one with that editor and optional options.
 	 */
-	move(group: GroupIdentifier, target: URI): IMoveResult | undefined;
+	rename(group: GroupIdentifier, target: URI): IMoveResult | undefined;
+
+	/**
+	 * Subclasses can set this to false if it does not make sense to split the editor input.
+	 */
+	supportsSplitEditor(): boolean;
 
 	/**
 	 * Returns if the other object matches this input.
@@ -512,6 +526,10 @@ export abstract class EditorInput extends Disposable implements IEditorInput {
 		return this.getName();
 	}
 
+	getAriaLabel(): string {
+		return this.getTitle(Verbosity.SHORT);
+	}
+
 	/**
 	 * Returns the preferred editor for this input. A list of candidate editors is passed in that whee registered
 	 * for the input. This allows subclasses to decide late which editor to use for the input on a case by case basis.
@@ -534,12 +552,6 @@ export abstract class EditorInput extends Disposable implements IEditorInput {
 		return { typeId: this.getTypeId() };
 	}
 
-	/**
-	 * Returns a type of EditorModel that represents the resolved input. Subclasses should
-	 * override to provide a meaningful model.
-	 */
-	abstract resolve(): Promise<IEditorModel | null>;
-
 	isReadonly(): boolean {
 		return true;
 	}
@@ -556,6 +568,10 @@ export abstract class EditorInput extends Disposable implements IEditorInput {
 		return false;
 	}
 
+	async resolve(): Promise<IEditorModel | null> {
+		return null;
+	}
+
 	async save(group: GroupIdentifier, options?: ISaveOptions): Promise<IEditorInput | undefined> {
 		return this;
 	}
@@ -566,13 +582,10 @@ export abstract class EditorInput extends Disposable implements IEditorInput {
 
 	async revert(group: GroupIdentifier, options?: IRevertOptions): Promise<void> { }
 
-	move(group: GroupIdentifier, target: URI): IMoveResult | undefined {
+	rename(group: GroupIdentifier, target: URI): IMoveResult | undefined {
 		return undefined;
 	}
 
-	/**
-	 * Subclasses can set this to false if it does not make sense to split the editor input.
-	 */
 	supportsSplitEditor(): boolean {
 		return true;
 	}
@@ -592,164 +605,6 @@ export abstract class EditorInput extends Disposable implements IEditorInput {
 		}
 
 		super.dispose();
-	}
-}
-
-export abstract class TextResourceEditorInput extends EditorInput {
-
-	private static readonly MEMOIZER = createMemoizer();
-
-	constructor(
-		public readonly resource: URI,
-		@IEditorService protected readonly editorService: IEditorService,
-		@IEditorGroupsService protected readonly editorGroupService: IEditorGroupsService,
-		@ITextFileService protected readonly textFileService: ITextFileService,
-		@ILabelService protected readonly labelService: ILabelService,
-		@IFileService protected readonly fileService: IFileService,
-		@IFilesConfigurationService protected readonly filesConfigurationService: IFilesConfigurationService
-	) {
-		super();
-
-		this.registerListeners();
-	}
-
-	protected registerListeners(): void {
-
-		// Clear label memoizer on certain events that have impact
-		this._register(this.labelService.onDidChangeFormatters(e => this.onLabelEvent(e.scheme)));
-		this._register(this.fileService.onDidChangeFileSystemProviderRegistrations(e => this.onLabelEvent(e.scheme)));
-		this._register(this.fileService.onDidChangeFileSystemProviderCapabilities(e => this.onLabelEvent(e.scheme)));
-	}
-
-	private onLabelEvent(scheme: string): void {
-		if (scheme === this.resource.scheme) {
-
-			// Clear any cached labels from before
-			TextResourceEditorInput.MEMOIZER.clear();
-
-			// Trigger recompute of label
-			this._onDidChangeLabel.fire();
-		}
-	}
-
-	getName(): string {
-		return this.basename;
-	}
-
-	@TextResourceEditorInput.MEMOIZER
-	private get basename(): string {
-		return this.labelService.getUriBasenameLabel(this.resource);
-	}
-
-	getDescription(verbosity: Verbosity = Verbosity.MEDIUM): string | undefined {
-		switch (verbosity) {
-			case Verbosity.SHORT:
-				return this.shortDescription;
-			case Verbosity.LONG:
-				return this.longDescription;
-			case Verbosity.MEDIUM:
-			default:
-				return this.mediumDescription;
-		}
-	}
-
-	@TextResourceEditorInput.MEMOIZER
-	private get shortDescription(): string {
-		return this.labelService.getUriBasenameLabel(dirname(this.resource));
-	}
-
-	@TextResourceEditorInput.MEMOIZER
-	private get mediumDescription(): string {
-		return this.labelService.getUriLabel(dirname(this.resource), { relative: true });
-	}
-
-	@TextResourceEditorInput.MEMOIZER
-	private get longDescription(): string {
-		return this.labelService.getUriLabel(dirname(this.resource));
-	}
-
-	@TextResourceEditorInput.MEMOIZER
-	private get shortTitle(): string {
-		return this.getName();
-	}
-
-	@TextResourceEditorInput.MEMOIZER
-	private get mediumTitle(): string {
-		return this.labelService.getUriLabel(this.resource, { relative: true });
-	}
-
-	@TextResourceEditorInput.MEMOIZER
-	private get longTitle(): string {
-		return this.labelService.getUriLabel(this.resource);
-	}
-
-	getTitle(verbosity: Verbosity): string {
-		switch (verbosity) {
-			case Verbosity.SHORT:
-				return this.shortTitle;
-			case Verbosity.LONG:
-				return this.longTitle;
-			default:
-			case Verbosity.MEDIUM:
-				return this.mediumTitle;
-		}
-	}
-
-	isUntitled(): boolean {
-		return this.resource.scheme === Schemas.untitled;
-	}
-
-	isReadonly(): boolean {
-		if (this.isUntitled()) {
-			return false; // untitled is never readonly
-		}
-
-		return this.fileService.hasCapability(this.resource, FileSystemProviderCapabilities.Readonly);
-	}
-
-	isSaving(): boolean {
-		if (this.isUntitled()) {
-			return false; // untitled is never saving automatically
-		}
-
-		if (this.filesConfigurationService.getAutoSaveMode() === AutoSaveMode.AFTER_SHORT_DELAY) {
-			return true; // a short auto save is configured, treat this as being saved
-		}
-
-		return false;
-	}
-
-	async save(group: GroupIdentifier, options?: ITextFileSaveOptions): Promise<IEditorInput | undefined> {
-		return this.doSave(group, options, false);
-	}
-
-	saveAs(group: GroupIdentifier, options?: ITextFileSaveOptions): Promise<IEditorInput | undefined> {
-		return this.doSave(group, options, true);
-	}
-
-	private async doSave(group: GroupIdentifier, options: ISaveOptions | undefined, saveAs: boolean): Promise<IEditorInput | undefined> {
-
-		// Save / Save As
-		let target: URI | undefined;
-		if (saveAs) {
-			target = await this.textFileService.saveAs(this.resource, undefined, options);
-		} else {
-			target = await this.textFileService.save(this.resource, options);
-		}
-
-		if (!target) {
-			return undefined; // save cancelled
-		}
-
-		if (!isEqual(target, this.resource)) {
-			return this.editorService.createEditorInput({ resource: target });
-		}
-
-		return this;
-	}
-
-	async revert(group: GroupIdentifier, options?: IRevertOptions): Promise<void> {
-		await this.textFileService.revert(this.resource, options);
 	}
 }
 
@@ -794,17 +649,33 @@ export interface IModeSupport {
 export interface IFileEditorInput extends IEditorInput, IEncodingSupport, IModeSupport {
 
 	/**
-	 * Gets the resource this editor is about.
+	 * Gets the resource this file input is about. This will always be the
+	 * canonical form of the resource, so it may differ from the original
+	 * resource that was provided to create the input. Use `preferredResource`
+	 * for the form as it was created.
 	 */
 	readonly resource: URI;
 
 	/**
-	 * Sets the preferred encoding to use for this input.
+	 * Gets the preferred resource of the editor. In most cases this will
+	 * be identical to the resource. But in some cases the preferredResource
+	 * may differ in path casing to the actual resource because we keep
+	 * canonical forms of resources in-memory.
+	 */
+	readonly preferredResource: URI;
+
+	/**
+	 * Sets the preferred resource to use for this file input.
+	 */
+	setPreferredResource(preferredResource: URI): void;
+
+	/**
+	 * Sets the preferred encoding to use for this file input.
 	 */
 	setPreferredEncoding(encoding: string): void;
 
 	/**
-	 * Sets the preferred language mode to use for this input.
+	 * Sets the preferred language mode to use for this file input.
 	 */
 	setPreferredMode(mode: string): void;
 
@@ -814,13 +685,13 @@ export interface IFileEditorInput extends IEditorInput, IEncodingSupport, IModeS
 	setForceOpenAsBinary(): void;
 
 	/**
-	 * Figure out if the input has been resolved or not.
+	 * Figure out if the file input has been resolved or not.
 	 */
 	isResolved(): boolean;
 }
 
 /**
- * Side by side editor inputs that have a master and details side.
+ * Side by side editor inputs that have a primary and secondary side.
  */
 export class SideBySideEditorInput extends EditorInput {
 
@@ -829,24 +700,46 @@ export class SideBySideEditorInput extends EditorInput {
 	constructor(
 		protected readonly name: string | undefined,
 		private readonly description: string | undefined,
-		private readonly _details: EditorInput,
-		private readonly _master: EditorInput
+		private readonly _secondary: EditorInput,
+		private readonly _primary: EditorInput
 	) {
 		super();
 
 		this.registerListeners();
 	}
 
+	private registerListeners(): void {
+
+		// When the primary or secondary input gets disposed, dispose this diff editor input
+		const onceSecondaryDisposed = Event.once(this.secondary.onDispose);
+		this._register(onceSecondaryDisposed(() => {
+			if (!this.isDisposed()) {
+				this.dispose();
+			}
+		}));
+
+		const oncePrimaryDisposed = Event.once(this.primary.onDispose);
+		this._register(oncePrimaryDisposed(() => {
+			if (!this.isDisposed()) {
+				this.dispose();
+			}
+		}));
+
+		// Reemit some events from the primary side to the outside
+		this._register(this.primary.onDidChangeDirty(() => this._onDidChangeDirty.fire()));
+		this._register(this.primary.onDidChangeLabel(() => this._onDidChangeLabel.fire()));
+	}
+
 	get resource(): URI | undefined {
 		return undefined;
 	}
 
-	get master(): EditorInput {
-		return this._master;
+	get primary(): EditorInput {
+		return this._primary;
 	}
 
-	get details(): EditorInput {
-		return this._details;
+	get secondary(): EditorInput {
+		return this._secondary;
 	}
 
 	getTypeId(): string {
@@ -855,7 +748,7 @@ export class SideBySideEditorInput extends EditorInput {
 
 	getName(): string {
 		if (!this.name) {
-			return localize('sideBySideLabels', "{0} - {1}", this._details.getName(), this._master.getName());
+			return localize('sideBySideLabels', "{0} - {1}", this._secondary.getName(), this._primary.getName());
 		}
 
 		return this.name;
@@ -866,76 +759,46 @@ export class SideBySideEditorInput extends EditorInput {
 	}
 
 	isReadonly(): boolean {
-		return this.master.isReadonly();
+		return this.primary.isReadonly();
 	}
 
 	isUntitled(): boolean {
-		return this.master.isUntitled();
+		return this.primary.isUntitled();
 	}
 
 	isDirty(): boolean {
-		return this.master.isDirty();
+		return this.primary.isDirty();
 	}
 
 	isSaving(): boolean {
-		return this.master.isSaving();
+		return this.primary.isSaving();
 	}
 
 	save(group: GroupIdentifier, options?: ISaveOptions): Promise<IEditorInput | undefined> {
-		return this.master.save(group, options);
+		return this.primary.save(group, options);
 	}
 
 	saveAs(group: GroupIdentifier, options?: ISaveOptions): Promise<IEditorInput | undefined> {
-		return this.master.saveAs(group, options);
+		return this.primary.saveAs(group, options);
 	}
 
 	revert(group: GroupIdentifier, options?: IRevertOptions): Promise<void> {
-		return this.master.revert(group, options);
+		return this.primary.revert(group, options);
 	}
 
 	getTelemetryDescriptor(): { [key: string]: unknown } {
-		const descriptor = this.master.getTelemetryDescriptor();
+		const descriptor = this.primary.getTelemetryDescriptor();
 
 		return Object.assign(descriptor, super.getTelemetryDescriptor());
 	}
 
-	private registerListeners(): void {
-
-		// When the details or master input gets disposed, dispose this diff editor input
-		const onceDetailsDisposed = Event.once(this.details.onDispose);
-		this._register(onceDetailsDisposed(() => {
-			if (!this.isDisposed()) {
-				this.dispose();
-			}
-		}));
-
-		const onceMasterDisposed = Event.once(this.master.onDispose);
-		this._register(onceMasterDisposed(() => {
-			if (!this.isDisposed()) {
-				this.dispose();
-			}
-		}));
-
-		// Reemit some events from the master side to the outside
-		this._register(this.master.onDidChangeDirty(() => this._onDidChangeDirty.fire()));
-		this._register(this.master.onDidChangeLabel(() => this._onDidChangeLabel.fire()));
-	}
-
-	async resolve(): Promise<EditorModel | null> {
-		return null;
-	}
-
 	matches(otherInput: unknown): boolean {
-		if (super.matches(otherInput) === true) {
+		if (otherInput === this) {
 			return true;
 		}
 
-		if (otherInput) {
-			if (!(otherInput instanceof SideBySideEditorInput)) {
-				return false;
-			}
-
-			return this.details.matches(otherInput.details) && this.master.matches(otherInput.master);
+		if (otherInput instanceof SideBySideEditorInput) {
+			return this.primary.matches(otherInput.primary) && this.secondary.matches(otherInput.secondary);
 		}
 
 		return false;
@@ -1074,9 +937,12 @@ export class EditorOptions implements IEditorOptions {
 	ignoreError: boolean | undefined;
 
 	/**
-	 * Does not use editor overrides while opening the editor.
+	 * Allows to override the editor that should be used to display the input:
+	 * - `undefined`: let the editor decide for itself
+	 * - `false`: disable overrides
+	 * - `string`: specific override by id
 	 */
-	ignoreOverrides: boolean | undefined;
+	override?: false | string;
 
 	/**
 	 * A optional hint to signal in which context the editor opens.
@@ -1134,8 +1000,8 @@ export class EditorOptions implements IEditorOptions {
 			this.index = options.index;
 		}
 
-		if (typeof options.ignoreOverrides === 'boolean') {
-			this.ignoreOverrides = options.ignoreOverrides;
+		if (typeof options.override === 'string' || options.override === false) {
+			this.override = options.override;
 		}
 
 		if (typeof options.context === 'number') {
@@ -1167,7 +1033,7 @@ export class TextEditorOptions extends EditorOptions implements ITextEditorOptio
 	selectionRevealType: TextEditorSelectionRevealType | undefined;
 
 	static from(input?: IBaseResourceEditorInput): TextEditorOptions | undefined {
-		if (!input || !input.options) {
+		if (!input?.options) {
 			return undefined;
 		}
 
@@ -1342,7 +1208,7 @@ interface IEditorPartConfiguration {
 }
 
 export interface IEditorPartOptions extends IEditorPartConfiguration {
-	iconTheme?: string;
+	hasIcons?: boolean;
 }
 
 export interface IEditorPartOptionsChangeEvent {
@@ -1351,8 +1217,8 @@ export interface IEditorPartOptionsChangeEvent {
 }
 
 export enum SideBySideEditor {
-	MASTER = 1,
-	DETAILS = 2,
+	PRIMARY = 1,
+	SECONDARY = 2,
 	BOTH = 3
 }
 
@@ -1361,10 +1227,10 @@ export interface IResourceOptions {
 	filterByScheme?: string | string[];
 }
 
-export function toResource(editor: IEditorInput | undefined): URI | undefined;
-export function toResource(editor: IEditorInput | undefined, options: IResourceOptions & { supportSideBySide?: SideBySideEditor.MASTER | SideBySideEditor.DETAILS }): URI | undefined;
-export function toResource(editor: IEditorInput | undefined, options: IResourceOptions & { supportSideBySide: SideBySideEditor.BOTH }): URI | { master?: URI, detail?: URI } | undefined;
-export function toResource(editor: IEditorInput | undefined, options?: IResourceOptions): URI | { master?: URI, detail?: URI } | undefined {
+export function toResource(editor: IEditorInput | undefined | null): URI | undefined;
+export function toResource(editor: IEditorInput | undefined | null, options: IResourceOptions & { supportSideBySide?: SideBySideEditor.PRIMARY | SideBySideEditor.SECONDARY }): URI | undefined;
+export function toResource(editor: IEditorInput | undefined | null, options: IResourceOptions & { supportSideBySide: SideBySideEditor.BOTH }): URI | { primary?: URI, secondary?: URI } | undefined;
+export function toResource(editor: IEditorInput | undefined | null, options?: IResourceOptions): URI | { primary?: URI, secondary?: URI } | undefined {
 	if (!editor) {
 		return undefined;
 	}
@@ -1372,12 +1238,12 @@ export function toResource(editor: IEditorInput | undefined, options?: IResource
 	if (options?.supportSideBySide && editor instanceof SideBySideEditorInput) {
 		if (options?.supportSideBySide === SideBySideEditor.BOTH) {
 			return {
-				master: toResource(editor.master, { filterByScheme: options.filterByScheme }),
-				detail: toResource(editor.details, { filterByScheme: options.filterByScheme })
+				primary: toResource(editor.primary, { filterByScheme: options.filterByScheme }),
+				secondary: toResource(editor.secondary, { filterByScheme: options.filterByScheme })
 			};
 		}
 
-		editor = options.supportSideBySide === SideBySideEditor.MASTER ? editor.master : editor.details;
+		editor = options.supportSideBySide === SideBySideEditor.PRIMARY ? editor.primary : editor.secondary;
 	}
 
 	const resource = editor.resource;
@@ -1414,13 +1280,13 @@ export interface IEditorMemento<T> {
 	clearEditorState(resource: URI, group?: IEditorGroup): void;
 	clearEditorState(editor: EditorInput, group?: IEditorGroup): void;
 
-	moveEditorState(source: URI, target: URI): void;
+	moveEditorState(source: URI, target: URI, comparer: IExtUri): void;
 }
 
 class EditorInputFactoryRegistry implements IEditorInputFactoryRegistry {
 	private instantiationService: IInstantiationService | undefined;
 	private fileEditorInputFactory: IFileEditorInputFactory | undefined;
-	private customEditorInputFactory: ICustomEditorInputFactory | undefined;
+	private customEditorInputFactoryInstances: Map<string, ICustomEditorInputFactory> = new Map();
 
 	private readonly editorInputFactoryConstructors: Map<string, IConstructorSignature0<IEditorInputFactory>> = new Map();
 	private readonly editorInputFactoryInstances: Map<string, IEditorInputFactory> = new Map();
@@ -1448,12 +1314,12 @@ class EditorInputFactoryRegistry implements IEditorInputFactoryRegistry {
 		return assertIsDefined(this.fileEditorInputFactory);
 	}
 
-	registerCustomEditorInputFactory(factory: ICustomEditorInputFactory): void {
-		this.customEditorInputFactory = factory;
+	registerCustomEditorInputFactory(scheme: string, factory: ICustomEditorInputFactory): void {
+		this.customEditorInputFactoryInstances.set(scheme, factory);
 	}
 
-	getCustomEditorInputFactory(): ICustomEditorInputFactory {
-		return assertIsDefined(this.customEditorInputFactory);
+	getCustomEditorInputFactory(scheme: string): ICustomEditorInputFactory | undefined {
+		return this.customEditorInputFactoryInstances.get(scheme);
 	}
 
 	registerEditorInputFactory(editorInputId: string, ctor: IConstructorSignature0<IEditorInputFactory>): IDisposable {
@@ -1502,8 +1368,12 @@ export async function pathsToEditors(paths: IPathData[] | undefined, fileService
 				startLineNumber: path.lineNumber,
 				startColumn: path.columnNumber || 1
 			},
-			pinned: true
-		} : { pinned: true };
+			pinned: true,
+			override: path.overrideId
+		} : {
+				pinned: true,
+				override: path.overrideId
+			};
 
 		let input: IResourceEditorInput | IUntitledTextResourceEditorInput;
 		if (!exists) {
@@ -1529,4 +1399,24 @@ export const enum EditorsOrder {
 	 * Editors sorted by sequential order
 	 */
 	SEQUENTIAL
+}
+
+export function computeEditorAriaLabel(input: IEditorInput, index: number | undefined, group: IEditorGroup | undefined, groupCount: number): string {
+	let ariaLabel = input.getAriaLabel();
+	if (group && !group.isPinned(input)) {
+		ariaLabel = localize('preview', "{0}, preview", ariaLabel);
+	}
+
+	if (group && group.isSticky(index ?? input)) {
+		ariaLabel = localize('pinned', "{0}, pinned", ariaLabel);
+	}
+
+	// Apply group information to help identify in
+	// which group we are (only if more than one group
+	// is actually opened)
+	if (group && groupCount > 1) {
+		ariaLabel = `${ariaLabel}, ${group.ariaLabel}`;
+	}
+
+	return ariaLabel;
 }

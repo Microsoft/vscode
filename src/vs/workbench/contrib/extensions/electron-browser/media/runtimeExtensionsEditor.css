@@ -57,8 +57,8 @@
 	color: currentColor;
 }
 
-.vs .runtime-extensions-editor .extension > .icon-container > .icon,
-.vs-dark .runtime-extensions-editor .extension > .icon-container > .icon {
+.monaco-workbench.vs .runtime-extensions-editor .extension > .icon-container > .icon,
+.monaco-workbench.vs-dark .runtime-extensions-editor .extension > .icon-container > .icon {
 	opacity: 0.5;
 }
 

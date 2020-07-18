@@ -13,10 +13,10 @@ const path = require('path');
 module.exports = withDefaults({
 	context: path.join(__dirname, 'client'),
 	entry: {
-		extension: './src/htmlMain.ts',
+		extension: './src/node/htmlClientMain.ts',
 	},
 	output: {
-		filename: 'htmlMain.js',
-		path: path.join(__dirname, 'client', 'dist')
+		filename: 'htmlClientMain.js',
+		path: path.join(__dirname, 'client', 'dist', 'node')
 	}
 });

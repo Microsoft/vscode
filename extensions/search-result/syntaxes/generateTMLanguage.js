@@ -12,7 +12,7 @@ const mappings = [
 	['css', 'source.css'],
 	['dart', 'source.dart'],
 	['diff', 'source.diff'],
-	['dockerfile', 'source.dockerfile', '(?:dockerfile|Dockerfile)'],
+	['dockerfile', 'source.dockerfile', '(?:dockerfile|Dockerfile|containerfile|Containerfile)'],
 	['fs', 'source.fsharp'],
 	['go', 'source.go'],
 	['groovy', 'source.groovy'],

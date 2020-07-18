@@ -20,6 +20,11 @@ export function prefersExecuteOnWorkspace(manifest: IExtensionManifest, productS
 	return (extensionKind.length > 0 && extensionKind[0] === 'workspace');
 }
 
+export function prefersExecuteOnWeb(manifest: IExtensionManifest, productService: IProductService, configurationService: IConfigurationService): boolean {
+	const extensionKind = getExtensionKind(manifest, productService, configurationService);
+	return (extensionKind.length > 0 && extensionKind[0] === 'web');
+}
+
 export function canExecuteOnUI(manifest: IExtensionManifest, productService: IProductService, configurationService: IConfigurationService): boolean {
 	const extensionKind = getExtensionKind(manifest, productService, configurationService);
 	return extensionKind.some(kind => kind === 'ui');

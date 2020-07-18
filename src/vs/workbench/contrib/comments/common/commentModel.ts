@@ -8,7 +8,6 @@ import { IRange } from 'vs/editor/common/core/range';
 import { Comment, CommentThread, CommentThreadChangedEvent } from 'vs/editor/common/modes';
 import { groupBy, firstIndex, flatten } from 'vs/base/common/arrays';
 import { localize } from 'vs/nls';
-import { values } from 'vs/base/common/map';
 
 export interface ICommentThreadChangedEvent extends CommentThreadChangedEvent {
 	owner: string;
@@ -74,7 +73,7 @@ export class CommentsModel {
 
 	public setCommentThreads(owner: string, commentThreads: CommentThread[]): void {
 		this.commentThreadsMap.set(owner, this.groupByResource(owner, commentThreads));
-		this.resourceCommentThreads = flatten(values(this.commentThreadsMap));
+		this.resourceCommentThreads = flatten([...this.commentThreadsMap.values()]);
 	}
 
 	public updateCommentThreads(event: ICommentThreadChangedEvent): boolean {
@@ -124,7 +123,7 @@ export class CommentsModel {
 		});
 
 		this.commentThreadsMap.set(owner, threadsForOwner);
-		this.resourceCommentThreads = flatten(values(this.commentThreadsMap));
+		this.resourceCommentThreads = flatten([...this.commentThreadsMap.values()]);
 
 		return removed.length > 0 || changed.length > 0 || added.length > 0;
 	}

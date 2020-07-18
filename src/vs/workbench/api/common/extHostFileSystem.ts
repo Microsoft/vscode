@@ -8,7 +8,7 @@ import { MainContext, IMainContext, ExtHostFileSystemShape, MainThreadFileSystem
 import type * as vscode from 'vscode';
 import * as files from 'vs/platform/files/common/files';
 import { IDisposable, toDisposable, dispose } from 'vs/base/common/lifecycle';
-import { FileChangeType, FileSystemError } from 'vs/workbench/api/common/extHostTypes';
+import { FileChangeType } from 'vs/workbench/api/common/extHostTypes';
 import * as typeConverter from 'vs/workbench/api/common/extHostTypeConverters';
 import { ExtHostLanguageFeatures } from 'vs/workbench/api/common/extHostLanguageFeatures';
 import { Schemas } from 'vs/base/common/network';
@@ -108,59 +108,6 @@ class FsLinkProvider {
 	}
 }
 
-class ConsumerFileSystem implements vscode.FileSystem {
-
-	constructor(private _proxy: MainThreadFileSystemShape) { }
-
-	stat(uri: vscode.Uri): Promise<vscode.FileStat> {
-		return this._proxy.$stat(uri).catch(ConsumerFileSystem._handleError);
-	}
-	readDirectory(uri: vscode.Uri): Promise<[string, vscode.FileType][]> {
-		return this._proxy.$readdir(uri).catch(ConsumerFileSystem._handleError);
-	}
-	createDirectory(uri: vscode.Uri): Promise<void> {
-		return this._proxy.$mkdir(uri).catch(ConsumerFileSystem._handleError);
-	}
-	async readFile(uri: vscode.Uri): Promise<Uint8Array> {
-		return this._proxy.$readFile(uri).then(buff => buff.buffer).catch(ConsumerFileSystem._handleError);
-	}
-	writeFile(uri: vscode.Uri, content: Uint8Array): Promise<void> {
-		return this._proxy.$writeFile(uri, VSBuffer.wrap(content)).catch(ConsumerFileSystem._handleError);
-	}
-	delete(uri: vscode.Uri, options?: { recursive?: boolean; useTrash?: boolean; }): Promise<void> {
-		return this._proxy.$delete(uri, { ...{ recursive: false, useTrash: false }, ...options }).catch(ConsumerFileSystem._handleError);
-	}
-	rename(oldUri: vscode.Uri, newUri: vscode.Uri, options?: { overwrite?: boolean; }): Promise<void> {
-		return this._proxy.$rename(oldUri, newUri, { ...{ overwrite: false }, ...options }).catch(ConsumerFileSystem._handleError);
-	}
-	copy(source: vscode.Uri, destination: vscode.Uri, options?: { overwrite?: boolean }): Promise<void> {
-		return this._proxy.$copy(source, destination, { ...{ overwrite: false }, ...options }).catch(ConsumerFileSystem._handleError);
-	}
-	private static _handleError(err: any): never {
-		// generic error
-		if (!(err instanceof Error)) {
-			throw new FileSystemError(String(err));
-		}
-
-		// no provider (unknown scheme) error
-		if (err.name === 'ENOPRO') {
-			throw FileSystemError.Unavailable(err.message);
-		}
-
-		// file system error
-		switch (err.name) {
-			case files.FileSystemProviderErrorCode.FileExists: throw FileSystemError.FileExists(err.message);
-			case files.FileSystemProviderErrorCode.FileNotFound: throw FileSystemError.FileNotFound(err.message);
-			case files.FileSystemProviderErrorCode.FileNotADirectory: throw FileSystemError.FileNotADirectory(err.message);
-			case files.FileSystemProviderErrorCode.FileIsADirectory: throw FileSystemError.FileIsADirectory(err.message);
-			case files.FileSystemProviderErrorCode.NoPermissions: throw FileSystemError.NoPermissions(err.message);
-			case files.FileSystemProviderErrorCode.Unavailable: throw FileSystemError.Unavailable(err.message);
-
-			default: throw new FileSystemError(err.message, err.name as files.FileSystemProviderErrorCode);
-		}
-	}
-}
-
 export class ExtHostFileSystem implements ExtHostFileSystemShape {
 
 	private readonly _proxy: MainThreadFileSystemShape;
@@ -172,11 +119,8 @@ export class ExtHostFileSystem implements ExtHostFileSystemShape {
 	private _linkProviderRegistration?: IDisposable;
 	private _handlePool: number = 0;
 
-	readonly fileSystem: vscode.FileSystem;
-
 	constructor(mainContext: IMainContext, private _extHostLanguageFeatures: ExtHostLanguageFeatures) {
 		this._proxy = mainContext.getProxy(MainContext.MainThreadFileSystem);
-		this.fileSystem = new ConsumerFileSystem(this._proxy);
 
 		// register used schemes
 		Object.keys(Schemas).forEach(scheme => this._usedSchemes.add(scheme));

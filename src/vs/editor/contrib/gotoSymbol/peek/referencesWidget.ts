@@ -6,13 +6,12 @@
 import 'vs/css!./referencesWidget';
 import * as dom from 'vs/base/browser/dom';
 import { IMouseEvent } from 'vs/base/browser/mouseEvent';
-import { GestureEvent } from 'vs/base/browser/touch';
 import { Orientation } from 'vs/base/browser/ui/sash/sash';
 import { Color } from 'vs/base/common/color';
 import { Emitter, Event } from 'vs/base/common/event';
 import { dispose, IDisposable, IReference, DisposableStore } from 'vs/base/common/lifecycle';
 import { Schemas } from 'vs/base/common/network';
-import { basenameOrAuthority, dirname, isEqual } from 'vs/base/common/resources';
+import { basenameOrAuthority, dirname } from 'vs/base/common/resources';
 import { ICodeEditor } from 'vs/editor/browser/editorBrowser';
 import { EmbeddedCodeEditorWidget } from 'vs/editor/browser/widget/embeddedCodeEditorWidget';
 import { IEditorOptions } from 'vs/editor/common/config/editorOptions';
@@ -62,12 +61,13 @@ class DecorationsManager implements IDisposable {
 	private _onModelChanged(): void {
 		this._callOnModelChange.clear();
 		const model = this._editor.getModel();
-		if (model) {
-			for (const ref of this._model.groups) {
-				if (isEqual(ref.uri, model.uri)) {
-					this._addDecorations(ref);
-					return;
-				}
+		if (!model) {
+			return;
+		}
+		for (let ref of this._model.references) {
+			if (ref.uri.toString() === model.uri.toString()) {
+				this._addDecorations(ref.parent);
+				return;
 			}
 		}
 	}
@@ -76,7 +76,7 @@ class DecorationsManager implements IDisposable {
 		if (!this._editor.hasModel()) {
 			return;
 		}
-		this._callOnModelChange.add(this._editor.getModel().onDidChangeDecorations((event) => this._onDecorationChanged()));
+		this._callOnModelChange.add(this._editor.getModel().onDidChangeDecorations(() => this._onDecorationChanged()));
 
 		const newDecorations: IModelDeltaDecoration[] = [];
 		const newDecorationsActualIndex: number[] = [];
@@ -84,6 +84,9 @@ class DecorationsManager implements IDisposable {
 		for (let i = 0, len = reference.children.length; i < len; i++) {
 			let oneReference = reference.children[i];
 			if (this._decorationIgnoreSet.has(oneReference.id)) {
+				continue;
+			}
+			if (oneReference.uri.toString() !== this._editor.getModel().uri.toString()) {
 				continue;
 			}
 			newDecorations.push({
@@ -107,19 +110,21 @@ class DecorationsManager implements IDisposable {
 			return;
 		}
 
-		this._decorations.forEach((reference, decorationId) => {
+		for (let [decorationId, reference] of this._decorations) {
+
 			const newRange = model.getDecorationRange(decorationId);
 
 			if (!newRange) {
-				return;
+				continue;
 			}
 
 			let ignore = false;
-
 			if (Range.equalsRange(newRange, reference.range)) {
-				return;
+				continue;
 
-			} else if (Range.spansMultipleLines(newRange)) {
+			}
+
+			if (Range.spansMultipleLines(newRange)) {
 				ignore = true;
 
 			} else {
@@ -137,7 +142,7 @@ class DecorationsManager implements IDisposable {
 			} else {
 				reference.range = newRange;
 			}
-		});
+		}
 
 		for (let i = 0, len = toRemove.length; i < len; i++) {
 			this._decorations.delete(toRemove[i]);
@@ -146,11 +151,7 @@ class DecorationsManager implements IDisposable {
 	}
 
 	removeDecorations(): void {
-		let toRemove: string[] = [];
-		this._decorations.forEach((value, key) => {
-			toRemove.push(key);
-		});
-		this._editor.deltaDecorations(toRemove, []);
+		this._editor.deltaDecorations([...this._decorations.keys()], []);
 		this._decorations.clear();
 	}
 }
@@ -315,6 +316,8 @@ export class ReferenceWidget extends peekView.PeekViewWidget {
 			accessibilityProvider: new AccessibilityProvider(),
 			keyboardNavigationLabelProvider: this._instantiationService.createInstance(StringRepresentationProvider),
 			identityProvider: new IdentityProvider(),
+			openOnSingleClick: true,
+			openOnFocus: true,
 			overrideStyles: {
 				listBackground: peekView.peekViewResultsBackground
 			}
@@ -370,22 +373,13 @@ export class ReferenceWidget extends peekView.PeekViewWidget {
 				this._onDidSelectReference.fire({ element, kind, source: 'tree' });
 			}
 		};
-		this._tree.onDidChangeFocus(e => {
-			onEvent(e.elements[0], 'show');
-		});
 		this._tree.onDidOpen(e => {
-			if (e.browserEvent instanceof MouseEvent && (e.browserEvent.ctrlKey || e.browserEvent.metaKey || e.browserEvent.altKey)) {
-				// modifier-click -> open to the side
-				onEvent(e.elements[0], 'side');
-			} else if (e.browserEvent instanceof KeyboardEvent || (e.browserEvent instanceof MouseEvent && e.browserEvent.detail === 2) || (<GestureEvent>e.browserEvent).tapCount === 2) {
-				// keybinding (list service command)
-				// OR double click
-				// OR double tap
-				// -> close widget and goto target
-				onEvent(e.elements[0], 'goto');
+			if (e.sideBySide) {
+				onEvent(e.element, 'side');
+			} else if (e.editorOptions.pinned) {
+				onEvent(e.element, 'goto');
 			} else {
-				// preview location
-				onEvent(e.elements[0], 'show');
+				onEvent(e.element, 'show');
 			}
 		});
 

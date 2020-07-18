@@ -6,6 +6,7 @@
 import { equals } from 'vs/base/common/arrays';
 import { UriComponents } from 'vs/base/common/uri';
 import { escapeCodicons } from 'vs/base/common/codicons';
+import { illegalArgument } from 'vs/base/common/errors';
 
 export interface IMarkdownString {
 	readonly value: string;
@@ -22,6 +23,10 @@ export class MarkdownString implements IMarkdownString {
 		private _value: string = '',
 		isTrustedOrOptions: boolean | { isTrusted?: boolean, supportThemeIcons?: boolean } = false,
 	) {
+		if (typeof this._value !== 'string') {
+			throw illegalArgument('value');
+		}
+
 		if (typeof isTrustedOrOptions === 'boolean') {
 			this._isTrusted = isTrustedOrOptions;
 			this._supportThemeIcons = false;
@@ -30,7 +35,6 @@ export class MarkdownString implements IMarkdownString {
 			this._isTrusted = isTrustedOrOptions.isTrusted ?? false;
 			this._supportThemeIcons = isTrustedOrOptions.supportThemeIcons ?? false;
 		}
-
 	}
 
 	get value() { return this._value; }

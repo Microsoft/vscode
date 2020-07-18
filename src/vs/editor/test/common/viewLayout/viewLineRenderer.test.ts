@@ -703,6 +703,36 @@ suite('viewLineRenderer.renderLine', () => {
 		assert.equal(actual.containsRTL, true);
 	});
 
+	test('issue #95685: Uses unicode replacement character for Paragraph Separator', () => {
+		const lineText = 'var ftext = [\u2029"Und", "dann", "eines"];';
+		const lineParts = createViewLineTokens([createPart(lineText.length, 1)]);
+		const expectedOutput = [
+			'<span class="mtk1">var\u00a0ftext\u00a0=\u00a0[\uFFFD"Und",\u00a0"dann",\u00a0"eines"];</span>'
+		];
+		const actual = renderViewLine(new RenderLineInput(
+			false,
+			true,
+			lineText,
+			false,
+			false,
+			false,
+			0,
+			lineParts,
+			[],
+			4,
+			0,
+			10,
+			10,
+			10,
+			-1,
+			'none',
+			false,
+			false,
+			null
+		));
+		assert.equal(actual.html, '<span>' + expectedOutput.join('') + '</span>');
+	});
+
 	test('issue #19673: Monokai Theme bad-highlighting in line wrap', () => {
 		let lineText = '    MongoCallback<string>): void {';
 

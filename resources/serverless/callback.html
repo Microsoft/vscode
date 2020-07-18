@@ -1,0 +1,81 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+
+	<!-- Disable pinch zooming -->
+	<meta name="viewport"
+		content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+
+	<!-- Content Security Policy -->
+	<meta http-equiv="Content-Security-Policy" content="
+				default-src 'self';
+				img-src 'self' https: data: blob:;
+				media-src 'none';
+				script-src 'self';
+				style-src 'self' 'unsafe-inline';
+				font-src 'self' blob:;
+		">
+
+	<title>Visual Studio Code</title>
+
+	<!-- Styling -->
+	<style type="text/css">
+		html {
+			height: 100%;
+		}
+
+		body {
+			box-sizing: border-box;
+			min-height: 100%;
+			margin: 0;
+			padding: 15px 30px;
+			display: flex;
+			flex-direction: column;
+			color: white;
+			font-family: "Segoe UI", "Helvetica Neue", "Helvetica", Arial, sans-serif;
+			background-color: #373277;
+		}
+
+		.branding {
+			background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PGRlZnM+PHN0eWxlPi5pY29uLWNhbnZhcy10cmFuc3BhcmVudHtmaWxsOiNmNmY2ZjY7b3BhY2l0eTowO30uaWNvbi13aGl0ZXtmaWxsOiNmZmY7fTwvc3R5bGU+PC9kZWZzPjx0aXRsZT5CcmFuZFZpc3VhbFN0dWRpb0NvZGUyMDE3UlRXXzI0eF93aGl0ZV8yNHg8L3RpdGxlPjxwYXRoIGNsYXNzPSJpY29uLWNhbnZhcy10cmFuc3BhcmVudCIgZD0iTTI0LDBWMjRIMFYwWiIvPjxwYXRoIGNsYXNzPSJpY29uLXdoaXRlIiBkPSJNMjQsMi41VjIxLjVMMTgsMjQsMCwxOC41di0uNTYxbDE4LDEuNTQ1VjBaTTEsMTMuMTExLDQuMzg1LDEwLDEsNi44ODlsMS40MTgtLjgyN0w1Ljg1Myw4LjY1LDEyLDNsMywxLjQ1NlYxNS41NDRMMTIsMTcsNS44NTMsMTEuMzUsMi40MTksMTMuOTM5Wk03LjY0NCwxMCwxMiwxMy4yODNWNi43MTdaIi8+PC9zdmc+");
+			background-size: 24px;
+			background-repeat: no-repeat;
+			background-position: left 50%;
+			padding-left: 36px;
+			font-size: 20px;
+			letter-spacing: -0.04rem;
+			font-weight: 400;
+			color: white;
+			text-decoration: none;
+		}
+
+		.message-container {
+			flex-grow: 1;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			margin: 0 30px;
+		}
+
+		.message {
+			font-weight: 300;
+			font-size: 1.3rem;
+		}
+	</style>
+</head>
+
+<body>
+	<span class="branding">
+		Visual Studio Code
+	</span>
+	<div class="message-container">
+		<div class="message">
+			You can close this page now.
+		</div>
+	</div>
+</body>
+
+</html>

@@ -298,7 +298,7 @@ export class StackFrame implements IStackFrame {
 	) { }
 
 	getId(): string {
-		return `stackframe:${this.thread.getId()}:${this.frameId}:${this.index}`;
+		return `stackframe:${this.thread.getId()}:${this.index}:${this.source.name}`;
 	}
 
 	getScopes(): Promise<IScope[]> {

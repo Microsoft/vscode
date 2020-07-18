@@ -19,4 +19,6 @@
 .monaco-count-badge.long {
 	padding: 2px 3px;
 	border-radius: 2px;
+	min-height: auto;
+	line-height: normal;
 }

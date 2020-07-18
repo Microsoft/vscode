@@ -35,26 +35,22 @@ export class EditorControl extends Disposable {
 	readonly onDidSizeConstraintsChange = this._onDidSizeConstraintsChange.event;
 
 	private _activeEditorPane: BaseEditor | null = null;
+	get activeEditorPane(): IVisibleEditorPane | null { return this._activeEditorPane as IVisibleEditorPane | null; }
+
 	private readonly editorPanes: BaseEditor[] = [];
 
 	private readonly activeEditorPaneDisposables = this._register(new DisposableStore());
 	private dimension: Dimension | undefined;
-	private editorOperation: LongRunningOperation;
+	private readonly editorOperation = this._register(new LongRunningOperation(this.editorProgressService));
 
 	constructor(
 		private parent: HTMLElement,
 		private groupView: IEditorGroupView,
 		@IWorkbenchLayoutService private readonly layoutService: IWorkbenchLayoutService,
 		@IInstantiationService private readonly instantiationService: IInstantiationService,
-		@IEditorProgressService editorProgressService: IEditorProgressService
+		@IEditorProgressService private readonly editorProgressService: IEditorProgressService
 	) {
 		super();
-
-		this.editorOperation = this._register(new LongRunningOperation(editorProgressService));
-	}
-
-	get activeEditorPane(): IVisibleEditorPane | null {
-		return this._activeEditorPane as IVisibleEditorPane | null;
 	}
 
 	async openEditor(editor: EditorInput, options?: EditorOptions): Promise<IOpenEditorResult> {
@@ -202,18 +198,18 @@ export class EditorControl extends Disposable {
 		// Stop any running operation
 		this.editorOperation.stop();
 
-		// Remove editor pane from parent and hide
-		const editorPaneContainer = this._activeEditorPane.getContainer();
-		if (editorPaneContainer) {
-			this._activeEditorPane.onWillHide();
-			this.parent.removeChild(editorPaneContainer);
-			hide(editorPaneContainer);
-			this._activeEditorPane.onHide();
-		}
-
-		// Indicate to editor pane
+		// Indicate to editor pane before removing the editor from
+		// the DOM to give a chance to persist certain state that
+		// might depend on still being the active DOM element.
 		this._activeEditorPane.clearInput();
 		this._activeEditorPane.setVisible(false, this.groupView);
+
+		// Remove editor pane from parent
+		const editorPaneContainer = this._activeEditorPane.getContainer();
+		if (editorPaneContainer) {
+			this.parent.removeChild(editorPaneContainer);
+			hide(editorPaneContainer);
+		}
 
 		// Clear active editor pane
 		this.doSetActiveEditorPane(null);
@@ -226,16 +222,12 @@ export class EditorControl extends Disposable {
 	}
 
 	setVisible(visible: boolean): void {
-		if (this._activeEditorPane) {
-			this._activeEditorPane.setVisible(visible, this.groupView);
-		}
+		this._activeEditorPane?.setVisible(visible, this.groupView);
 	}
 
 	layout(dimension: Dimension): void {
 		this.dimension = dimension;
 
-		if (this._activeEditorPane && this.dimension) {
-			this._activeEditorPane.layout(this.dimension);
-		}
+		this._activeEditorPane?.layout(dimension);
 	}
 }

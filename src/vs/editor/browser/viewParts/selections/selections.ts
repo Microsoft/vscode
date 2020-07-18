@@ -419,7 +419,7 @@ registerThemingParticipant((theme, collector) => {
 		collector.addRule(`.monaco-editor .selected-text { background-color: ${editorInactiveSelectionColor}; }`);
 	}
 	const editorSelectionForegroundColor = theme.getColor(editorSelectionForeground);
-	if (editorSelectionForegroundColor) {
+	if (editorSelectionForegroundColor && !editorSelectionForegroundColor.isTransparent()) {
 		collector.addRule(`.monaco-editor .view-line span.inline-selected-text { color: ${editorSelectionForegroundColor}; }`);
 	}
 });

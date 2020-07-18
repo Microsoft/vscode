@@ -20,7 +20,7 @@ export interface IPanelIdentifier {
 
 export interface IPanelService {
 
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	readonly onDidPanelOpen: Event<{ readonly panel: IPanel, readonly focus: boolean }>;
 	readonly onDidPanelClose: Event<IPanel>;

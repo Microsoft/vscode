@@ -123,7 +123,7 @@
 	"Throw Exception": {
 		"prefix": "throw",
 		"body": [
-			"throw \"$1\";",
+			"throw new Error(\"$1\");",
 			"$0"
 		],
 		"description": "Throw Exception"
@@ -151,7 +151,7 @@
 		"prefix": "forin",
 		"body": [
 			"for (const ${1:key} in ${2:object}) {",
-			"\tif (${2:object}.hasOwnProperty(${1:key})) {",
+			"\tif (Object.prototype.hasOwnProperty.call(${2:object}, ${1:key})) {",
 			"\t\tconst ${3:element} = ${2:object}[${1:key}];",
 			"\t\t$0",
 			"\t}",
@@ -167,7 +167,16 @@
 			"}"
 		],
 		"description": "For-Of Loop"
-	},
+    },
+    "For-Await-Of Loop": {
+        "prefix": "forawaitof",
+        "body": [
+			"for await (const ${1:iterator} of ${2:object}) {",
+			"\t$0",
+			"}"
+		],
+        "description": "For-Await-Of Loop"
+    },
 	"Function Statement": {
 		"prefix": "function",
 		"body": [

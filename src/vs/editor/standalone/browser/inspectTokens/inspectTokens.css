@@ -17,7 +17,7 @@
 }
 
 .monaco-editor .tokens-inspect-widget .tm-token {
-	font-family: monospace;
+	font-family: var(--monaco-monospace-font);
 }
 
 .monaco-editor .tokens-inspect-widget .tm-token-length {
@@ -31,10 +31,10 @@
 }
 
 .monaco-editor .tokens-inspect-widget .tm-metadata-value {
-	font-family: monospace;
+	font-family: var(--monaco-monospace-font);
 	text-align: right;
 }
 
 .monaco-editor .tokens-inspect-widget .tm-token-type {
-	font-family: monospace;
+	font-family: var(--monaco-monospace-font);
 }

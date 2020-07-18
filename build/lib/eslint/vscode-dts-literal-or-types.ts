@@ -15,6 +15,9 @@ export = new class ApiLiteralOrTypes implements eslint.Rule.RuleModule {
 	create(context: eslint.Rule.RuleContext): eslint.Rule.RuleListener {
 		return {
 			['TSTypeAnnotation TSUnionType TSLiteralType']: (node: any) => {
+				if (node.literal?.type === 'TSNullKeyword') {
+					return;
+				}
 				context.report({
 					node: node,
 					messageId: 'useEnum'

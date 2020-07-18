@@ -497,7 +497,8 @@ export class MonarchTokenizer implements modes.ITokenizationSupport {
 			let regex = rule.regex;
 			let regexSource = rule.regex.source;
 			if (regexSource.substr(0, 4) === '^(?:' && regexSource.substr(regexSource.length - 1, 1) === ')') {
-				regex = new RegExp(regexSource.substr(4, regexSource.length - 5), regex.ignoreCase ? 'i' : '');
+				let flags = (regex.ignoreCase ? 'i' : '') + (regex.unicode ? 'u' : '');
+				regex = new RegExp(regexSource.substr(4, regexSource.length - 5), flags);
 			}
 
 			let result = line.search(regex);

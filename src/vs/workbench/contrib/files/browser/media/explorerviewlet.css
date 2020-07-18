@@ -55,6 +55,7 @@
 	align-items: center;
 }
 
+.pane.horizontal:not(.expanded) .pane-header .dirty-count.monaco-count-badge,
 .pane-header .dirty-count.monaco-count-badge.hidden {
 	display: none;
 }
@@ -95,6 +96,6 @@
 }
 
 /* High Contrast Theming */
-.hc-black .monaco-workbench .explorer-viewlet .explorer-item {
+.monaco-workbench.hc-black .explorer-viewlet .explorer-item {
 	line-height: 20px;
 }

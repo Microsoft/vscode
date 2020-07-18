@@ -18,14 +18,14 @@ const THEME_BG_STORAGE_KEY = 'themeBackground';
 export const IThemeMainService = createDecorator<IThemeMainService>('themeMainService');
 
 export interface IThemeMainService {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	getBackgroundColor(): string;
 }
 
 export class ThemeMainService implements IThemeMainService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	constructor(@IStateService private stateService: IStateService) {
 		ipc.on('vscode:changeColorTheme', (e: Event, windowId: number, broadcast: string) => {

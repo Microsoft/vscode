@@ -9,8 +9,8 @@ import { IDecorationProvider } from 'vs/editor/contrib/folding/foldingModel';
 import { ICodeEditor } from 'vs/editor/browser/editorBrowser';
 import { Codicon, registerIcon } from 'vs/base/common/codicons';
 
-const foldingExpandedIcon = registerIcon('folding-expanded', Codicon.chevronDown);
-const foldingCollapsedIcon = registerIcon('folding-collapsed', Codicon.chevronRight);
+export const foldingExpandedIcon = registerIcon('folding-expanded', Codicon.chevronDown);
+export const foldingCollapsedIcon = registerIcon('folding-collapsed', Codicon.chevronRight);
 
 export class FoldingDecorationProvider implements IDecorationProvider {
 

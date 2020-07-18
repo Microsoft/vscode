@@ -6,10 +6,10 @@
 import 'vs/css!./media/paneviewlet';
 import * as nls from 'vs/nls';
 import { Event, Emitter } from 'vs/base/common/event';
-import { ColorIdentifier, activeContrastBorder } from 'vs/platform/theme/common/colorRegistry';
+import { ColorIdentifier, activeContrastBorder, foreground } from 'vs/platform/theme/common/colorRegistry';
 import { attachStyler, IColorMapping, attachButtonStyler, attachLinkStyler, attachProgressBarStyler } from 'vs/platform/theme/common/styler';
-import { SIDE_BAR_DRAG_AND_DROP_BACKGROUND, SIDE_BAR_SECTION_HEADER_FOREGROUND, SIDE_BAR_SECTION_HEADER_BACKGROUND, SIDE_BAR_SECTION_HEADER_BORDER, PANEL_BACKGROUND, SIDE_BAR_BACKGROUND, EDITOR_DRAG_AND_DROP_BACKGROUND, PANEL_BORDER } from 'vs/workbench/common/theme';
-import { append, $, trackFocus, toggleClass, EventType, isAncestor, Dimension, addDisposableListener, removeClass, addClass } from 'vs/base/browser/dom';
+import { SIDE_BAR_DRAG_AND_DROP_BACKGROUND, SIDE_BAR_SECTION_HEADER_FOREGROUND, SIDE_BAR_SECTION_HEADER_BACKGROUND, SIDE_BAR_SECTION_HEADER_BORDER, PANEL_BACKGROUND, SIDE_BAR_BACKGROUND, PANEL_SECTION_HEADER_FOREGROUND, PANEL_SECTION_HEADER_BACKGROUND, PANEL_SECTION_HEADER_BORDER, PANEL_SECTION_DRAG_AND_DROP_BACKGROUND, PANEL_SECTION_BORDER } from 'vs/workbench/common/theme';
+import { append, $, trackFocus, toggleClass, EventType, isAncestor, Dimension, addDisposableListener, removeClass, addClass, createCSSRule, asCSSUrl, addClasses } from 'vs/base/browser/dom';
 import { IDisposable, combinedDisposable, dispose, toDisposable, Disposable, DisposableStore } from 'vs/base/common/lifecycle';
 import { firstIndex } from 'vs/base/common/arrays';
 import { IAction } from 'vs/base/common/actions';
@@ -20,27 +20,27 @@ import { IKeybindingService } from 'vs/platform/keybinding/common/keybinding';
 import { IContextMenuService } from 'vs/platform/contextview/browser/contextView';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 import { IThemeService, Themable } from 'vs/platform/theme/common/themeService';
-import { PaneView, IPaneViewOptions, IPaneOptions, Pane } from 'vs/base/browser/ui/splitview/paneview';
+import { PaneView, IPaneViewOptions, IPaneOptions, Pane, IPaneStyles } from 'vs/base/browser/ui/splitview/paneview';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { IWorkbenchLayoutService, Position } from 'vs/workbench/services/layout/browser/layoutService';
 import { StandardMouseEvent } from 'vs/base/browser/mouseEvent';
 import { Extensions as ViewContainerExtensions, IView, FocusedViewContext, IViewDescriptor, ViewContainer, IViewDescriptorService, ViewContainerLocation, IViewPaneContainer, IViewsRegistry, IViewContentDescriptor, IAddedViewDescriptorRef, IViewDescriptorRef, IViewContainerModel } from 'vs/workbench/common/views';
 import { IStorageService, StorageScope } from 'vs/platform/storage/common/storage';
 import { IContextKey, IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
-import { assertIsDefined } from 'vs/base/common/types';
-import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
+import { assertIsDefined, isString } from 'vs/base/common/types';
+import { IInstantiationService, ServicesAccessor } from 'vs/platform/instantiation/common/instantiation';
 import { IViewletViewOptions } from 'vs/workbench/browser/parts/views/viewsViewlet';
 import { IExtensionService } from 'vs/workbench/services/extensions/common/extensions';
 import { IWorkspaceContextService } from 'vs/platform/workspace/common/workspace';
 import { Component } from 'vs/workbench/common/component';
-import { MenuId, MenuItemAction } from 'vs/platform/actions/common/actions';
+import { MenuId, MenuItemAction, registerAction2, Action2, IAction2Options } from 'vs/platform/actions/common/actions';
 import { ContextAwareMenuEntryActionViewItem } from 'vs/platform/actions/browser/menuEntryActionViewItem';
 import { ViewMenuActions } from 'vs/workbench/browser/parts/views/viewMenuActions';
 import { parseLinkedText } from 'vs/base/common/linkedText';
 import { IOpenerService } from 'vs/platform/opener/common/opener';
 import { Button } from 'vs/base/browser/ui/button/button';
 import { Link } from 'vs/platform/opener/browser/link';
-import { CompositeDragAndDropObserver, DragAndDropObserver } from 'vs/workbench/browser/dnd';
+import { CompositeDragAndDropObserver, DragAndDropObserver, toggleDropEffect } from 'vs/workbench/browser/dnd';
 import { Orientation } from 'vs/base/browser/ui/sash/sash';
 import { ProgressBar } from 'vs/base/browser/ui/progressbar/progressbar';
 import { CompositeProgressIndicator } from 'vs/workbench/services/progress/browser/progressIndicator';
@@ -48,6 +48,9 @@ import { IProgressIndicator } from 'vs/platform/progress/common/progress';
 import { RunOnceScheduler } from 'vs/base/common/async';
 import { DomScrollableElement } from 'vs/base/browser/ui/scrollbar/scrollableElement';
 import { ScrollbarVisibility } from 'vs/base/common/scrollable';
+import { URI } from 'vs/base/common/uri';
+import { KeyMod, KeyCode, KeyChord } from 'vs/base/common/keyCodes';
+import { KeybindingWeight } from 'vs/platform/keybinding/common/keybindingsRegistry';
 
 export interface IPaneColors extends IColorMapping {
 	dropBackground?: ColorIdentifier;
@@ -175,7 +178,11 @@ export abstract class ViewPane extends Pane implements IView {
 
 	private _isVisible: boolean = false;
 	readonly id: string;
-	title: string;
+
+	private _title: string;
+	public get title(): string {
+		return this._title;
+	}
 
 	private readonly menuActions: ViewMenuActions;
 	private progressBar!: ProgressBar;
@@ -185,6 +192,7 @@ export abstract class ViewPane extends Pane implements IView {
 	private readonly showActionsAlways: boolean = false;
 	private headerContainer?: HTMLElement;
 	private titleContainer?: HTMLElement;
+	private iconContainer?: HTMLElement;
 	protected twistiesContainer?: HTMLElement;
 
 	private bodyContainer!: HTMLElement;
@@ -207,7 +215,7 @@ export abstract class ViewPane extends Pane implements IView {
 		super({ ...options, ...{ orientation: viewDescriptorService.getViewLocationById(options.id) === ViewContainerLocation.Panel ? Orientation.HORIZONTAL : Orientation.VERTICAL } });
 
 		this.id = options.id;
-		this.title = options.title;
+		this._title = options.title;
 		this.showActionsAlways = !!options.showActionsAlways;
 		this.focusedViewContextKey = FocusedViewContext.bindTo(contextKeyService);
 
@@ -290,6 +298,10 @@ export abstract class ViewPane extends Pane implements IView {
 		this._register(this.toolbar);
 		this.setActions();
 
+		this._register(this.viewDescriptorService.getViewContainerModel(this.viewDescriptorService.getViewContainerByViewId(this.id)!)!.onDidChangeContainerInfo(({ title }) => {
+			this.updateTitle(this.title);
+		}));
+
 		const onDidRelevantConfigurationChange = Event.filter(this.configurationService.onDidChangeConfiguration, e => e.affectsConfiguration(ViewPane.AlwaysShowActionsConfig));
 		this._register(onDidRelevantConfigurationChange(this.updateActionsVisibility, this));
 		this.updateActionsVisibility();
@@ -299,16 +311,84 @@ export abstract class ViewPane extends Pane implements IView {
 		this.twistiesContainer = append(container, $('.twisties.codicon.codicon-chevron-right'));
 	}
 
+	style(styles: IPaneStyles): void {
+		super.style(styles);
+
+		const icon = this.getIcon();
+		if (this.iconContainer) {
+			const fgColor = styles.headerForeground || this.themeService.getColorTheme().getColor(foreground);
+			if (URI.isUri(icon)) {
+				// Apply background color to activity bar item provided with iconUrls
+				this.iconContainer.style.backgroundColor = fgColor ? fgColor.toString() : '';
+				this.iconContainer.style.color = '';
+			} else {
+				// Apply foreground color to activity bar items provided with codicons
+				this.iconContainer.style.color = fgColor ? fgColor.toString() : '';
+				this.iconContainer.style.backgroundColor = '';
+			}
+		}
+	}
+
+	private getIcon(): string | URI {
+		return this.viewDescriptorService.getViewDescriptorById(this.id)?.containerIcon || 'codicon-window';
+	}
+
 	protected renderHeaderTitle(container: HTMLElement, title: string): void {
-		this.titleContainer = append(container, $('h3.title', undefined, title));
+		this.iconContainer = append(container, $('.icon', undefined));
+		const icon = this.getIcon();
+
+		let cssClass: string | undefined = undefined;
+		if (URI.isUri(icon)) {
+			cssClass = `view-${this.id.replace(/[\.\:]/g, '-')}`;
+			const iconClass = `.pane-header .icon.${cssClass}`;
+
+			createCSSRule(iconClass, `
+				mask: ${asCSSUrl(icon)} no-repeat 50% 50%;
+				mask-size: 24px;
+				-webkit-mask: ${asCSSUrl(icon)} no-repeat 50% 50%;
+				-webkit-mask-size: 16px;
+			`);
+		} else if (isString(icon)) {
+			addClass(this.iconContainer, 'codicon');
+			cssClass = icon;
+		}
+
+		if (cssClass) {
+			addClasses(this.iconContainer, cssClass);
+		}
+
+		const calculatedTitle = this.calculateTitle(title);
+		this.titleContainer = append(container, $('h3.title', undefined, calculatedTitle));
+		this.iconContainer.title = calculatedTitle;
+		this.iconContainer.setAttribute('aria-label', calculatedTitle);
 	}
 
 	protected updateTitle(title: string): void {
+		const calculatedTitle = this.calculateTitle(title);
 		if (this.titleContainer) {
-			this.titleContainer.textContent = title;
+			this.titleContainer.textContent = calculatedTitle;
 		}
-		this.title = title;
+
+		if (this.iconContainer) {
+			this.iconContainer.title = calculatedTitle;
+			this.iconContainer.setAttribute('aria-label', calculatedTitle);
+		}
+
+		this._title = title;
 		this._onDidChangeTitleArea.fire();
+	}
+
+	private calculateTitle(title: string): string {
+		const viewContainer = this.viewDescriptorService.getViewContainerByViewId(this.id)!;
+		const model = this.viewDescriptorService.getViewContainerModel(viewContainer);
+		const viewDescriptor = this.viewDescriptorService.getViewDescriptorById(this.id);
+		const isDefault = this.viewDescriptorService.getDefaultContainerById(this.id) === viewContainer;
+
+		if (!isDefault && viewDescriptor?.containerTitle && model.title !== viewDescriptor.containerTitle) {
+			return `${viewDescriptor.containerTitle}: ${title}`;
+		}
+
+		return title;
 	}
 
 	private scrollableElement!: DomScrollableElement;
@@ -370,7 +450,7 @@ export abstract class ViewPane extends Pane implements IView {
 
 	private setActions(): void {
 		if (this.toolbar) {
-			this.toolbar.setActions(prepareActions(this.getActions()), prepareActions(this.getSecondaryActions()))();
+			this.toolbar.setActions(prepareActions(this.getActions()), prepareActions(this.getSecondaryActions()));
 			this.toolbar.context = this.getActionsContext();
 		}
 	}
@@ -510,7 +590,6 @@ export abstract class ViewPane extends Pane implements IView {
 
 export interface IViewPaneContainerOptions extends IPaneViewOptions {
 	mergeViewWithContainerWhenSingleView: boolean;
-	donotShowContainerTitleWhenMergedWithContainer?: boolean;
 }
 
 interface IViewPaneItem {
@@ -546,7 +625,8 @@ class ViewPaneDropOverlay extends Themable {
 	constructor(
 		private paneElement: HTMLElement,
 		private orientation: Orientation | undefined,
-		protected themeService: IThemeService
+		protected location: ViewContainerLocation,
+		protected themeService: IThemeService,
 	) {
 		super(themeService);
 		this.cleanupOverlayScheduler = this._register(new RunOnceScheduler(() => this.dispose(), 300));
@@ -587,7 +667,7 @@ class ViewPaneDropOverlay extends Themable {
 	protected updateStyles(): void {
 
 		// Overlay drop background
-		this.overlay.style.backgroundColor = this.getColor(EDITOR_DRAG_AND_DROP_BACKGROUND) || '';
+		this.overlay.style.backgroundColor = this.getColor(this.location === ViewContainerLocation.Panel ? PANEL_SECTION_DRAG_AND_DROP_BACKGROUND : SIDE_BAR_DRAG_AND_DROP_BACKGROUND) || '';
 
 		// Overlay contrast border (if any)
 		const activeContrastBorderColor = this.getColor(activeContrastBorder);
@@ -830,18 +910,23 @@ export class ViewPaneContainer extends Component implements IViewPaneContainer {
 							return;
 						}
 
-						overlay = new ViewPaneDropOverlay(parent, undefined, this.themeService);
+						overlay = new ViewPaneDropOverlay(parent, undefined, this.viewDescriptorService.getViewContainerLocation(this.viewContainer)!, this.themeService);
 					}
 
 					if (dropData.type === 'composite' && dropData.id !== this.viewContainer.id) {
 						const container = this.viewDescriptorService.getViewContainerById(dropData.id)!;
 						const viewsToMove = this.viewDescriptorService.getViewContainerModel(container).allViewDescriptors;
 
-						if (!viewsToMove.some(v => !v.canMoveView)) {
-							overlay = new ViewPaneDropOverlay(parent, undefined, this.themeService);
+						if (!viewsToMove.some(v => !v.canMoveView) && viewsToMove.length > 0) {
+							overlay = new ViewPaneDropOverlay(parent, undefined, this.viewDescriptorService.getViewContainerLocation(this.viewContainer)!, this.themeService);
 						}
 					}
 
+				}
+			},
+			onDragOver: (e) => {
+				if (this.panes.length === 0) {
+					toggleDropEffect(e.eventData.dataTransfer, 'move', overlay !== undefined);
 				}
 			},
 			onDragLeave: (e) => {
@@ -897,6 +982,8 @@ export class ViewPaneContainer extends Component implements IViewPaneContainer {
 				this.updateViewHeaders();
 			}
 		});
+
+		this._register(this.viewContainerModel.onDidChangeActiveViewDescriptors(() => this._onTitleAreaUpdate.fire()));
 	}
 
 	getTitle(): string {
@@ -904,7 +991,7 @@ export class ViewPaneContainer extends Component implements IViewPaneContainer {
 
 		if (this.isViewMergedWithContainer()) {
 			const paneItemTitle = this.paneItems[0].pane.title;
-			if (this.options.donotShowContainerTitleWhenMergedWithContainer || containerTitle === paneItemTitle) {
+			if (containerTitle === paneItemTitle) {
 				return this.paneItems[0].pane.title;
 			}
 			return paneItemTitle ? `${containerTitle}: ${paneItemTitle}` : containerTitle;
@@ -955,14 +1042,7 @@ export class ViewPaneContainer extends Component implements IViewPaneContainer {
 			}
 		}
 
-		const viewToggleActions = this.viewContainerModel.activeViewDescriptors.map(viewDescriptor => (<IAction>{
-			id: `${viewDescriptor.id}.toggleVisibility`,
-			label: viewDescriptor.name,
-			checked: this.viewContainerModel.isVisible(viewDescriptor.id),
-			enabled: viewDescriptor.canToggleVisibility && (!this.viewContainerModel.isVisible(viewDescriptor.id) || this.viewContainerModel.visibleViewDescriptors.length > 1),
-			run: () => this.toggleViewVisibility(viewDescriptor.id)
-		}));
-
+		const viewToggleActions = this.getViewsVisibilityActions();
 		if (result.length && viewToggleActions.length) {
 			result.push(new Separator());
 		}
@@ -986,6 +1066,16 @@ export class ViewPaneContainer extends Component implements IViewPaneContainer {
 		}
 
 		return [];
+	}
+
+	getViewsVisibilityActions(): IAction[] {
+		return this.viewContainerModel.activeViewDescriptors.map(viewDescriptor => (<IAction>{
+			id: `${viewDescriptor.id}.toggleVisibility`,
+			label: viewDescriptor.name,
+			checked: this.viewContainerModel.isVisible(viewDescriptor.id),
+			enabled: viewDescriptor.canToggleVisibility && (!this.viewContainerModel.isVisible(viewDescriptor.id) || this.viewContainerModel.visibleViewDescriptors.length > 1),
+			run: () => this.toggleViewVisibility(viewDescriptor.id)
+		}));
 	}
 
 	getActionViewItem(action: IAction): IActionViewItem | undefined {
@@ -1205,6 +1295,10 @@ export class ViewPaneContainer extends Component implements IViewPaneContainer {
 			panesToRemove.push(this.panes[index]);
 		}
 		this.removePanes(panesToRemove);
+
+		for (const pane of panesToRemove) {
+			pane.setVisible(false);
+		}
 	}
 
 	protected toggleViewVisibility(viewId: string): void {
@@ -1227,6 +1321,7 @@ export class ViewPaneContainer extends Component implements IViewPaneContainer {
 				this.updateTitleArea();
 			}
 		});
+
 		const onDidChangeVisibility = pane.onDidChangeBodyVisibility(() => this._onDidChangeViewVisibility.fire(pane));
 		const onDidChange = pane.onDidChange(() => {
 			if (pane === this.lastFocusedPane && !pane.isExpanded()) {
@@ -1234,13 +1329,13 @@ export class ViewPaneContainer extends Component implements IViewPaneContainer {
 			}
 		});
 
-		// TODO@sbatten Styling is viewlet specific, must fix
+		const isPanel = this.viewDescriptorService.getViewContainerLocation(this.viewContainer) === ViewContainerLocation.Panel;
 		const paneStyler = attachStyler<IPaneColors>(this.themeService, {
-			headerForeground: SIDE_BAR_SECTION_HEADER_FOREGROUND,
-			headerBackground: SIDE_BAR_SECTION_HEADER_BACKGROUND,
-			headerBorder: SIDE_BAR_SECTION_HEADER_BORDER,
-			leftBorder: PANEL_BORDER,
-			dropBackground: SIDE_BAR_DRAG_AND_DROP_BACKGROUND
+			headerForeground: isPanel ? PANEL_SECTION_HEADER_FOREGROUND : SIDE_BAR_SECTION_HEADER_FOREGROUND,
+			headerBackground: isPanel ? PANEL_SECTION_HEADER_BACKGROUND : SIDE_BAR_SECTION_HEADER_BACKGROUND,
+			headerBorder: isPanel ? PANEL_SECTION_HEADER_BORDER : SIDE_BAR_SECTION_HEADER_BORDER,
+			dropBackground: isPanel ? PANEL_SECTION_DRAG_AND_DROP_BACKGROUND : SIDE_BAR_DRAG_AND_DROP_BACKGROUND,
+			leftBorder: isPanel ? PANEL_SECTION_BORDER : undefined
 		}, pane);
 		const disposable = combinedDisposable(pane, onDidFocus, onDidChangeTitleArea, paneStyler, onDidChange, onDidChangeVisibility);
 		const paneItem: IViewPaneItem = { pane, disposable };
@@ -1265,18 +1360,21 @@ export class ViewPaneContainer extends Component implements IViewPaneContainer {
 							return;
 						}
 
-						overlay = new ViewPaneDropOverlay(pane.dropTargetElement, this.orientation ?? Orientation.VERTICAL, this.themeService);
+						overlay = new ViewPaneDropOverlay(pane.dropTargetElement, this.orientation ?? Orientation.VERTICAL, this.viewDescriptorService.getViewContainerLocation(this.viewContainer)!, this.themeService);
 					}
 
 					if (dropData.type === 'composite' && dropData.id !== this.viewContainer.id && !this.viewContainer.rejectAddedViews) {
 						const container = this.viewDescriptorService.getViewContainerById(dropData.id)!;
 						const viewsToMove = this.viewDescriptorService.getViewContainerModel(container).allViewDescriptors;
 
-						if (!viewsToMove.some(v => !v.canMoveView)) {
-							overlay = new ViewPaneDropOverlay(pane.dropTargetElement, this.orientation ?? Orientation.VERTICAL, this.themeService);
+						if (!viewsToMove.some(v => !v.canMoveView) && viewsToMove.length > 0) {
+							overlay = new ViewPaneDropOverlay(pane.dropTargetElement, this.orientation ?? Orientation.VERTICAL, this.viewDescriptorService.getViewContainerLocation(this.viewContainer)!, this.themeService);
 						}
 					}
 				}
+			},
+			onDragOver: (e) => {
+				toggleDropEffect(e.eventData.dataTransfer, 'move', overlay !== undefined);
 			},
 			onDragLeave: (e) => {
 				overlay?.dispose();
@@ -1466,3 +1564,96 @@ export class ViewPaneContainer extends Component implements IViewPaneContainer {
 		}
 	}
 }
+
+class MoveViewPosition extends Action2 {
+	constructor(desc: Readonly<IAction2Options>, private readonly offset: number) {
+		super(desc);
+	}
+
+	async run(accessor: ServicesAccessor): Promise<void> {
+		const viewDescriptorService = accessor.get(IViewDescriptorService);
+		const contextKeyService = accessor.get(IContextKeyService);
+
+		const viewId = FocusedViewContext.getValue(contextKeyService);
+		if (viewId === undefined) {
+			return;
+		}
+
+		const viewContainer = viewDescriptorService.getViewContainerByViewId(viewId)!;
+		const model = viewDescriptorService.getViewContainerModel(viewContainer);
+
+		const viewDescriptor = model.visibleViewDescriptors.find(vd => vd.id === viewId)!;
+		const currentIndex = model.visibleViewDescriptors.indexOf(viewDescriptor);
+		if (currentIndex + this.offset < 0 || currentIndex + this.offset >= model.visibleViewDescriptors.length) {
+			return;
+		}
+
+		const newPosition = model.visibleViewDescriptors[currentIndex + this.offset];
+
+		model.move(viewDescriptor.id, newPosition.id);
+	}
+}
+
+registerAction2(
+	class MoveViewUp extends MoveViewPosition {
+		constructor() {
+			super({
+				id: 'views.moveViewUp',
+				title: nls.localize('viewMoveUp', "Move View Up"),
+				keybinding: {
+					primary: KeyChord(KeyMod.CtrlCmd + KeyCode.KEY_K, KeyCode.UpArrow),
+					weight: KeybindingWeight.WorkbenchContrib + 1,
+					when: FocusedViewContext.notEqualsTo('')
+				}
+			}, -1);
+		}
+	}
+);
+
+registerAction2(
+	class MoveViewLeft extends MoveViewPosition {
+		constructor() {
+			super({
+				id: 'views.moveViewLeft',
+				title: nls.localize('viewMoveLeft', "Move View Left"),
+				keybinding: {
+					primary: KeyChord(KeyMod.CtrlCmd + KeyCode.KEY_K, KeyCode.LeftArrow),
+					weight: KeybindingWeight.WorkbenchContrib + 1,
+					when: FocusedViewContext.notEqualsTo('')
+				}
+			}, -1);
+		}
+	}
+);
+
+registerAction2(
+	class MoveViewDown extends MoveViewPosition {
+		constructor() {
+			super({
+				id: 'views.moveViewDown',
+				title: nls.localize('viewMoveDown', "Move View Down"),
+				keybinding: {
+					primary: KeyChord(KeyMod.CtrlCmd + KeyCode.KEY_K, KeyCode.DownArrow),
+					weight: KeybindingWeight.WorkbenchContrib + 1,
+					when: FocusedViewContext.notEqualsTo('')
+				}
+			}, 1);
+		}
+	}
+);
+
+registerAction2(
+	class MoveViewRight extends MoveViewPosition {
+		constructor() {
+			super({
+				id: 'views.moveViewRight',
+				title: nls.localize('viewMoveRight', "Move View Right"),
+				keybinding: {
+					primary: KeyChord(KeyMod.CtrlCmd + KeyCode.KEY_K, KeyCode.RightArrow),
+					weight: KeybindingWeight.WorkbenchContrib + 1,
+					when: FocusedViewContext.notEqualsTo('')
+				}
+			}, 1);
+		}
+	}
+);

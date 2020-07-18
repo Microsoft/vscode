@@ -4,7 +4,7 @@
 		"If you want to provide a fix or improvement, please create a pull request against the original repository.",
 		"Once accepted there, we are happy to receive an update request."
 	],
-	"version": "https://github.com/MagicStack/MagicPython/commit/0b09c1fca238d22e15ac5712d03f9bf6da626f9c",
+	"version": "https://github.com/MagicStack/MagicPython/commit/b4b2e6eb16fee36aea0788bf0aa1853c25f7d276",
 	"name": "MagicPython",
 	"scopeName": "source.python",
 	"patterns": [
@@ -30,6 +30,9 @@
 				},
 				{
 					"include": "#function-declaration"
+				},
+				{
+					"include": "#generator"
 				},
 				{
 					"include": "#statement-keyword"
@@ -292,6 +295,9 @@
 					"include": "#lambda"
 				},
 				{
+					"include": "#generator"
+				},
+				{
 					"include": "#illegal-operator"
 				},
 				{
@@ -305,6 +311,9 @@
 				},
 				{
 					"include": "#list"
+				},
+				{
+					"include": "#odd-function-call"
 				},
 				{
 					"include": "#round-braces"
@@ -388,6 +397,9 @@
 				},
 				{
 					"include": "#member-access-base"
+				},
+				{
+					"include": "#member-access-attribute"
 				}
 			]
 		},
@@ -412,6 +424,11 @@
 					"include": "#item-access"
 				}
 			]
+		},
+		"member-access-attribute": {
+			"comment": "Highlight attribute access in otherwise non-specialized cases.",
+			"name": "meta.attribute.python",
+			"match": "(?x)\n  \\b ([[:alpha:]_]\\w*) \\b\n"
 		},
 		"special-names": {
 			"name": "constant.other.caps.python",
@@ -456,6 +473,21 @@
 			"patterns": [
 				{
 					"include": "#expression"
+				}
+			]
+		},
+		"odd-function-call": {
+			"comment": "A bit obscured function call where there may have been an\narbitrary number of other operations to get the function.\nE.g. \"arr[idx](args)\"\n",
+			"begin": "(?x)\n  (?<= \\] | \\) ) \\s*\n  (?=\\()\n",
+			"end": "(\\))",
+			"endCaptures": {
+				"1": {
+					"name": "punctuation.definition.arguments.end.python"
+				}
+			},
+			"patterns": [
+				{
+					"include": "#function-arguments"
 				}
 			]
 		},
@@ -1195,6 +1227,26 @@
 				}
 			]
 		},
+		"generator": {
+			"comment": "Match \"for ... in\" construct used in generators and for loops to\ncorrectly identify the \"in\" as a control flow keyword.\n",
+			"begin": "\\bfor\\b",
+			"beginCaptures": {
+				"0": {
+					"name": "keyword.control.flow.python"
+				}
+			},
+			"end": "\\bin\\b",
+			"endCaptures": {
+				"0": {
+					"name": "keyword.control.flow.python"
+				}
+			},
+			"patterns": [
+				{
+					"include": "#expression"
+				}
+			]
+		},
 		"function-declaration": {
 			"name": "meta.function.python",
 			"begin": "(?x)\n  \\s*\n  (?:\\b(async) \\s+)? \\b(def)\\s+\n    (?=\n      [[:alpha:]_][[:word:]]* \\s* \\(\n    )\n",
@@ -1407,6 +1459,7 @@
 					"include": "#special-names"
 				},
 				{
+					"name": "meta.indexed-name.python",
 					"match": "(?x)\n  \\b ([[:alpha:]_]\\w*) \\b\n"
 				}
 			]
@@ -1524,6 +1577,7 @@
 		},
 		"function-call": {
 			"name": "meta.function-call.python",
+			"comment": "Regular function call of the type \"name(args)\"",
 			"begin": "(?x)\n  \\b(?=\n    ([[:alpha:]_]\\w*) \\s* (\\()\n  )\n",
 			"end": "(\\))",
 			"endCaptures": {

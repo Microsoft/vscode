@@ -45,7 +45,7 @@ const CustomEditorsContribution: IJSONSchema = {
 		properties: {
 			[Fields.viewType]: {
 				type: 'string',
-				description: nls.localize('contributes.viewType', 'Unique identifier of the custom editor.'),
+				markdownDescription: nls.localize('contributes.viewType', 'Identifier for the custom editor. This must be unique across all custom editors, so we recommend including your extension id as part of `viewType`. The `viewType` is used when registering custom editors with `vscode.registerCustomEditorProvider` and in the `onCustomEditor:${id}` [activation event](https://code.visualstudio.com/api/references/activation-events).'),
 			},
 			[Fields.displayName]: {
 				type: 'string',
@@ -71,14 +71,14 @@ const CustomEditorsContribution: IJSONSchema = {
 			},
 			[Fields.priority]: {
 				type: 'string',
-				description: nls.localize('contributes.priority', 'Controls when the custom editor is used. May be overridden by users.'),
+				markdownDeprecationMessage: nls.localize('contributes.priority', 'Controls if the custom editor is enabled automatically when the user opens a file. This may be overridden by users using the `workbench.editorAssociations` setting.'),
 				enum: [
 					CustomEditorPriority.default,
 					CustomEditorPriority.option,
 				],
 				markdownEnumDescriptions: [
-					nls.localize('contributes.priority.default', 'Editor is automatically used for a resource if no other default custom editors are registered for it.'),
-					nls.localize('contributes.priority.option', 'Editor is not automatically used but can be selected by a user.'),
+					nls.localize('contributes.priority.default', 'The editor is automatically used when the user opens a resource, provided that no other default custom editors are registered for that resource.'),
+					nls.localize('contributes.priority.option', 'The editor is not automatically used when the user opens a resource, but a user can switch to the editor using the `Reopen With` command.'),
 				],
 				default: 'default'
 			}

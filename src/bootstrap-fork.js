@@ -7,15 +7,16 @@
 'use strict';
 
 const bootstrap = require('./bootstrap');
+const bootstrapNode = require('./bootstrap-node');
 
 // Remove global paths from the node module lookup
-bootstrap.removeGlobalNodeModuleLookupPaths();
+bootstrapNode.removeGlobalNodeModuleLookupPaths();
 
 // Enable ASAR in our forked processes
 bootstrap.enableASARSupport();
 
 if (process.env['VSCODE_INJECT_NODE_MODULE_LOOKUP_PATH']) {
-	bootstrap.injectNodeModuleLookupPath(process.env['VSCODE_INJECT_NODE_MODULE_LOOKUP_PATH']);
+	bootstrapNode.injectNodeModuleLookupPath(process.env['VSCODE_INJECT_NODE_MODULE_LOOKUP_PATH']);
 }
 
 // Configure: pipe logging to parent process
@@ -39,6 +40,7 @@ configureCrashReporter();
 // Load AMD entry point
 require('./bootstrap-amd').load(process.env['AMD_ENTRYPOINT']);
 
+
 //#region Helpers
 
 function pipeLoggingToParent() {
@@ -48,8 +50,6 @@ function pipeLoggingToParent() {
 	function safeToArray(args) {
 		const seen = [];
 		const argsArray = [];
-
-		let res;
 
 		// Massage some arguments with special treatment
 		if (args.length) {
@@ -85,7 +85,7 @@ function pipeLoggingToParent() {
 		}
 
 		try {
-			res = JSON.stringify(argsArray, function (key, value) {
+			const res = JSON.stringify(argsArray, function (key, value) {
 
 				// Objects get special treatment to prevent circles
 				if (isObject(value) || Array.isArray(value)) {
@@ -98,17 +98,20 @@ function pipeLoggingToParent() {
 
 				return value;
 			});
+
+			if (res.length > MAX_LENGTH) {
+				return 'Output omitted for a large object that exceeds the limits';
+			}
+
+			return res;
 		} catch (error) {
-			return 'Output omitted for an object that cannot be inspected (' + error.toString() + ')';
+			return `Output omitted for an object that cannot be inspected ('${error.toString()}')`;
 		}
-
-		if (res && res.length > MAX_LENGTH) {
-			return 'Output omitted for a large object that exceeds the limits';
-		}
-
-		return res;
 	}
 
+	/**
+	 * @param {{ type: string; severity: string; arguments: string; }} arg
+	 */
 	function safeSend(arg) {
 		try {
 			process.send(arg);
@@ -117,6 +120,9 @@ function pipeLoggingToParent() {
 		}
 	}
 
+	/**
+	 * @param {unknown} obj
+	 */
 	function isObject(obj) {
 		return typeof obj === 'object'
 			&& obj !== null

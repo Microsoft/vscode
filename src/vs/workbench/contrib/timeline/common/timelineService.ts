@@ -13,7 +13,7 @@ import { ITimelineService, TimelineChangeEvent, TimelineOptions, TimelineProvide
 import { IViewsService } from 'vs/workbench/common/views';
 
 export class TimelineService implements ITimelineService {
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private readonly _onDidChangeProviders = new Emitter<TimelineProvidersChangeEvent>();
 	readonly onDidChangeProviders: Event<TimelineProvidersChangeEvent> = this._onDidChangeProviders.event;

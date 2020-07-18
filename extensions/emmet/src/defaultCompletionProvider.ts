@@ -6,8 +6,8 @@
 import * as vscode from 'vscode';
 import { Node, Stylesheet } from 'EmmetNode';
 import { isValidLocationForEmmetAbbreviation, getSyntaxFromArgs } from './abbreviationActions';
-import { getEmmetHelper, getMappingForIncludedLanguages, parsePartialStylesheet, getEmmetConfiguration, getEmmetMode, isStyleSheet, parseDocument, getNode, allowedMimeTypesInScriptTag, trimQuotes } from './util';
-import { getLanguageService, TextDocument, TokenType } from 'vscode-html-languageservice';
+import { getEmmetHelper, getMappingForIncludedLanguages, parsePartialStylesheet, getEmmetConfiguration, getEmmetMode, isStyleSheet, parseDocument, getNode, allowedMimeTypesInScriptTag, trimQuotes, toLSTextDocument } from './util';
+import { getLanguageService, TokenType, Range as LSRange } from 'vscode-html-languageservice';
 
 export class DefaultCompletionItemProvider implements vscode.CompletionItemProvider {
 
@@ -50,18 +50,23 @@ export class DefaultCompletionItemProvider implements vscode.CompletionItemProvi
 
 		const mappedLanguages = getMappingForIncludedLanguages();
 		const isSyntaxMapped = mappedLanguages[document.languageId] ? true : false;
-		let syntax = getEmmetMode((isSyntaxMapped ? mappedLanguages[document.languageId] : document.languageId), excludedLanguages);
+		let emmetMode = getEmmetMode((isSyntaxMapped ? mappedLanguages[document.languageId] : document.languageId), excludedLanguages);
 
-		if (!syntax
+		if (!emmetMode
 			|| emmetConfig['showExpandedAbbreviation'] === 'never'
-			|| ((isSyntaxMapped || syntax === 'jsx') && emmetConfig['showExpandedAbbreviation'] !== 'always')) {
+			|| ((isSyntaxMapped || emmetMode === 'jsx') && emmetConfig['showExpandedAbbreviation'] !== 'always')) {
 			return;
 		}
+
+		let syntax = emmetMode;
 
 		const helper = getEmmetHelper();
 		let validateLocation = syntax === 'html' || syntax === 'jsx' || syntax === 'xml';
 		let rootNode: Node | undefined = undefined;
 		let currentNode: Node | null = null;
+
+		const lsDoc = toLSTextDocument(document);
+		position = document.validatePosition(position);
 
 		if (document.languageId === 'html') {
 			if (context.triggerKind === vscode.CompletionTriggerKind.TriggerForIncompleteCompletions) {
@@ -79,7 +84,7 @@ export class DefaultCompletionItemProvider implements vscode.CompletionItemProvi
 
 			}
 			if (validateLocation) {
-				const lsDoc = TextDocument.create(document.uri.toString(), 'html', 0, document.getText());
+
 				const parsedLsDoc = this.htmlLS.parseHTMLDocument(lsDoc);
 				const positionOffset = document.offsetAt(position);
 				const node = parsedLsDoc.findNodeAt(positionOffset);
@@ -132,7 +137,7 @@ export class DefaultCompletionItemProvider implements vscode.CompletionItemProvi
 			}
 		}
 
-		const extractAbbreviationResults = helper.extractAbbreviation(document, position, !isStyleSheet(syntax));
+		const extractAbbreviationResults = helper.extractAbbreviation(lsDoc, position, !isStyleSheet(syntax));
 		if (!extractAbbreviationResults || !helper.isAbbreviationValid(syntax, extractAbbreviationResults.abbreviation)) {
 			return;
 		}
@@ -149,7 +154,7 @@ export class DefaultCompletionItemProvider implements vscode.CompletionItemProvi
 
 
 
-		if (validateLocation && !isValidLocationForEmmetAbbreviation(document, rootNode, currentNode, syntax, position, extractAbbreviationResults.abbreviationRange)) {
+		if (validateLocation && !isValidLocationForEmmetAbbreviation(document, rootNode, currentNode, syntax, position, toRange(extractAbbreviationResults.abbreviationRange))) {
 			return;
 		}
 
@@ -174,7 +179,7 @@ export class DefaultCompletionItemProvider implements vscode.CompletionItemProvi
 				return;
 			}
 
-			let result = helper.doComplete(document, position, syntax, getEmmetConfiguration(syntax!));
+			let result = helper.doComplete(toLSTextDocument(document), position, syntax, getEmmetConfiguration(syntax!));
 
 			// https://github.com/microsoft/vscode/issues/86941
 			if (result && result.items && result.items.length === 1) {
@@ -206,4 +211,8 @@ export class DefaultCompletionItemProvider implements vscode.CompletionItemProvi
 			return new vscode.CompletionList(newItems, true);
 		});
 	}
+}
+
+function toRange(lsRange: LSRange) {
+	return new vscode.Range(lsRange.start.line, lsRange.start.character, lsRange.end.line, lsRange.end.character);
 }

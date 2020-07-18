@@ -24,6 +24,8 @@ export const nullExtensionDescription = Object.freeze(<IExtensionDescription>{
 	isBuiltin: false,
 });
 
+export const webWorkerExtHostConfig = 'extensions.webWorker';
+
 export const IExtensionService = createDecorator<IExtensionService>('extensionService');
 
 export interface IMessage {
@@ -84,7 +86,15 @@ export interface IExtensionHostProfile {
 	getAggregatedTimes(): Map<ProfileSegmentId, number>;
 }
 
-export interface IExtensionHostStarter {
+export const enum ExtensionHostKind {
+	LocalProcess,
+	LocalWebWorker,
+	Remote
+}
+
+export interface IExtensionHost {
+	readonly kind: ExtensionHostKind;
+	readonly remoteAuthority: string | null;
 	readonly onExit: Event<[number, string | null]>;
 
 	start(): Promise<IMessagePassingProtocol> | null;
@@ -131,7 +141,7 @@ export interface IResponsiveStateChangeEvent {
 }
 
 export interface IExtensionService {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	/**
 	 * An event emitted when extensions are registered after their extension points got handled.
@@ -257,9 +267,20 @@ export function toExtension(extensionDescription: IExtensionDescription): IExten
 	};
 }
 
+export function toExtensionDescription(extension: IExtension): IExtensionDescription {
+	return {
+		identifier: new ExtensionIdentifier(extension.identifier.id),
+		isBuiltin: extension.type === ExtensionType.System,
+		isUnderDevelopment: false,
+		extensionLocation: extension.location,
+		...extension.manifest,
+		uuid: extension.identifier.uuid
+	};
+}
+
 
 export class NullExtensionService implements IExtensionService {
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 	onDidRegisterExtensions: Event<void> = Event.None;
 	onDidChangeExtensionsStatus: Event<ExtensionIdentifier[]> = Event.None;
 	onDidChangeExtensions: Event<void> = Event.None;

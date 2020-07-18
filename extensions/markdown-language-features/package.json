@@ -12,6 +12,7 @@
 		"vscode": "^1.20.0"
 	},
 	"main": "./out/extension",
+	"browser": "./dist/browser/extension",
 	"categories": [
 		"Programming Languages"
 	],
@@ -43,28 +44,19 @@
 				"command": "markdown.showPreviewToSide",
 				"title": "%markdown.previewSide.title%",
 				"category": "Markdown",
-				"icon": {
-					"light": "./media/preview-right-light.svg",
-					"dark": "./media/preview-right-dark.svg"
-				}
+				"icon": "$(open-preview)"
 			},
 			{
 				"command": "markdown.showLockedPreviewToSide",
 				"title": "%markdown.showLockedPreviewToSide.title%",
 				"category": "Markdown",
-				"icon": {
-					"light": "./media/preview-right-light.svg",
-					"dark": "./media/preview-right-dark.svg"
-				}
+				"icon": "$(open-preview)"
 			},
 			{
 				"command": "markdown.showSource",
 				"title": "%markdown.showSource.title%",
 				"category": "Markdown",
-				"icon": {
-					"light": "./media/view-source-light.svg",
-					"dark": "./media/view-source-dark.svg"
-				}
+				"icon": "$(go-to-file)"
 			},
 			{
 				"command": "markdown.showPreviewSecuritySelector",
@@ -86,7 +78,7 @@
 			"editor/title": [
 				{
 					"command": "markdown.showPreviewToSide",
-					"when": "editorLangId == markdown",
+					"when": "editorLangId == markdown && !notebookEditorFocused",
 					"alt": "markdown.showPreview",
 					"group": "navigation"
 				},
@@ -122,23 +114,23 @@
 				{
 					"command": "markdown.showPreview",
 					"when": "resourceLangId == markdown",
-					"group": "navigation"
+					"group": "1_open"
 				}
 			],
 			"commandPalette": [
 				{
 					"command": "markdown.showPreview",
-					"when": "editorLangId == markdown",
+					"when": "editorLangId == markdown && !notebookEditorFocused",
 					"group": "navigation"
 				},
 				{
 					"command": "markdown.showPreviewToSide",
-					"when": "editorLangId == markdown",
+					"when": "editorLangId == markdown && !notebookEditorFocused",
 					"group": "navigation"
 				},
 				{
 					"command": "markdown.showLockedPreviewToSide",
-					"when": "editorLangId == markdown",
+					"when": "editorLangId == markdown && !notebookEditorFocused",
 					"group": "navigation"
 				},
 				{
@@ -148,7 +140,7 @@
 				},
 				{
 					"command": "markdown.showPreviewSecuritySelector",
-					"when": "editorLangId == markdown"
+					"when": "editorLangId == markdown && !notebookEditorFocused"
 				},
 				{
 					"command": "markdown.showPreviewSecuritySelector",
@@ -160,7 +152,7 @@
 				},
 				{
 					"command": "markdown.preview.refresh",
-					"when": "editorLangId == markdown"
+					"when": "editorLangId == markdown && !notebookEditorFocused"
 				},
 				{
 					"command": "markdown.preview.refresh",
@@ -173,13 +165,13 @@
 				"command": "markdown.showPreview",
 				"key": "shift+ctrl+v",
 				"mac": "shift+cmd+v",
-				"when": "editorLangId == markdown"
+				"when": "editorLangId == markdown && !notebookEditorFocused"
 			},
 			{
 				"command": "markdown.showPreviewToSide",
 				"key": "ctrl+k v",
 				"mac": "cmd+k v",
-				"when": "editorLangId == markdown"
+				"when": "editorLangId == markdown && !notebookEditorFocused"
 			}
 		],
 		"configuration": {
@@ -210,7 +202,7 @@
 				},
 				"markdown.preview.fontFamily": {
 					"type": "string",
-					"default": "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', 'Ubuntu', 'Droid Sans', sans-serif",
+					"default": "-apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif",
 					"description": "%markdown.preview.fontFamily.desc%",
 					"scope": "resource"
 				},
@@ -327,7 +319,9 @@
 		"watch": "npm run build-preview && gulp watch-extension:markdown-language-features",
 		"vscode:prepublish": "npm run build-ext && npm run build-preview",
 		"build-ext": "node ../../node_modules/gulp/bin/gulp.js --gulpfile ../../build/gulpfile.extensions.js compile-extension:markdown-language-features ./tsconfig.json",
-		"build-preview": "webpack --mode production"
+		"build-preview": "webpack --mode production",
+		"compile-web": "npx webpack-cli --config extension-browser.webpack.config --mode none",
+		"watch-web": "npx webpack-cli --config extension-browser.webpack.config --mode none --watch --info-verbosity verbose"
 	},
 	"dependencies": {
 		"highlight.js": "9.15.10",

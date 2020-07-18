@@ -12,11 +12,9 @@ import { themeColorFromId, ThemeColor } from 'vs/platform/theme/common/themeServ
 import { overviewRulerWarning, overviewRulerInfo, overviewRulerError } from 'vs/editor/common/view/editorColorRegistry';
 import { IModelService } from 'vs/editor/common/services/modelService';
 import { Range } from 'vs/editor/common/core/range';
-import { keys } from 'vs/base/common/map';
 import { IMarkerDecorationsService } from 'vs/editor/common/services/markersDecorationService';
 import { Schemas } from 'vs/base/common/network';
 import { Emitter, Event } from 'vs/base/common/event';
-import { withUndefinedAsNull } from 'vs/base/common/types';
 import { minimapWarning, minimapError } from 'vs/platform/theme/common/colorRegistry';
 import { Delayer } from 'vs/base/common/async';
 
@@ -33,7 +31,7 @@ class MarkerDecorations extends Disposable {
 	) {
 		super();
 		this._register(toDisposable(() => {
-			this.model.deltaDecorations(keys(this._markersData), []);
+			this.model.deltaDecorations([...this._markersData.keys()], []);
 			this._markersData.clear();
 		}));
 	}
@@ -43,7 +41,7 @@ class MarkerDecorations extends Disposable {
 	}
 
 	public update(markers: IMarker[], newDecorations: IModelDeltaDecoration[]): boolean {
-		const oldIds = keys(this._markersData);
+		const oldIds = [...this._markersData.keys()];
 		this._markersData.clear();
 		const ids = this.model.deltaDecorations(oldIds, newDecorations);
 		for (let index = 0; index < ids.length; index++) {
@@ -70,7 +68,7 @@ class MarkerDecorations extends Disposable {
 
 export class MarkerDecorationsService extends Disposable implements IMarkerDecorationsService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private readonly _onDidChangeMarker = this._register(new Emitter<ITextModel>());
 	readonly onDidChangeMarker: Event<ITextModel> = this._onDidChangeMarker.event;
@@ -96,7 +94,7 @@ export class MarkerDecorationsService extends Disposable implements IMarkerDecor
 
 	getMarker(model: ITextModel, decoration: IModelDecoration): IMarker | null {
 		const markerDecorations = this._markerDecorations.get(MODEL_ID(model.uri));
-		return markerDecorations ? withUndefinedAsNull(markerDecorations.getMarker(decoration)) : null;
+		return markerDecorations ? (markerDecorations.getMarker(decoration) || null) : null;
 	}
 
 	getLiveMarkers(model: ITextModel): [Range, IMarker][] {

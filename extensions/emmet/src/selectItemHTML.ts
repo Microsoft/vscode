@@ -4,9 +4,8 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
-import { getDeepestNode, findNextWord, findPrevWord, getHtmlNode } from './util';
+import { getDeepestNode, findNextWord, findPrevWord, getHtmlNode, isNumber } from './util';
 import { HtmlNode } from 'EmmetNode';
-import { isNumber } from 'util';
 
 export function nextItemHTML(selectionStart: vscode.Position, selectionEnd: vscode.Position, editor: vscode.TextEditor, rootNode: HtmlNode): vscode.Selection | undefined {
 	let currentNode = getHtmlNode(editor.document, rootNode, selectionEnd, false);

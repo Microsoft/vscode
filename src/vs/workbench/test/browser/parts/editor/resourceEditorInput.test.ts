@@ -26,7 +26,7 @@ suite('Resource text editors', () => {
 		const resource = URI.from({ scheme: 'inmemory', authority: null!, path: 'thePath' });
 		accessor.modelService.createModel('function test() {}', accessor.modeService.create('text'), resource);
 
-		const input: ResourceEditorInput = instantiationService.createInstance(ResourceEditorInput, 'The Name', 'The Description', resource, undefined);
+		const input: ResourceEditorInput = instantiationService.createInstance(ResourceEditorInput, resource, 'The Name', 'The Description', undefined);
 
 		const model = await input.resolve();
 
@@ -42,7 +42,7 @@ suite('Resource text editors', () => {
 		const resource = URI.from({ scheme: 'inmemory', authority: null!, path: 'thePath' });
 		accessor.modelService.createModel('function test() {}', accessor.modeService.create('text'), resource);
 
-		const input: ResourceEditorInput = instantiationService.createInstance(ResourceEditorInput, 'The Name', 'The Description', resource, 'resource-input-test');
+		const input: ResourceEditorInput = instantiationService.createInstance(ResourceEditorInput, resource, 'The Name', 'The Description', 'resource-input-test');
 
 		const model = await input.resolve();
 		assert.ok(model);

@@ -4,7 +4,7 @@
 		"If you want to provide a fix or improvement, please create a pull request against the original repository.",
 		"Once accepted there, we are happy to receive an update request."
 	],
-	"version": "https://github.com/textmate/swift.tmbundle/commit/3f582e9acc1613745b06a56be55ba2a032c458eb",
+	"version": "https://github.com/textmate/swift.tmbundle/commit/ecba759c1c2f46f69795fe2d01691030214dd5ff",
 	"name": "Swift",
 	"scopeName": "source.swift",
 	"comment": "See swift.tmbundle/grammar-test.swift for test cases.",
@@ -2620,7 +2620,7 @@
 					"name": "variable.language.swift"
 				},
 				{
-					"match": "\\B(?:#file|#line|#column|#function|#dsohandle)\\b|\\b(?:__FILE__|__LINE__|__COLUMN__|__FUNCTION__|__DSO_HANDLE__)\\b",
+					"match": "\\B(?:#file|#filePath|#line|#column|#function|#dsohandle)\\b|\\b(?:__FILE__|__LINE__|__COLUMN__|__FUNCTION__|__DSO_HANDLE__)\\b",
 					"name": "support.variable.swift"
 				},
 				{

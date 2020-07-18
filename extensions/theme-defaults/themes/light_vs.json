@@ -45,7 +45,6 @@
 		{
 			"scope": [
 				"constant.numeric",
-				"entity.name.operator.custom-literal.number",
 				"variable.other.enummember",
 				"keyword.operator.plus.exponent",
 				"keyword.operator.minus.exponent"
@@ -218,7 +217,6 @@
 		{
 			"scope": [
 				"string",
-				"entity.name.operator.custom-literal.string",
 				"meta.embedded.assembly"
 			],
 			"settings": {
@@ -388,5 +386,11 @@
 				"foreground": "#0000ff"
 			}
 		}
-	]
+	],
+	"semanticTokenColors": {
+		"newOperator": "#0000ff",
+		"stringLiteral": "#a31515",
+		"customLiteral": "#000000",
+		"numberLiteral": "#098658",
+	}
 }

@@ -6,8 +6,21 @@
 //@ts-check
 'use strict';
 
-const bootstrap = require('../../../../bootstrap');
-const bootstrapWindow = require('../../../../bootstrap-window');
+/**
+ * @type {{ load: (modules: string[], resultCallback: (result, configuration: object) => any, options?: object) => unknown }}
+ */
+const bootstrapWindow = (() => {
+	// @ts-ignore (defined in bootstrap-window.js)
+	return window.MonacoBootstrapWindow;
+})();
+
+/**
+ * @type {{ avoidMonkeyPatchFromAppInsights: () => void; }}
+ */
+const bootstrap = (() => {
+	// @ts-ignore (defined in bootstrap.js)
+	return window.MonacoBootstrap;
+})();
 
 // Avoid Monkey Patches from Application Insights
 bootstrap.avoidMonkeyPatchFromAppInsights();

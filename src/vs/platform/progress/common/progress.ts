@@ -15,7 +15,7 @@ export const IProgressService = createDecorator<IProgressService>('progressServi
  */
 export interface IProgressService {
 
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	withProgress<R>(
 		options: IProgressOptions | IProgressNotificationOptions | IProgressWindowOptions | IProgressCompositeOptions,
@@ -179,5 +179,5 @@ export const IEditorProgressService = createDecorator<IEditorProgressService>('e
  */
 export interface IEditorProgressService extends IProgressIndicator {
 
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 }

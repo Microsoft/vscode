@@ -9,7 +9,7 @@ export const SIGN_SERVICE_ID = 'signService';
 export const ISignService = createDecorator<ISignService>(SIGN_SERVICE_ID);
 
 export interface ISignService {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	sign(value: string): Promise<string>;
 }

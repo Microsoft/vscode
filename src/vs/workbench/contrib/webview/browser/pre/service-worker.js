@@ -2,6 +2,8 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
+/// <reference lib="webworker" />
+
 const VERSION = 1;
 
 const rootPath = self.location.pathname.replace(/\/service-worker.js$/, '');

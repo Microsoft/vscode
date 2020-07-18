@@ -11,7 +11,7 @@ import { NullLogService } from 'vs/platform/log/common/log';
 import { MainThreadWebviews } from 'vs/workbench/api/browser/mainThreadWebview';
 import { ExtHostWebviews } from 'vs/workbench/api/common/extHostWebview';
 import { EditorViewColumn } from 'vs/workbench/api/common/shared/editor';
-import { mock } from 'vs/workbench/test/browser/api/mock';
+import { mock } from 'vs/base/test/common/mock';
 import { SingleProxyRPCProtocol } from './testRPCProtocol';
 import { ExtHostDocumentsAndEditors } from 'vs/workbench/api/common/extHostDocumentsAndEditors';
 import { ExtHostDocuments } from 'vs/workbench/api/common/extHostDocuments';

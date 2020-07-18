@@ -252,7 +252,7 @@ export class URI implements UriComponents {
 			return this;
 		}
 
-		return new _URI(scheme, authority, path, query, fragment);
+		return new Uri(scheme, authority, path, query, fragment);
 	}
 
 	// ---- parse & validate ------------------------
@@ -266,9 +266,9 @@ export class URI implements UriComponents {
 	static parse(value: string, _strict: boolean = false): URI {
 		const match = _regexp.exec(value);
 		if (!match) {
-			return new _URI(_empty, _empty, _empty, _empty, _empty);
+			return new Uri(_empty, _empty, _empty, _empty, _empty);
 		}
-		return new _URI(
+		return new Uri(
 			match[2] || _empty,
 			percentDecode(match[4] || _empty),
 			percentDecode(match[5] || _empty),
@@ -323,11 +323,11 @@ export class URI implements UriComponents {
 			}
 		}
 
-		return new _URI('file', authority, path, _empty, _empty);
+		return new Uri('file', authority, path, _empty, _empty);
 	}
 
 	static from(components: { scheme: string; authority?: string; path?: string; query?: string; fragment?: string }): URI {
-		return new _URI(
+		return new Uri(
 			components.scheme,
 			components.authority,
 			components.path,
@@ -387,7 +387,7 @@ export class URI implements UriComponents {
 		} else if (data instanceof URI) {
 			return data;
 		} else {
-			const result = new _URI(data);
+			const result = new Uri(data);
 			result._formatted = (<UriState>data).external;
 			result._fsPath = (<UriState>data)._sep === _pathSepMarker ? (<UriState>data).fsPath : null;
 			return result;
@@ -412,8 +412,8 @@ interface UriState extends UriComponents {
 
 const _pathSepMarker = isWindows ? 1 : undefined;
 
-// eslint-disable-next-line @typescript-eslint/class-name-casing
-class _URI extends URI {
+// This class exists so that URI is compatibile with vscode.Uri (API).
+class Uri extends URI {
 
 	_formatted: string | null = null;
 	_fsPath: string | null = null;

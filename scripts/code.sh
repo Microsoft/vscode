@@ -7,7 +7,8 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 	ROOT=$(dirname "$(dirname "$(realpath "$0")")")
 else
 	ROOT=$(dirname "$(dirname "$(readlink -f $0)")")
-	if grep -qi Microsoft /proc/version; then
+	# If the script is running in Docker using the WSL2 engine, powershell.exe won't exist
+	if grep -qi Microsoft /proc/version && type powershell.exe > /dev/null 2>&1; then
 		IN_WSL=true
 	fi
 fi

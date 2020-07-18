@@ -10,7 +10,7 @@ import * as extHostProtocol from 'vs/workbench/api/common/extHost.protocol';
 import { IExtHostRpcService } from 'vs/workbench/api/common/extHostRpcService';
 
 export interface IExtHostApiDeprecationService {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	report(apiId: string, extension: IExtensionDescription, migrationSuggestion: string): void;
 }
@@ -19,7 +19,7 @@ export const IExtHostApiDeprecationService = createDecorator<IExtHostApiDeprecat
 
 export class ExtHostApiDeprecationService implements IExtHostApiDeprecationService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private readonly _reportedUsages = new Set<string>();
 	private readonly _telemetryShape: extHostProtocol.MainThreadTelemetryShape;
@@ -63,7 +63,7 @@ export class ExtHostApiDeprecationService implements IExtHostApiDeprecationServi
 
 
 export const NullApiDeprecationService = Object.freeze(new class implements IExtHostApiDeprecationService {
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	public report(_apiId: string, _extension: IExtensionDescription, _warningMessage: string): void {
 		// noop

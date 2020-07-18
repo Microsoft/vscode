@@ -10,7 +10,7 @@ import { IContextKey, IContextKeyService } from 'vs/platform/contextkey/common/c
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 
 export class AccessibilityService extends Disposable implements IAccessibilityService {
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private _accessibilityModeEnabledContext: IContextKey<boolean>;
 	protected _accessibilitySupport = AccessibilitySupport.Unknown;

@@ -18,6 +18,7 @@ import TypeScriptServiceClient from './typescriptServiceClient';
 import { coalesce, flatten } from './utils/arrays';
 import { CommandManager } from './utils/commandManager';
 import { Disposable } from './utils/dispose';
+import * as errorCodes from './utils/errorCodes';
 import { DiagnosticLanguage, LanguageDescription } from './utils/languageDescription';
 import LogDirectoryProvider from './utils/logDirectoryProvider';
 import { PluginManager } from './utils/plugins';
@@ -25,16 +26,22 @@ import * as typeConverters from './utils/typeConverters';
 import TypingsStatus, { AtaProgressReporter } from './utils/typingsStatus';
 import VersionStatus from './utils/versionStatus';
 
+namespace Experimental {
+	export interface Diagnostic extends Proto.Diagnostic {
+		readonly reportsDeprecated?: {}
+	}
+}
+
 // Style check diagnostics that can be reported as warnings
-const styleCheckDiagnostics = [
-	6133, 	// variable is declared but never used
-	6138, 	// property is declared but its value is never read
-	6192, 	// All imports are unused
-	7027,	// unreachable code detected
-	7028,	// unused label
-	7029,	// fall through case in switch
-	7030	// not all code paths return a value
-];
+const styleCheckDiagnostics = new Set([
+	...errorCodes.variableDeclaredButNeverUsed,
+	...errorCodes.propertyDeclaretedButNeverUsed,
+	...errorCodes.allImportsAreUnused,
+	...errorCodes.unreachableCode,
+	...errorCodes.unusedLabel,
+	...errorCodes.fallThroughCaseInSwitch,
+	...errorCodes.notAllCodePathsReturnAValue,
+]);
 
 export default class TypeScriptServiceClientHost extends Disposable {
 
@@ -43,7 +50,6 @@ export default class TypeScriptServiceClientHost extends Disposable {
 	private readonly languagePerId = new Map<string, LanguageProvider>();
 
 	private readonly typingsStatus: TypingsStatus;
-	private readonly versionStatus: VersionStatus;
 
 	private readonly fileConfigurationManager: FileConfigurationManager;
 
@@ -62,7 +68,6 @@ export default class TypeScriptServiceClientHost extends Disposable {
 		const allModeIds = this.getAllModeIds(descriptions, pluginManager);
 		this.client = this._register(new TypeScriptServiceClient(
 			workspaceState,
-			version => this.versionStatus.onDidChangeTypeScriptVersion(version),
 			pluginManager,
 			logDirectoryProvider,
 			allModeIds));
@@ -74,8 +79,7 @@ export default class TypeScriptServiceClientHost extends Disposable {
 		this.client.onConfigDiagnosticsReceived(diag => this.configFileDiagnosticsReceived(diag), null, this._disposables);
 		this.client.onResendModelsRequested(() => this.populateService(), null, this._disposables);
 
-		this.versionStatus = this._register(new VersionStatus(this.client, commandManager));
-
+		this._register(new VersionStatus(this.client, commandManager));
 		this._register(new AtaProgressReporter(this.client));
 		this.typingsStatus = this._register(new TypingsStatus(this.client));
 		this.fileConfigurationManager = this._register(new FileConfigurationManager(this.client));
@@ -97,23 +101,31 @@ export default class TypeScriptServiceClientHost extends Disposable {
 		this.client.onReady(() => {
 			const languages = new Set<string>();
 			for (const plugin of pluginManager.plugins) {
-				for (const language of plugin.languages) {
-					languages.add(language);
+				if (plugin.configNamespace && plugin.languages.length) {
+					this.registerExtensionLanguageProvider({
+						id: plugin.configNamespace,
+						modeIds: Array.from(plugin.languages),
+						diagnosticSource: 'ts-plugin',
+						diagnosticLanguage: DiagnosticLanguage.TypeScript,
+						diagnosticOwner: 'typescript',
+						isExternal: true
+					}, onCompletionAccepted);
+				} else {
+					for (const language of plugin.languages) {
+						languages.add(language);
+					}
 				}
 			}
+
 			if (languages.size) {
-				const description: LanguageDescription = {
+				this.registerExtensionLanguageProvider({
 					id: 'typescript-plugins',
 					modeIds: Array.from(languages.values()),
 					diagnosticSource: 'ts-plugin',
 					diagnosticLanguage: DiagnosticLanguage.TypeScript,
 					diagnosticOwner: 'typescript',
 					isExternal: true
-				};
-				const manager = new LanguageProvider(this.client, description, this.commandManager, this.client.telemetryReporter, this.typingsStatus, this.fileConfigurationManager, onCompletionAccepted);
-				this.languages.push(manager);
-				this._register(manager);
-				this.languagePerId.set(description.id, manager);
+				}, onCompletionAccepted);
 			}
 		});
 
@@ -123,6 +135,13 @@ export default class TypeScriptServiceClientHost extends Disposable {
 
 		vscode.workspace.onDidChangeConfiguration(this.configurationChanged, this, this._disposables);
 		this.configurationChanged();
+	}
+
+	private registerExtensionLanguageProvider(description: LanguageDescription, onCompletionAccepted: (item: vscode.CompletionItem) => void) {
+		const manager = new LanguageProvider(this.client, description, this.commandManager, this.client.telemetryReporter, this.typingsStatus, this.fileConfigurationManager, onCompletionAccepted);
+		this.languages.push(manager);
+		this._register(manager);
+		this.languagePerId.set(description.id, manager);
 	}
 
 	private getAllModeIds(descriptions: LanguageDescription[], pluginManager: PluginManager) {
@@ -217,11 +236,11 @@ export default class TypeScriptServiceClientHost extends Disposable {
 	private createMarkerDatas(
 		diagnostics: Proto.Diagnostic[],
 		source: string
-	): (vscode.Diagnostic & { reportUnnecessary: any })[] {
+	): (vscode.Diagnostic & { reportUnnecessary: any, reportDeprecated: any })[] {
 		return diagnostics.map(tsDiag => this.tsDiagnosticToVsDiagnostic(tsDiag, source));
 	}
 
-	private tsDiagnosticToVsDiagnostic(diagnostic: Proto.Diagnostic, source: string): vscode.Diagnostic & { reportUnnecessary: any } {
+	private tsDiagnosticToVsDiagnostic(diagnostic: Experimental.Diagnostic, source: string): vscode.Diagnostic & { reportUnnecessary: any, reportDeprecated: any } {
 		const { start, end, text } = diagnostic;
 		const range = new vscode.Range(typeConverters.Position.fromLocation(start), typeConverters.Position.fromLocation(end));
 		const converted = new vscode.Diagnostic(range, text, this.getDiagnosticSeverity(diagnostic));
@@ -239,11 +258,19 @@ export default class TypeScriptServiceClientHost extends Disposable {
 				return new vscode.DiagnosticRelatedInformation(typeConverters.Location.fromTextSpan(this.client.toResource(span.file), span), info.message);
 			}));
 		}
+		const tags: vscode.DiagnosticTag[] = [];
 		if (diagnostic.reportsUnnecessary) {
-			converted.tags = [vscode.DiagnosticTag.Unnecessary];
+			tags.push(vscode.DiagnosticTag.Unnecessary);
 		}
-		(converted as vscode.Diagnostic & { reportUnnecessary: any }).reportUnnecessary = diagnostic.reportsUnnecessary;
-		return converted as vscode.Diagnostic & { reportUnnecessary: any };
+		if (diagnostic.reportsDeprecated) {
+			tags.push(vscode.DiagnosticTag.Deprecated);
+		}
+		converted.tags = tags.length ? tags : undefined;
+
+		const resultConverted = converted as vscode.Diagnostic & { reportUnnecessary: any, reportDeprecated: any };
+		resultConverted.reportUnnecessary = diagnostic.reportsUnnecessary;
+		resultConverted.reportDeprecated = diagnostic.reportsDeprecated;
+		return resultConverted;
 	}
 
 	private getDiagnosticSeverity(diagnostic: Proto.Diagnostic): vscode.DiagnosticSeverity {
@@ -270,6 +297,6 @@ export default class TypeScriptServiceClientHost extends Disposable {
 	}
 
 	private isStyleCheckDiagnostic(code: number | undefined): boolean {
-		return code ? styleCheckDiagnostics.indexOf(code) !== -1 : false;
+		return typeof code === 'number' && styleCheckDiagnostics.has(code);
 	}
 }

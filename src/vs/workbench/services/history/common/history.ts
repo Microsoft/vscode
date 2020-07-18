@@ -12,7 +12,7 @@ export const IHistoryService = createDecorator<IHistoryService>('historyService'
 
 export interface IHistoryService {
 
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	/**
 	 * Re-opens the last closed editor if any.

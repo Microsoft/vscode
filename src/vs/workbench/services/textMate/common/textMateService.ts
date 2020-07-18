@@ -10,7 +10,7 @@ import { createDecorator } from 'vs/platform/instantiation/common/instantiation'
 export const ITextMateService = createDecorator<ITextMateService>('textMateService');
 
 export interface ITextMateService {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	onDidEncounterLanguage: Event<LanguageId>;
 

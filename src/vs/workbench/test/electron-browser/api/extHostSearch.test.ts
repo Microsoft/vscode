@@ -19,7 +19,7 @@ import { TestRPCProtocol } from 'vs/workbench/test/browser/api/testRPCProtocol';
 import type * as vscode from 'vscode';
 import { NullLogService } from 'vs/platform/log/common/log';
 import { URITransformerService } from 'vs/workbench/api/common/extHostUriTransformerService';
-import { mock } from 'vs/workbench/test/browser/api/mock';
+import { mock } from 'vs/base/test/common/mock';
 import { IExtHostInitDataService } from 'vs/workbench/api/common/extHostInitDataService';
 import { TextSearchManager } from 'vs/workbench/services/search/common/textSearchManager';
 import { NativeTextSearchManager } from 'vs/workbench/services/search/node/textSearchManager';
@@ -144,7 +144,7 @@ suite('ExtHostSearch', () => {
 			constructor() {
 				super(
 					rpcProtocol,
-					new class extends mock<IExtHostInitDataService>() { remote = { isRemote: false, authority: undefined }; },
+					new class extends mock<IExtHostInitDataService>() { remote = { isRemote: false, authority: undefined, connectionData: null }; },
 					new URITransformerService(null),
 					logService
 				);

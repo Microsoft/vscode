@@ -8,12 +8,12 @@ import { MainThreadMessageService } from 'vs/workbench/api/browser/mainThreadMes
 import { IDialogService } from 'vs/platform/dialogs/common/dialogs';
 import { INotificationService, INotification, NoOpNotification, INotificationHandle, Severity, IPromptChoice, IPromptOptions, IStatusMessageOptions, NotificationsFilter } from 'vs/platform/notification/common/notification';
 import { ICommandService } from 'vs/platform/commands/common/commands';
-import { mock } from 'vs/workbench/test/browser/api/mock';
+import { mock } from 'vs/base/test/common/mock';
 import { IDisposable, Disposable } from 'vs/base/common/lifecycle';
 import * as platform from 'vs/base/common/platform';
 
 const emptyDialogService = new class implements IDialogService {
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 	show(): never {
 		throw new Error('not implemented');
 	}
@@ -37,7 +37,7 @@ const emptyCommandService: ICommandService = {
 };
 
 const emptyNotificationService = new class implements INotificationService {
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 	notify(...args: any[]): never {
 		throw new Error('not implemented');
 	}
@@ -62,7 +62,7 @@ const emptyNotificationService = new class implements INotificationService {
 };
 
 class EmptyNotificationService implements INotificationService {
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	constructor(private withNotify: (notification: INotification) => void) {
 	}

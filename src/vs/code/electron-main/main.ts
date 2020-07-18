@@ -5,7 +5,7 @@
 
 import 'vs/platform/update/common/update.config.contribution';
 import { app, dialog } from 'electron';
-import { isWindows, IProcessEnvironment, isMacintosh } from 'vs/base/common/platform';
+import { isWindows, IProcessEnvironment } from 'vs/base/common/platform';
 import product from 'vs/platform/product/common/product';
 import { parseMainProcessArgv, addArg } from 'vs/platform/environment/node/argvHelper';
 import { createWaitMarkerFile } from 'vs/platform/environment/node/waitMarkerFile';
@@ -13,7 +13,7 @@ import { mkdirp } from 'vs/base/node/pfs';
 import { validatePaths } from 'vs/code/node/paths';
 import { LifecycleMainService, ILifecycleMainService } from 'vs/platform/lifecycle/electron-main/lifecycleMainService';
 import { Server, serve, connect } from 'vs/base/parts/ipc/node/ipc.net';
-import { createChannelSender } from 'vs/base/parts/ipc/node/ipc';
+import { createChannelSender } from 'vs/base/parts/ipc/common/ipc';
 import { ILaunchMainService } from 'vs/platform/launch/electron-main/launchMainService';
 import { ServicesAccessor, IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { InstantiationService } from 'vs/platform/instantiation/common/instantiationService';
@@ -47,6 +47,9 @@ import { DiskFileSystemProvider } from 'vs/platform/files/node/diskFileSystemPro
 import { Schemas } from 'vs/base/common/network';
 import { IFileService } from 'vs/platform/files/common/files';
 import { IStorageKeysSyncRegistryService, StorageKeysSyncRegistryService } from 'vs/platform/userDataSync/common/storageKeys';
+import { ITunnelService } from 'vs/platform/remote/common/tunnel';
+import { TunnelService } from 'vs/platform/remote/node/tunnelService';
+import { IProductService } from 'vs/platform/product/common/productService';
 
 class ExpectedError extends Error {
 	readonly isExpected = true;
@@ -162,6 +165,8 @@ class CodeMain {
 		services.set(IThemeMainService, new SyncDescriptor(ThemeMainService));
 		services.set(ISignService, new SyncDescriptor(SignService));
 		services.set(IStorageKeysSyncRegistryService, new SyncDescriptor(StorageKeysSyncRegistryService));
+		services.set(IProductService, { _serviceBrand: undefined, ...product });
+		services.set(ITunnelService, new SyncDescriptor(TunnelService));
 
 		return [new InstantiationService(services, true), instanceEnvironment, environmentService];
 	}
@@ -173,8 +178,8 @@ class CodeMain {
 			environmentService.extensionsPath,
 			environmentService.nodeCachedDataDir,
 			environmentService.logsPath,
-			environmentService.globalStorageHome,
-			environmentService.workspaceStorageHome,
+			environmentService.globalStorageHome.fsPath,
+			environmentService.workspaceStorageHome.fsPath,
 			environmentService.backupHome.fsPath
 		].map((path): undefined | Promise<void> => path ? mkdirp(path) : undefined));
 
@@ -224,11 +229,6 @@ class CodeMain {
 
 				// Any other runtime error is just printed to the console
 				throw error;
-			}
-
-			// Since we are the second instance, we do not want to show the dock
-			if (isMacintosh) {
-				app.dock.hide();
 			}
 
 			// there's a running instance, let's connect to it
@@ -328,11 +328,6 @@ class CodeMain {
 			logService.warn('Warning: The --status argument can only be used if Code is already running. Please run it again after Code has started.');
 
 			throw new ExpectedError('Terminating...');
-		}
-
-		// dock might be hidden at this case due to a retry
-		if (isMacintosh) {
-			app.dock.show();
 		}
 
 		// Set the VSCODE_PID variable here when we are sure we are the first

@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
-import { IOutput, IRenderOutput } from 'vs/workbench/contrib/notebook/common/notebookCommon';
+import { IProcessedOutput, IRenderOutput } from 'vs/workbench/contrib/notebook/common/notebookCommon';
 import { NotebookRegistry } from 'vs/workbench/contrib/notebook/browser/notebookRegistry';
 import { onUnexpectedError } from 'vs/base/common/errors';
 import { INotebookEditor, IOutputTransformContribution } from 'vs/workbench/contrib/notebook/browser/notebookBrowser';
@@ -33,7 +33,7 @@ export class OutputRenderer {
 		}
 	}
 
-	renderNoop(output: IOutput, container: HTMLElement): IRenderOutput {
+	renderNoop(output: IProcessedOutput, container: HTMLElement): IRenderOutput {
 		const contentNode = document.createElement('p');
 
 		contentNode.innerText = `No renderer could be found for output. It has the following output type: ${output.outputKind}`;
@@ -43,7 +43,7 @@ export class OutputRenderer {
 		};
 	}
 
-	render(output: IOutput, container: HTMLElement, preferredMimeType: string | undefined): IRenderOutput {
+	render(output: IProcessedOutput, container: HTMLElement, preferredMimeType: string | undefined): IRenderOutput {
 		let transform = this._mimeTypeMapping[output.outputKind];
 
 		if (transform) {

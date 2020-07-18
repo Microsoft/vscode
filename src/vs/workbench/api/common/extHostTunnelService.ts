@@ -41,7 +41,7 @@ export interface IExtHostTunnelService extends ExtHostTunnelServiceShape {
 export const IExtHostTunnelService = createDecorator<IExtHostTunnelService>('IExtHostTunnelService');
 
 export class ExtHostTunnelService implements IExtHostTunnelService {
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 	onDidChangeTunnels: vscode.Event<void> = (new Emitter<void>()).event;
 	private readonly _proxy: MainThreadTunnelServiceShape;
 

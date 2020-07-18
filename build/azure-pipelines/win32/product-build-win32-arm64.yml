@@ -1,0 +1,190 @@
+steps:
+- powershell: |
+    mkdir .build -ea 0
+    "$env:BUILD_SOURCEVERSION" | Out-File -Encoding ascii -NoNewLine .build\commit
+    "$env:VSCODE_QUALITY" | Out-File -Encoding ascii -NoNewLine .build\quality
+  displayName: Prepare cache flag
+
+- task: 1ESLighthouseEng.PipelineArtifactCaching.RestoreCacheV1.RestoreCache@1
+  inputs:
+    keyfile: 'build/.cachesalt, .build/commit, .build/quality'
+    targetfolder: '.build, out-build, out-vscode-min, out-vscode-reh-min, out-vscode-reh-web-min'
+    vstsFeed: 'npm-vscode'
+    platformIndependent: true
+    alias: 'Compilation'
+
+- powershell: |
+    $ErrorActionPreference = "Stop"
+    exit 1
+  displayName: Check RestoreCache
+  condition: and(succeeded(), ne(variables['CacheRestored-Compilation'], 'true'))
+
+- task: NodeTool@0
+  inputs:
+    versionSpec: "12.13.0"
+
+- task: geeklearningio.gl-vsts-tasks-yarn.yarn-installer-task.YarnInstaller@2
+  inputs:
+    versionSpec: "1.x"
+
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '2.x'
+    addToPath: true
+
+- task: AzureKeyVault@1
+  displayName: 'Azure Key Vault: Get Secrets'
+  inputs:
+    azureSubscription: 'vscode-builds-subscription'
+    KeyVaultName: vscode
+
+- powershell: |
+    . build/azure-pipelines/win32/exec.ps1
+    $ErrorActionPreference = "Stop"
+    "machine github.com`nlogin vscode`npassword $(github-distro-mixin-password)" | Out-File "$env:USERPROFILE\_netrc" -Encoding ASCII
+
+    exec { git config user.email "vscode@microsoft.com" }
+    exec { git config user.name "VSCode" }
+
+    mkdir .build -ea 0
+    "$(VSCODE_ARCH)" | Out-File -Encoding ascii -NoNewLine .build\arch
+  displayName: Prepare tooling
+
+- powershell: |
+    . build/azure-pipelines/win32/exec.ps1
+    $ErrorActionPreference = "Stop"
+    exec { git remote add distro "https://github.com/$(VSCODE_MIXIN_REPO).git" }
+    exec { git fetch distro }
+    exec { git merge $(node -p "require('./package.json').distro") }
+  displayName: Merge distro
+
+- task: 1ESLighthouseEng.PipelineArtifactCaching.RestoreCacheV1.RestoreCache@1
+  inputs:
+    keyfile: 'build/.cachesalt, .build/arch, .yarnrc, remote/.yarnrc, **/yarn.lock, !**/node_modules/**/yarn.lock, !**/.*/**/yarn.lock'
+    targetfolder: '**/node_modules, !**/node_modules/**/node_modules'
+    vstsFeed: 'npm-vscode'
+
+- powershell: |
+    . build/azure-pipelines/win32/exec.ps1
+    $ErrorActionPreference = "Stop"
+    $env:npm_config_arch="$(VSCODE_ARCH)"
+    $env:CHILD_CONCURRENCY="1"
+    exec { yarn --frozen-lockfile }
+  displayName: Install dependencies
+  condition: and(succeeded(), ne(variables['CacheRestored'], 'true'))
+
+- task: 1ESLighthouseEng.PipelineArtifactCaching.SaveCacheV1.SaveCache@1
+  inputs:
+    keyfile: 'build/.cachesalt, .build/arch, .yarnrc, remote/.yarnrc, **/yarn.lock, !**/node_modules/**/yarn.lock, !**/.*/**/yarn.lock'
+    targetfolder: '**/node_modules, !**/node_modules/**/node_modules'
+    vstsFeed: 'npm-vscode'
+  condition: and(succeeded(), ne(variables['CacheRestored'], 'true'))
+
+- powershell: |
+    . build/azure-pipelines/win32/exec.ps1
+    $ErrorActionPreference = "Stop"
+    exec { yarn postinstall }
+  displayName: Run postinstall scripts
+  condition: and(succeeded(), eq(variables['CacheRestored'], 'true'))
+
+- powershell: |
+    . build/azure-pipelines/win32/exec.ps1
+    $ErrorActionPreference = "Stop"
+    exec { node build/azure-pipelines/mixin }
+  displayName: Mix in quality
+
+- powershell: |
+    . build/azure-pipelines/win32/exec.ps1
+    $ErrorActionPreference = "Stop"
+    $env:VSCODE_MIXIN_PASSWORD="$(github-distro-mixin-password)"
+    exec { yarn gulp "vscode-win32-$env:VSCODE_ARCH-min-ci" }
+    exec { yarn gulp "vscode-win32-$env:VSCODE_ARCH-code-helper" }
+    exec { yarn gulp "vscode-win32-$env:VSCODE_ARCH-inno-updater" }
+  displayName: Build
+
+- task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@1
+  inputs:
+    ConnectedServiceName: 'ESRP CodeSign'
+    FolderPath: '$(agent.builddirectory)/VSCode-win32-$(VSCODE_ARCH)'
+    Pattern: '*.dll,*.exe,*.node'
+    signConfigType: inlineSignParams
+    inlineOperation: |
+      [
+        {
+          "keyCode": "CP-230012",
+          "operationSetCode": "SigntoolSign",
+          "parameters": [
+            {
+              "parameterName": "OpusName",
+              "parameterValue": "VS Code"
+            },
+            {
+              "parameterName": "OpusInfo",
+              "parameterValue": "https://code.visualstudio.com/"
+            },
+            {
+              "parameterName": "Append",
+              "parameterValue": "/as"
+            },
+            {
+              "parameterName": "FileDigest",
+              "parameterValue": "/fd \"SHA256\""
+            },
+            {
+              "parameterName": "PageHash",
+              "parameterValue": "/NPH"
+            },
+            {
+              "parameterName": "TimeStamp",
+              "parameterValue": "/tr \"http://rfc3161.gtm.corp.microsoft.com/TSS/HttpTspServer\" /td sha256"
+            }
+          ],
+          "toolName": "sign",
+          "toolVersion": "1.0"
+        },
+        {
+          "keyCode": "CP-230012",
+          "operationSetCode": "SigntoolVerify",
+          "parameters": [
+            {
+              "parameterName": "VerifyAll",
+              "parameterValue": "/all"
+            }
+          ],
+          "toolName": "sign",
+          "toolVersion": "1.0"
+        }
+      ]
+    SessionTimeout: 120
+
+- task: NuGetCommand@2
+  displayName: Install ESRPClient.exe
+  inputs:
+    restoreSolution: 'build\azure-pipelines\win32\ESRPClient\packages.config'
+    feedsToUse: config
+    nugetConfigPath: 'build\azure-pipelines\win32\ESRPClient\NuGet.config'
+    externalFeedCredentials: 3fc0b7f7-da09-4ae7-a9c8-d69824b1819b
+    restoreDirectory: packages
+
+- task: ESRPImportCertTask@1
+  displayName: Import ESRP Request Signing Certificate
+  inputs:
+    ESRP: 'ESRP CodeSign'
+
+- powershell: |
+    $ErrorActionPreference = "Stop"
+    .\build\azure-pipelines\win32\import-esrp-auth-cert.ps1 -AuthCertificateBase64 $(esrp-auth-certificate) -AuthCertificateKey $(esrp-auth-certificate-key)
+  displayName: Import ESRP Auth Certificate
+
+- powershell: |
+    . build/azure-pipelines/win32/exec.ps1
+    $ErrorActionPreference = "Stop"
+    $env:AZURE_STORAGE_ACCESS_KEY_2 = "$(vscode-storage-key)"
+    $env:AZURE_DOCUMENTDB_MASTERKEY = "$(builds-docdb-key-readwrite)"
+    $env:VSCODE_MIXIN_PASSWORD="$(github-distro-mixin-password)"
+    .\build\azure-pipelines\win32\publish.ps1
+  displayName: Publish
+
+- task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
+  displayName: 'Component Detection'
+  continueOnError: true

@@ -41,6 +41,7 @@ import { EditorOption } from 'vs/editor/common/config/editorOptions';
 import { Constants } from 'vs/base/common/uint';
 import { textLinkForeground } from 'vs/platform/theme/common/colorRegistry';
 import { Progress } from 'vs/platform/progress/common/progress';
+import { IContextKey } from 'vs/platform/contextkey/common/contextkey';
 
 const $ = dom.$;
 
@@ -212,13 +213,14 @@ export class ModesContentHoverWidget extends ContentHoverWidget {
 
 	constructor(
 		editor: ICodeEditor,
+		_hoverVisibleKey: IContextKey<boolean>,
 		markerDecorationsService: IMarkerDecorationsService,
+		keybindingService: IKeybindingService,
 		private readonly _themeService: IThemeService,
-		private readonly _keybindingService: IKeybindingService,
 		private readonly _modeService: IModeService,
 		private readonly _openerService: IOpenerService = NullOpenerService,
 	) {
-		super(ModesContentHoverWidget.ID, editor);
+		super(ModesContentHoverWidget.ID, editor, _hoverVisibleKey, keybindingService);
 
 		this._messages = [];
 		this._lastRange = null;
@@ -249,7 +251,7 @@ export class ModesContentHoverWidget extends ContentHoverWidget {
 		}));
 		this._register(TokenizationRegistry.onDidChange((e) => {
 			if (this.isVisible && this._lastRange && this._messages.length > 0) {
-				this._domNode.textContent = '';
+				this._hover.contentsDomNode.textContent = '';
 				this._renderMessages(this._lastRange, this._messages);
 			}
 		}));
@@ -461,7 +463,7 @@ export class ModesContentHoverWidget extends ContentHoverWidget {
 							const renderer = markdownDisposeables.add(new MarkdownRenderer(this._editor, this._modeService, this._openerService));
 							markdownDisposeables.add(renderer.onDidRenderCodeBlock(() => {
 								hoverContentsElement.className = 'hover-contents code-hover-contents';
-								this.onContentsChange();
+								this._hover.onContentsChanged();
 							}));
 							const renderedContents = markdownDisposeables.add(renderer.render(contents));
 							hoverContentsElement.appendChild(renderedContents.element);
@@ -562,12 +564,12 @@ export class ModesContentHoverWidget extends ContentHoverWidget {
 		const disposables = new DisposableStore();
 		const actionsElement = dom.append(hoverElement, $('div.actions'));
 		if (markerHover.marker.severity === MarkerSeverity.Error || markerHover.marker.severity === MarkerSeverity.Warning || markerHover.marker.severity === MarkerSeverity.Info) {
-			disposables.add(this.renderAction(actionsElement, {
+			disposables.add(this._renderAction(actionsElement, {
 				label: nls.localize('peek problem', "Peek Problem"),
 				commandId: NextMarkerAction.ID,
 				run: () => {
 					this.hide();
-					MarkerController.get(this._editor).show(markerHover.marker);
+					MarkerController.get(this._editor).showAtMarker(markerHover.marker);
 					this._editor.focus();
 				}
 			}));
@@ -600,7 +602,7 @@ export class ModesContentHoverWidget extends ContentHoverWidget {
 				}
 			}));
 
-			disposables.add(this.renderAction(actionsElement, {
+			disposables.add(this._renderAction(actionsElement, {
 				label: nls.localize('quick fixes', "Quick Fix..."),
 				commandId: QuickFixAction.Id,
 				run: (target) => {
@@ -630,25 +632,6 @@ export class ModesContentHoverWidget extends ContentHoverWidget {
 				markerCodeActionTrigger,
 				Progress.None,
 				cancellationToken);
-		});
-	}
-
-	private renderAction(parent: HTMLElement, actionOptions: { label: string, iconClass?: string, run: (target: HTMLElement) => void, commandId: string }): IDisposable {
-		const actionContainer = dom.append(parent, $('div.action-container'));
-		const action = dom.append(actionContainer, $('a.action'));
-		action.setAttribute('href', '#');
-		action.setAttribute('role', 'button');
-		if (actionOptions.iconClass) {
-			dom.append(action, $(`span.icon.${actionOptions.iconClass}`));
-		}
-		const label = dom.append(action, $('span'));
-		const keybinding = this._keybindingService.lookupKeybinding(actionOptions.commandId);
-		const keybindingLabel = keybinding ? keybinding.getLabel() : null;
-		label.textContent = keybindingLabel ? `${actionOptions.label} (${keybindingLabel})` : actionOptions.label;
-		return dom.addDisposableListener(actionContainer, dom.EventType.CLICK, e => {
-			e.stopPropagation();
-			e.preventDefault();
-			actionOptions.run(actionContainer);
 		});
 	}
 
@@ -683,7 +666,6 @@ function hoverContentsEquals(first: HoverPart[], second: HoverPart[]): boolean {
 registerThemingParticipant((theme, collector) => {
 	const linkFg = theme.getColor(textLinkForeground);
 	if (linkFg) {
-		collector.addRule(`.monaco-editor-hover .hover-contents a.code-link span:hover { color: ${linkFg}; }`);
+		collector.addRule(`.monaco-hover .hover-contents a.code-link span:hover { color: ${linkFg}; }`);
 	}
 });
-

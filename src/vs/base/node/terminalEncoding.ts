@@ -7,7 +7,7 @@
  * This code is also used by standalone cli's. Avoid adding dependencies to keep the size of the cli small.
  */
 import { exec } from 'child_process';
-import * as os from 'os';
+import { isWindows } from 'vs/base/common/platform';
 
 const windowsTerminalEncodings = {
 	'437': 'cp437', // United States
@@ -39,7 +39,6 @@ const JSCHARDET_TO_ICONV_ENCODINGS: { [name: string]: string } = {
 
 const UTF8 = 'utf8';
 
-
 export async function resolveTerminalEncoding(verbose?: boolean): Promise<string> {
 	let rawEncodingPromise: Promise<string>;
 
@@ -54,7 +53,7 @@ export async function resolveTerminalEncoding(verbose?: boolean): Promise<string
 	}
 
 	// Windows: educated guess
-	else if (os.platform() === 'win32') {
+	else if (isWindows) {
 		rawEncodingPromise = new Promise<string>(resolve => {
 			if (verbose) {
 				console.log('Running "chcp" to detect terminal encoding...');

@@ -5,7 +5,7 @@
 
 import { Action } from 'vs/base/common/actions';
 import * as nls from 'vs/nls';
-import { IssueType } from 'vs/platform/issue/node/issue';
+import { IssueType } from 'vs/platform/issue/common/issue';
 import { IWorkbenchIssueService } from 'vs/workbench/contrib/issue/electron-browser/issue';
 
 export class OpenProcessExplorer extends Action {

@@ -22,17 +22,16 @@ import { assertIsDefined } from 'vs/base/common/types';
 export class SideBySideEditor extends BaseEditor {
 
 	static readonly ID: string = 'workbench.editor.sidebysideEditor';
-	static MASTER: SideBySideEditor | undefined;
 
-	get minimumMasterWidth() { return this.masterEditorPane ? this.masterEditorPane.minimumWidth : 0; }
-	get maximumMasterWidth() { return this.masterEditorPane ? this.masterEditorPane.maximumWidth : Number.POSITIVE_INFINITY; }
-	get minimumMasterHeight() { return this.masterEditorPane ? this.masterEditorPane.minimumHeight : 0; }
-	get maximumMasterHeight() { return this.masterEditorPane ? this.masterEditorPane.maximumHeight : Number.POSITIVE_INFINITY; }
+	private get minimumPrimaryWidth() { return this.primaryEditorPane ? this.primaryEditorPane.minimumWidth : 0; }
+	private get maximumPrimaryWidth() { return this.primaryEditorPane ? this.primaryEditorPane.maximumWidth : Number.POSITIVE_INFINITY; }
+	private get minimumPrimaryHeight() { return this.primaryEditorPane ? this.primaryEditorPane.minimumHeight : 0; }
+	private get maximumPrimaryHeight() { return this.primaryEditorPane ? this.primaryEditorPane.maximumHeight : Number.POSITIVE_INFINITY; }
 
-	get minimumDetailsWidth() { return this.detailsEditorPane ? this.detailsEditorPane.minimumWidth : 0; }
-	get maximumDetailsWidth() { return this.detailsEditorPane ? this.detailsEditorPane.maximumWidth : Number.POSITIVE_INFINITY; }
-	get minimumDetailsHeight() { return this.detailsEditorPane ? this.detailsEditorPane.minimumHeight : 0; }
-	get maximumDetailsHeight() { return this.detailsEditorPane ? this.detailsEditorPane.maximumHeight : Number.POSITIVE_INFINITY; }
+	private get minimumSecondaryWidth() { return this.secondaryEditorPane ? this.secondaryEditorPane.minimumWidth : 0; }
+	private get maximumSecondaryWidth() { return this.secondaryEditorPane ? this.secondaryEditorPane.maximumWidth : Number.POSITIVE_INFINITY; }
+	private get minimumSecondaryHeight() { return this.secondaryEditorPane ? this.secondaryEditorPane.minimumHeight : 0; }
+	private get maximumSecondaryHeight() { return this.secondaryEditorPane ? this.secondaryEditorPane.maximumHeight : Number.POSITIVE_INFINITY; }
 
 	// these setters need to exist because this extends from BaseEditor
 	set minimumWidth(value: number) { /* noop */ }
@@ -40,16 +39,16 @@ export class SideBySideEditor extends BaseEditor {
 	set minimumHeight(value: number) { /* noop */ }
 	set maximumHeight(value: number) { /* noop */ }
 
-	get minimumWidth() { return this.minimumMasterWidth + this.minimumDetailsWidth; }
-	get maximumWidth() { return this.maximumMasterWidth + this.maximumDetailsWidth; }
-	get minimumHeight() { return this.minimumMasterHeight + this.minimumDetailsHeight; }
-	get maximumHeight() { return this.maximumMasterHeight + this.maximumDetailsHeight; }
+	get minimumWidth() { return this.minimumPrimaryWidth + this.minimumSecondaryWidth; }
+	get maximumWidth() { return this.maximumPrimaryWidth + this.maximumSecondaryWidth; }
+	get minimumHeight() { return this.minimumPrimaryHeight + this.minimumSecondaryHeight; }
+	get maximumHeight() { return this.maximumPrimaryHeight + this.maximumSecondaryHeight; }
 
-	protected masterEditorPane?: BaseEditor;
-	protected detailsEditorPane?: BaseEditor;
+	protected primaryEditorPane?: BaseEditor;
+	protected secondaryEditorPane?: BaseEditor;
 
-	private masterEditorContainer: HTMLElement | undefined;
-	private detailsEditorContainer: HTMLElement | undefined;
+	private primaryEditorContainer: HTMLElement | undefined;
+	private secondaryEditorContainer: HTMLElement | undefined;
 
 	private splitview: SplitView | undefined;
 	private dimension: DOM.Dimension = new DOM.Dimension(0, 0);
@@ -74,19 +73,19 @@ export class SideBySideEditor extends BaseEditor {
 		const splitview = this.splitview = this._register(new SplitView(parent, { orientation: Orientation.HORIZONTAL }));
 		this._register(this.splitview.onDidSashReset(() => splitview.distributeViewSizes()));
 
-		this.detailsEditorContainer = DOM.$('.details-editor-container');
+		this.secondaryEditorContainer = DOM.$('.secondary-editor-container');
 		this.splitview.addView({
-			element: this.detailsEditorContainer,
-			layout: size => this.detailsEditorPane && this.detailsEditorPane.layout(new DOM.Dimension(size, this.dimension.height)),
+			element: this.secondaryEditorContainer,
+			layout: size => this.secondaryEditorPane && this.secondaryEditorPane.layout(new DOM.Dimension(size, this.dimension.height)),
 			minimumSize: 220,
 			maximumSize: Number.POSITIVE_INFINITY,
 			onDidChange: Event.None
 		}, Sizing.Distribute);
 
-		this.masterEditorContainer = DOM.$('.master-editor-container');
+		this.primaryEditorContainer = DOM.$('.primary-editor-container');
 		this.splitview.addView({
-			element: this.masterEditorContainer,
-			layout: size => this.masterEditorPane && this.masterEditorPane.layout(new DOM.Dimension(size, this.dimension.height)),
+			element: this.primaryEditorContainer,
+			layout: size => this.primaryEditorPane && this.primaryEditorPane.layout(new DOM.Dimension(size, this.dimension.height)),
 			minimumSize: 220,
 			maximumSize: Number.POSITIVE_INFINITY,
 			onDidChange: Event.None
@@ -103,30 +102,30 @@ export class SideBySideEditor extends BaseEditor {
 	}
 
 	setOptions(options: EditorOptions | undefined): void {
-		if (this.masterEditorPane) {
-			this.masterEditorPane.setOptions(options);
+		if (this.primaryEditorPane) {
+			this.primaryEditorPane.setOptions(options);
 		}
 	}
 
 	protected setEditorVisible(visible: boolean, group: IEditorGroup | undefined): void {
-		if (this.masterEditorPane) {
-			this.masterEditorPane.setVisible(visible, group);
+		if (this.primaryEditorPane) {
+			this.primaryEditorPane.setVisible(visible, group);
 		}
 
-		if (this.detailsEditorPane) {
-			this.detailsEditorPane.setVisible(visible, group);
+		if (this.secondaryEditorPane) {
+			this.secondaryEditorPane.setVisible(visible, group);
 		}
 
 		super.setEditorVisible(visible, group);
 	}
 
 	clearInput(): void {
-		if (this.masterEditorPane) {
-			this.masterEditorPane.clearInput();
+		if (this.primaryEditorPane) {
+			this.primaryEditorPane.clearInput();
 		}
 
-		if (this.detailsEditorPane) {
-			this.detailsEditorPane.clearInput();
+		if (this.secondaryEditorPane) {
+			this.secondaryEditorPane.clearInput();
 		}
 
 		this.disposeEditors();
@@ -135,8 +134,8 @@ export class SideBySideEditor extends BaseEditor {
 	}
 
 	focus(): void {
-		if (this.masterEditorPane) {
-			this.masterEditorPane.focus();
+		if (this.primaryEditorPane) {
+			this.primaryEditorPane.focus();
 		}
 	}
 
@@ -148,19 +147,19 @@ export class SideBySideEditor extends BaseEditor {
 	}
 
 	getControl(): IEditorControl | undefined {
-		if (this.masterEditorPane) {
-			return this.masterEditorPane.getControl();
+		if (this.primaryEditorPane) {
+			return this.primaryEditorPane.getControl();
 		}
 
 		return undefined;
 	}
 
-	getMasterEditorPane(): IEditorPane | undefined {
-		return this.masterEditorPane;
+	getPrimaryEditorPane(): IEditorPane | undefined {
+		return this.primaryEditorPane;
 	}
 
-	getDetailsEditorPane(): IEditorPane | undefined {
-		return this.detailsEditorPane;
+	getSecondaryEditorPane(): IEditorPane | undefined {
+		return this.secondaryEditorPane;
 	}
 
 	private async updateInput(oldInput: SideBySideEditorInput, newInput: SideBySideEditorInput, options: EditorOptions | undefined, token: CancellationToken): Promise<void> {
@@ -172,21 +171,21 @@ export class SideBySideEditor extends BaseEditor {
 			return this.setNewInput(newInput, options, token);
 		}
 
-		if (!this.detailsEditorPane || !this.masterEditorPane) {
+		if (!this.secondaryEditorPane || !this.primaryEditorPane) {
 			return;
 		}
 
 		await Promise.all([
-			this.detailsEditorPane.setInput(newInput.details, undefined, token),
-			this.masterEditorPane.setInput(newInput.master, options, token)
+			this.secondaryEditorPane.setInput(newInput.secondary, undefined, token),
+			this.primaryEditorPane.setInput(newInput.primary, options, token)
 		]);
 	}
 
 	private setNewInput(newInput: SideBySideEditorInput, options: EditorOptions | undefined, token: CancellationToken): Promise<void> {
-		const detailsEditor = this.doCreateEditor(newInput.details, assertIsDefined(this.detailsEditorContainer));
-		const masterEditor = this.doCreateEditor(newInput.master, assertIsDefined(this.masterEditorContainer));
+		const secondaryEditor = this.doCreateEditor(newInput.secondary, assertIsDefined(this.secondaryEditorContainer));
+		const primaryEditor = this.doCreateEditor(newInput.primary, assertIsDefined(this.primaryEditorContainer));
 
-		return this.onEditorsCreated(detailsEditor, masterEditor, newInput.details, newInput.master, options, token);
+		return this.onEditorsCreated(secondaryEditor, primaryEditor, newInput.secondary, newInput.primary, options, token);
 	}
 
 	private doCreateEditor(editorInput: EditorInput, container: HTMLElement): BaseEditor {
@@ -202,48 +201,48 @@ export class SideBySideEditor extends BaseEditor {
 		return editor;
 	}
 
-	private async onEditorsCreated(details: BaseEditor, master: BaseEditor, detailsInput: EditorInput, masterInput: EditorInput, options: EditorOptions | undefined, token: CancellationToken): Promise<void> {
-		this.detailsEditorPane = details;
-		this.masterEditorPane = master;
+	private async onEditorsCreated(secondary: BaseEditor, primary: BaseEditor, secondaryInput: EditorInput, primaryInput: EditorInput, options: EditorOptions | undefined, token: CancellationToken): Promise<void> {
+		this.secondaryEditorPane = secondary;
+		this.primaryEditorPane = primary;
 
 		this._onDidSizeConstraintsChange.input = Event.any(
-			Event.map(details.onDidSizeConstraintsChange, () => undefined),
-			Event.map(master.onDidSizeConstraintsChange, () => undefined)
+			Event.map(secondary.onDidSizeConstraintsChange, () => undefined),
+			Event.map(primary.onDidSizeConstraintsChange, () => undefined)
 		);
 
 		this.onDidCreateEditors.fire(undefined);
 
 		await Promise.all([
-			this.detailsEditorPane.setInput(detailsInput, undefined, token),
-			this.masterEditorPane.setInput(masterInput, options, token)]
+			this.secondaryEditorPane.setInput(secondaryInput, undefined, token),
+			this.primaryEditorPane.setInput(primaryInput, options, token)]
 		);
 	}
 
 	updateStyles(): void {
 		super.updateStyles();
 
-		if (this.masterEditorContainer) {
-			this.masterEditorContainer.style.boxShadow = `-6px 0 5px -5px ${this.getColor(scrollbarShadow)}`;
+		if (this.primaryEditorContainer) {
+			this.primaryEditorContainer.style.boxShadow = `-6px 0 5px -5px ${this.getColor(scrollbarShadow)}`;
 		}
 	}
 
 	private disposeEditors(): void {
-		if (this.detailsEditorPane) {
-			this.detailsEditorPane.dispose();
-			this.detailsEditorPane = undefined;
+		if (this.secondaryEditorPane) {
+			this.secondaryEditorPane.dispose();
+			this.secondaryEditorPane = undefined;
 		}
 
-		if (this.masterEditorPane) {
-			this.masterEditorPane.dispose();
-			this.masterEditorPane = undefined;
+		if (this.primaryEditorPane) {
+			this.primaryEditorPane.dispose();
+			this.primaryEditorPane = undefined;
 		}
 
-		if (this.detailsEditorContainer) {
-			DOM.clearNode(this.detailsEditorContainer);
+		if (this.secondaryEditorContainer) {
+			DOM.clearNode(this.secondaryEditorContainer);
 		}
 
-		if (this.masterEditorContainer) {
-			DOM.clearNode(this.masterEditorContainer);
+		if (this.primaryEditorContainer) {
+			DOM.clearNode(this.primaryEditorContainer);
 		}
 	}
 

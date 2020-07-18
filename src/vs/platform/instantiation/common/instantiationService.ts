@@ -22,7 +22,7 @@ class CyclicDependencyError extends Error {
 
 export class InstantiationService implements IInstantiationService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private readonly _services: ServiceCollection;
 	private readonly _strict: boolean;
@@ -96,8 +96,7 @@ export class InstantiationService implements IInstantiationService {
 
 		// check for argument mismatches, adjust static args if needed
 		if (args.length !== firstServiceArgPos) {
-			console.warn(`[createInstance] First service dependency of ${ctor.name} at position ${
-				firstServiceArgPos + 1} conflicts with ${args.length} static arguments`);
+			console.warn(`[createInstance] First service dependency of ${ctor.name} at position ${firstServiceArgPos + 1} conflicts with ${args.length} static arguments`);
 
 			let delta = firstServiceArgPos - args.length;
 			if (delta > 0) {
@@ -219,7 +218,7 @@ export class InstantiationService implements IInstantiationService {
 					if (key in target) {
 						return target[key];
 					}
-					let obj = idle.getValue();
+					let obj = idle.value;
 					let prop = obj[key];
 					if (typeof prop !== 'function') {
 						return prop;
@@ -229,7 +228,7 @@ export class InstantiationService implements IInstantiationService {
 					return prop;
 				},
 				set(_target: T, p: PropertyKey, value: any): boolean {
-					idle.getValue()[p] = value;
+					idle.value[p] = value;
 					return true;
 				}
 			});

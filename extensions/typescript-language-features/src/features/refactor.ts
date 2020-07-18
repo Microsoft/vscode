@@ -7,11 +7,11 @@ import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import { LearnMoreAboutRefactoringsCommand } from '../commands/learnMoreAboutRefactorings';
 import type * as Proto from '../protocol';
-import { ITypeScriptServiceClient } from '../typescriptService';
+import { ClientCapability, ITypeScriptServiceClient } from '../typescriptService';
 import API from '../utils/api';
 import { nulToken } from '../utils/cancellation';
 import { Command, CommandManager } from '../utils/commandManager';
-import { VersionDependentRegistration } from '../utils/dependentRegistration';
+import { conditionalRegistration, requireCapability, requireMinVersion } from '../utils/dependentRegistration';
 import * as fileSchemes from '../utils/fileSchemes';
 import { TelemetryReporter } from '../utils/telemetry';
 import * as typeConverters from '../utils/typeConverters';
@@ -22,14 +22,10 @@ const localize = nls.loadMessageBundle();
 
 namespace Experimental {
 	export interface RefactorActionInfo extends Proto.RefactorActionInfo {
-		readonly error?: string
+		readonly notApplicableReason?: string;
 	}
 
-	export type RefactorTriggerReason = RefactorInvokedReason;
-
-	export interface RefactorInvokedReason {
-		readonly kind: 'invoked';
-	}
+	export type RefactorTriggerReason = 'implicit' | 'invoked';
 
 	export interface GetApplicableRefactorsRequestArgs extends Proto.FileRangeRequestArgs {
 		readonly triggerReason?: RefactorTriggerReason;
@@ -275,11 +271,11 @@ class TypeScriptRefactorProvider implements vscode.CodeActionProvider {
 		return this.appendInvalidActions(actions);
 	}
 
-	private toTsTriggerReason(context: vscode.CodeActionContext): Experimental.RefactorInvokedReason | undefined {
+	private toTsTriggerReason(context: vscode.CodeActionContext): Experimental.RefactorTriggerReason | undefined {
 		if (!context.only) {
 			return;
 		}
-		return { kind: 'invoked' };
+		return 'invoked';
 	}
 
 	private convertApplicableRefactors(
@@ -316,16 +312,16 @@ class TypeScriptRefactorProvider implements vscode.CodeActionProvider {
 		const codeAction = new vscode.CodeAction(action.description, TypeScriptRefactorProvider.getKind(action));
 
 		// https://github.com/microsoft/TypeScript/pull/37871
-		if (action.error) {
-			codeAction.disabled = { reason: action.error };
-			return codeAction;
+		if (action.notApplicableReason) {
+			codeAction.disabled = { reason: action.notApplicableReason };
+		} else {
+			codeAction.command = {
+				title: action.description,
+				command: ApplyRefactoringCommand.ID,
+				arguments: [document, info.name, action.name, rangeOrSelection],
+			};
 		}
 
-		codeAction.command = {
-			title: action.description,
-			command: ApplyRefactoringCommand.ID,
-			arguments: [document, info.name, action.name, rangeOrSelection],
-		};
 		codeAction.isPreferred = TypeScriptRefactorProvider.isPreferred(action, allActions);
 		return codeAction;
 	}
@@ -406,7 +402,10 @@ export function register(
 	commandManager: CommandManager,
 	telemetryReporter: TelemetryReporter,
 ) {
-	return new VersionDependentRegistration(client, TypeScriptRefactorProvider.minVersion, () => {
+	return conditionalRegistration([
+		requireMinVersion(client, TypeScriptRefactorProvider.minVersion),
+		requireCapability(client, ClientCapability.Semantic),
+	], () => {
 		return vscode.languages.registerCodeActionsProvider(selector,
 			new TypeScriptRefactorProvider(client, formattingOptionsManager, commandManager, telemetryReporter),
 			TypeScriptRefactorProvider.metadata);

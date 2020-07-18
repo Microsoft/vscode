@@ -6,11 +6,12 @@
 import { Disposable } from 'vs/base/common/lifecycle';
 import { IMarkdownString } from 'vs/base/common/htmlContent';
 import { Widget } from 'vs/base/browser/ui/widget';
-import { ITerminalWidget, IHoverAnchor, IHoverTarget, HorizontalAnchorSide, VerticalAnchorSide } from 'vs/workbench/contrib/terminal/browser/widgets/widgets';
-import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
-import { HoverWidget } from 'vs/workbench/contrib/terminal/browser/widgets/hoverWidget';
+import { ITerminalWidget } from 'vs/workbench/contrib/terminal/browser/widgets/widgets';
 import * as dom from 'vs/base/browser/dom';
 import { IViewportRange } from 'xterm';
+import { IHoverTarget, IHoverService } from 'vs/workbench/services/hover/browser/hover';
+import { registerThemingParticipant } from 'vs/platform/theme/common/themeService';
+import { editorHoverHighlight } from 'vs/platform/theme/common/colorRegistry';
 
 const $ = dom.$;
 
@@ -28,8 +29,8 @@ export class TerminalHover extends Disposable implements ITerminalWidget {
 	constructor(
 		private readonly _targetOptions: ILinkHoverTargetOptions,
 		private readonly _text: IMarkdownString,
-		private readonly _linkHandler: (url: string) => void,
-		@IInstantiationService private readonly _instantiationService: IInstantiationService
+		private readonly _linkHandler: (url: string) => any,
+		@IHoverService private readonly _hoverService: IHoverService
 	) {
 		super();
 	}
@@ -40,92 +41,91 @@ export class TerminalHover extends Disposable implements ITerminalWidget {
 
 	attach(container: HTMLElement): void {
 		const target = new CellHoverTarget(container, this._targetOptions);
-		this._register(this._instantiationService.createInstance(HoverWidget, container, target, this._text, this._linkHandler, []));
+		this._hoverService.showHover({
+			target,
+			text: this._text,
+			linkHandler: this._linkHandler,
+			// .xterm-hover lets xterm know that the hover is part of a link
+			additionalClasses: ['xterm-hover']
+		});
 	}
 }
 
 class CellHoverTarget extends Widget implements IHoverTarget {
-	private _domNode: HTMLElement;
-	private _isDisposed: boolean = false;
+	private _domNode: HTMLElement | undefined;
+	private readonly _targetElements: HTMLElement[] = [];
 
-	readonly targetElements: readonly HTMLElement[];
+	get targetElements(): readonly HTMLElement[] { return this._targetElements; }
 
 	constructor(
-		private readonly _container: HTMLElement,
-		o: ILinkHoverTargetOptions
+		container: HTMLElement,
+		private readonly _options: ILinkHoverTargetOptions
 	) {
 		super();
 
-		this._domNode = $('div.terminal-hover-targets');
-		const targets: HTMLElement[] = [];
-		const rowCount = o.viewportRange.end.y - o.viewportRange.start.y + 1;
+		this._domNode = $('div.terminal-hover-targets.xterm-hover');
+		const rowCount = this._options.viewportRange.end.y - this._options.viewportRange.start.y + 1;
 
 		// Add top target row
-		const width = (o.viewportRange.end.y > o.viewportRange.start.y ? o.terminalDimensions.width - o.viewportRange.start.x : o.viewportRange.end.x - o.viewportRange.start.x + 1) * o.cellDimensions.width;
+		const width = (this._options.viewportRange.end.y > this._options.viewportRange.start.y ? this._options.terminalDimensions.width - this._options.viewportRange.start.x : this._options.viewportRange.end.x - this._options.viewportRange.start.x + 1) * this._options.cellDimensions.width;
 		const topTarget = $('div.terminal-hover-target.hoverHighlight');
-		topTarget.style.left = `${o.viewportRange.start.x * o.cellDimensions.width}px`;
-		topTarget.style.bottom = `${(o.terminalDimensions.height - o.viewportRange.start.y - 1) * o.cellDimensions.height}px`;
+		topTarget.style.left = `${this._options.viewportRange.start.x * this._options.cellDimensions.width}px`;
+		topTarget.style.bottom = `${(this._options.terminalDimensions.height - this._options.viewportRange.start.y - 1) * this._options.cellDimensions.height}px`;
 		topTarget.style.width = `${width}px`;
-		topTarget.style.height = `${o.cellDimensions.height}px`;
-		targets.push(this._domNode.appendChild(topTarget));
+		topTarget.style.height = `${this._options.cellDimensions.height}px`;
+		this._targetElements.push(this._domNode.appendChild(topTarget));
 
 		// Add middle target rows
 		if (rowCount > 2) {
 			const middleTarget = $('div.terminal-hover-target.hoverHighlight');
 			middleTarget.style.left = `0px`;
-			middleTarget.style.bottom = `${(o.terminalDimensions.height - o.viewportRange.start.y - 1 - (rowCount - 2)) * o.cellDimensions.height}px`;
-			middleTarget.style.width = `${o.terminalDimensions.width * o.cellDimensions.width}px`;
-			middleTarget.style.height = `${(rowCount - 2) * o.cellDimensions.height}px`;
-			targets.push(this._domNode.appendChild(middleTarget));
+			middleTarget.style.bottom = `${(this._options.terminalDimensions.height - this._options.viewportRange.start.y - 1 - (rowCount - 2)) * this._options.cellDimensions.height}px`;
+			middleTarget.style.width = `${this._options.terminalDimensions.width * this._options.cellDimensions.width}px`;
+			middleTarget.style.height = `${(rowCount - 2) * this._options.cellDimensions.height}px`;
+			this._targetElements.push(this._domNode.appendChild(middleTarget));
 		}
 
 		// Add bottom target row
 		if (rowCount > 1) {
 			const bottomTarget = $('div.terminal-hover-target.hoverHighlight');
 			bottomTarget.style.left = `0px`;
-			bottomTarget.style.bottom = `${(o.terminalDimensions.height - o.viewportRange.end.y - 1) * o.cellDimensions.height}px`;
-			bottomTarget.style.width = `${(o.viewportRange.end.x + 1) * o.cellDimensions.width}px`;
-			bottomTarget.style.height = `${o.cellDimensions.height}px`;
-			targets.push(this._domNode.appendChild(bottomTarget));
+			bottomTarget.style.bottom = `${(this._options.terminalDimensions.height - this._options.viewportRange.end.y - 1) * this._options.cellDimensions.height}px`;
+			bottomTarget.style.width = `${(this._options.viewportRange.end.x + 1) * this._options.cellDimensions.width}px`;
+			bottomTarget.style.height = `${this._options.cellDimensions.height}px`;
+			this._targetElements.push(this._domNode.appendChild(bottomTarget));
 		}
 
-		this.targetElements = targets;
-
-		if (o.modifierDownCallback && o.modifierUpCallback) {
+		if (this._options.modifierDownCallback && this._options.modifierUpCallback) {
 			let down = false;
 			this._register(dom.addDisposableListener(document, 'keydown', e => {
 				if (e.ctrlKey && !down) {
 					down = true;
-					o.modifierDownCallback!();
+					this._options.modifierDownCallback!();
 				}
 			}));
 			this._register(dom.addDisposableListener(document, 'keyup', e => {
 				if (!e.ctrlKey) {
 					down = false;
-					o.modifierUpCallback!();
+					this._options.modifierUpCallback!();
 				}
 			}));
 		}
 
-		this._container.appendChild(this._domNode);
+		container.appendChild(this._domNode);
 	}
 
 	dispose(): void {
-		if (!this._isDisposed) {
-			this._container.removeChild(this._domNode);
-		}
-		this._isDisposed = true;
+		this._domNode?.parentElement?.removeChild(this._domNode);
 		super.dispose();
 	}
-
-	get anchor(): IHoverAnchor {
-		const firstPosition = dom.getDomNodePagePosition(this.targetElements[0]);
-		return {
-			x: firstPosition.left,
-			horizontalAnchorSide: HorizontalAnchorSide.Left,
-			y: document.documentElement.clientHeight - firstPosition.top - 1,
-			verticalAnchorSide: VerticalAnchorSide.Bottom,
-			fallbackY: firstPosition.top + firstPosition.height - 1
-		};
-	}
 }
+
+registerThemingParticipant((theme, collector) => {
+	let editorHoverHighlightColor = theme.getColor(editorHoverHighlight);
+	if (editorHoverHighlightColor) {
+		if (editorHoverHighlightColor.isOpaque()) {
+			editorHoverHighlightColor = editorHoverHighlightColor.transparent(0.5);
+		}
+		collector.addRule(`.integrated-terminal .hoverHighlight { background-color: ${editorHoverHighlightColor}; }`);
+	}
+});

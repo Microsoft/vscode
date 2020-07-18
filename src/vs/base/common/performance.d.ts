@@ -5,7 +5,7 @@
 
 export interface PerformanceEntry {
 	readonly name: string;
-	readonly timestamp: number;
+	readonly startTime: number;
 }
 
 export function mark(name: string): void;
@@ -14,8 +14,6 @@ export function mark(name: string): void;
  * All entries filtered by type and sorted by `startTime`.
  */
 export function getEntries(): PerformanceEntry[];
-
-export function getEntry(name: string): PerformanceEntry;
 
 export function getDuration(from: string, to: string): number;
 

@@ -139,4 +139,8 @@ export abstract class FilterViewPaneContainer extends ViewPaneContainer {
 	}
 
 	abstract getTitle(): string;
+
+	getViewsVisibilityActions(): IAction[] {
+		return [];
+	}
 }

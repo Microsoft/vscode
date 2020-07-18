@@ -15,6 +15,8 @@ suite('Extension Identifier Pattern', () => {
 		assert.equal(true, regEx.test('PUBLISHER.NAME'));
 		assert.equal(true, regEx.test('PUBLISHEr.NAMe'));
 		assert.equal(true, regEx.test('PUBLISHEr.N-AMe'));
+		assert.equal(true, regEx.test('PUB-LISHEr.NAMe'));
+		assert.equal(true, regEx.test('PUB-LISHEr.N-AMe'));
 		assert.equal(true, regEx.test('PUBLISH12Er90.N-A54Me123'));
 		assert.equal(true, regEx.test('111PUBLISH12Er90.N-1111A54Me123'));
 		assert.equal(false, regEx.test('publishername'));

@@ -6,6 +6,7 @@
 import * as assert from 'assert';
 import { SnippetFile, Snippet, SnippetSource } from 'vs/workbench/contrib/snippets/browser/snippetsFile';
 import { URI } from 'vs/base/common/uri';
+import { SnippetParser } from 'vs/editor/contrib/snippet/snippetParser';
 
 suite('Snippets', function () {
 
@@ -70,6 +71,8 @@ suite('Snippets', function () {
 		function assertNeedsClipboard(body: string, expected: boolean): void {
 			let snippet = new Snippet(['foo'], 'FooSnippet1', 'foo', '', body, 'test', SnippetSource.User);
 			assert.equal(snippet.needsClipboard, expected);
+
+			assert.equal(SnippetParser.guessNeedsClipboard(body), expected);
 		}
 
 		assertNeedsClipboard('foo$CLIPBOARD', true);

@@ -24,7 +24,7 @@ function getLogFunction(logger: ILogService, level: LogLevel): Function {
 
 export class BufferLogService extends AbstractLogService implements ILogService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 	private buffer: ILog[] = [];
 	private _logger: ILogService | undefined = undefined;
 

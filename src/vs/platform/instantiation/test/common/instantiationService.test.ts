@@ -12,48 +12,48 @@ import { SyncDescriptor } from 'vs/platform/instantiation/common/descriptors';
 let IService1 = createDecorator<IService1>('service1');
 
 interface IService1 {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 	c: number;
 }
 
 class Service1 implements IService1 {
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 	c = 1;
 }
 
 let IService2 = createDecorator<IService2>('service2');
 
 interface IService2 {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 	d: boolean;
 }
 
 class Service2 implements IService2 {
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 	d = true;
 }
 
 let IService3 = createDecorator<IService3>('service3');
 
 interface IService3 {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 	s: string;
 }
 
 class Service3 implements IService3 {
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 	s = 'farboo';
 }
 
 let IDependentService = createDecorator<IDependentService>('dependentService');
 
 interface IDependentService {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 	name: string;
 }
 
 class DependentService implements IDependentService {
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 	constructor(@IService1 service: IService1) {
 		assert.equal(service.c, 1);
 	}
@@ -116,7 +116,7 @@ class DependentServiceTarget2 {
 
 
 class ServiceLoop1 implements IService1 {
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 	c = 1;
 
 	constructor(@IService2 s: IService2) {
@@ -125,7 +125,7 @@ class ServiceLoop1 implements IService1 {
 }
 
 class ServiceLoop2 implements IService2 {
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 	d = true;
 
 	constructor(@IService1 s: IService1) {
@@ -364,7 +364,7 @@ suite('Instantiation Service', () => {
 		let serviceInstanceCount = 0;
 
 		const CtorCounter = class implements Service1 {
-			_serviceBrand: undefined;
+			declare readonly _serviceBrand: undefined;
 			c = 1;
 			constructor() {
 				serviceInstanceCount += 1;

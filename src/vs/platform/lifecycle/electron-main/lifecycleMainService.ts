@@ -41,7 +41,7 @@ export interface ShutdownEvent {
 
 export interface ILifecycleMainService {
 
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	/**
 	 * Will be true if the program was restarted (e.g. due to explicit request or update).
@@ -137,7 +137,7 @@ export const enum LifecycleMainPhase {
 
 export class LifecycleMainService extends Disposable implements ILifecycleMainService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private static readonly QUIT_FROM_RESTART_MARKER = 'quit.from.restart'; // use a marker to find out if the session was restarted
 

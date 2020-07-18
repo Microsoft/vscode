@@ -151,9 +151,11 @@ export default class VersionStatus extends Disposable {
 			this._ready = true;
 			this.updateStatus();
 		});
+
+		this._register(this._client.onTsServerStarted(({ version }) => this.onDidChangeTypeScriptVersion(version)));
 	}
 
-	public onDidChangeTypeScriptVersion(version: TypeScriptVersion) {
+	private onDidChangeTypeScriptVersion(version: TypeScriptVersion) {
 		this._statusBarEntry.text = version.displayName;
 		this._statusBarEntry.tooltip = version.path;
 		this.updateStatus();

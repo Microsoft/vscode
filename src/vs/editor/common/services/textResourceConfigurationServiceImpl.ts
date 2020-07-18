@@ -28,9 +28,9 @@ export class TextResourceConfigurationService extends Disposable implements ITex
 		this._register(this.configurationService.onDidChangeConfiguration(e => this._onDidChangeConfiguration.fire(this.toResourceConfigurationChangeEvent(e))));
 	}
 
-	getValue<T>(resource: URI, section?: string): T;
-	getValue<T>(resource: URI, at?: IPosition, section?: string): T;
-	getValue<T>(resource: URI, arg2?: any, arg3?: any): T {
+	getValue<T>(resource: URI | undefined, section?: string): T;
+	getValue<T>(resource: URI | undefined, at?: IPosition, section?: string): T;
+	getValue<T>(resource: URI | undefined, arg2?: any, arg3?: any): T {
 		if (typeof arg3 === 'string') {
 			return this._getValue(resource, Position.isIPosition(arg2) ? arg2 : null, arg3);
 		}
@@ -98,7 +98,7 @@ export class TextResourceConfigurationService extends Disposable implements ITex
 		return ConfigurationTarget.USER_LOCAL;
 	}
 
-	private _getValue<T>(resource: URI, position: IPosition | null, section: string | undefined): T {
+	private _getValue<T>(resource: URI | undefined, position: IPosition | null, section: string | undefined): T {
 		const language = resource ? this.getLanguage(resource, position) : undefined;
 		if (typeof section === 'undefined') {
 			return this.configurationService.getValue<T>({ resource, overrideIdentifier: language });

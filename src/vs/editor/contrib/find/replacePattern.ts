@@ -20,7 +20,7 @@ class StaticValueReplacePattern {
 }
 
 /**
- * Assigned when the replace pattern has replacemend patterns.
+ * Assigned when the replace pattern has replacement patterns.
  */
 class DynamicPiecesReplacePattern {
 	public readonly kind = ReplacePatternKind.DynamicPieces;
@@ -68,7 +68,38 @@ export class ReplacePattern {
 			}
 
 			// match index ReplacePiece
-			result += ReplacePattern._substitute(piece.matchIndex, matches);
+			let match: string = ReplacePattern._substitute(piece.matchIndex, matches);
+			if (piece.caseOps !== null && piece.caseOps.length > 0) {
+				let repl: string[] = [];
+				let lenOps: number = piece.caseOps.length;
+				let opIdx: number = 0;
+				for (let idx: number = 0, len: number = match.length; idx < len; idx++) {
+					if (opIdx >= lenOps) {
+						repl.push(match.slice(idx));
+						break;
+					}
+					switch (piece.caseOps[opIdx]) {
+						case 'U':
+							repl.push(match[idx].toUpperCase());
+							break;
+						case 'u':
+							repl.push(match[idx].toUpperCase());
+							opIdx++;
+							break;
+						case 'L':
+							repl.push(match[idx].toLowerCase());
+							break;
+						case 'l':
+							repl.push(match[idx].toLowerCase());
+							opIdx++;
+							break;
+						default:
+							repl.push(match[idx]);
+					}
+				}
+				match = repl.join('');
+			}
+			result += match;
 		}
 
 		return result;
@@ -102,19 +133,29 @@ export class ReplacePattern {
 export class ReplacePiece {
 
 	public static staticValue(value: string): ReplacePiece {
-		return new ReplacePiece(value, -1);
+		return new ReplacePiece(value, -1, null);
 	}
 
 	public static matchIndex(index: number): ReplacePiece {
-		return new ReplacePiece(null, index);
+		return new ReplacePiece(null, index, null);
+	}
+
+	public static caseOps(index: number, caseOps: string[]): ReplacePiece {
+		return new ReplacePiece(null, index, caseOps);
 	}
 
 	public readonly staticValue: string | null;
 	public readonly matchIndex: number;
+	public readonly caseOps: string[] | null;
 
-	private constructor(staticValue: string | null, matchIndex: number) {
+	private constructor(staticValue: string | null, matchIndex: number, caseOps: string[] | null) {
 		this.staticValue = staticValue;
 		this.matchIndex = matchIndex;
+		if (!caseOps || caseOps.length === 0) {
+			this.caseOps = null;
+		} else {
+			this.caseOps = caseOps.slice(0);
+		}
 	}
 }
 
@@ -151,12 +192,12 @@ class ReplacePieceBuilder {
 		this._currentStaticPiece += value;
 	}
 
-	public emitMatchIndex(index: number, toCharIndex: number): void {
+	public emitMatchIndex(index: number, toCharIndex: number, caseOps: string[]): void {
 		if (this._currentStaticPiece.length !== 0) {
 			this._result[this._resultLen++] = ReplacePiece.staticValue(this._currentStaticPiece);
 			this._currentStaticPiece = '';
 		}
-		this._result[this._resultLen++] = ReplacePiece.matchIndex(index);
+		this._result[this._resultLen++] = ReplacePiece.caseOps(index, caseOps);
 		this._lastCharIndex = toCharIndex;
 	}
 
@@ -175,6 +216,10 @@ class ReplacePieceBuilder {
  * \n			=> inserts a LF
  * \t			=> inserts a TAB
  * \\			=> inserts a "\".
+ * \u			=> upper-cases one character in a match.
+ * \U			=> upper-cases ALL remaining characters in a match.
+ * \l			=> lower-cases one character in a match.
+ * \L			=> lower-cases ALL remaining characters in a match.
  * $$			=> inserts a "$".
  * $& and $0	=> inserts the matched substring.
  * $n			=> Where n is a non-negative integer lesser than 100, inserts the nth parenthesized submatch string
@@ -187,6 +232,7 @@ export function parseReplaceString(replaceString: string): ReplacePattern {
 		return new ReplacePattern(null);
 	}
 
+	let caseOps: string[] = [];
 	let result = new ReplacePieceBuilder(replaceString);
 
 	for (let i = 0, len = replaceString.length; i < len; i++) {
@@ -221,6 +267,20 @@ export function parseReplaceString(replaceString: string): ReplacePattern {
 					result.emitUnchanged(i - 1);
 					result.emitStatic('\t', i + 1);
 					break;
+				// Case modification of string replacements, patterned after Boost, but only applied
+				// to the replacement text, not subsequent content.
+				case CharCode.u:
+				// \u => upper-cases one character.
+				case CharCode.U:
+				// \U => upper-cases ALL following characters.
+				case CharCode.l:
+				// \l => lower-cases one character.
+				case CharCode.L:
+					// \L => lower-cases ALL following characters.
+					result.emitUnchanged(i - 1);
+					result.emitStatic('', i + 1);
+					caseOps.push(String.fromCharCode(nextChCode));
+					break;
 			}
 
 			continue;
@@ -248,7 +308,8 @@ export function parseReplaceString(replaceString: string): ReplacePattern {
 			if (nextChCode === CharCode.Digit0 || nextChCode === CharCode.Ampersand) {
 				// $& and $0 => inserts the matched substring.
 				result.emitUnchanged(i - 1);
-				result.emitMatchIndex(0, i + 1);
+				result.emitMatchIndex(0, i + 1, caseOps);
+				caseOps.length = 0;
 				continue;
 			}
 
@@ -268,13 +329,15 @@ export function parseReplaceString(replaceString: string): ReplacePattern {
 						matchIndex = matchIndex * 10 + (nextNextChCode - CharCode.Digit0);
 
 						result.emitUnchanged(i - 2);
-						result.emitMatchIndex(matchIndex, i + 1);
+						result.emitMatchIndex(matchIndex, i + 1, caseOps);
+						caseOps.length = 0;
 						continue;
 					}
 				}
 
 				result.emitUnchanged(i - 1);
-				result.emitMatchIndex(matchIndex, i + 1);
+				result.emitMatchIndex(matchIndex, i + 1, caseOps);
+				caseOps.length = 0;
 				continue;
 			}
 		}

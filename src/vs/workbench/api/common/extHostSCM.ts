@@ -536,7 +536,7 @@ export class ExtHostSCM implements ExtHostSCMShape {
 	private readonly _onDidChangeActiveProvider = new Emitter<vscode.SourceControl>();
 	get onDidChangeActiveProvider(): Event<vscode.SourceControl> { return this._onDidChangeActiveProvider.event; }
 
-	private _selectedSourceControlHandles = new Set<number>();
+	private _selectedSourceControlHandle: number | undefined;
 
 	constructor(
 		mainContext: IMainContext,
@@ -681,40 +681,18 @@ export class ExtHostSCM implements ExtHostSCMShape {
 		});
 	}
 
-	$setSelectedSourceControls(selectedSourceControlHandles: number[]): Promise<void> {
-		this.logService.trace('ExtHostSCM#$setSelectedSourceControls', selectedSourceControlHandles);
+	$setSelectedSourceControl(selectedSourceControlHandle: number | undefined): Promise<void> {
+		this.logService.trace('ExtHostSCM#$setSelectedSourceControl', selectedSourceControlHandle);
 
-		const set = new Set<number>();
-
-		for (const handle of selectedSourceControlHandles) {
-			set.add(handle);
+		if (selectedSourceControlHandle !== undefined) {
+			this._sourceControls.get(selectedSourceControlHandle)?.setSelectionState(true);
 		}
 
-		set.forEach(handle => {
-			if (!this._selectedSourceControlHandles.has(handle)) {
-				const sourceControl = this._sourceControls.get(handle);
+		if (this._selectedSourceControlHandle !== undefined) {
+			this._sourceControls.get(this._selectedSourceControlHandle)?.setSelectionState(false);
+		}
 
-				if (!sourceControl) {
-					return;
-				}
-
-				sourceControl.setSelectionState(true);
-			}
-		});
-
-		this._selectedSourceControlHandles.forEach(handle => {
-			if (!set.has(handle)) {
-				const sourceControl = this._sourceControls.get(handle);
-
-				if (!sourceControl) {
-					return;
-				}
-
-				sourceControl.setSelectionState(false);
-			}
-		});
-
-		this._selectedSourceControlHandles = set;
+		this._selectedSourceControlHandle = selectedSourceControlHandle;
 		return Promise.resolve(undefined);
 	}
 }

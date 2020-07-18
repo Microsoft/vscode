@@ -76,7 +76,6 @@ export type Pick<T> = T | IQuickPickSeparator;
 export type PicksWithActive<T> = { items: ReadonlyArray<Pick<T>>, active?: T };
 export type Picks<T> = ReadonlyArray<Pick<T>> | PicksWithActive<T>;
 export type FastAndSlowPicks<T> = { picks: Picks<T>, additionalPicks: Promise<Picks<T>> };
-export type FastAndSlowPicksWithActive<T> = { picks: PicksWithActive<T>, additionalPicks: PicksWithActive<Picks<T>> };
 
 function isPicksWithActive<T>(obj: unknown): obj is PicksWithActive<T> {
 	const candidate = obj as PicksWithActive<T>;
@@ -211,9 +210,23 @@ export abstract class PickerQuickAccessProvider<T extends IPickerQuickAccessItem
 							}
 
 							if (additionalPicks.length > 0 || !fastPicksApplied) {
+								// If we do not have any activePick or additionalActivePick
+								// we try to preserve the currently active pick from the
+								// fast results. This fixes an issue where the user might
+								// have made a pick active before the additional results
+								// kick in.
+								// See https://github.com/microsoft/vscode/issues/102480
+								let fallbackActivePick: Pick<T> | undefined = undefined;
+								if (!activePick && !additionalActivePick) {
+									const fallbackActivePickCandidate = picker.activeItems[0];
+									if (fallbackActivePickCandidate && picks.indexOf(fallbackActivePickCandidate) !== -1) {
+										fallbackActivePick = fallbackActivePickCandidate;
+									}
+								}
+
 								applyPicks({
 									items: [...picks, ...additionalPicks],
-									active: activePick || additionalActivePick
+									active: activePick || additionalActivePick || fallbackActivePick
 								});
 							}
 						} finally {

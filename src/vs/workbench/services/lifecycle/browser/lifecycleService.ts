@@ -11,7 +11,7 @@ import { registerSingleton } from 'vs/platform/instantiation/common/extensions';
 
 export class BrowserLifecycleService extends AbstractLifecycleService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	constructor(
 		@ILogService readonly logService: ILogService
@@ -22,12 +22,10 @@ export class BrowserLifecycleService extends AbstractLifecycleService {
 	}
 
 	private registerListeners(): void {
-		// Note: we cannot change this to window.addEventListener('beforeUnload')
-		// because it seems that mechanism does not allow for preventing the unload
-		window.onbeforeunload = () => this.onBeforeUnload();
+		window.addEventListener('beforeunload', e => this.onBeforeUnload(e));
 	}
 
-	private onBeforeUnload(): string | null {
+	private onBeforeUnload(event: BeforeUnloadEvent): void {
 		const logService = this.logService;
 		logService.info('[lifecycle] onBeforeUnload triggered');
 
@@ -48,7 +46,10 @@ export class BrowserLifecycleService extends AbstractLifecycleService {
 
 		// Veto: signal back to browser by returning a non-falsify return value
 		if (veto) {
-			return localize('lifecycleVeto', "Changes that you made may not be saved. Please check press 'Cancel' and try again.");
+			event.preventDefault();
+			event.returnValue = localize('lifecycleVeto', "Changes that you made may not be saved. Please check press 'Cancel' and try again.");
+
+			return;
 		}
 
 		// No Veto: continue with Will Shutdown
@@ -61,8 +62,6 @@ export class BrowserLifecycleService extends AbstractLifecycleService {
 
 		// Finally end with Shutdown event
 		this._onShutdown.fire();
-
-		return null;
 	}
 }
 

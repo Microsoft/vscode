@@ -61,7 +61,7 @@ export class ProgressBarIndicator extends Disposable implements IProgressIndicat
 
 export class EditorProgressIndicator extends ProgressBarIndicator {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	constructor(progressBar: ProgressBar, private readonly group: IEditorGroupView) {
 		super(progressBar);

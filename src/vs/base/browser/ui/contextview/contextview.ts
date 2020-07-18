@@ -38,7 +38,7 @@ export interface IDelegate {
 }
 
 export interface IContextViewProvider {
-	showContextView(delegate: IDelegate): void;
+	showContextView(delegate: IDelegate, container?: HTMLElement): void;
 	hideContextView(): void;
 	layout(): void;
 }
@@ -104,23 +104,25 @@ export class ContextView extends Disposable {
 
 	private container: HTMLElement | null = null;
 	private view: HTMLElement;
+	private useFixedPosition: boolean;
 	private delegate: IDelegate | null = null;
 	private toDisposeOnClean: IDisposable = Disposable.None;
 	private toDisposeOnSetContainer: IDisposable = Disposable.None;
 
-	constructor(container: HTMLElement) {
+	constructor(container: HTMLElement, useFixedPosition: boolean) {
 		super();
 
 		this.view = DOM.$('.context-view');
+		this.useFixedPosition = false;
 
 		DOM.hide(this.view);
 
-		this.setContainer(container);
+		this.setContainer(container, useFixedPosition);
 
-		this._register(toDisposable(() => this.setContainer(null)));
+		this._register(toDisposable(() => this.setContainer(null, false)));
 	}
 
-	setContainer(container: HTMLElement | null): void {
+	setContainer(container: HTMLElement | null, useFixedPosition: boolean): void {
 		if (this.container) {
 			this.toDisposeOnSetContainer.dispose();
 			this.container.removeChild(this.view);
@@ -146,6 +148,8 @@ export class ContextView extends Disposable {
 
 			this.toDisposeOnSetContainer = toDisposeOnSetContainer;
 		}
+
+		this.useFixedPosition = useFixedPosition;
 	}
 
 	show(delegate: IDelegate): void {
@@ -158,6 +162,7 @@ export class ContextView extends Disposable {
 		this.view.className = 'context-view';
 		this.view.style.top = '0px';
 		this.view.style.left = '0px';
+		this.view.style.position = this.useFixedPosition ? 'fixed' : 'absolute';
 		DOM.show(this.view);
 
 		// Render content
@@ -254,10 +259,11 @@ export class ContextView extends Disposable {
 		DOM.removeClasses(this.view, 'top', 'bottom', 'left', 'right');
 		DOM.addClass(this.view, anchorPosition === AnchorPosition.BELOW ? 'bottom' : 'top');
 		DOM.addClass(this.view, anchorAlignment === AnchorAlignment.LEFT ? 'left' : 'right');
+		DOM.toggleClass(this.view, 'fixed', this.useFixedPosition);
 
 		const containerPosition = DOM.getDomNodePagePosition(this.container!);
-		this.view.style.top = `${top - containerPosition.top}px`;
-		this.view.style.left = `${left - containerPosition.left}px`;
+		this.view.style.top = `${top - (this.useFixedPosition ? DOM.getDomNodePagePosition(this.view).top : containerPosition.top)}px`;
+		this.view.style.left = `${left - (this.useFixedPosition ? DOM.getDomNodePagePosition(this.view).left : containerPosition.left)}px`;
 		this.view.style.width = 'initial';
 	}
 

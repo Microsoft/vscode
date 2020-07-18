@@ -43,8 +43,9 @@ class FakeServerProcess implements TsServerProcess {
 		});
 	}
 
-
-	on(_name: any, _handler: any) { /* noop */ }
+	onData(_handler: any) { /* noop */ }
+	onError(_handler: any) { /* noop */ }
+	onExit(_handler: any) { /* noop */ }
 
 	kill(): void { /* noop */ }
 

@@ -34,7 +34,8 @@ export class TerminalEnvironmentManager {
 	}
 
 	private refresh(): void {
-		this.enabled = workspace.getConfiguration('git', null).get('terminalAuthentication', true);
+		const config = workspace.getConfiguration('git', null);
+		this.enabled = config.get<boolean>('enabled', true) && config.get('terminalAuthentication', true);
 	}
 
 	dispose(): void {

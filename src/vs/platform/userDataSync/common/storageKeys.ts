@@ -4,7 +4,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Event, Emitter } from 'vs/base/common/event';
-import { values } from 'vs/base/common/map';
 import { Disposable, toDisposable } from 'vs/base/common/lifecycle';
 import { createDecorator } from 'vs/platform/instantiation/common/instantiation';
 
@@ -43,7 +42,7 @@ export class StorageKeysSyncRegistryService extends Disposable implements IStora
 	_serviceBrand: any;
 
 	private readonly _storageKeys = new Map<string, IStorageKey>();
-	get storageKeys(): ReadonlyArray<IStorageKey> { return values(this._storageKeys); }
+	get storageKeys(): ReadonlyArray<IStorageKey> { return [...this._storageKeys.values()]; }
 
 	private readonly _onDidChangeStorageKeys: Emitter<ReadonlyArray<IStorageKey>> = this._register(new Emitter<ReadonlyArray<IStorageKey>>());
 	readonly onDidChangeStorageKeys = this._onDidChangeStorageKeys.event;

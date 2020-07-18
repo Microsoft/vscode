@@ -24,6 +24,7 @@ import { HIGH_CONTRAST, registerThemingParticipant } from 'vs/platform/theme/com
 import { ParameterHintsModel, TriggerContext } from 'vs/editor/contrib/parameterHints/parameterHintsModel';
 import { pad } from 'vs/base/common/strings';
 import { registerIcon, Codicon } from 'vs/base/common/codicons';
+import { assertIsDefined } from 'vs/base/common/types';
 
 const $ = dom.$;
 
@@ -263,16 +264,16 @@ export class ParameterHintsWidget extends Disposable implements IContentWidget {
 	}
 
 	private hasDocs(signature: modes.SignatureInformation, activeParameter: modes.ParameterInformation | undefined): boolean {
-		if (activeParameter && typeof (activeParameter.documentation) === 'string' && activeParameter.documentation.length > 0) {
+		if (activeParameter && typeof activeParameter.documentation === 'string' && assertIsDefined(activeParameter.documentation).length > 0) {
 			return true;
 		}
-		if (activeParameter && typeof (activeParameter.documentation) === 'object' && activeParameter.documentation.value.length > 0) {
+		if (activeParameter && typeof activeParameter.documentation === 'object' && assertIsDefined(activeParameter.documentation).value.length > 0) {
 			return true;
 		}
-		if (typeof (signature.documentation) === 'string' && signature.documentation.length > 0) {
+		if (signature.documentation && typeof signature.documentation === 'string' && assertIsDefined(signature.documentation).length > 0) {
 			return true;
 		}
-		if (typeof (signature.documentation) === 'object' && signature.documentation.value.length > 0) {
+		if (signature.documentation && typeof signature.documentation === 'object' && assertIsDefined(signature.documentation.value).length > 0) {
 			return true;
 		}
 		return false;
@@ -296,10 +297,10 @@ export class ParameterHintsWidget extends Disposable implements IContentWidget {
 
 	private getParameterLabel(signature: modes.SignatureInformation, paramIdx: number): string {
 		const param = signature.parameters[paramIdx];
-		if (typeof param.label === 'string') {
-			return param.label;
-		} else {
+		if (Array.isArray(param.label)) {
 			return signature.label.substring(param.label[0], param.label[1]);
+		} else {
+			return param.label;
 		}
 	}
 

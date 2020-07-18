@@ -5,7 +5,7 @@
 
 // keytar depends on a native module shipped in vscode, so this is
 // how we load it
-import * as keytarType from 'keytar';
+import type * as keytarType from 'keytar';
 import * as vscode from 'vscode';
 import Logger from './logger';
 import * as nls from 'vscode-nls';

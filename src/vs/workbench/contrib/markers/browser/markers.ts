@@ -5,9 +5,9 @@
 
 import { createDecorator, IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { MarkersModel, compareMarkersByUri } from './markersModel';
-import { Disposable } from 'vs/base/common/lifecycle';
+import { Disposable, MutableDisposable, IDisposable } from 'vs/base/common/lifecycle';
 import { IMarkerService, MarkerSeverity, IMarker } from 'vs/platform/markers/common/markers';
-import { NumberBadge, ViewContaierActivityByView } from 'vs/workbench/services/activity/common/activity';
+import { IActivityService, NumberBadge } from 'vs/workbench/services/activity/common/activity';
 import { localize } from 'vs/nls';
 import Constants from './constants';
 import { URI } from 'vs/base/common/uri';
@@ -19,12 +19,12 @@ import { ResourceMap } from 'vs/base/common/map';
 export const IMarkersWorkbenchService = createDecorator<IMarkersWorkbenchService>('markersWorkbenchService');
 
 export interface IMarkersWorkbenchService {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 	readonly markersModel: MarkersModel;
 }
 
 export class MarkersWorkbenchService extends Disposable implements IMarkersWorkbenchService {
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	readonly markersModel: MarkersModel;
 
@@ -55,22 +55,21 @@ export class MarkersWorkbenchService extends Disposable implements IMarkersWorkb
 
 export class ActivityUpdater extends Disposable implements IWorkbenchContribution {
 
-	private readonly activity: ViewContaierActivityByView;
+	private readonly activity = this._register(new MutableDisposable<IDisposable>());
 
 	constructor(
-		@IInstantiationService instantiationService: IInstantiationService,
+		@IActivityService private readonly activityService: IActivityService,
 		@IMarkerService private readonly markerService: IMarkerService
 	) {
 		super();
-		this.activity = this._register(instantiationService.createInstance(ViewContaierActivityByView, Constants.MARKERS_VIEW_ID));
-		this._register(this.markerService.onMarkerChanged(() => this.updateActivity()));
-		this.updateActivity();
+		this._register(this.markerService.onMarkerChanged(() => this.updateBadge()));
+		this.updateBadge();
 	}
 
-	private updateActivity(): void {
+	private updateBadge(): void {
 		const { errors, warnings, infos } = this.markerService.getStatistics();
 		const total = errors + warnings + infos;
 		const message = localize('totalProblems', 'Total {0} Problems', total);
-		this.activity.setActivity({ badge: new NumberBadge(total, () => message) });
+		this.activity.value = this.activityService.showViewActivity(Constants.MARKERS_VIEW_ID, { badge: new NumberBadge(total, () => message) });
 	}
 }

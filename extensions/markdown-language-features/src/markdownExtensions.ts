@@ -4,12 +4,11 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
-import * as path from 'path';
-import { Disposable } from './util/dispose';
 import * as arrays from './util/arrays';
+import { Disposable } from './util/dispose';
 
 const resolveExtensionResource = (extension: vscode.Extension<any>, resourcePath: string): vscode.Uri => {
-	return vscode.Uri.file(path.join(extension.extensionPath, resourcePath));
+	return vscode.Uri.joinPath(extension.extensionUri, resourcePath);
 };
 
 const resolveExtensionResources = (extension: vscode.Extension<any>, resourcePaths: unknown): vscode.Uri[] => {
@@ -71,7 +70,7 @@ export namespace MarkdownContributions {
 
 		const previewStyles = getContributedStyles(contributions, extension);
 		const previewScripts = getContributedScripts(contributions, extension);
-		const previewResourceRoots = previewStyles.length || previewScripts.length ? [vscode.Uri.file(extension.extensionPath)] : [];
+		const previewResourceRoots = previewStyles.length || previewScripts.length ? [extension.extensionUri] : [];
 		const markdownItPlugins = getContributedMarkdownItPlugins(contributions, extension);
 
 		return {
@@ -114,7 +113,8 @@ export namespace MarkdownContributions {
 }
 
 export interface MarkdownContributionProvider {
-	readonly extensionPath: string;
+	readonly extensionUri: vscode.Uri;
+
 	readonly contributions: MarkdownContributions;
 	readonly onContributionsChanged: vscode.Event<this>;
 
@@ -125,7 +125,7 @@ class VSCodeExtensionMarkdownContributionProvider extends Disposable implements 
 	private _contributions?: MarkdownContributions;
 
 	public constructor(
-		public readonly extensionPath: string,
+		private readonly _extensionContext: vscode.ExtensionContext,
 	) {
 		super();
 
@@ -138,6 +138,8 @@ class VSCodeExtensionMarkdownContributionProvider extends Disposable implements 
 			}
 		}, undefined, this._disposables);
 	}
+
+	public get extensionUri() { return this._extensionContext.extensionUri; }
 
 	private readonly _onContributionsChanged = this._register(new vscode.EventEmitter<this>());
 	public readonly onContributionsChanged = this._onContributionsChanged.event;
@@ -157,5 +159,5 @@ class VSCodeExtensionMarkdownContributionProvider extends Disposable implements 
 }
 
 export function getMarkdownExtensionContributions(context: vscode.ExtensionContext): MarkdownContributionProvider {
-	return new VSCodeExtensionMarkdownContributionProvider(context.extensionPath);
+	return new VSCodeExtensionMarkdownContributionProvider(context);
 }

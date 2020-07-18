@@ -5,9 +5,10 @@
 
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { createRandomFile, deleteFile, closeAllEditors, pathEquals, rndName, disposeAll, testFs, delay, withLogDisabled } from '../utils';
+import { createRandomFile, deleteFile, closeAllEditors, pathEquals, rndName, disposeAll, testFs, delay, withLogDisabled, revertAllDirty } from '../utils';
 import { join, posix, basename } from 'path';
 import * as fs from 'fs';
+import { TestFS } from '../memfs';
 
 suite('vscode API - workspace', () => {
 
@@ -59,12 +60,19 @@ suite('vscode API - workspace', () => {
 		}
 	});
 
-	test('openTextDocument', () => {
-		let len = vscode.workspace.textDocuments.length;
-		return vscode.workspace.openTextDocument(join(vscode.workspace.rootPath || '', './simple.txt')).then(doc => {
-			assert.ok(doc);
-			assert.equal(vscode.workspace.textDocuments.length, len + 1);
-		});
+	test('openTextDocument', async () => {
+		const uri = await createRandomFile();
+
+		// not yet there
+		const existing1 = vscode.workspace.textDocuments.find(doc => doc.uri.toString() === uri.toString());
+		assert.equal(existing1, undefined);
+
+		// open and assert its there
+		const doc = await vscode.workspace.openTextDocument(uri);
+		assert.ok(doc);
+		assert.equal(doc.uri.toString(), uri.toString());
+		const existing2 = vscode.workspace.textDocuments.find(doc => doc.uri.toString() === uri.toString());
+		assert.equal(existing2 === doc, true);
 	});
 
 	test('openTextDocument, illegal path', () => {
@@ -163,6 +171,40 @@ suite('vscode API - workspace', () => {
 		});
 	});
 
+	test('openTextDocument, actual casing first', async function () {
+
+		const fs = new TestFS('this-fs', false);
+		const reg = vscode.workspace.registerFileSystemProvider(fs.scheme, fs, { isCaseSensitive: fs.isCaseSensitive });
+
+		let uriOne = vscode.Uri.parse('this-fs:/one');
+		let uriTwo = vscode.Uri.parse('this-fs:/two');
+		let uriONE = vscode.Uri.parse('this-fs:/ONE'); // same resource, different uri
+		let uriTWO = vscode.Uri.parse('this-fs:/TWO');
+
+		fs.writeFile(uriOne, Buffer.from('one'), { create: true, overwrite: true });
+		fs.writeFile(uriTwo, Buffer.from('two'), { create: true, overwrite: true });
+
+		// lower case (actual case) comes first
+		let docOne = await vscode.workspace.openTextDocument(uriOne);
+		assert.equal(docOne.uri.toString(), uriOne.toString());
+
+		let docONE = await vscode.workspace.openTextDocument(uriONE);
+		assert.equal(docONE === docOne, true);
+		assert.equal(docONE.uri.toString(), uriOne.toString());
+		assert.equal(docONE.uri.toString() !== uriONE.toString(), true); // yep
+
+		// upper case (NOT the actual case) comes first
+		let docTWO = await vscode.workspace.openTextDocument(uriTWO);
+		assert.equal(docTWO.uri.toString(), uriTWO.toString());
+
+		let docTwo = await vscode.workspace.openTextDocument(uriTwo);
+		assert.equal(docTWO === docTwo, true);
+		assert.equal(docTwo.uri.toString(), uriTWO.toString());
+		assert.equal(docTwo.uri.toString() !== uriTwo.toString(), true); // yep
+
+		reg.dispose();
+	});
+
 	test('eol, read', () => {
 		const a = createRandomFile('foo\nbar\nbar').then(file => {
 			return vscode.workspace.openTextDocument(file).then(doc => {
@@ -246,7 +288,7 @@ suite('vscode API - workspace', () => {
 		const file = await createRandomFile();
 		let disposables: vscode.Disposable[] = [];
 
-		await vscode.workspace.saveAll();
+		await revertAllDirty(); // needed for a clean state for `onDidSaveTextDocument` (#102365)
 
 		let pendingAsserts: Function[] = [];
 		let onDidOpenTextDocument = false;
@@ -287,6 +329,8 @@ suite('vscode API - workspace', () => {
 		const file = await createRandomFile();
 		let disposables: vscode.Disposable[] = [];
 		let pendingAsserts: Function[] = [];
+
+		await revertAllDirty(); // needed for a clean state for `onDidSaveTextDocument` (#102365)
 
 		let onDidSaveTextDocument = false;
 		disposables.push(vscode.workspace.onDidSaveTextDocument(e => {

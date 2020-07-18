@@ -12,6 +12,7 @@ export interface IFindInputCheckboxOpts {
 	readonly appendTitle: string;
 	readonly isChecked: boolean;
 	readonly inputActiveOptionBorder?: Color;
+	readonly inputActiveOptionForeground?: Color;
 	readonly inputActiveOptionBackground?: Color;
 }
 
@@ -26,6 +27,7 @@ export class CaseSensitiveCheckbox extends Checkbox {
 			title: NLS_CASE_SENSITIVE_CHECKBOX_LABEL + opts.appendTitle,
 			isChecked: opts.isChecked,
 			inputActiveOptionBorder: opts.inputActiveOptionBorder,
+			inputActiveOptionForeground: opts.inputActiveOptionForeground,
 			inputActiveOptionBackground: opts.inputActiveOptionBackground
 		});
 	}
@@ -38,6 +40,7 @@ export class WholeWordsCheckbox extends Checkbox {
 			title: NLS_WHOLE_WORD_CHECKBOX_LABEL + opts.appendTitle,
 			isChecked: opts.isChecked,
 			inputActiveOptionBorder: opts.inputActiveOptionBorder,
+			inputActiveOptionForeground: opts.inputActiveOptionForeground,
 			inputActiveOptionBackground: opts.inputActiveOptionBackground
 		});
 	}
@@ -50,6 +53,7 @@ export class RegexCheckbox extends Checkbox {
 			title: NLS_REGEX_CHECKBOX_LABEL + opts.appendTitle,
 			isChecked: opts.isChecked,
 			inputActiveOptionBorder: opts.inputActiveOptionBorder,
+			inputActiveOptionForeground: opts.inputActiveOptionForeground,
 			inputActiveOptionBackground: opts.inputActiveOptionBackground
 		});
 	}

@@ -19,7 +19,7 @@ export interface IResolvedBackup<T extends object> {
  */
 export interface IBackupFileService {
 
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	/**
 	 * Finds out if there are any backups stored.

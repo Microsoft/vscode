@@ -13,11 +13,11 @@ const path = require('path');
 module.exports = withDefaults({
 	context: path.join(__dirname),
 	entry: {
-		extension: './src/htmlServerMain.ts',
+		extension: './src/node/htmlServerMain.ts',
 	},
 	output: {
 		filename: 'htmlServerMain.js',
-		path: path.join(__dirname, 'dist'),
+		path: path.join(__dirname, 'dist', 'node'),
 	},
 	externals: {
 		'typescript': 'commonjs typescript'

@@ -11,7 +11,7 @@ import { ModelServiceImpl } from 'vs/editor/common/services/modelServiceImpl';
 import { TestCodeEditorService } from 'vs/editor/test/browser/editorTestServices';
 import { ITextFileService } from 'vs/workbench/services/textfile/common/textfiles';
 import { ExtHostDocumentsAndEditorsShape, ExtHostContext, ExtHostDocumentsShape, IWorkspaceTextEditDto } from 'vs/workbench/api/common/extHost.protocol';
-import { mock } from 'vs/workbench/test/browser/api/mock';
+import { mock } from 'vs/base/test/common/mock';
 import { Event } from 'vs/base/common/event';
 import { MainThreadTextEditors } from 'vs/workbench/api/browser/mainThreadEditors';
 import { URI } from 'vs/base/common/uri';
@@ -48,6 +48,8 @@ import { IUndoRedoService } from 'vs/platform/undoRedo/common/undoRedo';
 import { TestNotificationService } from 'vs/platform/notification/test/common/testNotificationService';
 import { INotificationService } from 'vs/platform/notification/common/notification';
 import { TestTextResourcePropertiesService, TestContextService } from 'vs/workbench/test/common/workbenchTestServices';
+import { IUriIdentityService } from 'vs/workbench/services/uriIdentity/common/uriIdentity';
+import { extUri } from 'vs/base/common/resources';
 
 suite('MainThreadEditors', () => {
 
@@ -93,10 +95,6 @@ suite('MainThreadEditors', () => {
 		services.set(IEditorGroupsService, new TestEditorGroupsService());
 		services.set(ITextFileService, new class extends mock<ITextFileService>() {
 			isDirty() { return false; }
-			create(resource: URI) {
-				createdResources.add(resource);
-				return Promise.resolve(Object.create(null));
-			}
 			files = <any>{
 				onDidSave: Event.None,
 				onDidRevert: Event.None,
@@ -104,16 +102,25 @@ suite('MainThreadEditors', () => {
 			};
 		});
 		services.set(IWorkingCopyFileService, new class extends mock<IWorkingCopyFileService>() {
-			move(source: URI, target: URI) {
+			onDidRunWorkingCopyFileOperation = Event.None;
+			create(resource: URI) {
+				createdResources.add(resource);
+				return Promise.resolve(Object.create(null));
+			}
+			move(files: { source: URI, target: URI }[]) {
+				const { source, target } = files[0];
 				movedResources.set(source, target);
 				return Promise.resolve(Object.create(null));
 			}
-			copy(source: URI, target: URI) {
+			copy(files: { source: URI, target: URI }[]) {
+				const { source, target } = files[0];
 				copiedResources.set(source, target);
 				return Promise.resolve(Object.create(null));
 			}
-			delete(resource: URI) {
-				deletedResources.add(resource);
+			delete(resources: URI[]) {
+				for (const resource of resources) {
+					deletedResources.add(resource);
+				}
 				return Promise.resolve(undefined);
 			}
 		});
@@ -130,12 +137,15 @@ suite('MainThreadEditors', () => {
 
 		});
 		services.set(IPanelService, new class extends mock<IPanelService>() implements IPanelService {
-			_serviceBrand: undefined;
+			declare readonly _serviceBrand: undefined;
 			onDidPanelOpen = Event.None;
 			onDidPanelClose = Event.None;
 			getActivePanel() {
 				return undefined;
 			}
+		});
+		services.set(IUriIdentityService, new class extends mock<IUriIdentityService>() {
+			get extUri() { return extUri; }
 		});
 
 		const instaService = new InstantiationService(services);

@@ -14,7 +14,7 @@ import { timeout } from 'vs/base/common/async';
 
 export class CommandService extends Disposable implements ICommandService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private _extensionHostIsReady: boolean = false;
 	private _starActivation: Promise<void> | null;

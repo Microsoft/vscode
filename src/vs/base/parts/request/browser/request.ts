@@ -21,7 +21,7 @@ export function request(options: IRequestOptions, token: CancellationToken): Pro
 		setRequestHeaders(xhr, options);
 
 		xhr.responseType = 'arraybuffer';
-		xhr.onerror = e => reject(new Error(xhr.statusText && ('XHR failed: ' + xhr.statusText)));
+		xhr.onerror = e => reject(new Error(xhr.statusText && ('XHR failed: ' + xhr.statusText) || 'XHR failed'));
 		xhr.onload = (e) => {
 			resolve({
 				res: {

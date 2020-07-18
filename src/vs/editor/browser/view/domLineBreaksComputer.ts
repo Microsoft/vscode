@@ -217,7 +217,9 @@ function renderLine(lineContent: string, initialVisibleColumn: number, tabSize: 
 				break;
 
 			case CharCode.UTF8_BOM:
-			case CharCode.LINE_SEPARATOR_2028:
+			case CharCode.LINE_SEPARATOR:
+			case CharCode.PARAGRAPH_SEPARATOR:
+			case CharCode.NEXT_LINE:
 				sb.write1(0xFFFD);
 				break;
 

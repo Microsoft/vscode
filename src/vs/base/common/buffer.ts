@@ -194,6 +194,8 @@ export interface VSBufferReadableStream extends streams.ReadableStream<VSBuffer>
 
 export interface VSBufferWriteableStream extends streams.WriteableStream<VSBuffer> { }
 
+export interface VSBufferReadableBufferedStream extends streams.ReadableBufferedStream<VSBuffer> { }
+
 export function readableToBuffer(readable: VSBufferReadable): VSBuffer {
 	return streams.consumeReadable<VSBuffer>(readable, chunks => VSBuffer.concat(chunks));
 }
@@ -206,6 +208,21 @@ export function streamToBuffer(stream: streams.ReadableStream<VSBuffer>): Promis
 	return streams.consumeStream<VSBuffer>(stream, chunks => VSBuffer.concat(chunks));
 }
 
+export async function bufferedStreamToBuffer(bufferedStream: streams.ReadableBufferedStream<VSBuffer>): Promise<VSBuffer> {
+	if (bufferedStream.ended) {
+		return VSBuffer.concat(bufferedStream.buffer);
+	}
+
+	return VSBuffer.concat([
+
+		// Include already read chunks...
+		...bufferedStream.buffer,
+
+		// ...and all additional chunks
+		await streamToBuffer(bufferedStream.stream)
+	]);
+}
+
 export function bufferToStream(buffer: VSBuffer): streams.ReadableStream<VSBuffer> {
 	return streams.toStream<VSBuffer>(buffer, chunks => VSBuffer.concat(chunks));
 }
@@ -214,6 +231,6 @@ export function streamToBufferReadableStream(stream: streams.ReadableStreamEvent
 	return streams.transform<Uint8Array | string, VSBuffer>(stream, { data: data => typeof data === 'string' ? VSBuffer.fromString(data) : VSBuffer.wrap(data) }, chunks => VSBuffer.concat(chunks));
 }
 
-export function newWriteableBufferStream(): streams.WriteableStream<VSBuffer> {
-	return streams.newWriteableStream<VSBuffer>(chunks => VSBuffer.concat(chunks));
+export function newWriteableBufferStream(options?: streams.WriteableStreamOptions): streams.WriteableStream<VSBuffer> {
+	return streams.newWriteableStream<VSBuffer>(chunks => VSBuffer.concat(chunks), options);
 }

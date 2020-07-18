@@ -13,10 +13,10 @@ import { Registry } from 'vs/platform/registry/common/platform';
 import { IQuickAccessRegistry, Extensions as QuickaccesExtensions } from 'vs/platform/quickinput/common/quickAccess';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { IWorkbenchEditorConfiguration } from 'vs/workbench/common/editor';
-import { Action } from 'vs/base/common/actions';
-import { IWorkbenchActionRegistry, Extensions as ActionExtensions } from 'vs/workbench/common/actions';
-import { SyncActionDescriptor } from 'vs/platform/actions/common/actions';
+import { Action2, registerAction2 } from 'vs/platform/actions/common/actions';
 import { KeyMod, KeyCode } from 'vs/base/common/keyCodes';
+import { ServicesAccessor } from 'vs/platform/instantiation/common/instantiation';
+import { KeybindingWeight } from 'vs/platform/keybinding/common/keybindingsRegistry';
 
 export class GotoLineQuickAccessProvider extends AbstractGotoLineQuickAccessProvider {
 
@@ -66,25 +66,25 @@ Registry.as<IQuickAccessRegistry>(QuickaccesExtensions.Quickaccess).registerQuic
 	helpEntries: [{ description: localize('gotoLineQuickAccess', "Go to Line/Column"), needsEditor: true }]
 });
 
-export class GotoLineAction extends Action {
+class GotoLineAction extends Action2 {
 
-	static readonly ID = 'workbench.action.gotoLine';
-	static readonly LABEL = localize('gotoLine', "Go to Line/Column...");
-
-	constructor(
-		id: string,
-		label: string,
-		@IQuickInputService private readonly quickInputService: IQuickInputService
-	) {
-		super(id, label);
+	constructor() {
+		super({
+			id: 'workbench.action.gotoLine',
+			title: { value: localize('gotoLine', "Go to Line/Column..."), original: 'Go to Line/Column...' },
+			f1: true,
+			keybinding: {
+				weight: KeybindingWeight.WorkbenchContrib,
+				when: null,
+				primary: KeyMod.CtrlCmd | KeyCode.KEY_G,
+				mac: { primary: KeyMod.WinCtrl | KeyCode.KEY_G }
+			}
+		});
 	}
 
-	async run(): Promise<void> {
-		this.quickInputService.quickAccess.show(GotoLineQuickAccessProvider.PREFIX);
+	async run(accessor: ServicesAccessor): Promise<void> {
+		accessor.get(IQuickInputService).quickAccess.show(GotoLineQuickAccessProvider.PREFIX);
 	}
 }
 
-Registry.as<IWorkbenchActionRegistry>(ActionExtensions.WorkbenchActions).registerWorkbenchAction(SyncActionDescriptor.from(GotoLineAction, {
-	primary: KeyMod.CtrlCmd | KeyCode.KEY_G,
-	mac: { primary: KeyMod.WinCtrl | KeyCode.KEY_G }
-}), 'Go to Line/Column...');
+registerAction2(GotoLineAction);

@@ -69,6 +69,6 @@ class TerminalLinkAdapter implements ILinkComputerTarget {
 	}
 
 	getLineContent(): string {
-		return getXtermLineContent(this._xterm.buffer.active, this._lineStart, this._lineEnd);
+		return getXtermLineContent(this._xterm.buffer.active, this._lineStart, this._lineEnd, this._xterm.cols);
 	}
 }

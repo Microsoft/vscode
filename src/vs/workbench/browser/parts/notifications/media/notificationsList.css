@@ -121,3 +121,15 @@
 	height: 2px;
 	bottom: 0;
 }
+
+.monaco-workbench.mac:not(.web) .notifications-list-container .monaco-progress-container.infinite .progress-bit {
+	/** macOS native: reduce animation steps for reduced CPU load (https://github.com/microsoft/vscode/issues/97900) */
+	animation-timing-function: steps(100);
+}
+
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+	/** macOS native: do not change the animation-timing-function on highDPI screens to reduce stutter */
+	.monaco-workbench.mac:not(.web) .notifications-list-container .monaco-progress-container.infinite .progress-bit {
+		animation-timing-function: linear;
+	}
+}

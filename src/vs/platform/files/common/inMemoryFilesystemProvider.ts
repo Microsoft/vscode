@@ -11,7 +11,7 @@ import { URI } from 'vs/base/common/uri';
 
 class File implements IStat {
 
-	type: FileType;
+	type: FileType.File;
 	ctime: number;
 	mtime: number;
 	size: number;
@@ -30,7 +30,7 @@ class File implements IStat {
 
 class Directory implements IStat {
 
-	type: FileType;
+	type: FileType.Directory;
 	ctime: number;
 	mtime: number;
 	size: number;
@@ -52,7 +52,9 @@ export type Entry = File | Directory;
 
 export class InMemoryFileSystemProvider extends Disposable implements IFileSystemProviderWithFileReadWriteCapability {
 
-	readonly capabilities: FileSystemProviderCapabilities = FileSystemProviderCapabilities.FileReadWrite;
+	readonly capabilities: FileSystemProviderCapabilities =
+		FileSystemProviderCapabilities.FileReadWrite
+		| FileSystemProviderCapabilities.PathCaseSensitive;
 	readonly onDidChangeCapabilities: Event<void> = Event.None;
 
 	root = new Directory('');

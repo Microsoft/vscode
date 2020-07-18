@@ -95,10 +95,13 @@ async function launchServer(): Promise<{ endpoint: url.UrlWithStringQuery, serve
 	let serverLocation: string;
 	if (process.env.VSCODE_REMOTE_SERVER_PATH) {
 		serverLocation = path.join(process.env.VSCODE_REMOTE_SERVER_PATH, `server.${process.platform === 'win32' ? 'cmd' : 'sh'}`);
+
+		console.log(`Starting built server from '${serverLocation}'`);
 	} else {
 		serverLocation = path.join(__dirname, '..', '..', '..', '..', `resources/server/web.${process.platform === 'win32' ? 'bat' : 'sh'}`);
-
 		process.env.VSCODE_DEV = '1';
+
+		console.log(`Starting server out of sources from '${serverLocation}'`);
 	}
 
 	let serverProcess = cp.spawn(

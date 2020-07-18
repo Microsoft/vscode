@@ -457,7 +457,7 @@ export namespace win32 {
 
 		async function fileExists(path: string): Promise<boolean> {
 			if (await promisify(fs.exists)(path)) {
-				return !((await promisify(fs.stat)(path)).isDirectory);
+				return !((await promisify(fs.stat)(path)).isDirectory());
 			}
 			return false;
 		}

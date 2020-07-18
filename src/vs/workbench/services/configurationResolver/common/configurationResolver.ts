@@ -11,7 +11,7 @@ import { ConfigurationTarget } from 'vs/platform/configuration/common/configurat
 export const IConfigurationResolverService = createDecorator<IConfigurationResolverService>('configurationResolverService');
 
 export interface IConfigurationResolverService {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	resolve(folder: IWorkspaceFolder | undefined, value: string): string;
 	resolve(folder: IWorkspaceFolder | undefined, value: string[]): string[];

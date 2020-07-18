@@ -32,7 +32,7 @@ const configurationExtPoint = ExtensionsRegistry.registerExtensionPoint<IColorEx
 					type: 'string',
 					description: nls.localize('contributes.color.id', 'The identifier of the themable color'),
 					pattern: colorIdPattern,
-					patternErrorMessage: nls.localize('contributes.color.id.format', 'Identifiers should be in the form aa[.bb]*'),
+					patternErrorMessage: nls.localize('contributes.color.id.format', 'Identifiers must only contain letters, digits and dots and can not start with a dot'),
 				},
 				description: {
 					type: 'string',
@@ -102,7 +102,7 @@ export class ColorExtensionPoint {
 						return;
 					}
 					if (!colorContribution.id.match(colorIdPattern)) {
-						collector.error(nls.localize('invalid.id.format', "'configuration.colors.id' must follow the word[.word]*"));
+						collector.error(nls.localize('invalid.id.format', "'configuration.colors.id' must only contain letters, digits and dots and can not start with a dot"));
 						return;
 					}
 					if (typeof colorContribution.description !== 'string' || colorContribution.id.length === 0) {

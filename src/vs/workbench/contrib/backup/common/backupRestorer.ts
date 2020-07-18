@@ -71,7 +71,10 @@ export class BackupRestorer implements IWorkbenchContribution {
 
 	private findEditorByResource(resource: URI): IEditorInput | undefined {
 		for (const editor of this.editorService.editors) {
-			if (isEqual(editor.resource, resource)) {
+			const customFactory = Registry.as<IEditorInputFactoryRegistry>(EditorExtensions.EditorInputFactories).getCustomEditorInputFactory(resource.scheme);
+			if (customFactory && customFactory.canResolveBackup(editor, resource)) {
+				return editor;
+			} else if (isEqual(editor.resource, resource)) {
 				return editor;
 			}
 		}
@@ -97,9 +100,12 @@ export class BackupRestorer implements IWorkbenchContribution {
 			return { resource: toLocalResource(resource, this.environmentService.configuration.remoteAuthority), options, forceUntitled: true };
 		}
 
-		if (resource.scheme === Schemas.vscodeCustomEditor) {
-			const editor = await Registry.as<IEditorInputFactoryRegistry>(EditorExtensions.EditorInputFactories).getCustomEditorInputFactory()
-				.createCustomEditorInput(resource, this.instantiationService);
+		// handle custom editors by asking the custom editor input factory
+		// to create the input.
+		const customFactory = Registry.as<IEditorInputFactoryRegistry>(EditorExtensions.EditorInputFactories).getCustomEditorInputFactory(resource.scheme);
+
+		if (customFactory) {
+			const editor = await customFactory.createCustomEditorInput(resource, this.instantiationService);
 			return { editor, options };
 		}
 

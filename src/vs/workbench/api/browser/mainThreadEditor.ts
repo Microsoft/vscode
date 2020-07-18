@@ -17,6 +17,10 @@ import { IApplyEditsOptions, IEditorPropertiesChangeData, IResolvedTextEditorCon
 import { IEditorPane } from 'vs/workbench/common/editor';
 import { withNullAsUndefined } from 'vs/base/common/types';
 import { equals } from 'vs/base/common/arrays';
+import { CodeEditorStateFlag, EditorState } from 'vs/editor/browser/core/editorState';
+import { IClipboardService } from 'vs/platform/clipboard/common/clipboardService';
+import { SnippetParser } from 'vs/editor/contrib/snippet/snippetParser';
+import { MainThreadDocuments } from 'vs/workbench/api/browser/mainThreadDocuments';
 
 export interface IFocusTracker {
 	onGainedFocus(): void;
@@ -157,8 +161,10 @@ export class MainThreadTextEditorProperties {
 export class MainThreadTextEditor {
 
 	private readonly _id: string;
-	private _model: ITextModel;
+	private readonly _model: ITextModel;
+	private readonly _mainThreadDocuments: MainThreadDocuments;
 	private readonly _modelService: IModelService;
+	private readonly _clipboardService: IClipboardService;
 	private readonly _modelListeners = new DisposableStore();
 	private _codeEditor: ICodeEditor | null;
 	private readonly _focusTracker: IFocusTracker;
@@ -172,14 +178,18 @@ export class MainThreadTextEditor {
 		model: ITextModel,
 		codeEditor: ICodeEditor,
 		focusTracker: IFocusTracker,
-		modelService: IModelService
+		mainThreadDocuments: MainThreadDocuments,
+		modelService: IModelService,
+		clipboardService: IClipboardService,
 	) {
 		this._id = id;
 		this._model = model;
 		this._codeEditor = null;
 		this._properties = null;
 		this._focusTracker = focusTracker;
+		this._mainThreadDocuments = mainThreadDocuments;
 		this._modelService = modelService;
+		this._clipboardService = clipboardService;
 
 		this._onPropertiesChanged = new Emitter<IEditorPropertiesChangeData>();
 
@@ -192,7 +202,6 @@ export class MainThreadTextEditor {
 	}
 
 	public dispose(): void {
-		this._model = null!;
 		this._modelListeners.dispose();
 		this._codeEditor = null;
 		this._codeEditorListeners.dispose();
@@ -251,21 +260,46 @@ export class MainThreadTextEditor {
 				this._focusTracker.onLostFocus();
 			}));
 
+			let nextSelectionChangeSource: string | null = null;
+			this._codeEditorListeners.add(this._mainThreadDocuments.onIsCaughtUpWithContentChanges((uri) => {
+				if (uri.toString() === this._model.uri.toString()) {
+					const selectionChangeSource = nextSelectionChangeSource;
+					nextSelectionChangeSource = null;
+					this._updatePropertiesNow(selectionChangeSource);
+				}
+			}));
+
+			const updateProperties = (selectionChangeSource: string | null) => {
+				// Some editor events get delivered faster than model content changes. This is
+				// problematic, as this leads to editor properties reaching the extension host
+				// too soon, before the model content change that was the root cause.
+				//
+				// If this case is identified, then let's update editor properties on the next model
+				// content change instead.
+				if (this._mainThreadDocuments.isCaughtUpWithContentChanges(this._model.uri)) {
+					nextSelectionChangeSource = null;
+					this._updatePropertiesNow(selectionChangeSource);
+				} else {
+					// update editor properties on the next model content change
+					nextSelectionChangeSource = selectionChangeSource;
+				}
+			};
+
 			this._codeEditorListeners.add(this._codeEditor.onDidChangeCursorSelection((e) => {
 				// selection
-				this._updatePropertiesNow(e.source);
+				updateProperties(e.source);
 			}));
 			this._codeEditorListeners.add(this._codeEditor.onDidChangeConfiguration(() => {
 				// options
-				this._updatePropertiesNow(null);
+				updateProperties(null);
 			}));
 			this._codeEditorListeners.add(this._codeEditor.onDidLayoutChange(() => {
 				// visibleRanges
-				this._updatePropertiesNow(null);
+				updateProperties(null);
 			}));
 			this._codeEditorListeners.add(this._codeEditor.onDidScrollChange(() => {
 				// visibleRanges
-				this._updatePropertiesNow(null);
+				updateProperties(null);
 			}));
 			this._updatePropertiesNow(null);
 		}
@@ -454,10 +488,21 @@ export class MainThreadTextEditor {
 		return true;
 	}
 
-	insertSnippet(template: string, ranges: readonly IRange[], opts: IUndoStopOptions) {
+	async insertSnippet(template: string, ranges: readonly IRange[], opts: IUndoStopOptions) {
 
-		if (!this._codeEditor) {
+		if (!this._codeEditor || !this._codeEditor.hasModel()) {
 			return false;
+		}
+
+		// check if clipboard is required and only iff read it (async)
+		let clipboardText: string | undefined;
+		const needsTemplate = SnippetParser.guessNeedsClipboard(template);
+		if (needsTemplate) {
+			const state = new EditorState(this._codeEditor, CodeEditorStateFlag.Value | CodeEditorStateFlag.Position);
+			clipboardText = await this._clipboardService.readText();
+			if (!state.validate(this._codeEditor)) {
+				return false;
+			}
 		}
 
 		const snippetController = SnippetController2.get(this._codeEditor);
@@ -471,7 +516,11 @@ export class MainThreadTextEditor {
 		this._codeEditor.focus();
 
 		// make modifications
-		snippetController.insert(template, { overwriteBefore: 0, overwriteAfter: 0, undoStopBefore: opts.undoStopBefore, undoStopAfter: opts.undoStopAfter });
+		snippetController.insert(template, {
+			overwriteBefore: 0, overwriteAfter: 0,
+			undoStopBefore: opts.undoStopBefore, undoStopAfter: opts.undoStopAfter,
+			clipboardText
+		});
 
 		return true;
 	}

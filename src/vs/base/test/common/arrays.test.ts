@@ -342,5 +342,14 @@ suite('Arrays', () => {
 		arrays.coalesceInPlace(sparse);
 		assert.equal(sparse.length, 5);
 	});
+
+	test('insert, remove', function () {
+		const array: string[] = [];
+		const remove = arrays.insert(array, 'foo');
+		assert.equal(array[0], 'foo');
+
+		remove();
+		assert.equal(array.length, 0);
+	});
 });
 

@@ -115,6 +115,10 @@ export class PatternInputWidget extends Widget implements IThemable {
 		this.inputBox.clearHistory();
 	}
 
+	clear(): void {
+		this.setValue('');
+	}
+
 	onSearchSubmit(): void {
 		this.inputBox.addToHistory();
 	}

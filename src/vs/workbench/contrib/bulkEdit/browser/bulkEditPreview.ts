@@ -20,6 +20,7 @@ import { IIdentifiedSingleEditOperation } from 'vs/editor/common/model';
 import { ConflictDetector } from 'vs/workbench/services/bulkEdit/browser/conflicts';
 import { ResourceMap } from 'vs/base/common/map';
 import { localize } from 'vs/nls';
+import { extUri } from 'vs/base/common/resources';
 
 export class CheckedStates<T extends object> {
 
@@ -209,13 +210,13 @@ export class BulkFileOperations {
 			}
 
 			const insert = (uri: URI, map: Map<string, BulkFileOperation>) => {
-				let key = uri.toString();
+				let key = extUri.getComparisonKey(uri, true);
 				let operation = map.get(key);
 
 				// rename
 				if (!operation && newToOldUri.has(uri)) {
 					uri = newToOldUri.get(uri)!;
-					key = uri.toString();
+					key = extUri.getComparisonKey(uri, true);
 					operation = map.get(key);
 				}
 
@@ -247,15 +248,15 @@ export class BulkFileOperations {
 		for (let file of this.fileOperations) {
 			if (file.type !== BulkFileOperationType.TextEdit) {
 				let checked = true;
-				file.originalEdits.forEach(edit => {
+				for (const edit of file.originalEdits.values()) {
 					if (WorkspaceFileEdit.is(edit)) {
 						checked = checked && this.checked.isChecked(edit);
 					}
-				});
+				}
 				if (!checked) {
-					file.originalEdits.forEach(edit => {
+					for (const edit of file.originalEdits.values()) {
 						this.checked.updateChecked(edit, checked);
-					});
+					}
 				}
 			}
 		}
@@ -304,8 +305,7 @@ export class BulkFileOperations {
 				const result: IIdentifiedSingleEditOperation[] = [];
 				let ignoreAll = false;
 
-				file.originalEdits.forEach(edit => {
-
+				for (const edit of file.originalEdits.values()) {
 					if (WorkspaceTextEdit.is(edit)) {
 						if (this.checked.isChecked(edit)) {
 							result.push(EditOperation.replaceMove(Range.lift(edit.edit.range), edit.edit.text));
@@ -315,7 +315,7 @@ export class BulkFileOperations {
 						// UNCHECKED WorkspaceFileEdit disables all text edits
 						ignoreAll = true;
 					}
-				});
+				}
 
 				if (ignoreAll) {
 					return [];
@@ -331,16 +331,11 @@ export class BulkFileOperations {
 	}
 
 	getUriOfEdit(edit: WorkspaceFileEdit | WorkspaceTextEdit): URI {
-
 		for (let file of this.fileOperations) {
-			let found = false;
-			file.originalEdits.forEach(value => {
-				if (!found && value === edit) {
-					found = true;
+			for (const value of file.originalEdits.values()) {
+				if (value === edit) {
+					return file.uri;
 				}
-			});
-			if (found) {
-				return file.uri;
 			}
 		}
 		throw new Error('invalid edit');

@@ -3,9 +3,8 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { ISpliceable } from 'vs/base/common/sequence';
 import { Iterable } from 'vs/base/common/iterator';
-import { IndexTreeModel, IIndexTreeModelOptions } from 'vs/base/browser/ui/tree/indexTreeModel';
+import { IndexTreeModel, IIndexTreeModelOptions, IList } from 'vs/base/browser/ui/tree/indexTreeModel';
 import { Event } from 'vs/base/common/event';
 import { ITreeModel, ITreeNode, ITreeElement, ITreeSorter, ICollapseStateChangeEvent, ITreeModelSpliceEvent, TreeError } from 'vs/base/browser/ui/tree/tree';
 import { IIdentityProvider } from 'vs/base/browser/ui/list/list';
@@ -16,6 +15,7 @@ export type ITreeNodeCallback<T, TFilterData> = (node: ITreeNode<T, TFilterData>
 export interface IObjectTreeModel<T extends NonNullable<any>, TFilterData extends NonNullable<any> = void> extends ITreeModel<T | null, TFilterData, T | null> {
 	setChildren(element: T | null, children: Iterable<ITreeElement<T>> | undefined): void;
 	resort(element?: T | null, recursive?: boolean): void;
+	updateElementHeight(element: T, height: number): void;
 }
 
 export interface IObjectTreeModelOptions<T, TFilterData> extends IIndexTreeModelOptions<T, TFilterData> {
@@ -41,7 +41,7 @@ export class ObjectTreeModel<T extends NonNullable<any>, TFilterData extends Non
 
 	constructor(
 		private user: string,
-		list: ISpliceable<ITreeNode<T, TFilterData>>,
+		list: IList<ITreeNode<T, TFilterData>>,
 		options: IObjectTreeModelOptions<T, TFilterData> = {}
 	) {
 		this.model = new IndexTreeModel(user, list, null, options);
@@ -167,6 +167,11 @@ export class ObjectTreeModel<T extends NonNullable<any>, TFilterData extends Non
 	rerender(element: T | null): void {
 		const location = this.getElementLocation(element);
 		this.model.rerender(location);
+	}
+
+	updateElementHeight(element: T, height: number): void {
+		const location = this.getElementLocation(element);
+		this.model.updateElementHeight(location, height);
 	}
 
 	resort(element: T | null = null, recursive = true): void {

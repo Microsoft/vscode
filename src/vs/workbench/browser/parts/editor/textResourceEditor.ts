@@ -25,7 +25,6 @@ import { IModelService } from 'vs/editor/common/services/modelService';
 import { IModeService } from 'vs/editor/common/services/modeService';
 import { PLAINTEXT_MODE_ID } from 'vs/editor/common/modes/modesRegistry';
 import { EditorOption, IEditorOptions } from 'vs/editor/common/config/editorOptions';
-import { basenameOrAuthority } from 'vs/base/common/resources';
 import { ModelConstants } from 'vs/editor/common/model';
 
 /**
@@ -106,11 +105,6 @@ export class AbstractTextResourceEditor extends BaseTextEditor {
 				control.restoreViewState(viewState);
 			}
 		}
-	}
-
-	protected getAriaLabel(): string {
-		const inputName = this.input instanceof UntitledTextEditorInput ? basenameOrAuthority(this.input.resource) : this.input?.getName() || nls.localize('writeableEditorAriaLabel', "Editor");
-		return this.input?.isReadonly() ? nls.localize('readonlyEditor', "{0} readonly", inputName) : inputName;
 	}
 
 	/**

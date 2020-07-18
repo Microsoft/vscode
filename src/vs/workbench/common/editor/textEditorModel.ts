@@ -41,7 +41,7 @@ export class BaseTextEditorModel extends EditorModel implements ITextEditorModel
 		// We need the resource to point to an existing model
 		const model = this.modelService.getModel(textEditorModelHandle);
 		if (!model) {
-			throw new Error(`Document with resource ${textEditorModelHandle.toString()} does not exist`);
+			throw new Error(`Document with resource ${textEditorModelHandle.toString(true)} does not exist`);
 		}
 
 		this.textEditorModelHandle = textEditorModelHandle;

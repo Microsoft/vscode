@@ -722,9 +722,10 @@ CommandsRegistry.registerCommand({
 			{ name: 'position', description: 'The position at which to start', constraint: corePosition.Position.isIPosition },
 			{ name: 'locations', description: 'An array of locations.', constraint: Array },
 			{ name: 'multiple', description: 'Define what to do when having multiple results, either `peek`, `gotoAndPeek`, or `goto' },
+			{ name: 'noResultsMessage', description: 'Human readable message that shows when locations is empty.' },
 		]
 	},
-	handler: async (accessor: ServicesAccessor, resource: any, position: any, references: any, multiple?: any, openInPeek?: boolean) => {
+	handler: async (accessor: ServicesAccessor, resource: any, position: any, references: any, multiple?: any, noResultsMessage?: string, openInPeek?: boolean) => {
 		assertType(URI.isUri(resource));
 		assertType(corePosition.Position.isIPosition(position));
 		assertType(Array.isArray(references));
@@ -739,7 +740,16 @@ CommandsRegistry.registerCommand({
 			editor.revealPositionInCenterIfOutsideViewport(position, ScrollType.Smooth);
 
 			return editor.invokeWithinContext(accessor => {
-				const command = new GenericGoToLocationAction({ muteMessage: true, openInPeek: Boolean(openInPeek), openToSide: false }, references, multiple as GoToLocationValues);
+				const command = new class extends GenericGoToLocationAction {
+					_getNoResultFoundMessage(info: IWordAtPosition | null) {
+						return noResultsMessage || super._getNoResultFoundMessage(info);
+					}
+				}({
+					muteMessage: !Boolean(noResultsMessage),
+					openInPeek: Boolean(openInPeek),
+					openToSide: false
+				}, references, multiple as GoToLocationValues);
+
 				accessor.get(IInstantiationService).invokeFunction(command.run.bind(command), editor);
 			});
 		}
@@ -758,7 +768,7 @@ CommandsRegistry.registerCommand({
 		]
 	},
 	handler: async (accessor: ServicesAccessor, resource: any, position: any, references: any, multiple?: any) => {
-		accessor.get(ICommandService).executeCommand('editor.action.goToLocations', resource, position, references, multiple, true);
+		accessor.get(ICommandService).executeCommand('editor.action.goToLocations', resource, position, references, multiple, undefined, true);
 	}
 });
 

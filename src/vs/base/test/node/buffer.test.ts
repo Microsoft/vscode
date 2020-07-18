@@ -4,8 +4,9 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as assert from 'assert';
-import { VSBuffer, bufferToReadable, readableToBuffer, bufferToStream, streamToBuffer, newWriteableBufferStream } from 'vs/base/common/buffer';
+import { VSBuffer, bufferToReadable, readableToBuffer, bufferToStream, streamToBuffer, newWriteableBufferStream, bufferedStreamToBuffer } from 'vs/base/common/buffer';
 import { timeout } from 'vs/base/common/async';
+import { peekStream } from 'vs/base/common/stream';
 
 suite('Buffer', () => {
 
@@ -27,6 +28,13 @@ suite('Buffer', () => {
 		const stream = bufferToStream(VSBuffer.fromString(content));
 
 		assert.equal((await streamToBuffer(stream)).toString(), content);
+	});
+
+	test('bufferedStreamToBuffer', async () => {
+		const content = 'Hello World';
+		const stream = await peekStream(bufferToStream(VSBuffer.fromString(content)), 1);
+
+		assert.equal((await bufferedStreamToBuffer(stream)).toString(), content);
 	});
 
 	test('bufferWriteableStream - basics (no error)', async () => {

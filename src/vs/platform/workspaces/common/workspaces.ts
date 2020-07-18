@@ -9,7 +9,7 @@ import { IWorkspaceFolder, IWorkspace } from 'vs/platform/workspace/common/works
 import { URI, UriComponents } from 'vs/base/common/uri';
 import { isWindows, isLinux, isMacintosh } from 'vs/base/common/platform';
 import { extname, isAbsolute } from 'vs/base/common/path';
-import { dirname, resolvePath, isEqualAuthority, isEqualOrParent, relativePath, extname as resourceExtname } from 'vs/base/common/resources';
+import { dirname, resolvePath, isEqualAuthority, relativePath, extname as resourceExtname, extUriBiasedIgnorePathCase } from 'vs/base/common/resources';
 import * as jsonEdit from 'vs/base/common/jsonEdit';
 import * as json from 'vs/base/common/json';
 import { Schemas } from 'vs/base/common/network';
@@ -29,7 +29,7 @@ export const IWorkspacesService = createDecorator<IWorkspacesService>('workspace
 
 export interface IWorkspacesService {
 
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	// Workspaces Management
 	enterWorkspace(path: URI): Promise<IEnterWorkspaceResult | null>;
@@ -168,6 +168,7 @@ export function toWorkspaceIdentifier(workspace: IWorkspace): IWorkspaceIdentifi
 			id: workspace.id
 		};
 	}
+
 	if (workspace.folders.length === 1) {
 		return workspace.folders[0].uri;
 	}
@@ -177,7 +178,7 @@ export function toWorkspaceIdentifier(workspace: IWorkspace): IWorkspaceIdentifi
 }
 
 export function isUntitledWorkspace(path: URI, environmentService: IEnvironmentService): boolean {
-	return isEqualOrParent(path, environmentService.untitledWorkspacesHome);
+	return extUriBiasedIgnorePathCase.isEqualOrParent(path, environmentService.untitledWorkspacesHome);
 }
 
 export type IMultiFolderWorkspaceInitializationPayload = IWorkspaceIdentifier;
@@ -212,7 +213,6 @@ const SLASH = '/';
  * @param useSlashForPath if set, use forward slashes for file paths on windows
  */
 export function getStoredWorkspaceFolder(folderURI: URI, forceAbsolute: boolean, folderName: string | undefined, targetConfigFolderURI: URI, useSlashForPath = !isWindows): IStoredWorkspaceFolder {
-
 	if (folderURI.scheme !== targetConfigFolderURI.scheme) {
 		return { name: folderName, uri: folderURI.toString(true) };
 	}
@@ -227,6 +227,7 @@ export function getStoredWorkspaceFolder(folderURI: URI, forceAbsolute: boolean,
 			folderPath = folderPath.replace(/\//g, '\\');
 		}
 	} else {
+
 		// use absolute path
 		if (folderURI.scheme === Schemas.file) {
 			folderPath = folderURI.fsPath;
@@ -246,6 +247,7 @@ export function getStoredWorkspaceFolder(folderURI: URI, forceAbsolute: boolean,
 			folderPath = folderURI.path;
 		}
 	}
+
 	return { name: folderName, path: folderPath };
 }
 
@@ -285,6 +287,7 @@ export function rewriteWorkspaceFileForNewLocation(rawWorkspaceContents: string,
 		// unsaved remote workspaces have the remoteAuthority set. Remove it when no longer nexessary.
 		newContent = jsonEdit.applyEdits(newContent, jsonEdit.removeProperty(newContent, ['remoteAuthority'], formattingOptions));
 	}
+
 	return newContent;
 }
 
@@ -307,6 +310,7 @@ export function useSlashForPath(storedFolders: IStoredWorkspaceFolder[]): boolea
 	if (isWindows) {
 		return storedFolders.some(folder => isRawFileWorkspaceFolder(folder) && folder.path.indexOf(SLASH) >= 0);
 	}
+
 	return true;
 }
 
@@ -319,22 +323,7 @@ interface ISerializedRecentlyOpened {
 	fileLabels?: Array<string | null>; // added in 1.33
 }
 
-interface ILegacySerializedRecentlyOpened {
-	workspaces2: Array<ILegacySerializedWorkspace | string>; // legacy, configPath as file path
-	workspaces: Array<ILegacySerializedWorkspace | string | UriComponents>; // legacy (UriComponents was also supported for a few insider builds)
-	files: string[]; // files as paths
-}
-
 interface ISerializedWorkspace { id: string; configURIPath: string; }
-interface ILegacySerializedWorkspace { id: string; configPath: string; }
-
-function isLegacySerializedWorkspace(curr: any): curr is ILegacySerializedWorkspace {
-	return typeof curr === 'object' && typeof curr['id'] === 'string' && typeof curr['configPath'] === 'string';
-}
-
-function isUriComponents(curr: any): curr is UriComponents {
-	return curr && typeof curr['path'] === 'string' && typeof curr['scheme'] === 'string';
-}
 
 export type RecentlyOpenedStorageData = object;
 
@@ -351,7 +340,7 @@ export function restoreRecentlyOpened(data: RecentlyOpenedStorageData | undefine
 			}
 		};
 
-		const storedRecents = data as ISerializedRecentlyOpened & ILegacySerializedRecentlyOpened;
+		const storedRecents = data as ISerializedRecentlyOpened;
 		if (Array.isArray(storedRecents.workspaces3)) {
 			restoreGracefully(storedRecents.workspaces3, (workspace, i) => {
 				const label: string | undefined = (Array.isArray(storedRecents.workspaceLabels) && storedRecents.workspaceLabels[i]) || undefined;
@@ -361,39 +350,12 @@ export function restoreRecentlyOpened(data: RecentlyOpenedStorageData | undefine
 					result.workspaces.push({ label, folderUri: URI.parse(workspace) });
 				}
 			});
-		} else if (Array.isArray(storedRecents.workspaces2)) {
-			restoreGracefully(storedRecents.workspaces2, workspace => {
-				if (typeof workspace === 'object' && typeof workspace.id === 'string' && typeof workspace.configPath === 'string') {
-					result.workspaces.push({ workspace: { id: workspace.id, configPath: URI.file(workspace.configPath) } });
-				} else if (typeof workspace === 'string') {
-					result.workspaces.push({ folderUri: URI.parse(workspace) });
-				}
-			});
-		} else if (Array.isArray(storedRecents.workspaces)) {
-			// TODO@martin legacy support can be removed at some point (6 month?)
-			// format of 1.25 and before
-			restoreGracefully(storedRecents.workspaces, workspace => {
-				if (typeof workspace === 'string') {
-					result.workspaces.push({ folderUri: URI.file(workspace) });
-				} else if (isLegacySerializedWorkspace(workspace)) {
-					result.workspaces.push({ workspace: { id: workspace.id, configPath: URI.file(workspace.configPath) } });
-				} else if (isUriComponents(workspace)) {
-					// added by 1.26-insiders
-					result.workspaces.push({ folderUri: URI.revive(<UriComponents>workspace) });
-				}
-			});
 		}
 		if (Array.isArray(storedRecents.files2)) {
 			restoreGracefully(storedRecents.files2, (file, i) => {
 				const label: string | undefined = (Array.isArray(storedRecents.fileLabels) && storedRecents.fileLabels[i]) || undefined;
 				if (typeof file === 'string') {
 					result.files.push({ label, fileUri: URI.parse(file) });
-				}
-			});
-		} else if (Array.isArray(storedRecents.files)) {
-			restoreGracefully(storedRecents.files, file => {
-				if (typeof file === 'string') {
-					result.files.push({ fileUri: URI.file(file) });
 				}
 			});
 		}
@@ -416,17 +378,20 @@ export function toStoreData(recents: IRecentlyOpened): RecentlyOpenedStorageData
 		workspaceLabels.push(recent.label || null);
 		hasLabel = hasLabel || !!recent.label;
 	}
+
 	if (hasLabel) {
 		serialized.workspaceLabels = workspaceLabels;
 	}
 
 	hasLabel = false;
+
 	const fileLabels: (string | null)[] = [];
 	for (const recent of recents.files) {
 		serialized.files2.push(recent.fileUri.toString());
 		fileLabels.push(recent.label || null);
 		hasLabel = hasLabel || !!recent.label;
 	}
+
 	if (hasLabel) {
 		serialized.fileLabels = fileLabels;
 	}

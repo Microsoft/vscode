@@ -25,6 +25,7 @@ export class MainThreadTheming implements MainThreadThemingShape {
 		this._themeChangeListener = this._themeService.onDidColorThemeChange(e => {
 			this._proxy.$onColorThemeChange(this._themeService.getColorTheme().type);
 		});
+		this._proxy.$onColorThemeChange(this._themeService.getColorTheme().type);
 	}
 
 	dispose(): void {

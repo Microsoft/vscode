@@ -32,7 +32,7 @@ suite('Breadcrumb Model', function () {
 
 	test('only uri, inside workspace', function () {
 
-		let model = new EditorBreadcrumbsModel(URI.parse('foo:/bar/baz/ws/some/path/file.ts'), undefined, configService, configService, workspaceService);
+		let model = new EditorBreadcrumbsModel(URI.parse('foo:/bar/baz/ws/some/path/file.ts'), URI.parse('foo:/bar/baz/ws/some/path/file.ts'), undefined, configService, configService, workspaceService);
 		let elements = model.getElements();
 
 		assert.equal(elements.length, 3);
@@ -45,9 +45,24 @@ suite('Breadcrumb Model', function () {
 		assert.equal(three.uri.toString(), 'foo:/bar/baz/ws/some/path/file.ts');
 	});
 
+	test('display uri matters for FileElement', function () {
+
+		let model = new EditorBreadcrumbsModel(URI.parse('foo:/bar/baz/ws/some/PATH/file.ts'), URI.parse('foo:/bar/baz/ws/some/path/file.ts'), undefined, configService, configService, workspaceService);
+		let elements = model.getElements();
+
+		assert.equal(elements.length, 3);
+		let [one, two, three] = elements as FileElement[];
+		assert.equal(one.kind, FileKind.FOLDER);
+		assert.equal(two.kind, FileKind.FOLDER);
+		assert.equal(three.kind, FileKind.FILE);
+		assert.equal(one.uri.toString(), 'foo:/bar/baz/ws/some');
+		assert.equal(two.uri.toString(), 'foo:/bar/baz/ws/some/PATH');
+		assert.equal(three.uri.toString(), 'foo:/bar/baz/ws/some/PATH/file.ts');
+	});
+
 	test('only uri, outside workspace', function () {
 
-		let model = new EditorBreadcrumbsModel(URI.parse('foo:/outside/file.ts'), undefined, configService, configService, workspaceService);
+		let model = new EditorBreadcrumbsModel(URI.parse('foo:/outside/file.ts'), URI.parse('foo:/outside/file.ts'), undefined, configService, configService, workspaceService);
 		let elements = model.getElements();
 
 		assert.equal(elements.length, 2);

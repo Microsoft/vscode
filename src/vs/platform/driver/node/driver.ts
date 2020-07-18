@@ -42,7 +42,7 @@ export class DriverChannel implements IServerChannel {
 
 export class DriverChannelClient implements IDriver {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	constructor(private channel: IChannel) { }
 
@@ -136,7 +136,7 @@ export class WindowDriverRegistryChannel implements IServerChannel {
 
 export class WindowDriverRegistryChannelClient implements IWindowDriverRegistry {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	constructor(private channel: IChannel) { }
 
@@ -177,7 +177,7 @@ export class WindowDriverChannel implements IServerChannel {
 
 export class WindowDriverChannelClient implements IWindowDriver {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	constructor(private channel: IChannel) { }
 

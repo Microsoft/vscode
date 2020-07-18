@@ -48,6 +48,10 @@ class StandaloneTheme implements IStandaloneTheme {
 		this._tokenTheme = null;
 	}
 
+	public get label(): string {
+		return this.themeName;
+	}
+
 	public get base(): string {
 		return this.themeData.base;
 	}
@@ -168,7 +172,7 @@ function newBuiltInTheme(builtinTheme: BuiltinTheme): StandaloneTheme {
 
 export class StandaloneThemeServiceImpl extends Disposable implements IStandaloneThemeService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private readonly _onColorThemeChange = this._register(new Emitter<IStandaloneTheme>());
 	public readonly onDidColorThemeChange = this._onColorThemeChange.event;

@@ -36,7 +36,7 @@ export class DiagnosticsChannel implements IServerChannel {
 
 export class DiagnosticsService implements IDiagnosticsService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	constructor(private channel: IChannel) { }
 

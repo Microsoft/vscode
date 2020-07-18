@@ -3,9 +3,12 @@
   "version": "0.0.1",
   "description": "Dependencies shared by all extensions",
   "dependencies": {
-    "typescript": "3.9.1-rc"
+    "typescript": "3.9.6"
   },
   "scripts": {
     "postinstall": "node ./postinstall"
+  },
+  "devDependencies": {
+    "rimraf": "^3.0.2"
   }
 }

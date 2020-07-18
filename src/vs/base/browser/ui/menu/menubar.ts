@@ -140,8 +140,8 @@ export class MenuBar extends Disposable {
 				eventHandled = false;
 			}
 
-			// Never allow default tab behavior
-			if (event.equals(KeyCode.Tab | KeyMod.Shift) || event.equals(KeyCode.Tab)) {
+			// Never allow default tab behavior when not compact
+			if (this.options.compactMode === undefined && (event.equals(KeyCode.Tab | KeyMod.Shift) || event.equals(KeyCode.Tab))) {
 				event.preventDefault();
 			}
 
@@ -315,7 +315,7 @@ export class MenuBar extends Disposable {
 	createOverflowMenu(): void {
 		const label = this.options.compactMode !== undefined ? nls.localize('mAppMenu', 'Application Menu') : nls.localize('mMore', 'More');
 		const title = this.options.compactMode !== undefined ? label : undefined;
-		const buttonElement = $('div.menubar-menu-button', { 'role': 'menuitem', 'tabindex': -1, 'aria-label': label, 'title': title, 'aria-haspopup': true });
+		const buttonElement = $('div.menubar-menu-button', { 'role': 'menuitem', 'tabindex': this.options.compactMode !== undefined ? 0 : -1, 'aria-label': label, 'title': title, 'aria-haspopup': true });
 		const titleElement = $('div.menubar-menu-title.toolbar-toggle-more' + menuBarMoreIcon.cssSelector, { 'role': 'none', 'aria-hidden': true });
 
 		buttonElement.appendChild(titleElement);
@@ -326,7 +326,15 @@ export class MenuBar extends Disposable {
 			let event = new StandardKeyboardEvent(e as KeyboardEvent);
 			let eventHandled = true;
 
-			if ((event.equals(KeyCode.DownArrow) || event.equals(KeyCode.Enter)) && !this.isOpen) {
+			const triggerKeys = [KeyCode.Enter];
+			if (this.options.compactMode === undefined) {
+				triggerKeys.push(KeyCode.DownArrow);
+			} else {
+				triggerKeys.push(KeyCode.Space);
+				triggerKeys.push(this.options.compactMode === Direction.Right ? KeyCode.RightArrow : KeyCode.LeftArrow);
+			}
+
+			if ((triggerKeys.some(k => event.equals(k)) && !this.isOpen)) {
 				this.focusedMenu = { index: MenuBar.OVERFLOW_INDEX };
 				this.openedViaKeyboard = true;
 				this.focusState = MenubarState.OPEN;
@@ -444,6 +452,16 @@ export class MenuBar extends Disposable {
 
 	getHeight(): number {
 		return this.container.clientHeight;
+	}
+
+	toggleFocus(): void {
+		if (!this.isFocused && this.options.visibility !== 'hidden') {
+			this.mnemonicsInUse = true;
+			this.focusedMenu = { index: this.numMenusShown > 0 ? 0 : MenuBar.OVERFLOW_INDEX };
+			this.focusState = MenubarState.FOCUSED;
+		} else if (!this.isOpen) {
+			this.setUnfocusedState();
+		}
 	}
 
 	private updateOverflowAction(): void {
@@ -932,7 +950,6 @@ export class MenuBar extends Disposable {
 			menuHolder.style.top = `0px`;
 			menuHolder.style.right = `${this.container.clientWidth}px`;
 			menuHolder.style.left = 'auto';
-			console.log(customMenu.buttonElement.getBoundingClientRect().right - this.container.clientWidth);
 		} else {
 			menuHolder.style.top = `${this.container.clientHeight}px`;
 			menuHolder.style.left = `${customMenu.buttonElement.getBoundingClientRect().left}px`;
@@ -945,7 +962,8 @@ export class MenuBar extends Disposable {
 			actionRunner: this.actionRunner,
 			enableMnemonics: this.options.alwaysOnMnemonics || (this.mnemonicsInUse && this.options.enableMnemonics),
 			ariaLabel: withNullAsUndefined(customMenu.buttonElement.getAttribute('aria-label')),
-			expandDirection: this.options.compactMode !== undefined ? this.options.compactMode : Direction.Right
+			expandDirection: this.options.compactMode !== undefined ? this.options.compactMode : Direction.Right,
+			useEventAsContext: true
 		};
 
 		let menuWidget = this._register(new Menu(menuHolder, customMenu.actions, menuOptions));

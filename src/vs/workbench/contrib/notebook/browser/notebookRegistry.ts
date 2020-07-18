@@ -15,31 +15,16 @@ export interface IOutputTransformDescription {
 	ctor: IOutputTransformCtor;
 }
 
-export namespace NotebookRegistry {
-	export function getOutputTransformContributions(): IOutputTransformDescription[] {
-		return NotebookRegistryImpl.INSTANCE.getNotebookOutputTransform();
-	}
-}
 
-export function registerOutputTransform<Services extends BrandedService[]>(id: string, kind: CellOutputKind, ctor: { new(editor: INotebookEditor, ...services: Services): IOutputTransformContribution }): void {
-	NotebookRegistryImpl.INSTANCE.registerOutputTransform(id, kind, ctor);
-}
+export const NotebookRegistry = new class NotebookRegistryImpl {
 
-class NotebookRegistryImpl {
-
-	static readonly INSTANCE = new NotebookRegistryImpl();
-
-	private readonly outputTransforms: IOutputTransformDescription[];
-
-	constructor() {
-		this.outputTransforms = [];
-	}
+	readonly outputTransforms: IOutputTransformDescription[] = [];
 
 	registerOutputTransform<Services extends BrandedService[]>(id: string, kind: CellOutputKind, ctor: { new(editor: INotebookEditor, ...services: Services): IOutputTransformContribution }): void {
 		this.outputTransforms.push({ id: id, kind: kind, ctor: ctor as IOutputTransformCtor });
 	}
 
-	getNotebookOutputTransform(): IOutputTransformDescription[] {
+	getOutputTransformContributions(): IOutputTransformDescription[] {
 		return this.outputTransforms.slice(0);
 	}
-}
+};

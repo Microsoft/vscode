@@ -1,0 +1,25 @@
+#!/bin/bash
+RESOLUTION=${1:-${VNC_RESOLUTION:-1920x1080}}
+DPI=${2:-${VNC_DPI:-72}}
+if [ -z "$1" ]; then
+	echo -e "**Current Settings **\n"
+	xrandr
+	echo -n -e "\nEnter new resolution (WIDTHxHEIGHT, blank for ${RESOLUTION}, Ctrl+C to abort).\n> "
+	read NEW_RES
+	if [ "${NEW_RES}" != "" ]; then
+		RESOLUTION=${NEW_RES}
+	fi
+	if [ -z "$2" ]; then
+		echo -n -e "\nEnter new DPI (blank for ${DPI}, Ctrl+C to abort).\n> "
+		read NEW_DPI
+		if [ "${NEW_DPI}" != "" ]; then
+			DPI=${NEW_DPI}
+		fi
+	fi
+fi
+
+xrandr --fb ${RESOLUTION} --dpi ${DPI} > /dev/null 2>&1
+
+echo -e "\n**New Settings **\n"
+xrandr
+echo

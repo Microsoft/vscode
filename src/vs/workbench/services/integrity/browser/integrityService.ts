@@ -8,7 +8,7 @@ import { registerSingleton } from 'vs/platform/instantiation/common/extensions';
 
 export class BrowserIntegrityServiceImpl implements IIntegrityService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	async isPure(): Promise<IntegrityTestResult> {
 		return { isPure: true, proof: [] };

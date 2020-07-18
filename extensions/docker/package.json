@@ -12,9 +12,9 @@
 	"contributes": {
 		"languages": [{
 			"id": "dockerfile",
-			"extensions": [ ".dockerfile" ],
-			"filenames": [ "Dockerfile" ],
-			"aliases": [ "Dockerfile" ],
+			"extensions": [ ".dockerfile", ".containerfile" ],
+			"filenames": [ "Dockerfile", "Containerfile" ],
+			"aliases": [ "Dockerfile", "Containerfile" ],
 			"configuration": "./language-configuration.json"
 		}],
 		"grammars": [{

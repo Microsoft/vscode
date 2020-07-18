@@ -18,12 +18,12 @@ export interface IIssueReporterOptions {
 }
 
 export interface IWebIssueService {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 	openReporter(options?: IIssueReporterOptions): Promise<void>;
 }
 
 export class WebIssueService implements IWebIssueService {
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	constructor(
 		@IExtensionManagementService private readonly extensionManagementService: IExtensionManagementService,

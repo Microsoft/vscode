@@ -214,8 +214,8 @@ export class CodeActionModel extends Disposable {
 				}
 
 				const actions = createCancelablePromise(token => getCodeActions(model, trigger.selection, trigger.trigger, Progress.None, token));
-				if (this._progressService && trigger.trigger.type === CodeActionTriggerType.Manual) {
-					this._progressService.showWhile(actions, 250);
+				if (trigger.trigger.type === CodeActionTriggerType.Manual) {
+					this._progressService?.showWhile(actions, 250);
 				}
 
 				this.setState(new CodeActionsState.Triggered(trigger.trigger, trigger.selection, trigger.position, actions));

@@ -94,8 +94,7 @@ export class MainThreadEditorInsets implements MainThreadEditorInsetsShape {
 		}, {
 			allowScripts: options.enableScripts,
 			localResourceRoots: options.localResourceRoots ? options.localResourceRoots.map(uri => URI.revive(uri)) : undefined
-		});
-		webview.extension = { id: extensionId, location: URI.revive(extensionLocation) };
+		}, { id: extensionId, location: URI.revive(extensionLocation) });
 
 		const webviewZone = new EditorWebviewZone(editor, line, height, webview);
 
@@ -128,12 +127,15 @@ export class MainThreadEditorInsets implements MainThreadEditorInsetsShape {
 
 	$setOptions(handle: number, options: modes.IWebviewOptions): void {
 		const inset = this.getInset(handle);
-		inset.webview.contentOptions = options;
+		inset.webview.contentOptions = {
+			...options,
+			localResourceRoots: options.localResourceRoots?.map(components => URI.from(components)),
+		};
 	}
 
 	async $postMessage(handle: number, value: any): Promise<boolean> {
 		const inset = this.getInset(handle);
-		inset.webview.sendMessage(value);
+		inset.webview.postMessage(value);
 		return true;
 	}
 

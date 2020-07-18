@@ -3,7 +3,7 @@
 	"description": "Provides rich language support for JSON files.",
 	"json.schemas.desc": "Associate schemas to JSON files in the current project",
 	"json.schemas.url.desc": "A URL to a schema or a relative path to a schema in the current directory",
-	"json.schemas.fileMatch.desc": "An array of file patterns to match against when resolving JSON files to schemas. `*` can be used as a wildcard. Exclusion patterns can also be defined and start with '!'. A file matches when there at least one matching pattern and the last matching pattern is not an exclusion pattern.",
+	"json.schemas.fileMatch.desc": "An array of file patterns to match against when resolving JSON files to schemas. `*` can be used as a wildcard. Exclusion patterns can also be defined and start with '!'. A file matches when there is at least one matching pattern and the last matching pattern is not an exclusion pattern.",
 	"json.schemas.fileMatch.item.desc": "A file pattern that can contain '*' to match against when resolving JSON files to schemas.",
 	"json.schemas.schema.desc": "The schema definition for the given URL. The schema only needs to be provided to avoid accesses to the schema URL.",
 	"json.format.enable.desc": "Enable/disable default JSON formatter",

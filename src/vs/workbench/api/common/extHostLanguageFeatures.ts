@@ -73,7 +73,7 @@ class DocumentSymbolAdapter {
 			const element: modes.DocumentSymbol = {
 				name: info.name || '!!MISSING: name!!',
 				kind: typeConvert.SymbolKind.from(info.kind),
-				tags: info.tags ? info.tags.map(typeConvert.SymbolTag.from) : [],
+				tags: info.tags?.map(typeConvert.SymbolTag.from) || [],
 				detail: '',
 				containerName: info.containerName,
 				range: typeConvert.Range.from(info.location.range),
@@ -857,16 +857,11 @@ class SuggestAdapter {
 	private _cache = new Cache<vscode.CompletionItem>('CompletionItem');
 	private _disposables = new Map<number, DisposableStore>();
 
-	private _didWarnMust: boolean = false;
-	private _didWarnShould: boolean = false;
-
 	constructor(
 		private readonly _documents: ExtHostDocuments,
 		private readonly _commands: CommandsConverter,
 		private readonly _provider: vscode.CompletionItemProvider,
-		private readonly _logService: ILogService,
 		private readonly _apiDeprecation: IExtHostApiDeprecationService,
-		private readonly _telemetry: extHostProtocol.MainThreadTelemetryShape,
 		private readonly _extension: IExtensionDescription,
 	) { }
 
@@ -930,39 +925,10 @@ class SuggestAdapter {
 			return undefined;
 		}
 
-		const _mustNotChange = SuggestAdapter._mustNotChangeHash(item);
-		const _mayNotChange = SuggestAdapter._mayNotChangeHash(item);
-
 		const resolvedItem = await asPromise(() => this._provider.resolveCompletionItem!(item, token));
 
 		if (!resolvedItem) {
 			return undefined;
-		}
-
-		type BlameExtension = {
-			extensionId: string;
-			kind: string;
-			index: string;
-		};
-
-		type BlameExtensionMeta = {
-			extensionId: { classification: 'SystemMetaData', purpose: 'PerformanceAndHealth' };
-			kind: { classification: 'SystemMetaData', purpose: 'PerformanceAndHealth' };
-			index: { classification: 'SystemMetaData', purpose: 'PerformanceAndHealth' };
-		};
-
-		let _mustNotChangeIndex = !this._didWarnMust && SuggestAdapter._mustNotChangeDiff(_mustNotChange, resolvedItem);
-		if (typeof _mustNotChangeIndex === 'string') {
-			this._logService.warn(`[${this._extension.identifier.value}] INVALID result from 'resolveCompletionItem', extension MUST NOT change any of: label, sortText, filterText, insertText, or textEdit`);
-			this._telemetry.$publicLog2<BlameExtension, BlameExtensionMeta>('badresolvecompletion', { extensionId: this._extension.identifier.value, kind: 'must', index: _mustNotChangeIndex });
-			this._didWarnMust = true;
-		}
-
-		let _mayNotChangeIndex = !this._didWarnShould && SuggestAdapter._mayNotChangeDiff(_mayNotChange, resolvedItem);
-		if (typeof _mayNotChangeIndex === 'string') {
-			this._logService.info(`[${this._extension.identifier.value}] UNSAVE result from 'resolveCompletionItem', extension SHOULD NOT change any of: additionalTextEdits, or command`);
-			this._telemetry.$publicLog2<BlameExtension, BlameExtensionMeta>('badresolvecompletion', { extensionId: this._extension.identifier.value, kind: 'should', index: _mayNotChangeIndex });
-			this._didWarnShould = true;
 		}
 
 		return this._convertCompletionItem(resolvedItem, id);
@@ -1034,45 +1000,6 @@ class SuggestAdapter {
 		}
 
 		return result;
-	}
-
-	private static _mustNotChangeHash(item: vscode.CompletionItem) {
-		const res = JSON.stringify([item.label, item.sortText, item.filterText, item.insertText, item.range]);
-		return res;
-	}
-
-	private static _mustNotChangeDiff(hash: string, item: vscode.CompletionItem): string | void {
-		const thisArr = [item.label, item.sortText, item.filterText, item.insertText, item.range];
-		const thisHash = JSON.stringify(thisArr);
-		if (hash === thisHash) {
-			return;
-		}
-		const arr = JSON.parse(hash);
-		for (let i = 0; i < 6; i++) {
-			if (JSON.stringify(arr[i] !== JSON.stringify(thisArr[i]))) {
-				return i.toString();
-			}
-		}
-		return 'unknown';
-	}
-
-	private static _mayNotChangeHash(item: vscode.CompletionItem) {
-		return JSON.stringify([item.additionalTextEdits, item.command]);
-	}
-
-	private static _mayNotChangeDiff(hash: string, item: vscode.CompletionItem): string | void {
-		const thisArr = [item.additionalTextEdits, item.command];
-		const thisHash = JSON.stringify(thisArr);
-		if (hash === thisHash) {
-			return;
-		}
-		const arr = JSON.parse(hash);
-		for (let i = 0; i < 6; i++) {
-			if (JSON.stringify(arr[i] !== JSON.stringify(thisArr[i]))) {
-				return i.toString();
-			}
-		}
-		return 'unknown';
 	}
 }
 
@@ -1360,6 +1287,7 @@ class CallHierarchyAdapter {
 			uri: item.uri,
 			range: typeConvert.Range.from(item.range),
 			selectionRange: typeConvert.Range.from(item.selectionRange),
+			tags: item.tags?.map(typeConvert.SymbolTag.from)
 		};
 		map.set(dto._itemId, item);
 		return dto;
@@ -1392,7 +1320,6 @@ export class ExtHostLanguageFeatures implements extHostProtocol.ExtHostLanguageF
 
 	private readonly _uriTransformer: IURITransformer | null;
 	private readonly _proxy: extHostProtocol.MainThreadLanguageFeaturesShape;
-	private readonly _telemetryShape: extHostProtocol.MainThreadTelemetryShape;
 	private _documents: ExtHostDocuments;
 	private _commands: ExtHostCommands;
 	private _diagnostics: ExtHostDiagnostics;
@@ -1411,7 +1338,6 @@ export class ExtHostLanguageFeatures implements extHostProtocol.ExtHostLanguageF
 	) {
 		this._uriTransformer = uriTransformer;
 		this._proxy = mainContext.getProxy(extHostProtocol.MainContext.MainThreadLanguageFeatures);
-		this._telemetryShape = mainContext.getProxy(extHostProtocol.MainContext.MainThreadTelemetry);
 		this._documents = documents;
 		this._commands = commands;
 		this._diagnostics = diagnostics;
@@ -1780,7 +1706,7 @@ export class ExtHostLanguageFeatures implements extHostProtocol.ExtHostLanguageF
 	// --- suggestion
 
 	registerCompletionItemProvider(extension: IExtensionDescription, selector: vscode.DocumentSelector, provider: vscode.CompletionItemProvider, triggerCharacters: string[]): vscode.Disposable {
-		const handle = this._addNewAdapter(new SuggestAdapter(this._documents, this._commands.converter, provider, this._logService, this._apiDeprecation, this._telemetryShape, extension), extension);
+		const handle = this._addNewAdapter(new SuggestAdapter(this._documents, this._commands.converter, provider, this._apiDeprecation, extension), extension);
 		this._proxy.$registerSuggestSupport(handle, this._transformDocumentSelector(selector), triggerCharacters, SuggestAdapter.supportsResolving(provider), extension.identifier);
 		return this._createDisposable(handle);
 	}

@@ -109,18 +109,18 @@ export class NotificationsStatus extends Disposable {
 				return localize('oneNotification', "1 New Notification");
 			}
 
-			return localize('notifications', "{0} New Notifications", this.newNotificationsCount);
+			return localize({ key: 'notifications', comment: ['{0} will be replaced by a number'] }, "{0} New Notifications", this.newNotificationsCount);
 		}
 
 		if (this.newNotificationsCount === 0) {
-			return localize('noNotificationsWithProgress', "No New Notifications ({0} in progress)", notificationsInProgress);
+			return localize({ key: 'noNotificationsWithProgress', comment: ['{0} will be replaced by a number'] }, "No New Notifications ({0} in progress)", notificationsInProgress);
 		}
 
 		if (this.newNotificationsCount === 1) {
-			return localize('oneNotificationWithProgress', "1 New Notification ({0} in progress)", notificationsInProgress);
+			return localize({ key: 'oneNotificationWithProgress', comment: ['{0} will be replaced by a number'] }, "1 New Notification ({0} in progress)", notificationsInProgress);
 		}
 
-		return localize('notificationsWithProgress', "{0} New Notifications ({0} in progress)", this.newNotificationsCount, notificationsInProgress);
+		return localize({ key: 'notificationsWithProgress', comment: ['{0} and {1} will be replaced by a number'] }, "{0} New Notifications ({1} in progress)", this.newNotificationsCount, notificationsInProgress);
 	}
 
 	update(isCenterVisible: boolean, isToastsVisible: boolean): void {

@@ -7,7 +7,7 @@ import * as arrays from 'vs/base/common/arrays';
 import { CancellationToken } from 'vs/base/common/cancellation';
 import { canceled } from 'vs/base/common/errors';
 import { Disposable, IDisposable, toDisposable } from 'vs/base/common/lifecycle';
-import { keys, ResourceMap, values } from 'vs/base/common/map';
+import { ResourceMap } from 'vs/base/common/map';
 import { Schemas } from 'vs/base/common/network';
 import { StopWatch } from 'vs/base/common/stopwatch';
 import { URI as uri } from 'vs/base/common/uri';
@@ -24,7 +24,7 @@ import { DeferredPromise } from 'vs/base/test/common/utils';
 
 export class SearchService extends Disposable implements ISearchService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	protected diskSearch: ISearchResultProvider | null = null;
 	private readonly fileSearchProviders = new Map<string, ISearchResultProvider>();
@@ -116,41 +116,43 @@ export class SearchService extends Disposable implements ISearchService {
 		schemesInQuery.forEach(scheme => providerActivations.push(this.extensionService.activateByEvent(`onSearch:${scheme}`)));
 		providerActivations.push(this.extensionService.activateByEvent('onSearch:file'));
 
-		const providerPromise = Promise.all(providerActivations)
-			.then(() => this.extensionService.whenInstalledExtensionsRegistered())
-			.then(() => {
-				// Cancel faster if search was canceled while waiting for extensions
+		const providerPromise = (async () => {
+			await Promise.all(providerActivations);
+			this.extensionService.whenInstalledExtensionsRegistered();
+
+			// Cancel faster if search was canceled while waiting for extensions
+			if (token && token.isCancellationRequested) {
+				return Promise.reject(canceled());
+			}
+
+			const progressCallback = (item: ISearchProgressItem) => {
 				if (token && token.isCancellationRequested) {
-					return Promise.reject(canceled());
+					return;
 				}
 
-				const progressCallback = (item: ISearchProgressItem) => {
-					if (token && token.isCancellationRequested) {
-						return;
-					}
-
-					if (onProgress) {
-						onProgress(item);
-					}
-				};
-
-				return this.searchWithProviders(query, progressCallback, token);
-			})
-			.then(completes => {
-				completes = arrays.coalesce(completes);
-				if (!completes.length) {
-					return {
-						limitHit: false,
-						results: []
-					};
+				if (onProgress) {
+					onProgress(item);
 				}
+			};
 
-				return <ISearchComplete>{
-					limitHit: completes[0] && completes[0].limitHit,
-					stats: completes[0].stats,
-					results: arrays.flatten(completes.map((c: ISearchComplete) => c.results))
+			const exists = await Promise.all(query.folderQueries.map(query => this.fileService.exists(query.folder)));
+			query.folderQueries = query.folderQueries.filter((_, i) => exists[i]);
+
+			let completes = await this.searchWithProviders(query, progressCallback, token);
+			completes = arrays.coalesce(completes);
+			if (!completes.length) {
+				return {
+					limitHit: false,
+					results: []
 				};
-			});
+			}
+
+			return <ISearchComplete>{
+				limitHit: completes[0] && completes[0].limitHit,
+				stats: completes[0].stats,
+				results: arrays.flatten(completes.map((c: ISearchComplete) => c.results))
+			};
+		})();
 
 		return new Promise((resolve, reject) => {
 			if (token) {
@@ -197,7 +199,7 @@ export class SearchService extends Disposable implements ISearchService {
 		const searchPs: Promise<ISearchComplete>[] = [];
 
 		const fqs = this.groupFolderQueriesByScheme(query);
-		await Promise.all(keys(fqs).map(async scheme => {
+		await Promise.all([...fqs.keys()].map(async scheme => {
 			const schemeFQs = fqs.get(scheme)!;
 			let provider = query.type === QueryType.File ?
 				this.fileSearchProviders.get(scheme) :
@@ -258,7 +260,8 @@ export class SearchService extends Disposable implements ISearchService {
 		}, err => {
 			const endToEndTime = e2eSW.elapsed();
 			this.logService.trace(`SearchService#search: ${endToEndTime}ms`);
-			const searchError = deserializeSearchError(err.message);
+			const searchError = deserializeSearchError(err);
+			this.logService.trace(`SearchService#searchError: ${searchError.message}`);
 			this.sendTelemetry(query, endToEndTime, undefined, searchError);
 
 			throw searchError;
@@ -385,7 +388,8 @@ export class SearchService extends Disposable implements ISearchService {
 						err.code === SearchErrorCode.globParseError ? 'glob' :
 							err.code === SearchErrorCode.invalidLiteral ? 'literal' :
 								err.code === SearchErrorCode.other ? 'other' :
-									'unknown';
+									err.code === SearchErrorCode.canceled ? 'canceled' :
+										'unknown';
 			}
 
 			type TextSearchCompleteClassification = {
@@ -489,7 +493,7 @@ export class SearchService extends Disposable implements ISearchService {
 	clearCache(cacheKey: string): Promise<void> {
 		const clearPs = [
 			this.diskSearch,
-			...values(this.fileSearchProviders)
+			...Array.from(this.fileSearchProviders.values())
 		].map(provider => provider && provider.clearCache(cacheKey));
 
 		return Promise.all(clearPs)

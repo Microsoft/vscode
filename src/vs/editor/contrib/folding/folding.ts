@@ -15,7 +15,7 @@ import { ITextModel } from 'vs/editor/common/model';
 import { registerEditorAction, registerEditorContribution, ServicesAccessor, EditorAction, registerInstantiatedEditorAction } from 'vs/editor/browser/editorExtensions';
 import { ICodeEditor, IEditorMouseEvent, MouseTargetType } from 'vs/editor/browser/editorBrowser';
 import { FoldingModel, setCollapseStateAtLevel, CollapseMemento, setCollapseStateLevelsDown, setCollapseStateLevelsUp, setCollapseStateForMatchingLines, setCollapseStateForType, toggleCollapseState, setCollapseStateUp } from 'vs/editor/contrib/folding/foldingModel';
-import { FoldingDecorationProvider } from './foldingDecorations';
+import { FoldingDecorationProvider, foldingCollapsedIcon, foldingExpandedIcon } from './foldingDecorations';
 import { FoldingRegions, FoldingRegion } from './foldingRanges';
 import { EditorContextKeys } from 'vs/editor/common/editorContextKeys';
 import { ConfigurationChangedEvent, EditorOption } from 'vs/editor/common/config/editorOptions';
@@ -909,8 +909,8 @@ registerThemingParticipant((theme, collector) => {
 	const editorFoldColor = theme.getColor(editorFoldForeground);
 	if (editorFoldColor) {
 		collector.addRule(`
-		.monaco-editor .cldr.codicon-chevron-right,
-		.monaco-editor .cldr.codicon-chevron-down {
+		.monaco-editor .cldr${foldingExpandedIcon.cssSelector},
+		.monaco-editor .cldr${foldingCollapsedIcon.cssSelector} {
 			color: ${editorFoldColor} !important;
 		}
 		`);

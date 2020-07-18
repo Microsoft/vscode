@@ -16,7 +16,7 @@ import { IRequestService } from 'vs/platform/request/common/request';
  */
 export class RequestService implements IRequestService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	constructor(
 		@IConfigurationService private readonly configurationService: IConfigurationService,

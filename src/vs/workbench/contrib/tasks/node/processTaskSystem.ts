@@ -147,7 +147,7 @@ export class ProcessTaskSystem implements ITaskSystem {
 		if (this.childProcess) {
 			let task = this.activeTask;
 			return this.childProcess.terminate().then((response) => {
-				let result: TaskTerminateResponse = Objects.assign({ task: task! }, response);
+				let result: TaskTerminateResponse = Object.assign({ task: task! }, response);
 				this._onDidStateChange.fire(TaskEvent.create(TaskEventKind.Terminated, task!));
 				return [result];
 			});

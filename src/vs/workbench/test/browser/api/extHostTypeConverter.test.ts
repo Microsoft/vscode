@@ -7,12 +7,21 @@
 import * as assert from 'assert';
 import { MarkdownString, LogLevel } from 'vs/workbench/api/common/extHostTypeConverters';
 import { isEmptyObject } from 'vs/base/common/types';
-import { size, forEach } from 'vs/base/common/collections';
+import { forEach } from 'vs/base/common/collections';
 import * as types from 'vs/workbench/api/common/extHostTypes';
 import { LogLevel as _MainLogLevel } from 'vs/platform/log/common/log';
 import { URI } from 'vs/base/common/uri';
 
 suite('ExtHostTypeConverter', function () {
+	function size<T>(from: Record<any, any>): number {
+		let count = 0;
+		for (let key in from) {
+			if (Object.prototype.hasOwnProperty.call(from, key)) {
+				count += 1;
+			}
+		}
+		return count;
+	}
 
 	test('MarkdownConvert - uris', function () {
 

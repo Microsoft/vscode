@@ -30,7 +30,7 @@ export class RemoteExtensionsInstaller extends Disposable implements IWorkbenchC
 				disposable = MenuRegistry.appendMenuItem(MenuId.CommandPalette, {
 					command: {
 						id: 'workbench.extensions.installLocalExtensions',
-						category: localize('remote', "Remote"),
+						category: localize({ key: 'remote', comment: ['Remote as in remote machine'] }, "Remote"),
 						title: installLocalExtensionsInRemoteAction.label
 					}
 				});

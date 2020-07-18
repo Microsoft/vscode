@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Event, Emitter } from 'vs/base/common/event';
-import { CONTEXT_EXPRESSION_SELECTED, IViewModel, IStackFrame, IDebugSession, IThread, IExpression, IFunctionBreakpoint, CONTEXT_BREAKPOINT_SELECTED, CONTEXT_LOADED_SCRIPTS_SUPPORTED, CONTEXT_STEP_BACK_SUPPORTED, CONTEXT_FOCUSED_SESSION_IS_ATTACH, CONTEXT_RESTART_FRAME_SUPPORTED, CONTEXT_JUMP_TO_CURSOR_SUPPORTED } from 'vs/workbench/contrib/debug/common/debug';
+import { CONTEXT_EXPRESSION_SELECTED, IViewModel, IStackFrame, IDebugSession, IThread, IExpression, IFunctionBreakpoint, CONTEXT_BREAKPOINT_SELECTED, CONTEXT_LOADED_SCRIPTS_SUPPORTED, CONTEXT_STEP_BACK_SUPPORTED, CONTEXT_FOCUSED_SESSION_IS_ATTACH, CONTEXT_RESTART_FRAME_SUPPORTED, CONTEXT_JUMP_TO_CURSOR_SUPPORTED, CONTEXT_STEP_INTO_TARGETS_SUPPORTED } from 'vs/workbench/contrib/debug/common/debug';
 import { IContextKeyService, IContextKey } from 'vs/platform/contextkey/common/contextkey';
 import { isSessionAttach } from 'vs/workbench/contrib/debug/common/debugUtils';
 
@@ -21,23 +21,27 @@ export class ViewModel implements IViewModel {
 	private readonly _onDidFocusStackFrame = new Emitter<{ stackFrame: IStackFrame | undefined, explicit: boolean }>();
 	private readonly _onDidSelectExpression = new Emitter<IExpression | undefined>();
 	private multiSessionView: boolean;
-	private expressionSelectedContextKey: IContextKey<boolean>;
-	private breakpointSelectedContextKey: IContextKey<boolean>;
-	private loadedScriptsSupportedContextKey: IContextKey<boolean>;
-	private stepBackSupportedContextKey: IContextKey<boolean>;
-	private focusedSessionIsAttach: IContextKey<boolean>;
-	private restartFrameSupportedContextKey: IContextKey<boolean>;
-	private jumpToCursorSupported: IContextKey<boolean>;
+	private expressionSelectedContextKey!: IContextKey<boolean>;
+	private breakpointSelectedContextKey!: IContextKey<boolean>;
+	private loadedScriptsSupportedContextKey!: IContextKey<boolean>;
+	private stepBackSupportedContextKey!: IContextKey<boolean>;
+	private focusedSessionIsAttach!: IContextKey<boolean>;
+	private restartFrameSupportedContextKey!: IContextKey<boolean>;
+	private stepIntoTargetsSupported!: IContextKey<boolean>;
+	private jumpToCursorSupported!: IContextKey<boolean>;
 
-	constructor(contextKeyService: IContextKeyService) {
+	constructor(private contextKeyService: IContextKeyService) {
 		this.multiSessionView = false;
-		this.expressionSelectedContextKey = CONTEXT_EXPRESSION_SELECTED.bindTo(contextKeyService);
-		this.breakpointSelectedContextKey = CONTEXT_BREAKPOINT_SELECTED.bindTo(contextKeyService);
-		this.loadedScriptsSupportedContextKey = CONTEXT_LOADED_SCRIPTS_SUPPORTED.bindTo(contextKeyService);
-		this.stepBackSupportedContextKey = CONTEXT_STEP_BACK_SUPPORTED.bindTo(contextKeyService);
-		this.focusedSessionIsAttach = CONTEXT_FOCUSED_SESSION_IS_ATTACH.bindTo(contextKeyService);
-		this.restartFrameSupportedContextKey = CONTEXT_RESTART_FRAME_SUPPORTED.bindTo(contextKeyService);
-		this.jumpToCursorSupported = CONTEXT_JUMP_TO_CURSOR_SUPPORTED.bindTo(contextKeyService);
+		contextKeyService.bufferChangeEvents(() => {
+			this.expressionSelectedContextKey = CONTEXT_EXPRESSION_SELECTED.bindTo(contextKeyService);
+			this.breakpointSelectedContextKey = CONTEXT_BREAKPOINT_SELECTED.bindTo(contextKeyService);
+			this.loadedScriptsSupportedContextKey = CONTEXT_LOADED_SCRIPTS_SUPPORTED.bindTo(contextKeyService);
+			this.stepBackSupportedContextKey = CONTEXT_STEP_BACK_SUPPORTED.bindTo(contextKeyService);
+			this.focusedSessionIsAttach = CONTEXT_FOCUSED_SESSION_IS_ATTACH.bindTo(contextKeyService);
+			this.restartFrameSupportedContextKey = CONTEXT_RESTART_FRAME_SUPPORTED.bindTo(contextKeyService);
+			this.stepIntoTargetsSupported = CONTEXT_STEP_INTO_TARGETS_SUPPORTED.bindTo(contextKeyService);
+			this.jumpToCursorSupported = CONTEXT_JUMP_TO_CURSOR_SUPPORTED.bindTo(contextKeyService);
+		});
 	}
 
 	getId(): string {
@@ -64,12 +68,15 @@ export class ViewModel implements IViewModel {
 		this._focusedThread = thread;
 		this._focusedSession = session;
 
-		this.loadedScriptsSupportedContextKey.set(session ? !!session.capabilities.supportsLoadedSourcesRequest : false);
-		this.stepBackSupportedContextKey.set(session ? !!session.capabilities.supportsStepBack : false);
-		this.restartFrameSupportedContextKey.set(session ? !!session.capabilities.supportsRestartFrame : false);
-		this.jumpToCursorSupported.set(session ? !!session.capabilities.supportsGotoTargetsRequest : false);
-		const attach = !!session && isSessionAttach(session);
-		this.focusedSessionIsAttach.set(attach);
+		this.contextKeyService.bufferChangeEvents(() => {
+			this.loadedScriptsSupportedContextKey.set(session ? !!session.capabilities.supportsLoadedSourcesRequest : false);
+			this.stepBackSupportedContextKey.set(session ? !!session.capabilities.supportsStepBack : false);
+			this.restartFrameSupportedContextKey.set(session ? !!session.capabilities.supportsRestartFrame : false);
+			this.stepIntoTargetsSupported.set(session ? !!session.capabilities.supportsStepInTargetsRequest : false);
+			this.jumpToCursorSupported.set(session ? !!session.capabilities.supportsGotoTargetsRequest : false);
+			const attach = !!session && isSessionAttach(session);
+			this.focusedSessionIsAttach.set(attach);
+		});
 
 		if (shouldEmitForSession) {
 			this._onDidFocusSession.fire(session);

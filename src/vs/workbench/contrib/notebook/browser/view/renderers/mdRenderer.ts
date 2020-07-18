@@ -12,6 +12,7 @@ import { tokenizeToString } from 'vs/editor/common/modes/textToHtmlTokenizer';
 import { Event, Emitter } from 'vs/base/common/event';
 import { IDisposable, DisposableStore, Disposable } from 'vs/base/common/lifecycle';
 import { TokenizationRegistry } from 'vs/editor/common/modes';
+import { URI } from 'vs/base/common/uri';
 
 export interface IMarkdownRenderResult extends IDisposable {
 	element: HTMLElement;
@@ -23,6 +24,7 @@ export class MarkdownRenderer extends Disposable {
 	readonly onDidUpdateRender: Event<void> = this._onDidUpdateRender.event;
 
 	constructor(
+		private readonly _baseUrl: URI | undefined,
 		@IModeService private readonly _modeService: IModeService,
 		@IOpenerService private readonly _openerService: IOpenerService
 	) {
@@ -31,6 +33,7 @@ export class MarkdownRenderer extends Disposable {
 
 	private getOptions(disposeables: DisposableStore): MarkdownRenderOptions {
 		return {
+			baseUrl: this._baseUrl,
 			codeBlockRenderer: (languageAlias, value) => {
 				// In markdown,
 				// it is possible that we stumble upon language aliases (e.g.js instead of javascript)

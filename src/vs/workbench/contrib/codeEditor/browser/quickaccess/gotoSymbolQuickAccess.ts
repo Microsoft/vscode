@@ -14,17 +14,18 @@ import { AbstractGotoSymbolQuickAccessProvider, IGotoSymbolQuickPickItem } from 
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { IWorkbenchEditorConfiguration, IEditorPane } from 'vs/workbench/common/editor';
 import { ITextModel } from 'vs/editor/common/model';
-import { DisposableStore, IDisposable, toDisposable } from 'vs/base/common/lifecycle';
+import { DisposableStore, IDisposable, toDisposable, Disposable } from 'vs/base/common/lifecycle';
 import { timeout } from 'vs/base/common/async';
 import { CancellationToken, CancellationTokenSource } from 'vs/base/common/cancellation';
-import { Action } from 'vs/base/common/actions';
-import { IWorkbenchActionRegistry, Extensions as ActionExtensions } from 'vs/workbench/common/actions';
-import { SyncActionDescriptor } from 'vs/platform/actions/common/actions';
+import { registerAction2, Action2 } from 'vs/platform/actions/common/actions';
 import { KeyMod, KeyCode } from 'vs/base/common/keyCodes';
 import { prepareQuery } from 'vs/base/common/fuzzyScorer';
 import { SymbolKind } from 'vs/editor/common/modes';
 import { fuzzyScore, createMatches } from 'vs/base/common/filters';
 import { onUnexpectedError } from 'vs/base/common/errors';
+import { ThemeIcon } from 'vs/platform/theme/common/themeService';
+import { ServicesAccessor } from 'vs/platform/instantiation/common/instantiation';
+import { KeybindingWeight } from 'vs/platform/keybinding/common/keybindingsRegistry';
 
 export class GotoSymbolQuickAccessProvider extends AbstractGotoSymbolQuickAccessProvider {
 
@@ -40,6 +41,13 @@ export class GotoSymbolQuickAccessProvider extends AbstractGotoSymbolQuickAccess
 	}
 
 	//#region DocumentSymbols (text editor required)
+
+	protected provideWithTextEditor(editor: IEditor, picker: IQuickPick<IGotoSymbolQuickPickItem>, token: CancellationToken): IDisposable {
+		if (this.canPickFromTableOfContents()) {
+			return this.doGetTableOfContentsPicks(picker);
+		}
+		return super.provideWithTextEditor(editor, picker, token);
+	}
 
 	private get configuration() {
 		const editorConfig = this.configurationService.getValue<IWorkbenchEditorConfiguration>().workbench.editor;
@@ -106,12 +114,21 @@ export class GotoSymbolQuickAccessProvider extends AbstractGotoSymbolQuickAccess
 	//#endregion
 
 	protected provideWithoutTextEditor(picker: IQuickPick<IGotoSymbolQuickPickItem>): IDisposable {
-		const pane = this.editorService.activeEditorPane;
-		if (!pane || !TableOfContentsProviderRegistry.has(pane.getId())) {
-			//
-			return super.provideWithoutTextEditor(picker);
+		if (this.canPickFromTableOfContents()) {
+			return this.doGetTableOfContentsPicks(picker);
 		}
+		return super.provideWithoutTextEditor(picker);
+	}
 
+	private canPickFromTableOfContents(): boolean {
+		return this.editorService.activeEditorPane ? TableOfContentsProviderRegistry.has(this.editorService.activeEditorPane.getId()) : false;
+	}
+
+	private doGetTableOfContentsPicks(picker: IQuickPick<IGotoSymbolQuickPickItem>): IDisposable {
+		const pane = this.editorService.activeEditorPane;
+		if (!pane) {
+			return Disposable.None;
+		}
 		const provider = TableOfContentsProviderRegistry.get(pane.getId())!;
 		const cts = new CancellationTokenSource();
 
@@ -120,7 +137,7 @@ export class GotoSymbolQuickAccessProvider extends AbstractGotoSymbolQuickAccess
 
 		picker.busy = true;
 
-		provider.provideTableOfContents(pane, cts.token).then(entries => {
+		provider.provideTableOfContents(pane, { disposables }, cts.token).then(entries => {
 
 			picker.busy = false;
 
@@ -133,7 +150,8 @@ export class GotoSymbolQuickAccessProvider extends AbstractGotoSymbolQuickAccess
 					kind: SymbolKind.File,
 					index: idx,
 					score: 0,
-					label: entry.label,
+					label: entry.icon ? `$(${entry.icon.id}) ${entry.label}` : entry.label,
+					ariaLabel: entry.detail ? `${entry.label}, ${entry.detail}` : entry.label,
 					detail: entry.detail,
 					description: entry.description,
 				};
@@ -142,7 +160,7 @@ export class GotoSymbolQuickAccessProvider extends AbstractGotoSymbolQuickAccess
 			disposables.add(picker.onDidAccept(() => {
 				picker.hide();
 				const [entry] = picker.selectedItems;
-				entries[entry.index]?.reveal();
+				entries[entry.index]?.pick();
 			}));
 
 			const updatePickerItems = () => {
@@ -172,17 +190,10 @@ export class GotoSymbolQuickAccessProvider extends AbstractGotoSymbolQuickAccess
 			updatePickerItems();
 			disposables.add(picker.onDidChangeValue(updatePickerItems));
 
-			let ignoreFirstActiveEvent = true;
 			disposables.add(picker.onDidChangeActive(() => {
 				const [entry] = picker.activeItems;
-
-				if (entry && entries[entry.index]) {
-					if (ignoreFirstActiveEvent) {
-						ignoreFirstActiveEvent = false;
-						return;
-					}
-
-					entries[entry.index]?.reveal();
+				if (entry) {
+					entries[entry.index]?.preview();
 				}
 			}));
 
@@ -206,40 +217,43 @@ Registry.as<IQuickAccessRegistry>(QuickaccessExtensions.Quickaccess).registerQui
 	]
 });
 
-export class GotoSymbolAction extends Action {
+registerAction2(class GotoSymbolAction extends Action2 {
 
-	static readonly ID = 'workbench.action.gotoSymbol';
-	static readonly LABEL = localize('gotoSymbol', "Go to Symbol in Editor...");
-
-	constructor(
-		id: string,
-		label: string,
-		@IQuickInputService private readonly quickInputService: IQuickInputService
-	) {
-		super(id, label);
+	constructor() {
+		super({
+			id: 'workbench.action.gotoSymbol',
+			title: {
+				value: localize('gotoSymbol', "Go to Symbol in Editor..."),
+				original: 'Go to Symbol in Editor...'
+			},
+			f1: true,
+			keybinding: {
+				when: undefined,
+				weight: KeybindingWeight.WorkbenchContrib,
+				primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KEY_O
+			}
+		});
 	}
 
-	async run(): Promise<void> {
-		this.quickInputService.quickAccess.show(GotoSymbolQuickAccessProvider.PREFIX);
+	run(accessor: ServicesAccessor) {
+		accessor.get(IQuickInputService).quickAccess.show(GotoSymbolQuickAccessProvider.PREFIX);
 	}
-}
-
-Registry.as<IWorkbenchActionRegistry>(ActionExtensions.WorkbenchActions).registerWorkbenchAction(SyncActionDescriptor.from(GotoSymbolAction, {
-	primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KEY_O
-}), 'Go to Symbol in Editor...');
-
+});
 
 //#region toc definition and logic
 
 export interface ITableOfContentsEntry {
+	icon?: ThemeIcon;
 	label: string;
 	detail?: string;
 	description?: string;
-	reveal(): any;
+	pick(): any;
+	preview(): any;
 }
 
 export interface ITableOfContentsProvider<T extends IEditorPane = IEditorPane> {
-	provideTableOfContents(editor: T, token: CancellationToken): Promise<ITableOfContentsEntry[] | undefined | null>;
+
+	provideTableOfContents(editor: T, context: { disposables: DisposableStore }, token: CancellationToken): Promise<ITableOfContentsEntry[] | undefined | null>;
 }
 
 class ProviderRegistry {

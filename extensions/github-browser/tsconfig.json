@@ -1,0 +1,14 @@
+{
+	"extends": "../shared.tsconfig.json",
+	"compilerOptions": {
+		"experimentalDecorators": true,
+		"lib": [
+			"es2018",
+			"dom"
+		],
+		"outDir": "./out"
+	},
+	"include": [
+		"src/**/*"
+	]
+}

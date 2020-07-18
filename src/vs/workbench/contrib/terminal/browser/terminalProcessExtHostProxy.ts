@@ -4,14 +4,14 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Event, Emitter } from 'vs/base/common/event';
-import { ITerminalProcessExtHostProxy, IShellLaunchConfig, ITerminalChildProcess, ITerminalConfigHelper, ITerminalDimensions } from 'vs/workbench/contrib/terminal/common/terminal';
+import { ITerminalProcessExtHostProxy, IShellLaunchConfig, ITerminalChildProcess, ITerminalConfigHelper, ITerminalDimensions, ITerminalLaunchError } from 'vs/workbench/contrib/terminal/common/terminal';
 import { Disposable } from 'vs/base/common/lifecycle';
 import { URI } from 'vs/base/common/uri';
 import { IRemoteAgentService } from 'vs/workbench/services/remote/common/remoteAgentService';
 import * as nls from 'vs/nls';
 import { ITerminalService } from 'vs/workbench/contrib/terminal/browser/terminal';
 
-let hasReceivedResponse: boolean = false;
+let hasReceivedResponseFromRemoteExtHost: boolean = false;
 
 export class TerminalProcessExtHostProxy extends Disposable implements ITerminalChildProcess, ITerminalProcessExtHostProxy {
 
@@ -28,6 +28,8 @@ export class TerminalProcessExtHostProxy extends Disposable implements ITerminal
 	private readonly _onProcessResolvedShellLaunchConfig = this._register(new Emitter<IShellLaunchConfig>());
 	public get onProcessResolvedShellLaunchConfig(): Event<IShellLaunchConfig> { return this._onProcessResolvedShellLaunchConfig.event; }
 
+	private readonly _onStart = this._register(new Emitter<void>());
+	public readonly onStart: Event<void> = this._onStart.event;
 	private readonly _onInput = this._register(new Emitter<string>());
 	public readonly onInput: Event<string> = this._onInput.event;
 	private readonly _onResize: Emitter<{ cols: number, rows: number }> = this._register(new Emitter<{ cols: number, rows: number }>());
@@ -47,31 +49,15 @@ export class TerminalProcessExtHostProxy extends Disposable implements ITerminal
 
 	constructor(
 		public terminalId: number,
-		shellLaunchConfig: IShellLaunchConfig,
-		activeWorkspaceRootUri: URI | undefined,
-		cols: number,
-		rows: number,
-		configHelper: ITerminalConfigHelper,
+		private _shellLaunchConfig: IShellLaunchConfig,
+		private _activeWorkspaceRootUri: URI | undefined,
+		private _cols: number,
+		private _rows: number,
+		private _configHelper: ITerminalConfigHelper,
 		@ITerminalService private readonly _terminalService: ITerminalService,
-		@IRemoteAgentService readonly remoteAgentService: IRemoteAgentService
+		@IRemoteAgentService private readonly _remoteAgentService: IRemoteAgentService
 	) {
 		super();
-
-		// Request a process if needed, if this is a virtual process this step can be skipped as
-		// there is no real "process" and we know it's ready on the ext host already.
-		if (shellLaunchConfig.isExtensionTerminal) {
-			this._terminalService.requestStartExtensionTerminal(this, cols, rows);
-		} else {
-			remoteAgentService.getEnvironment().then(env => {
-				if (!env) {
-					throw new Error('Could not fetch environment');
-				}
-				this._terminalService.requestSpawnExtHostProcess(this, shellLaunchConfig, activeWorkspaceRootUri, cols, rows, configHelper.checkWorkspaceShellPermissions(env.os));
-			});
-			if (!hasReceivedResponse) {
-				setTimeout(() => this._onProcessTitleChanged.fire(nls.localize('terminal.integrated.starting', "Starting...")), 0);
-			}
-		}
 	}
 
 	public emitData(data: string): void {
@@ -79,7 +65,7 @@ export class TerminalProcessExtHostProxy extends Disposable implements ITerminal
 	}
 
 	public emitTitle(title: string): void {
-		hasReceivedResponse = true;
+		hasReceivedResponseFromRemoteExtHost = true;
 		this._onProcessTitleChanged.fire(title);
 	}
 
@@ -116,6 +102,29 @@ export class TerminalProcessExtHostProxy extends Disposable implements ITerminal
 		while (this._pendingLatencyRequests.length > 0) {
 			this._pendingLatencyRequests.pop()!(latency);
 		}
+	}
+
+	public async start(): Promise<ITerminalLaunchError | undefined> {
+		// Request a process if needed, if this is a virtual process this step can be skipped as
+		// there is no real "process" and we know it's ready on the ext host already.
+		if (this._shellLaunchConfig.isExtensionTerminal) {
+			return this._terminalService.requestStartExtensionTerminal(this, this._cols, this._rows);
+		}
+
+		// Add a loading title if the extension host has not started yet as there could be a
+		// decent wait for the user
+		if (!hasReceivedResponseFromRemoteExtHost) {
+			setTimeout(() => this._onProcessTitleChanged.fire(nls.localize('terminal.integrated.starting', "Starting...")), 0);
+		}
+
+		// Fetch the environment to check shell permissions
+		const env = await this._remoteAgentService.getEnvironment();
+		if (!env) {
+			// Extension host processes are only allowed in remote extension hosts currently
+			throw new Error('Could not fetch remote environment');
+		}
+
+		return this._terminalService.requestSpawnExtHostProcess(this, this._shellLaunchConfig, this._activeWorkspaceRootUri, this._cols, this._rows, this._configHelper.checkWorkspaceShellPermissions(env.os));
 	}
 
 	public shutdown(immediate: boolean): void {

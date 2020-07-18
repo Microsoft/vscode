@@ -12,7 +12,8 @@
     "onLanguage:json",
     "onLanguage:jsonc"
   ],
-  "main": "./out/extension",
+  "main": "./out/configurationEditingMain",
+  "browser": "./dist/browser/configurationEditingMain",
   "scripts": {
     "compile": "gulp compile-extension:configuration-editing",
     "watch": "gulp watch-extension:configuration-editing"
@@ -115,6 +116,10 @@
       {
         "fileMatch": "/.devcontainer.json",
         "url": "./schemas/devContainer.schema.json"
+      },
+      {
+        "fileMatch": "%APP_SETTINGS_HOME%/globalStorage/ms-vscode-remote.remote-containers/nameConfigs/*.json",
+        "url": "./schemas/attachContainer.schema.json"
       },
       {
         "fileMatch": "%APP_SETTINGS_HOME%/globalStorage/ms-vscode-remote.remote-containers/imageConfigs/*.json",

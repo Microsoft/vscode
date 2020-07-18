@@ -34,7 +34,7 @@ The extension fetches data from https://registry.npmjs.org and https://registry.
 
 - `npm.autoDetect` - Enable detecting scripts as tasks, the default is `on`.
 - `npm.runSilent` - Run npm script with the `--silent` option, the default is `false`.
-- `npm.packageManager` - The package manager used to run the scripts: `npm` or `yarn`, the default is `npm`.
+- `npm.packageManager` - The package manager used to run the scripts: `npm`, `yarn` or `pnpm`, the default is `npm`.
 - `npm.exclude` - Glob patterns for folders that should be excluded from automatic script detection. The pattern is matched against the **absolute path** of the package.json. For example, to exclude all test folders use '&ast;&ast;/test/&ast;&ast;'.
 - `npm.enableScriptExplorer` - Enable an explorer view for npm scripts.
 - `npm.scriptExplorerAction` - The default click action: `open` or `run`, the default is `open`.

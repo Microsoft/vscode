@@ -136,4 +136,18 @@ suite('ContextKeyExpr', () => {
 		testNormalize('isLinux', isLinux ? 'true' : 'false');
 		testNormalize('isWindows', isWindows ? 'true' : 'false');
 	});
+
+	test('issue #101015: distribute OR', () => {
+		function t(expr1: string, expr2: string, expected: string | undefined): void {
+			const e1 = ContextKeyExpr.deserialize(expr1);
+			const e2 = ContextKeyExpr.deserialize(expr2);
+			const actual = ContextKeyExpr.and(e1, e2)?.serialize();
+			assert.strictEqual(actual, expected);
+		}
+		t('a', 'b', 'a && b');
+		t('a || b', 'c', 'a && c || b && c');
+		t('a || b', 'c || d', 'a && c || b && c || a && d || b && d');
+		t('a || b', 'c && d', 'a && c && d || b && c && d');
+		t('a || b', 'c && d || e', 'a && e || b && e || a && c && d || b && c && d');
+	});
 });

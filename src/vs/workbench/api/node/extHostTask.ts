@@ -53,7 +53,15 @@ export class ExtHostTask extends ExtHostTaskBase {
 		const tTask = (task as types.Task);
 		// We have a preserved ID. So the task didn't change.
 		if (tTask._id !== undefined) {
-			return this._proxy.$executeTask(TaskHandleDTO.from(tTask)).then(value => this.getTaskExecution(value, task));
+			// Always get the task execution first to prevent timing issues when retrieving it later
+			const handleDto = TaskHandleDTO.from(tTask);
+			const executionDTO = await this._proxy.$getTaskExecution(handleDto);
+			if (executionDTO.task === undefined) {
+				throw new Error('Task from execution DTO is undefined');
+			}
+			const execution = await this.getTaskExecution(executionDTO, task);
+			this._proxy.$executeTask(handleDto).catch(() => { /* The error here isn't actionable. */ });
+			return execution;
 		} else {
 			const dto = TaskDTO.from(task, extension);
 			if (dto === undefined) {
@@ -66,8 +74,10 @@ export class ExtHostTask extends ExtHostTaskBase {
 			if (CustomExecutionDTO.is(dto.execution)) {
 				await this.addCustomExecution(dto, task, false);
 			}
-
-			return this._proxy.$executeTask(dto).then(value => this.getTaskExecution(value, task));
+			// Always get the task execution first to prevent timing issues when retrieving it later
+			const execution = await this.getTaskExecution(await this._proxy.$getTaskExecution(dto), task);
+			this._proxy.$executeTask(dto).catch(() => { /* The error here isn't actionable. */ });
+			return execution;
 		}
 	}
 
@@ -184,5 +194,9 @@ export class ExtHostTask extends ExtHostTaskBase {
 
 	public async $jsonTasksSupported(): Promise<boolean> {
 		return true;
+	}
+
+	public async $findExecutable(command: string, cwd?: string, paths?: string[]): Promise<string> {
+		return win32.findExecutable(command, cwd, paths);
 	}
 }

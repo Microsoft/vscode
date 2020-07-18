@@ -12,7 +12,7 @@ export const IExtensionResourceLoaderService = createDecorator<IExtensionResourc
  * A service useful for reading resources from within extensions.
  */
 export interface IExtensionResourceLoaderService {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	/**
 	 * Read a certain resource within an extension.

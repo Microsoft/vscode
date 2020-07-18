@@ -4,7 +4,7 @@
 		"If you want to provide a fix or improvement, please create a pull request against the original repository.",
 		"Once accepted there, we are happy to receive an update request."
 	],
-	"version": "https://github.com/microsoft/vscode-markdown-tm-grammar/commit/7cf9aa7bb76c55428063383610edc0a631230d58",
+	"version": "https://github.com/microsoft/vscode-markdown-tm-grammar/commit/4be9cb335581f3559166c319607dac9100103083",
 	"name": "Markdown",
 	"scopeName": "text.html.markdown",
 	"patterns": [
@@ -1715,6 +1715,72 @@
 				}
 			]
 		},
+		"fenced_code_block_erlang": {
+			"begin": "(^|\\G)(\\s*)(`{3,}|~{3,})\\s*(?i:(erlang)((\\s+|:|\\{)[^`~]*)?$)",
+			"name": "markup.fenced_code.block.markdown",
+			"end": "(^|\\G)(\\2|\\s{0,3})(\\3)\\s*$",
+			"beginCaptures": {
+				"3": {
+					"name": "punctuation.definition.markdown"
+				},
+				"4": {
+					"name": "fenced_code.block.language.markdown"
+				},
+				"5": {
+					"name": "fenced_code.block.language.attributes.markdown"
+				}
+			},
+			"endCaptures": {
+				"3": {
+					"name": "punctuation.definition.markdown"
+				}
+			},
+			"patterns": [
+				{
+					"begin": "(^|\\G)(\\s*)(.*)",
+					"while": "(^|\\G)(?!\\s*([`~]{3,})\\s*$)",
+					"contentName": "meta.embedded.block.erlang",
+					"patterns": [
+						{
+							"include": "source.erlang"
+						}
+					]
+				}
+			]
+		},
+		"fenced_code_block_elixir": {
+			"begin": "(^|\\G)(\\s*)(`{3,}|~{3,})\\s*(?i:(elixir)((\\s+|:|\\{)[^`~]*)?$)",
+			"name": "markup.fenced_code.block.markdown",
+			"end": "(^|\\G)(\\2|\\s{0,3})(\\3)\\s*$",
+			"beginCaptures": {
+				"3": {
+					"name": "punctuation.definition.markdown"
+				},
+				"4": {
+					"name": "fenced_code.block.language.markdown"
+				},
+				"5": {
+					"name": "fenced_code.block.language.attributes.markdown"
+				}
+			},
+			"endCaptures": {
+				"3": {
+					"name": "punctuation.definition.markdown"
+				}
+			},
+			"patterns": [
+				{
+					"begin": "(^|\\G)(\\s*)(.*)",
+					"while": "(^|\\G)(?!\\s*([`~]{3,})\\s*$)",
+					"contentName": "meta.embedded.block.elixir",
+					"patterns": [
+						{
+							"include": "source.elixir"
+						}
+					]
+				}
+			]
+		},
 		"fenced_code_block": {
 			"patterns": [
 				{
@@ -1868,6 +1934,12 @@
 					"include": "#fenced_code_block_log"
 				},
 				{
+					"include": "#fenced_code_block_erlang"
+				},
+				{
+					"include": "#fenced_code_block_elixir"
+				},
+				{
 					"include": "#fenced_code_block_unknown"
 				}
 			]
@@ -1891,12 +1963,12 @@
 			"name": "markup.fenced_code.block.markdown"
 		},
 		"heading": {
-			"match": "(?:^|\\G)[ ]{0,3}((#{1,6})\\s+(?=[\\S[^#]]).*?\\s*(#{1,6})?)$\\n?",
+			"match": "(?:^|\\G)[ ]{0,3}(#{1,6}\\s+(.*?)(\\s+#{1,6})?\\s*)$",
 			"captures": {
 				"1": {
 					"patterns": [
 						{
-							"match": "(#{6})\\s+(?=[\\S[^#]])(.*?)\\s*(\\s+#+)?$\\n?",
+							"match": "(#{6})\\s+(.*?)(?:\\s+(#+))?\\s*$",
 							"name": "heading.6.markdown",
 							"captures": {
 								"1": {
@@ -1911,7 +1983,7 @@
 							}
 						},
 						{
-							"match": "(#{5})\\s+(?=[\\S[^#]])(.*?)\\s*(\\s+#+)?$\\n?",
+							"match": "(#{5})\\s+(.*?)(?:\\s+(#+))?\\s*$",
 							"name": "heading.5.markdown",
 							"captures": {
 								"1": {
@@ -1926,7 +1998,7 @@
 							}
 						},
 						{
-							"match": "(#{4})\\s+(?=[\\S[^#]])(.*?)\\s*(\\s+#+)?$\\n?",
+							"match": "(#{4})\\s+(.*?)(?:\\s+(#+))?\\s*$",
 							"name": "heading.4.markdown",
 							"captures": {
 								"1": {
@@ -1941,7 +2013,7 @@
 							}
 						},
 						{
-							"match": "(#{3})\\s+(?=[\\S[^#]])(.*?)\\s*(\\s+#+)?$\\n?",
+							"match": "(#{3})\\s+(.*?)(?:\\s+(#+))?\\s*$",
 							"name": "heading.3.markdown",
 							"captures": {
 								"1": {
@@ -1956,7 +2028,7 @@
 							}
 						},
 						{
-							"match": "(#{2})\\s+(?=[\\S[^#]])(.*?)\\s*(\\s+#+)?$\\n?",
+							"match": "(#{2})\\s+(.*?)(?:\\s+(#+))?\\s*$",
 							"name": "heading.2.markdown",
 							"captures": {
 								"1": {
@@ -1971,7 +2043,7 @@
 							}
 						},
 						{
-							"match": "(#{1})\\s+(?=[\\S[^#]])(.*?)\\s*(\\s+#+)?$\\n?",
+							"match": "(#{1})\\s+(.*?)(?:\\s+(#+))?\\s*$",
 							"name": "heading.1.markdown",
 							"captures": {
 								"1": {

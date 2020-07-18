@@ -637,16 +637,7 @@ export class ContextKeyNotRegexExpr implements IContextKeyExpression {
 export class ContextKeyAndExpr implements IContextKeyExpression {
 
 	public static create(_expr: ReadonlyArray<ContextKeyExpression | null | undefined>): ContextKeyExpression | undefined {
-		const expr = ContextKeyAndExpr._normalizeArr(_expr);
-		if (expr.length === 0) {
-			return undefined;
-		}
-
-		if (expr.length === 1) {
-			return expr[0];
-		}
-
-		return new ContextKeyAndExpr(expr);
+		return ContextKeyAndExpr._normalizeArr(_expr);
 	}
 
 	public readonly type = ContextKeyExprType.And;
@@ -697,7 +688,7 @@ export class ContextKeyAndExpr implements IContextKeyExpression {
 		return true;
 	}
 
-	private static _normalizeArr(arr: ReadonlyArray<ContextKeyExpression | null | undefined>): ContextKeyExpression[] {
+	private static _normalizeArr(arr: ReadonlyArray<ContextKeyExpression | null | undefined>): ContextKeyExpression | undefined {
 		const expr: ContextKeyExpression[] = [];
 		let hasTrue = false;
 
@@ -714,7 +705,7 @@ export class ContextKeyAndExpr implements IContextKeyExpression {
 
 			if (e.type === ContextKeyExprType.False) {
 				// anything && false ==> false
-				return [ContextKeyFalseExpr.INSTANCE];
+				return ContextKeyFalseExpr.INSTANCE;
 			}
 
 			if (e.type === ContextKeyExprType.And) {
@@ -722,21 +713,48 @@ export class ContextKeyAndExpr implements IContextKeyExpression {
 				continue;
 			}
 
-			if (e.type === ContextKeyExprType.Or) {
-				// Not allowed, because we don't have parens!
-				throw new Error(`It is not allowed to have an or expression here due to lack of parens! For example "a && (b||c)" is not supported, use "(a&&b) || (a&&c)" instead.`);
-			}
-
 			expr.push(e);
 		}
 
 		if (expr.length === 0 && hasTrue) {
-			return [ContextKeyTrueExpr.INSTANCE];
+			return ContextKeyTrueExpr.INSTANCE;
+		}
+
+		if (expr.length === 0) {
+			return undefined;
+		}
+
+		if (expr.length === 1) {
+			return expr[0];
 		}
 
 		expr.sort(cmp);
 
-		return expr;
+		// We must distribute any OR expression because we don't support parens
+		// OR extensions will be at the end (due to sorting rules)
+		while (expr.length > 1) {
+			const lastElement = expr[expr.length - 1];
+			if (lastElement.type !== ContextKeyExprType.Or) {
+				break;
+			}
+			// pop the last element
+			expr.pop();
+
+			// pop the second to last element
+			const secondToLastElement = expr.pop()!;
+
+			// distribute `lastElement` over `secondToLastElement`
+			const resultElement = ContextKeyOrExpr.create(
+				lastElement.expr.map(el => ContextKeyAndExpr.create([el, secondToLastElement]))
+			);
+
+			if (resultElement) {
+				expr.push(resultElement);
+				expr.sort(cmp);
+			}
+		}
+
+		return new ContextKeyAndExpr(expr);
 	}
 
 	public serialize(): string {
@@ -974,12 +992,11 @@ export interface IContextKeyChangeEvent {
 }
 
 export interface IContextKeyService {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 	dispose(): void;
 
 	onDidChangeContext: Event<IContextKeyChangeEvent>;
 	bufferChangeEvents(callback: Function): void;
-
 
 	createKey<T>(key: string, defaultValue: T | undefined): IContextKey<T>;
 	contextMatchesRules(rules: ContextKeyExpression | undefined): boolean;

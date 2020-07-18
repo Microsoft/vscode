@@ -13,8 +13,13 @@ import { IWorkspaceFolder, IWorkspace } from 'vs/platform/workspace/common/works
 import { Task, ContributedTask, CustomTask, TaskSet, TaskSorter, TaskEvent, TaskIdentifier, ConfiguringTask, TaskRunSource } from 'vs/workbench/contrib/tasks/common/tasks';
 import { ITaskSummary, TaskTerminateResponse, TaskSystemInfo } from 'vs/workbench/contrib/tasks/common/taskSystem';
 import { IStringDictionary } from 'vs/base/common/collections';
+import { RawContextKey } from 'vs/platform/contextkey/common/contextkey';
 
 export { ITaskSummary, Task, TaskTerminateResponse };
+
+export const CustomExecutionSupportedContext = new RawContextKey<boolean>('customExecutionSupported', true);
+export const ShellExecutionSupportedContext = new RawContextKey<boolean>('shellExecutionSupported', false);
+export const ProcessExecutionSupportedContext = new RawContextKey<boolean>('processExecutionSupported', false);
 
 export const ITaskService = createDecorator<ITaskService>('taskService');
 
@@ -53,7 +58,7 @@ export interface WorkspaceFolderTaskResult extends WorkspaceTaskResult {
 export const USER_TASKS_GROUP_KEY = 'settings';
 
 export interface ITaskService {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 	onDidStateChange: Event<TaskEvent>;
 	supportsMultipleTaskExecutions: boolean;
 
@@ -84,8 +89,8 @@ export interface ITaskService {
 
 	getTaskDescription(task: Task | ConfiguringTask): string | undefined;
 	canCustomize(task: ContributedTask | CustomTask): boolean;
-	customize(task: ContributedTask | CustomTask, properties?: {}, openConfig?: boolean): Promise<void>;
-	openConfig(task: CustomTask | ConfiguringTask | undefined): Promise<void>;
+	customize(task: ContributedTask | CustomTask | ConfiguringTask, properties?: {}, openConfig?: boolean): Promise<void>;
+	openConfig(task: CustomTask | ConfiguringTask | undefined): Promise<boolean>;
 
 	registerTaskProvider(taskProvider: ITaskProvider, type: string): IDisposable;
 

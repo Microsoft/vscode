@@ -6,7 +6,13 @@
 //@ts-check
 'use strict';
 
-const bootstrapWindow = require('../../../../bootstrap-window');
+/**
+ * @type {{ load: (modules: string[], resultCallback: (result, configuration: object) => any, options: object) => unknown }}
+ */
+const bootstrapWindow = (() => {
+	// @ts-ignore (defined in bootstrap-window.js)
+	return window.MonacoBootstrapWindow;
+})();
 
 bootstrapWindow.load(['vs/code/electron-browser/issue/issueReporterMain'], function (issueReporter, configuration) {
 	issueReporter.startup(configuration);

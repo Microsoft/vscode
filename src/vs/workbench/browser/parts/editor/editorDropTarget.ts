@@ -22,6 +22,9 @@ import { IFileDialogService } from 'vs/platform/dialogs/common/dialogs';
 import { URI } from 'vs/base/common/uri';
 import { joinPath } from 'vs/base/common/resources';
 import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
+import { assertIsDefined, assertAllDefined } from 'vs/base/common/types';
+import { INotificationService } from 'vs/platform/notification/common/notification';
+import { localize } from 'vs/nls';
 
 interface IDropOperation {
 	splitDirection?: GroupDirection;
@@ -31,8 +34,10 @@ class DropOverlay extends Themable {
 
 	private static readonly OVERLAY_ID = 'monaco-workbench-editor-drop-overlay';
 
-	private container!: HTMLElement;
-	private overlay!: HTMLElement;
+	private static readonly MAX_FILE_UPLOAD_SIZE = 100 * 1024 * 1024; // 100mb
+
+	private container: HTMLElement | undefined;
+	private overlay: HTMLElement | undefined;
 
 	private currentDropOperation: IDropOperation | undefined;
 	private _disposed: boolean | undefined;
@@ -48,7 +53,8 @@ class DropOverlay extends Themable {
 		@IThemeService themeService: IThemeService,
 		@IInstantiationService private instantiationService: IInstantiationService,
 		@IFileDialogService private readonly fileDialogService: IFileDialogService,
-		@IEditorService private readonly editorService: IEditorService
+		@IEditorService private readonly editorService: IEditorService,
+		@INotificationService private readonly notificationService: INotificationService
 	) {
 		super(themeService);
 
@@ -65,45 +71,46 @@ class DropOverlay extends Themable {
 		const overlayOffsetHeight = this.getOverlayOffsetHeight();
 
 		// Container
-		this.container = document.createElement('div');
-		this.container.id = DropOverlay.OVERLAY_ID;
-		this.container.style.top = `${overlayOffsetHeight}px`;
+		const container = this.container = document.createElement('div');
+		container.id = DropOverlay.OVERLAY_ID;
+		container.style.top = `${overlayOffsetHeight}px`;
 
 		// Parent
-		this.groupView.element.appendChild(this.container);
+		this.groupView.element.appendChild(container);
 		addClass(this.groupView.element, 'dragged-over');
 		this._register(toDisposable(() => {
-			this.groupView.element.removeChild(this.container);
+			this.groupView.element.removeChild(container);
 			removeClass(this.groupView.element, 'dragged-over');
 		}));
 
 		// Overlay
 		this.overlay = document.createElement('div');
 		addClass(this.overlay, 'editor-group-overlay-indicator');
-		this.container.appendChild(this.overlay);
+		container.appendChild(this.overlay);
 
 		// Overlay Event Handling
-		this.registerListeners();
+		this.registerListeners(container);
 
 		// Styles
 		this.updateStyles();
 	}
 
 	protected updateStyles(): void {
+		const overlay = assertIsDefined(this.overlay);
 
 		// Overlay drop background
-		this.overlay.style.backgroundColor = this.getColor(EDITOR_DRAG_AND_DROP_BACKGROUND) || '';
+		overlay.style.backgroundColor = this.getColor(EDITOR_DRAG_AND_DROP_BACKGROUND) || '';
 
 		// Overlay contrast border (if any)
 		const activeContrastBorderColor = this.getColor(activeContrastBorder);
-		this.overlay.style.outlineColor = activeContrastBorderColor || '';
-		this.overlay.style.outlineOffset = activeContrastBorderColor ? '-2px' : '';
-		this.overlay.style.outlineStyle = activeContrastBorderColor ? 'dashed' : '';
-		this.overlay.style.outlineWidth = activeContrastBorderColor ? '2px' : '';
+		overlay.style.outlineColor = activeContrastBorderColor || '';
+		overlay.style.outlineOffset = activeContrastBorderColor ? '-2px' : '';
+		overlay.style.outlineStyle = activeContrastBorderColor ? 'dashed' : '';
+		overlay.style.outlineWidth = activeContrastBorderColor ? '2px' : '';
 	}
 
-	private registerListeners(): void {
-		this._register(new DragAndDropObserver(this.container, {
+	private registerListeners(container: HTMLElement): void {
+		this._register(new DragAndDropObserver(container, {
 			onDragEnter: e => undefined,
 			onDragOver: e => {
 				const isDraggingGroup = this.groupTransfer.hasData(DraggedEditorGroupIdentifier.prototype);
@@ -161,7 +168,7 @@ class DropOverlay extends Themable {
 			}
 		}));
 
-		this._register(addDisposableListener(this.container, EventType.MOUSE_OVER, () => {
+		this._register(addDisposableListener(container, EventType.MOUSE_OVER, () => {
 			// Under some circumstances we have seen reports where the drop overlay is not being
 			// cleaned up and as such the editor area remains under the overlay so that you cannot
 			// type into the editor anymore. This seems related to using VMs and DND via host and
@@ -295,6 +302,14 @@ class DropOverlay extends Themable {
 				for (let i = 0; i < files.length; i++) {
 					const file = files.item(i);
 					if (file) {
+
+						// Skip for very large files because this operation is unbuffered
+						if (file.size > DropOverlay.MAX_FILE_UPLOAD_SIZE) {
+							this.notificationService.warn(localize('fileTooLarge', "File is too large to open as untitled editor. Please upload it first into the file explorer and then try again."));
+							continue;
+						}
+
+						// Read file fully and open as untitled editor
 						const reader = new FileReader();
 						reader.readAsArrayBuffer(file);
 						reader.onload = async event => {
@@ -456,30 +471,32 @@ class DropOverlay extends Themable {
 		}
 
 		// Make sure the overlay is visible now
-		this.overlay.style.opacity = '1';
+		const overlay = assertIsDefined(this.overlay);
+		overlay.style.opacity = '1';
 
 		// Enable transition after a timeout to prevent initial animation
-		setTimeout(() => addClass(this.overlay, 'overlay-move-transition'), 0);
+		setTimeout(() => addClass(overlay, 'overlay-move-transition'), 0);
 
 		// Remember as current split direction
 		this.currentDropOperation = { splitDirection };
 	}
 
 	private doPositionOverlay(options: { top: string, left: string, width: string, height: string }): void {
+		const [container, overlay] = assertAllDefined(this.container, this.overlay);
 
 		// Container
 		const offsetHeight = this.getOverlayOffsetHeight();
 		if (offsetHeight) {
-			this.container.style.height = `calc(100% - ${offsetHeight}px)`;
+			container.style.height = `calc(100% - ${offsetHeight}px)`;
 		} else {
-			this.container.style.height = '100%';
+			container.style.height = '100%';
 		}
 
 		// Overlay
-		this.overlay.style.top = options.top;
-		this.overlay.style.left = options.left;
-		this.overlay.style.width = options.width;
-		this.overlay.style.height = options.height;
+		overlay.style.top = options.top;
+		overlay.style.left = options.left;
+		overlay.style.width = options.width;
+		overlay.style.height = options.height;
 	}
 
 	private getOverlayOffsetHeight(): number {
@@ -491,11 +508,12 @@ class DropOverlay extends Themable {
 	}
 
 	private hideOverlay(): void {
+		const overlay = assertIsDefined(this.overlay);
 
 		// Reset overlay
 		this.doPositionOverlay({ top: '0', left: '0', width: '100%', height: '100%' });
-		this.overlay.style.opacity = '0';
-		removeClass(this.overlay, 'overlay-move-transition');
+		overlay.style.opacity = '0';
+		removeClass(overlay, 'overlay-move-transition');
 
 		// Reset current operation
 		this.currentDropOperation = undefined;
@@ -512,8 +530,12 @@ class DropOverlay extends Themable {
 	}
 }
 
-export interface EditorDropTargetDelegate {
-	groupContainsPredicate?(groupView: IEditorGroupView): boolean;
+export interface IEditorDropTargetDelegate {
+
+	/**
+	 * A helper to figure out if the drop target contains the provided group.
+	 */
+	containsGroup?(groupView: IEditorGroupView): boolean;
 }
 
 export class EditorDropTarget extends Themable {
@@ -528,7 +550,7 @@ export class EditorDropTarget extends Themable {
 	constructor(
 		private accessor: IEditorGroupsAccessor,
 		private container: HTMLElement,
-		private readonly delegate: EditorDropTargetDelegate,
+		private readonly delegate: IEditorDropTargetDelegate,
 		@IThemeService themeService: IThemeService,
 		@IInstantiationService private readonly instantiationService: IInstantiationService
 	) {
@@ -602,7 +624,8 @@ export class EditorDropTarget extends Themable {
 
 	private findTargetGroupView(child: HTMLElement): IEditorGroupView | undefined {
 		const groups = this.accessor.groups;
-		return groups.find(groupView => isAncestor(child, groupView.element) || this.delegate.groupContainsPredicate?.(groupView));
+
+		return groups.find(groupView => isAncestor(child, groupView.element) || this.delegate.containsGroup?.(groupView));
 	}
 
 	private updateContainer(isDraggedOver: boolean): void {

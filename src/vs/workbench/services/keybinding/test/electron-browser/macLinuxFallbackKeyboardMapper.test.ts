@@ -107,9 +107,9 @@ suite('keyboardMapper - MAC fallback', () => {
 			},
 			{
 				label: '⌘',
-				ariaLabel: 'Command+',
+				ariaLabel: 'Command',
 				electronAccelerator: null,
-				userSettingsLabel: 'cmd+',
+				userSettingsLabel: 'cmd',
 				isWYSIWYG: true,
 				isChord: false,
 				dispatchParts: [null],
@@ -228,10 +228,10 @@ suite('keyboardMapper - LINUX fallback', () => {
 				code: null!
 			},
 			{
-				label: 'Ctrl+',
-				ariaLabel: 'Control+',
+				label: 'Ctrl',
+				ariaLabel: 'Control',
 				electronAccelerator: null,
-				userSettingsLabel: 'ctrl+',
+				userSettingsLabel: 'ctrl',
 				isWYSIWYG: true,
 				isChord: false,
 				dispatchParts: [null],

@@ -14,7 +14,7 @@ import { IKeybindingService } from 'vs/platform/keybinding/common/keybinding';
 import { Disposable } from 'vs/base/common/lifecycle';
 
 export class ContextMenuService extends Disposable implements IContextMenuService {
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private _onDidContextMenu = this._register(new Emitter<void>());
 	readonly onDidContextMenu: Event<void> = this._onDidContextMenu.event;

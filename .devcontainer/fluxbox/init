@@ -1,0 +1,9 @@
+session.menuFile:	~/.fluxbox/menu
+session.keyFile: ~/.fluxbox/keys
+session.styleFile: /usr/share/fluxbox/styles//Squared_for_Debian
+session.configVersion:	13
+session.screen0.workspaces: 1
+session.screen0.workspacewarping: false
+session.screen0.toolbar.widthPercent: 100
+session.screen0.strftimeFormat: %d %b, %a %02k:%M:%S
+session.screen0.toolbar.tools: prevworkspace, workspacename, nextworkspace, clock, prevwindow, nextwindow, iconbar, systemtray

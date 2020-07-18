@@ -1,0 +1,23 @@
+name: "Rich Navigation Indexing"
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+jobs:
+  richnav:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js
+      uses: actions/setup-node@v1
+    - name: Install dependencies
+      run: yarn --frozen-lockfile
+      env:
+        CHILD_CONCURRENCY: 1
+    - uses: microsoft/RichCodeNavIndexer@master
+      with:
+        languages: typescript
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+      continue-on-error: true

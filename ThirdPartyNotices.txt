@@ -23,7 +23,7 @@ This project incorporates components from the projects listed below. The origina
 16.	fadeevab/make.tmbundle (https://github.com/fadeevab/make.tmbundle)
 17.	freebroccolo/atom-language-swift (https://github.com/freebroccolo/atom-language-swift)
 18.	HTML 5.1 W3C Working Draft version 08 October 2015 (http://www.w3.org/TR/2015/WD-html51-20151008/)
-19.	Ikuyadeu/vscode-R version 1.1.8 (https://github.com/Ikuyadeu/vscode-R)
+19.	Ikuyadeu/vscode-R version 1.3.0 (https://github.com/Ikuyadeu/vscode-R)
 20.	insane version 2.6.2 (https://github.com/bevacqua/insane)
 21.	Ionic documentation version 1.2.4 (https://github.com/ionic-team/ionic-site)
 22.	ionide/ionide-fsgrammar (https://github.com/ionide/ionide-fsgrammar)

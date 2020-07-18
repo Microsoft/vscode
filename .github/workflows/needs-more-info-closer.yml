@@ -3,6 +3,7 @@ on:
   schedule:
     - cron: 20 11 * * * # 4:20am Redmond
   repository_dispatch:
+    types: [trigger-needs-more-info]
 
 jobs:
   main:
@@ -13,15 +14,16 @@ jobs:
         with:
           repository: 'microsoft/vscode-github-triage-actions'
           path: ./actions
-          ref: v15
+          ref: v31
       - name: Install Actions
         run: npm install --production --prefix ./actions
       - name: Run Needs More Info Closer
         uses: ./actions/needs-more-info-closer
         with:
+          appInsightsKey: ${{secrets.TRIAGE_ACTIONS_APP_INSIGHTS}}
           label: needs more info
           closeDays: 7
           additionalTeam:	"cleidigh|usernamehw|gjsjohnmurray|IllusionMH"
           closeComment: "This issue has been closed automatically because it needs more information and has not had recent activity. See also our [issue reporting](https://aka.ms/vscodeissuereporting) guidelines.\n\nHappy Coding!"
-          pingDays: 120
+          pingDays: 100
           pingComment: "Hey @${assignee}, this issue might need further attention.\n\n@${author}, you can help us out by closing this issue if the problem no longer exists, or adding more information."

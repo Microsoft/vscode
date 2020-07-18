@@ -10,7 +10,7 @@ import { localize } from 'vs/nls';
 import Severity from 'vs/base/common/severity';
 
 export interface IMarkerService {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	getStatistics(): MarkerStatistics;
 

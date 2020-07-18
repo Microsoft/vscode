@@ -75,7 +75,10 @@ export class TasksQuickAccessProvider extends PickerQuickAccessProvider<IPickerQ
 			quickAccessEntry.accept = async () => {
 				if (isString(task)) {
 					// switch to quick pick and show second level
-					taskQuickPick.show(localize('TaskService.pickRunTask', 'Select the task to run'), undefined, task);
+					const showResult = await taskQuickPick.show(localize('TaskService.pickRunTask', 'Select the task to run'), undefined, task);
+					if (showResult) {
+						this.taskService.run(showResult, { attachProblemMatcher: true });
+					}
 				} else {
 					this.taskService.run(await this.toTask(task), { attachProblemMatcher: true });
 				}

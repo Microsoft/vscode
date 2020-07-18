@@ -16,13 +16,12 @@ const fs = require('fs');
 const os = require('os');
 const bootstrap = require('./bootstrap');
 const paths = require('./paths');
-// @ts-ignore
+/** @type {any} */
 const product = require('../product.json');
-// @ts-ignore
 const { app, protocol } = require('electron');
 
 // Enable portable support
-const portable = bootstrap.configurePortable();
+const portable = bootstrap.configurePortable(product);
 
 // Enable ASAR support
 bootstrap.enableASARSupport();
@@ -42,6 +41,11 @@ let crashReporterDirectory = args['crash-reporter-directory'];
 if (crashReporterDirectory) {
 	crashReporterDirectory = path.normalize(crashReporterDirectory);
 
+	if (!path.isAbsolute(crashReporterDirectory)) {
+		console.error(`The path '${crashReporterDirectory}' specified for --crash-reporter-directory must be absolute.`);
+		app.exit(1);
+	}
+
 	if (!fs.existsSync(crashReporterDirectory)) {
 		try {
 			fs.mkdirSync(crashReporterDirectory);
@@ -58,9 +62,11 @@ if (crashReporterDirectory) {
 
 	// Start crash reporter
 	const { crashReporter } = require('electron');
+	const productName = (product.crashReporter && product.crashReporter.productName) || product.nameShort;
+	const companyName = (product.crashReporter && product.crashReporter.companyName) || 'Microsoft';
 	crashReporter.start({
-		companyName: 'Microsoft',
-		productName: product.nameShort,
+		companyName: companyName,
+		productName: process.env['VSCODE_DEV'] ? `${productName} Dev` : productName,
 		submitURL: '',
 		uploadToServer: false
 	});
@@ -79,7 +85,23 @@ setCurrentWorkingDirectory();
 
 // Register custom schemes with privileges
 protocol.registerSchemesAsPrivileged([
-	{ scheme: 'vscode-resource', privileges: { secure: true, supportFetchAPI: true, corsEnabled: true } }
+	{
+		scheme: 'vscode-webview',
+		privileges: {
+			standard: true,
+			secure: true,
+			supportFetchAPI: true,
+			corsEnabled: true,
+		}
+	}, {
+		scheme: 'vscode-webview-resource',
+		privileges: {
+			secure: true,
+			standard: true,
+			supportFetchAPI: true,
+			corsEnabled: true,
+		}
+	},
 ]);
 
 // Global app listeners
@@ -114,7 +136,6 @@ if (locale) {
 // Load our code once ready
 app.once('ready', function () {
 	if (args['trace']) {
-		// @ts-ignore
 		const contentTracing = require('electron').contentTracing;
 
 		const traceOptions = {
@@ -178,33 +199,51 @@ function configureCommandlineSwitchesSync(cliArgs) {
 	];
 
 	if (process.platform === 'linux') {
+
+		// Force enable screen readers on Linux via this flag
 		SUPPORTED_ELECTRON_SWITCHES.push('force-renderer-accessibility');
 	}
+
+	const SUPPORTED_MAIN_PROCESS_SWITCHES = [
+
+		// Persistently enable proposed api via argv.json: https://github.com/microsoft/vscode/issues/99775
+		'enable-proposed-api'
+	];
 
 	// Read argv config
 	const argvConfig = readArgvConfigSync();
 
-	// Append each flag to Electron
 	Object.keys(argvConfig).forEach(argvKey => {
-		if (SUPPORTED_ELECTRON_SWITCHES.indexOf(argvKey) === -1) {
-			return; // unsupported argv key
-		}
-
 		const argvValue = argvConfig[argvKey];
 
-		// Color profile
-		if (argvKey === 'force-color-profile') {
-			if (argvValue) {
-				app.commandLine.appendSwitch(argvKey, argvValue);
+		// Append Electron flags to Electron
+		if (SUPPORTED_ELECTRON_SWITCHES.indexOf(argvKey) !== -1) {
+
+			// Color profile
+			if (argvKey === 'force-color-profile') {
+				if (argvValue) {
+					app.commandLine.appendSwitch(argvKey, argvValue);
+				}
+			}
+
+			// Others
+			else if (argvValue === true || argvValue === 'true') {
+				if (argvKey === 'disable-hardware-acceleration') {
+					app.disableHardwareAcceleration(); // needs to be called explicitly
+				} else {
+					app.commandLine.appendSwitch(argvKey);
+				}
 			}
 		}
 
-		// Others
-		else if (argvValue === true || argvValue === 'true') {
-			if (argvKey === 'disable-hardware-acceleration') {
-				app.disableHardwareAcceleration(); // needs to be called explicitly
-			} else {
-				app.commandLine.appendSwitch(argvKey);
+		// Append main process flags to process.argv
+		else if (SUPPORTED_MAIN_PROCESS_SWITCHES.indexOf(argvKey) !== -1) {
+			if (argvKey === 'enable-proposed-api') {
+				if (Array.isArray(argvValue)) {
+					argvValue.forEach(id => id && typeof id === 'string' && process.argv.push('--enable-proposed-api', id));
+				} else {
+					console.error(`Unexpected value for \`enable-proposed-api\` in argv.json. Expected array of extension ids.`);
+				}
 			}
 		}
 	});
@@ -431,7 +470,7 @@ function getNodeCachedDir() {
 
 		async ensureExists() {
 			try {
-				await bootstrap.mkdirp(this.value);
+				await mkdirp(this.value);
 
 				return this.value;
 			} catch (error) {
@@ -460,7 +499,20 @@ function getNodeCachedDir() {
 	};
 }
 
+/**
+ * @param {string} dir
+ * @returns {Promise<string>}
+ */
+function mkdirp(dir) {
+	const fs = require('fs');
+
+	return new Promise((resolve, reject) => {
+		fs.mkdir(dir, { recursive: true }, err => (err && err.code !== 'EEXIST') ? reject(err) : resolve(dir));
+	});
+}
+
 //#region NLS Support
+
 /**
  * Resolve the NLS configuration
  *
@@ -556,4 +608,5 @@ function getLegacyUserDefinedLocaleSync(localeConfigPath) {
 		// ignore
 	}
 }
+
 //#endregion

@@ -8,9 +8,12 @@ import { Disposable } from 'vs/base/common/lifecycle';
 import { URI } from 'vs/base/common/uri';
 import * as nls from 'vs/nls';
 import { IExtensionDescription } from 'vs/platform/extensions/common/extensions';
-import { CustomEditorInfo, CustomEditorPriority } from 'vs/workbench/contrib/customEditor/common/customEditor';
+import { IStorageService, StorageScope } from 'vs/platform/storage/common/storage';
+import { Memento } from 'vs/workbench/common/memento';
+import { CustomEditorDescriptor, CustomEditorInfo, CustomEditorPriority } from 'vs/workbench/contrib/customEditor/common/customEditor';
 import { customEditorsExtensionPoint, ICustomEditorsExtensionPoint } from 'vs/workbench/contrib/customEditor/common/extensionPoint';
-import { DEFAULT_EDITOR_ID } from 'vs/workbench/contrib/files/common/files';
+import { IExtensionPointUser } from 'vs/workbench/services/extensions/common/extensionsRegistry';
+import { DEFAULT_EDITOR_ID } from 'vs/workbench/services/editor/common/editorOpenWith';
 
 const builtinProviderDisplayName = nls.localize('builtinProviderDisplayName', "Built-in");
 
@@ -26,31 +29,51 @@ export const defaultCustomEditor = new CustomEditorInfo({
 
 export class ContributedCustomEditors extends Disposable {
 
-	private readonly _editors = new Map<string, CustomEditorInfo>();
+	private static readonly CUSTOM_EDITORS_STORAGE_ID = 'customEditors';
+	private static readonly CUSTOM_EDITORS_ENTRY_ID = 'editors';
 
-	constructor() {
+	private readonly _editors = new Map<string, CustomEditorInfo>();
+	private readonly _memento: Memento;
+
+	constructor(storageService: IStorageService) {
 		super();
 
-		customEditorsExtensionPoint.setHandler(extensions => {
-			this._editors.clear();
+		this._memento = new Memento(ContributedCustomEditors.CUSTOM_EDITORS_STORAGE_ID, storageService);
 
-			for (const extension of extensions) {
-				for (const webviewEditorContribution of extension.value) {
-					this.add(new CustomEditorInfo({
-						id: webviewEditorContribution.viewType,
-						displayName: webviewEditorContribution.displayName,
-						providerDisplayName: extension.description.isBuiltin ? builtinProviderDisplayName : extension.description.displayName || extension.description.identifier.value,
-						selector: webviewEditorContribution.selector || [],
-						priority: getPriorityFromContribution(webviewEditorContribution, extension.description),
-					}));
-				}
-			}
-			this._onChange.fire();
+		const mementoObject = this._memento.getMemento(StorageScope.GLOBAL);
+		for (const info of (mementoObject[ContributedCustomEditors.CUSTOM_EDITORS_ENTRY_ID] || []) as CustomEditorDescriptor[]) {
+			this.add(new CustomEditorInfo(info));
+		}
+
+		customEditorsExtensionPoint.setHandler(extensions => {
+			this.update(extensions);
 		});
 	}
 
 	private readonly _onChange = this._register(new Emitter<void>());
 	public readonly onChange = this._onChange.event;
+
+	private update(extensions: readonly IExtensionPointUser<ICustomEditorsExtensionPoint[]>[]) {
+		this._editors.clear();
+
+		for (const extension of extensions) {
+			for (const webviewEditorContribution of extension.value) {
+				this.add(new CustomEditorInfo({
+					id: webviewEditorContribution.viewType,
+					displayName: webviewEditorContribution.displayName,
+					providerDisplayName: extension.description.isBuiltin ? builtinProviderDisplayName : extension.description.displayName || extension.description.identifier.value,
+					selector: webviewEditorContribution.selector || [],
+					priority: getPriorityFromContribution(webviewEditorContribution, extension.description),
+				}));
+			}
+		}
+
+		const mementoObject = this._memento.getMemento(StorageScope.GLOBAL);
+		mementoObject[ContributedCustomEditors.CUSTOM_EDITORS_ENTRY_ID] = Array.from(this._editors.values());
+		this._memento.saveMemento();
+
+		this._onChange.fire();
+	}
 
 	public [Symbol.iterator](): Iterator<CustomEditorInfo> {
 		return this._editors.values();

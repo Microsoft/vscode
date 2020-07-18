@@ -3,12 +3,8 @@
 	"tasks": [
 		{
 			"type": "npm",
-			"script": "watchd",
-			"label": "Build VS Code",
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			},
+			"script": "watch-clientd",
+			"label": "Build VS Code Core",
 			"isBackground": true,
 			"presentation": {
 				"reveal": "never"
@@ -33,11 +29,103 @@
 		},
 		{
 			"type": "npm",
-			"script": "kill-watchd",
-			"label": "Kill Build VS Code",
+			"script": "watch-extensionsd",
+			"label": "Build VS Code Extensions",
+			"isBackground": true,
+			"presentation": {
+				"reveal": "never"
+			},
+			"problemMatcher": {
+				"owner": "typescript",
+				"applyTo": "closedDocuments",
+				"fileLocation": [
+					"absolute"
+				],
+				"pattern": {
+					"regexp": "Error: ([^(]+)\\((\\d+|\\d+,\\d+|\\d+,\\d+,\\d+,\\d+)\\): (.*)$",
+					"file": 1,
+					"location": 2,
+					"message": 3
+				},
+				"background": {
+					"beginsPattern": "Starting compilation",
+					"endsPattern": "Finished compilation"
+				}
+			}
+		},
+		{
+			"label": "Build VS Code",
+			"dependsOn": [
+				"Build VS Code Core",
+				"Build VS Code Extensions"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
+		{
+			"type": "npm",
+			"script": "kill-watch-clientd",
+			"label": "Kill Build VS Code Core",
 			"group": "build",
 			"presentation": {
 				"reveal": "never"
+			},
+			"problemMatcher": "$tsc"
+		},
+		{
+			"type": "npm",
+			"script": "kill-watch-extensionsd",
+			"label": "Kill Build VS Code Extensions",
+			"group": "build",
+			"presentation": {
+				"reveal": "never"
+			},
+			"problemMatcher": "$tsc"
+		},
+		{
+			"label": "Kill Build VS Code",
+			"dependsOn": [
+				"Kill Build VS Code Core",
+				"Kill Build VS Code Extensions"
+			],
+			"group": "build"
+		},
+		{
+			"type": "npm",
+			"script": "watch-webd",
+			"label": "Build Web Extensions",
+			"group": "build",
+			"isBackground": true,
+			"presentation": {
+				"reveal": "never"
+			},
+			"problemMatcher": {
+				"owner": "typescript",
+				"applyTo": "closedDocuments",
+				"fileLocation": [
+					"absolute"
+				],
+				"pattern": {
+					"regexp": "Error: ([^(]+)\\((\\d+|\\d+,\\d+|\\d+,\\d+,\\d+,\\d+)\\): (.*)$",
+					"file": 1,
+					"location": 2,
+					"message": 3
+				},
+				"background": {
+					"beginsPattern": "Starting compilation",
+					"endsPattern": "Finished compilation"
+				}
+			}
+		},
+		{
+			"type": "npm",
+			"script": "kill-watch-webd",
+			"label": "Kill Build Web Extensions",
+			"group": "build",
+			"presentation": {
+				"reveal": "never",
 			},
 			"problemMatcher": "$tsc"
 		},
@@ -75,7 +163,7 @@
 		},
 		{
 			"type": "shell",
-			"command": "yarn web -- --no-launch",
+			"command": "yarn web --no-launch",
 			"label": "Run web",
 			"isBackground": true,
 			"problemMatcher": {

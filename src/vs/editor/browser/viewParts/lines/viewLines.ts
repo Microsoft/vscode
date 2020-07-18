@@ -22,6 +22,7 @@ import { ViewportData } from 'vs/editor/common/viewLayout/viewLinesViewportData'
 import { Viewport } from 'vs/editor/common/viewModel/viewModel';
 import { EditorOption } from 'vs/editor/common/config/editorOptions';
 import { Constants } from 'vs/base/common/uint';
+import { MOUSE_CURSOR_TEXT_CSS_CLASS_NAME } from 'vs/base/browser/ui/mouseCursor/mouseCursor';
 
 class LastRenderedData {
 
@@ -134,7 +135,7 @@ export class ViewLines extends ViewPart implements IVisibleLinesHost<ViewLine>, 
 		this._viewLineOptions = new ViewLineOptions(conf, this._context.theme.type);
 
 		PartFingerprints.write(this.domNode, PartFingerprint.ViewLines);
-		this.domNode.setClassName('view-lines');
+		this.domNode.setClassName(`view-lines ${MOUSE_CURSOR_TEXT_CSS_CLASS_NAME}`);
 		Configuration.applyFontInfo(this.domNode, fontInfo);
 
 		// --- width & height
@@ -280,11 +281,8 @@ export class ViewLines extends ViewPart implements IVisibleLinesHost<ViewLine>, 
 		}
 
 		const scrollTopDelta = Math.abs(this._context.viewLayout.getCurrentScrollTop() - newScrollPosition.scrollTop);
-		if (e.scrollType === ScrollType.Smooth && scrollTopDelta > this._lineHeight) {
-			this._context.viewLayout.setScrollPositionSmooth(newScrollPosition);
-		} else {
-			this._context.viewLayout.setScrollPositionNow(newScrollPosition);
-		}
+		const scrollType = (scrollTopDelta <= this._lineHeight ? ScrollType.Immediate : e.scrollType);
+		this._context.model.setScrollPosition(newScrollPosition, scrollType);
 
 		return true;
 	}
@@ -309,7 +307,7 @@ export class ViewLines extends ViewPart implements IVisibleLinesHost<ViewLine>, 
 		return this._visibleLines.onTokensChanged(e);
 	}
 	public onZonesChanged(e: viewEvents.ViewZonesChangedEvent): boolean {
-		this._context.viewLayout.onMaxLineWidthChanged(this._maxLineWidth);
+		this._context.model.setMaxLineWidth(this._maxLineWidth);
 		return this._visibleLines.onZonesChanged(e);
 	}
 	public onThemeChanged(e: viewEvents.ViewThemeChangedEvent): boolean {
@@ -589,15 +587,9 @@ export class ViewLines extends ViewPart implements IVisibleLinesHost<ViewLine>, 
 						this._ensureMaxLineWidth(newScrollLeft.maxHorizontalOffset);
 					}
 					// set `scrollLeft`
-					if (horizontalRevealRequest.scrollType === ScrollType.Smooth) {
-						this._context.viewLayout.setScrollPositionSmooth({
-							scrollLeft: newScrollLeft.scrollLeft
-						});
-					} else {
-						this._context.viewLayout.setScrollPositionNow({
-							scrollLeft: newScrollLeft.scrollLeft
-						});
-					}
+					this._context.model.setScrollPosition({
+						scrollLeft: newScrollLeft.scrollLeft
+					}, horizontalRevealRequest.scrollType);
 				}
 			}
 		}
@@ -634,11 +626,11 @@ export class ViewLines extends ViewPart implements IVisibleLinesHost<ViewLine>, 
 		const iLineWidth = Math.ceil(lineWidth);
 		if (this._maxLineWidth < iLineWidth) {
 			this._maxLineWidth = iLineWidth;
-			this._context.viewLayout.onMaxLineWidthChanged(this._maxLineWidth);
+			this._context.model.setMaxLineWidth(this._maxLineWidth);
 		}
 	}
 
-	private _computeScrollTopToRevealRange(viewport: Viewport, source: string, range: Range | null, selections: Selection[] | null, verticalType: viewEvents.VerticalRevealType): number {
+	private _computeScrollTopToRevealRange(viewport: Viewport, source: string | null | undefined, range: Range | null, selections: Selection[] | null, verticalType: viewEvents.VerticalRevealType): number {
 		const viewportStartY = viewport.top;
 		const viewportHeight = viewport.height;
 		const viewportEndY = viewportStartY + viewportHeight;

@@ -9,10 +9,10 @@ import { MainContext, ExtHostDecorationsShape, MainThreadDecorationsShape, Decor
 import { Disposable, Decoration } from 'vs/workbench/api/common/extHostTypes';
 import { CancellationToken } from 'vs/base/common/cancellation';
 import { ExtensionIdentifier } from 'vs/platform/extensions/common/extensions';
-import { asArray } from 'vs/base/common/arrays';
 import { createDecorator } from 'vs/platform/instantiation/common/instantiation';
 import { IExtHostRpcService } from 'vs/workbench/api/common/extHostRpcService';
 import { ILogService } from 'vs/platform/log/common/log';
+import { asArray } from 'vs/base/common/arrays';
 
 interface ProviderData {
 	provider: vscode.DecorationProvider;
@@ -40,7 +40,9 @@ export class ExtHostDecorations implements IExtHostDecorations {
 		this._proxy.$registerDecorationProvider(handle, extensionId.value);
 
 		const listener = provider.onDidChangeDecorations(e => {
-			this._proxy.$onDidChange(handle, !e ? null : asArray(e));
+			this._proxy.$onDidChange(handle, !e || (Array.isArray(e) && e.length > 250)
+				? null
+				: asArray(e));
 		});
 
 		return new Disposable(() => {
@@ -50,17 +52,20 @@ export class ExtHostDecorations implements IExtHostDecorations {
 		});
 	}
 
-	$provideDecorations(requests: DecorationRequest[], token: CancellationToken): Promise<DecorationReply> {
+	async $provideDecorations(handle: number, requests: DecorationRequest[], token: CancellationToken): Promise<DecorationReply> {
+
+		if (!this._provider.has(handle)) {
+			// might have been unregistered in the meantime
+			return Object.create(null);
+		}
+
 		const result: DecorationReply = Object.create(null);
-		return Promise.all(requests.map(request => {
-			const { handle, uri, id } = request;
-			const entry = this._provider.get(handle);
-			if (!entry) {
-				// might have been unregistered in the meantime
-				return undefined;
-			}
-			const { provider, extensionId } = entry;
-			return Promise.resolve(provider.provideDecoration(URI.revive(uri), token)).then(data => {
+		const { provider, extensionId } = this._provider.get(handle)!;
+
+		await Promise.all(requests.map(async request => {
+			try {
+				const { uri, id } = request;
+				const data = await Promise.resolve(provider.provideDecoration(URI.revive(uri), token));
 				if (!data) {
 					return;
 				}
@@ -70,13 +75,12 @@ export class ExtHostDecorations implements IExtHostDecorations {
 				} catch (e) {
 					this._logService.warn(`INVALID decoration from extension '${extensionId.value}': ${e}`);
 				}
-			}, err => {
+			} catch (err) {
 				this._logService.error(err);
-			});
+			}
+		}));
 
-		})).then(() => {
-			return result;
-		});
+		return result;
 	}
 }
 

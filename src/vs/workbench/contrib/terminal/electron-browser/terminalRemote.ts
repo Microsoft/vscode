@@ -29,7 +29,7 @@ export class CreateNewLocalTerminalAction extends Action {
 		super(id, label);
 	}
 
-	public run(event?: any): Promise<any> {
+	public run(): Promise<any> {
 		const instance = this.terminalService.createTerminal({ cwd: URI.file(homedir()) });
 		if (!instance) {
 			return Promise.resolve(undefined);

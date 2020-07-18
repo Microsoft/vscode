@@ -36,7 +36,7 @@ export interface NodeRequestOptions extends IRequestOptions {
  */
 export class RequestService extends Disposable implements IRequestService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private proxyUrl?: string;
 	private strictSSL: boolean | undefined;
@@ -112,7 +112,7 @@ export class RequestService extends Disposable implements IRequestService {
 						followRedirects: followRedirects - 1
 					}), token).then(c, e);
 				} else {
-					let stream: streams.ReadableStream<Uint8Array> = res;
+					let stream: streams.ReadableStreamEvents<Uint8Array> = res;
 
 					if (res.headers['content-encoding'] === 'gzip') {
 						stream = res.pipe(createGunzip());

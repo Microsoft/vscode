@@ -26,9 +26,9 @@
 	opacity: .4;
 }
 
-.hc-black .monaco-workbench.blur-background #workbench\.parts\.panel,
-.hc-black .monaco-workbench.blur-background #workbench\.parts\.sidebar,
-.hc-black .monaco-workbench.blur-background #workbench\.parts\.editor {
+.monaco-workbench.hc-black.blur-background #workbench\.parts\.panel,
+.monaco-workbench.hc-black.blur-background #workbench\.parts\.sidebar,
+.monaco-workbench.hc-black.blur-background #workbench\.parts\.editor {
 	opacity: .2;
 }
 
@@ -154,8 +154,8 @@
 	background-size: 100%;
 }
 
-.vs-dark .monaco-workbench > .welcomeOverlay > .commandPalettePlaceholder,
-.hc-black .monaco-workbench > .welcomeOverlay > .commandPalettePlaceholder {
+.monaco-workbench.vs-dark > .welcomeOverlay > .commandPalettePlaceholder,
+.monaco-workbench.hc-black > .welcomeOverlay > .commandPalettePlaceholder {
 	background-image: url('media/commandpalette-dark.svg');
 }
 @media screen and (max-width: 880px) {

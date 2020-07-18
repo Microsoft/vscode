@@ -1,0 +1,83 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="Content-Security-Policy"
+		content="default-src 'none'; img-src 'self' https: data:; media-src 'none'; child-src 'self'; object-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https:; font-src 'self' https:;">
+	<style>
+		html,
+		body {
+			margin: 0;
+			padding: 0;
+			height: 100%;
+			width: 100%;
+			overflow: hidden;
+			user-select: none;
+		}
+
+		body {
+			font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif;
+			font-size: 10pt;
+			background-color: #F3F3F3;
+		}
+
+		#main {
+			box-sizing: border-box;
+			padding: 10px;
+		}
+
+		h1 {
+			margin: 0;
+			padding: 10px 0;
+			font-size: 16px;
+			background-color: #555;
+			color: #f0f0f0;
+			text-align: center;
+		}
+
+		#form {
+			margin-top: 10px;
+		}
+
+		#username,
+		#password {
+			padding: 6px 10px;
+			font-size: 12px;
+			box-sizing: border-box;
+			width: 100%;
+		}
+
+		#buttons {
+			text-align: center;
+		}
+
+		p {
+			margin: 6px 0;
+		}
+
+		input {
+			font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif !important;
+		}
+	</style>
+</head>
+
+<body>
+	<h1 id="title"></h1>
+	<section id="main">
+		<p id="message"></p>
+		<form id="form">
+			<p><input type="text" id="username" placeholder="Username" required /></p>
+			<p><input type="password" id="password" placeholder="Password" required /></p>
+			<p id="buttons">
+				<input id="ok" type="submit" value="OK" />
+				<input id="cancel" type="button" value="Cancel" />
+			</p>
+		</form>
+	</section>
+</body>
+
+<script src="auth.js"></script>
+
+</html>

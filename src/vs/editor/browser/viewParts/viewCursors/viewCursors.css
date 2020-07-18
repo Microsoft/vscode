@@ -9,7 +9,6 @@
 
 .monaco-editor .cursors-layer > .cursor {
 	position: absolute;
-	cursor: text;
 	overflow: hidden;
 }
 

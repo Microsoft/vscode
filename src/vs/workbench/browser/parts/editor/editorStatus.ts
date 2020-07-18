@@ -54,22 +54,22 @@ import { STATUS_BAR_PROMINENT_ITEM_BACKGROUND, STATUS_BAR_PROMINENT_ITEM_FOREGRO
 import { themeColorFromId } from 'vs/platform/theme/common/themeService';
 
 class SideBySideEditorEncodingSupport implements IEncodingSupport {
-	constructor(private master: IEncodingSupport, private details: IEncodingSupport) { }
+	constructor(private primary: IEncodingSupport, private secondary: IEncodingSupport) { }
 
 	getEncoding(): string | undefined {
-		return this.master.getEncoding(); // always report from modified (right hand) side
+		return this.primary.getEncoding(); // always report from modified (right hand) side
 	}
 
 	setEncoding(encoding: string, mode: EncodingMode): void {
-		[this.master, this.details].forEach(editor => editor.setEncoding(encoding, mode));
+		[this.primary, this.secondary].forEach(editor => editor.setEncoding(encoding, mode));
 	}
 }
 
 class SideBySideEditorModeSupport implements IModeSupport {
-	constructor(private master: IModeSupport, private details: IModeSupport) { }
+	constructor(private primary: IModeSupport, private secondary: IModeSupport) { }
 
 	setMode(mode: string): void {
-		[this.master, this.details].forEach(editor => editor.setMode(mode));
+		[this.primary, this.secondary].forEach(editor => editor.setMode(mode));
 	}
 }
 
@@ -82,14 +82,14 @@ function toEditorWithEncodingSupport(input: IEditorInput): IEncodingSupport | nu
 
 	// Side by Side (diff) Editor
 	if (input instanceof SideBySideEditorInput) {
-		const masterEncodingSupport = toEditorWithEncodingSupport(input.master);
-		const detailsEncodingSupport = toEditorWithEncodingSupport(input.details);
+		const primaryEncodingSupport = toEditorWithEncodingSupport(input.primary);
+		const secondaryEncodingSupport = toEditorWithEncodingSupport(input.secondary);
 
-		if (masterEncodingSupport && detailsEncodingSupport) {
-			return new SideBySideEditorEncodingSupport(masterEncodingSupport, detailsEncodingSupport);
+		if (primaryEncodingSupport && secondaryEncodingSupport) {
+			return new SideBySideEditorEncodingSupport(primaryEncodingSupport, secondaryEncodingSupport);
 		}
 
-		return masterEncodingSupport;
+		return primaryEncodingSupport;
 	}
 
 	// File or Resource Editor
@@ -111,14 +111,14 @@ function toEditorWithModeSupport(input: IEditorInput): IModeSupport | null {
 
 	// Side by Side (diff) Editor
 	if (input instanceof SideBySideEditorInput) {
-		const masterModeSupport = toEditorWithModeSupport(input.master);
-		const detailsModeSupport = toEditorWithModeSupport(input.details);
+		const primaryModeSupport = toEditorWithModeSupport(input.primary);
+		const secondaryModeSupport = toEditorWithModeSupport(input.secondary);
 
-		if (masterModeSupport && detailsModeSupport) {
-			return new SideBySideEditorModeSupport(masterModeSupport, detailsModeSupport);
+		if (primaryModeSupport && secondaryModeSupport) {
+			return new SideBySideEditorModeSupport(primaryModeSupport, secondaryModeSupport);
 		}
 
-		return masterModeSupport;
+		return primaryModeSupport;
 	}
 
 	// File or Resource Editor
@@ -296,7 +296,7 @@ export class EditorStatus extends Disposable implements IWorkbenchContribution {
 	private readonly screenRedearModeElement = this._register(new MutableDisposable<IStatusbarEntryAccessor>());
 	private readonly indentationElement = this._register(new MutableDisposable<IStatusbarEntryAccessor>());
 	private readonly selectionElement = this._register(new MutableDisposable<IStatusbarEntryAccessor>());
-	private readonly encodingElement = Object.keys(SUPPORTED_ENCODINGS).length > 1 ? this._register(new MutableDisposable<IStatusbarEntryAccessor>()) : undefined;
+	private readonly encodingElement = this._register(new MutableDisposable<IStatusbarEntryAccessor>());
 	private readonly eolElement = this._register(new MutableDisposable<IStatusbarEntryAccessor>());
 	private readonly modeElement = this._register(new MutableDisposable<IStatusbarEntryAccessor>());
 	private readonly metadataElement = this._register(new MutableDisposable<IStatusbarEntryAccessor>());
@@ -483,10 +483,6 @@ export class EditorStatus extends Disposable implements IWorkbenchContribution {
 	}
 
 	private updateEncodingElement(text: string | undefined): void {
-		if (!this.encodingElement) {
-			return; // return early if encoding should not show (e.g. in Web we only support utf8)
-		}
-
 		if (!text) {
 			this.encodingElement.clear();
 			return;
@@ -685,14 +681,14 @@ export class EditorStatus extends Disposable implements IWorkbenchContribution {
 		else if (activeEditorPane instanceof BaseBinaryResourceEditor || activeEditorPane instanceof BinaryResourceDiffEditor) {
 			const binaryEditors: BaseBinaryResourceEditor[] = [];
 			if (activeEditorPane instanceof BinaryResourceDiffEditor) {
-				const details = activeEditorPane.getDetailsEditorPane();
-				if (details instanceof BaseBinaryResourceEditor) {
-					binaryEditors.push(details);
+				const primary = activeEditorPane.getPrimaryEditorPane();
+				if (primary instanceof BaseBinaryResourceEditor) {
+					binaryEditors.push(primary);
 				}
 
-				const master = activeEditorPane.getMasterEditorPane();
-				if (master instanceof BaseBinaryResourceEditor) {
-					binaryEditors.push(master);
+				const secondary = activeEditorPane.getSecondaryEditorPane();
+				if (secondary instanceof BaseBinaryResourceEditor) {
+					binaryEditors.push(secondary);
 				}
 			} else {
 				binaryEditors.push(activeEditorPane);
@@ -871,7 +867,7 @@ export class EditorStatus extends Disposable implements IWorkbenchContribution {
 	private onResourceEncodingChange(resource: URI): void {
 		const activeEditorPane = this.editorService.activeEditorPane;
 		if (activeEditorPane) {
-			const activeResource = toResource(activeEditorPane.input, { supportSideBySide: SideBySideEditor.MASTER });
+			const activeResource = toResource(activeEditorPane.input, { supportSideBySide: SideBySideEditor.PRIMARY });
 			if (activeResource && isEqual(activeResource, resource)) {
 				const activeCodeEditor = withNullAsUndefined(getCodeEditor(activeEditorPane.getControl()));
 
@@ -1064,7 +1060,7 @@ export class ChangeModeAction extends Action {
 		}
 
 		const textModel = activeTextEditorControl.getModel();
-		const resource = this.editorService.activeEditor ? toResource(this.editorService.activeEditor, { supportSideBySide: SideBySideEditor.MASTER }) : null;
+		const resource = this.editorService.activeEditor ? toResource(this.editorService.activeEditor, { supportSideBySide: SideBySideEditor.PRIMARY }) : null;
 
 		let hasLanguageSupport = !!resource;
 		if (resource?.scheme === Schemas.untitled && !this.textFileService.untitled.get(resource)?.hasAssociatedFilePath) {
@@ -1161,7 +1157,7 @@ export class ChangeModeAction extends Action {
 				let languageSelection: ILanguageSelection | undefined;
 				if (pick === autoDetectMode) {
 					if (textModel) {
-						const resource = toResource(activeEditor, { supportSideBySide: SideBySideEditor.MASTER });
+						const resource = toResource(activeEditor, { supportSideBySide: SideBySideEditor.PRIMARY });
 						if (resource) {
 							languageSelection = this.modeService.createByFilepathOrFirstLine(resource, textModel.getLineContent(1));
 						}
@@ -1356,7 +1352,7 @@ export class ChangeEncodingAction extends Action {
 
 		await timeout(50); // quick input is sensitive to being opened so soon after another
 
-		const resource = toResource(activeEditorPane.input, { supportSideBySide: SideBySideEditor.MASTER });
+		const resource = toResource(activeEditorPane.input, { supportSideBySide: SideBySideEditor.PRIMARY });
 		if (!resource || (!this.fileService.canHandleResource(resource) && resource.scheme !== Schemas.untitled)) {
 			return; // encoding detection only possible for resources the file service can handle or that are untitled
 		}

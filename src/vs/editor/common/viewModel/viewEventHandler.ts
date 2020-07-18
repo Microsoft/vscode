@@ -36,9 +36,7 @@ export class ViewEventHandler extends Disposable {
 	public onConfigurationChanged(e: viewEvents.ViewConfigurationChangedEvent): boolean {
 		return false;
 	}
-	public onContentSizeChanged(e: viewEvents.ViewContentSizeChangedEvent): boolean {
-		return false;
-	}
+
 	public onCursorStateChanged(e: viewEvents.ViewCursorStateChangedEvent): boolean {
 		return false;
 	}
@@ -98,12 +96,6 @@ export class ViewEventHandler extends Disposable {
 
 				case viewEvents.ViewEventType.ViewConfigurationChanged:
 					if (this.onConfigurationChanged(e)) {
-						shouldRender = true;
-					}
-					break;
-
-				case viewEvents.ViewEventType.ViewContentSizeChanged:
-					if (this.onContentSizeChanged(e)) {
 						shouldRender = true;
 					}
 					break;

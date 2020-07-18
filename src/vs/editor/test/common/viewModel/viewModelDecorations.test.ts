@@ -77,7 +77,7 @@ suite('ViewModelDecorations', () => {
 				new Range(2, viewModel.getLineMinColumn(2), 3, viewModel.getLineMaxColumn(3))
 			).map((dec) => {
 				return dec.options.className;
-			});
+			}).filter(Boolean);
 
 			assert.deepEqual(actualDecorations, [
 				'dec1',
@@ -292,7 +292,7 @@ suite('ViewModelDecorations', () => {
 
 			let decorations = viewModel.getDecorationsInViewport(
 				new Range(2, viewModel.getLineMinColumn(2), 3, viewModel.getLineMaxColumn(3))
-			);
+			).filter(x => Boolean(x.options.beforeContentClassName));
 			assert.deepEqual(decorations, []);
 
 			let inlineDecorations1 = viewModel.getViewLineRenderingData(

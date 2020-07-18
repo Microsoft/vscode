@@ -33,7 +33,18 @@
 		}
 	},
 	{
-		"c": " #",
+		"c": " ",
+		"t": "text.html.markdown markup.heading.markdown heading.1.markdown",
+		"r": {
+			"dark_plus": "markup.heading: #569CD6",
+			"light_plus": "markup.heading: #800000",
+			"dark_vs": "markup.heading: #569CD6",
+			"light_vs": "markup.heading: #800000",
+			"hc_black": "markup.heading: #6796E6"
+		}
+	},
+	{
+		"c": "#",
 		"t": "text.html.markdown markup.heading.markdown heading.1.markdown punctuation.definition.heading.markdown",
 		"r": {
 			"dark_plus": "markup.heading: #569CD6",
@@ -77,7 +88,18 @@
 		}
 	},
 	{
-		"c": " ##",
+		"c": " ",
+		"t": "text.html.markdown markup.heading.markdown heading.2.markdown",
+		"r": {
+			"dark_plus": "markup.heading: #569CD6",
+			"light_plus": "markup.heading: #800000",
+			"dark_vs": "markup.heading: #569CD6",
+			"light_vs": "markup.heading: #800000",
+			"hc_black": "markup.heading: #6796E6"
+		}
+	},
+	{
+		"c": "##",
 		"t": "text.html.markdown markup.heading.markdown heading.2.markdown punctuation.definition.heading.markdown",
 		"r": {
 			"dark_plus": "markup.heading: #569CD6",
@@ -2189,7 +2211,18 @@
 		}
 	},
 	{
-		"c": " ##",
+		"c": " ",
+		"t": "text.html.markdown markup.heading.markdown heading.2.markdown",
+		"r": {
+			"dark_plus": "markup.heading: #569CD6",
+			"light_plus": "markup.heading: #800000",
+			"dark_vs": "markup.heading: #569CD6",
+			"light_vs": "markup.heading: #800000",
+			"hc_black": "markup.heading: #6796E6"
+		}
+	},
+	{
+		"c": "##",
 		"t": "text.html.markdown markup.heading.markdown heading.2.markdown punctuation.definition.heading.markdown",
 		"r": {
 			"dark_plus": "markup.heading: #569CD6",
@@ -2343,7 +2376,18 @@
 		}
 	},
 	{
-		"c": " ##",
+		"c": " ",
+		"t": "text.html.markdown markup.heading.markdown heading.2.markdown",
+		"r": {
+			"dark_plus": "markup.heading: #569CD6",
+			"light_plus": "markup.heading: #800000",
+			"dark_vs": "markup.heading: #569CD6",
+			"light_vs": "markup.heading: #800000",
+			"hc_black": "markup.heading: #6796E6"
+		}
+	},
+	{
+		"c": "##",
 		"t": "text.html.markdown markup.heading.markdown heading.2.markdown punctuation.definition.heading.markdown",
 		"r": {
 			"dark_plus": "markup.heading: #569CD6",

@@ -29,31 +29,34 @@ suite('vscode API - languages', () => {
 		const doc = await vscode.workspace.openTextDocument(file);
 		const langIdNow = doc.languageId;
 		let clock = 0;
+		const disposables: vscode.Disposable[] = [];
 
 		let close = new Promise(resolve => {
-			vscode.workspace.onDidCloseTextDocument(e => {
+			disposables.push(vscode.workspace.onDidCloseTextDocument(e => {
 				if (e === doc) {
 					assert.equal(doc.languageId, langIdNow);
 					assert.equal(clock, 0);
 					clock += 1;
 					resolve();
 				}
-			});
+			}));
 		});
 		let open = new Promise(resolve => {
-			vscode.workspace.onDidOpenTextDocument(e => {
+			disposables.push(vscode.workspace.onDidOpenTextDocument(e => {
 				if (e === doc) { // same instance!
 					assert.equal(doc.languageId, 'json');
 					assert.equal(clock, 1);
 					clock += 1;
 					resolve();
 				}
-			});
+			}));
 		});
 		let change = vscode.languages.setTextDocumentLanguage(doc, 'json');
 		await Promise.all([change, close, open]);
 		assert.equal(clock, 2);
 		assert.equal(doc.languageId, 'json');
+		disposables.forEach(disposable => disposable.dispose());
+		disposables.length = 0;
 	});
 
 	test('setTextDocumentLanguage -> error when language does not exist', async function () {

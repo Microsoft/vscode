@@ -38,6 +38,7 @@ const schema: IJSONSchema = {
 			oneOf: [
 				{
 					type: 'string',
+					errorMessage: nls.localize('JsonSchema.tasks.matcherError', 'Unrecognized problem matcher. Is the extension that contributes this problem matcher installed?')
 				},
 				Schemas.LegacyProblemMatcher,
 				{
@@ -46,6 +47,7 @@ const schema: IJSONSchema = {
 						anyOf: [
 							{
 								type: 'string',
+								errorMessage: nls.localize('JsonSchema.tasks.matcherError', 'Unrecognized problem matcher. Is the extension that contributes this problem matcher installed?')
 							},
 							Schemas.LegacyProblemMatcher
 						]

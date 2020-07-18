@@ -12,7 +12,6 @@ import { IWorkbenchEnvironmentService } from 'vs/workbench/services/environment/
 import { VIEWLET_ID } from 'vs/workbench/contrib/extensions/common/extensions';
 import { IEditorInput } from 'vs/workbench/common/editor';
 import { IViewsService } from 'vs/workbench/common/views';
-import { VIEW_CONTAINER_ID } from 'vs/workbench/contrib/userDataSync/browser/userDataSyncView';
 
 export class UserDataSyncTrigger extends Disposable {
 
@@ -29,7 +28,7 @@ export class UserDataSyncTrigger extends Disposable {
 			Event.filter(
 				Event.any<string | undefined>(
 					Event.map(editorService.onDidActiveEditorChange, () => this.getUserDataEditorInputSource(editorService.activeEditor)),
-					Event.map(Event.filter(viewsService.onDidChangeViewContainerVisibility, e => [VIEWLET_ID, VIEW_CONTAINER_ID].includes(e.id) && e.visible), e => e.id)
+					Event.map(Event.filter(viewsService.onDidChangeViewContainerVisibility, e => e.id === VIEWLET_ID && e.visible), e => e.id)
 				), source => source !== undefined)(source => this._onDidTriggerSync.fire(source!)));
 	}
 

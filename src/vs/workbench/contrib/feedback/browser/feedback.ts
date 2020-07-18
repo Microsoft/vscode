@@ -385,6 +385,8 @@ export class FeedbackDropdown extends Dropdown {
 		if (this.options.onFeedbackVisibilityChange) {
 			this.options.onFeedbackVisibilityChange(true);
 		}
+
+		this.updateCharCountText();
 	}
 
 	protected onHide(): void {

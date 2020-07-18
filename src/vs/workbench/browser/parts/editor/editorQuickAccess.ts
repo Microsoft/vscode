@@ -137,7 +137,7 @@ export abstract class BaseEditorQuickAccessProvider extends PickerQuickAccessPro
 		}
 
 		return this.doGetEditors().map(({ editor, groupId }): IEditorQuickPickItem => {
-			const resource = toResource(editor, { supportSideBySide: SideBySideEditor.MASTER });
+			const resource = toResource(editor, { supportSideBySide: SideBySideEditor.PRIMARY });
 			const isDirty = editor.isDirty() && !editor.isSaving();
 			const description = editor.getDescription();
 			const nameAndDescription = description ? `${editor.getName()} ${description}` : editor.getName();

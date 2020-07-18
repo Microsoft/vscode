@@ -1,0 +1,168 @@
+{
+  "name": "github-browser",
+  "displayName": "%displayName%",
+  "description": "%description%",
+  "publisher": "vscode",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.45.0"
+  },
+  "enableProposedApi": true,
+  "private": true,
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onFileSystem:codespace",
+    "onFileSystem:github",
+    "onCommand:githubBrowser.openRepository"
+  ],
+  "browser": "./dist/browser/extension.js",
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "githubBrowser.openRepository",
+        "title": "Open GitHub Repository...",
+        "category": "GitHub Browser"
+      },
+      {
+        "command": "githubBrowser.commit",
+        "title": "Commit",
+        "icon": "$(check)",
+        "category": "GitHub Browser"
+      },
+      {
+        "command": "githubBrowser.discardChanges",
+        "title": "Discard Changes",
+        "icon": "$(discard)",
+        "category": "GitHub Browser"
+      },
+      {
+        "command": "githubBrowser.openChanges",
+        "title": "Open Changes",
+        "icon": "$(git-compare)",
+        "category": "GitHub Browser"
+      },
+      {
+        "command": "githubBrowser.openFile",
+        "title": "Open File",
+        "icon": "$(go-to-file)",
+        "category": "GitHub Browser"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "githubBrowser.openRepository",
+          "when": "config.githubBrowser.openRepository"
+        },
+        {
+          "command": "githubBrowser.commit",
+          "when": "false"
+        },
+        {
+          "command": "githubBrowser.discardChanges",
+          "when": "false"
+        },
+        {
+          "command": "githubBrowser.openChanges",
+          "when": "false"
+        },
+        {
+          "command": "githubBrowser.openFile",
+          "when": "false"
+        }
+      ],
+      "scm/title": [
+        {
+          "command": "githubBrowser.commit",
+          "group": "navigation",
+          "when": "scmProvider == github"
+        }
+      ],
+      "scm/resourceState/context": [
+        {
+          "command": "githubBrowser.openFile",
+          "when": "scmProvider == github && scmResourceGroup == github.changes",
+          "group": "inline@0"
+        },
+        {
+          "command": "githubBrowser.discardChanges",
+          "when": "scmProvider == github && scmResourceGroup == github.changes",
+          "group": "inline@1"
+        },
+        {
+          "command": "githubBrowser.openChanges",
+          "when": "scmProvider == github && scmResourceGroup == github.changes",
+          "group": "navigation@0"
+        },
+        {
+          "command": "githubBrowser.openFile",
+          "when": "scmProvider == github && scmResourceGroup == github.changes",
+          "group": "navigation@1"
+        },
+        {
+          "command": "githubBrowser.discardChanges",
+          "when": "scmProvider == github && scmResourceGroup == github.changes",
+          "group": "1_modification@0"
+        }
+      ]
+    },
+    "resourceLabelFormatters": [
+      {
+        "scheme": "github",
+        "authority": "HEAD",
+        "formatting": {
+          "label": "github.com${path}",
+          "separator": "/",
+          "workspaceSuffix": "GitHub"
+        }
+      },
+      {
+        "scheme": "github",
+        "authority": "*",
+        "formatting": {
+          "label": "github.com${path} (${authority})",
+          "separator": "/",
+          "workspaceSuffix": "GitHub"
+        }
+      },
+      {
+        "scheme": "codespace",
+        "authority": "HEAD",
+        "formatting": {
+          "label": "github.com${path}",
+          "separator": "/",
+          "workspaceSuffix": "GitHub"
+        }
+      },
+      {
+        "scheme": "codespace",
+        "authority": "*",
+        "formatting": {
+          "label": "github.com${path} (${authority})",
+          "separator": "/",
+          "workspaceSuffix": "GitHub"
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "gulp compile-extension:github-browser",
+    "compile-web": "npx webpack-cli --config extension-browser.webpack.config --mode none",
+    "watch": "gulp watch-extension:github-browser",
+    "watch-web": "npx webpack-cli --config extension-browser.webpack.config --mode none --watch --info-verbosity verbose",
+    "vscode:prepublish": "npm run compile"
+  },
+  "dependencies": {
+    "@octokit/graphql": "4.5.1",
+    "@octokit/rest": "18.0.0",
+    "fuzzysort": "1.1.4",
+    "node-fetch": "2.6.0",
+    "vscode-nls": "4.1.2"
+  },
+  "devDependencies": {
+    "@types/node-fetch": "2.5.7"
+  }
+}

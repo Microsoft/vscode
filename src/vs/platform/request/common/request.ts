@@ -14,7 +14,7 @@ import { IRequestOptions, IRequestContext } from 'vs/base/parts/request/common/r
 export const IRequestService = createDecorator<IRequestService>('requestService');
 
 export interface IRequestService {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	request(options: IRequestOptions, token: CancellationToken): Promise<IRequestContext>;
 

@@ -19,7 +19,10 @@
 		"statusBarItem.remoteForeground": "#FFF",
 		"statusBarItem.remoteBackground": "#16825D",
 		"sideBarSectionHeader.background": "#0000",
-		"sideBarSectionHeader.border": "#61616130"
+		"sideBarSectionHeader.border": "#61616130",
+		"notebook.focusedCellBackground": "#c8ddf150",
+		"notebook.cellBorderColor": "#dae3e9",
+		"notebook.outputContainerBackgroundColor": "#c8ddf150"
 	},
 	"semanticHighlighting": true
 }

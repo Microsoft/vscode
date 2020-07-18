@@ -150,6 +150,7 @@ export interface ILineChange extends IChange {
  * @internal
  */
 export interface IConfiguration extends IDisposable {
+	onDidChangeFast(listener: (e: ConfigurationChangedEvent) => void): IDisposable;
 	onDidChange(listener: (e: ConfigurationChangedEvent) => void): IDisposable;
 
 	readonly options: IComputedEditorOptions;
@@ -480,7 +481,7 @@ export interface IEditor {
 	 * @param handlerId The id of the handler or the id of a contribution.
 	 * @param payload Extra data to be sent to the handler.
 	 */
-	trigger(source: string, handlerId: string, payload: any): void;
+	trigger(source: string | null | undefined, handlerId: string, payload: any): void;
 
 	/**
 	 * Gets the current model attached to this editor.
@@ -688,14 +689,36 @@ export const EditorType = {
  * Built-in commands.
  * @internal
  */
-export const Handler = {
-	ExecuteCommand: 'executeCommand',
-	ExecuteCommands: 'executeCommands',
+export const enum Handler {
+	CompositionStart = 'compositionStart',
+	CompositionEnd = 'compositionEnd',
+	Type = 'type',
+	ReplacePreviousChar = 'replacePreviousChar',
+	Paste = 'paste',
+	Cut = 'cut',
+}
 
-	Type: 'type',
-	ReplacePreviousChar: 'replacePreviousChar',
-	CompositionStart: 'compositionStart',
-	CompositionEnd: 'compositionEnd',
-	Paste: 'paste',
-	Cut: 'cut',
-};
+/**
+ * @internal
+ */
+export interface TypePayload {
+	text: string;
+}
+
+/**
+ * @internal
+ */
+export interface ReplacePreviousCharPayload {
+	text: string;
+	replaceCharCnt: number;
+}
+
+/**
+ * @internal
+ */
+export interface PastePayload {
+	text: string;
+	pasteOnNewLine: boolean;
+	multicursorText: string[] | null;
+	mode: string | null;
+}

@@ -1555,7 +1555,7 @@
 		"t": "source.coffee string.regexp.multiline.coffee keyword.control.anchor.regexp",
 		"r": {
 			"dark_plus": "keyword.control.anchor.regexp: #DCDCAA",
-			"light_plus": "keyword.control.anchor.regexp: #FF0000",
+			"light_plus": "keyword.control.anchor.regexp: #EE0000",
 			"dark_vs": "keyword.control: #569CD6",
 			"light_vs": "keyword.control: #0000FF",
 			"hc_black": "keyword.control: #C586C0"

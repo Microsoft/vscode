@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { IServerChannel, IChannel } from 'vs/base/parts/ipc/common/ipc';
-import { IReloadSessionEvent, ICloseSessionEvent, IAttachSessionEvent, ILogToSessionEvent, ITerminateSessionEvent, IExtensionHostDebugService } from 'vs/platform/debug/common/extensionHostDebug';
+import { IReloadSessionEvent, ICloseSessionEvent, IAttachSessionEvent, ILogToSessionEvent, ITerminateSessionEvent, IExtensionHostDebugService, IOpenExtensionWindowResult } from 'vs/platform/debug/common/extensionHostDebug';
 import { Event, Emitter } from 'vs/base/common/event';
 import { IRemoteConsoleLog } from 'vs/base/common/console';
 import { Disposable } from 'vs/base/common/lifecycle';
@@ -55,7 +55,7 @@ export class ExtensionHostDebugBroadcastChannel<TContext> implements IServerChan
 
 export class ExtensionHostDebugChannelClient extends Disposable implements IExtensionHostDebugService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	constructor(private channel: IChannel) {
 		super();
@@ -101,7 +101,7 @@ export class ExtensionHostDebugChannelClient extends Disposable implements IExte
 		return this.channel.listen('terminate');
 	}
 
-	openExtensionDevelopmentHostWindow(args: string[], env: IProcessEnvironment): Promise<void> {
-		return this.channel.call('openExtensionDevelopmentHostWindow', [args, env]);
+	openExtensionDevelopmentHostWindow(args: string[], env: IProcessEnvironment, debugRenderer: boolean): Promise<IOpenExtensionWindowResult> {
+		return this.channel.call('openExtensionDevelopmentHostWindow', [args, env, debugRenderer]);
 	}
 }

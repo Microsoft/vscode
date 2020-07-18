@@ -10,7 +10,9 @@ import { isMessageOfType, MessageType, createMessageOfType } from 'vs/workbench/
 import { IInitData } from 'vs/workbench/api/common/extHost.protocol';
 import { ExtensionHostMain } from 'vs/workbench/services/extensions/common/extensionHostMain';
 import { IHostUtils } from 'vs/workbench/api/common/extHostExtensionService';
-import 'vs/workbench/services/extensions/worker/extHost.services';
+
+import 'vs/workbench/api/common/extHost.common.services';
+import 'vs/workbench/api/worker/extHost.worker.services';
 
 //#region --- Define, capture, and override some globals
 
@@ -36,7 +38,7 @@ self.addEventLister = () => console.trace(`'addEventListener' has been blocked`)
 //#endregion ---
 
 const hostUtil = new class implements IHostUtils {
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 	exit(_code?: number | undefined): void {
 		nativeClose();
 	}

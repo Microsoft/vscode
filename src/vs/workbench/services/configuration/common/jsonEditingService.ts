@@ -41,9 +41,11 @@ export class JSONEditingService implements IJSONEditingService {
 
 	private async doWriteConfiguration(resource: URI, values: IJSONValue[], save: boolean): Promise<void> {
 		const reference = await this.resolveAndValidate(resource, save);
-		await this.writeToBuffer(reference.object.textEditorModel, values, save);
-
-		reference.dispose();
+		try {
+			await this.writeToBuffer(reference.object.textEditorModel, values, save);
+		} finally {
+			reference.dispose();
+		}
 	}
 
 	private async writeToBuffer(model: ITextModel, values: IJSONValue[], save: boolean): Promise<any> {
@@ -73,10 +75,10 @@ export class JSONEditingService implements IJSONEditingService {
 	private getEdits(model: ITextModel, configurationValue: IJSONValue): Edit[] {
 		const { tabSize, insertSpaces } = model.getOptions();
 		const eol = model.getEOL();
-		const { key, value } = configurationValue;
+		const { path, value } = configurationValue;
 
-		// Without key, the entire settings file is being replaced, so we just use JSON.stringify
-		if (!key) {
+		// With empty path the entire file is being replaced, so we just use JSON.stringify
+		if (!path.length) {
 			const content = JSON.stringify(value, null, insertSpaces ? strings.repeat(' ', tabSize) : '\t');
 			return [{
 				content,
@@ -85,7 +87,7 @@ export class JSONEditingService implements IJSONEditingService {
 			}];
 		}
 
-		return setProperty(model.getValue(), [key], value, { tabSize, insertSpaces, eol });
+		return setProperty(model.getValue(), path, value, { tabSize, insertSpaces, eol });
 	}
 
 	private async resolveModelReference(resource: URI): Promise<IReference<IResolvedTextEditorModel>> {
@@ -108,11 +110,13 @@ export class JSONEditingService implements IJSONEditingService {
 		const model = reference.object.textEditorModel;
 
 		if (this.hasParseErrors(model)) {
+			reference.dispose();
 			return this.reject<IReference<IResolvedTextEditorModel>>(JSONEditingErrorCode.ERROR_INVALID_FILE);
 		}
 
 		// Target cannot be dirty if not writing into buffer
 		if (checkDirty && this.textFileService.isDirty(resource)) {
+			reference.dispose();
 			return this.reject<IReference<IResolvedTextEditorModel>>(JSONEditingErrorCode.ERROR_FILE_DIRTY);
 		}
 

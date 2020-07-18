@@ -421,22 +421,6 @@ class KeybindingItemMatches {
 		return this.wordMatchesMetaModifier(word);
 	}
 
-	private wordMatchesMetaModifier(word: string): boolean {
-		if (matchesPrefix(this.modifierLabels.ui.metaKey, word)) {
-			return true;
-		}
-		if (matchesPrefix(this.modifierLabels.aria.metaKey, word)) {
-			return true;
-		}
-		if (matchesPrefix(this.modifierLabels.user.metaKey, word)) {
-			return true;
-		}
-		if (matchesPrefix(localize('meta', "meta"), word)) {
-			return true;
-		}
-		return false;
-	}
-
 	private matchesCtrlModifier(keybinding: ResolvedKeybindingPart | null, word: string): boolean {
 		if (!keybinding) {
 			return false;
@@ -445,19 +429,6 @@ class KeybindingItemMatches {
 			return false;
 		}
 		return this.wordMatchesCtrlModifier(word);
-	}
-
-	private wordMatchesCtrlModifier(word: string): boolean {
-		if (matchesPrefix(this.modifierLabels.ui.ctrlKey, word)) {
-			return true;
-		}
-		if (matchesPrefix(this.modifierLabels.aria.ctrlKey, word)) {
-			return true;
-		}
-		if (matchesPrefix(this.modifierLabels.user.ctrlKey, word)) {
-			return true;
-		}
-		return false;
 	}
 
 	private matchesShiftModifier(keybinding: ResolvedKeybindingPart | null, word: string): boolean {
@@ -470,19 +441,6 @@ class KeybindingItemMatches {
 		return this.wordMatchesShiftModifier(word);
 	}
 
-	private wordMatchesShiftModifier(word: string): boolean {
-		if (matchesPrefix(this.modifierLabels.ui.shiftKey, word)) {
-			return true;
-		}
-		if (matchesPrefix(this.modifierLabels.aria.shiftKey, word)) {
-			return true;
-		}
-		if (matchesPrefix(this.modifierLabels.user.shiftKey, word)) {
-			return true;
-		}
-		return false;
-	}
-
 	private matchesAltModifier(keybinding: ResolvedKeybindingPart | null, word: string): boolean {
 		if (!keybinding) {
 			return false;
@@ -491,22 +449,6 @@ class KeybindingItemMatches {
 			return false;
 		}
 		return this.wordMatchesAltModifier(word);
-	}
-
-	private wordMatchesAltModifier(word: string): boolean {
-		if (matchesPrefix(this.modifierLabels.ui.altKey, word)) {
-			return true;
-		}
-		if (matchesPrefix(this.modifierLabels.aria.altKey, word)) {
-			return true;
-		}
-		if (matchesPrefix(this.modifierLabels.user.altKey, word)) {
-			return true;
-		}
-		if (matchesPrefix(localize('option', "option"), word)) {
-			return true;
-		}
-		return false;
 	}
 
 	private hasAnyMatch(keybindingMatch: KeybindingMatch): boolean {
@@ -570,6 +512,64 @@ class KeybindingItemMatches {
 			return true;
 		}
 		if (this.wordMatchesShiftModifier(word)) {
+			return true;
+		}
+		return false;
+	}
+
+	private wordMatchesAltModifier(word: string): boolean {
+		if (strings.equalsIgnoreCase(this.modifierLabels.ui.altKey, word)) {
+			return true;
+		}
+		if (strings.equalsIgnoreCase(this.modifierLabels.aria.altKey, word)) {
+			return true;
+		}
+		if (strings.equalsIgnoreCase(this.modifierLabels.user.altKey, word)) {
+			return true;
+		}
+		if (strings.equalsIgnoreCase(localize('option', "option"), word)) {
+			return true;
+		}
+		return false;
+	}
+
+	private wordMatchesCtrlModifier(word: string): boolean {
+		if (strings.equalsIgnoreCase(this.modifierLabels.ui.ctrlKey, word)) {
+			return true;
+		}
+		if (strings.equalsIgnoreCase(this.modifierLabels.aria.ctrlKey, word)) {
+			return true;
+		}
+		if (strings.equalsIgnoreCase(this.modifierLabels.user.ctrlKey, word)) {
+			return true;
+		}
+		return false;
+	}
+
+	private wordMatchesMetaModifier(word: string): boolean {
+		if (strings.equalsIgnoreCase(this.modifierLabels.ui.metaKey, word)) {
+			return true;
+		}
+		if (strings.equalsIgnoreCase(this.modifierLabels.aria.metaKey, word)) {
+			return true;
+		}
+		if (strings.equalsIgnoreCase(this.modifierLabels.user.metaKey, word)) {
+			return true;
+		}
+		if (strings.equalsIgnoreCase(localize('meta', "meta"), word)) {
+			return true;
+		}
+		return false;
+	}
+
+	private wordMatchesShiftModifier(word: string): boolean {
+		if (strings.equalsIgnoreCase(this.modifierLabels.ui.shiftKey, word)) {
+			return true;
+		}
+		if (strings.equalsIgnoreCase(this.modifierLabels.aria.shiftKey, word)) {
+			return true;
+		}
+		if (strings.equalsIgnoreCase(this.modifierLabels.user.shiftKey, word)) {
 			return true;
 		}
 		return false;

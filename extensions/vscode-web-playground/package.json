@@ -8,8 +8,10 @@
   "private": true,
   "activationEvents": [
     "onFileSystem:memfs",
+    "onFileSystem:github",
     "onDebug"
   ],
+  "browser": "./dist/browser/extension",
   "main": "./out/extension",
   "engines": {
     "vscode": "^1.25.0"
@@ -78,15 +80,27 @@
           }
         ]
       }
+    ],
+    "resourceLabelFormatters": [
+      {
+        "scheme": "github",
+        "authority": "*",
+        "formatting": {
+          "label": "${authority}${path}",
+          "separator": "/",
+          "workspaceSuffix": "GitHub"
+        }
+      }
     ]
   },
   "scripts": {
     "compile": "node ./node_modules/vscode/bin/compile -watch -p ./",
-    "vscode:prepublish": "node ../../node_modules/gulp/bin/gulp.js --gulpfile ../../build/gulpfile.extensions.js compile-extension:vscode-api-tests ./tsconfig.json"
+    "compile-web": "npx webpack-cli --config extension.webpack.config --mode none",
+    "watch-web": "npx webpack-cli --config extension.webpack.config --mode none --watch --info-verbosity verbose",
+    "vscode:prepublish": "node ../../node_modules/gulp/bin/gulp.js --gulpfile ../../build/gulpfile.extensions.js compile-extension:vscode-web-playground ./tsconfig.json"
   },
   "devDependencies": {
     "@types/mocha": "2.2.43",
-    "@types/node": "^12.11.7",
     "mocha-junit-reporter": "^1.17.0",
     "mocha-multi-reporters": "^1.1.7"
   }

@@ -20,7 +20,7 @@ export interface ICredentialsProvider {
 
 export class BrowserCredentialsService implements ICredentialsService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private credentialsProvider: ICredentialsProvider;
 

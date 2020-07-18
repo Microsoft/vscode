@@ -69,7 +69,7 @@ export class DebugTaskRunner {
 				return TaskRunResult.Success;
 			}
 			if (onTaskErrors === 'showErrors') {
-				await this.viewsService.openView(Constants.MARKERS_VIEW_ID);
+				await this.viewsService.openView(Constants.MARKERS_VIEW_ID, true);
 				return Promise.resolve(TaskRunResult.Failure);
 			}
 			if (onTaskErrors === 'abort') {
@@ -106,7 +106,7 @@ export class DebugTaskRunner {
 				return TaskRunResult.Success;
 			}
 
-			await this.viewsService.openView(Constants.MARKERS_VIEW_ID);
+			await this.viewsService.openView(Constants.MARKERS_VIEW_ID, true);
 			return Promise.resolve(TaskRunResult.Failure);
 		} catch (err) {
 			await onError(err.message, [this.taskService.configureAction()]);

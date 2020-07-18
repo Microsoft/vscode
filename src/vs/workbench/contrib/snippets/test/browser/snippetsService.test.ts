@@ -15,7 +15,7 @@ import { LanguageConfigurationRegistry } from 'vs/editor/common/modes/languageCo
 import { CompletionContext, CompletionTriggerKind } from 'vs/editor/common/modes';
 
 class SimpleSnippetService implements ISnippetsService {
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 	constructor(readonly snippets: Snippet[]) {
 	}
 	getSnippets() {

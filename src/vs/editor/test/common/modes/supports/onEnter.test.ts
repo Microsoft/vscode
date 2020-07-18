@@ -118,6 +118,7 @@ suite('OnEnter', () => {
 		testIndentAction(' *', ' * asdfsfagadfg * / * / * /*', '', IndentAction.None, '* ');
 
 		testIndentAction('', ' */', '', IndentAction.None, null, 1);
+		testIndentAction(' */', ' * test() {', '', IndentAction.Indent, null, 0);
 		testIndentAction('', '\t */', '', IndentAction.None, null, 1);
 		testIndentAction('', '\t\t */', '', IndentAction.None, null, 1);
 		testIndentAction('', '   */', '', IndentAction.None, null, 1);

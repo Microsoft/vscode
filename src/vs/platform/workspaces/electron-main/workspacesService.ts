@@ -13,7 +13,7 @@ import { IBackupMainService } from 'vs/platform/backup/electron-main/backup';
 
 export class WorkspacesService implements AddFirstParameterToFunctions<IWorkspacesService, Promise<unknown> /* only methods, not events */, number /* window ID */> {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	constructor(
 		@IWorkspacesMainService private readonly workspacesMainService: IWorkspacesMainService,

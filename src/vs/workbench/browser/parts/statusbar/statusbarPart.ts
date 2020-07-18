@@ -9,17 +9,16 @@ import { toErrorMessage } from 'vs/base/common/errorMessage';
 import { dispose, IDisposable, Disposable, toDisposable, MutableDisposable } from 'vs/base/common/lifecycle';
 import { CodiconLabel } from 'vs/base/browser/ui/codicons/codiconLabel';
 import { ICommandService } from 'vs/platform/commands/common/commands';
-import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
 import { Part } from 'vs/workbench/browser/part';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 import { StatusbarAlignment, IStatusbarService, IStatusbarEntry, IStatusbarEntryAccessor } from 'vs/workbench/services/statusbar/common/statusbar';
 import { IContextMenuService } from 'vs/platform/contextview/browser/contextView';
 import { Action, IAction, WorkbenchActionExecutedEvent, WorkbenchActionExecutedClassification } from 'vs/base/common/actions';
-import { IThemeService, registerThemingParticipant, IColorTheme, ICssStyleCollector, ThemeColor } from 'vs/platform/theme/common/themeService';
+import { IThemeService, registerThemingParticipant, IColorTheme, ICssStyleCollector, ThemeColor, HIGH_CONTRAST } from 'vs/platform/theme/common/themeService';
 import { STATUS_BAR_BACKGROUND, STATUS_BAR_FOREGROUND, STATUS_BAR_NO_FOLDER_BACKGROUND, STATUS_BAR_ITEM_HOVER_BACKGROUND, STATUS_BAR_ITEM_ACTIVE_BACKGROUND, STATUS_BAR_PROMINENT_ITEM_FOREGROUND, STATUS_BAR_PROMINENT_ITEM_BACKGROUND, STATUS_BAR_PROMINENT_ITEM_HOVER_BACKGROUND, STATUS_BAR_BORDER, STATUS_BAR_NO_FOLDER_FOREGROUND, STATUS_BAR_NO_FOLDER_BORDER } from 'vs/workbench/common/theme';
 import { IWorkspaceContextService, WorkbenchState } from 'vs/platform/workspace/common/workspace';
-import { contrastBorder } from 'vs/platform/theme/common/colorRegistry';
+import { contrastBorder, activeContrastBorder } from 'vs/platform/theme/common/colorRegistry';
 import { isThemeColor } from 'vs/editor/common/editorCommon';
 import { Color } from 'vs/base/common/color';
 import { addClass, EventHelper, createStyleSheet, addDisposableListener, addClasses, removeClass, EventType, hide, show, removeClasses, isAncestor } from 'vs/base/browser/dom';
@@ -69,6 +68,10 @@ class StatusbarViewModel extends Disposable {
 	get entries(): IStatusbarViewModelEntry[] { return this._entries; }
 
 	private hidden!: Set<string>;
+	get lastFocusedEntry(): IStatusbarViewModelEntry | undefined {
+		return this._lastFocusedEntry && !this.isHidden(this._lastFocusedEntry.id) ? this._lastFocusedEntry : undefined;
+	}
+	private _lastFocusedEntry: IStatusbarViewModelEntry | undefined;
 
 	private readonly _onDidChangeEntryVisibility = this._register(new Emitter<{ id: string, visible: boolean }>());
 	readonly onDidChangeEntryVisibility = this._onDidChangeEntryVisibility.event;
@@ -219,6 +222,7 @@ class StatusbarViewModel extends Disposable {
 		if (focused) {
 			const entry = getVisibleEntry(this._entries.indexOf(focused) + delta);
 			if (entry) {
+				this._lastFocusedEntry = entry;
 				entry.labelContainer.focus();
 				return;
 			}
@@ -226,6 +230,7 @@ class StatusbarViewModel extends Disposable {
 
 		const entry = getVisibleEntry(restartPosition);
 		if (entry) {
+			this._lastFocusedEntry = entry;
 			entry.labelContainer.focus();
 		}
 	}
@@ -368,7 +373,7 @@ class HideStatusbarEntryAction extends Action {
 
 export class StatusbarPart extends Part implements IStatusbarService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	//#region IView
 
@@ -491,6 +496,15 @@ export class StatusbarPart extends Part implements IStatusbarService {
 
 	focusPreviousEntry(): void {
 		this.viewModel.focusPreviousEntry();
+	}
+
+	focus(preserveEntryFocus = true): void {
+		this.getContainer()?.focus();
+		const lastFocusedEntry = this.viewModel.lastFocusedEntry;
+		if (preserveEntryFocus && lastFocusedEntry) {
+			// Need a timeout, for some reason without it the inner label container will not get focused
+			setTimeout(() => lastFocusedEntry.labelContainer.focus(), 0);
+		}
 	}
 
 	createContentArea(parent: HTMLElement): HTMLElement {
@@ -680,10 +694,6 @@ export class StatusbarPart extends Part implements IStatusbarService {
 		return itemContainer;
 	}
 
-	focus(): void {
-		this.getContainer();
-	}
-
 	layout(width: number, height: number): void {
 		super.layout(width, height);
 		super.layoutContents(width, height);
@@ -715,7 +725,6 @@ class StatusbarEntryItem extends Disposable {
 		@ICommandService private readonly commandService: ICommandService,
 		@INotificationService private readonly notificationService: INotificationService,
 		@ITelemetryService private readonly telemetryService: ITelemetryService,
-		@IEditorService private readonly editorService: IEditorService,
 		@IThemeService private readonly themeService: IThemeService
 	) {
 		super();
@@ -729,6 +738,7 @@ class StatusbarEntryItem extends Disposable {
 		// Label Container
 		this.labelContainer = document.createElement('a');
 		this.labelContainer.tabIndex = -1; // allows screen readers to read title, but still prevents tab focus.
+		this.labelContainer.setAttribute('role', 'button');
 
 		// Label
 		this.label = new CodiconLabel(this.labelContainer);
@@ -755,6 +765,9 @@ class StatusbarEntryItem extends Disposable {
 			this.container.setAttribute('aria-label', entry.ariaLabel);
 			this.labelContainer.setAttribute('aria-label', entry.ariaLabel);
 		}
+		if (!this.entry || entry.role !== this.entry.role) {
+			this.labelContainer.setAttribute('role', entry.role || 'button');
+		}
 
 		// Update: Tooltip (on the container, because label can be disabled)
 		if (!this.entry || entry.tooltip !== this.entry.tooltip) {
@@ -773,7 +786,7 @@ class StatusbarEntryItem extends Disposable {
 			const command = entry.command;
 			if (command) {
 				this.commandMouseListener.value = addDisposableListener(this.labelContainer, EventType.CLICK, () => this.executeCommand(command));
-				this.commandKeyboardListener.value = addDisposableListener(this.labelContainer, EventType.KEY_UP, e => {
+				this.commandKeyboardListener.value = addDisposableListener(this.labelContainer, EventType.KEY_DOWN, e => {
 					const event = new StandardKeyboardEvent(e);
 					if (event.equals(KeyCode.Space) || event.equals(KeyCode.Enter)) {
 						this.executeCommand(command);
@@ -817,12 +830,6 @@ class StatusbarEntryItem extends Disposable {
 	private async executeCommand(command: string | Command): Promise<void> {
 		const id = typeof command === 'string' ? command : command.id;
 		const args = typeof command === 'string' ? [] : command.arguments ?? [];
-
-		// Maintain old behaviour of always focusing the editor here
-		const activeTextEditorControl = this.editorService.activeTextEditorControl;
-		if (activeTextEditorControl) {
-			activeTextEditorControl.focus();
-		}
 
 		this.telemetryService.publicLog2<WorkbenchActionExecutedEvent, WorkbenchActionExecutedClassification>('workbenchActionExecuted', { id, from: 'status bar' });
 		try {
@@ -883,15 +890,34 @@ class StatusbarEntryItem extends Disposable {
 }
 
 registerThemingParticipant((theme: IColorTheme, collector: ICssStyleCollector) => {
-	const statusBarItemHoverBackground = theme.getColor(STATUS_BAR_ITEM_HOVER_BACKGROUND);
-	if (statusBarItemHoverBackground) {
-		collector.addRule(`.monaco-workbench .part.statusbar > .items-container > .statusbar-item a:hover { background-color: ${statusBarItemHoverBackground}; }`);
-		collector.addRule(`.monaco-workbench .part.statusbar > .items-container > .statusbar-item a:focus { background-color: ${statusBarItemHoverBackground}; }`);
+	if (theme.type !== HIGH_CONTRAST) {
+		const statusBarItemHoverBackground = theme.getColor(STATUS_BAR_ITEM_HOVER_BACKGROUND);
+		if (statusBarItemHoverBackground) {
+			collector.addRule(`.monaco-workbench .part.statusbar > .items-container > .statusbar-item a:hover { background-color: ${statusBarItemHoverBackground}; }`);
+			collector.addRule(`.monaco-workbench .part.statusbar > .items-container > .statusbar-item a:focus { background-color: ${statusBarItemHoverBackground}; }`);
+		}
+
+		const statusBarItemActiveBackground = theme.getColor(STATUS_BAR_ITEM_ACTIVE_BACKGROUND);
+		if (statusBarItemActiveBackground) {
+			collector.addRule(`.monaco-workbench .part.statusbar > .items-container > .statusbar-item a:active { background-color: ${statusBarItemActiveBackground}; }`);
+		}
 	}
 
-	const statusBarItemActiveBackground = theme.getColor(STATUS_BAR_ITEM_ACTIVE_BACKGROUND);
-	if (statusBarItemActiveBackground) {
-		collector.addRule(`.monaco-workbench .part.statusbar > .items-container > .statusbar-item a:active { background-color: ${statusBarItemActiveBackground}; }`);
+	const activeContrastBorderColor = theme.getColor(activeContrastBorder);
+	if (activeContrastBorderColor) {
+		collector.addRule(`
+			.monaco-workbench .part.statusbar > .items-container > .statusbar-item a:focus,
+			.monaco-workbench .part.statusbar > .items-container > .statusbar-item a:active {
+				outline: 1px solid ${activeContrastBorderColor} !important;
+				outline-offset: -1px;
+			}
+		`);
+		collector.addRule(`
+			.monaco-workbench .part.statusbar > .items-container > .statusbar-item a:hover {
+				outline: 1px dashed ${activeContrastBorderColor};
+				outline-offset: -1px;
+			}
+		`);
 	}
 
 	const statusBarProminentItemForeground = theme.getColor(STATUS_BAR_PROMINENT_ITEM_FOREGROUND);
@@ -933,5 +959,40 @@ KeybindingsRegistry.registerCommandAndKeybindingRule({
 	handler: (accessor: ServicesAccessor) => {
 		const statusBarService = accessor.get(IStatusbarService);
 		statusBarService.focusNextEntry();
+	}
+});
+
+KeybindingsRegistry.registerCommandAndKeybindingRule({
+	id: 'workbench.statusBar.focusFirst',
+	weight: KeybindingWeight.WorkbenchContrib,
+	primary: KeyCode.Home,
+	when: CONTEXT_STATUS_BAR_FOCUSED,
+	handler: (accessor: ServicesAccessor) => {
+		const statusBarService = accessor.get(IStatusbarService);
+		statusBarService.focus(false);
+		statusBarService.focusNextEntry();
+	}
+});
+
+KeybindingsRegistry.registerCommandAndKeybindingRule({
+	id: 'workbench.statusBar.focusLast',
+	weight: KeybindingWeight.WorkbenchContrib,
+	primary: KeyCode.End,
+	when: CONTEXT_STATUS_BAR_FOCUSED,
+	handler: (accessor: ServicesAccessor) => {
+		const statusBarService = accessor.get(IStatusbarService);
+		statusBarService.focus(false);
+		statusBarService.focusPreviousEntry();
+	}
+});
+
+KeybindingsRegistry.registerCommandAndKeybindingRule({
+	id: 'workbench.statusBar.clearFocus',
+	weight: KeybindingWeight.WorkbenchContrib,
+	primary: KeyCode.Escape,
+	when: CONTEXT_STATUS_BAR_FOCUSED,
+	handler: (accessor: ServicesAccessor) => {
+		const statusBarService = accessor.get(IStatusbarService);
+		statusBarService.focus(false);
 	}
 });

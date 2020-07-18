@@ -1,0 +1,28 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.monaco-workbench .workbench-hover {
+	position: relative;
+	font-size: 14px;
+	line-height: 19px;
+	animation: fadein 100ms linear;
+	/* Must be higher than sash's z-index and terminal canvases */
+	z-index: 40;
+	overflow: hidden;
+	max-width: 700px;
+}
+
+.monaco-workbench .workbench-hover a {
+	color: #3794ff;
+}
+
+.monaco-workbench .workbench-hover.right-aligned .hover-row.status-bar .actions {
+	flex-direction: row-reverse;
+}
+
+.monaco-workbench .workbench-hover.right-aligned .hover-row.status-bar .actions .action-container {
+	margin-right: 0;
+	margin-left: 16px;
+}

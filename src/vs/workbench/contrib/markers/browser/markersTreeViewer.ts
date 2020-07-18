@@ -16,7 +16,7 @@ import { IInstantiationService } from 'vs/platform/instantiation/common/instanti
 import { attachBadgeStyler } from 'vs/platform/theme/common/styler';
 import { IThemeService, registerThemingParticipant } from 'vs/platform/theme/common/themeService';
 import { IDisposable, dispose, Disposable, toDisposable, DisposableStore } from 'vs/base/common/lifecycle';
-import { ActionBar } from 'vs/base/browser/ui/actionbar/actionbar';
+import { ActionBar, ActionViewItem } from 'vs/base/browser/ui/actionbar/actionbar';
 import { QuickFixAction, QuickFixActionViewItem } from 'vs/workbench/contrib/markers/browser/markersViewActions';
 import { ILabelService } from 'vs/platform/label/common/label';
 import { dirname, basename, isEqual } from 'vs/base/common/resources';
@@ -254,6 +254,30 @@ export class MarkerRenderer implements ITreeRenderer<Marker, MarkerFilterData, I
 
 }
 
+const toggleMultilineAction = 'problems.action.toggleMultiline';
+const expandedClass = 'codicon codicon-chevron-up';
+const collapsedClass = 'codicon codicon-chevron-down';
+
+class ToggleMultilineActionViewItem extends ActionViewItem {
+
+	render(container: HTMLElement): void {
+		super.render(container);
+		this.updateExpandedAttribute();
+	}
+
+	updateClass(): void {
+		super.updateClass();
+		this.updateExpandedAttribute();
+	}
+
+	private updateExpandedAttribute(): void {
+		if (this.element) {
+			this.element.setAttribute('aria-expanded', `${this._action.class === expandedClass}`);
+		}
+	}
+
+}
+
 type ModifierKey = 'meta' | 'ctrl' | 'alt';
 
 class MarkerWidget extends Disposable {
@@ -279,7 +303,14 @@ class MarkerWidget extends Disposable {
 			actionViewItemProvider: (action: IAction) => action.id === QuickFixAction.ID ? _instantiationService.createInstance(QuickFixActionViewItem, <QuickFixAction>action) : undefined
 		}));
 		this.icon = dom.append(parent, dom.$(''));
-		this.multilineActionbar = this._register(new ActionBar(dom.append(parent, dom.$('.multiline-actions'))));
+		this.multilineActionbar = this._register(new ActionBar(dom.append(parent, dom.$('.multiline-actions')), {
+			actionViewItemProvider: (action) => {
+				if (action.id === toggleMultilineAction) {
+					return new ToggleMultilineActionViewItem(undefined, action, { icon: true });
+				}
+				return undefined;
+			}
+		}));
 		this.messageAndDetailsContainer = dom.append(parent, dom.$('.marker-message-details-container'));
 
 		this._clickModifierKey = this._getClickModifierKey();
@@ -332,10 +363,10 @@ class MarkerWidget extends Disposable {
 	private renderMultilineActionbar(marker: Marker): void {
 		const viewModel = this.markersViewModel.getViewModel(marker);
 		const multiline = viewModel && viewModel.multiline;
-		const action = new Action('problems.action.toggleMultiline');
+		const action = new Action(toggleMultilineAction);
 		action.enabled = !!viewModel && marker.lines.length > 1;
 		action.tooltip = multiline ? localize('single line', "Show message in single line") : localize('multi line', "Show message in multiple lines");
-		action.class = multiline ? 'codicon codicon-chevron-up' : 'codicon codicon-chevron-down';
+		action.class = multiline ? expandedClass : collapsedClass;
 		action.run = () => { if (viewModel) { viewModel.multiline = !viewModel.multiline; } return Promise.resolve(); };
 		this.multilineActionbar.push([action], { icon: true, label: false });
 	}

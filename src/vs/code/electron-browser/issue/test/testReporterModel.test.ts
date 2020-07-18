@@ -6,7 +6,7 @@
 import * as assert from 'assert';
 import { IssueReporterModel } from 'vs/code/electron-browser/issue/issueReporterModel';
 import { normalizeGitHubUrl } from 'vs/platform/issue/common/issueReporterUtil';
-import { IssueType } from 'vs/platform/issue/node/issue';
+import { IssueType } from 'vs/platform/issue/common/issue';
 
 suite('IssueReporter', () => {
 

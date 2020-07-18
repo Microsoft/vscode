@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Event, Disposable } from 'vscode';
+import { Event, Disposable, EventEmitter } from 'vscode';
 import { dirname, sep } from 'path';
 import { Readable } from 'stream';
 import { promises as fs, createReadStream } from 'fs';
@@ -42,18 +42,6 @@ export function mapEvent<I, O>(event: Event<I>, map: (i: I) => O): Event<O> {
 
 export function filterEvent<T>(event: Event<T>, filter: (e: T) => boolean): Event<T> {
 	return (listener: (e: T) => any, thisArgs?: any, disposables?: Disposable[]) => event(e => filter(e) && listener.call(thisArgs, e), null, disposables);
-}
-
-export function latchEvent<T>(event: Event<T>): Event<T> {
-	let firstCall = true;
-	let cache: T;
-
-	return filterEvent(event, value => {
-		let shouldEmit = firstCall || value !== cache;
-		firstCall = false;
-		cache = value;
-		return shouldEmit;
-	});
 }
 
 export function anyEvent<T>(...events: Event<T>[]): Event<T> {
@@ -397,6 +385,42 @@ export class Limiter<T> {
 
 		if (this.outstandingPromises.length > 0) {
 			this.consume();
+		}
+	}
+}
+
+type Completion<T> = { success: true, value: T } | { success: false, err: any };
+
+export class PromiseSource<T> {
+
+	private _onDidComplete = new EventEmitter<Completion<T>>();
+
+	private _promise: Promise<T> | undefined;
+	get promise(): Promise<T> {
+		if (this._promise) {
+			return this._promise;
+		}
+
+		return eventToPromise(this._onDidComplete.event).then(completion => {
+			if (completion.success) {
+				return completion.value;
+			} else {
+				throw completion.err;
+			}
+		});
+	}
+
+	resolve(value: T): void {
+		if (!this._promise) {
+			this._promise = Promise.resolve(value);
+			this._onDidComplete.fire({ success: true, value });
+		}
+	}
+
+	reject(err: any): void {
+		if (!this._promise) {
+			this._promise = Promise.reject(err);
+			this._onDidComplete.fire({ success: false, err });
 		}
 	}
 }

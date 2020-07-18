@@ -47,31 +47,31 @@ export class ToggleColumnSelectionAction extends Action {
 		if (!codeEditor || codeEditor !== this._getCodeEditor() || oldValue === newValue || !codeEditor.hasModel()) {
 			return;
 		}
-		const cursors = codeEditor._getCursors();
+		const viewModel = codeEditor._getViewModel();
 		if (codeEditor.getOption(EditorOption.columnSelection)) {
 			const selection = codeEditor.getSelection();
 			const modelSelectionStart = new Position(selection.selectionStartLineNumber, selection.selectionStartColumn);
-			const viewSelectionStart = cursors.context.convertModelPositionToViewPosition(modelSelectionStart);
+			const viewSelectionStart = viewModel.coordinatesConverter.convertModelPositionToViewPosition(modelSelectionStart);
 			const modelPosition = new Position(selection.positionLineNumber, selection.positionColumn);
-			const viewPosition = cursors.context.convertModelPositionToViewPosition(modelPosition);
+			const viewPosition = viewModel.coordinatesConverter.convertModelPositionToViewPosition(modelPosition);
 
-			CoreNavigationCommands.MoveTo.runCoreEditorCommand(cursors, {
+			CoreNavigationCommands.MoveTo.runCoreEditorCommand(viewModel, {
 				position: modelSelectionStart,
 				viewPosition: viewSelectionStart
 			});
-			const visibleColumn = CursorColumns.visibleColumnFromColumn2(cursors.context.config, cursors.context.viewModel, viewPosition);
-			CoreNavigationCommands.ColumnSelect.runCoreEditorCommand(cursors, {
+			const visibleColumn = CursorColumns.visibleColumnFromColumn2(viewModel.cursorConfig, viewModel, viewPosition);
+			CoreNavigationCommands.ColumnSelect.runCoreEditorCommand(viewModel, {
 				position: modelPosition,
 				viewPosition: viewPosition,
 				doColumnSelect: true,
 				mouseColumn: visibleColumn + 1
 			});
 		} else {
-			const columnSelectData = cursors.getColumnSelectData();
-			const fromViewColumn = CursorColumns.columnFromVisibleColumn2(cursors.context.config, cursors.context.viewModel, columnSelectData.fromViewLineNumber, columnSelectData.fromViewVisualColumn);
-			const fromPosition = cursors.context.convertViewPositionToModelPosition(columnSelectData.fromViewLineNumber, fromViewColumn);
-			const toViewColumn = CursorColumns.columnFromVisibleColumn2(cursors.context.config, cursors.context.viewModel, columnSelectData.toViewLineNumber, columnSelectData.toViewVisualColumn);
-			const toPosition = cursors.context.convertViewPositionToModelPosition(columnSelectData.toViewLineNumber, toViewColumn);
+			const columnSelectData = viewModel.getCursorColumnSelectData();
+			const fromViewColumn = CursorColumns.columnFromVisibleColumn2(viewModel.cursorConfig, viewModel, columnSelectData.fromViewLineNumber, columnSelectData.fromViewVisualColumn);
+			const fromPosition = viewModel.coordinatesConverter.convertViewPositionToModelPosition(new Position(columnSelectData.fromViewLineNumber, fromViewColumn));
+			const toViewColumn = CursorColumns.columnFromVisibleColumn2(viewModel.cursorConfig, viewModel, columnSelectData.toViewLineNumber, columnSelectData.toViewVisualColumn);
+			const toPosition = viewModel.coordinatesConverter.convertViewPositionToModelPosition(new Position(columnSelectData.toViewLineNumber, toViewColumn));
 
 			codeEditor.setSelection(new Selection(fromPosition.lineNumber, fromPosition.column, toPosition.lineNumber, toPosition.column));
 		}

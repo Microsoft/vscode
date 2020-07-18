@@ -101,7 +101,7 @@ suite('suggest, word distance', function () {
 				return;
 			}
 		};
-		return new CompletionItem(position, suggestion, container, provider, undefined!);
+		return new CompletionItem(position, suggestion, container, provider);
 	}
 
 	test('Suggest locality bonus can boost current word #90515', function () {

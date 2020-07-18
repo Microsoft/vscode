@@ -5,10 +5,12 @@
 
 import { Model } from '../model';
 import { Repository as BaseRepository, Resource } from '../repository';
-import { InputBox, Git, API, Repository, Remote, RepositoryState, Branch, Ref, Submodule, Commit, Change, RepositoryUIState, Status, LogOptions, APIState, CommitOptions, GitExtension, RefType, RemoteSourceProvider, CredentialsProvider } from './git';
+import { InputBox, Git, API, Repository, Remote, RepositoryState, Branch, Ref, Submodule, Commit, Change, RepositoryUIState, Status, LogOptions, APIState, CommitOptions, RefType, RemoteSourceProvider, CredentialsProvider, BranchQuery, PushErrorHandler } from './git';
 import { Event, SourceControlInputBox, Uri, SourceControl, Disposable, commands } from 'vscode';
 import { mapEvent } from '../util';
 import { toGitUri } from '../uri';
+import { pickRemoteSource, PickRemoteSourceOptions } from '../remoteSource';
+import { GitExtensionImpl } from './extension';
 
 class ApiInputBox implements InputBox {
 	set value(value: string) { this._inputBox.value = value; }
@@ -159,6 +161,10 @@ export class ApiRepository implements Repository {
 		return this._repository.getBranch(name);
 	}
 
+	getBranches(query: BranchQuery): Promise<Ref[]> {
+		return this._repository.getBranches(query);
+	}
+
 	setBranchUpstream(name: string, upstream: string): Promise<void> {
 		return this._repository.setBranchUpstream(name, upstream);
 	}
@@ -267,6 +273,10 @@ export class ApiImpl implements API {
 		return this._model.registerCredentialsProvider(provider);
 	}
 
+	registerPushErrorHandler(handler: PushErrorHandler): Disposable {
+		return this._model.registerPushErrorHandler(handler);
+	}
+
 	constructor(private _model: Model) { }
 }
 
@@ -304,41 +314,51 @@ function getStatus(status: Status): string {
 	return 'UNKNOWN';
 }
 
-export function registerAPICommands(extension: GitExtension): Disposable {
-	return Disposable.from(
-		commands.registerCommand('git.api.getRepositories', () => {
-			const api = extension.getAPI(1);
-			return api.repositories.map(r => r.rootUri.toString());
-		}),
+export function registerAPICommands(extension: GitExtensionImpl): Disposable {
+	const disposables: Disposable[] = [];
 
-		commands.registerCommand('git.api.getRepositoryState', (uri: string) => {
-			const api = extension.getAPI(1);
-			const repository = api.getRepository(Uri.parse(uri));
+	disposables.push(commands.registerCommand('git.api.getRepositories', () => {
+		const api = extension.getAPI(1);
+		return api.repositories.map(r => r.rootUri.toString());
+	}));
 
-			if (!repository) {
-				return null;
-			}
+	disposables.push(commands.registerCommand('git.api.getRepositoryState', (uri: string) => {
+		const api = extension.getAPI(1);
+		const repository = api.getRepository(Uri.parse(uri));
 
-			const state = repository.state;
+		if (!repository) {
+			return null;
+		}
 
-			const ref = (ref: Ref | undefined) => (ref && { ...ref, type: getRefType(ref.type) });
-			const change = (change: Change) => ({
-				uri: change.uri.toString(),
-				originalUri: change.originalUri.toString(),
-				renameUri: change.renameUri?.toString(),
-				status: getStatus(change.status)
-			});
+		const state = repository.state;
 
-			return {
-				HEAD: ref(state.HEAD),
-				refs: state.refs.map(ref),
-				remotes: state.remotes,
-				submodules: state.submodules,
-				rebaseCommit: state.rebaseCommit,
-				mergeChanges: state.mergeChanges.map(change),
-				indexChanges: state.indexChanges.map(change),
-				workingTreeChanges: state.workingTreeChanges.map(change)
-			};
-		})
-	);
+		const ref = (ref: Ref | undefined) => (ref && { ...ref, type: getRefType(ref.type) });
+		const change = (change: Change) => ({
+			uri: change.uri.toString(),
+			originalUri: change.originalUri.toString(),
+			renameUri: change.renameUri?.toString(),
+			status: getStatus(change.status)
+		});
+
+		return {
+			HEAD: ref(state.HEAD),
+			refs: state.refs.map(ref),
+			remotes: state.remotes,
+			submodules: state.submodules,
+			rebaseCommit: state.rebaseCommit,
+			mergeChanges: state.mergeChanges.map(change),
+			indexChanges: state.indexChanges.map(change),
+			workingTreeChanges: state.workingTreeChanges.map(change)
+		};
+	}));
+
+	disposables.push(commands.registerCommand('git.api.getRemoteSources', (opts?: PickRemoteSourceOptions) => {
+		if (!extension.model) {
+			return;
+		}
+
+		return pickRemoteSource(extension.model, opts);
+	}));
+
+	return Disposable.from(...disposables);
 }

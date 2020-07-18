@@ -59,7 +59,6 @@
 
 .monaco-action-bar .action-item.disabled .action-label.extension-action {
 	opacity: 1;
-	pointer-events: none;
 }
 
 .monaco-action-bar .action-item.disabled .action-label.extension-action.text {

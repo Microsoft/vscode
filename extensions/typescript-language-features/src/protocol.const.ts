@@ -45,6 +45,7 @@ export class DiagnosticCategory {
 
 export class KindModifiers {
 	public static readonly optional = 'optional';
+	public static readonly depreacted = 'deprecated';
 	public static readonly color = 'color';
 
 	public static readonly dtsFile = '.d.ts';
@@ -71,4 +72,20 @@ export class DisplayPartKind {
 	public static readonly propertyName = 'propertyName';
 	public static readonly punctuation = 'punctuation';
 	public static readonly text = 'text';
+}
+
+export enum EventName {
+	syntaxDiag = 'syntaxDiag',
+	semanticDiag = 'semanticDiag',
+	suggestionDiag = 'suggestionDiag',
+	configFileDiag = 'configFileDiag',
+	telemetry = 'telemetry',
+	projectLanguageServiceState = 'projectLanguageServiceState',
+	projectsUpdatedInBackground = 'projectsUpdatedInBackground',
+	beginInstallTypes = 'beginInstallTypes',
+	endInstallTypes = 'endInstallTypes',
+	typesInstallerInitializationFailed = 'typesInstallerInitializationFailed',
+	surveyReady = 'surveyReady',
+	projectLoadingStart = 'projectLoadingStart',
+	projectLoadingFinish = 'projectLoadingFinish',
 }

@@ -17,7 +17,7 @@ import { once } from 'vs/base/common/functional';
 export const ICodeLensCache = createDecorator<ICodeLensCache>('ICodeLensCache');
 
 export interface ICodeLensCache {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 	put(model: ITextModel, data: CodeLensModel): void;
 	get(model: ITextModel): CodeLensModel | undefined;
 	delete(model: ITextModel): void;
@@ -38,7 +38,7 @@ class CacheItem {
 
 export class CodeLensCache implements ICodeLensCache {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private readonly _fakeProvider = new class implements CodeLensProvider {
 		provideCodeLenses(): CodeLensList {
@@ -96,7 +96,7 @@ export class CodeLensCache implements ICodeLensCache {
 
 	private _serialize(): string {
 		const data: Record<string, ISerializedCacheData> = Object.create(null);
-		this._cache.forEach((value, key) => {
+		for (const [key, value] of this._cache) {
 			const lines = new Set<number>();
 			for (const d of value.data.lenses) {
 				lines.add(d.symbol.range.startLineNumber);
@@ -105,7 +105,7 @@ export class CodeLensCache implements ICodeLensCache {
 				lineCount: value.lineCount,
 				lines: [...lines.values()]
 			};
-		});
+		}
 		return JSON.stringify(data);
 	}
 

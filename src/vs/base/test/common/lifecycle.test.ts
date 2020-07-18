@@ -48,6 +48,21 @@ suite('Lifecycle', () => {
 		assert(disposable.isDisposed);
 		assert(disposable2.isDisposed);
 	});
+
+	test('Action bar has broken accessibility #100273', function () {
+		let array = [{ dispose() { } }, { dispose() { } }];
+		let array2 = dispose(array);
+
+		assert.equal(array.length, 2);
+		assert.equal(array2.length, 0);
+		assert.ok(array !== array2);
+
+		let set = new Set<IDisposable>([{ dispose() { } }, { dispose() { } }]);
+		let setValues = set.values();
+		let setValues2 = dispose(setValues);
+		assert.ok(setValues === setValues2);
+
+	});
 });
 
 suite('Reference Collection', () => {

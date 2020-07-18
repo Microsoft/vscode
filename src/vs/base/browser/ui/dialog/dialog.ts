@@ -73,6 +73,7 @@ export class Dialog extends Disposable {
 		this.modal = this.container.appendChild($(`.monaco-dialog-modal-block${options.type === 'pending' ? '.dimmed' : ''}`));
 		this.shadowElement = this.modal.appendChild($('.dialog-shadow'));
 		this.element = this.shadowElement.appendChild($('.monaco-dialog-box'));
+		this.element.setAttribute('role', 'dialog');
 		hide(this.element);
 
 		// If no button is provided, default to OK
@@ -107,6 +108,28 @@ export class Dialog extends Disposable {
 
 		const toolbarRowElement = this.element.appendChild($('.dialog-toolbar-row'));
 		this.toolbarContainer = toolbarRowElement.appendChild($('.dialog-toolbar'));
+	}
+
+	private getAriaLabel(): string {
+		let typeLabel = nls.localize('dialogInfoMessage', 'Info');
+		switch (this.options.type) {
+			case 'error':
+				nls.localize('dialogErrorMessage', 'Error');
+				break;
+			case 'warning':
+				nls.localize('dialogWarningMessage', 'Warning');
+				break;
+			case 'pending':
+				nls.localize('dialogPendingMessage', 'In Progress');
+				break;
+			case 'none':
+			case 'info':
+			case 'question':
+			default:
+				break;
+		}
+
+		return `${typeLabel}: ${this.message} ${this.options.detail || ''}`;
 	}
 
 	updateMessage(message: string): void {
@@ -242,7 +265,7 @@ export class Dialog extends Disposable {
 
 			this.applyStyles();
 
-			this.element.setAttribute('aria-label', this.message);
+			this.element.setAttribute('aria-label', this.getAriaLabel());
 			show(this.element);
 
 			// Focus first element

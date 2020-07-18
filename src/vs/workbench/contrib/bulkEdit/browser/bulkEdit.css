@@ -70,10 +70,10 @@
 	min-width: 16px;
 }
 
-.vs-dark .monaco-workbench .bulk-edit-panel .monaco-tl-contents.category .uri-icon,
-.hc-black .monaco-workbench .bulk-edit-panel .monaco-tl-contents.category .uri-icon,
-.vs-dark .monaco-workbench .bulk-edit-panel .monaco-tl-contents.textedit .uri-icon,
-.hc-black .monaco-workbench .bulk-edit-panel .monaco-tl-contents.textedit .uri-icon
+.monaco-workbench.vs-dark .bulk-edit-panel .monaco-tl-contents.category .uri-icon,
+.monaco-workbench.hc-black .bulk-edit-panel .monaco-tl-contents.category .uri-icon,
+.monaco-workbench.vs-dark .bulk-edit-panel .monaco-tl-contents.textedit .uri-icon,
+.monaco-workbench.hc-black .bulk-edit-panel .monaco-tl-contents.textedit .uri-icon
 {
 	background-image: var(--background-dark);
 }

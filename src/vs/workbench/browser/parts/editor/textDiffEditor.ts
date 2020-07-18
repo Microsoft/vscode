@@ -9,7 +9,7 @@ import { isFunction, isObject, isArray, assertIsDefined } from 'vs/base/common/t
 import { IDiffEditor } from 'vs/editor/browser/editorBrowser';
 import { IDiffEditorOptions, IEditorOptions as ICodeEditorOptions } from 'vs/editor/common/config/editorOptions';
 import { BaseTextEditor, IEditorConfiguration } from 'vs/workbench/browser/parts/editor/textEditor';
-import { TextEditorOptions, EditorInput, EditorOptions, TEXT_DIFF_EDITOR_ID, IEditorInputFactoryRegistry, Extensions as EditorInputExtensions, ITextDiffEditorPane, IEditorMemento } from 'vs/workbench/common/editor';
+import { TextEditorOptions, EditorInput, EditorOptions, TEXT_DIFF_EDITOR_ID, IEditorInputFactoryRegistry, Extensions as EditorInputExtensions, ITextDiffEditorPane, IEditorInput } from 'vs/workbench/common/editor';
 import { DiffEditorInput } from 'vs/workbench/common/editor/diffEditorInput';
 import { DiffNavigator } from 'vs/editor/browser/widget/diffNavigator';
 import { DiffEditorWidget } from 'vs/editor/browser/widget/diffEditorWidget';
@@ -28,7 +28,6 @@ import { Event } from 'vs/base/common/event';
 import { IEditorGroupsService } from 'vs/workbench/services/editor/common/editorGroupsService';
 import { IEditorService, ACTIVE_GROUP } from 'vs/workbench/services/editor/common/editorService';
 import { CancellationToken } from 'vs/base/common/cancellation';
-import { EditorMemento } from 'vs/workbench/browser/parts/editor/baseEditor';
 import { EditorActivation, IEditorOptions } from 'vs/platform/editor/common/editor';
 
 /**
@@ -53,8 +52,12 @@ export class TextDiffEditor extends BaseTextEditor implements ITextDiffEditorPan
 		super(TextDiffEditor.ID, telemetryService, instantiationService, storageService, configurationService, themeService, editorService, editorGroupService);
 	}
 
-	protected getEditorMemento<T>(editorGroupService: IEditorGroupsService, key: string, limit: number = 10): IEditorMemento<T> {
-		return new EditorMemento(this.getId(), key, Object.create(null), limit, editorGroupService); // do not persist in storage as diff editors are never persisted
+	protected onWillCloseEditorInGroup(editor: IEditorInput): void {
+
+		// React to editors closing to preserve or clear view state. This needs to happen
+		// in the onWillCloseEditor because at that time the editor has not yet
+		// been disposed and we can safely persist the view state still as needed.
+		this.doSaveOrClearTextDiffEditorViewState(editor);
 	}
 
 	getTitle(): string {
@@ -74,8 +77,8 @@ export class TextDiffEditor extends BaseTextEditor implements ITextDiffEditorPan
 		// Dispose previous diff navigator
 		this.diffNavigatorDisposables.clear();
 
-		// Remember view settings if input changes
-		this.saveTextDiffEditorViewState(this.input);
+		// Update/clear view settings if input changes
+		this.doSaveOrClearTextDiffEditorViewState(this.input);
 
 		// Set input and resolve
 		await super.setInput(input, options, token);
@@ -199,7 +202,16 @@ export class TextDiffEditor extends BaseTextEditor implements ITextDiffEditorPan
 
 		// Handle diff editor specially by merging in diffEditor configuration
 		if (isObject(configuration.diffEditor)) {
-			objects.mixin(editorConfiguration, configuration.diffEditor);
+			// User settings defines `diffEditor.codeLens`, but there is also `editor.codeLens`.
+			// Due to the mixin, the two settings cannot be distinguished anymore.
+			//
+			// So we map `diffEditor.codeLens` to `diffEditor.originalCodeLens` and `diffEditor.modifiedCodeLens`.
+			const diffEditorConfiguration = <IDiffEditorOptions>objects.deepClone(configuration.diffEditor);
+			diffEditorConfiguration.originalCodeLens = diffEditorConfiguration.codeLens;
+			diffEditorConfiguration.modifiedCodeLens = diffEditorConfiguration.codeLens;
+			delete diffEditorConfiguration.codeLens;
+
+			objects.mixin(editorConfiguration, diffEditorConfiguration);
 		}
 
 		return editorConfiguration;
@@ -213,19 +225,6 @@ export class TextDiffEditor extends BaseTextEditor implements ITextDiffEditorPan
 		options.lineDecorationsWidth = '2ch';
 
 		return options;
-	}
-
-	protected getAriaLabel(): string {
-		let ariaLabel: string;
-
-		const inputName = this.input?.getName();
-		if (this.input?.isReadonly()) {
-			ariaLabel = inputName ? nls.localize('readonlyEditorWithInputAriaLabel', "{0} readonly compare", inputName) : nls.localize('readonlyEditorAriaLabel', "Readonly compare");
-		} else {
-			ariaLabel = inputName ? nls.localize('editableEditorWithInputAriaLabel', "{0} compare", inputName) : nls.localize('editableEditorAriaLabel', "Compare");
-		}
-
-		return ariaLabel;
 	}
 
 	private isFileBinaryError(error: Error[]): boolean;
@@ -245,8 +244,8 @@ export class TextDiffEditor extends BaseTextEditor implements ITextDiffEditorPan
 		// Dispose previous diff navigator
 		this.diffNavigatorDisposables.clear();
 
-		// Keep editor view state in settings to restore when coming back
-		this.saveTextDiffEditorViewState(this.input);
+		// Update/clear editor view state in settings
+		this.doSaveOrClearTextDiffEditorViewState(this.input);
 
 		// Clear Model
 		const diffEditor = this.getControl();
@@ -270,7 +269,15 @@ export class TextDiffEditor extends BaseTextEditor implements ITextDiffEditorPan
 		return super.loadTextEditorViewState(resource) as IDiffEditorViewState;  // overridden for text diff editor support
 	}
 
-	private saveTextDiffEditorViewState(input: EditorInput | undefined): void {
+	protected saveState(): void {
+
+		// Update/clear editor view State
+		this.doSaveOrClearTextDiffEditorViewState(this.input);
+
+		super.saveState();
+	}
+
+	private doSaveOrClearTextDiffEditorViewState(input: IEditorInput | undefined): void {
 		if (!(input instanceof DiffEditorInput)) {
 			return; // only supported for diff editor inputs
 		}
@@ -280,9 +287,9 @@ export class TextDiffEditor extends BaseTextEditor implements ITextDiffEditorPan
 			return; // unable to retrieve input resource
 		}
 
-		// Clear view state if input is disposed
-		if (input.isDisposed()) {
-			super.clearTextEditorViewState([resource]);
+		// Clear view state if input is disposed or we are configured to not storing any state
+		if (input.isDisposed() || (!this.shouldRestoreViewState && (!this.group || !this.group.isOpened(input)))) {
+			super.clearTextEditorViewState([resource], this.group);
 		}
 
 		// Otherwise save it
@@ -291,7 +298,7 @@ export class TextDiffEditor extends BaseTextEditor implements ITextDiffEditorPan
 
 			// Make sure to clean up when the input gets disposed
 			Event.once(input.onDispose)(() => {
-				super.clearTextEditorViewState([resource]);
+				super.clearTextEditorViewState([resource], this.group);
 			});
 		}
 	}

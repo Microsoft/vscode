@@ -18,7 +18,7 @@ export class ConsoleLogInAutomationService extends LogServiceAdapter implements 
 
 	declare codeAutomationLog: any;
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	constructor(logLevel: LogLevel = DEFAULT_LOG_LEVEL) {
 		super({ consoleLog: (type, args) => this.consoleLog(type, args) }, logLevel);

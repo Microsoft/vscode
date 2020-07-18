@@ -4,11 +4,26 @@
  *--------------------------------------------------------------------------------------------*/
 
 html, body {
-	font-family: var(--vscode-markdown-font-family, system-ui, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
-	font-size: var(--vscode-markdown-font-size, 14px);
+	font-family: var(--markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--markdown-font-size, 14px);
 	padding: 0 26px;
-	line-height: var(--vscode-markdown-line-height, 22px);
+	line-height: var(--markdown-line-height, 22px);
 	word-wrap: break-word;
+}
+
+body {
+	padding-top: 1em;
+}
+
+/* Reset margin top for elements */
+h1, h2, h3, h4, h5, h6,
+p, ol, ul, pre {
+	margin-top: 0;
+}
+
+h2, h3, h4, h5, h6 {
+	font-weight: normal;
+	margin-bottom: 0.2em;
 }
 
 #code-csp-warning {
@@ -112,6 +127,24 @@ textarea:focus {
 	outline-offset: -1px;
 }
 
+p {
+	margin-bottom: 1.5em;
+}
+
+li > p {
+	margin-bottom: 0;
+}
+
+/* don't space 2 paragraphs too far apart */
+p + p {
+	margin-top: -0.8em;
+}
+
+ul,
+ol {
+	margin-bottom: 1.5em;
+}
+
 hr {
 	border: 0;
 	height: 2px;
@@ -123,9 +156,6 @@ h1 {
 	line-height: 1.2;
 	border-bottom-width: 1px;
 	border-bottom-style: solid;
-}
-
-h1, h2, h3 {
 	font-weight: normal;
 }
 
@@ -157,7 +187,7 @@ blockquote {
 }
 
 code {
-	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-family: var(--vscode-editor-font-family, "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace);
 	font-size: 1em;
 	line-height: 1.357em;
 }

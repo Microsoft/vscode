@@ -18,6 +18,7 @@ import { createReporter } from './reporter';
 import * as util from './util';
 import * as fancyLog from 'fancy-log';
 import * as ansiColors from 'ansi-colors';
+import * as os from 'os';
 import ts = require('typescript');
 
 const watch = require('./watch');
@@ -81,6 +82,11 @@ function createCompile(src: string, build: boolean, emitError?: boolean) {
 export function compileTask(src: string, out: string, build: boolean): () => NodeJS.ReadWriteStream {
 
 	return function () {
+
+		if (os.totalmem() < 4_000_000_000) {
+			throw new Error('compilation requires 4GB of RAM');
+		}
+
 		const compile = createCompile(src, build, true);
 		const srcPipe = gulp.src(`${src}/**`, { base: `${src}` });
 		let generator = new MonacoGenerator(false);

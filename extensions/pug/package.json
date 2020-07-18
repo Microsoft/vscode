@@ -12,7 +12,7 @@
 	"contributes": {
 		"languages": [{
 			"id": "jade",
-			"extensions": [ ".jade", ".pug" ],
+			"extensions": [ ".pug", ".jade" ],
 			"aliases": [ "Pug", "Jade", "jade" ],
 			"configuration": "./language-configuration.json"
 		}],

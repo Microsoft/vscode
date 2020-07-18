@@ -24,7 +24,7 @@ export interface IQuickAccessOptions {
 	itemActivation?: ItemActivation;
 
 	/**
-	 * Wether to take the input value as is and not restore it
+	 * Whether to take the input value as is and not restore it
 	 * from any existing value if quick access is visible.
 	 */
 	preserveValue?: boolean;

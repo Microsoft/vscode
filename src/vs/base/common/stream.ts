@@ -3,6 +3,8 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import { DisposableStore, toDisposable } from 'vs/base/common/lifecycle';
+
 /**
  * The payload that flows in readable stream events.
  */
@@ -49,6 +51,11 @@ export interface ReadableStream<T> extends ReadableStreamEvents<T> {
 	 * Destroys the stream and stops emitting any event.
 	 */
 	destroy(): void;
+
+	/**
+	 * Allows to remove a listener that was previously added.
+	 */
+	removeListener(event: string, callback: Function): void;
 }
 
 /**
@@ -74,8 +81,14 @@ export interface WriteableStream<T> extends ReadableStream<T> {
 	 * Writing data to the stream will trigger the on('data')
 	 * event listener if the stream is flowing and buffer the
 	 * data otherwise until the stream is flowing.
+	 *
+	 * If a `highWaterMark` is configured and writing to the
+	 * stream reaches this mark, a promise will be returned
+	 * that should be awaited on before writing more data.
+	 * Otherwise there is a risk of buffering a large number
+	 * of data chunks without consumer.
 	 */
-	write(data: T): void;
+	write(data: T): void | Promise<void>;
 
 	/**
 	 * Signals an error to the consumer of the stream via the
@@ -95,10 +108,41 @@ export interface WriteableStream<T> extends ReadableStream<T> {
 	end(result?: T | Error): void;
 }
 
+/**
+ * A stream that has a buffer already read. Returns the original stream
+ * that was read as well as the chunks that got read.
+ *
+ * The `ended` flag indicates if the stream has been fully consumed.
+ */
+export interface ReadableBufferedStream<T> {
+
+	/**
+	 * The original stream that is being read.
+	 */
+	stream: ReadableStream<T>;
+
+	/**
+	 * An array of chunks already read from this stream.
+	 */
+	buffer: T[];
+
+	/**
+	 * Signals if the stream has ended or not. If not, consumers
+	 * should continue to read from the stream until consumed.
+	 */
+	ended: boolean;
+}
+
 export function isReadableStream<T>(obj: unknown): obj is ReadableStream<T> {
 	const candidate = obj as ReadableStream<T>;
 
 	return candidate && [candidate.on, candidate.pause, candidate.resume, candidate.destroy].every(fn => typeof fn === 'function');
+}
+
+export function isReadableBufferedStream<T>(obj: unknown): obj is ReadableBufferedStream<T> {
+	const candidate = obj as ReadableBufferedStream<T>;
+
+	return candidate && isReadableStream(candidate.stream) && Array.isArray(candidate.buffer) && typeof candidate.ended === 'boolean';
 }
 
 export interface IReducer<T> {
@@ -118,8 +162,18 @@ export interface ITransformer<Original, Transformed> {
 	error?: IErrorTransformer;
 }
 
-export function newWriteableStream<T>(reducer: IReducer<T>): WriteableStream<T> {
-	return new WriteableStreamImpl<T>(reducer);
+export function newWriteableStream<T>(reducer: IReducer<T>, options?: WriteableStreamOptions): WriteableStream<T> {
+	return new WriteableStreamImpl<T>(reducer, options);
+}
+
+export interface WriteableStreamOptions {
+
+	/**
+	 * The number of objects to buffer before WriteableStream#write()
+	 * signals back that the buffer is full. Can be used to reduce
+	 * the memory pressure when the stream is not flowing.
+	 */
+	highWaterMark?: number;
 }
 
 class WriteableStreamImpl<T> implements WriteableStream<T> {
@@ -141,7 +195,9 @@ class WriteableStreamImpl<T> implements WriteableStream<T> {
 		end: [] as { (): void }[]
 	};
 
-	constructor(private reducer: IReducer<T>) { }
+	private readonly pendingWritePromises: Function[] = [];
+
+	constructor(private reducer: IReducer<T>, private options?: WriteableStreamOptions) { }
 
 	pause(): void {
 		if (this.state.destroyed) {
@@ -166,7 +222,7 @@ class WriteableStreamImpl<T> implements WriteableStream<T> {
 		}
 	}
 
-	write(data: T): void {
+	write(data: T): void | Promise<void> {
 		if (this.state.destroyed) {
 			return;
 		}
@@ -179,6 +235,11 @@ class WriteableStreamImpl<T> implements WriteableStream<T> {
 		// not yet flowing: buffer data until flowing
 		else {
 			this.buffer.data.push(data);
+
+			// highWaterMark: if configured, signal back when buffer reached limits
+			if (typeof this.options?.highWaterMark === 'number' && this.buffer.data.length > this.options.highWaterMark) {
+				return new Promise(resolve => this.pendingWritePromises.push(resolve));
+			}
 		}
 	}
 
@@ -267,6 +328,35 @@ class WriteableStreamImpl<T> implements WriteableStream<T> {
 		}
 	}
 
+	removeListener(event: string, callback: Function): void {
+		if (this.state.destroyed) {
+			return;
+		}
+
+		let listeners: unknown[] | undefined = undefined;
+
+		switch (event) {
+			case 'data':
+				listeners = this.listeners.data;
+				break;
+
+			case 'end':
+				listeners = this.listeners.end;
+				break;
+
+			case 'error':
+				listeners = this.listeners.error;
+				break;
+		}
+
+		if (listeners) {
+			const index = listeners.indexOf(callback);
+			if (index >= 0) {
+				listeners.splice(index, 1);
+			}
+		}
+	}
+
 	private flowData(): void {
 		if (this.buffer.data.length > 0) {
 			const fullDataBuffer = this.reducer(this.buffer.data);
@@ -274,6 +364,11 @@ class WriteableStreamImpl<T> implements WriteableStream<T> {
 			this.listeners.data.forEach(listener => listener(fullDataBuffer));
 
 			this.buffer.data.length = 0;
+
+			// When the buffer is empty, resolve all pending writers
+			const pendingWritePromises = [...this.pendingWritePromises];
+			this.pendingWritePromises.length = 0;
+			pendingWritePromises.forEach(pendingWritePromise => pendingWritePromise());
 		}
 	}
 
@@ -308,6 +403,8 @@ class WriteableStreamImpl<T> implements WriteableStream<T> {
 			this.listeners.data.length = 0;
 			this.listeners.error.length = 0;
 			this.listeners.end.length = 0;
+
+			this.pendingWritePromises.length = 0;
 		}
 	}
 }
@@ -331,7 +428,7 @@ export function consumeReadable<T>(readable: Readable<T>, reducer: IReducer<T>):
  * reached, will return a readable instead to ensure all data can still
  * be read.
  */
-export function consumeReadableWithLimit<T>(readable: Readable<T>, reducer: IReducer<T>, maxChunks: number): T | Readable<T> {
+export function peekReadable<T>(readable: Readable<T>, reducer: IReducer<T>, maxChunks: number): T | Readable<T> {
 	const chunks: T[] = [];
 
 	let chunk: T | null | undefined = undefined;
@@ -377,7 +474,7 @@ export function consumeReadableWithLimit<T>(readable: Readable<T>, reducer: IRed
 /**
  * Helper to fully read a T stream into a T.
  */
-export function consumeStream<T>(stream: ReadableStream<T>, reducer: IReducer<T>): Promise<T> {
+export function consumeStream<T>(stream: ReadableStreamEvents<T>, reducer: IReducer<T>): Promise<T> {
 	return new Promise((resolve, reject) => {
 		const chunks: T[] = [];
 
@@ -388,58 +485,50 @@ export function consumeStream<T>(stream: ReadableStream<T>, reducer: IReducer<T>
 }
 
 /**
- * Helper to read a T stream up to a maximum of chunks. If the limit is
- * reached, will return a stream instead to ensure all data can still
- * be read.
+ * Helper to peek up to `maxChunks` into a stream. The return type signals if
+ * the stream has ended or not. If not, caller needs to add a `data` listener
+ * to continue reading.
  */
-export function consumeStreamWithLimit<T>(stream: ReadableStream<T>, reducer: IReducer<T>, maxChunks: number): Promise<T | ReadableStream<T>> {
+export function peekStream<T>(stream: ReadableStream<T>, maxChunks: number): Promise<ReadableBufferedStream<T>> {
 	return new Promise((resolve, reject) => {
-		const chunks: T[] = [];
+		const streamListeners = new DisposableStore();
 
-		let wrapperStream: WriteableStream<T> | undefined = undefined;
+		// Data Listener
+		const buffer: T[] = [];
+		const dataListener = (chunk: T) => {
 
-		stream.on('data', data => {
+			// Add to buffer
+			buffer.push(chunk);
 
-			// If we reach maxChunks, we start to return a stream
-			// and make sure that any data we have already read
-			// is in it as well
-			if (!wrapperStream && chunks.length === maxChunks) {
-				wrapperStream = newWriteableStream(reducer);
-				while (chunks.length) {
-					wrapperStream.write(chunks.shift()!);
-				}
+			// We reached maxChunks and thus need to return
+			if (buffer.length > maxChunks) {
 
-				wrapperStream.write(data);
+				// Dispose any listeners and ensure to pause the
+				// stream so that it can be consumed again by caller
+				streamListeners.dispose();
+				stream.pause();
 
-				return resolve(wrapperStream);
+				return resolve({ stream, buffer, ended: false });
 			}
+		};
 
-			if (wrapperStream) {
-				wrapperStream.write(data);
-			} else {
-				chunks.push(data);
-			}
-		});
+		streamListeners.add(toDisposable(() => stream.removeListener('data', dataListener)));
+		stream.on('data', dataListener);
 
-		stream.on('error', error => {
-			if (wrapperStream) {
-				wrapperStream.error(error);
-			} else {
-				return reject(error);
-			}
-		});
+		// Error Listener
+		const errorListener = (error: Error) => {
+			return reject(error);
+		};
 
-		stream.on('end', () => {
-			if (wrapperStream) {
-				while (chunks.length) {
-					wrapperStream.write(chunks.shift()!);
-				}
+		streamListeners.add(toDisposable(() => stream.removeListener('error', errorListener)));
+		stream.on('error', errorListener);
 
-				wrapperStream.end();
-			} else {
-				return resolve(reducer(chunks));
-			}
-		});
+		const endListener = () => {
+			return resolve({ stream, buffer, ended: true });
+		};
+
+		streamListeners.add(toDisposable(() => stream.removeListener('end', endListener)));
+		stream.on('end', endListener);
 	});
 }
 

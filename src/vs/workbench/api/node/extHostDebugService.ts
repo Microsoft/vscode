@@ -88,6 +88,7 @@ export class ExtHostDebugService extends ExtHostDebugServiceBase {
 
 			const configProvider = await this._configurationService.getConfigProvider();
 			const shell = this._terminalService.getDefaultShell(true, configProvider);
+			let cwdForPrepareCommand: string | undefined;
 
 			if (needNewTerminal || !this._integratedTerminalInstance) {
 
@@ -97,9 +98,9 @@ export class ExtHostDebugService extends ExtHostDebugServiceBase {
 					cwd: args.cwd,
 					name: args.title || nls.localize('debug.terminal.title', "debuggee"),
 				};
-				// @ts-ignore
-				delete args.cwd;
 				this._integratedTerminalInstance = this._terminalService.createTerminalFromOptions(options);
+			} else {
+				cwdForPrepareCommand = args.cwd;
 			}
 
 			const terminal = this._integratedTerminalInstance;
@@ -107,7 +108,7 @@ export class ExtHostDebugService extends ExtHostDebugServiceBase {
 			terminal.show();
 
 			const shellProcessId = await this._integratedTerminalInstance.processId;
-			const command = prepareCommand(args, shell);
+			const command = prepareCommand(shell, args.args, cwdForPrepareCommand, args.env);
 			terminal.sendText(command, true);
 
 			return shellProcessId;
@@ -122,5 +123,4 @@ export class ExtHostDebugService extends ExtHostDebugServiceBase {
 	protected createVariableResolver(folders: vscode.WorkspaceFolder[], editorService: ExtHostDocumentsAndEditors, configurationService: ExtHostConfigProvider): AbstractVariableResolverService {
 		return new ExtHostVariableResolverService(folders, editorService, configurationService, process.env as env.IProcessEnvironment);
 	}
-
 }

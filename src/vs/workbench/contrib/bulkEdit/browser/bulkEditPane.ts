@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import 'vs/css!./bulkEdit';
-import { WorkbenchAsyncDataTree, IOpenEvent, TreeResourceNavigator } from 'vs/platform/list/browser/listService';
+import { WorkbenchAsyncDataTree, IOpenEvent } from 'vs/platform/list/browser/listService';
 import { WorkspaceEdit } from 'vs/editor/common/modes';
 import { BulkEditElement, BulkEditDelegate, TextEditElementRenderer, FileElementRenderer, BulkEditDataSource, BulkEditIdentityProvider, FileElement, TextEditElement, BulkEditAccessibilityProvider, CategoryElementRenderer, BulkEditNaviLabelProvider, CategoryElement, BulkEditSorter } from 'vs/workbench/contrib/bulkEdit/browser/bulkEditTree';
 import { FuzzyScore } from 'vs/base/common/filters';
@@ -136,15 +136,13 @@ export class BulkEditPane extends ViewPane {
 				expandOnlyOnTwistieClick: true,
 				multipleSelectionSupport: false,
 				keyboardNavigationLabelProvider: new BulkEditNaviLabelProvider(),
-				sorter: new BulkEditSorter()
+				sorter: new BulkEditSorter(),
+				openOnFocus: true
 			}
 		);
 
 		this._disposables.add(this._tree.onContextMenu(this._onContextMenu, this));
-
-		const navigator = new TreeResourceNavigator(this._tree, { openOnFocus: true });
-		this._disposables.add(navigator);
-		this._disposables.add(navigator.onDidOpenResource(e => this._openElementAsEditor(e)));
+		this._disposables.add(this._tree.onDidOpen(e => this._openElementAsEditor(e)));
 
 		// message
 		this._message = document.createElement('span');

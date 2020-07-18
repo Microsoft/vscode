@@ -9,9 +9,10 @@ import { ISerializableContextMenuItem, CONTEXT_MENU_CLOSE_CHANNEL, CONTEXT_MENU_
 export function registerContextMenuListener(): void {
 	ipcMain.on(CONTEXT_MENU_CHANNEL, (event: IpcMainEvent, contextMenuId: number, items: ISerializableContextMenuItem[], onClickChannel: string, options?: IPopupOptions) => {
 		const menu = createMenu(event, onClickChannel, items);
+		const window = BrowserWindow.fromWebContents(event.sender);
 
 		menu.popup({
-			window: BrowserWindow.fromWebContents(event.sender),
+			window: window ? window : undefined,
 			x: options ? options.x : undefined,
 			y: options ? options.y : undefined,
 			positioningItem: options ? options.positioningItem : undefined,

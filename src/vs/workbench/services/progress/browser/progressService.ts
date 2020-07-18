@@ -29,7 +29,7 @@ import { IViewsService, IViewDescriptorService, ViewContainerLocation } from 'vs
 
 export class ProgressService extends Disposable implements IProgressService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	constructor(
 		@IActivityService private readonly activityService: IActivityService,
@@ -525,7 +525,7 @@ export class ProgressService extends Disposable implements IProgressService {
 					keyEventProcessor: (event: StandardKeyboardEvent) => {
 						const resolved = this.keybindingService.softDispatch(event, this.layoutService.container);
 						if (resolved?.commandId) {
-							if (allowableCommands.indexOf(resolved.commandId) === -1) {
+							if (!allowableCommands.includes(resolved.commandId)) {
 								EventHelper.stop(event, true);
 							}
 						}

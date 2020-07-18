@@ -76,7 +76,7 @@
 	display: block;
 }
 
-.hc-black .monaco-workbench .part.editor > .content .welcomePage .subtitle {
+.monaco-workbench.hc-black .part.editor > .content .welcomePage .subtitle {
 	font-weight: 200;
 }
 
@@ -184,7 +184,7 @@
 	border: none;
 }
 
-.hc-black .monaco-workbench .part.editor > .content .welcomePage .commands .item button > h3 {
+.monaco-workbench.hc-black .part.editor > .content .welcomePage .commands .item button > h3 {
 	font-weight: bold;
 }
 
@@ -193,12 +193,12 @@
 	outline-width: 1px;
 }
 
-.hc-black .monaco-workbench .part.editor > .content .welcomePage .commands .item button {
+.monaco-workbench.hc-black .part.editor > .content .welcomePage .commands .item button {
 	border-width: 1px;
 	border-style: solid;
 }
 
-.hc-black .monaco-workbench .part.editor > .content .welcomePage .commands .item button:hover {
+.monaco-workbench.hc-black .part.editor > .content .welcomePage .commands .item button:hover {
 	outline-width: 1px;
 	outline-style: dashed;
 	outline-offset: -5px;

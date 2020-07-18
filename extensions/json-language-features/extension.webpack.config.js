@@ -14,11 +14,11 @@ const webpack = require('webpack');
 const config = withDefaults({
 	context: path.join(__dirname, 'client'),
 	entry: {
-		extension: './src/jsonMain.ts',
+		extension: './src/node/jsonClientMain.ts'
 	},
 	output: {
-		filename: 'jsonMain.js',
-		path: path.join(__dirname, 'client', 'dist')
+		filename: 'jsonClientMain.js',
+		path: path.join(__dirname, 'client', 'dist', 'node')
 	}
 });
 

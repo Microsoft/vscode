@@ -8,7 +8,6 @@ import { IStringDictionary } from 'vs/base/common/collections';
 import { Emitter, Event } from 'vs/base/common/event';
 import { JSONVisitor, visit } from 'vs/base/common/json';
 import { Disposable, IReference } from 'vs/base/common/lifecycle';
-import * as map from 'vs/base/common/map';
 import { assign } from 'vs/base/common/objects';
 import { URI } from 'vs/base/common/uri';
 import { IRange, Range } from 'vs/editor/common/core/range';
@@ -49,7 +48,7 @@ export abstract class AbstractSettingsModel extends EditorModel {
 	 */
 	private removeDuplicateResults(): void {
 		const settingKeys = new Set<string>();
-		map.keys(this._currentResultGroups)
+		[...this._currentResultGroups.keys()]
 			.sort((a, b) => this._currentResultGroups.get(a)!.order - this._currentResultGroups.get(b)!.order)
 			.forEach(groupId => {
 				const group = this._currentResultGroups.get(groupId)!;
@@ -171,7 +170,7 @@ export class SettingsEditorModel extends AbstractSettingsModel implements ISetti
 	}
 
 	protected update(): IFilterResult | undefined {
-		const resultGroups = map.values(this._currentResultGroups);
+		const resultGroups = [...this._currentResultGroups.values()];
 		if (!resultGroups.length) {
 			return undefined;
 		}
@@ -620,6 +619,10 @@ export class DefaultSettings extends Disposable {
 					? prop.items.type
 					: undefined;
 
+				const objectProperties = prop.type === 'object' ? prop.properties : undefined;
+				const objectPatternProperties = prop.type === 'object' ? prop.patternProperties : undefined;
+				const objectAdditionalProperties = prop.type === 'object' ? prop.additionalProperties : undefined;
+
 				result.push({
 					key,
 					value,
@@ -633,6 +636,9 @@ export class DefaultSettings extends Disposable {
 					scope: prop.scope,
 					type: prop.type,
 					arrayItemType: listItemType,
+					objectProperties,
+					objectPatternProperties,
+					objectAdditionalProperties,
 					enum: prop.enum,
 					enumDescriptions: prop.enumDescriptions || prop.markdownEnumDescriptions,
 					enumDescriptionsAreMarkdown: !prop.enumDescriptions,
@@ -745,8 +751,7 @@ export class DefaultSettingsEditorModel extends AbstractSettingsModel implements
 		}
 
 		// Grab current result groups, only render non-empty groups
-		const resultGroups = map
-			.values(this._currentResultGroups)
+		const resultGroups = [...this._currentResultGroups.values()]
 			.sort((a, b) => a.order - b.order);
 		const nonEmptyResultGroups = resultGroups.filter(group => group.result.filterMatches.length);
 

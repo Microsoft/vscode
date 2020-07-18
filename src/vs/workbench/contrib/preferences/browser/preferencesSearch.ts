@@ -33,7 +33,7 @@ export interface IEndpointDetails {
 }
 
 export class PreferencesSearchService extends Disposable implements IPreferencesSearchService {
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private _installedExtensions: Promise<ILocalExtension[]>;
 

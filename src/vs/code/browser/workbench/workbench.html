@@ -2,6 +2,10 @@
 <!DOCTYPE html>
 <html>
 	<head>
+		<script>
+			globalThis.MonacoPerformanceMarks = globalThis.MonacoPerformanceMarks || [];
+			globalThis.MonacoPerformanceMarks.push('renderer/started', Date.now());
+		</script>
 		<meta charset="utf-8" />
 
 		<!-- Disable pinch zooming -->
@@ -30,19 +34,24 @@
 		// NOTE: Changes to inline scripts require update of content security policy
 		self.require = {
 			baseUrl: `${window.location.origin}/static/out`,
+			recordStats: true,
 			paths: {
 				'vscode-textmate': `${window.location.origin}/static/node_modules/vscode-textmate/release/main`,
 				'vscode-oniguruma': `${window.location.origin}/static/node_modules/vscode-oniguruma/release/main`,
 				'xterm': `${window.location.origin}/static/node_modules/xterm/lib/xterm.js`,
 				'xterm-addon-search': `${window.location.origin}/static/node_modules/xterm-addon-search/lib/xterm-addon-search.js`,
 				'xterm-addon-unicode11': `${window.location.origin}/static/node_modules/xterm-addon-unicode11/lib/xterm-addon-unicode11.js`,
-				'xterm-addon-web-links': `${window.location.origin}/static/node_modules/xterm-addon-web-links/lib/xterm-addon-web-links.js`,
 				'xterm-addon-webgl': `${window.location.origin}/static/node_modules/xterm-addon-webgl/lib/xterm-addon-webgl.js`,
 				'semver-umd': `${window.location.origin}/static/node_modules/semver-umd/lib/semver-umd.js`,
+				'iconv-lite-umd': `${window.location.origin}/static/node_modules/iconv-lite-umd/lib/iconv-lite-umd.js`,
+				'jschardet': `${window.location.origin}/static/node_modules/jschardet/dist/jschardet.min.js`,
 			}
 		};
 	</script>
 	<script src="./static/out/vs/loader.js"></script>
+	<script>
+		globalThis.MonacoPerformanceMarks.push('willLoadWorkbenchMain', Date.now());
+	</script>
 	<script src="./static/out/vs/workbench/workbench.web.api.nls.js"></script>
 	<script src="./static/out/vs/workbench/workbench.web.api.js"></script>
 	<script src="./static/out/vs/code/browser/workbench/workbench.js"></script>

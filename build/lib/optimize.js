@@ -28,13 +28,13 @@ const REPO_ROOT_PATH = path.join(__dirname, '../..');
 function log(prefix, message) {
     fancyLog(ansiColors.cyan('[' + prefix + ']'), message);
 }
-function loaderConfig(emptyPaths) {
+function loaderConfig() {
     const result = {
         paths: {
             'vs': 'out-build/vs',
             'vscode': 'empty:'
         },
-        nodeModules: emptyPaths || []
+        amdModulesPattern: /^vs\//
     };
     result['vs/css'] = { inlineResources: true };
     return result;

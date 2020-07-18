@@ -51,10 +51,9 @@ export class DiskSearch implements ISearchResultProvider {
 		searchDebug: IDebugParams | undefined,
 		@ILogService private readonly logService: ILogService,
 		@IConfigurationService private readonly configService: IConfigurationService,
-		@IFileService private readonly fileService: IFileService
 	) {
 		const timeout = this.configService.getValue<ISearchConfiguration>().search.maintainFileSearchCache ?
-			Number.MAX_VALUE :
+			100 * 60 * 60 * 1000 :
 			60 * 60 * 1000;
 
 		const opts: IIPCOptions = {
@@ -91,41 +90,31 @@ export class DiskSearch implements ISearchResultProvider {
 	}
 
 	textSearch(query: ITextQuery, onProgress?: (p: ISearchProgressItem) => void, token?: CancellationToken): Promise<ISearchComplete> {
-		const folderQueries = query.folderQueries || [];
-		return Promise.all(folderQueries.map(q => this.fileService.exists(q.folder)))
-			.then(exists => {
-				if (token && token.isCancellationRequested) {
-					throw canceled();
-				}
+		if (token && token.isCancellationRequested) {
+			throw canceled();
+		}
 
-				query.folderQueries = folderQueries.filter((q, index) => exists[index]);
-				const event: Event<ISerializedSearchProgressItem | ISerializedSearchComplete> = this.raw.textSearch(query);
+		const event: Event<ISerializedSearchProgressItem | ISerializedSearchComplete> = this.raw.textSearch(query);
 
-				return DiskSearch.collectResultsFromEvent(event, onProgress, token);
-			});
+		return DiskSearch.collectResultsFromEvent(event, onProgress, token);
 	}
 
 	fileSearch(query: IFileQuery, token?: CancellationToken): Promise<ISearchComplete> {
-		const folderQueries = query.folderQueries || [];
-		return Promise.all(folderQueries.map(q => this.fileService.exists(q.folder)))
-			.then(exists => {
-				if (token && token.isCancellationRequested) {
-					throw canceled();
-				}
+		if (token && token.isCancellationRequested) {
+			throw canceled();
+		}
 
-				query.folderQueries = folderQueries.filter((q, index) => exists[index]);
-				let event: Event<ISerializedSearchProgressItem | ISerializedSearchComplete>;
-				event = this.raw.fileSearch(query);
+		let event: Event<ISerializedSearchProgressItem | ISerializedSearchComplete>;
+		event = this.raw.fileSearch(query);
 
-				const onProgress = (p: ISearchProgressItem) => {
-					if (!isFileMatch(p)) {
-						// Should only be for logs
-						this.logService.debug('SearchService#search', p.message);
-					}
-				};
+		const onProgress = (p: ISearchProgressItem) => {
+			if (!isFileMatch(p)) {
+				// Should only be for logs
+				this.logService.debug('SearchService#search', p.message);
+			}
+		};
 
-				return DiskSearch.collectResultsFromEvent(event, onProgress, token);
-			});
+		return DiskSearch.collectResultsFromEvent(event, onProgress, token);
 	}
 
 	/**

@@ -15,16 +15,15 @@ import { hash } from 'vs/base/common/hash';
 import { Disposable, IDisposable, dispose } from 'vs/base/common/lifecycle';
 import { Schemas } from 'vs/base/common/network';
 import { Configuration } from 'vs/editor/browser/config/configuration';
-import { CoreEditorCommand } from 'vs/editor/browser/controller/coreCommands';
 import * as editorBrowser from 'vs/editor/browser/editorBrowser';
 import { EditorExtensionsRegistry, IEditorContributionDescription } from 'vs/editor/browser/editorExtensions';
 import { ICodeEditorService } from 'vs/editor/browser/services/codeEditorService';
 import { ICommandDelegate } from 'vs/editor/browser/view/viewController';
 import { IContentWidgetData, IOverlayWidgetData, View } from 'vs/editor/browser/view/viewImpl';
-import { ViewOutgoingEvents } from 'vs/editor/browser/view/viewOutgoingEvents';
-import { ConfigurationChangedEvent, EditorLayoutInfo, IEditorOptions, EditorOption, IComputedEditorOptions, FindComputedEditorOptionValueById, IEditorConstructionOptions, filterValidationDecorations } from 'vs/editor/common/config/editorOptions';
-import { Cursor, CursorStateChangedEvent } from 'vs/editor/common/controller/cursor';
-import { CursorColumns, ICursors } from 'vs/editor/common/controller/cursorCommon';
+import { ViewUserInputEvents } from 'vs/editor/browser/view/viewUserInputEvents';
+import { ConfigurationChangedEvent, EditorLayoutInfo, IEditorOptions, EditorOption, IComputedEditorOptions, FindComputedEditorOptionValueById, filterValidationDecorations } from 'vs/editor/common/config/editorOptions';
+import { Cursor } from 'vs/editor/common/controller/cursor';
+import { CursorColumns } from 'vs/editor/common/controller/cursorCommon';
 import { ICursorPositionChangedEvent, ICursorSelectionChangedEvent } from 'vs/editor/common/controller/cursorEvents';
 import { IPosition, Position } from 'vs/editor/common/core/position';
 import { IRange, Range } from 'vs/editor/common/core/range';
@@ -53,6 +52,8 @@ import { withNullAsUndefined } from 'vs/base/common/types';
 import { MonospaceLineBreaksComputerFactory } from 'vs/editor/common/viewModel/monospaceLineBreaksComputer';
 import { DOMLineBreaksComputerFactory } from 'vs/editor/browser/view/domLineBreaksComputer';
 import { WordOperations } from 'vs/editor/common/controller/cursorWordOperations';
+import { IViewModel } from 'vs/editor/common/viewModel/viewModel';
+import { OutgoingViewModelEventKind } from 'vs/editor/common/viewModel/viewModelEventDispatcher';
 
 let EDITOR_ID = 0;
 
@@ -79,15 +80,13 @@ export interface ICodeEditorWidgetOptions {
 class ModelData {
 	public readonly model: ITextModel;
 	public readonly viewModel: ViewModel;
-	public readonly cursor: Cursor;
 	public readonly view: View;
 	public readonly hasRealView: boolean;
 	public readonly listenersToRemove: IDisposable[];
 
-	constructor(model: ITextModel, viewModel: ViewModel, cursor: Cursor, view: View, hasRealView: boolean, listenersToRemove: IDisposable[]) {
+	constructor(model: ITextModel, viewModel: ViewModel, view: View, hasRealView: boolean, listenersToRemove: IDisposable[]) {
 		this.model = model;
 		this.viewModel = viewModel;
-		this.cursor = cursor;
 		this.view = view;
 		this.hasRealView = hasRealView;
 		this.listenersToRemove = listenersToRemove;
@@ -99,7 +98,6 @@ class ModelData {
 		if (this.hasRealView) {
 			this.view.dispose();
 		}
-		this.cursor.dispose();
 		this.viewModel.dispose();
 	}
 }
@@ -210,6 +208,7 @@ export class CodeEditorWidget extends Disposable implements editorBrowser.ICodeE
 	private readonly _telemetryData?: object;
 
 	private readonly _domElement: HTMLElement;
+	private readonly _overflowWidgetsDomNode: HTMLElement | undefined;
 	private readonly _id: number;
 	private readonly _configuration: editorCommon.IConfiguration;
 
@@ -239,7 +238,7 @@ export class CodeEditorWidget extends Disposable implements editorBrowser.ICodeE
 
 	constructor(
 		domElement: HTMLElement,
-		options: IEditorConstructionOptions,
+		options: editorBrowser.IEditorConstructionOptions,
 		codeEditorWidgetOptions: ICodeEditorWidgetOptions,
 		@IInstantiationService instantiationService: IInstantiationService,
 		@ICodeEditorService codeEditorService: ICodeEditorService,
@@ -250,14 +249,17 @@ export class CodeEditorWidget extends Disposable implements editorBrowser.ICodeE
 		@IAccessibilityService accessibilityService: IAccessibilityService
 	) {
 		super();
+
+		options = options || {};
+
 		this._domElement = domElement;
+		this._overflowWidgetsDomNode = options.overflowWidgetsDomNode;
 		this._id = (++EDITOR_ID);
 		this._decorationTypeKeysToIds = {};
 		this._decorationTypeSubtypes = {};
 		this.isSimpleWidget = codeEditorWidgetOptions.isSimpleWidget || false;
 		this._telemetryData = codeEditorWidgetOptions.telemetryData;
 
-		options = options || {};
 		this._configuration = this._register(this._createConfiguration(options, accessibilityService));
 		this._register(this._configuration.onDidChange((e) => {
 			this._onDidChangeConfiguration.fire(e);
@@ -326,7 +328,7 @@ export class CodeEditorWidget extends Disposable implements editorBrowser.ICodeE
 		this._codeEditorService.addCodeEditor(this);
 	}
 
-	protected _createConfiguration(options: IEditorConstructionOptions, accessibilityService: IAccessibilityService): editorCommon.IConfiguration {
+	protected _createConfiguration(options: editorBrowser.IEditorConstructionOptions, accessibilityService: IAccessibilityService): editorCommon.IConfiguration {
 		return new Configuration(this.isSimpleWidget, options, this._domElement, accessibilityService);
 	}
 
@@ -529,7 +531,7 @@ export class CodeEditorWidget extends Disposable implements editorBrowser.ICodeE
 		if (!this._modelData) {
 			return null;
 		}
-		return this._modelData.cursor.getPosition();
+		return this._modelData.viewModel.getPosition();
 	}
 
 	public setPosition(position: IPosition): void {
@@ -539,7 +541,7 @@ export class CodeEditorWidget extends Disposable implements editorBrowser.ICodeE
 		if (!Position.isIPosition(position)) {
 			throw new Error('Invalid arguments');
 		}
-		this._modelData.cursor.setSelections('api', [{
+		this._modelData.viewModel.setSelections('api', [{
 			selectionStartLineNumber: position.lineNumber,
 			selectionStartColumn: position.column,
 			positionLineNumber: position.lineNumber,
@@ -557,7 +559,7 @@ export class CodeEditorWidget extends Disposable implements editorBrowser.ICodeE
 		const validatedModelRange = this._modelData.model.validateRange(modelRange);
 		const viewRange = this._modelData.viewModel.coordinatesConverter.convertModelRangeToViewRange(validatedModelRange);
 
-		this._modelData.cursor.emitCursorRevealRange('api', viewRange, null, verticalType, revealHorizontal, scrollType);
+		this._modelData.viewModel.revealRange('api', revealHorizontal, viewRange, verticalType, scrollType);
 	}
 
 	public revealLine(lineNumber: number, scrollType: editorCommon.ScrollType = editorCommon.ScrollType.Smooth): void {
@@ -642,14 +644,14 @@ export class CodeEditorWidget extends Disposable implements editorBrowser.ICodeE
 		if (!this._modelData) {
 			return null;
 		}
-		return this._modelData.cursor.getSelection();
+		return this._modelData.viewModel.getSelection();
 	}
 
 	public getSelections(): Selection[] | null {
 		if (!this._modelData) {
 			return null;
 		}
-		return this._modelData.cursor.getSelections();
+		return this._modelData.viewModel.getSelections();
 	}
 
 	public setSelection(range: IRange): void;
@@ -683,7 +685,7 @@ export class CodeEditorWidget extends Disposable implements editorBrowser.ICodeE
 			return;
 		}
 		const selection = new Selection(sel.selectionStartLineNumber, sel.selectionStartColumn, sel.positionLineNumber, sel.positionColumn);
-		this._modelData.cursor.setSelections('api', [selection]);
+		this._modelData.viewModel.setSelections('api', [selection]);
 	}
 
 	public revealLines(startLineNumber: number, endLineNumber: number, scrollType: editorCommon.ScrollType = editorCommon.ScrollType.Smooth): void {
@@ -814,7 +816,7 @@ export class CodeEditorWidget extends Disposable implements editorBrowser.ICodeE
 				throw new Error('Invalid arguments');
 			}
 		}
-		this._modelData.cursor.setSelections(source, ranges);
+		this._modelData.viewModel.setSelections(source, ranges);
 	}
 
 	public getContentWidth(): number {
@@ -857,33 +859,33 @@ export class CodeEditorWidget extends Disposable implements editorBrowser.ICodeE
 		return this._modelData.viewModel.viewLayout.getCurrentScrollTop();
 	}
 
-	public setScrollLeft(newScrollLeft: number): void {
+	public setScrollLeft(newScrollLeft: number, scrollType: editorCommon.ScrollType = editorCommon.ScrollType.Immediate): void {
 		if (!this._modelData) {
 			return;
 		}
 		if (typeof newScrollLeft !== 'number') {
 			throw new Error('Invalid arguments');
 		}
-		this._modelData.viewModel.viewLayout.setScrollPositionNow({
+		this._modelData.viewModel.setScrollPosition({
 			scrollLeft: newScrollLeft
-		});
+		}, scrollType);
 	}
-	public setScrollTop(newScrollTop: number): void {
+	public setScrollTop(newScrollTop: number, scrollType: editorCommon.ScrollType = editorCommon.ScrollType.Immediate): void {
 		if (!this._modelData) {
 			return;
 		}
 		if (typeof newScrollTop !== 'number') {
 			throw new Error('Invalid arguments');
 		}
-		this._modelData.viewModel.viewLayout.setScrollPositionNow({
+		this._modelData.viewModel.setScrollPosition({
 			scrollTop: newScrollTop
-		});
+		}, scrollType);
 	}
-	public setScrollPosition(position: editorCommon.INewScrollPosition): void {
+	public setScrollPosition(position: editorCommon.INewScrollPosition, scrollType: editorCommon.ScrollType = editorCommon.ScrollType.Immediate): void {
 		if (!this._modelData) {
 			return;
 		}
-		this._modelData.viewModel.viewLayout.setScrollPositionNow(position);
+		this._modelData.viewModel.setScrollPosition(position, scrollType);
 	}
 
 	public saveViewState(): editorCommon.ICodeEditorViewState | null {
@@ -900,7 +902,7 @@ export class CodeEditorWidget extends Disposable implements editorBrowser.ICodeE
 			}
 		}
 
-		const cursorState = this._modelData.cursor.saveState();
+		const cursorState = this._modelData.viewModel.saveCursorState();
 		const viewState = this._modelData.viewModel.saveState();
 		return {
 			cursorState: cursorState,
@@ -917,10 +919,10 @@ export class CodeEditorWidget extends Disposable implements editorBrowser.ICodeE
 		if (codeEditorState && codeEditorState.cursorState && codeEditorState.viewState) {
 			const cursorState = <any>codeEditorState.cursorState;
 			if (Array.isArray(cursorState)) {
-				this._modelData.cursor.restoreState(<editorCommon.ICursorState[]>cursorState);
+				this._modelData.viewModel.restoreCursorState(<editorCommon.ICursorState[]>cursorState);
 			} else {
 				// Backwards compatibility
-				this._modelData.cursor.restoreState([<editorCommon.ICursorState>cursorState]);
+				this._modelData.viewModel.restoreCursorState([<editorCommon.ICursorState>cursorState]);
 			}
 
 			const contributionsState = codeEditorState.contributionsState || {};
@@ -975,43 +977,34 @@ export class CodeEditorWidget extends Disposable implements editorBrowser.ICodeE
 		return this._actions[id] || null;
 	}
 
-	public trigger(source: string, handlerId: string, payload: any): void {
+	public trigger(source: string | null | undefined, handlerId: string, payload: any): void {
 		payload = payload || {};
 
-		// Special case for typing
-		if (handlerId === editorCommon.Handler.Type) {
-			if (!this._modelData || typeof payload.text !== 'string' || payload.text.length === 0) {
-				// nothing to do
+		switch (handlerId) {
+			case editorCommon.Handler.CompositionStart:
+				this._startComposition();
+				return;
+			case editorCommon.Handler.CompositionEnd:
+				this._endComposition(source);
+				return;
+			case editorCommon.Handler.Type: {
+				const args = <Partial<editorCommon.TypePayload>>payload;
+				this._type(source, args.text || '');
 				return;
 			}
-			if (source === 'keyboard') {
-				this._onWillType.fire(payload.text);
-			}
-			this._modelData.cursor.trigger(source, handlerId, payload);
-			if (source === 'keyboard') {
-				this._onDidType.fire(payload.text);
-			}
-			return;
-		}
-
-		// Special case for pasting
-		if (handlerId === editorCommon.Handler.Paste) {
-			if (!this._modelData || typeof payload.text !== 'string' || payload.text.length === 0) {
-				// nothing to do
+			case editorCommon.Handler.ReplacePreviousChar: {
+				const args = <Partial<editorCommon.ReplacePreviousCharPayload>>payload;
+				this._replacePreviousChar(source, args.text || '', args.replaceCharCnt || 0);
 				return;
 			}
-			const startPosition = this._modelData.cursor.getSelection().getStartPosition();
-			this._modelData.cursor.trigger(source, handlerId, payload);
-			const endPosition = this._modelData.cursor.getSelection().getStartPosition();
-			if (source === 'keyboard') {
-				this._onDidPaste.fire(
-					{
-						range: new Range(startPosition.lineNumber, startPosition.column, endPosition.lineNumber, endPosition.column),
-						mode: payload.mode
-					}
-				);
+			case editorCommon.Handler.Paste: {
+				const args = <Partial<editorCommon.PastePayload>>payload;
+				this._paste(source, args.text || '', args.pasteOnNewLine || false, args.multicursorText || null, args.mode || null);
+				return;
 			}
-			return;
+			case editorCommon.Handler.Cut:
+				this._cut(source);
+				return;
 		}
 
 		const action = this.getAction(handlerId);
@@ -1027,18 +1020,67 @@ export class CodeEditorWidget extends Disposable implements editorBrowser.ICodeE
 		if (this._triggerEditorCommand(source, handlerId, payload)) {
 			return;
 		}
+	}
 
-		this._modelData.cursor.trigger(source, handlerId, payload);
-
-		if (handlerId === editorCommon.Handler.CompositionStart) {
-			this._onDidCompositionStart.fire();
+	private _startComposition(): void {
+		if (!this._modelData) {
+			return;
 		}
-		if (handlerId === editorCommon.Handler.CompositionEnd) {
-			this._onDidCompositionEnd.fire();
+		this._modelData.viewModel.startComposition();
+		this._onDidCompositionStart.fire();
+	}
+
+	private _endComposition(source: string | null | undefined): void {
+		if (!this._modelData) {
+			return;
+		}
+		this._modelData.viewModel.endComposition(source);
+		this._onDidCompositionEnd.fire();
+	}
+
+	private _type(source: string | null | undefined, text: string): void {
+		if (!this._modelData || text.length === 0) {
+			return;
+		}
+		if (source === 'keyboard') {
+			this._onWillType.fire(text);
+		}
+		this._modelData.viewModel.type(text, source);
+		if (source === 'keyboard') {
+			this._onDidType.fire(text);
 		}
 	}
 
-	private _triggerEditorCommand(source: string, handlerId: string, payload: any): boolean {
+	private _replacePreviousChar(source: string | null | undefined, text: string, replaceCharCnt: number): void {
+		if (!this._modelData) {
+			return;
+		}
+		this._modelData.viewModel.replacePreviousChar(text, replaceCharCnt, source);
+	}
+
+	private _paste(source: string | null | undefined, text: string, pasteOnNewLine: boolean, multicursorText: string[] | null, mode: string | null): void {
+		if (!this._modelData || text.length === 0) {
+			return;
+		}
+		const startPosition = this._modelData.viewModel.getSelection().getStartPosition();
+		this._modelData.viewModel.paste(text, pasteOnNewLine, multicursorText, source);
+		const endPosition = this._modelData.viewModel.getSelection().getStartPosition();
+		if (source === 'keyboard') {
+			this._onDidPaste.fire({
+				range: new Range(startPosition.lineNumber, startPosition.column, endPosition.lineNumber, endPosition.column),
+				mode: mode
+			});
+		}
+	}
+
+	private _cut(source: string | null | undefined): void {
+		if (!this._modelData) {
+			return;
+		}
+		this._modelData.viewModel.cut(source);
+	}
+
+	private _triggerEditorCommand(source: string | null | undefined, handlerId: string, payload: any): boolean {
 		const command = EditorExtensionsRegistry.getEditorCommand(handlerId);
 		if (command) {
 			payload = payload || {};
@@ -1052,11 +1094,11 @@ export class CodeEditorWidget extends Disposable implements editorBrowser.ICodeE
 		return false;
 	}
 
-	public _getCursors(): ICursors | null {
+	public _getViewModel(): IViewModel | null {
 		if (!this._modelData) {
 			return null;
 		}
-		return this._modelData.cursor;
+		return this._modelData.viewModel;
 	}
 
 	public pushUndoStop(): boolean {
@@ -1071,7 +1113,7 @@ export class CodeEditorWidget extends Disposable implements editorBrowser.ICodeE
 		return true;
 	}
 
-	public executeEdits(source: string, edits: IIdentifiedSingleEditOperation[], endCursorState?: ICursorStateComputer | Selection[]): boolean {
+	public executeEdits(source: string | null | undefined, edits: IIdentifiedSingleEditOperation[], endCursorState?: ICursorStateComputer | Selection[]): boolean {
 		if (!this._modelData) {
 			return false;
 		}
@@ -1089,22 +1131,22 @@ export class CodeEditorWidget extends Disposable implements editorBrowser.ICodeE
 			cursorStateComputer = endCursorState;
 		}
 
-		this._modelData.cursor.executeEdits(source, edits, cursorStateComputer);
+		this._modelData.viewModel.executeEdits(source, edits, cursorStateComputer);
 		return true;
 	}
 
-	public executeCommand(source: string, command: editorCommon.ICommand): void {
+	public executeCommand(source: string | null | undefined, command: editorCommon.ICommand): void {
 		if (!this._modelData) {
 			return;
 		}
-		this._modelData.cursor.trigger(source, editorCommon.Handler.ExecuteCommand, command);
+		this._modelData.viewModel.executeCommand(command, source);
 	}
 
-	public executeCommands(source: string, commands: editorCommon.ICommand[]): void {
+	public executeCommands(source: string | null | undefined, commands: editorCommon.ICommand[]): void {
 		if (!this._modelData) {
 			return;
 		}
-		this._modelData.cursor.trigger(source, editorCommon.Handler.ExecuteCommands, commands);
+		this._modelData.viewModel.executeCommands(commands, source);
 	}
 
 	public changeDecorations(callback: (changeAccessor: IModelDecorationsChangeAccessor) => any): any {
@@ -1346,10 +1388,7 @@ export class CodeEditorWidget extends Disposable implements editorBrowser.ICodeE
 		if (!this._modelData || !this._modelData.hasRealView) {
 			return;
 		}
-		const hasChanges = this._modelData.view.change(callback);
-		if (hasChanges) {
-			this._onDidChangeViewZones.fire();
-		}
+		this._modelData.view.change(callback);
 	}
 
 	public getTargetAtClientPoint(clientX: number, clientY: number): editorBrowser.IMouseTarget | null {
@@ -1437,43 +1476,59 @@ export class CodeEditorWidget extends Disposable implements editorBrowser.ICodeE
 		// Someone might destroy the model from under the editor, so prevent any exceptions by setting a null model
 		listenersToRemove.push(model.onWillDispose(() => this.setModel(null)));
 
-		const cursor = new Cursor(this._configuration, model, viewModel);
+		listenersToRemove.push(viewModel.onEvent((e) => {
+			switch (e.kind) {
+				case OutgoingViewModelEventKind.ContentSizeChanged:
+					this._onDidContentSizeChange.fire(e);
+					break;
+				case OutgoingViewModelEventKind.FocusChanged:
+					this._editorTextFocus.setValue(e.hasFocus);
+					break;
+				case OutgoingViewModelEventKind.ScrollChanged:
+					this._onDidScrollChange.fire(e);
+					break;
+				case OutgoingViewModelEventKind.ViewZonesChanged:
+					this._onDidChangeViewZones.fire();
+					break;
+				case OutgoingViewModelEventKind.ReadOnlyEditAttempt:
+					this._onDidAttemptReadOnlyEdit.fire();
+					break;
+				case OutgoingViewModelEventKind.CursorStateChanged: {
+					if (e.reachedMaxCursorCount) {
+						this._notificationService.warn(nls.localize('cursors.maximum', "The number of cursors has been limited to {0}.", Cursor.MAX_CURSOR_COUNT));
+					}
 
-		listenersToRemove.push(cursor.onDidReachMaxCursorCount(() => {
-			this._notificationService.warn(nls.localize('cursors.maximum', "The number of cursors has been limited to {0}.", Cursor.MAX_CURSOR_COUNT));
-		}));
+					const positions: Position[] = [];
+					for (let i = 0, len = e.selections.length; i < len; i++) {
+						positions[i] = e.selections[i].getPosition();
+					}
 
-		listenersToRemove.push(cursor.onDidAttemptReadOnlyEdit(() => {
-			this._onDidAttemptReadOnlyEdit.fire(undefined);
-		}));
+					const e1: ICursorPositionChangedEvent = {
+						position: positions[0],
+						secondaryPositions: positions.slice(1),
+						reason: e.reason,
+						source: e.source
+					};
+					this._onDidChangeCursorPosition.fire(e1);
 
-		listenersToRemove.push(cursor.onDidChange((e: CursorStateChangedEvent) => {
-			const positions: Position[] = [];
-			for (let i = 0, len = e.selections.length; i < len; i++) {
-				positions[i] = e.selections[i].getPosition();
+					const e2: ICursorSelectionChangedEvent = {
+						selection: e.selections[0],
+						secondarySelections: e.selections.slice(1),
+						modelVersionId: e.modelVersionId,
+						oldSelections: e.oldSelections,
+						oldModelVersionId: e.oldModelVersionId,
+						source: e.source,
+						reason: e.reason
+					};
+					this._onDidChangeCursorSelection.fire(e2);
+
+					break;
+				}
+
 			}
-
-			const e1: ICursorPositionChangedEvent = {
-				position: positions[0],
-				secondaryPositions: positions.slice(1),
-				reason: e.reason,
-				source: e.source
-			};
-			this._onDidChangeCursorPosition.fire(e1);
-
-			const e2: ICursorSelectionChangedEvent = {
-				selection: e.selections[0],
-				secondarySelections: e.selections.slice(1),
-				modelVersionId: e.modelVersionId,
-				oldSelections: e.oldSelections,
-				oldModelVersionId: e.oldModelVersionId,
-				source: e.source,
-				reason: e.reason
-			};
-			this._onDidChangeCursorSelection.fire(e2);
 		}));
 
-		const [view, hasRealView] = this._createView(viewModel, cursor);
+		const [view, hasRealView] = this._createView(viewModel);
 		if (hasRealView) {
 			this._domElement.appendChild(view.domNode.domNode);
 
@@ -1493,101 +1548,77 @@ export class CodeEditorWidget extends Disposable implements editorBrowser.ICodeE
 			view.domNode.domNode.setAttribute('data-uri', model.uri.toString());
 		}
 
-		this._modelData = new ModelData(model, viewModel, cursor, view, hasRealView, listenersToRemove);
+		this._modelData = new ModelData(model, viewModel, view, hasRealView, listenersToRemove);
 	}
 
-	protected _createView(viewModel: ViewModel, cursor: Cursor): [View, boolean] {
+	protected _createView(viewModel: ViewModel): [View, boolean] {
 		let commandDelegate: ICommandDelegate;
 		if (this.isSimpleWidget) {
 			commandDelegate = {
-				executeEditorCommand: (editorCommand: CoreEditorCommand, args: any): void => {
-					editorCommand.runCoreEditorCommand(cursor, args);
+				paste: (text: string, pasteOnNewLine: boolean, multicursorText: string[] | null, mode: string | null) => {
+					this._paste('keyboard', text, pasteOnNewLine, multicursorText, mode);
 				},
-				paste: (source: string, text: string, pasteOnNewLine: boolean, multicursorText: string[] | null, mode: string | null) => {
-					this.trigger(source, editorCommon.Handler.Paste, { text, pasteOnNewLine, multicursorText, mode });
+				type: (text: string) => {
+					this._type('keyboard', text);
 				},
-				type: (source: string, text: string) => {
-					this.trigger(source, editorCommon.Handler.Type, { text });
+				replacePreviousChar: (text: string, replaceCharCnt: number) => {
+					this._replacePreviousChar('keyboard', text, replaceCharCnt);
 				},
-				replacePreviousChar: (source: string, text: string, replaceCharCnt: number) => {
-					this.trigger(source, editorCommon.Handler.ReplacePreviousChar, { text, replaceCharCnt });
+				startComposition: () => {
+					this._startComposition();
 				},
-				compositionStart: (source: string) => {
-					this.trigger(source, editorCommon.Handler.CompositionStart, undefined);
+				endComposition: () => {
+					this._endComposition('keyboard');
 				},
-				compositionEnd: (source: string) => {
-					this.trigger(source, editorCommon.Handler.CompositionEnd, undefined);
-				},
-				cut: (source: string) => {
-					this.trigger(source, editorCommon.Handler.Cut, undefined);
+				cut: () => {
+					this._cut('keyboard');
 				}
 			};
 		} else {
 			commandDelegate = {
-				executeEditorCommand: (editorCommand: CoreEditorCommand, args: any): void => {
-					editorCommand.runCoreEditorCommand(cursor, args);
+				paste: (text: string, pasteOnNewLine: boolean, multicursorText: string[] | null, mode: string | null) => {
+					const payload: editorCommon.PastePayload = { text, pasteOnNewLine, multicursorText, mode };
+					this._commandService.executeCommand(editorCommon.Handler.Paste, payload);
 				},
-				paste: (source: string, text: string, pasteOnNewLine: boolean, multicursorText: string[] | null, mode: string | null) => {
-					this._commandService.executeCommand(editorCommon.Handler.Paste, {
-						text: text,
-						pasteOnNewLine: pasteOnNewLine,
-						multicursorText: multicursorText,
-						mode
-					});
+				type: (text: string) => {
+					const payload: editorCommon.TypePayload = { text };
+					this._commandService.executeCommand(editorCommon.Handler.Type, payload);
 				},
-				type: (source: string, text: string) => {
-					this._commandService.executeCommand(editorCommon.Handler.Type, {
-						text: text
-					});
+				replacePreviousChar: (text: string, replaceCharCnt: number) => {
+					const payload: editorCommon.ReplacePreviousCharPayload = { text, replaceCharCnt };
+					this._commandService.executeCommand(editorCommon.Handler.ReplacePreviousChar, payload);
 				},
-				replacePreviousChar: (source: string, text: string, replaceCharCnt: number) => {
-					this._commandService.executeCommand(editorCommon.Handler.ReplacePreviousChar, {
-						text: text,
-						replaceCharCnt: replaceCharCnt
-					});
-				},
-				compositionStart: (source: string) => {
+				startComposition: () => {
 					this._commandService.executeCommand(editorCommon.Handler.CompositionStart, {});
 				},
-				compositionEnd: (source: string) => {
+				endComposition: () => {
 					this._commandService.executeCommand(editorCommon.Handler.CompositionEnd, {});
 				},
-				cut: (source: string) => {
+				cut: () => {
 					this._commandService.executeCommand(editorCommon.Handler.Cut, {});
 				}
 			};
 		}
 
-		const onDidChangeTextFocus = (textFocus: boolean) => {
-			if (this._modelData) {
-				this._modelData.cursor.setHasFocus(textFocus);
-			}
-			this._editorTextFocus.setValue(textFocus);
-		};
-
-		const viewOutgoingEvents = new ViewOutgoingEvents(viewModel);
-		viewOutgoingEvents.onDidContentSizeChange = (e) => this._onDidContentSizeChange.fire(e);
-		viewOutgoingEvents.onDidScroll = (e) => this._onDidScrollChange.fire(e);
-		viewOutgoingEvents.onDidGainFocus = () => onDidChangeTextFocus(true);
-		viewOutgoingEvents.onDidLoseFocus = () => onDidChangeTextFocus(false);
-		viewOutgoingEvents.onContextMenu = (e) => this._onContextMenu.fire(e);
-		viewOutgoingEvents.onMouseDown = (e) => this._onMouseDown.fire(e);
-		viewOutgoingEvents.onMouseUp = (e) => this._onMouseUp.fire(e);
-		viewOutgoingEvents.onMouseDrag = (e) => this._onMouseDrag.fire(e);
-		viewOutgoingEvents.onMouseDrop = (e) => this._onMouseDrop.fire(e);
-		viewOutgoingEvents.onKeyUp = (e) => this._onKeyUp.fire(e);
-		viewOutgoingEvents.onMouseMove = (e) => this._onMouseMove.fire(e);
-		viewOutgoingEvents.onMouseLeave = (e) => this._onMouseLeave.fire(e);
-		viewOutgoingEvents.onMouseWheel = (e) => this._onMouseWheel.fire(e);
-		viewOutgoingEvents.onKeyDown = (e) => this._onKeyDown.fire(e);
+		const viewUserInputEvents = new ViewUserInputEvents(viewModel.coordinatesConverter);
+		viewUserInputEvents.onKeyDown = (e) => this._onKeyDown.fire(e);
+		viewUserInputEvents.onKeyUp = (e) => this._onKeyUp.fire(e);
+		viewUserInputEvents.onContextMenu = (e) => this._onContextMenu.fire(e);
+		viewUserInputEvents.onMouseMove = (e) => this._onMouseMove.fire(e);
+		viewUserInputEvents.onMouseLeave = (e) => this._onMouseLeave.fire(e);
+		viewUserInputEvents.onMouseDown = (e) => this._onMouseDown.fire(e);
+		viewUserInputEvents.onMouseUp = (e) => this._onMouseUp.fire(e);
+		viewUserInputEvents.onMouseDrag = (e) => this._onMouseDrag.fire(e);
+		viewUserInputEvents.onMouseDrop = (e) => this._onMouseDrop.fire(e);
+		viewUserInputEvents.onMouseWheel = (e) => this._onMouseWheel.fire(e);
 
 		const view = new View(
 			commandDelegate,
 			this._configuration,
 			this._themeService,
 			viewModel,
-			cursor,
-			viewOutgoingEvents
+			viewUserInputEvents,
+			this._overflowWidgetsDomNode
 		);
 
 		return [view, true];
@@ -1985,5 +2016,5 @@ registerThemingParticipant((theme, collector) => {
 	}
 
 	const deprecatedForeground = theme.getColor(editorForeground) || 'inherit';
-	collector.addRule(`.monaco-editor .${ClassName.EditorDeprecatedInlineDecoration} { text-decoration: line-through; text-decoration-color: ${deprecatedForeground}}`);
+	collector.addRule(`.monaco-editor.showDeprecated .${ClassName.EditorDeprecatedInlineDecoration} { text-decoration: line-through; text-decoration-color: ${deprecatedForeground}}`);
 });

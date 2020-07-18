@@ -28,8 +28,8 @@
 
 /* Title Actions */
 
-.monaco-workbench .part.editor > .content .editor-group-container > .title .title-actions .action-label,
-.monaco-workbench .part.editor > .content .editor-group-container > .title .editor-actions .action-label {
+.monaco-workbench .part.editor > .content .editor-group-container > .title .title-actions .action-label:not(span),
+.monaco-workbench .part.editor > .content .editor-group-container > .title .editor-actions .action-label:not(span) {
 	display: flex;
 	height: 35px;
 	min-width: 28px;
@@ -40,8 +40,8 @@
 	background-repeat: no-repeat;
 }
 
-.hc-black .monaco-workbench .part.editor > .content .editor-group-container > .title .title-actions .action-label,
-.hc-black .monaco-workbench .part.editor > .content .editor-group-container > .title .editor-actions .action-label:not(.codicon) {
+.monaco-workbench.hc-black .part.editor > .content .editor-group-container > .title .title-actions .action-label,
+.monaco-workbench.hc-black .part.editor > .content .editor-group-container > .title .editor-actions .action-label:not(.codicon) {
 	line-height: initial;
 }
 

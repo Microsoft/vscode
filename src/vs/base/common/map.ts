@@ -9,27 +9,6 @@ import { compareSubstringIgnoreCase, compare, compareSubstring } from 'vs/base/c
 import { Schemas } from 'vs/base/common/network';
 import { isLinux } from 'vs/base/common/platform';
 
-/**
- * @deprecated ES6: use `[...SetOrMap.values()]`
- */
-export function values<V = any>(set: Set<V>): V[];
-export function values<K = any, V = any>(map: Map<K, V>): V[];
-export function values<V>(forEachable: { forEach(callback: (value: V, ...more: any[]) => any): void }): V[] {
-	const result: V[] = [];
-	forEachable.forEach(value => result.push(value));
-	return result;
-}
-
-/**
- * @deprecated ES6: use `[...map.keys()]`
- */
-export function keys<K, V>(map: Map<K, V>): K[] {
-	const result: K[] = [];
-	map.forEach((_value, key) => result.push(key));
-
-	return result;
-}
-
 export function getOrSet<K, V>(map: Map<K, V>, key: K, value: V): V {
 	let result = map.get(key);
 	if (result === undefined) {
@@ -206,7 +185,7 @@ export class UriIterator implements IKeyIterator<URI> {
 
 	cmp(a: string): number {
 		if (this._states[this._stateIdx] === UriIteratorState.Scheme) {
-			return compareSubstringIgnoreCase(a, this._value.scheme);
+			return compare(a, this._value.scheme);
 		} else if (this._states[this._stateIdx] === UriIteratorState.Authority) {
 			return compareSubstringIgnoreCase(a, this._value.authority);
 		} else if (this._states[this._stateIdx] === UriIteratorState.Path) {
@@ -481,16 +460,40 @@ export class TernarySearchTree<K, V> {
 	}
 }
 
+interface ResourceMapKeyFn {
+	(resource: URI): string;
+}
+
 export class ResourceMap<T> implements Map<URI, T> {
+
+	private static readonly defaultToKey = (resource: URI) => resource.toString();
 
 	readonly [Symbol.toStringTag] = 'ResourceMap';
 
-	protected readonly map: Map<string, T>;
-	protected readonly ignoreCase?: boolean;
+	private readonly map: Map<string, T>;
+	private readonly toKey: ResourceMapKeyFn;
 
-	constructor() {
-		this.map = new Map<string, T>();
-		this.ignoreCase = false; // in the future this should be an uri-comparator
+	/**
+	 *
+	 * @param toKey Custom uri identity function, e.g use an existing `IExtUri#getComparison`-util
+	 */
+	constructor(toKey?: ResourceMapKeyFn);
+
+	/**
+	 *
+	 * @param other Another resource which this maps is created from
+	 * @param toKey Custom uri identity function, e.g use an existing `IExtUri#getComparison`-util
+	 */
+	constructor(other?: ResourceMap<T>, toKey?: ResourceMapKeyFn);
+
+	constructor(mapOrKeyFn?: ResourceMap<T> | ResourceMapKeyFn, toKey?: ResourceMapKeyFn) {
+		if (mapOrKeyFn instanceof ResourceMap) {
+			this.map = new Map(mapOrKeyFn.map);
+			this.toKey = toKey ?? ResourceMap.defaultToKey;
+		} else {
+			this.map = new Map();
+			this.toKey = mapOrKeyFn ?? ResourceMap.defaultToKey;
+		}
 	}
 
 	set(resource: URI, value: T): this {
@@ -548,23 +551,6 @@ export class ResourceMap<T> implements Map<URI, T> {
 			yield [URI.parse(item[0]), item[1]];
 		}
 	}
-
-	private toKey(resource: URI): string {
-		let key = resource.toString();
-		if (this.ignoreCase) {
-			key = key.toLowerCase();
-		}
-
-		return key;
-	}
-
-	clone(): ResourceMap<T> {
-		const resourceMap = new ResourceMap<T>();
-
-		this.map.forEach((value, key) => resourceMap.map.set(key, value));
-
-		return resourceMap;
-	}
 }
 
 interface Item<K, V> {
@@ -580,18 +566,23 @@ export const enum Touch {
 	AsNew = 2
 }
 
-export class LinkedMap<K, V> {
+export class LinkedMap<K, V> implements Map<K, V> {
+
+	readonly [Symbol.toStringTag] = 'LinkedMap';
 
 	private _map: Map<K, Item<K, V>>;
 	private _head: Item<K, V> | undefined;
 	private _tail: Item<K, V> | undefined;
 	private _size: number;
 
+	private _state: number;
+
 	constructor() {
 		this._map = new Map<K, Item<K, V>>();
 		this._head = undefined;
 		this._tail = undefined;
 		this._size = 0;
+		this._state = 0;
 	}
 
 	clear(): void {
@@ -599,6 +590,7 @@ export class LinkedMap<K, V> {
 		this._head = undefined;
 		this._tail = undefined;
 		this._size = 0;
+		this._state++;
 	}
 
 	isEmpty(): boolean {
@@ -632,7 +624,7 @@ export class LinkedMap<K, V> {
 		return item.value;
 	}
 
-	set(key: K, value: V, touch: Touch = Touch.None): void {
+	set(key: K, value: V, touch: Touch = Touch.None): this {
 		let item = this._map.get(key);
 		if (item) {
 			item.value = value;
@@ -658,6 +650,7 @@ export class LinkedMap<K, V> {
 			this._map.set(key, item);
 			this._size++;
 		}
+		return this;
 	}
 
 	delete(key: K): boolean {
@@ -690,6 +683,7 @@ export class LinkedMap<K, V> {
 	}
 
 	forEach(callbackfn: (value: V, key: K, map: LinkedMap<K, V>) => void, thisArg?: any): void {
+		const state = this._state;
 		let current = this._head;
 		while (current) {
 			if (thisArg) {
@@ -697,38 +691,25 @@ export class LinkedMap<K, V> {
 			} else {
 				callbackfn(current.value, current.key, this);
 			}
+			if (this._state !== state) {
+				throw new Error(`LinkedMap got modified during iteration.`);
+			}
 			current = current.next;
 		}
 	}
 
-	values(): V[] {
-		const result: V[] = [];
-		let current = this._head;
-		while (current) {
-			result.push(current.value);
-			current = current.next;
-		}
-		return result;
-	}
-
-	keys(): K[] {
-		const result: K[] = [];
-		let current = this._head;
-		while (current) {
-			result.push(current.key);
-			current = current.next;
-		}
-		return result;
-	}
-
-	/* VS Code / Monaco editor runs on es5 which has no Symbol.iterator
 	keys(): IterableIterator<K> {
-		const current = this._head;
+		const map = this;
+		const state = this._state;
+		let current = this._head;
 		const iterator: IterableIterator<K> = {
 			[Symbol.iterator]() {
 				return iterator;
 			},
-			next():IteratorResult<K> {
+			next(): IteratorResult<K> {
+				if (map._state !== state) {
+					throw new Error(`LinkedMap got modified during iteration.`);
+				}
 				if (current) {
 					const result = { value: current.key, done: false };
 					current = current.next;
@@ -742,12 +723,17 @@ export class LinkedMap<K, V> {
 	}
 
 	values(): IterableIterator<V> {
-		const current = this._head;
+		const map = this;
+		const state = this._state;
+		let current = this._head;
 		const iterator: IterableIterator<V> = {
 			[Symbol.iterator]() {
 				return iterator;
 			},
-			next():IteratorResult<V> {
+			next(): IteratorResult<V> {
+				if (map._state !== state) {
+					throw new Error(`LinkedMap got modified during iteration.`);
+				}
 				if (current) {
 					const result = { value: current.value, done: false };
 					current = current.next;
@@ -759,7 +745,34 @@ export class LinkedMap<K, V> {
 		};
 		return iterator;
 	}
-	*/
+
+	entries(): IterableIterator<[K, V]> {
+		const map = this;
+		const state = this._state;
+		let current = this._head;
+		const iterator: IterableIterator<[K, V]> = {
+			[Symbol.iterator]() {
+				return iterator;
+			},
+			next(): IteratorResult<[K, V]> {
+				if (map._state !== state) {
+					throw new Error(`LinkedMap got modified during iteration.`);
+				}
+				if (current) {
+					const result: IteratorResult<[K, V]> = { value: [current.key, current.value], done: false };
+					current = current.next;
+					return result;
+				} else {
+					return { value: undefined, done: true };
+				}
+			}
+		};
+		return iterator;
+	}
+
+	[Symbol.iterator](): IterableIterator<[K, V]> {
+		return this.entries();
+	}
 
 	protected trimOld(newSize: number) {
 		if (newSize >= this.size) {
@@ -781,6 +794,7 @@ export class LinkedMap<K, V> {
 		if (current) {
 			current.previous = undefined;
 		}
+		this._state++;
 	}
 
 	private addItemFirst(item: Item<K, V>): void {
@@ -794,6 +808,7 @@ export class LinkedMap<K, V> {
 			this._head.previous = item;
 		}
 		this._head = item;
+		this._state++;
 	}
 
 	private addItemLast(item: Item<K, V>): void {
@@ -807,6 +822,7 @@ export class LinkedMap<K, V> {
 			this._tail.next = item;
 		}
 		this._tail = item;
+		this._state++;
 	}
 
 	private removeItem(item: Item<K, V>): void {
@@ -843,6 +859,7 @@ export class LinkedMap<K, V> {
 		}
 		item.next = undefined;
 		item.previous = undefined;
+		this._state++;
 	}
 
 	private touch(item: Item<K, V>, touch: Touch): void {
@@ -879,6 +896,7 @@ export class LinkedMap<K, V> {
 			item.next = this._head;
 			this._head.previous = item;
 			this._head = item;
+			this._state++;
 		} else if (touch === Touch.AsNew) {
 			if (item === this._tail) {
 				return;
@@ -902,6 +920,7 @@ export class LinkedMap<K, V> {
 			item.previous = this._tail;
 			this._tail.next = item;
 			this._tail = item;
+			this._state++;
 		}
 	}
 
@@ -953,17 +972,18 @@ export class LRUCache<K, V> extends LinkedMap<K, V> {
 		this.checkTrim();
 	}
 
-	get(key: K): V | undefined {
-		return super.get(key, Touch.AsNew);
+	get(key: K, touch: Touch = Touch.AsNew): V | undefined {
+		return super.get(key, touch);
 	}
 
 	peek(key: K): V | undefined {
 		return super.get(key, Touch.None);
 	}
 
-	set(key: K, value: V): void {
+	set(key: K, value: V): this {
 		super.set(key, value, Touch.AsNew);
 		this.checkTrim();
+		return this;
 	}
 
 	private checkTrim() {

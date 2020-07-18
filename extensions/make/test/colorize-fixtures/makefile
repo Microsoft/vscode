@@ -84,3 +84,5 @@ var-$(nested-var)=val
 # but not so much.
 var-$(shell printf 2) := val2
 $(info Should be 'val2' here: $(var-2))
+
+export a ?= b:c

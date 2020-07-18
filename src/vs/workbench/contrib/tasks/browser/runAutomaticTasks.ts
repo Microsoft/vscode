@@ -145,7 +145,7 @@ export class ManageAutomaticTaskRunning extends Action {
 		super(id, label);
 	}
 
-	public async run(event?: any): Promise<any> {
+	public async run(): Promise<any> {
 		const allowItem: IQuickPickItem = { label: nls.localize('workbench.action.tasks.allowAutomaticTasks', "Allow Automatic Tasks in Folder") };
 		const disallowItem: IQuickPickItem = { label: nls.localize('workbench.action.tasks.disallowAutomaticTasks', "Disallow Automatic Tasks in Folder") };
 		const value = await this.quickInputService.pick([allowItem, disallowItem], { canPickMany: false });

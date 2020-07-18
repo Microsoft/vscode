@@ -14,7 +14,6 @@ import { CancellationToken } from 'vs/base/common/cancellation';
 import { ILogService } from 'vs/platform/log/common/log';
 import { joinPath } from 'vs/base/common/resources';
 import { getDomainsOfRemotes } from 'vs/platform/extensionManagement/common/configRemotes';
-import { keys } from 'vs/base/common/map';
 
 export class ExtensionTipsService implements IExtensionTipsService {
 
@@ -76,8 +75,13 @@ export class ExtensionTipsService implements IExtensionTipsService {
 						});
 					}
 				});
-				const remotes = getDomainsOfRemotes(content.value.toString(), keys(recommendationByRemote));
-				remotes.forEach(remote => result.push(recommendationByRemote.get(remote)!));
+				const domains = getDomainsOfRemotes(content.value.toString(), [...recommendationByRemote.keys()]);
+				for (const domain of domains) {
+					const remote = recommendationByRemote.get(domain);
+					if (remote) {
+						result.push(remote);
+					}
+				}
 			} catch (error) { /* Ignore */ }
 		}
 		return result;

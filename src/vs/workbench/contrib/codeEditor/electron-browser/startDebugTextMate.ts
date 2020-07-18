@@ -4,7 +4,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as os from 'os';
-import * as path from 'path';
 
 import * as nls from 'vs/nls';
 import { Range } from 'vs/editor/common/core/range';
@@ -22,6 +21,7 @@ import { ICodeEditorService } from 'vs/editor/browser/services/codeEditorService
 import { ITextModel } from 'vs/editor/common/model';
 import { Constants } from 'vs/base/common/uint';
 import { IHostService } from 'vs/workbench/services/host/browser/host';
+import { join } from 'vs/base/common/path';
 
 class StartDebugTextMate extends Action {
 
@@ -59,7 +59,7 @@ class StartDebugTextMate extends Action {
 	}
 
 	public async run(): Promise<any> {
-		const pathInTemp = path.join(os.tmpdir(), `vcode-tm-log-${generateUuid()}.txt`);
+		const pathInTemp = join(os.tmpdir(), `vcode-tm-log-${generateUuid()}.txt`);
 		const logger = createRotatingLogger(`tm-log`, pathInTemp, 1024 * 1024 * 30, 1);
 		const model = this._getOrCreateModel();
 		const append = (str: string) => {
@@ -104,4 +104,4 @@ class StartDebugTextMate extends Action {
 }
 
 const registry = Registry.as<IWorkbenchActionRegistry>(ActionExtensions.WorkbenchActions);
-registry.registerWorkbenchAction(SyncActionDescriptor.from(StartDebugTextMate), 'Start Text Mate Syntax Grammar Logging', nls.localize('developer', "Developer"));
+registry.registerWorkbenchAction(SyncActionDescriptor.from(StartDebugTextMate), 'Start Text Mate Syntax Grammar Logging', nls.localize({ key: 'developer', comment: ['A developer on Code itself or someone diagnosing issues in Code'] }, "Developer"));

@@ -141,6 +141,51 @@ suite('MarkersModel Test', () => {
 		assert.equal(JSON.stringify({ ...marker, resource: marker.resource.path, relatedInformation: marker.relatedInformation!.map(r => ({ ...r, resource: r.resource.path })) }, null, '\t'), testObject.toString());
 	});
 
+	test('Markers for same-document but different fragment', function () {
+		const model = new TestMarkersModel([anErrorWithRange(1)]);
+
+		assert.equal(model.total, 1);
+
+		const document = URI.parse('foo://test/path/file');
+		const frag1 = URI.parse('foo://test/path/file#1');
+		const frag2 = URI.parse('foo://test/path/file#two');
+
+		model.setResourceMarkers([[document, [{ ...aMarker(), resource: frag1 }, { ...aMarker(), resource: frag2 }]]]);
+
+		assert.equal(model.total, 3);
+		let a = model.getResourceMarkers(document);
+		let b = model.getResourceMarkers(frag1);
+		let c = model.getResourceMarkers(frag2);
+		assert.ok(a === b);
+		assert.ok(a === c);
+
+		model.setResourceMarkers([[document, [{ ...aMarker(), resource: frag2 }]]]);
+		assert.equal(model.total, 2);
+	});
+
+	test('Problems are no sorted correctly #99135', function () {
+		const model = new TestMarkersModel([]);
+		assert.equal(model.total, 0);
+
+		const document = URI.parse('foo://test/path/file');
+		const frag1 = URI.parse('foo://test/path/file#1');
+		const frag2 = URI.parse('foo://test/path/file#2');
+
+		model.setResourceMarkers([[frag1, [
+			{ ...aMarker(), resource: frag1 },
+			{ ...aMarker(undefined, MarkerSeverity.Warning), resource: frag1 },
+		]]]);
+
+		model.setResourceMarkers([[frag2, [
+			{ ...aMarker(), resource: frag2 }
+		]]]);
+
+		assert.equal(model.total, 3);
+		const markers = model.getResourceMarkers(document)?.markers;
+		assert.deepEqual(markers?.map(m => m.marker.severity), [MarkerSeverity.Error, MarkerSeverity.Error, MarkerSeverity.Warning]);
+		assert.deepEqual(markers?.map(m => m.marker.resource.toString()), [frag1.toString(), frag2.toString(), frag1.toString()]);
+	});
+
 	function compareResource(a: ResourceMarkers, b: string): boolean {
 		return a.resource.toString() === URI.file(b).toString();
 	}

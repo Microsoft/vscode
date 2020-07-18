@@ -3,7 +3,6 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as nls from 'vs/nls';
 import * as strings from 'vs/base/common/strings';
 
 enum Severity {
@@ -19,11 +18,6 @@ namespace Severity {
 	const _warning = 'warning';
 	const _warn = 'warn';
 	const _info = 'info';
-
-	const _displayStrings: { [value: number]: string; } = Object.create(null);
-	_displayStrings[Severity.Error] = nls.localize('sev.error', "Error");
-	_displayStrings[Severity.Warning] = nls.localize('sev.warning', "Warning");
-	_displayStrings[Severity.Info] = nls.localize('sev.info', "Info");
 
 	/**
 	 * Parses 'error', 'warning', 'warn', 'info' in call casings

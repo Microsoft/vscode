@@ -73,6 +73,9 @@ class ManagedCodeActionSet extends Disposable implements CodeActionSet {
 	}
 }
 
+
+const emptyCodeActionsResponse = { actions: [] as modes.CodeAction[], documentation: undefined };
+
 export function getCodeActions(
 	model: ITextModel,
 	rangeOrSelection: Range | Selection,
@@ -100,7 +103,7 @@ export function getCodeActions(
 			}
 
 			if (cts.token.isCancellationRequested) {
-				return { actions: [] as modes.CodeAction[], documentation: undefined };
+				return emptyCodeActionsResponse;
 			}
 
 			const filteredActions = (providedCodeActions?.actions || []).filter(action => action && filtersAction(filter, action));
@@ -111,7 +114,7 @@ export function getCodeActions(
 				throw err;
 			}
 			onUnexpectedExternalError(err);
-			return { actions: [] as modes.CodeAction[], documentation: undefined };
+			return emptyCodeActionsResponse;
 		}
 	});
 

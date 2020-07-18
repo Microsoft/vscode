@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as assert from 'assert';
-import { guessMimeTypes, registerTextMime, suggestFilename } from 'vs/base/common/mime';
+import { guessMimeTypes, registerTextMime } from 'vs/base/common/mime';
 import { URI } from 'vs/base/common/uri';
 
 suite('Mime', () => {
@@ -125,54 +125,5 @@ suite('Mime', () => {
 		registerTextMime({ id: 'data', extension: '.data', mime: 'text/data' });
 
 		assert.deepEqual(guessMimeTypes(URI.parse(`data:;label:something.data;description:data,`)), ['text/data', 'text/plain']);
-	});
-
-	test('Filename Suggestion - Suggest prefix only when there are no relevant extensions', () => {
-		const id = 'plumbus0';
-		const mime = `text/${id}`;
-		for (let extension of ['one', 'two']) {
-			registerTextMime({ id, mime, extension });
-		}
-
-		let suggested = suggestFilename('shleem', 'Untitled-1');
-		assert.equal(suggested, 'Untitled-1');
-	});
-
-	test('Filename Suggestion - Suggest prefix with first extension that begins with a dot', () => {
-		const id = 'plumbus1';
-		const mime = `text/${id}`;
-		for (let extension of ['plumbus', '.shleem', '.gazorpazorp']) {
-			registerTextMime({ id, mime, extension });
-		}
-
-		let suggested = suggestFilename('plumbus1', 'Untitled-1');
-		assert.equal(suggested, 'Untitled-1.shleem');
-	});
-
-	test('Filename Suggestion - Suggest first relevant extension when there are none that begin with a dot', () => {
-		const id = 'plumbus2';
-		const mime = `text/${id}`;
-		for (let extension of ['plumbus', 'shleem', 'gazorpazorp']) {
-			registerTextMime({ id, mime, extension });
-		}
-
-		let suggested = suggestFilename('plumbus2', 'Untitled-1');
-		assert.equal(suggested, 'plumbus');
-	});
-
-	test('Filename Suggestion - Should ignore user-configured associations', () => {
-		registerTextMime({ id: 'plumbus3', mime: 'text/plumbus3', extension: 'plumbus', userConfigured: true });
-		registerTextMime({ id: 'plumbus3', mime: 'text/plumbus3', extension: '.shleem', userConfigured: true });
-		registerTextMime({ id: 'plumbus3', mime: 'text/plumbus3', extension: '.gazorpazorp', userConfigured: false });
-
-		let suggested = suggestFilename('plumbus3', 'Untitled-1');
-		assert.equal(suggested, 'Untitled-1.gazorpazorp');
-
-		registerTextMime({ id: 'plumbus4', mime: 'text/plumbus4', extension: 'plumbus', userConfigured: true });
-		registerTextMime({ id: 'plumbus4', mime: 'text/plumbus4', extension: '.shleem', userConfigured: true });
-		registerTextMime({ id: 'plumbus4', mime: 'text/plumbus4', extension: '.gazorpazorp', userConfigured: true });
-
-		suggested = suggestFilename('plumbus4', 'Untitled-1');
-		assert.equal(suggested, 'Untitled-1');
 	});
 });

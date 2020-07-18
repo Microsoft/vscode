@@ -115,7 +115,8 @@
 }
 
 /* Theming */
-.vs .monaco-workbench .feedback-form .feedback-alias, .vs .monaco-workbench .feedback-form .feedback-description {
+.monaco-workbench.vs .feedback-form .feedback-alias,
+.monaco-workbench.vs .feedback-form .feedback-description {
 	font-family: inherit;
 	border: 1px solid transparent;
 }
@@ -167,16 +168,17 @@
 	background-color: #E51400;
 }
 
-.vs-dark .monaco-workbench .feedback-form h3 {
+.monaco-workbench.vs-dark .feedback-form h3 {
 	font-weight: normal;
 	font-size: 1.2em;
 }
 
-.vs-dark .monaco-workbench .feedback-form .sentiment:hover {
+.monaco-workbench.vs-dark .feedback-form .sentiment:hover {
 	background-color: rgba(30,30,30,0.8);
 }
 
-.vs-dark .monaco-workbench .feedback-form .feedback-alias, .vs-dark .monaco-workbench .feedback-form .feedback-description {
+.monaco-workbench.vs-dark .feedback-form .feedback-alias,
+.monaco-workbench.vs-dark .feedback-form .feedback-description {
 	font-family: inherit;
 }
 
@@ -193,28 +195,29 @@
 }
 
 /* High Contrast Theming */
-.hc-black .monaco-workbench .feedback-form {
+.monaco-workbench.hc-black .feedback-form {
 	outline: 2px solid #6fc3df;
 	outline-offset: -2px;
 }
 
-.hc-black .monaco-workbench .feedback-form .feedback-alias, .hc-black .monaco-workbench .feedback-form .feedback-description {
+.monaco-workbench.hc-black .feedback-form .feedback-alias,
+.monaco-workbench.hc-black .feedback-form .feedback-description {
 	font-family: inherit;
 }
 
-.hc-black .monaco-workbench .feedback-form .content .contactus {
+.monaco-workbench.hc-black .feedback-form .content .contactus {
 	padding: 10px;
 	float: right;
 }
 
-.hc-black .monaco-workbench .feedback-form .form-buttons .send,
-.hc-black .monaco-workbench .feedback-form .form-buttons .send.in-progress,
-.hc-black .monaco-workbench .feedback-form .form-buttons .send.success {
+.monaco-workbench.hc-black .feedback-form .form-buttons .send,
+.monaco-workbench.hc-black .feedback-form .form-buttons .send.in-progress,
+.monaco-workbench.hc-black .feedback-form .form-buttons .send.success {
 	background-color: #0C141F;
 	color: #D4D4D4;
 	border: 1px solid #6FC3DF;
 }
 
-.hc-black .monaco-workbench .feedback-form .form-buttons .send:hover {
+.monaco-workbench.hc-black .feedback-form .form-buttons .send:hover {
 	background-color: #0C141F;
 }

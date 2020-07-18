@@ -43,8 +43,5 @@
         "path": "./syntaxes/searchResult.tmLanguage.json"
       }
     ]
-  },
-  "devDependencies": {
-    "vscode": "^1.1.36"
   }
 }

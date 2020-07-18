@@ -26,6 +26,7 @@
           ".webmanifest",
           ".js.map",
           ".css.map",
+          ".ts.map",
           ".har",
           ".jslintrc",
           ".jsonld"
@@ -47,14 +48,14 @@
           "JSON with Comments"
         ],
         "extensions": [
-          ".hintrc",
-          ".babelrc",
           ".jsonc",
           ".eslintrc",
           ".eslintrc.json",
           ".jsfmtrc",
           ".jshintrc",
-          ".swcrc"
+          ".swcrc",
+          ".hintrc",
+          ".babelrc"
         ],
         "configuration": "./language-configuration.json"
       }

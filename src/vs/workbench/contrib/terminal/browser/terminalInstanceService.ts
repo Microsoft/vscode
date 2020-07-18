@@ -8,7 +8,6 @@ import { IWindowsShellHelper, ITerminalChildProcess, IDefaultShellAndArgsRequest
 import { Terminal as XTermTerminal } from 'xterm';
 import { SearchAddon as XTermSearchAddon } from 'xterm-addon-search';
 import { Unicode11Addon as XTermUnicode11Addon } from 'xterm-addon-unicode11';
-import { WebLinksAddon as XTermWebLinksAddon } from 'xterm-addon-web-links';
 import { WebglAddon as XTermWebglAddon } from 'xterm-addon-webgl';
 import { IProcessEnvironment } from 'vs/base/common/platform';
 import { Emitter, Event } from 'vs/base/common/event';
@@ -17,7 +16,6 @@ import { registerSingleton } from 'vs/platform/instantiation/common/extensions';
 let Terminal: typeof XTermTerminal;
 let SearchAddon: typeof XTermSearchAddon;
 let Unicode11Addon: typeof XTermUnicode11Addon;
-let WebLinksAddon: typeof XTermWebLinksAddon;
 let WebglAddon: typeof XTermWebglAddon;
 
 export class TerminalInstanceService implements ITerminalInstanceService {
@@ -45,13 +43,6 @@ export class TerminalInstanceService implements ITerminalInstanceService {
 			Unicode11Addon = (await import('xterm-addon-unicode11')).Unicode11Addon;
 		}
 		return Unicode11Addon;
-	}
-
-	public async getXtermWebLinksConstructor(): Promise<typeof XTermWebLinksAddon> {
-		if (!WebLinksAddon) {
-			WebLinksAddon = (await import('xterm-addon-web-links')).WebLinksAddon;
-		}
-		return WebLinksAddon;
 	}
 
 	public async getXtermWebglConstructor(): Promise<typeof XTermWebglAddon> {

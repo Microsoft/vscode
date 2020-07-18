@@ -8,8 +8,8 @@ import { URI } from 'vs/base/common/uri';
 import { isEqual, isEqualOrParent } from 'vs/base/common/extpath';
 import { FileChangeType, FileChangesEvent, isParent } from 'vs/platform/files/common/files';
 import { isLinux, isMacintosh, isWindows } from 'vs/base/common/platform';
-// eslint-disable-next-line code-import-patterns
 import { toResource } from 'vs/base/test/common/utils';
+import { extUri } from 'vs/base/common/resources';
 
 suite('Files', () => {
 
@@ -22,7 +22,7 @@ suite('Files', () => {
 			{ resource: toResource.call(this, '/bar/folder'), type: FileChangeType.DELETED }
 		];
 
-		let r1 = new FileChangesEvent(changes);
+		let r1 = new FileChangesEvent(changes, extUri);
 
 		assert(!r1.contains(toResource.call(this, '/foo'), FileChangeType.UPDATED));
 		assert(r1.contains(toResource.call(this, '/foo/updated.txt'), FileChangeType.UPDATED));

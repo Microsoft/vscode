@@ -18,6 +18,16 @@
 .monaco-pane-view .pane > .pane-header > .actions.show {
 	display: initial;
 }
+.monaco-pane-view .pane > .pane-header .icon {
+	display: none;
+	width: 16px;
+	height: 16px;
+}
+
+.monaco-pane-view .pane.pane.horizontal:not(.expanded) > .pane-header .icon {
+	display: inline;
+	margin-top: 4px;
+}
 
 .monaco-pane-view .pane > .pane-header h3.title {
 	white-space: nowrap;
@@ -26,6 +36,11 @@
 	font-size: 11px;
 	-webkit-margin-before: 0;
 	-webkit-margin-after: 0;
+}
+
+.monaco-pane-view .pane.horizontal:not(.expanded) > .pane-header h3.title,
+.monaco-pane-view .pane.horizontal:not(.expanded) > .pane-header .description {
+	display: none;
 }
 
 .monaco-pane-view .pane .monaco-progress-container {

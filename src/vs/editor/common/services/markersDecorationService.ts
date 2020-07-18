@@ -12,7 +12,7 @@ import { Range } from 'vs/editor/common/core/range';
 export const IMarkerDecorationsService = createDecorator<IMarkerDecorationsService>('markerDecorationsService');
 
 export interface IMarkerDecorationsService {
-	_serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	onDidChangeMarker: Event<ITextModel>;
 

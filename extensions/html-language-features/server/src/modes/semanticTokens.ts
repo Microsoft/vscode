@@ -13,14 +13,14 @@ interface LegendMapping {
 
 export interface SemanticTokenProvider {
 	readonly legend: { types: string[]; modifiers: string[] };
-	getSemanticTokens(document: TextDocument, ranges?: Range[]): number[];
+	getSemanticTokens(document: TextDocument, ranges?: Range[]): Promise<number[]>;
 }
 
 
 export function newSemanticTokenProvider(languageModes: LanguageModes): SemanticTokenProvider {
 
 	// combined legend across modes
-	const legend = { types: [], modifiers: [] };
+	const legend: { types: string[], modifiers: string[] } = { types: [], modifiers: [] };
 	const legendMappings: { [modeId: string]: LegendMapping } = {};
 
 	for (let mode of languageModes.getAllModes()) {
@@ -32,12 +32,12 @@ export function newSemanticTokenProvider(languageModes: LanguageModes): Semantic
 
 	return {
 		legend,
-		getSemanticTokens(document: TextDocument, ranges?: Range[]): number[] {
+		async getSemanticTokens(document: TextDocument, ranges?: Range[]): Promise<number[]> {
 			const allTokens: SemanticTokenData[] = [];
 			for (let mode of languageModes.getAllModesInDocument(document)) {
 				if (mode.getSemanticTokens) {
 					const mapping = legendMappings[mode.getId()];
-					const tokens = mode.getSemanticTokens(document);
+					const tokens = await mode.getSemanticTokens(document);
 					applyTypesMapping(tokens, mapping.types);
 					applyModifiersMapping(tokens, mapping.modifiers);
 					for (let token of tokens) {

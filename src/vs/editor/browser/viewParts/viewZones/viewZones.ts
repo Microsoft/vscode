@@ -79,9 +79,8 @@ export class ViewZones extends ViewPart {
 		for (const whitespace of whitespaces) {
 			oldWhitespaces.set(whitespace.id, whitespace);
 		}
-		return this._context.viewLayout.changeWhitespace((whitespaceAccessor: IWhitespaceChangeAccessor) => {
-			let hadAChange = false;
-
+		let hadAChange = false;
+		this._context.model.changeWhitespace((whitespaceAccessor: IWhitespaceChangeAccessor) => {
 			const keys = Object.keys(this._zones);
 			for (let i = 0, len = keys.length; i < len; i++) {
 				const id = keys[i];
@@ -94,9 +93,8 @@ export class ViewZones extends ViewPart {
 					hadAChange = true;
 				}
 			}
-
-			return hadAChange;
 		});
+		return hadAChange;
 	}
 
 	public onConfigurationChanged(e: viewEvents.ViewConfigurationChangedEvent): boolean {
@@ -115,11 +113,7 @@ export class ViewZones extends ViewPart {
 	}
 
 	public onLineMappingChanged(e: viewEvents.ViewLineMappingChangedEvent): boolean {
-		const hadAChange = this._recomputeWhitespacesProps();
-		if (hadAChange) {
-			this._context.viewLayout.onHeightMaybeChanged();
-		}
-		return hadAChange;
+		return this._recomputeWhitespacesProps();
 	}
 
 	public onLinesDeleted(e: viewEvents.ViewLinesDeletedEvent): boolean {
@@ -199,9 +193,9 @@ export class ViewZones extends ViewPart {
 	}
 
 	public changeViewZones(callback: (changeAccessor: IViewZoneChangeAccessor) => any): boolean {
+		let zonesHaveChanged = false;
 
-		return this._context.viewLayout.changeWhitespace((whitespaceAccessor: IWhitespaceChangeAccessor) => {
-			let zonesHaveChanged = false;
+		this._context.model.changeWhitespace((whitespaceAccessor: IWhitespaceChangeAccessor) => {
 
 			const changeAccessor: IViewZoneChangeAccessor = {
 				addZone: (zone: IViewZone): string => {
@@ -228,9 +222,9 @@ export class ViewZones extends ViewPart {
 			changeAccessor.addZone = invalidFunc;
 			changeAccessor.removeZone = invalidFunc;
 			changeAccessor.layoutZone = invalidFunc;
-
-			return zonesHaveChanged;
 		});
+
+		return zonesHaveChanged;
 	}
 
 	private _addZone(whitespaceAccessor: IWhitespaceChangeAccessor, zone: IViewZone): string {

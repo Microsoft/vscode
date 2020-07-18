@@ -5,6 +5,7 @@
 
 .monaco-editor .monaco-editor-overlaymessage {
 	padding-bottom: 8px;
+	z-index: 10000;
 }
 
 @keyframes fadeIn {

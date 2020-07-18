@@ -344,7 +344,7 @@ registry.registerWorkbenchAction(SyncActionDescriptor.from(OpenRecentAction, { p
 const viewCategory = nls.localize('view', "View");
 registry.registerWorkbenchAction(SyncActionDescriptor.from(ToggleFullScreenAction, { primary: KeyCode.F11, mac: { primary: KeyMod.CtrlCmd | KeyMod.WinCtrl | KeyCode.KEY_F } }), 'View: Toggle Full Screen', viewCategory);
 
-const developerCategory = nls.localize('developer', "Developer");
+const developerCategory = nls.localize({ key: 'developer', comment: ['A developer on Code itself or someone diagnosing issues in Code'] }, "Developer");
 registry.registerWorkbenchAction(SyncActionDescriptor.from(ReloadWindowAction), 'Developer: Reload Window', developerCategory);
 
 const helpCategory = nls.localize('help', "Help");

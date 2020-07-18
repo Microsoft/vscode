@@ -9,6 +9,7 @@ import * as PConst from '../protocol.const';
 import { ITypeScriptServiceClient } from '../typescriptService';
 import * as typeConverters from '../utils/typeConverters';
 import { CachedResponse } from '../tsServer/cachedResponse';
+import { parseKindModifier } from '../utils/modifiers';
 
 const getSymbolKind = (kind: string): vscode.SymbolKind => {
 	switch (kind) {
@@ -78,6 +79,12 @@ class TypeScriptDocumentSymbolProvider implements vscode.DocumentSymbolProvider 
 				getSymbolKind(item.kind),
 				range,
 				range.contains(selectionRange) ? selectionRange : range);
+
+
+			const kindModifiers = parseKindModifier(item.kindModifiers);
+			if (kindModifiers.has(PConst.KindModifiers.depreacted)) {
+				symbolInfo.tags = [vscode.SymbolTag.Deprecated];
+			}
 
 			for (const child of children) {
 				if (child.spans.some(span => !!range.intersection(typeConverters.Range.fromTextSpan(span)))) {

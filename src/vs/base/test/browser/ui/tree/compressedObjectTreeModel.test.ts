@@ -7,7 +7,7 @@ import * as assert from 'assert';
 import { compress, ICompressedTreeElement, ICompressedTreeNode, decompress, CompressedObjectTreeModel } from 'vs/base/browser/ui/tree/compressedObjectTreeModel';
 import { Iterable } from 'vs/base/common/iterator';
 import { ITreeNode } from 'vs/base/browser/ui/tree/tree';
-import { ISpliceable } from 'vs/base/common/sequence';
+import { IList } from 'vs/base/browser/ui/tree/indexTreeModel';
 
 interface IResolvedCompressedTreeElement<T> extends ICompressedTreeElement<T> {
 	readonly element: T;
@@ -289,11 +289,12 @@ suite('CompressedObjectTree', function () {
 		});
 	});
 
-	function toSpliceable<T>(arr: T[]): ISpliceable<T> {
+	function toList<T>(arr: T[]): IList<T> {
 		return {
 			splice(start: number, deleteCount: number, elements: T[]): void {
 				arr.splice(start, deleteCount, ...elements);
-			}
+			},
+			updateElementHeight() { }
 		};
 	}
 
@@ -305,7 +306,7 @@ suite('CompressedObjectTree', function () {
 
 		test('ctor', () => {
 			const list: ITreeNode<ICompressedTreeNode<number>>[] = [];
-			const model = new CompressedObjectTreeModel<number>('test', toSpliceable(list));
+			const model = new CompressedObjectTreeModel<number>('test', toList(list));
 			assert(model);
 			assert.equal(list.length, 0);
 			assert.equal(model.size, 0);
@@ -313,7 +314,7 @@ suite('CompressedObjectTree', function () {
 
 		test('flat', () => {
 			const list: ITreeNode<ICompressedTreeNode<number>>[] = [];
-			const model = new CompressedObjectTreeModel<number>('test', toSpliceable(list));
+			const model = new CompressedObjectTreeModel<number>('test', toList(list));
 
 			model.setChildren(null, [
 				{ element: 0 },
@@ -340,7 +341,7 @@ suite('CompressedObjectTree', function () {
 
 		test('nested', () => {
 			const list: ITreeNode<ICompressedTreeNode<number>>[] = [];
-			const model = new CompressedObjectTreeModel<number>('test', toSpliceable(list));
+			const model = new CompressedObjectTreeModel<number>('test', toList(list));
 
 			model.setChildren(null, [
 				{
@@ -376,7 +377,7 @@ suite('CompressedObjectTree', function () {
 
 		test('compressed', () => {
 			const list: ITreeNode<ICompressedTreeNode<number>>[] = [];
-			const model = new CompressedObjectTreeModel<number>('test', toSpliceable(list));
+			const model = new CompressedObjectTreeModel<number>('test', toList(list));
 
 			model.setChildren(null, [
 				{

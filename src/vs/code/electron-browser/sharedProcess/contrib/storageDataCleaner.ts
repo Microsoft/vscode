@@ -35,7 +35,7 @@ export class StorageDataCleaner extends Disposable {
 				const emptyWorkspaces = workspaces.emptyWorkspaceInfos.map(info => info.backupFolder);
 
 				// Read all workspace storage folders that exist
-				return readdir(this.environmentService.workspaceStorageHome).then(storageFolders => {
+				return readdir(this.environmentService.workspaceStorageHome.fsPath).then(storageFolders => {
 					const deletes: Promise<void>[] = [];
 
 					storageFolders.forEach(storageFolder => {
@@ -44,7 +44,7 @@ export class StorageDataCleaner extends Disposable {
 						}
 
 						if (emptyWorkspaces.indexOf(storageFolder) === -1) {
-							deletes.push(rimraf(join(this.environmentService.workspaceStorageHome, storageFolder)));
+							deletes.push(rimraf(join(this.environmentService.workspaceStorageHome.fsPath, storageFolder)));
 						}
 					});
 

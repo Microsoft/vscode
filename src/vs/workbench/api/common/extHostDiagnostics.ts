@@ -173,9 +173,9 @@ export class DiagnosticCollection implements vscode.DiagnosticCollection {
 
 	forEach(callback: (uri: URI, diagnostics: ReadonlyArray<vscode.Diagnostic>, collection: DiagnosticCollection) => any, thisArg?: any): void {
 		this._checkDisposed();
-		this._data.forEach((value, uri) => {
+		for (let uri of this._data.keys()) {
 			callback.apply(thisArg, [uri, this.get(uri), this]);
-		});
+		}
 	}
 
 	get(uri: URI): ReadonlyArray<vscode.Diagnostic> {
@@ -307,7 +307,7 @@ export class ExtHostDiagnostics implements ExtHostDiagnosticsShape {
 		} else {
 			const index = new Map<string, number>();
 			const res: [vscode.Uri, vscode.Diagnostic[]][] = [];
-			this._collections.forEach(collection => {
+			for (const collection of this._collections.values()) {
 				collection.forEach((uri, diagnostics) => {
 					let idx = index.get(uri.toString());
 					if (typeof idx === 'undefined') {
@@ -317,18 +317,18 @@ export class ExtHostDiagnostics implements ExtHostDiagnosticsShape {
 					}
 					res[idx][1] = res[idx][1].concat(...diagnostics);
 				});
-			});
+			}
 			return res;
 		}
 	}
 
 	private _getDiagnostics(resource: vscode.Uri): ReadonlyArray<vscode.Diagnostic> {
 		let res: vscode.Diagnostic[] = [];
-		this._collections.forEach(collection => {
+		for (let collection of this._collections.values()) {
 			if (collection.has(resource)) {
 				res = res.concat(collection.get(resource));
 			}
-		});
+		}
 		return res;
 	}
 

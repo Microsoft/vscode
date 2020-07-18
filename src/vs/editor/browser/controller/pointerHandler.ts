@@ -100,7 +100,7 @@ class StandardPointerHandler extends MouseHandler implements IDisposable {
 	}
 
 	private _onGestureChange(e: IThrottledGestureEvent): void {
-		this._context.viewLayout.deltaScrollNow(-e.translationX, -e.translationY);
+		this._context.model.deltaScrollNow(-e.translationX, -e.translationY);
 	}
 
 	public dispose(): void {
@@ -177,7 +177,7 @@ export class PointerEventHandler extends MouseHandler {
 
 	private onChange(e: GestureEvent): void {
 		if (this._lastPointerType === 'touch') {
-			this._context.viewLayout.deltaScrollNow(-e.translationX, -e.translationY);
+			this._context.model.deltaScrollNow(-e.translationX, -e.translationY);
 		}
 	}
 
@@ -215,7 +215,7 @@ class TouchHandler extends MouseHandler {
 	}
 
 	private onChange(e: GestureEvent): void {
-		this._context.viewLayout.deltaScrollNow(-e.translationX, -e.translationY);
+		this._context.model.deltaScrollNow(-e.translationX, -e.translationY);
 	}
 }
 

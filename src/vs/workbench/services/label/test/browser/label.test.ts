@@ -3,14 +3,15 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import * as resources from 'vs/base/common/resources';
 import * as assert from 'assert';
 import { TestEnvironmentService, TestPathService } from 'vs/workbench/test/browser/workbenchTestServices';
 import { URI } from 'vs/base/common/uri';
 import { LabelService } from 'vs/workbench/services/label/common/labelService';
 import { TestContextService } from 'vs/workbench/test/common/workbenchTestServices';
+import { Workspace, WorkspaceFolder } from 'vs/platform/workspace/common/workspace';
 
 suite('URI Label', () => {
-
 	let labelService: LabelService;
 
 	setup(() => {
@@ -154,5 +155,77 @@ suite('URI Label', () => {
 
 		const uri1 = URI.parse('vscode://microsoft.com/1/2/3/4/5');
 		assert.equal(labelService.getUriLabel(uri1, { relative: false }), 'LABEL: /END');
+	});
+});
+
+
+suite('multi-root worksapce', () => {
+	let labelService: LabelService;
+
+	setup(() => {
+		const sources = URI.file('folder1/src');
+		const tests = URI.file('folder1/test');
+		const other = URI.file('folder2');
+
+		labelService = new LabelService(
+			TestEnvironmentService,
+			new TestContextService(
+				new Workspace('test-workspaace', [
+					new WorkspaceFolder({ uri: sources, index: 0, name: 'Sources' }, { uri: sources.toString() }),
+					new WorkspaceFolder({ uri: tests, index: 1, name: 'Tests' }, { uri: tests.toString() }),
+					new WorkspaceFolder({ uri: other, index: 2, name: resources.basename(other) }, { uri: other.toString() }),
+				])),
+			new TestPathService());
+	});
+
+	test('labels of files in multiroot workspaces are the foldername folloed by offset from the folder', () => {
+		labelService.registerFormatter({
+			scheme: 'file',
+			formatting: {
+				label: '${authority}${path}',
+				separator: '/',
+				tildify: false,
+				normalizeDriveLetter: false,
+				authorityPrefix: '//',
+				workspaceSuffix: ''
+			}
+		});
+
+		const tests = {
+			'folder1/src/file': 'Sources • file',
+			'folder1/src/folder/file': 'Sources • folder/file',
+			'folder1/src': 'Sources',
+			'folder1/other': '/folder1/other',
+			'folder2/other': 'folder2 • other',
+		};
+
+		Object.entries(tests).forEach(([path, label]) => {
+			const generated = labelService.getUriLabel(URI.file(path), { relative: true });
+			assert.equal(generated, label);
+		});
+	});
+
+	test('labels with context after path', () => {
+		labelService.registerFormatter({
+			scheme: 'file',
+			formatting: {
+				label: '${path} (${scheme})',
+				separator: '/',
+			}
+		});
+
+		const tests = {
+			'folder1/src/file': 'Sources • file (file)',
+			'folder1/src/folder/file': 'Sources • folder/file (file)',
+			'folder1/src': 'Sources',
+			'folder1/other': '/folder1/other (file)',
+			'folder2/other': 'folder2 • other (file)',
+		};
+
+		Object.entries(tests).forEach(([path, label]) => {
+			const generated = labelService.getUriLabel(URI.file(path), { relative: true });
+			assert.equal(generated, label, path);
+		});
+
 	});
 });

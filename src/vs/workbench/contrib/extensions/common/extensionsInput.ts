@@ -3,25 +3,26 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import { Schemas } from 'vs/base/common/network';
+import { URI } from 'vs/base/common/uri';
 import { localize } from 'vs/nls';
 import { EditorInput } from 'vs/workbench/common/editor';
 import { IExtension } from 'vs/workbench/contrib/extensions/common/extensions';
-import { URI } from 'vs/base/common/uri';
+import { areSameExtensions } from 'vs/platform/extensionManagement/common/extensionManagementUtil';
 
 export class ExtensionsInput extends EditorInput {
 
 	static readonly ID = 'workbench.extensions.input2';
-	get extension(): IExtension { return this._extension; }
 
 	get resource() {
 		return URI.from({
-			scheme: 'extension',
+			scheme: Schemas.extension,
 			path: this.extension.identifier.id
 		});
 	}
 
 	constructor(
-		private readonly _extension: IExtension
+		public readonly extension: IExtension
 	) {
 		super();
 	}
@@ -34,26 +35,15 @@ export class ExtensionsInput extends EditorInput {
 		return localize('extensionsInputName', "Extension: {0}", this.extension.displayName);
 	}
 
+	supportsSplitEditor(): boolean {
+		return false;
+	}
+
 	matches(other: unknown): boolean {
-		if (super.matches(other) === true) {
+		if (super.matches(other)) {
 			return true;
 		}
 
-		if (!(other instanceof ExtensionsInput)) {
-			return false;
-		}
-
-		const otherExtensionInput = other as ExtensionsInput;
-
-		// TODO@joao is this correct?
-		return this.extension === otherExtensionInput.extension;
-	}
-
-	resolve(): Promise<any> {
-		return Promise.resolve(null);
-	}
-
-	supportsSplitEditor(): boolean {
-		return false;
+		return other instanceof ExtensionsInput && areSameExtensions(this.extension.identifier, other.extension.identifier);
 	}
 }

@@ -3,14 +3,14 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from 'vscode';
-import { ITypeScriptServiceClient, ExecConfig, ServerResponse } from '../typescriptService';
-import * as Proto from '../protocol';
-import { VersionDependentRegistration } from '../utils/dependentRegistration';
-import API from '../utils/api';
-
 // all constants are const
-import { TokenType, TokenModifier, TokenEncodingConsts, VersionRequirement } from 'typescript-vscode-sh-plugin/lib/constants';
+import { TokenEncodingConsts, TokenModifier, TokenType, VersionRequirement } from 'typescript-vscode-sh-plugin/lib/constants';
+import * as vscode from 'vscode';
+import * as Proto from '../protocol';
+import { ClientCapability, ExecConfig, ITypeScriptServiceClient, ServerResponse } from '../typescriptService';
+import API from '../utils/api';
+import { conditionalRegistration, requireCapability, requireMinVersion } from '../utils/dependentRegistration';
+
 
 const minTypeScriptVersion = API.fromVersionString(`${VersionRequirement.major}.${VersionRequirement.minor}`);
 
@@ -18,7 +18,10 @@ const minTypeScriptVersion = API.fromVersionString(`${VersionRequirement.major}.
 const CONTENT_LENGTH_LIMIT = 100000;
 
 export function register(selector: vscode.DocumentSelector, client: ITypeScriptServiceClient) {
-	return new VersionDependentRegistration(client, minTypeScriptVersion, () => {
+	return conditionalRegistration([
+		requireMinVersion(client, minTypeScriptVersion),
+		requireCapability(client, ClientCapability.Semantic),
+	], () => {
 		const provider = new DocumentSemanticTokensProvider(client);
 		return vscode.Disposable.from(
 			// register only as a range provider

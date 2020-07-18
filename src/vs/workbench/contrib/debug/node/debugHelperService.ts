@@ -10,9 +10,16 @@ import { getPathFromAmdModule } from 'vs/base/common/amd';
 import { TelemetryService } from 'vs/platform/telemetry/common/telemetryService';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { registerSingleton } from 'vs/platform/instantiation/common/extensions';
+import { IWorkbenchEnvironmentService } from 'vs/workbench/services/environment/common/environmentService';
+import { cleanRemoteAuthority } from 'vs/platform/telemetry/common/telemetryUtils';
 
 export class NodeDebugHelperService implements IDebugHelperService {
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
+
+	constructor(
+		@IWorkbenchEnvironmentService private readonly environmentService: IWorkbenchEnvironmentService,
+	) { }
+
 
 	createTelemetryService(configurationService: IConfigurationService, args: string[]): TelemetryService | undefined {
 
@@ -33,8 +40,11 @@ export class NodeDebugHelperService implements IDebugHelperService {
 		const channel = client.getChannel('telemetryAppender');
 		const appender = new TelemetryAppenderClient(channel);
 
-		return new TelemetryService({ appender, sendErrorTelemetry: true }, configurationService);
+		return new TelemetryService({
+			appender,
+			sendErrorTelemetry: cleanRemoteAuthority(this.environmentService.configuration.remoteAuthority) !== 'other'
+		}, configurationService);
 	}
 }
 
-registerSingleton(IDebugHelperService, NodeDebugHelperService);
+registerSingleton(IDebugHelperService, NodeDebugHelperService, true);

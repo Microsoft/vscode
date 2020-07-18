@@ -20,15 +20,13 @@
 			"port": 5870,
 			"outFiles": [
 				"${workspaceFolder}/out/**/*.js"
-			],
-			"presentation": {
-				"hidden": true
-			}
+			]
 		},
 		{
 			"type": "pwa-chrome",
 			"request": "attach",
 			"name": "Attach to Shared Process",
+			"timeout": 30000,
 			"port": 9222,
 			"urlFilter": "*sharedProcess.html*",
 			"presentation": {
@@ -60,6 +58,7 @@
 			"type": "node",
 			"request": "attach",
 			"name": "Attach to Main Process",
+			"timeout": 30000,
 			"port": 5875,
 			"outFiles": [
 				"${workspaceFolder}/out/**/*.js"
@@ -173,7 +172,7 @@
 				"${workspaceFolder}/out/**/*.js"
 			],
 			"presentation": {
-				"group": "6_tests",
+				"group": "5_tests",
 				"order": 6
 			}
 		},
@@ -201,6 +200,7 @@
 			"env": {
 				"VSCODE_EXTHOST_WILL_SEND_SOCKET": null
 			},
+			"cleanUp": "wholeBrowser",
 			"breakOnLoad": false,
 			"urlFilter": "*workbench.html*",
 			"runtimeArgs": [
@@ -220,10 +220,7 @@
 			"type": "node",
 			"request": "launch",
 			"name": "VS Code (Web)",
-			"runtimeExecutable": "yarn",
-			"runtimeArgs": [
-				"web"
-			],
+			"program": "${workspaceFolder}/resources/serverless/code-web.js",
 			"presentation": {
 				"group": "0_vscode",
 				"order": 2
@@ -260,6 +257,18 @@
 			}
 		},
 		{
+			"type": "pwa-msedge",
+			"request": "launch",
+			"name": "VS Code (Web, Edge)",
+			"url": "http://localhost:8080",
+			"pauseForSourceMap": false,
+			"preLaunchTask": "Run web",
+			"presentation": {
+				"group": "0_vscode",
+				"order": 3
+			}
+		},
+		{
 			"type": "node",
 			"request": "launch",
 			"name": "Git Unit Tests",
@@ -277,7 +286,7 @@
 		{
 			"type": "node",
 			"request": "launch",
-			"name": "HTML Unit Tests",
+			"name": "HTML Server Unit Tests",
 			"program": "${workspaceFolder}/extensions/html-language-features/server/test/index.js",
 			"stopOnEntry": false,
 			"cwd": "${workspaceFolder}/extensions/html-language-features/server",
@@ -290,12 +299,27 @@
 			}
 		},
 		{
+			"type": "node",
+			"request": "launch",
+			"name": "CSS Server Unit Tests",
+			"program": "${workspaceFolder}/extensions/css-language-features/server/test/index.js",
+			"stopOnEntry": false,
+			"cwd": "${workspaceFolder}/extensions/css-language-features/server",
+			"outFiles": [
+				"${workspaceFolder}/extensions/css-language-features/server/out/**/*.js"
+			],
+			"presentation": {
+				"group": "5_tests",
+				"order": 10
+			}
+		},
+		{
 			"type": "extensionHost",
 			"request": "launch",
 			"name": "Markdown Extension Tests",
 			"runtimeExecutable": "${execPath}",
 			"args": [
-				"${workspaceFolder}/extensions/markdown-language-features/test-fixtures",
+				"${workspaceFolder}/extensions/markdown-language-features/test-workspace",
 				"--extensionDevelopmentPath=${workspaceFolder}/extensions/markdown-language-features",
 				"--extensionTestsPath=${workspaceFolder}/extensions/markdown-language-features/out/test"
 			],
@@ -313,7 +337,7 @@
 			"name": "TypeScript Extension Tests",
 			"runtimeExecutable": "${execPath}",
 			"args": [
-				"${workspaceFolder}/extensions/typescript-language-features/test-fixtures",
+				"${workspaceFolder}/extensions/typescript-language-features/test-workspace",
 				"--extensionDevelopmentPath=${workspaceFolder}/extensions/typescript-language-features",
 				"--extensionTestsPath=${workspaceFolder}/extensions/typescript-language-features/out/test"
 			],
@@ -386,6 +410,7 @@
 	"compounds": [
 		{
 			"name": "VS Code",
+			"stopAll": true,
 			"configurations": [
 				"Launch VS Code",
 				"Attach to Main Process",

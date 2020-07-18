@@ -99,10 +99,6 @@ export class WebviewInput extends EditorInput {
 		this._group = group;
 	}
 
-	public async resolve(): Promise<null> {
-		return null;
-	}
-
 	public supportsSplitEditor() {
 		return false;
 	}

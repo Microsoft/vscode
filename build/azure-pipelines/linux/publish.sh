@@ -27,11 +27,6 @@ rm -rf $ROOT/vscode-server-*.tar.*
 
 node build/azure-pipelines/common/createAsset.js "server-$PLATFORM_LINUX" archive-unsigned "$SERVER_TARBALL_FILENAME" "$SERVER_TARBALL_PATH"
 
-# Publish hockeyapp symbols
-# node build/azure-pipelines/common/symbols.js "$VSCODE_MIXIN_PASSWORD" "$VSCODE_HOCKEYAPP_TOKEN" "x64" "$VSCODE_HOCKEYAPP_ID_LINUX64"
-# Skip hockey app because build failure.
-# https://github.com/microsoft/vscode/issues/90491
-
 # Publish DEB
 PLATFORM_DEB="linux-deb-x64"
 DEB_ARCH="amd64"

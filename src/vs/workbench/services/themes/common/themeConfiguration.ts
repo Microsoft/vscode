@@ -14,7 +14,8 @@ import { workbenchColorsSchemaId } from 'vs/platform/theme/common/colorRegistry'
 import { tokenStylingSchemaId } from 'vs/platform/theme/common/tokenClassificationRegistry';
 import { ThemeSettings, IWorkbenchColorTheme, IWorkbenchFileIconTheme, IColorCustomizations, ITokenColorCustomizations, IWorkbenchProductIconTheme, ISemanticTokenColorCustomizations, IExperimentalSemanticTokenColorCustomizations } from 'vs/workbench/services/themes/common/workbenchThemeService';
 import { IConfigurationService, ConfigurationTarget } from 'vs/platform/configuration/common/configuration';
-const DEFAULT_THEME_SETTING_VALUE = 'Default Dark+';
+import { ThemeType, HIGH_CONTRAST, LIGHT } from 'vs/platform/theme/common/themeService';
+
 const DEFAULT_THEME_DARK_SETTING_VALUE = 'Default Dark+';
 const DEFAULT_THEME_LIGHT_SETTING_VALUE = 'Default Light+';
 const DEFAULT_THEME_HC_SETTING_VALUE = 'Default High Contrast';
@@ -32,7 +33,7 @@ const colorThemeSettingEnumDescriptions: string[] = [];
 const colorThemeSettingSchema: IConfigurationPropertySchema = {
 	type: 'string',
 	description: nls.localize('colorTheme', "Specifies the color theme used in the workbench."),
-	default: DEFAULT_THEME_SETTING_VALUE,
+	default: DEFAULT_THEME_DARK_SETTING_VALUE,
 	enum: colorThemeSettingEnum,
 	enumDescriptions: colorThemeSettingEnumDescriptions,
 	errorMessage: nls.localize('colorThemeError', "Theme is unknown or not installed."),
@@ -109,7 +110,6 @@ const themeSettingsConfiguration: IConfigurationNode = {
 		[ThemeSettings.PRODUCT_ICON_THEME]: productIconThemeSettingSchema
 	}
 };
-configurationRegistry.registerConfiguration(themeSettingsConfiguration);
 
 function tokenGroupSettings(description: string): IJSONSchema {
 	return {
@@ -231,7 +231,19 @@ export function updateProductIconThemeConfigurationSchemas(themes: IWorkbenchPro
 
 
 export class ThemeConfiguration {
-	constructor(private configurationService: IConfigurationService) {
+	constructor(private configurationService: IConfigurationService, themeType: ThemeType) {
+		switch (themeType) {
+			case LIGHT:
+				colorThemeSettingSchema.default = DEFAULT_THEME_LIGHT_SETTING_VALUE;
+				break;
+			case HIGH_CONTRAST:
+				colorThemeSettingSchema.default = DEFAULT_THEME_HC_SETTING_VALUE;
+				break;
+			default:
+				colorThemeSettingSchema.default = DEFAULT_THEME_DARK_SETTING_VALUE;
+				break;
+		}
+		configurationRegistry.registerConfiguration(themeSettingsConfiguration);
 	}
 
 	public get colorTheme(): string {

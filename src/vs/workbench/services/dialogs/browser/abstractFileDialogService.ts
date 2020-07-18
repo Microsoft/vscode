@@ -25,10 +25,11 @@ import { coalesce } from 'vs/base/common/arrays';
 import { trim } from 'vs/base/common/strings';
 import { IModeService } from 'vs/editor/common/services/modeService';
 import { ILabelService } from 'vs/platform/label/common/label';
+import { isWindows } from 'vs/base/common/platform';
 
 export abstract class AbstractFileDialogService implements IFileDialogService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	constructor(
 		@IHostService protected readonly hostService: IHostService,
@@ -218,27 +219,23 @@ export abstract class AbstractFileDialogService implements IFileDialogService {
 	}
 
 	private pickResource(options: IOpenDialogOptions): Promise<URI | undefined> {
-		const simpleFileDialog = this.createSimpleFileDialog();
+		const simpleFileDialog = this.instantiationService.createInstance(SimpleFileDialog);
 
 		return simpleFileDialog.showOpenDialog(options);
 	}
 
 	private saveRemoteResource(options: ISaveDialogOptions): Promise<URI | undefined> {
-		const remoteFileDialog = this.createSimpleFileDialog();
+		const remoteFileDialog = this.instantiationService.createInstance(SimpleFileDialog);
 
 		return remoteFileDialog.showSaveDialog(options);
 	}
 
-	protected createSimpleFileDialog(): SimpleFileDialog {
-		return this.instantiationService.createInstance(SimpleFileDialog);
-	}
-
-	protected getSchemeFilterForWindow(): string {
-		return !this.environmentService.configuration.remoteAuthority ? Schemas.file : REMOTE_HOST_SCHEME;
+	protected getSchemeFilterForWindow(defaultUriScheme?: string): string {
+		return !this.environmentService.configuration.remoteAuthority ? (!defaultUriScheme || defaultUriScheme === Schemas.file ? Schemas.file : defaultUriScheme) : REMOTE_HOST_SCHEME;
 	}
 
 	protected getFileSystemSchema(options: { availableFileSystems?: readonly string[], defaultUri?: URI }): string {
-		return options.availableFileSystems && options.availableFileSystems[0] || this.getSchemeFilterForWindow();
+		return options.availableFileSystems && options.availableFileSystems[0] || this.getSchemeFilterForWindow(options.defaultUri?.scheme);
 	}
 
 	abstract pickFileFolderAndOpen(options: IPickAndOpenOptions): Promise<void>;
@@ -254,7 +251,7 @@ export abstract class AbstractFileDialogService implements IFileDialogService {
 		const options: ISaveDialogOptions = {
 			defaultUri,
 			title: nls.localize('saveAsTitle', "Save As"),
-			availableFileSystems,
+			availableFileSystems
 		};
 
 		interface IFilter { name: string; extensions: string[]; }
@@ -279,21 +276,29 @@ export abstract class AbstractFileDialogService implements IFileDialogService {
 			return filter;
 		}));
 
-		// Filters are a bit weird on Windows, based on having a match or not:
-		// Match: we put the matching filter first so that it shows up selected and the all files last
-		// No match: we put the all files filter first
-		const allFilesFilter = { name: nls.localize('allFiles', "All Files"), extensions: ['*'] };
-		if (matchingFilter) {
-			filters.unshift(matchingFilter);
-			filters.unshift(allFilesFilter);
-		} else {
-			filters.unshift(allFilesFilter);
+		// We have no matching filter, e.g. because the language
+		// is unknown. We still add the extension to the list of
+		// filters though so that it can be picked
+		// (https://github.com/microsoft/vscode/issues/96283) but
+		// only on Windows where this is an issue. Adding this to
+		// macOS would result in the following bugs:
+		// https://github.com/microsoft/vscode/issues/100614 and
+		// https://github.com/microsoft/vscode/issues/100241
+		if (isWindows && !matchingFilter && ext) {
+			matchingFilter = { name: trim(ext, '.').toUpperCase(), extensions: [trim(ext, '.')] };
 		}
 
-		// Allow to save file without extension
-		filters.push({ name: nls.localize('noExt', "No Extension"), extensions: [''] });
-
-		options.filters = filters;
+		// Order of filters is
+		// - File Extension Match
+		// - All Files
+		// - All Languages
+		// - No Extension
+		options.filters = coalesce([
+			matchingFilter,
+			{ name: nls.localize('allFiles', "All Files"), extensions: ['*'] },
+			...filters,
+			{ name: nls.localize('noExt', "No Extension"), extensions: [''] }
+		]);
 
 		return options;
 	}

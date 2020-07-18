@@ -20,14 +20,15 @@
   "dependencies": {
     "jsonc-parser": "^2.2.1",
     "minimatch": "^3.0.4",
-    "request-light": "^0.2.5",
+    "request-light": "^0.4.0",
     "vscode-nls": "^4.1.1"
   },
   "devDependencies": {
     "@types/minimatch": "^3.0.3",
     "@types/node": "^12.11.7"
   },
-  "main": "./out/main",
+  "main": "./out/npmMain",
+  "browser": "./dist/browser/npmBrowserMain",
   "activationEvents": [
     "onCommand:workbench.action.tasks.runTask",
     "onCommand:npm.runScriptFromFolder",
@@ -55,7 +56,9 @@
         {
           "id": "npm",
           "name": "%view.name%",
-          "when": "npm:showScriptExplorer || config.npm.enableScriptExplorer"
+          "when": "npm:showScriptExplorer",
+          "icon": "images/code.svg",
+          "visibility": "hidden"
         }
       ]
     },
@@ -126,7 +129,7 @@
       "editor/context": [
         {
           "command": "npm.runSelectedScript",
-          "when": "resourceFilename == 'package.json'",
+          "when": "resourceFilename == 'package.json' && resourceScheme == file",
           "group": "navigation@+1"
         }
       ],
@@ -180,12 +183,12 @@
         }
       ],
       "explorer/context": [
-				{
-					"when": "config.npm.enableRunFromFolder && explorerViewletVisible && explorerResourceIsFolder",
+        {
+          "when": "config.npm.enableRunFromFolder && explorerViewletVisible && explorerResourceIsFolder && resourceScheme == file",
           "command": "npm.runScriptFromFolder",
-					"group": "2_workspace"
-				}
-			]
+          "group": "2_workspace"
+        }
+      ]
     },
     "configuration": {
       "id": "npm",
@@ -213,7 +216,8 @@
           "type": "string",
           "enum": [
             "npm",
-            "yarn"
+            "yarn",
+            "pnpm"
           ],
           "default": "npm",
           "description": "%config.npm.packageManager%"
@@ -265,11 +269,11 @@
     "jsonValidation": [
       {
         "fileMatch": "package.json",
-        "url": "https://schemastore.azurewebsites.net/schemas/json/package.json"
+        "url": "https://json.schemastore.org/package"
       },
       {
         "fileMatch": "bower.json",
-        "url": "https://schemastore.azurewebsites.net/schemas/json/bower.json"
+        "url": "https://json.schemastore.org/bower"
       }
     ],
     "taskDefinitions": [
@@ -287,7 +291,8 @@
             "type": "string",
             "description": "%taskdef.path%"
           }
-        }
+        },
+        "when": "shellExecutionSupported"
       }
     ]
   }

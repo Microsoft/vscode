@@ -155,13 +155,13 @@
 	},
 	{
 		"c": "console",
-		"t": "source.ts meta.function-call.ts support.class.console.ts",
+		"t": "source.ts meta.function-call.ts variable.other.object.ts",
 		"r": {
-			"dark_plus": "support.class: #4EC9B0",
-			"light_plus": "support.class: #267F99",
+			"dark_plus": "variable: #9CDCFE",
+			"light_plus": "variable: #001080",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "support.class: #4EC9B0"
+			"hc_black": "variable: #9CDCFE"
 		}
 	},
 	{
@@ -177,13 +177,13 @@
 	},
 	{
 		"c": "log",
-		"t": "source.ts meta.function-call.ts support.function.console.ts",
+		"t": "source.ts meta.function-call.ts entity.name.function.ts",
 		"r": {
-			"dark_plus": "support.function: #DCDCAA",
-			"light_plus": "support.function: #795E26",
+			"dark_plus": "entity.name.function: #DCDCAA",
+			"light_plus": "entity.name.function: #795E26",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "support.function: #DCDCAA"
+			"hc_black": "entity.name.function: #DCDCAA"
 		}
 	},
 	{

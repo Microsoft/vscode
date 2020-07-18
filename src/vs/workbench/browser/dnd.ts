@@ -5,7 +5,7 @@
 
 import { hasWorkspaceFileExtension, IWorkspaceFolderCreationData, IRecentFile, IWorkspacesService } from 'vs/platform/workspaces/common/workspaces';
 import { normalize } from 'vs/base/common/path';
-import { basename } from 'vs/base/common/resources';
+import { basename, extUri } from 'vs/base/common/resources';
 import { IFileService } from 'vs/platform/files/common/files';
 import { IWindowOpenable } from 'vs/platform/windows/common/windows';
 import { URI } from 'vs/base/common/uri';
@@ -36,38 +36,30 @@ export interface IDraggedResource {
 	isExternal: boolean;
 }
 
+interface ISerializedDraggedResource {
+	resource: string;
+}
+
 export class DraggedEditorIdentifier {
 
-	constructor(private _identifier: IEditorIdentifier) { }
-
-	get identifier(): IEditorIdentifier {
-		return this._identifier;
-	}
+	constructor(public readonly identifier: IEditorIdentifier) { }
 }
 
 export class DraggedEditorGroupIdentifier {
 
-	constructor(private _identifier: GroupIdentifier) { }
-
-	get identifier(): GroupIdentifier {
-		return this._identifier;
-	}
+	constructor(public readonly identifier: GroupIdentifier) { }
 }
 
-export interface IDraggedEditor extends IDraggedResource {
-	content?: string;
+interface IDraggedEditorProps {
+	dirtyContent?: string;
 	encoding?: string;
 	mode?: string;
 	options?: ITextEditorOptions;
 }
 
-export interface ISerializedDraggedEditor {
-	resource: string;
-	content?: string;
-	encoding?: string;
-	mode?: string;
-	options?: ITextEditorOptions;
-}
+export interface IDraggedEditor extends IDraggedResource, IDraggedEditorProps { }
+
+export interface ISerializedDraggedEditor extends ISerializedDraggedResource, IDraggedEditorProps { }
 
 export const CodeDataTransfers = {
 	EDITORS: 'CodeEditors',
@@ -89,7 +81,7 @@ export function extractResources(e: DragEvent, externalOnly?: boolean): Array<ID
 					draggedEditors.forEach(draggedEditor => {
 						resources.push({
 							resource: URI.parse(draggedEditor.resource),
-							content: draggedEditor.content,
+							dirtyContent: draggedEditor.dirtyContent,
 							options: draggedEditor.options,
 							encoding: draggedEditor.encoding,
 							mode: draggedEditor.mode,
@@ -186,13 +178,12 @@ export class ResourcesDropHandler {
 
 		// Check for special things being dropped
 		const isWorkspaceOpening = await this.doHandleDrop(untitledOrFileResources);
-
 		if (isWorkspaceOpening) {
 			return; // return early if the drop operation resulted in this window changing to a workspace
 		}
 
 		// Add external ones to recently open list unless dropped resource is a workspace
-		const recentFiles: IRecentFile[] = untitledOrFileResources.filter(d => d.isExternal && d.resource.scheme === Schemas.file).map(d => ({ fileUri: d.resource }));
+		const recentFiles: IRecentFile[] = untitledOrFileResources.filter(untitledOrFileResource => untitledOrFileResource.isExternal && untitledOrFileResource.resource.scheme === Schemas.file).map(d => ({ fileUri: d.resource }));
 		if (recentFiles.length) {
 			this.workspacesService.addRecentlyOpened(recentFiles);
 		}
@@ -219,15 +210,15 @@ export class ResourcesDropHandler {
 	private async doHandleDrop(untitledOrFileResources: Array<IDraggedResource | IDraggedEditor>): Promise<boolean> {
 
 		// Check for dirty editors being dropped
-		const resourcesWithContent: IDraggedEditor[] = untitledOrFileResources.filter(resource => !resource.isExternal && !!(resource as IDraggedEditor).content);
-		if (resourcesWithContent.length > 0) {
-			await Promise.all(resourcesWithContent.map(resourceWithContent => this.handleDirtyEditorDrop(resourceWithContent)));
+		const dirtyEditors: IDraggedEditor[] = untitledOrFileResources.filter(untitledOrFileResource => !untitledOrFileResource.isExternal && typeof (untitledOrFileResource as IDraggedEditor).dirtyContent === 'string');
+		if (dirtyEditors.length > 0) {
+			await Promise.all(dirtyEditors.map(dirtyEditor => this.handleDirtyEditorDrop(dirtyEditor)));
 			return false;
 		}
 
 		// Check for workspace file being dropped if we are allowed to do so
 		if (this.options.allowWorkspaceOpen) {
-			const externalFileOnDiskResources = untitledOrFileResources.filter(d => d.isExternal && d.resource.scheme === Schemas.file).map(d => d.resource);
+			const externalFileOnDiskResources = untitledOrFileResources.filter(untitledOrFileResource => untitledOrFileResource.isExternal && untitledOrFileResource.resource.scheme === Schemas.file).map(d => d.resource);
 			if (externalFileOnDiskResources.length > 0) {
 				return this.handleWorkspaceFileDrop(externalFileOnDiskResources);
 			}
@@ -253,9 +244,9 @@ export class ResourcesDropHandler {
 
 		// If the dropped editor is dirty with content we simply take that
 		// content and turn it into a backup so that it loads the contents
-		if (droppedDirtyEditor.content) {
+		if (typeof droppedDirtyEditor.dirtyContent === 'string') {
 			try {
-				await this.backupFileService.backup(droppedDirtyEditor.resource, stringToSnapshot(droppedDirtyEditor.content));
+				await this.backupFileService.backup(droppedDirtyEditor.resource, stringToSnapshot(droppedDirtyEditor.dirtyContent));
 			} catch (e) {
 				// Ignore error
 			}
@@ -335,9 +326,9 @@ export function fillResourceDataTransfers(accessor: ServicesAccessor, resources:
 	}
 
 	// Resource URLs: allows to drop multiple resources to a target in VS Code (not directories)
-	const files = sources.filter(s => !s.isDirectory);
+	const files = sources.filter(source => !source.isDirectory);
 	if (files.length) {
-		event.dataTransfer.setData(DataTransfers.RESOURCES, JSON.stringify(files.map(f => f.resource.toString())));
+		event.dataTransfer.setData(DataTransfers.RESOURCES, JSON.stringify(files.map(file => file.resource.toString())));
 	}
 
 	// Editors: enables cross window DND of tabs into the editor area
@@ -361,7 +352,7 @@ export function fillResourceDataTransfers(accessor: ServicesAccessor, resources:
 					for (const textEditorControl of textEditorControls) {
 						if (isCodeEditor(textEditorControl)) {
 							const model = textEditorControl.getModel();
-							if (model?.uri?.toString() === file.resource.toString()) {
+							if (extUri.isEqual(model?.uri, file.resource)) {
 								return withNullAsUndefined(textEditorControl.saveViewState());
 							}
 						}
@@ -384,13 +375,13 @@ export function fillResourceDataTransfers(accessor: ServicesAccessor, resources:
 
 		// If the resource is dirty or untitled, send over its content
 		// to restore dirty state. Get that from the text model directly
-		let content: string | undefined = undefined;
+		let dirtyContent: string | undefined = undefined;
 		if (model?.isDirty()) {
-			content = model.textEditorModel.getValue();
+			dirtyContent = model.textEditorModel.getValue();
 		}
 
 		// Add as dragged editor
-		draggedEditors.push({ resource: file.resource.toString(), content, options, encoding, mode });
+		draggedEditors.push({ resource: file.resource.toString(), dirtyContent, options, encoding, mode });
 	});
 
 	if (draggedEditors.length) {
@@ -675,6 +666,11 @@ export class CompositeDragAndDropObserver extends Disposable {
 		disposableStore.add(addDisposableListener(element, EventType.DRAG_START, e => {
 			const { id, type } = draggedItemProvider();
 			this.writeDragData(id, type);
+
+			if (e.dataTransfer) {
+				e.dataTransfer.setDragImage(element, 0, 0);
+			}
+
 			this._onDragStart.fire({ eventData: e, dragAndDropData: this.readDragData(type)! });
 		}));
 		disposableStore.add(new DragAndDropObserver(element, {
@@ -747,4 +743,12 @@ export class CompositeDragAndDropObserver extends Disposable {
 		}
 		return this._register(disposableStore);
 	}
+}
+
+export function toggleDropEffect(dataTransfer: DataTransfer | null, dropEffect: string, shouldHaveIt: boolean) {
+	if (!dataTransfer) {
+		return;
+	}
+
+	dataTransfer.dropEffect = shouldHaveIt ? dropEffect : 'none';
 }

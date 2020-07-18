@@ -24,6 +24,7 @@ export interface ILexerMin {
 	languageId: string;
 	noThrow: boolean;
 	ignoreCase: boolean;
+	unicode: boolean;
 	usesEmbedded: boolean;
 	defaultToken: string;
 	stateNames: { [stateName: string]: any; };
@@ -34,6 +35,7 @@ export interface ILexer extends ILexerMin {
 	maxStack: number;
 	start: string | null;
 	ignoreCase: boolean;
+	unicode: boolean;
 	tokenPostfix: string;
 
 	tokenizer: { [stateName: string]: IRule[]; };

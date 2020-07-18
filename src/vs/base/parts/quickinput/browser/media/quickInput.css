@@ -105,6 +105,8 @@
 	vertical-align: middle;
 	padding: 2px 4px;
 	border-radius: 2px;
+	min-height: auto;
+	line-height: normal;
 }
 
 .quick-input-action {

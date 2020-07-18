@@ -143,6 +143,15 @@ const RULES = [
 		]
 	},
 
+	// Electron (sandbox)
+	{
+		target: '**/vs/**/electron-sandbox/**',
+		allowedTypes: CORE_TYPES,
+		disallowedDefinitions: [
+			'@types/node'	// no node.js
+		]
+	},
+
 	// Electron (renderer): skip
 	{
 		target: '**/vs/**/electron-browser/**',

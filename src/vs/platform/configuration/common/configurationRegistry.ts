@@ -10,7 +10,6 @@ import { Registry } from 'vs/platform/registry/common/platform';
 import * as types from 'vs/base/common/types';
 import { IJSONContributionRegistry, Extensions as JSONExtensions } from 'vs/platform/jsonschemas/common/jsonContributionRegistry';
 import { ExtensionIdentifier } from 'vs/platform/extensions/common/extensions';
-import { values } from 'vs/base/common/map';
 
 export const Extensions = {
 	Configuration: 'base.contributions.configuration'
@@ -395,7 +394,7 @@ class ConfigurationRegistry implements IConfigurationRegistry {
 	}
 
 	private updateOverridePropertyPatternKey(): void {
-		for (const overrideIdentifier of values(this.overrideIdentifiers)) {
+		for (const overrideIdentifier of this.overrideIdentifiers.values()) {
 			const overrideIdentifierProperty = `[${overrideIdentifier}]`;
 			const resourceLanguagePropertiesSchema: IJSONSchema = {
 				type: 'object',

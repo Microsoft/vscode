@@ -7,7 +7,7 @@ import { ISignService } from 'vs/platform/sign/common/sign';
 
 export class SignService implements ISignService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private readonly _tkn: string | null;
 

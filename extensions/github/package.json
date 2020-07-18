@@ -1,0 +1,67 @@
+{
+  "name": "github",
+  "displayName": "%displayName%",
+  "description": "%description%",
+  "publisher": "vscode",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.41.0"
+  },
+  "enableProposedApi": true,
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "extensionDependencies": [
+    "vscode.git"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "github.publish",
+        "title": "Publish to GitHub"
+      }
+    ],
+    "configuration": [
+      {
+        "title": "GitHub",
+        "properties": {
+          "github.gitAuthentication": {
+            "type": "boolean",
+            "scope": "resource",
+            "default": true,
+            "description": "%config.gitAuthentication%"
+          }
+        }
+      }
+    ],
+    "viewsWelcome": [
+      {
+        "view": "scm",
+        "contents": "%welcome.publishFolder%",
+        "when": "config.git.enabled && git.state == initialized && workbenchState == folder"
+      },
+      {
+        "view": "scm",
+        "contents": "%welcome.publishWorkspaceFolder%",
+        "when": "config.git.enabled && git.state == initialized && workbenchState == workspace && workspaceFolderCount != 0"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "gulp compile-extension:github",
+    "watch": "gulp watch-extension:github"
+  },
+  "dependencies": {
+    "@octokit/rest": "^18.0.1",
+    "tunnel": "^0.0.6",
+    "vscode-nls": "^4.1.2"
+  },
+  "devDependencies": {
+    "@types/node": "^10.12.21"
+  }
+}

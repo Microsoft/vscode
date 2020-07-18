@@ -28,7 +28,7 @@ import { IListVirtualDelegate } from 'vs/base/browser/ui/list/list';
 import { ITreeNode, ITreeFilter, TreeVisibility, TreeFilterResult, ITreeElement } from 'vs/base/browser/ui/tree/tree';
 import { IListAccessibilityProvider } from 'vs/base/browser/ui/list/listWidget';
 import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
-import { TreeResourceNavigator, WorkbenchCompressibleObjectTree } from 'vs/platform/list/browser/listService';
+import { WorkbenchCompressibleObjectTree } from 'vs/platform/list/browser/listService';
 import { dispose } from 'vs/base/common/lifecycle';
 import { createMatches, FuzzyScore } from 'vs/base/common/filters';
 import { DebugContentProvider } from 'vs/workbench/contrib/debug/common/debugContentProvider';
@@ -56,6 +56,10 @@ class BaseTreeItem {
 
 	constructor(private _parent: BaseTreeItem | undefined, private _label: string, public readonly isIncompressible = false) {
 		this._showedMoreThanOne = false;
+	}
+
+	updateLabel(label: string) {
+		this._label = label;
 	}
 
 	isLeaf(): boolean {
@@ -310,7 +314,7 @@ class SessionTreeItem extends BaseTreeItem {
 		return 999;
 	}
 
-	addPath(source: Source): void {
+	async addPath(source: Source): Promise<void> {
 
 		let folder: IWorkspaceFolder | null;
 		let url: string;
@@ -347,9 +351,8 @@ class SessionTreeItem extends BaseTreeItem {
 				} else {
 					// on unix try to tildify absolute paths
 					path = normalize(path);
-					const userHome = this._pathService.resolvedUserHome;
-					if (userHome && !isWindows) {
-						path = tildify(path, userHome.fsPath);
+					if (!isWindows) {
+						path = tildify(path, (await this._pathService.userHome()).fsPath);
 					}
 				}
 			}
@@ -491,9 +494,7 @@ export class LoadedScriptsView extends ViewPane {
 		}, 300);
 		this._register(this.changeScheduler);
 
-		const loadedScriptsNavigator = new TreeResourceNavigator(this.tree);
-		this._register(loadedScriptsNavigator);
-		this._register(loadedScriptsNavigator.onDidOpenResource(e => {
+		this._register(this.tree.onDidOpen(e => {
 			if (e.element instanceof BaseTreeItem) {
 				const source = e.element.getSource();
 				if (source && source.available) {
@@ -520,27 +521,30 @@ export class LoadedScriptsView extends ViewPane {
 			}
 		};
 
-		const addSourcePathsToSession = (session: IDebugSession) => {
+		const addSourcePathsToSession = async (session: IDebugSession) => {
 			const sessionNode = root.add(session);
-			return session.getLoadedSources().then(paths => {
-				paths.forEach(path => sessionNode.addPath(path));
-				scheduleRefreshOnVisible();
-			});
+			const paths = await session.getLoadedSources();
+			for (const path of paths) {
+				await sessionNode.addPath(path);
+			}
+			scheduleRefreshOnVisible();
 		};
 
 		const registerSessionListeners = (session: IDebugSession) => {
-			this._register(session.onDidChangeName(() => {
-				// Re-add session, this will trigger proper sorting and id recalculation.
-				root.remove(session.getId());
-				addSourcePathsToSession(session);
+			this._register(session.onDidChangeName(async () => {
+				const sessionRoot = root.find(session);
+				if (sessionRoot) {
+					sessionRoot.updateLabel(session.getLabel());
+					scheduleRefreshOnVisible();
+				}
 			}));
-			this._register(session.onDidLoadedSource(event => {
+			this._register(session.onDidLoadedSource(async event => {
 				let sessionRoot: SessionTreeItem;
 				switch (event.reason) {
 					case 'new':
 					case 'changed':
 						sessionRoot = root.add(session);
-						sessionRoot.addPath(event.source);
+						await sessionRoot.addPath(event.source);
 						scheduleRefreshOnVisible();
 						if (event.reason === 'changed') {
 							DebugContentProvider.refreshDebugContent(event.source.uri);

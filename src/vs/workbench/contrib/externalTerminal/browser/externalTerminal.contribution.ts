@@ -5,16 +5,11 @@
 
 import * as nls from 'vs/nls';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
-import * as paths from 'vs/base/common/path';
 import { URI } from 'vs/base/common/uri';
 import { IExternalTerminalConfiguration, IExternalTerminalService } from 'vs/workbench/contrib/externalTerminal/common/externalTerminal';
-import { MenuId, MenuRegistry } from 'vs/platform/actions/common/actions';
-import { KeyMod, KeyCode } from 'vs/base/common/keyCodes';
-import { KEYBINDING_CONTEXT_TERMINAL_NOT_FOCUSED } from 'vs/workbench/contrib/terminal/common/terminal';
+import { MenuId, MenuRegistry, IMenuItem } from 'vs/platform/actions/common/actions';
 import { ITerminalService as IIntegratedTerminalService } from 'vs/workbench/contrib/terminal/browser/terminal';
-import { IHistoryService } from 'vs/workbench/services/history/common/history';
 import { ResourceContextKey } from 'vs/workbench/common/resources';
-import { KeybindingsRegistry, KeybindingWeight } from 'vs/platform/keybinding/common/keybindingsRegistry';
 import { IFileService } from 'vs/platform/files/common/files';
 import { IListService } from 'vs/platform/list/browser/listService';
 import { getMultiSelectedResources } from 'vs/workbench/contrib/files/browser/files';
@@ -25,9 +20,13 @@ import { IEditorService } from 'vs/workbench/services/editor/common/editorServic
 import { IRemoteAgentService } from 'vs/workbench/services/remote/common/remoteAgentService';
 import { optional } from 'vs/platform/instantiation/common/instantiation';
 import { IExplorerService } from 'vs/workbench/contrib/files/common/files';
-import { isWeb } from 'vs/base/common/platform';
-import { IPathService } from 'vs/workbench/services/path/common/pathService';
-
+import { ContextKeyExpr } from 'vs/platform/contextkey/common/contextkey';
+import { IWorkbenchContribution, IWorkbenchContributionsRegistry, Extensions as WorkbenchExtensions } from 'vs/workbench/common/contributions';
+import { Disposable } from 'vs/base/common/lifecycle';
+import { isWeb, isWindows } from 'vs/base/common/platform';
+import { dirname, basename } from 'vs/base/common/path';
+import { LifecyclePhase } from 'vs/platform/lifecycle/common/lifecycle';
+import { Registry } from 'vs/platform/registry/common/platform';
 
 const OPEN_IN_TERMINAL_COMMAND_ID = 'openInTerminal';
 CommandsRegistry.registerCommand({
@@ -62,7 +61,7 @@ CommandsRegistry.registerCommand({
 						authority: resource.authority,
 						fragment: resource.fragment,
 						query: resource.query,
-						path: paths.dirname(resource.path)
+						path: dirname(resource.path)
 					});
 				}).forEach(cwd => {
 					if (opened[cwd.path]) {
@@ -70,13 +69,13 @@ CommandsRegistry.registerCommand({
 					}
 					opened[cwd.path] = true;
 					const instance = integratedTerminalService.createTerminal({ cwd });
-					if (instance && (resources.length === 1 || !resource || cwd.path === resource.path || cwd.path === paths.dirname(resource.path))) {
+					if (instance && (resources.length === 1 || !resource || cwd.path === resource.path || cwd.path === dirname(resource.path))) {
 						integratedTerminalService.setActiveInstance(instance);
 						integratedTerminalService.showPanel(true);
 					}
 				});
 			} else {
-				distinct(targets.map(({ stat }) => stat!.isDirectory ? stat!.resource.fsPath : paths.dirname(stat!.resource.fsPath))).forEach(cwd => {
+				distinct(targets.map(({ stat }) => stat!.isDirectory ? stat!.resource.fsPath : dirname(stat!.resource.fsPath))).forEach(cwd => {
 					terminalService!.openTerminal(cwd);
 				});
 			}
@@ -84,67 +83,56 @@ CommandsRegistry.registerCommand({
 	}
 });
 
-if (!isWeb) {
-	const OPEN_NATIVE_CONSOLE_COMMAND_ID = 'workbench.action.terminal.openNativeConsole';
-	KeybindingsRegistry.registerCommandAndKeybindingRule({
-		id: OPEN_NATIVE_CONSOLE_COMMAND_ID,
-		primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KEY_C,
-		when: KEYBINDING_CONTEXT_TERMINAL_NOT_FOCUSED,
-		weight: KeybindingWeight.WorkbenchContrib,
-		handler: async (accessor) => {
-			const historyService = accessor.get(IHistoryService);
-			// Open external terminal in local workspaces
-			const terminalService = accessor.get(IExternalTerminalService);
-			const root = historyService.getLastActiveWorkspaceRoot(Schemas.file);
-			if (root) {
-				terminalService.openTerminal(root.fsPath);
-			} else {
-				// Opens current file's folder, if no folder is open in editor
-				const activeFile = historyService.getLastActiveFile(Schemas.file);
-				if (activeFile) {
-					terminalService.openTerminal(paths.dirname(activeFile.fsPath));
-				} else {
-					const pathService = accessor.get(IPathService);
-					const userHome = await pathService.userHome;
-					terminalService.openTerminal(userHome.fsPath);
-				}
+export class ExternalTerminalContribution extends Disposable implements IWorkbenchContribution {
+	private _openInTerminalMenuItem: IMenuItem;
+
+	constructor(
+		@IConfigurationService private readonly _configurationService: IConfigurationService
+	) {
+		super();
+
+		this._openInTerminalMenuItem = {
+			group: 'navigation',
+			order: 30,
+			command: {
+				id: OPEN_IN_TERMINAL_COMMAND_ID,
+				title: nls.localize('scopedConsoleAction', "Open in Terminal")
+			},
+			when: ContextKeyExpr.or(ResourceContextKey.Scheme.isEqualTo(Schemas.file), ResourceContextKey.Scheme.isEqualTo(Schemas.vscodeRemote))
+		};
+		MenuRegistry.appendMenuItem(MenuId.OpenEditorsContext, this._openInTerminalMenuItem);
+		MenuRegistry.appendMenuItem(MenuId.ExplorerContext, this._openInTerminalMenuItem);
+
+		this._configurationService.onDidChangeConfiguration(e => {
+			if (e.affectsConfiguration('terminal.explorerKind') || e.affectsConfiguration('terminal.external')) {
+				this._refreshOpenInTerminalMenuItemTitle();
+			}
+		});
+		this._refreshOpenInTerminalMenuItemTitle();
+	}
+
+	private _refreshOpenInTerminalMenuItemTitle(): void {
+		if (isWeb) {
+			this._openInTerminalMenuItem.command.title = nls.localize('scopedConsoleAction.integrated', "Open in Integrated Terminal");
+			return;
+		}
+
+		const config = this._configurationService.getValue<IExternalTerminalConfiguration>().terminal;
+		if (config.explorerKind === 'integrated') {
+			this._openInTerminalMenuItem.command.title = nls.localize('scopedConsoleAction.integrated', "Open in Integrated Terminal");
+			return;
+		}
+
+		if (isWindows && config.external.windowsExec) {
+			const file = basename(config.external.windowsExec);
+			if (file === 'wt' || file === 'wt.exe') {
+				this._openInTerminalMenuItem.command.title = nls.localize('scopedConsoleAction.wt', "Open in Windows Terminal");
+				return;
 			}
 		}
-	});
 
-	MenuRegistry.appendMenuItem(MenuId.CommandPalette, {
-		command: {
-			id: OPEN_NATIVE_CONSOLE_COMMAND_ID,
-			title: { value: nls.localize('globalConsoleAction', "Open New External Terminal"), original: 'Open New External Terminal' }
-		}
-	});
+		this._openInTerminalMenuItem.command.title = nls.localize('scopedConsoleAction.external', "Open in External Terminal");
+	}
 }
 
-const openConsoleCommand = {
-	id: OPEN_IN_TERMINAL_COMMAND_ID,
-	title: nls.localize('scopedConsoleAction', "Open in Terminal")
-};
-MenuRegistry.appendMenuItem(MenuId.OpenEditorsContext, {
-	group: 'navigation',
-	order: 30,
-	command: openConsoleCommand,
-	when: ResourceContextKey.Scheme.isEqualTo(Schemas.file)
-});
-MenuRegistry.appendMenuItem(MenuId.OpenEditorsContext, {
-	group: 'navigation',
-	order: 30,
-	command: openConsoleCommand,
-	when: ResourceContextKey.Scheme.isEqualTo(Schemas.vscodeRemote)
-});
-MenuRegistry.appendMenuItem(MenuId.ExplorerContext, {
-	group: 'navigation',
-	order: 30,
-	command: openConsoleCommand,
-	when: ResourceContextKey.Scheme.isEqualTo(Schemas.file)
-});
-MenuRegistry.appendMenuItem(MenuId.ExplorerContext, {
-	group: 'navigation',
-	order: 30,
-	command: openConsoleCommand,
-	when: ResourceContextKey.Scheme.isEqualTo(Schemas.vscodeRemote)
-});
+Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench).registerWorkbenchContribution(ExternalTerminalContribution, LifecyclePhase.Restored);

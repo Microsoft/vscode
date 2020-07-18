@@ -7,6 +7,7 @@ import { isWindows } from 'vs/base/common/platform';
 import { startsWithIgnoreCase, equalsIgnoreCase, rtrim } from 'vs/base/common/strings';
 import { CharCode } from 'vs/base/common/charCode';
 import { sep, posix, isAbsolute, join, normalize } from 'vs/base/common/path';
+import { isNumber } from 'vs/base/common/types';
 
 export function isPathSeparator(code: number) {
 	return code === CharCode.Slash || code === CharCode.Backslash;
@@ -284,7 +285,7 @@ export function isRootOrDriveLetter(path: string): boolean {
 	return pathNormalized === posix.sep;
 }
 
-export function indexOfPath(path: string, candidate: string, ignoreCase: boolean): number {
+export function indexOfPath(path: string, candidate: string, ignoreCase?: boolean): number {
 	if (candidate.length > path.length) {
 		return -1;
 	}
@@ -299,4 +300,39 @@ export function indexOfPath(path: string, candidate: string, ignoreCase: boolean
 	}
 
 	return path.indexOf(candidate);
+}
+
+export interface IPathWithLineAndColumn {
+	path: string;
+	line?: number;
+	column?: number;
+}
+
+export function parseLineAndColumnAware(rawPath: string): IPathWithLineAndColumn {
+	const segments = rawPath.split(':'); // C:\file.txt:<line>:<column>
+
+	let path: string | undefined = undefined;
+	let line: number | undefined = undefined;
+	let column: number | undefined = undefined;
+
+	segments.forEach(segment => {
+		const segmentAsNumber = Number(segment);
+		if (!isNumber(segmentAsNumber)) {
+			path = !!path ? [path, segment].join(':') : segment; // a colon can well be part of a path (e.g. C:\...)
+		} else if (line === undefined) {
+			line = segmentAsNumber;
+		} else if (column === undefined) {
+			column = segmentAsNumber;
+		}
+	});
+
+	if (!path) {
+		throw new Error('Format for `--goto` should be: `FILE:LINE(:COLUMN)`');
+	}
+
+	return {
+		path,
+		line: line !== undefined ? line : undefined,
+		column: column !== undefined ? column : line !== undefined ? 1 : undefined // if we have a line, make sure column is also set
+	};
 }

@@ -16,17 +16,19 @@ const insertModes = Object.freeze(['insert', 'replace']);
 suite('TypeScript Completions', () => {
 	const configDefaults: VsCodeConfiguration = Object.freeze({
 		[Config.autoClosingBrackets]: 'always',
-		[Config.completeFunctionCalls]: false,
+		[Config.typescriptCompleteFunctionCalls]: false,
 		[Config.insertMode]: 'insert',
 		[Config.snippetSuggestions]: 'none',
 		[Config.suggestSelection]: 'first',
+		[Config.javascriptQuoteStyle]: 'double',
+		[Config.typescriptQuoteStyle]: 'double',
 	});
 
 	const _disposables: vscode.Disposable[] = [];
 	let oldConfig: { [key: string]: any } = {};
 
 	setup(async () => {
-		await wait(100);
+		await wait(500);
 
 		// Save off config and apply defaults
 		oldConfig = await updateConfig(testDocumentUri, configDefaults);
@@ -178,7 +180,7 @@ suite('TypeScript Completions', () => {
 	});
 
 	test('completeFunctionCalls should complete function parameters when at end of word', async () => {
-		await updateConfig(testDocumentUri, { [Config.completeFunctionCalls]: true });
+		await updateConfig(testDocumentUri, { [Config.typescriptCompleteFunctionCalls]: true });
 
 		// Complete with-in word
 		const editor = await createTestEditor(testDocumentUri,
@@ -196,7 +198,7 @@ suite('TypeScript Completions', () => {
 	});
 
 	test.skip('completeFunctionCalls should complete function parameters when within word', async () => {
-		await updateConfig(testDocumentUri, { [Config.completeFunctionCalls]: true });
+		await updateConfig(testDocumentUri, { [Config.typescriptCompleteFunctionCalls]: true });
 
 		const editor = await createTestEditor(testDocumentUri,
 			`function abcdef(x, y, z) { }`,
@@ -213,7 +215,7 @@ suite('TypeScript Completions', () => {
 	});
 
 	test('completeFunctionCalls should not complete function parameters at end of word if we are already in something that looks like a function call, #18131', async () => {
-		await updateConfig(testDocumentUri, { [Config.completeFunctionCalls]: true });
+		await updateConfig(testDocumentUri, { [Config.typescriptCompleteFunctionCalls]: true });
 
 		const editor = await createTestEditor(testDocumentUri,
 			`function abcdef(x, y, z) { }`,
@@ -230,7 +232,7 @@ suite('TypeScript Completions', () => {
 	});
 
 	test.skip('completeFunctionCalls should not complete function parameters within word if we are already in something that looks like a function call, #18131', async () => {
-		await updateConfig(testDocumentUri, { [Config.completeFunctionCalls]: true });
+		await updateConfig(testDocumentUri, { [Config.typescriptCompleteFunctionCalls]: true });
 
 		const editor = await createTestEditor(testDocumentUri,
 			`function abcdef(x, y, z) { }`,

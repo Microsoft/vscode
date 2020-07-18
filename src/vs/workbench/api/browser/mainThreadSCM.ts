@@ -6,7 +6,7 @@
 import { URI, UriComponents } from 'vs/base/common/uri';
 import { Event, Emitter } from 'vs/base/common/event';
 import { assign } from 'vs/base/common/objects';
-import { IDisposable, DisposableStore } from 'vs/base/common/lifecycle';
+import { IDisposable, DisposableStore, combinedDisposable } from 'vs/base/common/lifecycle';
 import { ISCMService, ISCMRepository, ISCMProvider, ISCMResource, ISCMResourceGroup, ISCMResourceDecorations, IInputValidation } from 'vs/workbench/contrib/scm/common/scm';
 import { ExtHostContext, MainThreadSCMShape, ExtHostSCMShape, SCMProviderFeatures, SCMRawResourceSplices, SCMGroupFeatures, MainContext, IExtHostContext } from '../common/extHost.protocol';
 import { Command } from 'vs/editor/common/modes';
@@ -264,7 +264,7 @@ export class MainThreadSCM implements MainThreadSCMShape {
 
 	private readonly _proxy: ExtHostSCMShape;
 	private _repositories = new Map<number, ISCMRepository>();
-	private _inputDisposables = new Map<number, IDisposable>();
+	private _repositoryDisposables = new Map<number, IDisposable>();
 	private readonly _disposables = new DisposableStore();
 
 	constructor(
@@ -272,17 +272,14 @@ export class MainThreadSCM implements MainThreadSCMShape {
 		@ISCMService private readonly scmService: ISCMService
 	) {
 		this._proxy = extHostContext.getProxy(ExtHostContext.ExtHostSCM);
-
-		Event.debounce(scmService.onDidChangeSelectedRepositories, (_, e) => e, 100)
-			(this.onDidChangeSelectedRepositories, this, this._disposables);
 	}
 
 	dispose(): void {
 		this._repositories.forEach(r => r.dispose());
 		this._repositories.clear();
 
-		this._inputDisposables.forEach(d => d.dispose());
-		this._inputDisposables.clear();
+		this._repositoryDisposables.forEach(d => d.dispose());
+		this._repositoryDisposables.clear();
 
 		this._disposables.dispose();
 	}
@@ -292,8 +289,16 @@ export class MainThreadSCM implements MainThreadSCMShape {
 		const repository = this.scmService.registerSCMProvider(provider);
 		this._repositories.set(handle, repository);
 
-		const inputDisposable = repository.input.onDidChange(value => this._proxy.$onInputBoxValueChange(handle, value));
-		this._inputDisposables.set(handle, inputDisposable);
+		const disposable = combinedDisposable(
+			Event.filter(repository.onDidChangeSelection, selected => selected)(_ => this._proxy.$setSelectedSourceControl(handle)),
+			repository.input.onDidChange(value => this._proxy.$onInputBoxValueChange(handle, value))
+		);
+
+		if (repository.selected) {
+			setTimeout(() => this._proxy.$setSelectedSourceControl(handle), 0);
+		}
+
+		this._repositoryDisposables.set(handle, disposable);
 	}
 
 	$updateSourceControl(handle: number, features: SCMProviderFeatures): void {
@@ -314,8 +319,8 @@ export class MainThreadSCM implements MainThreadSCMShape {
 			return;
 		}
 
-		this._inputDisposables.get(handle)!.dispose();
-		this._inputDisposables.delete(handle);
+		this._repositoryDisposables.get(handle)!.dispose();
+		this._repositoryDisposables.delete(handle);
 
 		repository.dispose();
 		this._repositories.delete(handle);
@@ -421,13 +426,5 @@ export class MainThreadSCM implements MainThreadSCMShape {
 		} else {
 			repository.input.validateInput = async () => undefined;
 		}
-	}
-
-	private onDidChangeSelectedRepositories(repositories: ISCMRepository[]): void {
-		const handles = repositories
-			.filter(r => r.provider instanceof MainThreadSCMProvider)
-			.map(r => (r.provider as MainThreadSCMProvider).handle);
-
-		this._proxy.$setSelectedSourceControls(handles);
 	}
 }

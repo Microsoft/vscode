@@ -146,6 +146,40 @@ suite('Files - TextFileEditorModel', () => {
 		assert.ok(!accessor.modelService.getModel(model.resource));
 	});
 
+	test('save - touching with error turns model dirty', async function () {
+		const model: TextFileEditorModel = instantiationService.createInstance(TextFileEditorModel, toResource.call(this, '/path/index_async.txt'), 'utf8', undefined);
+
+		await model.load();
+
+		let saveErrorEvent = false;
+		model.onDidSaveError(() => saveErrorEvent = true);
+
+		let savedEvent = false;
+		model.onDidSave(() => savedEvent = true);
+
+		accessor.fileService.writeShouldThrowError = new Error('failed to write');
+		try {
+			await model.save({ force: true });
+
+			assert.ok(model.hasState(TextFileEditorModelState.ERROR));
+			assert.ok(model.isDirty());
+			assert.ok(saveErrorEvent);
+
+			assert.equal(accessor.workingCopyService.dirtyCount, 1);
+			assert.equal(accessor.workingCopyService.isDirty(model.resource), true);
+		} finally {
+			accessor.fileService.writeShouldThrowError = undefined;
+		}
+
+		await model.save({ force: true });
+
+		assert.ok(savedEvent);
+		assert.ok(!model.isDirty());
+
+		model.dispose();
+		assert.ok(!accessor.modelService.getModel(model.resource));
+	});
+
 	test('save error (generic)', async function () {
 		const model: TextFileEditorModel = instantiationService.createInstance(TextFileEditorModel, toResource.call(this, '/path/index_async.txt'), 'utf8', undefined);
 

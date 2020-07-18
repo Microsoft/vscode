@@ -5,7 +5,7 @@
 
 import { Disposable, DisposableStore } from 'vs/base/common/lifecycle';
 import { URI } from 'vs/base/common/uri';
-import { Event, Emitter } from 'vs/base/common/event';
+import { Emitter } from 'vs/base/common/event';
 import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
 import { IRange } from 'vs/editor/common/core/range';
 import { CursorChangeReason, ICursorPositionChangedEvent } from 'vs/editor/common/controller/cursorEvents';
@@ -26,9 +26,11 @@ export class RangeHighlightDecorations extends Disposable {
 	private readonly editorDisposables = this._register(new DisposableStore());
 
 	private readonly _onHighlightRemoved: Emitter<void> = this._register(new Emitter<void>());
-	readonly onHighlightRemoved: Event<void> = this._onHighlightRemoved.event;
+	readonly onHighlightRemoved = this._onHighlightRemoved.event;
 
-	constructor(@IEditorService private readonly editorService: IEditorService) {
+	constructor(
+		@IEditorService private readonly editorService: IEditorService
+	) {
 		super();
 	}
 

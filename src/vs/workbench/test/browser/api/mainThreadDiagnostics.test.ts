@@ -8,6 +8,8 @@ import { MarkerService } from 'vs/platform/markers/common/markerService';
 import { MainThreadDiagnostics } from 'vs/workbench/api/browser/mainThreadDiagnostics';
 import { URI } from 'vs/base/common/uri';
 import { IExtHostContext } from 'vs/workbench/api/common/extHost.protocol';
+import { mock } from 'vs/workbench/test/common/workbenchTestServices';
+import { IUriIdentityService } from 'vs/workbench/services/uriIdentity/common/uriIdentity';
 
 
 suite('MainThreadDiagnostics', function () {
@@ -20,16 +22,22 @@ suite('MainThreadDiagnostics', function () {
 
 	test('clear markers on dispose', function () {
 
-		let diag = new MainThreadDiagnostics(new class implements IExtHostContext {
-			remoteAuthority = '';
-			assertRegistered() { }
-			set(v: any): any { return null; }
-			getProxy(): any {
-				return {
-					$acceptMarkersChange() { }
-				};
+		let diag = new MainThreadDiagnostics(
+			new class implements IExtHostContext {
+				remoteAuthority = '';
+				assertRegistered() { }
+				set(v: any): any { return null; }
+				getProxy(): any {
+					return {
+						$acceptMarkersChange() { }
+					};
+				}
+			},
+			markerService,
+			new class extends mock<IUriIdentityService>() {
+				asCanonicalUri(uri: URI) { return uri; }
 			}
-		}, markerService);
+		);
 
 		diag.$changeMany('foo', [[URI.file('a'), [{
 			code: '666',

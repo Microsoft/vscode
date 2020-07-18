@@ -29,7 +29,7 @@ registerAction2(class extends Action2 {
 	constructor() {
 		super({
 			id: 'notebook.format',
-			title: localize('format.title', 'Format Notebook'),
+			title: { value: localize('format.title', "Format Notebook"), original: 'Format Notebook' },
 			category: NOTEBOOK_ACTIONS_CATEGORY,
 			precondition: ContextKeyExpr.and(NOTEBOOK_IS_ACTIVE_EDITOR, NOTEBOOK_EDITOR_EDITABLE),
 			keybinding: {

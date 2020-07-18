@@ -17,13 +17,13 @@ import { IFilesConfiguration, HotExitConfiguration } from 'vs/platform/files/com
 import { ILogService } from 'vs/platform/log/common/log';
 import { IWorkspaceIdentifier, isWorkspaceIdentifier } from 'vs/platform/workspaces/common/workspaces';
 import { URI } from 'vs/base/common/uri';
-import { isEqual as areResourcesEquals, getComparisonKey, hasToIgnoreCase } from 'vs/base/common/resources';
 import { isEqual } from 'vs/base/common/extpath';
 import { Schemas } from 'vs/base/common/network';
+import { extUriBiasedIgnorePathCase } from 'vs/base/common/resources';
 
 export class BackupMainService implements IBackupMainService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	protected backupHome: string;
 	protected workspacesJsonPath: string;
@@ -31,6 +31,12 @@ export class BackupMainService implements IBackupMainService {
 	private workspaces: IWorkspaceBackupInfo[] = [];
 	private folders: URI[] = [];
 	private emptyWindows: IEmptyWindowBackupInfo[] = [];
+
+	// Comparers for paths and resources that will
+	// - ignore path casing on Windows/macOS
+	// - respect path casing on Linux
+	private readonly backupUriComparer = extUriBiasedIgnorePathCase;
+	private readonly backupPathComparer = { isEqual: (pathA: string, pathB: string) => isEqual(pathA, pathB, !platform.isLinux) };
 
 	constructor(
 		@IEnvironmentService environmentService: INativeEnvironmentService,
@@ -196,7 +202,7 @@ export class BackupMainService implements IBackupMainService {
 	}
 
 	registerFolderBackupSync(folderUri: URI): string {
-		if (!this.folders.some(folder => areResourcesEquals(folderUri, folder))) {
+		if (!this.folders.some(folder => this.backupUriComparer.isEqual(folderUri, folder))) {
 			this.folders.push(folderUri);
 			this.saveSync();
 		}
@@ -205,7 +211,7 @@ export class BackupMainService implements IBackupMainService {
 	}
 
 	unregisterFolderBackupSync(folderUri: URI): void {
-		const index = this.folders.findIndex(folder => areResourcesEquals(folderUri, folder));
+		const index = this.folders.findIndex(folder => this.backupUriComparer.isEqual(folderUri, folder));
 		if (index !== -1) {
 			this.folders.splice(index, 1);
 			this.saveSync();
@@ -216,7 +222,7 @@ export class BackupMainService implements IBackupMainService {
 
 		// Generate a new folder if this is a new empty workspace
 		const backupFolder = backupFolderCandidate || this.getRandomEmptyWindowId();
-		if (!this.emptyWindows.some(emptyWindow => !!emptyWindow.backupFolder && isEqual(emptyWindow.backupFolder, backupFolder, !platform.isLinux))) {
+		if (!this.emptyWindows.some(emptyWindow => !!emptyWindow.backupFolder && this.backupPathComparer.isEqual(emptyWindow.backupFolder, backupFolder))) {
 			this.emptyWindows.push({ backupFolder, remoteAuthority });
 			this.saveSync();
 		}
@@ -225,7 +231,7 @@ export class BackupMainService implements IBackupMainService {
 	}
 
 	unregisterEmptyWindowBackupSync(backupFolder: string): void {
-		const index = this.emptyWindows.findIndex(emptyWindow => !!emptyWindow.backupFolder && isEqual(emptyWindow.backupFolder, backupFolder, !platform.isLinux));
+		const index = this.emptyWindows.findIndex(emptyWindow => !!emptyWindow.backupFolder && this.backupPathComparer.isEqual(emptyWindow.backupFolder, backupFolder));
 		if (index !== -1) {
 			this.emptyWindows.splice(index, 1);
 			this.saveSync();
@@ -282,7 +288,7 @@ export class BackupMainService implements IBackupMainService {
 		const result: URI[] = [];
 		const seenIds: Set<string> = new Set();
 		for (let folderURI of folderWorkspaces) {
-			const key = getComparisonKey(folderURI);
+			const key = this.backupUriComparer.getComparisonKey(folderURI);
 			if (!seenIds.has(key)) {
 				seenIds.add(key);
 
@@ -350,7 +356,7 @@ export class BackupMainService implements IBackupMainService {
 
 		// New empty window backup
 		let newBackupFolder = this.getRandomEmptyWindowId();
-		while (this.emptyWindows.some(emptyWindow => !!emptyWindow.backupFolder && isEqual(emptyWindow.backupFolder, newBackupFolder, platform.isLinux))) {
+		while (this.emptyWindows.some(emptyWindow => !!emptyWindow.backupFolder && this.backupPathComparer.isEqual(emptyWindow.backupFolder, newBackupFolder))) {
 			newBackupFolder = this.getRandomEmptyWindowId();
 		}
 
@@ -371,7 +377,7 @@ export class BackupMainService implements IBackupMainService {
 
 		// New empty window backup
 		let newBackupFolder = this.getRandomEmptyWindowId();
-		while (this.emptyWindows.some(emptyWindow => !!emptyWindow.backupFolder && isEqual(emptyWindow.backupFolder, newBackupFolder, platform.isLinux))) {
+		while (this.emptyWindows.some(emptyWindow => !!emptyWindow.backupFolder && this.backupPathComparer.isEqual(emptyWindow.backupFolder, newBackupFolder))) {
 			newBackupFolder = this.getRandomEmptyWindowId();
 		}
 
@@ -486,7 +492,7 @@ export class BackupMainService implements IBackupMainService {
 			// for backward compatibility, use the fspath as key
 			key = platform.isLinux ? folderUri.fsPath : folderUri.fsPath.toLowerCase();
 		} else {
-			key = hasToIgnoreCase(folderUri) ? folderUri.toString().toLowerCase() : folderUri.toString();
+			key = folderUri.toString().toLowerCase();
 		}
 
 		return crypto.createHash('md5').update(key).digest('hex');

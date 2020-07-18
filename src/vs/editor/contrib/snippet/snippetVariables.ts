@@ -208,14 +208,15 @@ export class ClipboardBasedVariableResolver implements VariableResolver {
 }
 export class CommentBasedVariableResolver implements VariableResolver {
 	constructor(
-		private readonly _model: ITextModel
+		private readonly _model: ITextModel,
+		private readonly _selection: Selection
 	) {
 		//
 	}
 	resolve(variable: Variable): string | undefined {
 		const { name } = variable;
-		const language = this._model.getLanguageIdentifier();
-		const config = LanguageConfigurationRegistry.getComments(language.id);
+		const langId = this._model.getLanguageIdAtPosition(this._selection.selectionStartLineNumber, this._selection.selectionStartColumn);
+		const config = LanguageConfigurationRegistry.getComments(langId);
 		if (!config) {
 			return undefined;
 		}

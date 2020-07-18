@@ -305,7 +305,7 @@ export class NotificationsCenter extends Themable implements INotificationsCente
 		this.hide();
 
 		// Close all
-		for (const notification of this.model.notifications) {
+		for (const notification of [...this.model.notifications] /* copy array since we modify it from closing */) {
 			if (!notification.hasProgress) {
 				notification.close();
 			}

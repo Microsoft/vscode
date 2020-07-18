@@ -25,7 +25,7 @@ export class TestCodeEditorService extends AbstractCodeEditorService {
 }
 
 export class TestCommandService implements ICommandService {
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private readonly _instantiationService: IInstantiationService;
 

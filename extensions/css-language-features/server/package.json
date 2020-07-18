@@ -7,10 +7,12 @@
   "engines": {
     "node": "*"
   },
-  "main": "./out/cssServerMain",
+  "main": "./out/node/cssServerMain",
+  "browser": "./dist/browser/cssServerMain",
   "dependencies": {
-    "vscode-css-languageservice": "^4.1.2",
-    "vscode-languageserver": "^6.1.1"
+    "vscode-css-languageservice": "^4.3.0",
+    "vscode-languageserver": "7.0.0-next.3",
+    "vscode-uri": "^2.1.2"
   },
   "devDependencies": {
     "@types/mocha": "7.0.2",
@@ -27,6 +29,6 @@
     "install-service-local": "npm install ../../../../vscode-css-languageservice -f",
     "install-server-next": "yarn add vscode-languageserver@next",
     "install-server-local": "npm install ../../../../vscode-languageserver-node/server -f",
-    "test": "../../../node_modules/.bin/mocha"
+    "test": "node ./test/index.js"
   }
 }

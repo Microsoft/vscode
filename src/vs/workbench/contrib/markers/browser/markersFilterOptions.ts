@@ -34,7 +34,7 @@ export class FilterOptions {
 		if (filter) {
 			const filters = splitGlobAware(filter, ',').map(s => s.trim()).filter(s => !!s.length);
 			for (const f of filters) {
-				if (strings.startsWith(f, '!')) {
+				if (f.startsWith('!')) {
 					this.setPattern(excludesExpression, strings.ltrim(f, '!'));
 				} else {
 					this.setPattern(includeExpression, f);

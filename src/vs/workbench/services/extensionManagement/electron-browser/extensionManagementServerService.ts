@@ -5,7 +5,6 @@
 
 import { localize } from 'vs/nls';
 import { Schemas } from 'vs/base/common/network';
-import { URI } from 'vs/base/common/uri';
 import { IExtensionGalleryService } from 'vs/platform/extensionManagement/common/extensionManagement';
 import { IExtensionManagementServer, IExtensionManagementServerService } from 'vs/workbench/services/extensionManagement/common/extensionManagement';
 import { ExtensionManagementChannelClient } from 'vs/platform/extensionManagement/common/extensionManagementIpc';
@@ -19,16 +18,16 @@ import { RemoteExtensionManagementChannelClient } from 'vs/workbench/services/ex
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { IProductService } from 'vs/platform/product/common/productService';
 import { ILabelService } from 'vs/platform/label/common/label';
-
-const localExtensionManagementServerAuthority: string = 'vscode-local';
+import { IExtension } from 'vs/platform/extensions/common/extensions';
 
 export class ExtensionManagementServerService implements IExtensionManagementServerService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
-	readonly localExtensionManagementServer: IExtensionManagementServer;
+	private readonly _localExtensionManagementServer: IExtensionManagementServer;
+	public get localExtensionManagementServer(): IExtensionManagementServer { return this._localExtensionManagementServer; }
 	readonly remoteExtensionManagementServer: IExtensionManagementServer | null = null;
-	readonly isSingleServer: boolean = false;
+	readonly webExtensionManagementServer: IExtensionManagementServer | null = null;
 
 	constructor(
 		@ISharedProcessService sharedProcessService: ISharedProcessService,
@@ -41,26 +40,26 @@ export class ExtensionManagementServerService implements IExtensionManagementSer
 	) {
 		const localExtensionManagementService = new ExtensionManagementChannelClient(sharedProcessService.getChannel('extensions'));
 
-		this.localExtensionManagementServer = { extensionManagementService: localExtensionManagementService, authority: localExtensionManagementServerAuthority, label: localize('local', "Local") };
+		this._localExtensionManagementServer = { extensionManagementService: localExtensionManagementService, id: 'local', label: localize('local', "Local") };
 		const remoteAgentConnection = remoteAgentService.getConnection();
 		if (remoteAgentConnection) {
 			const extensionManagementService = new RemoteExtensionManagementChannelClient(remoteAgentConnection.getChannel<IChannel>('extensions'), this.localExtensionManagementServer.extensionManagementService, galleryService, logService, configurationService, productService);
 			this.remoteExtensionManagementServer = {
-				authority: remoteAgentConnection.remoteAuthority,
+				id: 'remote',
 				extensionManagementService,
 				get label() { return labelService.getHostLabel(REMOTE_HOST_SCHEME, remoteAgentConnection!.remoteAuthority) || localize('remote', "Remote"); }
 			};
 		}
 	}
 
-	getExtensionManagementServer(location: URI): IExtensionManagementServer | null {
-		if (location.scheme === Schemas.file) {
+	getExtensionManagementServer(extension: IExtension): IExtensionManagementServer {
+		if (extension.location.scheme === Schemas.file) {
 			return this.localExtensionManagementServer;
 		}
-		if (location.scheme === REMOTE_HOST_SCHEME) {
+		if (this.remoteExtensionManagementServer && extension.location.scheme === REMOTE_HOST_SCHEME) {
 			return this.remoteExtensionManagementServer;
 		}
-		return null;
+		throw new Error(`Invalid Extension ${extension.location}`);
 	}
 }
 

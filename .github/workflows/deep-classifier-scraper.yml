@@ -1,0 +1,27 @@
+name: "Deep Classifier: Scraper"
+on:
+  repository_dispatch:
+    types: [trigger-deep-classifier-scraper]
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Actions
+        uses: actions/checkout@v2
+        with:
+          repository: 'microsoft/vscode-github-triage-actions'
+          ref: v31
+          path: ./actions
+      - name: Install Actions
+        run: npm install --production --prefix ./actions
+      - name: Install Additional Dependencies
+        # Pulls in a bunch of other packages that arent needed for the rest of the actions
+        run: npm install @azure/storage-blob@12
+      - name: "Run Classifier: Scraper"
+        uses: ./actions/classifier-deep/train/fetch-issues
+        with:
+          blobContainerName: vscode-issue-classifier
+          blobStorageKey: ${{secrets.AZURE_BLOB_STORAGE_CONNECTION_STRING}}
+          token: ${{secrets.ISSUE_SCRAPER_TOKEN}}
+          appInsightsKey: ${{secrets.TRIAGE_ACTIONS_APP_INSIGHTS}}

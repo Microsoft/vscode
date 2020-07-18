@@ -30,8 +30,8 @@ export interface IJSONContribution {
 	resolveSuggestion?(item: CompletionItem): Thenable<CompletionItem | null> | null;
 }
 
-export function addJSONProviders(xhr: XHRRequest): Disposable {
-	const contributions = [new PackageJSONContribution(xhr), new BowerJSONContribution(xhr)];
+export function addJSONProviders(xhr: XHRRequest, canRunNPM: boolean): Disposable {
+	const contributions = [new PackageJSONContribution(xhr, canRunNPM), new BowerJSONContribution(xhr)];
 	const subscriptions: Disposable[] = [];
 	contributions.forEach(contribution => {
 		const selector = contribution.getDocumentSelector();

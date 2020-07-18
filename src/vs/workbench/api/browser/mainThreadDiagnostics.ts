@@ -8,6 +8,7 @@ import { URI, UriComponents } from 'vs/base/common/uri';
 import { MainThreadDiagnosticsShape, MainContext, IExtHostContext, ExtHostDiagnosticsShape, ExtHostContext } from '../common/extHost.protocol';
 import { extHostNamedCustomer } from 'vs/workbench/api/common/extHostCustomers';
 import { IDisposable } from 'vs/base/common/lifecycle';
+import { IUriIdentityService } from 'vs/workbench/services/uriIdentity/common/uriIdentity';
 
 @extHostNamedCustomer(MainContext.MainThreadDiagnostics)
 export class MainThreadDiagnostics implements MainThreadDiagnosticsShape {
@@ -15,15 +16,15 @@ export class MainThreadDiagnostics implements MainThreadDiagnosticsShape {
 	private readonly _activeOwners = new Set<string>();
 
 	private readonly _proxy: ExtHostDiagnosticsShape;
-	private readonly _markerService: IMarkerService;
 	private readonly _markerListener: IDisposable;
 
 	constructor(
 		extHostContext: IExtHostContext,
-		@IMarkerService markerService: IMarkerService
+		@IMarkerService private readonly _markerService: IMarkerService,
+		@IUriIdentityService private readonly _uriIdentService: IUriIdentityService,
 	) {
 		this._proxy = extHostContext.getProxy(ExtHostContext.ExtHostDiagnostics);
-		this._markerService = markerService;
+
 		this._markerListener = this._markerService.onMarkerChanged(this._forwardMarkers, this);
 	}
 
@@ -59,7 +60,7 @@ export class MainThreadDiagnostics implements MainThreadDiagnosticsShape {
 					}
 				}
 			}
-			this._markerService.changeOne(owner, URI.revive(uri), markers);
+			this._markerService.changeOne(owner, this._uriIdentService.asCanonicalUri(URI.revive(uri)), markers);
 		}
 		this._activeOwners.add(owner);
 	}

@@ -7,9 +7,9 @@ import { Event } from 'vs/base/common/event';
 import { IHostService } from 'vs/workbench/services/host/browser/host';
 import { registerSingleton } from 'vs/platform/instantiation/common/extensions';
 import { ILayoutService } from 'vs/platform/layout/browser/layoutService';
-import { IResourceEditorInputType, IEditorService } from 'vs/workbench/services/editor/common/editorService';
+import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
-import { IWindowSettings, IWindowOpenable, IOpenWindowOptions, isFolderToOpen, isWorkspaceToOpen, isFileToOpen, IOpenEmptyWindowOptions } from 'vs/platform/windows/common/windows';
+import { IWindowSettings, IWindowOpenable, IOpenWindowOptions, isFolderToOpen, isWorkspaceToOpen, isFileToOpen, IOpenEmptyWindowOptions, IPathData, IFileToOpen } from 'vs/platform/windows/common/windows';
 import { pathsToEditors } from 'vs/workbench/common/editor';
 import { IFileService } from 'vs/platform/files/common/files';
 import { ILabelService } from 'vs/platform/label/common/label';
@@ -19,6 +19,10 @@ import { URI } from 'vs/base/common/uri';
 import { IWorkbenchEnvironmentService } from 'vs/workbench/services/environment/common/environmentService';
 import { domEvent } from 'vs/base/browser/event';
 import { memoize } from 'vs/base/common/decorators';
+import { parseLineAndColumnAware } from 'vs/base/common/extpath';
+import { IWorkspaceFolderCreationData } from 'vs/platform/workspaces/common/workspaces';
+import { IWorkspaceEditingService } from 'vs/workbench/services/workspaces/common/workspaceEditing';
+import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 
 /**
  * A workspace to open in the workbench can either be:
@@ -55,7 +59,7 @@ export interface IWorkspaceProvider {
 
 export class BrowserHostService extends Disposable implements IHostService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
 	private workspaceProvider: IWorkspaceProvider;
 
@@ -65,7 +69,8 @@ export class BrowserHostService extends Disposable implements IHostService {
 		@IConfigurationService private readonly configurationService: IConfigurationService,
 		@IFileService private readonly fileService: IFileService,
 		@ILabelService private readonly labelService: ILabelService,
-		@IWorkbenchEnvironmentService environmentService: IWorkbenchEnvironmentService
+		@IWorkbenchEnvironmentService private readonly environmentService: IWorkbenchEnvironmentService,
+		@IInstantiationService private readonly instantiationService: IInstantiationService
 	) {
 		super();
 
@@ -113,58 +118,140 @@ export class BrowserHostService extends Disposable implements IHostService {
 	}
 
 	private async doOpenWindow(toOpen: IWindowOpenable[], options?: IOpenWindowOptions): Promise<void> {
-		for (let i = 0; i < toOpen.length; i++) {
-			const openable = toOpen[i];
-			openable.label = openable.label || this.getRecentLabel(openable);
+		const payload = this.preservePayload();
+		const fileOpenables: IFileToOpen[] = [];
+		const foldersToAdd: IWorkspaceFolderCreationData[] = [];
 
-			// selectively copy payload: for now only extension debugging properties are considered
-			const originalPayload = this.workspaceProvider.payload;
-			let newPayload: Array<unknown> | undefined = undefined;
-			if (originalPayload && Array.isArray(originalPayload)) {
-				for (let pair of originalPayload) {
-					if (Array.isArray(pair) && pair.length === 2) {
-						switch (pair[0]) {
-							case 'extensionDevelopmentPath':
-							case 'debugId':
-							case 'inspect-brk-extensions':
-								if (!newPayload) {
-									newPayload = new Array();
-								}
-								newPayload.push(pair);
-								break;
-						}
-					}
-				}
-			}
+		for (const openable of toOpen) {
+			openable.label = openable.label || this.getRecentLabel(openable);
 
 			// Folder
 			if (isFolderToOpen(openable)) {
-				this.workspaceProvider.open({ folderUri: openable.folderUri }, { reuse: this.shouldReuse(options, false /* no file */), payload: newPayload });
+				if (options?.addMode) {
+					foldersToAdd.push(({ uri: openable.folderUri }));
+				} else {
+					this.workspaceProvider.open({ folderUri: openable.folderUri }, { reuse: this.shouldReuse(options, false /* no file */), payload });
+				}
 			}
 
 			// Workspace
 			else if (isWorkspaceToOpen(openable)) {
-				this.workspaceProvider.open({ workspaceUri: openable.workspaceUri }, { reuse: this.shouldReuse(options, false /* no file */), payload: newPayload });
+				this.workspaceProvider.open({ workspaceUri: openable.workspaceUri }, { reuse: this.shouldReuse(options, false /* no file */), payload });
 			}
 
-			// File
+			// File (handled later in bulk)
 			else if (isFileToOpen(openable)) {
+				fileOpenables.push(openable);
+			}
+		}
+
+		// Handle Folders to Add
+		if (foldersToAdd.length > 0) {
+			this.instantiationService.invokeFunction(accessor => {
+				const workspaceEditingService: IWorkspaceEditingService = accessor.get(IWorkspaceEditingService);
+				workspaceEditingService.addFolders(foldersToAdd);
+			});
+		}
+
+		// Handle Files
+		if (fileOpenables.length > 0) {
+
+			// Support diffMode
+			if (options?.diffMode && fileOpenables.length === 2) {
+				const editors = await pathsToEditors(fileOpenables, this.fileService);
+				if (editors.length !== 2 || !editors[0].resource || !editors[1].resource) {
+					return; // invalid resources
+				}
 
 				// Same Window: open via editor service in current window
 				if (this.shouldReuse(options, true /* file */)) {
-					const inputs: IResourceEditorInputType[] = await pathsToEditors([openable], this.fileService);
-					this.editorService.openEditors(inputs);
+					this.editorService.openEditor({
+						leftResource: editors[0].resource,
+						rightResource: editors[1].resource
+					});
 				}
 
 				// New Window: open into empty window
 				else {
 					const environment = new Map<string, string>();
-					environment.set('openFile', openable.fileUri.toString());
+					environment.set('diffFileSecondary', editors[0].resource.toString());
+					environment.set('diffFilePrimary', editors[1].resource.toString());
 
 					this.workspaceProvider.open(undefined, { payload: Array.from(environment.entries()) });
 				}
 			}
+
+			// Just open normally
+			else {
+				for (const openable of fileOpenables) {
+
+					// Same Window: open via editor service in current window
+					if (this.shouldReuse(options, true /* file */)) {
+						let openables: IPathData[] = [];
+
+						// Support: --goto parameter to open on line/col
+						if (options?.gotoLineMode) {
+							const pathColumnAware = parseLineAndColumnAware(openable.fileUri.path);
+							openables = [{
+								fileUri: openable.fileUri.with({ path: pathColumnAware.path }),
+								lineNumber: pathColumnAware.line,
+								columnNumber: pathColumnAware.column
+							}];
+						} else {
+							openables = [openable];
+						}
+
+						this.editorService.openEditors(await pathsToEditors(openables, this.fileService));
+					}
+
+					// New Window: open into empty window
+					else {
+						const environment = new Map<string, string>();
+						environment.set('openFile', openable.fileUri.toString());
+
+						if (options?.gotoLineMode) {
+							environment.set('gotoLineMode', 'true');
+						}
+
+						this.workspaceProvider.open(undefined, { payload: Array.from(environment.entries()) });
+					}
+				}
+			}
+
+			// Support wait mode
+			const waitMarkerFileURI = options?.waitMarkerFileURI;
+			if (waitMarkerFileURI) {
+				(async () => {
+
+					// Wait for the resources to be closed in the editor...
+					await this.editorService.whenClosed(fileOpenables.map(openable => ({ resource: openable.fileUri })), { waitForSaved: true });
+
+					// ...before deleting the wait marker file
+					await this.fileService.del(waitMarkerFileURI);
+				})();
+			}
 		}
+	}
+
+	private preservePayload(): Array<unknown> | undefined {
+
+		// Selectively copy payload: for now only extension debugging properties are considered
+		let newPayload: Array<unknown> | undefined = undefined;
+		if (this.environmentService.extensionDevelopmentLocationURI) {
+			newPayload = new Array();
+
+			newPayload.push(['extensionDevelopmentPath', this.environmentService.extensionDevelopmentLocationURI.toString()]);
+
+			if (this.environmentService.debugExtensionHost.debugId) {
+				newPayload.push(['debugId', this.environmentService.debugExtensionHost.debugId]);
+			}
+
+			if (this.environmentService.debugExtensionHost.port) {
+				newPayload.push(['inspect-brk-extensions', String(this.environmentService.debugExtensionHost.port)]);
+			}
+		}
+
+		return newPayload;
 	}
 
 	private getRecentLabel(openable: IWindowOpenable): string {
@@ -179,7 +266,11 @@ export class BrowserHostService extends Disposable implements IHostService {
 		return this.labelService.getUriLabel(openable.fileUri);
 	}
 
-	private shouldReuse(options: IOpenWindowOptions = {}, isFile: boolean): boolean {
+	private shouldReuse(options: IOpenWindowOptions = Object.create(null), isFile: boolean): boolean {
+		if (options.waitMarkerFileURI) {
+			return true; // always handle --wait in same window
+		}
+
 		const windowConfig = this.configurationService.getValue<IWindowSettings>('window');
 		const openInNewWindowConfig = isFile ? (windowConfig?.openFilesInNewWindow || 'off' /* default */) : (windowConfig?.openFoldersInNewWindow || 'default' /* default */);
 
@@ -192,7 +283,7 @@ export class BrowserHostService extends Disposable implements IHostService {
 	}
 
 	private async doOpenEmptyWindow(options?: IOpenEmptyWindowOptions): Promise<void> {
-		this.workspaceProvider.open(undefined, { reuse: options?.forceReuseWindow });
+		return this.workspaceProvider.open(undefined, { reuse: options?.forceReuseWindow });
 	}
 
 	async toggleFullScreen(): Promise<void> {

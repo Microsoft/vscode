@@ -13,6 +13,7 @@ import { Range } from 'vs/editor/common/core/range';
 import { RenderingContext, RestrictedRenderingContext } from 'vs/editor/common/view/renderingContext';
 import { ViewContext } from 'vs/editor/common/view/viewContext';
 import * as viewEvents from 'vs/editor/common/view/viewEvents';
+import { MOUSE_CURSOR_TEXT_CSS_CLASS_NAME } from 'vs/base/browser/ui/mouseCursor/mouseCursor';
 
 export interface IViewCursorRenderData {
 	domNode: HTMLElement;
@@ -63,7 +64,7 @@ export class ViewCursor {
 
 		// Create the dom node
 		this._domNode = createFastDomNode(document.createElement('div'));
-		this._domNode.setClassName('cursor');
+		this._domNode.setClassName(`cursor ${MOUSE_CURSOR_TEXT_CSS_CLASS_NAME}`);
 		this._domNode.setHeight(this._lineHeight);
 		this._domNode.setTop(0);
 		this._domNode.setLeft(0);
@@ -200,7 +201,7 @@ export class ViewCursor {
 			this._domNode.domNode.textContent = this._lastRenderedContent;
 		}
 
-		this._domNode.setClassName('cursor ' + this._renderData.textContentClassName);
+		this._domNode.setClassName(`cursor ${MOUSE_CURSOR_TEXT_CSS_CLASS_NAME} ${this._renderData.textContentClassName}`);
 
 		this._domNode.setDisplay('block');
 		this._domNode.setTop(this._renderData.top);

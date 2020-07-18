@@ -9,6 +9,8 @@ import { Color } from 'vs/base/common/color';
 
 export class TestColorTheme implements IColorTheme {
 
+	public readonly label = 'test';
+
 	constructor(private colors: { [id: string]: string; } = {}, public type = DARK) {
 	}
 
@@ -43,7 +45,7 @@ export class TestFileIconTheme implements IFileIconTheme {
 
 export class TestThemeService implements IThemeService {
 
-	_serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 	_colorTheme: IColorTheme;
 	_fileIconTheme: IFileIconTheme;
 	_onThemeChange = new Emitter<IColorTheme>();

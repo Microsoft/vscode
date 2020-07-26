@@ -30,13 +30,13 @@ import { IStorageService } from 'vs/platform/storage/common/storage';
 import { IWorkspaceContextService } from 'vs/platform/workspace/common/workspace';
 import { IExtensionService } from 'vs/workbench/services/extensions/common/extensions';
 import { IAction, Action } from 'vs/base/common/actions';
-import { IUserDataSyncWorkbenchService, CONTEXT_SYNC_STATE, getSyncAreaLabel, CONTEXT_ACCOUNT_STATE, AccountStatus, CONTEXT_ENABLE_ACTIVITY_VIEWS, SHOW_SYNC_LOG_COMMAND_ID, CONFIGURE_SYNC_COMMAND_ID, MANUAL_SYNC_VIEW_ID, CONTEXT_ENABLE_MANUAL_SYNC_VIEW } from 'vs/workbench/services/userDataSync/common/userDataSync';
+import { IUserDataSyncWorkbenchService, CONTEXT_SYNC_STATE, getSyncAreaLabel, CONTEXT_ACCOUNT_STATE, AccountStatus, CONTEXT_ENABLE_ACTIVITY_VIEWS, SHOW_SYNC_LOG_COMMAND_ID, CONFIGURE_SYNC_COMMAND_ID, SYNC_MERGES_VIEW_ID, CONTEXT_ENABLE_SYNC_MERGES_VIEW } from 'vs/workbench/services/userDataSync/common/userDataSync';
 import { IUserDataSyncMachinesService, IUserDataSyncMachine } from 'vs/platform/userDataSync/common/userDataSyncMachines';
 import { IQuickInputService } from 'vs/platform/quickinput/common/quickInput';
 import { INotificationService, Severity } from 'vs/platform/notification/common/notification';
 import { TreeView } from 'vs/workbench/contrib/views/browser/treeView';
 import { flatten } from 'vs/base/common/arrays';
-import { UserDataManualSyncViewPane } from 'vs/workbench/contrib/userDataSync/browser/userDataManualSyncView';
+import { UserDataSyncMergesViewPane } from 'vs/workbench/contrib/userDataSync/browser/userDataSyncMergesView';
 
 export class UserDataSyncViewPaneContainer extends ViewPaneContainer {
 
@@ -55,7 +55,7 @@ export class UserDataSyncViewPaneContainer extends ViewPaneContainer {
 		@IExtensionService extensionService: IExtensionService,
 		@IViewDescriptorService viewDescriptorService: IViewDescriptorService,
 	) {
-		super(containerId, { mergeViewWithContainerWhenSingleView: false }, instantiationService, configurationService, layoutService, contextMenuService, telemetryService, extensionService, themeService, storageService, contextService, viewDescriptorService);
+		super(containerId, { mergeViewWithContainerWhenSingleView: true }, instantiationService, configurationService, layoutService, contextMenuService, telemetryService, extensionService, themeService, storageService, contextService, viewDescriptorService);
 	}
 
 	getActions(): IAction[] {
@@ -67,7 +67,7 @@ export class UserDataSyncViewPaneContainer extends ViewPaneContainer {
 
 	getSecondaryActions(): IAction[] {
 		return [
-			new Action('workbench.actions.syncData.reset', localize('workbench.actions.syncData.reset', "Reset Synced Data"), undefined, true, () => this.userDataSyncWorkbenchService.resetSyncedData()),
+			new Action('workbench.actions.syncData.reset', localize('workbench.actions.syncData.reset', "Clear Data in Cloud..."), undefined, true, () => this.userDataSyncWorkbenchService.resetSyncedData()),
 		];
 	}
 
@@ -86,7 +86,7 @@ export class UserDataSyncDataViews extends Disposable {
 	}
 
 	private registerViews(container: ViewContainer): void {
-		this.registerManualSyncView(container);
+		this.registerMergesView(container);
 
 		this.registerActivityView(container, true);
 		this.registerMachinesView(container);
@@ -94,17 +94,17 @@ export class UserDataSyncDataViews extends Disposable {
 		this.registerActivityView(container, false);
 	}
 
-	private registerManualSyncView(container: ViewContainer): void {
+	private registerMergesView(container: ViewContainer): void {
 		const viewsRegistry = Registry.as<IViewsRegistry>(Extensions.ViewsRegistry);
-		const viewName = localize('manual sync', "Manual Sync");
+		const viewName = localize('merges', "Merges");
 		viewsRegistry.registerViews([<ITreeViewDescriptor>{
-			id: MANUAL_SYNC_VIEW_ID,
+			id: SYNC_MERGES_VIEW_ID,
 			name: viewName,
-			ctorDescriptor: new SyncDescriptor(UserDataManualSyncViewPane),
-			when: CONTEXT_ENABLE_MANUAL_SYNC_VIEW,
+			ctorDescriptor: new SyncDescriptor(UserDataSyncMergesViewPane),
+			when: CONTEXT_ENABLE_SYNC_MERGES_VIEW,
 			canToggleVisibility: false,
 			canMoveView: false,
-			treeView: this.instantiationService.createInstance(TreeView, MANUAL_SYNC_VIEW_ID, viewName),
+			treeView: this.instantiationService.createInstance(TreeView, SYNC_MERGES_VIEW_ID, viewName),
 			collapsed: false,
 			order: 100,
 		}], container);

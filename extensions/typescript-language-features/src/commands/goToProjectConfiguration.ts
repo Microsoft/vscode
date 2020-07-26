@@ -5,9 +5,9 @@
 
 import * as vscode from 'vscode';
 import TypeScriptServiceClientHost from '../typeScriptServiceClientHost';
-import { Command } from '../utils/commandManager';
 import { Lazy } from '../utils/lazy';
 import { openProjectConfigForFile, ProjectType } from '../utils/tsconfig';
+import { Command } from './commandManager';
 
 export class TypeScriptGoToProjectConfigCommand implements Command {
 	public readonly id = 'typescript.goToProjectConfig';

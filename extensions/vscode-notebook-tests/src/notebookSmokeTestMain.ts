@@ -79,7 +79,8 @@ export function smokeTestActivate(context: vscode.ExtensionContext): any {
 				}];
 			}
 		},
-		executeCell: async (_document: vscode.NotebookDocument, _cell: vscode.NotebookCell | undefined, _token: vscode.CancellationToken) => {
+		cancelAllCellsExecution: async () => { },
+		executeCell: async (_document: vscode.NotebookDocument, _cell: vscode.NotebookCell | undefined) => {
 			if (!_cell) {
 				_cell = _document.cells[0];
 			}
@@ -92,6 +93,7 @@ export function smokeTestActivate(context: vscode.ExtensionContext): any {
 			}];
 			return;
 		},
+		cancelCellExecution: async () => { }
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('vscode-notebook-tests.debugAction', async (cell: vscode.NotebookCell) => {

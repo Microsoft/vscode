@@ -64,7 +64,7 @@ class DefaultFormatter extends Disposable implements IWorkbenchContribution {
 		DefaultFormatter.extensionDescriptions.push(nls.localize('nullFormatterDescription', "None"));
 
 		for (const extension of extensions) {
-			if (extension.main) {
+			if (extension.main || extension.browser) {
 				DefaultFormatter.extensionIds.push(extension.identifier.value);
 				DefaultFormatter.extensionDescriptions.push(extension.description || '');
 			}

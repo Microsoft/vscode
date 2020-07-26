@@ -18,7 +18,7 @@ import { EmbeddedCodeEditorWidget } from 'vs/editor/browser/widget/embeddedCodeE
 import { IOptions, IStyles, ZoneWidget } from 'vs/editor/contrib/zoneWidget/zoneWidget';
 import * as nls from 'vs/nls';
 import { RawContextKey, IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
-import { ServicesAccessor, createDecorator } from 'vs/platform/instantiation/common/instantiation';
+import { ServicesAccessor, createDecorator, IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { IDisposable } from 'vs/base/common/lifecycle';
 import { registerSingleton } from 'vs/platform/instantiation/common/extensions';
 import { EditorOption } from 'vs/editor/common/config/editorOptions';
@@ -26,7 +26,8 @@ import { registerEditorContribution } from 'vs/editor/browser/editorExtensions';
 import { IEditorContribution } from 'vs/editor/common/editorCommon';
 import { registerColor, contrastBorder, activeContrastBorder } from 'vs/platform/theme/common/colorRegistry';
 import { Codicon } from 'vs/base/common/codicons';
-
+import { MenuItemAction, SubmenuItemAction } from 'vs/platform/actions/common/actions';
+import { MenuEntryActionViewItem, SubmenuEntryActionViewItem } from 'vs/platform/actions/browser/menuEntryActionViewItem';
 
 export const IPeekViewService = createDecorator<IPeekViewService>('IPeekViewService');
 export interface IPeekViewService {
@@ -115,7 +116,11 @@ export abstract class PeekViewWidget extends ZoneWidget {
 	protected _actionbarWidget?: ActionBar;
 	protected _bodyElement?: HTMLDivElement;
 
-	constructor(editor: ICodeEditor, options: IPeekViewOptions = {}) {
+	constructor(
+		editor: ICodeEditor,
+		options: IPeekViewOptions,
+		@IInstantiationService protected readonly instantiationService: IInstantiationService
+	) {
 		super(editor, options);
 		objects.mixin(this.options, defaultOptions, false);
 	}
@@ -199,7 +204,17 @@ export abstract class PeekViewWidget extends ZoneWidget {
 	}
 
 	protected _getActionBarOptions(): IActionBarOptions {
-		return {};
+		return {
+			actionViewItemProvider: action => {
+				if (action instanceof MenuItemAction) {
+					return this.instantiationService.createInstance(MenuEntryActionViewItem, action);
+				} else if (action instanceof SubmenuItemAction) {
+					return this.instantiationService.createInstance(SubmenuEntryActionViewItem, action);
+				}
+
+				return undefined;
+			}
+		};
 	}
 
 	protected _onTitleClick(event: IMouseEvent): void {

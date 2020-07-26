@@ -20,17 +20,15 @@ import { IContextKeyService, IContextKey } from 'vs/platform/contextkey/common/c
 import { ICommandService } from 'vs/platform/commands/common/commands';
 import { IKeybindingService } from 'vs/platform/keybinding/common/keybinding';
 import { MenuItemAction, IMenuService } from 'vs/platform/actions/common/actions';
-import { IAction, IActionViewItem, ActionRunner, Action, RadioGroup } from 'vs/base/common/actions';
-import { ContextAwareMenuEntryActionViewItem } from 'vs/platform/actions/browser/menuEntryActionViewItem';
+import { IAction, IActionViewItem, ActionRunner, Action, RadioGroup, Separator, SubmenuAction, IActionViewItemProvider } from 'vs/base/common/actions';
 import { SCMMenus } from './menus';
-import { ActionBar, IActionViewItemProvider, Separator, ActionViewItem } from 'vs/base/browser/ui/actionbar/actionbar';
+import { ActionBar } from 'vs/base/browser/ui/actionbar/actionbar';
 import { IThemeService, LIGHT, registerThemingParticipant, IFileIconTheme } from 'vs/platform/theme/common/themeService';
 import { isSCMResource, isSCMResourceGroup, connectPrimaryMenuToInlineActionBar, isSCMRepository, isSCMInput, connectPrimaryMenu } from './util';
 import { attachBadgeStyler } from 'vs/platform/theme/common/styler';
 import { WorkbenchCompressibleObjectTree, IOpenEvent } from 'vs/platform/list/browser/listService';
 import { IConfigurationService, ConfigurationTarget } from 'vs/platform/configuration/common/configuration';
 import { disposableTimeout, ThrottledDelayer } from 'vs/base/common/async';
-import { INotificationService } from 'vs/platform/notification/common/notification';
 import { ITreeNode, ITreeFilter, ITreeSorter, ITreeContextMenuEvent } from 'vs/base/browser/ui/tree/tree';
 import { ResourceTree, IResourceNode } from 'vs/base/common/resourceTree';
 import { ISequence, ISplice, SimpleSequence } from 'vs/base/common/sequence';
@@ -72,7 +70,6 @@ import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 import { IListAccessibilityProvider } from 'vs/base/browser/ui/list/listWidget';
 import { IModeService } from 'vs/editor/common/services/modeService';
 import { ILabelService } from 'vs/platform/label/common/label';
-import { ContextSubMenu } from 'vs/base/browser/contextmenu';
 import { KeyCode } from 'vs/base/common/keyCodes';
 import { DEFAULT_FONT_FAMILY } from 'vs/workbench/browser/style';
 import { Command } from 'vs/editor/common/modes';
@@ -81,6 +78,7 @@ import { ToolBar } from 'vs/base/browser/ui/toolbar/toolbar';
 import { AnchorAlignment } from 'vs/base/browser/ui/contextview/contextview';
 import { domEvent } from 'vs/base/browser/event';
 import { StandardKeyboardEvent } from 'vs/base/browser/keyboardEvent';
+import { ActionViewItem } from 'vs/base/browser/ui/actionbar/actionViewItems';
 
 type TreeElement = ISCMRepository | ISCMInput | ISCMResourceGroup | IResourceNode<ISCMResource, ISCMResourceGroup> | ISCMResource;
 
@@ -1102,7 +1100,7 @@ class ViewModel {
 		const viewAction = new SCMViewSubMenuAction(this);
 
 		if (this.repositories.elements.length !== 1) {
-			return viewAction.entries;
+			return Array.isArray(viewAction.actions) ? viewAction.actions : viewAction.actions();
 		}
 
 		const menus = this.menus.getRepositoryMenus(this.repositories.elements[0].provider);
@@ -1167,9 +1165,11 @@ class ViewModel {
 	}
 }
 
-class SCMViewSubMenuAction extends ContextSubMenu {
+class SCMViewSubMenuAction extends SubmenuAction {
 	constructor(viewModel: ViewModel) {
-		super(localize('sortAction', "View & Sort"),
+		super(
+			'scm.viewsort',
+			localize('sortAction', "View & Sort"),
 			[
 				...new RadioGroup([
 					new SCMViewModeListAction(viewModel),
@@ -1591,7 +1591,6 @@ export class SCMViewPane extends ViewPane {
 		@IContextMenuService protected contextMenuService: IContextMenuService,
 		@IContextViewService protected contextViewService: IContextViewService,
 		@ICommandService protected commandService: ICommandService,
-		@INotificationService private readonly notificationService: INotificationService,
 		@IEditorService protected editorService: IEditorService,
 		@IInstantiationService protected instantiationService: IInstantiationService,
 		@IViewDescriptorService viewDescriptorService: IViewDescriptorService,
@@ -1768,11 +1767,7 @@ export class SCMViewPane extends ViewPane {
 			return new StatusBarActionViewItem(action);
 		}
 
-		if (!(action instanceof MenuItemAction)) {
-			return undefined;
-		}
-
-		return new ContextAwareMenuEntryActionViewItem(action, this.keybindingService, this.notificationService, this.contextMenuService);
+		return super.getActionViewItem(action);
 	}
 
 	getActionsContext(): any {

@@ -11,7 +11,7 @@ const localize = nls.loadMessageBundle();
 
 type LogLevel = 'Trace' | 'Info' | 'Error';
 
-export default class Logger {
+export class Logger {
 
 	@memoize
 	private get output(): vscode.OutputChannel {

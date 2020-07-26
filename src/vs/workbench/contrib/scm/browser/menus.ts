@@ -123,7 +123,6 @@ export class SCMRepositoryMenus implements IDisposable {
 
 		disposable.dispose();
 		menu.dispose();
-		contextKeyService.dispose();
 
 		if (this.provider.rootUri) {
 			secondary.push(new Action('_openInTerminal', localize('open in terminal', "Open In Terminal"), undefined, true, async () => {
@@ -157,7 +156,6 @@ export class SCMRepositoryMenus implements IDisposable {
 		createAndFillInContextMenuActions(menu, { shouldForwardArgs: true }, result, this.contextMenuService, g => /^inline/.test(g));
 
 		menu.dispose();
-		contextKeyService.dispose();
 
 		return result;
 	}

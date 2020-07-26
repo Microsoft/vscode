@@ -5,26 +5,19 @@
 
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { OngoingRequestCancellerFactory } from '../tsServer/cancellation';
 import { ClientCapabilities, ClientCapability } from '../typescriptService';
 import API from '../utils/api';
 import { SeparateSyntaxServerConfiguration, TsServerLogLevel, TypeScriptServiceConfiguration } from '../utils/configuration';
-import * as electron from '../utils/electron';
-import LogDirectoryProvider from '../utils/logDirectoryProvider';
-import Logger from '../utils/logger';
+import { Logger } from '../utils/logger';
 import { TypeScriptPluginPathsProvider } from '../utils/pluginPathsProvider';
 import { PluginManager } from '../utils/plugins';
-import { ChildServerProcess } from '../utils/serverProcess';
 import { TelemetryReporter } from '../utils/telemetry';
 import Tracer from '../utils/tracer';
-import { TypeScriptVersion, TypeScriptVersionProvider } from '../utils/versionProvider';
-import { GetErrRoutingTsServer, ITypeScriptServer, PipeRequestCanceller, ProcessBasedTsServer, SyntaxRoutingTsServer, TsServerDelegate } from './server';
-
-const enum ServerKind {
-	Main = 'main',
-	Syntax = 'syntax',
-	Semantic = 'semantic',
-	Diagnostics = 'diagnostics'
-}
+import { ILogDirectoryProvider } from './logDirectoryProvider';
+import { GetErrRoutingTsServer, ITypeScriptServer, ProcessBasedTsServer, SyntaxRoutingTsServer, TsServerDelegate, TsServerProcessFactory, TsServerProcessKind } from './server';
+import { TypeScriptVersionManager } from './versionManager';
+import { ITypeScriptVersionProvider, TypeScriptVersion } from './versionProvider';
 
 const enum CompositeServerType {
 	/** Run a single server that handles all commands  */
@@ -42,12 +35,14 @@ const enum CompositeServerType {
 
 export class TypeScriptServerSpawner {
 	public constructor(
-		private readonly _versionProvider: TypeScriptVersionProvider,
-		private readonly _logDirectoryProvider: LogDirectoryProvider,
+		private readonly _versionProvider: ITypeScriptVersionProvider,
+		private readonly _versionManager: TypeScriptVersionManager,
+		private readonly _logDirectoryProvider: ILogDirectoryProvider,
 		private readonly _pluginPathsProvider: TypeScriptPluginPathsProvider,
 		private readonly _logger: Logger,
 		private readonly _telemetryReporter: TelemetryReporter,
 		private readonly _tracer: Tracer,
+		private readonly _factory: TsServerProcessFactory,
 	) { }
 
 	public spawn(
@@ -55,6 +50,7 @@ export class TypeScriptServerSpawner {
 		capabilities: ClientCapabilities,
 		configuration: TypeScriptServiceConfiguration,
 		pluginManager: PluginManager,
+		cancellerFactory: OngoingRequestCancellerFactory,
 		delegate: TsServerDelegate,
 	): ITypeScriptServer {
 		let primaryServer: ITypeScriptServer;
@@ -65,26 +61,26 @@ export class TypeScriptServerSpawner {
 				{
 					const enableDynamicRouting = serverType === CompositeServerType.DynamicSeparateSyntax;
 					primaryServer = new SyntaxRoutingTsServer({
-						syntax: this.spawnTsServer(ServerKind.Syntax, version, configuration, pluginManager),
-						semantic: this.spawnTsServer(ServerKind.Semantic, version, configuration, pluginManager)
+						syntax: this.spawnTsServer(TsServerProcessKind.Syntax, version, configuration, pluginManager, cancellerFactory),
+						semantic: this.spawnTsServer(TsServerProcessKind.Semantic, version, configuration, pluginManager, cancellerFactory),
 					}, delegate, enableDynamicRouting);
 					break;
 				}
 			case CompositeServerType.Single:
 				{
-					primaryServer = this.spawnTsServer(ServerKind.Main, version, configuration, pluginManager);
+					primaryServer = this.spawnTsServer(TsServerProcessKind.Main, version, configuration, pluginManager, cancellerFactory);
 					break;
 				}
 			case CompositeServerType.SyntaxOnly:
 				{
-					primaryServer = this.spawnTsServer(ServerKind.Syntax, version, configuration, pluginManager);
+					primaryServer = this.spawnTsServer(TsServerProcessKind.Syntax, version, configuration, pluginManager, cancellerFactory);
 					break;
 				}
 		}
 
 		if (this.shouldUseSeparateDiagnosticsServer(configuration)) {
 			return new GetErrRoutingTsServer({
-				getErr: this.spawnTsServer(ServerKind.Diagnostics, version, configuration, pluginManager),
+				getErr: this.spawnTsServer(TsServerProcessKind.Diagnostics, version, configuration, pluginManager, cancellerFactory),
 				primary: primaryServer,
 			}, delegate);
 		}
@@ -122,14 +118,16 @@ export class TypeScriptServerSpawner {
 	}
 
 	private spawnTsServer(
-		kind: ServerKind,
+		kind: TsServerProcessKind,
 		version: TypeScriptVersion,
 		configuration: TypeScriptServiceConfiguration,
 		pluginManager: PluginManager,
+		cancellerFactory: OngoingRequestCancellerFactory,
 	): ITypeScriptServer {
 		const apiVersion = version.apiVersion || API.defaultVersion;
 
-		const { args, cancellationPipeName, tsServerLogFile } = this.getTsServerArgs(kind, configuration, version, apiVersion, pluginManager);
+		const canceller = cancellerFactory.create(kind, this._tracer);
+		const { args, tsServerLogFile } = this.getTsServerArgs(kind, configuration, version, apiVersion, pluginManager, canceller.cancellationPipeName);
 
 		if (TypeScriptServerSpawner.isLoggingEnabled(configuration)) {
 			if (tsServerLogFile) {
@@ -140,42 +138,31 @@ export class TypeScriptServerSpawner {
 		}
 
 		this._logger.info(`<${kind}> Forking...`);
-		const childProcess = electron.fork(version.tsServerPath, args, this.getForkOptions(kind, configuration));
+		const process = this._factory.fork(version.tsServerPath, args, kind, configuration, this._versionManager);
 		this._logger.info(`<${kind}> Starting...`);
 
 		return new ProcessBasedTsServer(
 			kind,
-			new ChildServerProcess(childProcess),
+			process!,
 			tsServerLogFile,
-			new PipeRequestCanceller(kind, cancellationPipeName, this._tracer),
+			canceller,
 			version,
 			this._telemetryReporter,
 			this._tracer);
 	}
 
-	private getForkOptions(kind: ServerKind, configuration: TypeScriptServiceConfiguration) {
-		const debugPort = TypeScriptServerSpawner.getDebugPort(kind);
-		const inspectFlag = process.env['TSS_DEBUG_BRK'] ? '--inspect-brk' : '--inspect';
-		const tsServerForkOptions: electron.ForkOptions = {
-			execArgv: [
-				...(debugPort ? [`${inspectFlag}=${debugPort}`] : []),
-				...(configuration.maxTsServerMemory ? [`--max-old-space-size=${configuration.maxTsServerMemory}`] : [])
-			]
-		};
-		return tsServerForkOptions;
-	}
-
 	private getTsServerArgs(
-		kind: ServerKind,
+		kind: TsServerProcessKind,
 		configuration: TypeScriptServiceConfiguration,
 		currentVersion: TypeScriptVersion,
 		apiVersion: API,
 		pluginManager: PluginManager,
-	): { args: string[], cancellationPipeName: string, tsServerLogFile: string | undefined } {
+		cancellationPipeName: string | undefined,
+	): { args: string[], tsServerLogFile: string | undefined } {
 		const args: string[] = [];
 		let tsServerLogFile: string | undefined;
 
-		if (kind === ServerKind.Syntax) {
+		if (kind === TsServerProcessKind.Syntax) {
 			args.push('--syntaxOnly');
 		}
 
@@ -185,16 +172,17 @@ export class TypeScriptServerSpawner {
 			args.push('--useSingleInferredProject');
 		}
 
-		if (configuration.disableAutomaticTypeAcquisition || kind === ServerKind.Syntax || kind === ServerKind.Diagnostics) {
+		if (configuration.disableAutomaticTypeAcquisition || kind === TsServerProcessKind.Syntax || kind === TsServerProcessKind.Diagnostics) {
 			args.push('--disableAutomaticTypingAcquisition');
 		}
 
-		if (kind === ServerKind.Semantic || kind === ServerKind.Main) {
+		if (kind === TsServerProcessKind.Semantic || kind === TsServerProcessKind.Main) {
 			args.push('--enableTelemetry');
 		}
 
-		const cancellationPipeName = electron.getTempFile('tscancellation');
-		args.push('--cancellationPipeName', cancellationPipeName + '*');
+		if (cancellationPipeName) {
+			args.push('--cancellationPipeName', cancellationPipeName + '*');
+		}
 
 		if (TypeScriptServerSpawner.isLoggingEnabled(configuration)) {
 			const logDir = this._logDirectoryProvider.getNewLogDirectory();
@@ -238,22 +226,7 @@ export class TypeScriptServerSpawner {
 			args.push('--validateDefaultNpmLocation');
 		}
 
-		return { args, cancellationPipeName, tsServerLogFile };
-	}
-
-	private static getDebugPort(kind: ServerKind): number | undefined {
-		if (kind === 'syntax') {
-			// We typically only want to debug the main semantic server
-			return undefined;
-		}
-		const value = process.env['TSS_DEBUG_BRK'] || process.env['TSS_DEBUG'];
-		if (value) {
-			const port = parseInt(value);
-			if (!isNaN(port)) {
-				return port;
-			}
-		}
-		return undefined;
+		return { args, tsServerLogFile };
 	}
 
 	private static isLoggingEnabled(configuration: TypeScriptServiceConfiguration) {

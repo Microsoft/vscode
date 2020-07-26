@@ -8,8 +8,8 @@ import { Emitter, Event } from 'vs/base/common/event';
 import * as UUID from 'vs/base/common/uuid';
 import * as editorCommon from 'vs/editor/common/editorCommon';
 import * as model from 'vs/editor/common/model';
-import { BOTTOM_CELL_TOOLBAR_HEIGHT, CELL_MARGIN, CELL_STATUSBAR_HEIGHT, EDITOR_TOP_MARGIN, CELL_BOTTOM_MARGIN, CODE_CELL_LEFT_MARGIN } from 'vs/workbench/contrib/notebook/browser/constants';
-import { CellFindMatch, ICellViewModel, MarkdownCellLayoutChangeEvent, MarkdownCellLayoutInfo, NotebookLayoutInfo } from 'vs/workbench/contrib/notebook/browser/notebookBrowser';
+import { BOTTOM_CELL_TOOLBAR_HEIGHT, CELL_MARGIN, CELL_STATUSBAR_HEIGHT, CELL_TOP_MARGIN, CELL_BOTTOM_MARGIN, CODE_CELL_LEFT_MARGIN, BOTTOM_CELL_TOOLBAR_OFFSET, COLLAPSED_INDICATOR_HEIGHT } from 'vs/workbench/contrib/notebook/browser/constants';
+import { CellCollapseState, CellFindMatch, ICellViewModel, MarkdownCellLayoutChangeEvent, MarkdownCellLayoutInfo, NotebookLayoutInfo } from 'vs/workbench/contrib/notebook/browser/notebookBrowser';
 import { MarkdownRenderer } from 'vs/workbench/contrib/notebook/browser/view/renderers/mdRenderer';
 import { BaseCellViewModel } from 'vs/workbench/contrib/notebook/browser/viewModel/baseCellViewModel';
 import { EditorFoldingStateDelegate } from 'vs/workbench/contrib/notebook/browser/contrib/fold/foldingModel';
@@ -18,7 +18,7 @@ import { CellKind, INotebookSearchOptions } from 'vs/workbench/contrib/notebook/
 import { NotebookEventDispatcher, NotebookCellStateChangedEvent } from 'vs/workbench/contrib/notebook/browser/viewModel/eventDispatcher';
 
 export class MarkdownCellViewModel extends BaseCellViewModel implements ICellViewModel {
-	cellKind: CellKind.Markdown = CellKind.Markdown;
+	readonly cellKind = CellKind.Markdown;
 	private _html: HTMLElement | null = null;
 	private _layoutInfo: MarkdownCellLayoutInfo;
 
@@ -45,7 +45,7 @@ export class MarkdownCellViewModel extends BaseCellViewModel implements ICellVie
 	set editorHeight(newHeight: number) {
 		this._editorHeight = newHeight;
 
-		this.totalHeight = this._editorHeight + EDITOR_TOP_MARGIN + CELL_BOTTOM_MARGIN + BOTTOM_CELL_TOOLBAR_HEIGHT + CELL_STATUSBAR_HEIGHT;
+		this.totalHeight = this._editorHeight + CELL_TOP_MARGIN + CELL_BOTTOM_MARGIN + BOTTOM_CELL_TOOLBAR_HEIGHT + CELL_STATUSBAR_HEIGHT;
 	}
 
 	get editorHeight() {
@@ -92,15 +92,31 @@ export class MarkdownCellViewModel extends BaseCellViewModel implements ICellVie
 
 	layoutChange(state: MarkdownCellLayoutChangeEvent) {
 		// recompute
-		const editorWidth = state.outerWidth !== undefined ? this.computeEditorWidth(state.outerWidth) : this._layoutInfo.editorWidth;
 
-		this._layoutInfo = {
-			fontInfo: state.font || this._layoutInfo.fontInfo,
-			editorWidth,
-			editorHeight: this._editorHeight,
-			bottomToolbarOffset: BOTTOM_CELL_TOOLBAR_HEIGHT,
-			totalHeight: state.totalHeight === undefined ? this._layoutInfo.totalHeight : state.totalHeight
-		};
+		if (this.collapseState === CellCollapseState.Normal) {
+			const editorWidth = state.outerWidth !== undefined ? this.computeEditorWidth(state.outerWidth) : this._layoutInfo.editorWidth;
+			const totalHeight = state.totalHeight === undefined ? this._layoutInfo.totalHeight : state.totalHeight;
+
+			this._layoutInfo = {
+				fontInfo: state.font || this._layoutInfo.fontInfo,
+				editorWidth,
+				editorHeight: this._editorHeight,
+				bottomToolbarOffset: totalHeight - BOTTOM_CELL_TOOLBAR_HEIGHT - BOTTOM_CELL_TOOLBAR_OFFSET,
+				totalHeight
+			};
+		} else {
+			const editorWidth = state.outerWidth !== undefined ? this.computeEditorWidth(state.outerWidth) : this._layoutInfo.editorWidth;
+			const totalHeight = CELL_TOP_MARGIN + COLLAPSED_INDICATOR_HEIGHT + BOTTOM_CELL_TOOLBAR_HEIGHT + CELL_BOTTOM_MARGIN;
+			state.totalHeight = totalHeight;
+
+			this._layoutInfo = {
+				fontInfo: state.font || this._layoutInfo.fontInfo,
+				editorWidth,
+				editorHeight: this._editorHeight,
+				bottomToolbarOffset: totalHeight - BOTTOM_CELL_TOOLBAR_HEIGHT - BOTTOM_CELL_TOOLBAR_OFFSET,
+				totalHeight
+			};
+		}
 
 		this._onDidChangeLayout.fire(state);
 	}
@@ -115,6 +131,7 @@ export class MarkdownCellViewModel extends BaseCellViewModel implements ICellVie
 				totalHeight: totalHeight,
 				editorHeight: this._editorHeight
 			};
+			this.layoutChange({});
 		}
 	}
 

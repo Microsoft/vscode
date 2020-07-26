@@ -295,6 +295,11 @@ interface IWorkbenchConstructionOptions {
 	 */
 	readonly defaultLayout?: IDefaultLayout;
 
+	/**
+	 * Optional configuration default overrides contributed to the workbench.
+	 */
+	readonly configurationDefaults?: Record<string, any>;
+
 	//#endregion
 
 
@@ -339,6 +344,11 @@ interface IWorkbenchConstructionOptions {
 	 * Whether to enable the smoke test driver.
 	 */
 	readonly driver?: boolean;
+
+	/**
+	 * Endpoints to be used for proxying authentication code exchange calls in the browser.
+	 */
+	readonly codeExchangeProxyEndpoints?: { [providerId: string]: string }
 
 	//#endregion
 }

@@ -27,12 +27,14 @@ namespace NotebookRendererContribution {
 	export const viewType = 'viewType';
 	export const displayName = 'displayName';
 	export const mimeTypes = 'mimeTypes';
+	export const entrypoint = 'entrypoint';
 }
 
-interface INotebookRendererContribution {
+export interface INotebookRendererContribution {
 	readonly [NotebookRendererContribution.viewType]: string;
 	readonly [NotebookRendererContribution.displayName]: string;
 	readonly [NotebookRendererContribution.mimeTypes]?: readonly string[];
+	readonly [NotebookRendererContribution.entrypoint]?: string;
 }
 
 const notebookProviderContribution: IJSONSchema = {
@@ -115,7 +117,11 @@ const notebookRendererContribution: IJSONSchema = {
 				items: {
 					type: 'string'
 				}
-			}
+			},
+			[NotebookRendererContribution.entrypoint]: {
+				type: 'string',
+				description: nls.localize('contributes.notebook.renderer.entrypoint', 'File to load in the webview to render the extension.'),
+			},
 		}
 	}
 };

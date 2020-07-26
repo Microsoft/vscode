@@ -77,7 +77,7 @@ const vscodeResources = [
 	'out-build/vs/platform/files/**/*.md',
 	'out-build/vs/code/electron-browser/workbench/**',
 	'out-build/vs/code/electron-browser/sharedProcess/sharedProcess.js',
-	'out-build/vs/code/electron-browser/issue/issueReporter.js',
+	'out-build/vs/code/electron-sandbox/issue/issueReporter.js',
 	'out-build/vs/code/electron-sandbox/processExplorer/processExplorer.js',
 	'out-build/vs/platform/auth/common/auth.css',
 	'!**/test/**'

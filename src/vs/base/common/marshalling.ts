@@ -3,8 +3,9 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { URI } from 'vs/base/common/uri';
+import { VSBuffer } from 'vs/base/common/buffer';
 import { regExpFlags } from 'vs/base/common/strings';
+import { URI } from 'vs/base/common/uri';
 
 export function stringify(obj: any): string {
 	return JSON.stringify(obj, replacer);
@@ -44,10 +45,23 @@ export function revive(obj: any, depth = 0): any {
 			case 2: return new RegExp(obj.source, obj.flags);
 		}
 
-		// walk object (or array)
-		for (let key in obj) {
-			if (Object.hasOwnProperty.call(obj, key)) {
-				obj[key] = revive(obj[key], depth + 1);
+		if (
+			obj instanceof VSBuffer
+			|| obj instanceof Uint8Array
+		) {
+			return obj;
+		}
+
+		if (Array.isArray(obj)) {
+			for (let i = 0; i < obj.length; ++i) {
+				obj[i] = revive(obj[i], depth + 1);
+			}
+		} else {
+			// walk object
+			for (const key in obj) {
+				if (Object.hasOwnProperty.call(obj, key)) {
+					obj[key] = revive(obj[key], depth + 1);
+				}
 			}
 		}
 	}

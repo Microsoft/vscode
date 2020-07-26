@@ -23,7 +23,6 @@ import { IProductService } from 'vs/platform/product/common/productService';
 
 interface IConfiguration extends IWindowsConfiguration {
 	update: { mode: string; };
-	telemetry: { enableCrashReporter: boolean };
 	debug: { console: { wordWrap: boolean } };
 	editor: { accessibilitySupport: 'on' | 'off' | 'auto' };
 }
@@ -35,7 +34,6 @@ export class SettingsChangeRelauncher extends Disposable implements IWorkbenchCo
 	private nativeFullScreen: boolean | undefined;
 	private clickThroughInactive: boolean | undefined;
 	private updateMode: string | undefined;
-	private enableCrashReporter: boolean | undefined;
 	private debugConsoleWordWrap: boolean | undefined;
 	private accessibilitySupport: 'on' | 'off' | 'auto' | undefined;
 
@@ -89,12 +87,6 @@ export class SettingsChangeRelauncher extends Disposable implements IWorkbenchCo
 			// Update channel
 			if (typeof config.update?.mode === 'string' && config.update.mode !== this.updateMode) {
 				this.updateMode = config.update.mode;
-				changed = true;
-			}
-
-			// Crash reporter
-			if (typeof config.telemetry?.enableCrashReporter === 'boolean' && config.telemetry.enableCrashReporter !== this.enableCrashReporter) {
-				this.enableCrashReporter = config.telemetry.enableCrashReporter;
 				changed = true;
 			}
 

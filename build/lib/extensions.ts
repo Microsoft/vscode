@@ -21,6 +21,7 @@ import * as fancyLog from 'fancy-log';
 import * as ansiColors from 'ansi-colors';
 const buffer = require('gulp-buffer');
 import json = require('gulp-json-editor');
+import * as jsoncParser from 'jsonc-parser';
 const webpack = require('webpack');
 const webpackGulp = require('webpack-stream');
 const util = require('./util');
@@ -28,16 +29,21 @@ const root = path.dirname(path.dirname(__dirname));
 const commit = util.getVersion(root);
 const sourceMappingURLBase = `https://ticino.blob.core.windows.net/sourcemaps/${commit}`;
 
-function minimizeLanguageJSON(input: Stream): Stream {
-	const tmLanguageJsonFilter = filter('**/*.tmLanguage.json', { restore: true });
+function minifyExtensionResources(input: Stream): Stream {
+	const jsonFilter = filter(['**/*.json', '**/*.code-snippets'], { restore: true });
 	return input
-		.pipe(tmLanguageJsonFilter)
+		.pipe(jsonFilter)
 		.pipe(buffer())
 		.pipe(es.mapSync((f: File) => {
-			f.contents = Buffer.from(JSON.stringify(JSON.parse(f.contents.toString('utf8'))));
+			const errors: jsoncParser.ParseError[] = [];
+			const value = jsoncParser.parse(f.contents.toString('utf8'), errors);
+			if (errors.length === 0) {
+				// file parsed OK => just stringify to drop whitespace and comments
+				f.contents = Buffer.from(JSON.stringify(value));
+			}
 			return f;
 		}))
-		.pipe(tmLanguageJsonFilter.restore);
+		.pipe(jsonFilter.restore);
 }
 
 function updateExtensionPackageJSON(input: Stream, update: (data: any) => any): Stream {
@@ -61,16 +67,11 @@ function fromLocal(extensionPath: string, forWeb: boolean): Stream {
 		? fromLocalWebpack(extensionPath, webpackConfigFileName)
 		: fromLocalNormal(extensionPath);
 
-	if (forWeb) {
+	if (isWebPacked) {
 		input = updateExtensionPackageJSON(input, (data: any) => {
-			if (data.browser) {
-				data.main = data.browser;
-			}
-			data.extensionKind = ['web'];
-			return data;
-		});
-	} else if (isWebPacked) {
-		input = updateExtensionPackageJSON(input, (data: any) => {
+			delete data.scripts;
+			delete data.dependencies;
+			delete data.devDependencies;
 			if (data.main) {
 				data.main = data.main.replace('/out/', /dist/);
 			}
@@ -78,7 +79,7 @@ function fromLocal(extensionPath: string, forWeb: boolean): Stream {
 		});
 	}
 
-	return minimizeLanguageJSON(input);
+	return input;
 }
 
 
@@ -243,7 +244,7 @@ interface IBuiltInExtension {
 
 const builtInExtensions: IBuiltInExtension[] = JSON.parse(fs.readFileSync(path.join(__dirname, '../../product.json'), 'utf8')).builtInExtensions;
 
-export function packageLocalExtensionsStream(): NodeJS.ReadWriteStream {
+export function packageLocalExtensionsStream(): Stream {
 	const localExtensionDescriptions = (<string[]>glob.sync('extensions/*/package.json'))
 		.map(manifestPath => {
 			const extensionPath = path.dirname(path.join(root, manifestPath));
@@ -260,11 +261,13 @@ export function packageLocalExtensionsStream(): NodeJS.ReadWriteStream {
 	});
 
 	const nodeModules = gulp.src('extensions/node_modules/**', { base: '.' });
-	return es.merge(nodeModules, ...localExtensions)
-		.pipe(util2.setExecutableBit(['**/*.sh']));
+	return minifyExtensionResources(
+		es.merge(nodeModules, ...localExtensions)
+		.pipe(util2.setExecutableBit(['**/*.sh']))
+	);
 }
 
-export function packageLocalWebExtensionsStream(): NodeJS.ReadWriteStream {
+export function packageLocalWebExtensionsStream(): Stream {
 	const localExtensionDescriptions = (<string[]>glob.sync('extensions/*/package.json'))
 		.filter(manifestPath => {
 			const packageJsonConfig = require(path.join(root, manifestPath));
@@ -276,23 +279,27 @@ export function packageLocalWebExtensionsStream(): NodeJS.ReadWriteStream {
 			return { name: extensionName, path: extensionPath };
 		});
 
-	return es.merge(...localExtensionDescriptions.map(extension => {
-		return fromLocal(extension.path, true)
-			.pipe(rename(p => p.dirname = `extensions/${extension.name}/${p.dirname}`));
-	}));
+	return minifyExtensionResources(
+		es.merge(...localExtensionDescriptions.map(extension => {
+			return fromLocal(extension.path, true)
+				.pipe(rename(p => p.dirname = `extensions/${extension.name}/${p.dirname}`));
+		}))
+	);
 }
 
-export function packageMarketplaceExtensionsStream(): NodeJS.ReadWriteStream {
+export function packageMarketplaceExtensionsStream(): Stream {
 	const extensions = builtInExtensions.map(extension => {
 		return fromMarketplace(extension.name, extension.version, extension.metadata)
 			.pipe(rename(p => p.dirname = `extensions/${extension.name}/${p.dirname}`));
 	});
 
-	return es.merge(extensions)
-		.pipe(util2.setExecutableBit(['**/*.sh']));
+	return minifyExtensionResources(
+		es.merge(extensions)
+		.pipe(util2.setExecutableBit(['**/*.sh']))
+	);
 }
 
-export function packageMarketplaceWebExtensionsStream(builtInExtensions: IBuiltInExtension[]): NodeJS.ReadWriteStream {
+export function packageMarketplaceWebExtensionsStream(builtInExtensions: IBuiltInExtension[]): Stream {
 	const extensions = builtInExtensions
 		.map(extension => {
 			const input = fromMarketplace(extension.name, extension.version, extension.metadata)
@@ -305,7 +312,9 @@ export function packageMarketplaceWebExtensionsStream(builtInExtensions: IBuiltI
 				return data;
 			});
 		});
-	return es.merge(extensions);
+	return minifyExtensionResources(
+		es.merge(extensions)
+	);
 }
 
 export interface IScannedBuiltinExtension {
@@ -336,7 +345,7 @@ export function scanBuiltinExtensions(extensionsRoot: string, forWeb: boolean): 
 
 		if (packageNLS) {
 			// temporary
-			packageJSON = translatePackageJSON(packageJSON, path.join(extensionsRoot, extensionFolder, packageNLS))
+			packageJSON = translatePackageJSON(packageJSON, path.join(extensionsRoot, extensionFolder, packageNLS));
 		}
 		scannedExtensions.push({
 			extensionPath: extensionFolder,

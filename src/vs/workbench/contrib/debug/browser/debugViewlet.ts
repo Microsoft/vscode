@@ -5,9 +5,8 @@
 
 import 'vs/css!./media/debugViewlet';
 import * as nls from 'vs/nls';
-import { IAction } from 'vs/base/common/actions';
+import { IAction, IActionViewItem } from 'vs/base/common/actions';
 import * as DOM from 'vs/base/browser/dom';
-import { IActionViewItem } from 'vs/base/browser/ui/actionbar/actionbar';
 import { IDebugService, VIEWLET_ID, State, BREAKPOINTS_VIEW_ID, IDebugConfiguration, CONTEXT_DEBUG_UX, CONTEXT_DEBUG_UX_KEY, REPL_VIEW_ID } from 'vs/workbench/contrib/debug/common/debug';
 import { StartAction, ConfigureAction, SelectAndStartAction, FocusSessionAction } from 'vs/workbench/contrib/debug/browser/debugActions';
 import { StartDebugActionViewItem, FocusSessionActionViewItem } from 'vs/workbench/contrib/debug/browser/debugActionViewItems';
@@ -24,12 +23,10 @@ import { IWorkbenchLayoutService } from 'vs/workbench/services/layout/browser/la
 import { memoize } from 'vs/base/common/decorators';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { DebugToolBar } from 'vs/workbench/contrib/debug/browser/debugToolBar';
-import { IKeybindingService } from 'vs/platform/keybinding/common/keybinding';
 import { ViewPane, ViewPaneContainer } from 'vs/workbench/browser/parts/views/viewPaneContainer';
-import { IMenu, MenuId, IMenuService, MenuItemAction } from 'vs/platform/actions/common/actions';
+import { IMenu, MenuId, IMenuService, MenuItemAction, SubmenuItemAction } from 'vs/platform/actions/common/actions';
 import { IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
-import { MenuEntryActionViewItem } from 'vs/platform/actions/browser/menuEntryActionViewItem';
-import { INotificationService } from 'vs/platform/notification/common/notification';
+import { MenuEntryActionViewItem, SubmenuEntryActionViewItem } from 'vs/platform/actions/browser/menuEntryActionViewItem';
 import { IViewDescriptorService, IViewsService } from 'vs/workbench/common/views';
 import { WelcomeView } from 'vs/workbench/contrib/debug/browser/welcomeView';
 import { ToggleViewAction } from 'vs/workbench/browser/actions/layoutActions';
@@ -55,11 +52,9 @@ export class DebugViewPaneContainer extends ViewPaneContainer {
 		@IContextMenuService contextMenuService: IContextMenuService,
 		@IExtensionService extensionService: IExtensionService,
 		@IConfigurationService configurationService: IConfigurationService,
-		@IKeybindingService private readonly keybindingService: IKeybindingService,
 		@IContextViewService private readonly contextViewService: IContextViewService,
 		@IMenuService private readonly menuService: IMenuService,
 		@IContextKeyService private readonly contextKeyService: IContextKeyService,
-		@INotificationService private readonly notificationService: INotificationService,
 		@IViewDescriptorService viewDescriptorService: IViewDescriptorService
 	) {
 		super(VIEWLET_ID, { mergeViewWithContainerWhenSingleView: true }, instantiationService, configurationService, layoutService, contextMenuService, telemetryService, extensionService, themeService, storageService, contextService, viewDescriptorService);
@@ -165,7 +160,9 @@ export class DebugViewPaneContainer extends ViewPaneContainer {
 			return new FocusSessionActionViewItem(action, this.debugService, this.themeService, this.contextViewService, this.configurationService);
 		}
 		if (action instanceof MenuItemAction) {
-			return new MenuEntryActionViewItem(action, this.keybindingService, this.notificationService, this.contextMenuService);
+			return this.instantiationService.createInstance(MenuEntryActionViewItem, action);
+		} else if (action instanceof SubmenuItemAction) {
+			return this.instantiationService.createInstance(SubmenuEntryActionViewItem, action);
 		}
 
 		return undefined;

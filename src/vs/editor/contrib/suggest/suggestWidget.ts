@@ -43,9 +43,10 @@ import { MarkdownString } from 'vs/base/common/htmlContent';
 import { flatten, isFalsyOrEmpty } from 'vs/base/common/arrays';
 import { IKeyboardEvent } from 'vs/base/browser/keyboardEvent';
 import { IMenuService } from 'vs/platform/actions/common/actions';
-import { ActionBar, IActionViewItemProvider, ActionViewItem } from 'vs/base/browser/ui/actionbar/actionbar';
-import { IAction } from 'vs/base/common/actions';
+import { ActionBar } from 'vs/base/browser/ui/actionbar/actionbar';
+import { IAction, IActionViewItemProvider } from 'vs/base/common/actions';
 import { Codicon, registerIcon } from 'vs/base/common/codicons';
+import { ActionViewItem } from 'vs/base/browser/ui/actionbar/actionViewItems';
 
 const expandSuggestionDocsByDefault = false;
 

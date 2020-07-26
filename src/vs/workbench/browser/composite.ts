@@ -3,8 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { IAction, IActionRunner, ActionRunner } from 'vs/base/common/actions';
-import { IActionViewItem } from 'vs/base/browser/ui/actionbar/actionbar';
+import { IAction, IActionRunner, ActionRunner, IActionViewItem } from 'vs/base/common/actions';
 import { Component } from 'vs/workbench/common/component';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 import { IComposite, ICompositeControl } from 'vs/workbench/common/composite';

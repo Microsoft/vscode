@@ -66,6 +66,7 @@ suite('MainThreadHostTreeView', function () {
 				getProxy(): any {
 					return extHostTreeViewsShape;
 				}
+				drain(): any { return null; }
 			}, new TestViewsService(), new TestNotificationService(), testExtensionService, new NullLogService());
 		mainThreadTreeViews.$registerTreeViewDataProvider(testTreeViewId, { showCollapseAll: false, canSelectMany: false });
 		await testExtensionService.whenInstalledExtensionsRegistered();

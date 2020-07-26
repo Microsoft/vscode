@@ -59,18 +59,29 @@ export function getExtensionKind(manifest: IExtensionManifest, productService: I
 		return toArray(result);
 	}
 
+	return deduceExtensionKind(manifest);
+}
+
+export function deduceExtensionKind(manifest: IExtensionManifest): ExtensionKind[] {
 	// Not an UI extension if it has main
 	if (manifest.main) {
+		if (manifest.browser) {
+			return ['workspace', 'web'];
+		}
 		return ['workspace'];
 	}
 
-	// Not an UI extension if it has dependencies or an extension pack
+	if (manifest.browser) {
+		return ['web'];
+	}
+
+	// Not an UI nor web extension if it has dependencies or an extension pack
 	if (isNonEmptyArray(manifest.extensionDependencies) || isNonEmptyArray(manifest.extensionPack)) {
 		return ['workspace'];
 	}
 
 	if (manifest.contributes) {
-		// Not an UI extension if it has no ui contributions
+		// Not an UI nor web extension if it has no ui contributions
 		for (const contribution of Object.keys(manifest.contributes)) {
 			if (!isUIExtensionPoint(contribution)) {
 				return ['workspace'];
@@ -78,7 +89,7 @@ export function getExtensionKind(manifest: IExtensionManifest, productService: I
 		}
 	}
 
-	return ['ui', 'workspace'];
+	return ['ui', 'workspace', 'web'];
 }
 
 let _uiExtensionPoints: Set<string> | null = null;

@@ -128,7 +128,7 @@ export class MainThreadExtensionService implements MainThreadExtensionServiceSha
 		}
 	}
 
-	$onExtensionHostExit(code: number): void {
+	async $onExtensionHostExit(code: number): Promise<void> {
 		this._extensionService._onExtensionHostExit(code);
 	}
 }

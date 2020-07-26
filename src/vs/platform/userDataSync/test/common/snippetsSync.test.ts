@@ -596,7 +596,7 @@ suite('SnippetsSync', () => {
 
 		await updateSnippet('html.json', htmlSnippet2, testClient);
 		await testObject.sync(await testClient.manifest());
-		await testObject.accept(testObject.conflicts[0].previewResource, '');
+		await testObject.accept(testObject.conflicts[0].previewResource, null);
 		await testObject.apply(false);
 
 		assert.equal(testObject.status, SyncStatus.Idle);

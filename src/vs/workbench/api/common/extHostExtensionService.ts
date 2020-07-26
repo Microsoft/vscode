@@ -193,8 +193,6 @@ export abstract class AbstractExtHostExtensionService extends Disposable impleme
 		}
 	}
 
-	protected abstract _beforeAlmostReadyToRunExtensions(): Promise<void>;
-
 	public async deactivateAll(): Promise<void> {
 		let allPromises: Promise<void>[] = [];
 		try {
@@ -254,7 +252,7 @@ export abstract class AbstractExtHostExtensionService extends Disposable impleme
 		if (!this._extensionPathIndex) {
 			const tree = TernarySearchTree.forPaths<IExtensionDescription>();
 			const extensions = this._registry.getAllExtensionDescriptions().map(ext => {
-				if (!ext.main) {
+				if (!this._getEntryPoint(ext)) {
 					return undefined;
 				}
 				return this._hostUtils.realpath(ext.extensionLocation.fsPath).then(value => tree.set(URI.file(value).fsPath, ext));
@@ -345,7 +343,8 @@ export abstract class AbstractExtHostExtensionService extends Disposable impleme
 		const event = getTelemetryActivationEvent(extensionDescription, reason);
 		type ActivatePluginClassification = {} & TelemetryActivationEventFragment;
 		this._mainThreadTelemetryProxy.$publicLog2<TelemetryActivationEvent, ActivatePluginClassification>('activatePlugin', event);
-		if (!extensionDescription.main) {
+		const entryPoint = this._getEntryPoint(extensionDescription);
+		if (!entryPoint) {
 			// Treat the extension as being empty => NOT AN ERROR CASE
 			return Promise.resolve(new EmptyExtension(ExtensionActivationTimes.NONE));
 		}
@@ -355,14 +354,12 @@ export abstract class AbstractExtHostExtensionService extends Disposable impleme
 
 		const activationTimesBuilder = new ExtensionActivationTimesBuilder(reason.startup);
 		return Promise.all([
-			this._loadCommonJSModule<IExtensionModule>(joinPath(extensionDescription.extensionLocation, extensionDescription.main), activationTimesBuilder),
+			this._loadCommonJSModule<IExtensionModule>(joinPath(extensionDescription.extensionLocation, entryPoint), activationTimesBuilder),
 			this._loadExtensionContext(extensionDescription)
 		]).then(values => {
 			return AbstractExtHostExtensionService._callActivate(this._logService, extensionDescription.identifier, values[0], values[1], activationTimesBuilder);
 		});
 	}
-
-	protected abstract _loadCommonJSModule<T>(module: URI, activationTimesBuilder: ExtensionActivationTimesBuilder): Promise<T>;
 
 	private _loadExtensionContext(extensionDescription: IExtensionDescription): Promise<vscode.ExtensionContext> {
 
@@ -557,7 +554,7 @@ export abstract class AbstractExtHostExtensionService extends Disposable impleme
 					}
 
 					// after tests have run, we shutdown the host
-					this._gracefulExit(error || (typeof failures === 'number' && failures > 0) ? 1 /* ERROR */ : 0 /* OK */);
+					this._testRunnerExit(error || (typeof failures === 'number' && failures > 0) ? 1 /* ERROR */ : 0 /* OK */);
 				};
 
 				const runResult = testRunner!.run(extensionTestsPath, oldTestRunnerCallback);
@@ -567,11 +564,11 @@ export abstract class AbstractExtHostExtensionService extends Disposable impleme
 					runResult
 						.then(() => {
 							c();
-							this._gracefulExit(0);
+							this._testRunnerExit(0);
 						})
 						.catch((err: Error) => {
 							e(err.toString());
-							this._gracefulExit(1);
+							this._testRunnerExit(1);
 						});
 				}
 			});
@@ -579,24 +576,20 @@ export abstract class AbstractExtHostExtensionService extends Disposable impleme
 
 		// Otherwise make sure to shutdown anyway even in case of an error
 		else {
-			this._gracefulExit(1 /* ERROR */);
+			this._testRunnerExit(1 /* ERROR */);
 		}
 
 		return Promise.reject(new Error(requireError ? requireError.toString() : nls.localize('extensionTestError', "Path {0} does not point to a valid extension test runner.", extensionTestsPath)));
 	}
 
-	private _gracefulExit(code: number): void {
-		// to give the PH process a chance to flush any outstanding console
-		// messages to the main process, we delay the exit() by some time
-		setTimeout(() => {
-			// If extension tests are running, give the exit code to the renderer
-			if (this._initData.remote.isRemote && !!this._initData.environment.extensionTestsLocationURI) {
-				this._mainThreadExtensionsProxy.$onExtensionHostExit(code);
-				return;
-			}
-
+	private _testRunnerExit(code: number): void {
+		// wait at most 5000ms for the renderer to confirm our exit request and for the renderer socket to drain
+		// (this is to ensure all outstanding messages reach the renderer)
+		const exitPromise = this._mainThreadExtensionsProxy.$onExtensionHostExit(code);
+		const drainPromise = this._extHostContext.drain();
+		Promise.race([Promise.all([exitPromise, drainPromise]), timeout(5000)]).then(() => {
 			this._hostUtils.exit(code);
-		}, 500);
+		});
 	}
 
 	private _startExtensionHost(): Promise<void> {
@@ -751,6 +744,9 @@ export abstract class AbstractExtHostExtensionService extends Disposable impleme
 		this._onDidChangeRemoteConnectionData.fire();
 	}
 
+	protected abstract _beforeAlmostReadyToRunExtensions(): Promise<void>;
+	protected abstract _getEntryPoint(extensionDescription: IExtensionDescription): string | undefined;
+	protected abstract _loadCommonJSModule<T>(module: URI, activationTimesBuilder: ExtensionActivationTimesBuilder): Promise<T>;
 	public abstract async $setRemoteEnvironment(env: { [key: string]: string | null }): Promise<void>;
 }
 

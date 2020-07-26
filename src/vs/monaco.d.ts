@@ -3557,9 +3557,9 @@ declare namespace monaco.editor {
 	 * Configuration options for quick suggestions
 	 */
 	export interface IQuickSuggestionsOptions {
-		other: boolean;
-		comments: boolean;
-		strings: boolean;
+		other?: boolean;
+		comments?: boolean;
+		strings?: boolean;
 	}
 
 	export type ValidQuickSuggestionsOptions = boolean | Readonly<Required<IQuickSuggestionsOptions>>;

@@ -111,16 +111,15 @@ function onConfigureExcludesSelected(
 
 export function create(
 	client: ITypeScriptServiceClient,
-	telemetryReporter: TelemetryReporter
-) {
+): vscode.Disposable {
 	const toDispose: vscode.Disposable[] = [];
 
-	const item = new ExcludeHintItem(telemetryReporter);
+	const item = new ExcludeHintItem(client.telemetryReporter);
 	toDispose.push(vscode.commands.registerCommand('js.projectStatus.command', () => {
 		if (item.configFileName) {
 			onConfigureExcludesSelected(client, item.configFileName);
 		}
-		let { message } = item.getCurrentHint();
+		const { message } = item.getCurrentHint();
 		return vscode.window.showInformationMessage(message);
 	}));
 
@@ -128,4 +127,3 @@ export function create(
 
 	return vscode.Disposable.from(...toDispose);
 }
-

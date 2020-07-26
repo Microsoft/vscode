@@ -3,10 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as fs from 'fs';
 import * as vscode from 'vscode';
-import { memoize } from './memoize';
-import { getTempFile } from './temp';
 
 /**
  * Maps of file resources
@@ -18,7 +15,10 @@ export class ResourceMap<T> {
 	private readonly _map = new Map<string, { resource: vscode.Uri, value: T }>();
 
 	constructor(
-		private readonly _normalizePath: (resource: vscode.Uri) => string | undefined = (resource) => resource.fsPath
+		private readonly _normalizePath: (resource: vscode.Uri) => string | undefined = (resource) => resource.fsPath,
+		protected readonly config: {
+			readonly onCaseInsenitiveFileSystem: boolean,
+		},
 	) { }
 
 	public get size() {
@@ -83,23 +83,10 @@ export class ResourceMap<T> {
 		if (isWindowsPath(path)) {
 			return true;
 		}
-		return path[0] === '/' && this.onIsCaseInsenitiveFileSystem;
-	}
-
-	@memoize
-	private get onIsCaseInsenitiveFileSystem() {
-		if (process.platform === 'win32') {
-			return true;
-		}
-		if (process.platform !== 'darwin') {
-			return false;
-		}
-		const temp = getTempFile('typescript-case-check');
-		fs.writeFileSync(temp, '');
-		return fs.existsSync(temp.toUpperCase());
+		return path[0] === '/' && this.config.onCaseInsenitiveFileSystem;
 	}
 }
 
-export function isWindowsPath(path: string): boolean {
+function isWindowsPath(path: string): boolean {
 	return /^[a-zA-Z]:[\/\\]/.test(path);
 }

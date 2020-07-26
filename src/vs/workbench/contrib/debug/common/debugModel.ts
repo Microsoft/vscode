@@ -689,7 +689,7 @@ export class Breakpoint extends BaseBreakpoint implements IBreakpoint {
 
 	toJSON(): any {
 		const result = super.toJSON();
-		result.uri = this.uri;
+		result.uri = this._uri;
 		result.lineNumber = this._lineNumber;
 		result.column = this._column;
 		result.adapterData = this.adapterData;

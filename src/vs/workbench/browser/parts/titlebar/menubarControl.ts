@@ -8,8 +8,7 @@ import { IMenuService, MenuId, IMenu, SubmenuItemAction, registerAction2, Action
 import { registerThemingParticipant, IColorTheme, ICssStyleCollector, IThemeService } from 'vs/platform/theme/common/themeService';
 import { MenuBarVisibility, getTitleBarStyle, IWindowOpenable, getMenuBarVisibility } from 'vs/platform/windows/common/windows';
 import { IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
-import { IAction, Action } from 'vs/base/common/actions';
-import { Separator } from 'vs/base/browser/ui/actionbar/actionbar';
+import { IAction, Action, SubmenuAction, Separator } from 'vs/base/common/actions';
 import * as DOM from 'vs/base/browser/dom';
 import { IKeybindingService } from 'vs/platform/keybinding/common/keybinding';
 import { isMacintosh, isWeb, isIOS } from 'vs/base/common/platform';
@@ -27,7 +26,7 @@ import { INotificationService, Severity } from 'vs/platform/notification/common/
 import { IPreferencesService } from 'vs/workbench/services/preferences/common/preferences';
 import { IWorkbenchEnvironmentService } from 'vs/workbench/services/environment/common/environmentService';
 import { MenuBar, IMenuBarOptions } from 'vs/base/browser/ui/menu/menubar';
-import { SubmenuAction, Direction } from 'vs/base/browser/ui/menu/menu';
+import { Direction } from 'vs/base/browser/ui/menu/menu';
 import { attachMenuStyler } from 'vs/platform/theme/common/styler';
 import { mnemonicMenuLabel, unmnemonicLabel } from 'vs/base/common/labels';
 import { IAccessibilityService } from 'vs/platform/accessibility/common/accessibility';
@@ -599,7 +598,7 @@ export class CustomMenubarControl extends MenubarControl {
 
 						const submenuActions: SubmenuAction[] = [];
 						updateActions(submenu, submenuActions, topLevelTitle);
-						target.push(new SubmenuAction(mnemonicMenuLabel(action.label), submenuActions));
+						target.push(new SubmenuAction(action.id, mnemonicMenuLabel(action.label), submenuActions));
 					} else {
 						action.label = mnemonicMenuLabel(this.calculateActionLabel(action));
 						target.push(action);

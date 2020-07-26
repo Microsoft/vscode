@@ -28,6 +28,7 @@ export const NullTelemetryService = new class implements ITelemetryService {
 		return this.publicLogError(eventName, data as ITelemetryData);
 	}
 
+	setExperimentProperty() { }
 	setEnabled() { }
 	isOptedIn = true;
 	getTelemetryInfo(): Promise<ITelemetryInfo> {

@@ -12,7 +12,8 @@
     "Other"
   ],
   "activationEvents": [
-    "*"
+    "*",
+    "onAuthenticationRequest:github"
   ],
   "contributes": {
     "commands": [

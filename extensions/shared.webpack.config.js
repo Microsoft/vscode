@@ -78,7 +78,7 @@ function withNodeDefaults(/**@type WebpackConfig*/extConfig) {
 	};
 
 	return merge(defaultConfig, extConfig);
-};
+}
 
 
 function withBrowserDefaults(/**@type WebpackConfig*/extConfig) {
@@ -135,7 +135,7 @@ function withBrowserDefaults(/**@type WebpackConfig*/extConfig) {
 	};
 
 	return merge(defaultConfig, extConfig);
-};
+}
 
 
 module.exports = withNodeDefaults;

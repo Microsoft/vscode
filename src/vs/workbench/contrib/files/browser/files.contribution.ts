@@ -34,7 +34,7 @@ import { ILabelService } from 'vs/platform/label/common/label';
 import { IWorkbenchLayoutService } from 'vs/workbench/services/layout/browser/layoutService';
 import { registerSingleton } from 'vs/platform/instantiation/common/extensions';
 import { ExplorerService } from 'vs/workbench/contrib/files/common/explorerService';
-import { SUPPORTED_ENCODINGS } from 'vs/workbench/services/textfile/common/textfiles';
+import { SUPPORTED_ENCODINGS } from 'vs/workbench/services/textfile/common/encoding';
 import { Schemas } from 'vs/base/common/network';
 import { WorkspaceWatcher } from 'vs/workbench/contrib/files/common/workspaceWatcher';
 import { editorConfigurationBaseNode } from 'vs/editor/common/config/commonEditorConfig';

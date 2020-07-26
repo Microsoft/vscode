@@ -18,7 +18,7 @@ import { Emitter, Event } from 'vs/base/common/event';
 import { Button, IButtonStyles } from 'vs/base/browser/ui/button/button';
 import { dispose, Disposable, DisposableStore } from 'vs/base/common/lifecycle';
 import Severity from 'vs/base/common/severity';
-import { ActionBar, ActionViewItem } from 'vs/base/browser/ui/actionbar/actionbar';
+import { ActionBar } from 'vs/base/browser/ui/actionbar/actionbar';
 import { Action } from 'vs/base/common/actions';
 import { equals } from 'vs/base/common/arrays';
 import { TimeoutTimer } from 'vs/base/common/async';
@@ -28,6 +28,7 @@ import { List, IListOptions, IListStyles } from 'vs/base/browser/ui/list/listWid
 import { IInputBoxStyles } from 'vs/base/browser/ui/inputbox/inputBox';
 import { Color } from 'vs/base/common/color';
 import { registerIcon, Codicon } from 'vs/base/common/codicons';
+import { ActionViewItem } from 'vs/base/browser/ui/actionbar/actionViewItems';
 
 export interface IQuickInputOptions {
 	idPrefix: string;

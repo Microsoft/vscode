@@ -96,12 +96,12 @@ export function requireConfiguration(
 	);
 }
 
-export function requireCapability(
+export function requireSomeCapability(
 	client: ITypeScriptServiceClient,
-	requiredCapability: ClientCapability,
+	...capabilities: readonly ClientCapability[]
 ) {
 	return new Condition(
-		() => client.capabilities.has(requiredCapability),
+		() => capabilities.some(requiredCapability => client.capabilities.has(requiredCapability)),
 		client.onDidChangeCapabilities
 	);
 }

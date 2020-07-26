@@ -3,8 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { IAction, IActionRunner, ActionRunner, WorkbenchActionExecutedEvent, WorkbenchActionExecutedClassification } from 'vs/base/common/actions';
-import { Separator } from 'vs/base/browser/ui/actionbar/actionbar';
+import { IAction, IActionRunner, ActionRunner, WorkbenchActionExecutedEvent, WorkbenchActionExecutedClassification, Separator, SubmenuAction } from 'vs/base/common/actions';
 import * as dom from 'vs/base/browser/dom';
 import { IContextMenuService, IContextViewService } from 'vs/platform/contextview/browser/contextView';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
@@ -13,7 +12,7 @@ import { getZoomFactor } from 'vs/base/browser/browser';
 import { unmnemonicLabel } from 'vs/base/common/labels';
 import { Event, Emitter } from 'vs/base/common/event';
 import { INotificationService } from 'vs/platform/notification/common/notification';
-import { IContextMenuDelegate, ContextSubMenu, IContextMenuEvent } from 'vs/base/browser/contextmenu';
+import { IContextMenuDelegate, IContextMenuEvent } from 'vs/base/browser/contextmenu';
 import { once } from 'vs/base/common/functional';
 import { Disposable } from 'vs/base/common/lifecycle';
 import { IContextMenuItem } from 'vs/base/parts/contextmenu/common/contextmenu';
@@ -26,6 +25,7 @@ import { ContextMenuService as HTMLContextMenuService } from 'vs/platform/contex
 import { IThemeService } from 'vs/platform/theme/common/themeService';
 import { registerSingleton } from 'vs/platform/instantiation/common/extensions';
 import { stripCodicons } from 'vs/base/common/codicons';
+import { coalesce } from 'vs/base/common/arrays';
 
 export class ContextMenuService extends Disposable implements IContextMenuService {
 
@@ -124,24 +124,28 @@ class NativeContextMenuService extends Disposable implements IContextMenuService
 		}
 	}
 
-	private createMenu(delegate: IContextMenuDelegate, entries: ReadonlyArray<IAction | ContextSubMenu>, onHide: () => void): IContextMenuItem[] {
+	private createMenu(delegate: IContextMenuDelegate, entries: IAction[], onHide: () => void, submenuIds = new Set<string>()): IContextMenuItem[] {
 		const actionRunner = delegate.actionRunner || new ActionRunner();
-
-		return entries.map(entry => this.createMenuItem(delegate, entry, actionRunner, onHide));
+		return coalesce(entries.map(entry => this.createMenuItem(delegate, entry, actionRunner, onHide, submenuIds)));
 	}
 
-	private createMenuItem(delegate: IContextMenuDelegate, entry: IAction | ContextSubMenu, actionRunner: IActionRunner, onHide: () => void): IContextMenuItem {
-
+	private createMenuItem(delegate: IContextMenuDelegate, entry: IAction, actionRunner: IActionRunner, onHide: () => void, submenuIds: Set<string>): IContextMenuItem | undefined {
 		// Separator
 		if (entry instanceof Separator) {
 			return { type: 'separator' };
 		}
 
 		// Submenu
-		if (entry instanceof ContextSubMenu) {
+		if (entry instanceof SubmenuAction) {
+			if (submenuIds.has(entry.id)) {
+				console.warn(`Found submenu cycle: ${entry.id}`);
+				return undefined;
+			}
+
+			const actions = Array.isArray(entry.actions) ? entry.actions : entry.actions();
 			return {
 				label: unmnemonicLabel(stripCodicons(entry.label)).trim(),
-				submenu: this.createMenu(delegate, entry.entries, onHide)
+				submenu: this.createMenu(delegate, actions, onHide, new Set([...submenuIds, entry.id]))
 			};
 		}
 

@@ -211,4 +211,15 @@ suite('Common Editor Config', () => {
 			strings: false
 		});
 	});
+
+	test('issue #102920: Can\'t snap or split view with JSON files', () => {
+		const config = new TestConfiguration({ quickSuggestions: null! });
+		config.updateOptions({ quickSuggestions: { strings: true } });
+		const actual = <Readonly<Required<IQuickSuggestionsOptions>>>config.options.get(EditorOption.quickSuggestions);
+		assert.deepEqual(actual, {
+			other: true,
+			comments: false,
+			strings: true
+		});
+	});
 });

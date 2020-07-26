@@ -209,37 +209,6 @@ export interface SaveDialogReturnValue {
 	bookmark?: string;
 }
 
-export interface CrashReporterStartOptions {
-	companyName: string;
-	/**
-	 * URL that crash reports will be sent to as POST.
-	 */
-	submitURL: string;
-	/**
-	 * Defaults to `app.name`.
-	 */
-	productName?: string;
-	/**
-	 * Whether crash reports should be sent to the server. Default is `true`.
-	 */
-	uploadToServer?: boolean;
-	/**
-	 * Default is `false`.
-	 */
-	ignoreSystemCrashHandler?: boolean;
-	/**
-	 * An object you can define that will be sent along with the report. Only string
-	 * properties are sent correctly. Nested objects are not supported. When using
-	 * Windows, the property names and values must be fewer than 64 characters.
-	 */
-	extra?: Record<string, string>;
-	/**
-	 * Directory to store the crash reports temporarily (only used when the crash
-	 * reporter is started via `process.crashReporter.start`).
-	 */
-	crashesDirectory?: string;
-}
-
 export interface FileFilter {
 
 	// Docs: http://electronjs.org/docs/api/structures/file-filter
@@ -280,4 +249,63 @@ export interface MouseInputEvent extends InputEvent {
 	type: ('mouseDown' | 'mouseUp' | 'mouseEnter' | 'mouseLeave' | 'contextMenu' | 'mouseWheel' | 'mouseMove');
 	x: number;
 	y: number;
+}
+
+export interface CrashReporterStartOptions {
+	/**
+	 * URL that crash reports will be sent to as POST.
+	 */
+	submitURL: string;
+	/**
+	 * Defaults to `app.name`.
+	 */
+	productName?: string;
+	/**
+	 * Deprecated alias for `{ globalExtra: { _companyName: ... } }`.
+	 *
+	 * @deprecated
+	 */
+	companyName?: string;
+	/**
+	 * Whether crash reports should be sent to the server. If false, crash reports will
+	 * be collected and stored in the crashes directory, but not uploaded. Default is
+	 * `true`.
+	 */
+	uploadToServer?: boolean;
+	/**
+	 * If true, crashes generated in the main process will not be forwarded to the
+	 * system crash handler. Default is `false`.
+	 */
+	ignoreSystemCrashHandler?: boolean;
+	/**
+	 * If true, limit the number of crashes uploaded to 1/hour. Default is `false`.
+	 *
+	 * @platform darwin,win32
+	 */
+	rateLimit?: boolean;
+	/**
+	 * If true, crash reports will be compressed and uploaded with `Content-Encoding:
+	 * gzip`. Not all collection servers support compressed payloads. Default is
+	 * `false`.
+	 *
+	 * @platform darwin,win32
+	 */
+	compress?: boolean;
+	/**
+	 * Extra string key/value annotations that will be sent along with crash reports
+	 * that are generated in the main process. Only string values are supported.
+	 * Crashes generated in child processes will not contain these extra parameters to
+	 * crash reports generated from child processes, call `addExtraParameter` from the
+	 * child process.
+	 */
+	extra?: Record<string, string>;
+	/**
+	 * Extra string key/value annotations that will be sent along with any crash
+	 * reports generated in any process. These annotations cannot be changed once the
+	 * crash reporter has been started. If a key is present in both the global extra
+	 * parameters and the process-specific extra parameters, then the global one will
+	 * take precedence. By default, `productName` and the app version are included, as
+	 * well as the Electron version.
+	 */
+	globalExtra?: Record<string, string>;
 }

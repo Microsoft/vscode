@@ -14,8 +14,7 @@ import { AddWatchExpressionAction, RemoveAllWatchExpressionsAction, CopyValueAct
 import { IContextMenuService } from 'vs/platform/contextview/browser/contextView';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { IKeybindingService } from 'vs/platform/keybinding/common/keybinding';
-import { IAction, Action } from 'vs/base/common/actions';
-import { Separator } from 'vs/base/browser/ui/actionbar/actionbar';
+import { IAction, Action, Separator } from 'vs/base/common/actions';
 import { renderExpressionValue, renderViewTree, IInputBoxOptions, AbstractExpressionsRenderer, IExpressionTemplateData } from 'vs/workbench/contrib/debug/browser/baseDebugView';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { ViewPane } from 'vs/workbench/browser/parts/views/viewPaneContainer';

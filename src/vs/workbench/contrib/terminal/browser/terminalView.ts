@@ -6,8 +6,7 @@
 import * as dom from 'vs/base/browser/dom';
 import * as nls from 'vs/nls';
 import * as platform from 'vs/base/common/platform';
-import { Action, IAction } from 'vs/base/common/actions';
-import { IActionViewItem, Separator } from 'vs/base/browser/ui/actionbar/actionbar';
+import { Action, IAction, Separator, IActionViewItem } from 'vs/base/common/actions';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { IContextMenuService } from 'vs/platform/contextview/browser/contextView';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
@@ -110,6 +109,8 @@ export class TerminalViewPane extends ViewPane {
 				} else {
 					this.layoutBody(this._bodyDimensions.height, this._bodyDimensions.width);
 				}
+			} else {
+				this._terminalService.getActiveTab()?.setVisible(false);
 			}
 		}));
 

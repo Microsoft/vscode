@@ -247,10 +247,6 @@
 			"project": "vscode-workbench"
 		},
 		{
-			"name": "vs/workbench/services/crashReporter",
-			"project": "vscode-workbench"
-		},
-		{
 			"name": "vs/workbench/services/dialogs",
 			"project": "vscode-workbench"
 		},

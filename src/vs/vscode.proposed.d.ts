@@ -102,7 +102,7 @@ declare module 'vscode' {
 		clearSessionPreference?: boolean;
 	}
 
-	export interface AuthenticationProviderAuthenticationSessionsChangeEvent extends AuthenticationSessionsChangeEvent {
+	export interface AuthenticationProviderAuthenticationSessionsChangeEvent {
 		/**
 		 * The [authenticationProvider](#AuthenticationProvider) that has had its sessions change.
 		 */
@@ -868,22 +868,6 @@ declare module 'vscode' {
 		debugAdapterExecutable?(folder: WorkspaceFolder | undefined, token?: CancellationToken): ProviderResult<DebugAdapterExecutable>;
 	}
 
-	export interface DebugSession {
-
-		/**
-		 * Terminates the session.
-		 */
-		terminate(): Thenable<void>;
-	}
-
-	export interface DebugSession {
-
-		/**
-		 * Terminates the session.
-		 */
-		terminate(): Thenable<void>;
-	}
-
 	export namespace debug {
 
 		/**
@@ -1423,6 +1407,11 @@ declare module 'vscode' {
 		Error = 4
 	}
 
+	export enum NotebookRunState {
+		Running = 1,
+		Idle = 2
+	}
+
 	export interface NotebookCellMetadata {
 		/**
 		 * Controls if the content of a cell is editable or not.
@@ -1525,6 +1514,11 @@ declare module 'vscode' {
 		 * Additional attributes of the document metadata.
 		 */
 		custom?: { [key: string]: any };
+
+		/**
+		 * The document's current run state
+		 */
+		runState?: NotebookRunState;
 	}
 
 	export interface NotebookDocument {
@@ -1832,8 +1826,10 @@ declare module 'vscode' {
 		description?: string;
 		isPreferred?: boolean;
 		preloads?: Uri[];
-		executeCell(document: NotebookDocument, cell: NotebookCell, token: CancellationToken): Promise<void>;
-		executeAllCells(document: NotebookDocument, token: CancellationToken): Promise<void>;
+		executeCell(document: NotebookDocument, cell: NotebookCell): void;
+		cancelCellExecution(document: NotebookDocument, cell: NotebookCell): void;
+		executeAllCells(document: NotebookDocument): void;
+		cancelAllCellsExecution(document: NotebookDocument): void;
 	}
 
 	export interface NotebookDocumentFilter {

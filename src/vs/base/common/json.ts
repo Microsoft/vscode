@@ -72,6 +72,7 @@ export interface JSONScanner {
 }
 
 
+
 export interface ParseError {
 	error: ParseErrorCode;
 	offset: number;

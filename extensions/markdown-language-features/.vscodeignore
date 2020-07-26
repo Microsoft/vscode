@@ -1,4 +1,5 @@
 test/**
+test-workspace/**
 src/**
 tsconfig.json
 out/test/**

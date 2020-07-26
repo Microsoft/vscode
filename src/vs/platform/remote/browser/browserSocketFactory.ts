@@ -194,6 +194,9 @@ class BrowserSocket implements ISocket {
 		this.socket.close();
 	}
 
+	public drain(): Promise<void> {
+		return Promise.resolve();
+	}
 }
 
 

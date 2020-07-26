@@ -220,7 +220,7 @@ export class ReferenceWidget extends peekView.PeekViewWidget {
 		@ILabelService private readonly _uriLabel: ILabelService,
 		@IUndoRedoService private readonly _undoRedoService: IUndoRedoService,
 	) {
-		super(editor, { showFrame: false, showArrow: true, isResizeable: true, isAccessible: true });
+		super(editor, { showFrame: false, showArrow: true, isResizeable: true, isAccessible: true }, _instantiationService);
 
 		this._applyTheme(themeService.getColorTheme());
 		this._callOnDispose.add(themeService.onDidColorThemeChange(this._applyTheme.bind(this)));

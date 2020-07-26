@@ -726,6 +726,18 @@
                 ]
             },
             {
+                "target": "**/vs/code/browser/**",
+                "restrictions": [
+                    "vs/nls",
+                    "vs/css!./**/*",
+                    "**/vs/base/**/{common,browser}/**",
+                    "**/vs/base/parts/**/{common,browser}/**",
+                    "**/vs/platform/**/{common,browser}/**",
+                    "**/vs/code/**/{common,browser}/**",
+                    "**/vs/workbench/workbench.web.api"
+                ]
+            },
+            {
                 "target": "**/vs/code/node/**",
                 "restrictions": [
                     "vs/nls",
@@ -793,6 +805,18 @@
                     "**/vs/editor/**",
                     "**/vs/workbench/**/{common,browser}/**",
                     "**/vs/workbench/workbench.common.main"
+                ]
+            },
+            {
+                "target": "**/src/vs/workbench/workbench.web.api.ts",
+                "restrictions": [
+                    "vs/nls",
+                    "**/vs/base/**/{common,browser}/**",
+                    "**/vs/base/parts/**/{common,browser}/**",
+                    "**/vs/platform/**/{common,browser}/**",
+                    "**/vs/editor/**",
+                    "**/vs/workbench/**/{common,browser}/**",
+                    "**/vs/workbench/workbench.web.main"
                 ]
             },
             {

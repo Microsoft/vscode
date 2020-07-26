@@ -58,6 +58,7 @@ import 'vs/workbench/services/userDataSync/electron-browser/userDataSyncAccountS
 import 'vs/workbench/services/sharedProcess/electron-browser/sharedProcessService';
 import 'vs/workbench/services/localizations/electron-browser/localizationsService';
 import 'vs/workbench/services/path/electron-browser/pathService';
+import 'vs/workbench/services/experiment/electron-browser/experimentService';
 
 import { registerSingleton } from 'vs/platform/instantiation/common/extensions';
 import { ICredentialsService } from 'vs/platform/credentials/common/credentials';

@@ -13,6 +13,7 @@ import { ExtHostDownloadService } from 'vs/workbench/api/node/extHostDownloadSer
 import { CLIServer } from 'vs/workbench/api/node/extHostCLIServer';
 import { URI } from 'vs/base/common/uri';
 import { Schemas } from 'vs/base/common/network';
+import { IExtensionDescription } from 'vs/platform/extensions/common/extensions';
 
 class NodeModuleRequireInterceptor extends RequireInterceptor {
 
@@ -74,6 +75,10 @@ export class ExtHostExtensionService extends AbstractExtHostExtensionService {
 			mainThreadConsole.$logExtensionHostMessage(args[0]);
 			return false;
 		};
+	}
+
+	protected _getEntryPoint(extensionDescription: IExtensionDescription): string | undefined {
+		return extensionDescription.main;
 	}
 
 	protected _loadCommonJSModule<T>(module: URI, activationTimesBuilder: ExtensionActivationTimesBuilder): Promise<T> {

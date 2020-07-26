@@ -14,7 +14,6 @@ import { IWorkingCopyService, IWorkingCopy, IWorkingCopyBackup, WorkingCopyCapab
 import { basename } from 'vs/base/common/resources';
 import { CancellationTokenSource } from 'vs/base/common/cancellation';
 import { IBackupFileService } from 'vs/workbench/services/backup/common/backup';
-import { DefaultEndOfLine, ITextBuffer, EndOfLinePreference } from 'vs/editor/common/model';
 import { Schemas } from 'vs/base/common/network';
 import { IFileStatWithMetadata, IFileService } from 'vs/platform/files/common/files';
 import { INotificationService, Severity } from 'vs/platform/notification/common/notification';
@@ -142,40 +141,7 @@ export class NotebookEditorModel extends EditorModel implements IWorkingCopy, IN
 			return this; // Make sure meanwhile someone else did not succeed in loading
 		}
 
-		if (backup && backup.meta?.backupId === undefined) {
-			try {
-				return await this.loadFromBackup(backup.value.create(DefaultEndOfLine.LF), options?.editorId);
-			} catch (error) {
-				// this.logService.error('[text file model] load() from backup', error); // ignore error and continue to load as file below
-			}
-		}
-
 		return this.loadFromProvider(false, options?.editorId, backup?.meta?.backupId);
-	}
-
-	private async loadFromBackup(content: ITextBuffer, editorId?: string): Promise<NotebookEditorModel> {
-		const fullRange = content.getRangeAt(0, content.getLength());
-		const data = JSON.parse(content.getValueInRange(fullRange, EndOfLinePreference.LF));
-
-		const notebook = await this._notebookService.createNotebookFromBackup(this.viewType!, this.resource, data.metadata, data.languages, data.cells, editorId);
-		this._notebook = notebook!;
-		const newStats = await this._resolveStats(this.resource);
-		this._lastResolvedFileStat = newStats;
-		this._register(this._notebook);
-
-		this._name = basename(this._notebook!.uri);
-
-		this._register(this._notebook.onDidChangeContent(() => {
-			this._onDidChangeContent.fire();
-		}));
-		this._register(this._notebook.onDidChangeDirty(() => {
-			this._onDidChangeDirty.fire();
-		}));
-
-		await this._backupFileService.discardBackup(this._workingCopyResource);
-		this._notebook.setDirty(true);
-
-		return this;
 	}
 
 	private async loadFromProvider(forceReloadFromDisk: boolean, editorId: string | undefined, backupId: string | undefined) {

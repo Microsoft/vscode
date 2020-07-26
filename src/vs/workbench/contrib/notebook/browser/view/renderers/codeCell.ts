@@ -11,7 +11,7 @@ import { IModeService } from 'vs/editor/common/services/modeService';
 import * as nls from 'vs/nls';
 import { IQuickInputService, IQuickPickItem } from 'vs/platform/quickinput/common/quickInput';
 import { EDITOR_BOTTOM_PADDING, EDITOR_TOP_PADDING } from 'vs/workbench/contrib/notebook/browser/constants';
-import { CellFocusMode, CodeCellRenderTemplate, INotebookEditor } from 'vs/workbench/contrib/notebook/browser/notebookBrowser';
+import { CellCollapseState, CellFocusMode, CodeCellRenderTemplate, INotebookEditor } from 'vs/workbench/contrib/notebook/browser/notebookBrowser';
 import { INotebookService } from 'vs/workbench/contrib/notebook/common/notebookService';
 import { getResizesObserver } from 'vs/workbench/contrib/notebook/browser/view/renderers/sizeObserver';
 import { CodeCellViewModel } from 'vs/workbench/contrib/notebook/browser/viewModel/codeCellViewModel';
@@ -84,14 +84,20 @@ export class CodeCell extends Disposable {
 
 			DOM.toggleClass(templateData.container, 'cell-editor-focus', viewCell.focusMode === CellFocusMode.Editor);
 		};
+		const updateForCollapseState = () => {
+			this.viewUpdate();
+		};
 		this._register(viewCell.onDidChangeState((e) => {
-			if (!e.focusModeChanged) {
-				return;
+			if (e.focusModeChanged) {
+				updateForFocusMode();
 			}
 
-			updateForFocusMode();
+			if (e.collapseStateChanged) {
+				updateForCollapseState();
+			}
 		}));
 		updateForFocusMode();
+		updateForCollapseState();
 
 		templateData.editor?.updateOptions({ readOnly: !(viewCell.getEvaluatedMetadata(notebookEditor.viewModel!.metadata).editable) });
 		this._register(viewCell.onDidChangeState((e) => {
@@ -101,22 +107,23 @@ export class CodeCell extends Disposable {
 		}));
 
 		this._register(viewCell.onDidChangeState((e) => {
-			if (!e.languageChanged) {
-				return;
+			if (e.languageChanged) {
+				const mode = this._modeService.create(viewCell.language);
+				templateData.editor?.getModel()?.setMode(mode.languageIdentifier);
 			}
 
-			const mode = this._modeService.create(viewCell.language);
-			templateData.editor?.getModel()?.setMode(mode.languageIdentifier);
+			if (e.collapseStateChanged) {
+				this.viewCell.layoutChange({});
+				this.relayoutCell();
+			}
 		}));
 
 		this._register(viewCell.onDidChangeLayout((e) => {
-			if (e.outerWidth === undefined) {
-				return;
-			}
-
-			const layoutInfo = templateData.editor!.getLayoutInfo();
-			if (layoutInfo.width !== viewCell.layoutInfo.editorWidth) {
-				this.onCellWidthChange();
+			if (e.outerWidth !== undefined) {
+				const layoutInfo = templateData.editor!.getLayoutInfo();
+				if (layoutInfo.width !== viewCell.layoutInfo.editorWidth) {
+					this.onCellWidthChange();
+				}
 			}
 		}));
 
@@ -249,6 +256,14 @@ export class CodeCell extends Disposable {
 			}
 		});
 
+		this._register(templateData.editor!.onMouseDown(e => {
+			// prevent default on right mouse click, otherwise it will trigger unexpected focus changes
+			// the catch is, it means we don't allow customization of right button mouse down handlers other than the built in ones.
+			if (e.event.rightButton) {
+				e.event.preventDefault();
+			}
+		}));
+
 		const updateFocusMode = () => viewCell.focusMode = templateData.editor!.hasWidgetFocus() ? CellFocusMode.Editor : CellFocusMode.Container;
 		this._register(templateData.editor!.onDidFocusEditorWidget(() => {
 			updateFocusMode();
@@ -289,6 +304,80 @@ export class CodeCell extends Disposable {
 			this.relayoutCell();
 			this.templateData.outputContainer!.style.display = 'none';
 		}
+	}
+
+	private viewUpdate(): void {
+		if (this.viewCell.collapseState === CellCollapseState.Collapsed && this.viewCell.outputCollapseState === CellCollapseState.Collapsed) {
+			this.viewUpdateAllCollapsed();
+		} else if (this.viewCell.collapseState === CellCollapseState.Collapsed) {
+			this.viewUpdateInputCollapsed();
+		} else if (this.viewCell.outputCollapseState === CellCollapseState.Collapsed && this.viewCell.outputs.length) {
+			this.viewUpdateOutputCollapsed();
+		} else {
+			this.viewUpdateExpanded();
+		}
+	}
+
+	private viewUpdateShowOutputs(): void {
+		for (let index = 0; index < this.viewCell.outputs.length; index++) {
+			const currOutput = this.viewCell.outputs[index];
+
+			if (currOutput.outputKind === CellOutputKind.Rich) {
+				this.renderOutput(currOutput, index, undefined);
+			}
+		}
+	}
+
+	private viewUpdateInputCollapsed(): void {
+		DOM.hide(this.templateData.cellContainer);
+		DOM.show(this.templateData.collapsedPart);
+		DOM.show(this.templateData.outputContainer);
+		this.templateData.container.classList.toggle('collapsed', true);
+
+		this.viewUpdateShowOutputs();
+
+		this.relayoutCell();
+	}
+
+	private viewUpdateOutputCollapsed(): void {
+		DOM.show(this.templateData.cellContainer);
+		DOM.show(this.templateData.collapsedPart);
+		DOM.hide(this.templateData.outputContainer);
+
+		for (let e of this.outputElements.keys()) {
+			this.notebookEditor.hideInset(e);
+		}
+
+		this.templateData.container.classList.toggle('collapsed', false);
+		this.templateData.container.classList.toggle('output-collapsed', true);
+
+		this.relayoutCell();
+	}
+
+	private viewUpdateAllCollapsed(): void {
+		DOM.hide(this.templateData.cellContainer);
+		DOM.show(this.templateData.collapsedPart);
+		DOM.hide(this.templateData.outputContainer);
+		this.templateData.container.classList.toggle('collapsed', true);
+		this.templateData.container.classList.toggle('output-collapsed', true);
+
+		for (let e of this.outputElements.keys()) {
+			this.notebookEditor.hideInset(e);
+		}
+
+		this.relayoutCell();
+	}
+
+	private viewUpdateExpanded(): void {
+		DOM.show(this.templateData.cellContainer);
+		DOM.hide(this.templateData.collapsedPart);
+		DOM.show(this.templateData.outputContainer);
+		this.templateData.container.classList.toggle('collapsed', false);
+		this.templateData.container.classList.toggle('output-collapsed', false);
+
+		this.viewUpdateShowOutputs();
+
+		this.relayoutCell();
 	}
 
 	private layoutEditor(dimension: IDimension): void {
@@ -547,7 +636,7 @@ export class CodeCell extends Disposable {
 			value.dispose();
 		});
 
-		this.templateData.focusIndicator!.style.height = 'initial';
+		this.templateData.focusIndicatorLeft!.style.height = 'initial';
 
 		super.dispose();
 	}

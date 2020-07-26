@@ -261,6 +261,8 @@ function webviewPreloads() {
 
 	interface ICreateCellInfo {
 		outputId: string;
+		output?: unknown;
+		mimeType?: string;
 		element: HTMLElement;
 	}
 
@@ -374,10 +376,21 @@ function webviewPreloads() {
 					outputNode.innerHTML = content;
 					cellOutputContainer.appendChild(outputNode);
 
+					let pureData: { mimeType: string, output: unknown } | undefined;
+					const outputScript = cellOutputContainer.querySelector('script.vscode-pure-data');
+					if (outputScript) {
+						try { pureData = JSON.parse(outputScript.innerHTML); } catch { }
+					}
+
 					// eval
 					domEval(outputNode);
 					resizeObserve(outputNode, outputId);
-					onDidCreateOutput.fire([data.apiNamespace, { element: outputNode, outputId }]);
+					onDidCreateOutput.fire([data.apiNamespace, {
+						element: outputNode,
+						output: pureData?.output,
+						mimeType: pureData?.mimeType,
+						outputId
+					}]);
 
 					vscode.postMessage({
 						__vscode_notebook_message: true,

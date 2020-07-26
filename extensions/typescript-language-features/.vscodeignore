@@ -1,8 +1,10 @@
 build/**
 src/**
 test/**
+test-workspace/**
 out/**
 tsconfig.json
 extension.webpack.config.js
+extension-browser.webpack.config.js
 cgmanifest.json
 yarn.lock

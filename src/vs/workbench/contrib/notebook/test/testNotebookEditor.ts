@@ -62,7 +62,13 @@ export class TestNotebookEditor implements INotebookEditor {
 	constructor(
 	) { }
 
+	hideInset(output: IProcessedOutput): void {
+		throw new Error('Method not implemented.');
+	}
+
 	multipleKernelsAvailable: boolean = false;
+	onDidChangeAvailableKernels: Event<void> = new Emitter<void>().event;
+
 
 	uri?: URI | undefined;
 	textModel?: NotebookTextModel | undefined;
@@ -155,6 +161,10 @@ export class TestNotebookEditor implements INotebookEditor {
 	}
 
 	moveCellUp(cell: CellViewModel): Promise<ICellViewModel | null> {
+		throw new Error('Method not implemented.');
+	}
+
+	moveCellToIdx(cell: ICellViewModel, index: number): Promise<ICellViewModel | null> {
 		throw new Error('Method not implemented.');
 	}
 

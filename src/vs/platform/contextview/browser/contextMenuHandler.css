@@ -7,11 +7,3 @@
 	min-width: 130px;
 }
 
-.context-view-block {
-	position: fixed;
-	cursor: initial;
-	left:0;
-	top:0;
-	width: 100%;
-	height: 100%;
-}

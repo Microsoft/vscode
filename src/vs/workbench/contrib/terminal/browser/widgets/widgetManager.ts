@@ -5,10 +5,14 @@
 
 import { IDisposable } from 'vs/base/common/lifecycle';
 import { ITerminalWidget } from 'vs/workbench/contrib/terminal/browser/widgets/widgets';
+import { IHoverService } from 'vs/workbench/services/hover/browser/hover';
 
 export class TerminalWidgetManager implements IDisposable {
 	private _container: HTMLElement | undefined;
 	private _attached: Map<string, ITerminalWidget> = new Map();
+
+	constructor(@IHoverService private readonly _hoverService: IHoverService) {
+	}
 
 	attachToElement(terminalWrapper: HTMLElement) {
 		if (!this._container) {
@@ -23,6 +27,10 @@ export class TerminalWidgetManager implements IDisposable {
 			this._container.parentElement.removeChild(this._container);
 			this._container = undefined;
 		}
+	}
+
+	hideHovers(): void {
+		this._hoverService.hideHover();
 	}
 
 	attachWidget(widget: ITerminalWidget): IDisposable | undefined {

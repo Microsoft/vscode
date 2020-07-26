@@ -28,7 +28,7 @@ function initialize() {
 	delayer.schedule();
 }
 
-function formatRule(c: Codicon) {
+export function formatRule(c: Codicon) {
 	let def = c.definition;
 	while (def instanceof Codicon) {
 		def = def.definition;

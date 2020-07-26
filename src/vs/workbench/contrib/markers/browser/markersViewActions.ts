@@ -5,7 +5,7 @@
 
 import { Delayer } from 'vs/base/common/async';
 import * as DOM from 'vs/base/browser/dom';
-import { Action, IAction, IActionRunner } from 'vs/base/common/actions';
+import { Action, IAction, IActionRunner, Separator } from 'vs/base/common/actions';
 import { HistoryInputBox } from 'vs/base/browser/ui/inputbox/inputBox';
 import { KeyCode } from 'vs/base/common/keyCodes';
 import { StandardKeyboardEvent } from 'vs/base/browser/keyboardEvent';
@@ -15,7 +15,7 @@ import Constants from 'vs/workbench/contrib/markers/browser/constants';
 import { IThemeService, registerThemingParticipant, ICssStyleCollector, IColorTheme } from 'vs/platform/theme/common/themeService';
 import { attachInputBoxStyler, attachStylerCallback } from 'vs/platform/theme/common/styler';
 import { toDisposable, Disposable } from 'vs/base/common/lifecycle';
-import { BaseActionViewItem, ActionViewItem, ActionBar, Separator } from 'vs/base/browser/ui/actionbar/actionbar';
+import { ActionBar } from 'vs/base/browser/ui/actionbar/actionbar';
 import { badgeBackground, badgeForeground, contrastBorder, inputActiveOptionBorder, inputActiveOptionBackground, inputActiveOptionForeground } from 'vs/platform/theme/common/colorRegistry';
 import { localize } from 'vs/nls';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
@@ -23,10 +23,11 @@ import { ContextScopedHistoryInputBox } from 'vs/platform/browser/contextScopedH
 import { Marker } from 'vs/workbench/contrib/markers/browser/markersModel';
 import { IContextKey, IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
 import { Event, Emitter } from 'vs/base/common/event';
-import { DropdownMenuActionViewItem } from 'vs/base/browser/ui/dropdown/dropdown';
 import { AnchorAlignment } from 'vs/base/browser/ui/contextview/contextview';
 import { IViewsService } from 'vs/workbench/common/views';
 import { Codicon } from 'vs/base/common/codicons';
+import { BaseActionViewItem, ActionViewItem } from 'vs/base/browser/ui/actionbar/actionViewItems';
+import { DropdownMenuActionViewItem } from 'vs/base/browser/ui/dropdown/dropdownActionViewItem';
 
 export class ShowProblemsPanelAction extends Action {
 
@@ -179,11 +180,12 @@ class FiltersDropdownMenuActionViewItem extends DropdownMenuActionViewItem {
 		super(action,
 			{ getActions: () => this.getActions() },
 			contextMenuService,
-			action => undefined,
-			actionRunner!,
-			undefined,
-			action.class,
-			() => { return AnchorAlignment.RIGHT; });
+			{
+				actionRunner,
+				classNames: action.class,
+				anchorAlignmentProvider: () => AnchorAlignment.RIGHT
+			}
+		);
 	}
 
 	render(container: HTMLElement): void {

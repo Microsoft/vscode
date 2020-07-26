@@ -19,6 +19,8 @@ import { Extensions as WorkbenchExtensions, IWorkbenchContributionsRegistry, IWo
 import { LifecyclePhase } from 'vs/platform/lifecycle/common/lifecycle';
 import { Disposable, DisposableStore, MutableDisposable } from 'vs/base/common/lifecycle';
 import { IStatusbarEntryAccessor, IStatusbarService, StatusbarAlignment } from 'vs/workbench/services/statusbar/common/statusbar';
+import { NotebookKernelProviderAssociation, NotebookKernelProviderAssociations, notebookKernelProviderAssociationsSettingId } from 'vs/workbench/contrib/notebook/browser/notebookKernelAssociation';
+import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 
 
 registerAction2(class extends Action2 {
@@ -37,6 +39,7 @@ registerAction2(class extends Action2 {
 		const editorService = accessor.get<IEditorService>(IEditorService);
 		const notebookService = accessor.get<INotebookService>(INotebookService);
 		const quickInputService = accessor.get<IQuickInputService>(IQuickInputService);
+		const configurationService = accessor.get<IConfigurationService>(IConfigurationService);
 
 		const activeEditorPane = editorService.activeEditorPane as unknown as { isNotebookEditor?: boolean } | undefined;
 		if (!activeEditorPane?.isNotebookEditor) {
@@ -48,7 +51,7 @@ registerAction2(class extends Action2 {
 		const tokenSource = new CancellationTokenSource();
 		const availableKernels2 = await notebookService.getContributedNotebookKernels2(editor.viewModel!.viewType, editor.viewModel!.uri, tokenSource.token);
 		const availableKernels = notebookService.getContributedNotebookKernels(editor.viewModel!.viewType, editor.viewModel!.uri);
-		const picks: QuickPickInput<IQuickPickItem & { run(): void; }>[] = [...availableKernels2, ...availableKernels].map((a) => {
+		const picks: QuickPickInput<IQuickPickItem & { run(): void; kernelProviderId?: string; }>[] = [...availableKernels2, ...availableKernels].map((a) => {
 			return {
 				id: a.id,
 				label: a.label,
@@ -59,12 +62,17 @@ registerAction2(class extends Action2 {
 						: a.extension.value + (a.id === activeKernel?.id
 							? nls.localize('currentActiveKernel', " (Currently Active)")
 							: ''),
+				kernelProviderId: a.extension.value,
 				run: async () => {
 					editor.activeKernel = a;
 					if ((a as any).resolve) {
 						(a as INotebookKernelInfo2).resolve(editor.uri!, editor.getId(), tokenSource.token);
 					}
-				}
+				},
+				buttons: [{
+					iconClass: 'codicon-settings-gear',
+					tooltip: nls.localize('notebook.promptKernel.setDefaultTooltip', "Set as default kernel provider for '{0}'", editor.viewModel!.viewType)
+				}]
 			};
 		});
 
@@ -78,16 +86,60 @@ registerAction2(class extends Action2 {
 				description: activeKernel === undefined
 					? nls.localize('currentActiveBuiltinKernel', " (Currently Active)")
 					: '',
+				kernelProviderId: provider.providerExtensionId,
 				run: () => {
 					editor.activeKernel = undefined;
-				}
+				},
+				buttons: [{
+					iconClass: 'codicon-settings-gear',
+					tooltip: nls.localize('notebook.promptKernel.setDefaultTooltip', "Set as default kernel provider for '{0}'", editor.viewModel!.viewType)
+				}]
 			});
 		}
 
-		const action = await quickInputService.pick(picks, { placeHolder: nls.localize('pickAction', "Select Action"), matchOnDetail: true });
-		tokenSource.dispose();
-		return action?.run();
+		const picker = quickInputService.createQuickPick<(IQuickPickItem & { run(): void; kernelProviderId?: string })>();
+		picker.items = picks;
+		picker.placeholder = nls.localize('pickAction', "Select Action");
+		picker.matchOnDetail = true;
 
+		const pickedItem = await new Promise<(IQuickPickItem & { run(): void; kernelProviderId?: string; }) | undefined>(resolve => {
+			picker.onDidAccept(() => {
+				resolve(picker.selectedItems.length === 1 ? picker.selectedItems[0] : undefined);
+				picker.dispose();
+			});
+
+			picker.onDidTriggerItemButton(e => {
+				const pick = e.item;
+				const id = pick.id;
+				resolve(pick); // open the view
+				picker.dispose();
+
+				// And persist the setting
+				if (pick && id && pick.kernelProviderId) {
+					const newAssociation: NotebookKernelProviderAssociation = { viewType: editor.viewModel!.viewType, kernelProvider: pick.kernelProviderId };
+					const currentAssociations = [...configurationService.getValue<NotebookKernelProviderAssociations>(notebookKernelProviderAssociationsSettingId)];
+
+					// First try updating existing association
+					for (let i = 0; i < currentAssociations.length; ++i) {
+						const existing = currentAssociations[i];
+						if (existing.viewType === newAssociation.viewType) {
+							currentAssociations.splice(i, 1, newAssociation);
+							configurationService.updateValue(notebookKernelProviderAssociationsSettingId, currentAssociations);
+							return;
+						}
+					}
+
+					// Otherwise, create a new one
+					currentAssociations.unshift(newAssociation);
+					configurationService.updateValue(notebookKernelProviderAssociationsSettingId, currentAssociations);
+				}
+			});
+
+			picker.show();
+		});
+
+		tokenSource.dispose();
+		return pickedItem?.run();
 	}
 });
 
@@ -114,8 +166,7 @@ export class KernelStatus extends Disposable implements IWorkbenchContribution {
 
 		const activeEditor = getActiveNotebookEditor(this._editorService);
 
-		if (activeEditor && activeEditor.multipleKernelsAvailable) {
-			this.showKernelStatus(activeEditor.activeKernel);
+		if (activeEditor) {
 			this._editorDisposable.add(activeEditor.onDidChangeKernel(() => {
 				if (activeEditor.multipleKernelsAvailable) {
 					this.showKernelStatus(activeEditor.activeKernel);
@@ -123,6 +174,18 @@ export class KernelStatus extends Disposable implements IWorkbenchContribution {
 					this.kernelInfoElement.clear();
 				}
 			}));
+
+			this._editorDisposable.add(activeEditor.onDidChangeAvailableKernels(() => {
+				if (activeEditor.multipleKernelsAvailable) {
+					this.showKernelStatus(activeEditor.activeKernel);
+				} else {
+					this.kernelInfoElement.clear();
+				}
+			}));
+		}
+
+		if (activeEditor && activeEditor.multipleKernelsAvailable) {
+			this.showKernelStatus(activeEditor.activeKernel);
 		} else {
 			this.kernelInfoElement.clear();
 		}

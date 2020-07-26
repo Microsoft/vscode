@@ -18,6 +18,11 @@ export interface IRPCProtocol {
 	 * Assert these identifiers are already registered via `.set`.
 	 */
 	assertRegistered(identifiers: ProxyIdentifier<any>[]): void;
+
+	/**
+	 * Wait for the write buffer (if applicable) to become empty.
+	 */
+	drain(): Promise<void>;
 }
 
 export class ProxyIdentifier<T> {

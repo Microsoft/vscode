@@ -12,6 +12,10 @@ const events = require('events');
 // const MochaJUnitReporter = require('mocha-junit-reporter');
 const url = require('url');
 
+// Disable render process reuse, we still have
+// non-context aware native modules in the renderer.
+app.allowRendererProcessReuse = false;
+
 const defaultReporterName = process.platform === 'win32' ? 'list' : 'spec';
 
 const optimist = require('optimist')
@@ -112,14 +116,13 @@ app.on('ready', () => {
 		width: 800,
 		show: false,
 		webPreferences: {
-			backgroundThrottling: false,
-			nodeIntegration: true,
-			webSecurity: false,
-			webviewTag: true,
 			preload: path.join(__dirname, '..', '..', '..', 'src', 'vs', 'base', 'parts', 'sandbox', 'electron-browser', 'preload.js'), // ensure similar environment as VSCode as tests may depend on this
+			nodeIntegration: true,
 			enableWebSQL: false,
 			enableRemoteModule: false,
-			nativeWindowOpen: true
+			spellcheck: false,
+			nativeWindowOpen: true,
+			webviewTag: true
 		}
 	});
 

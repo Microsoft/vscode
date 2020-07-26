@@ -47,6 +47,7 @@ export class ExtHostTask extends ExtHostTaskBase {
 				platform: process.platform
 			});
 		}
+		this._proxy.$registerSupportedExecutions(true, true, true);
 	}
 
 	public async executeTask(extension: IExtensionDescription, task: vscode.Task): Promise<vscode.TaskExecution> {

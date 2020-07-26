@@ -39,6 +39,7 @@ import { IProductService } from 'vs/platform/product/common/productService';
 import { asDomUri } from 'vs/base/browser/dom';
 import { getIgnoredExtensions } from 'vs/platform/userDataSync/common/extensionsMerge';
 import { isWeb } from 'vs/base/common/platform';
+import { getExtensionKind } from 'vs/workbench/services/extensions/common/extensionsUtil';
 
 interface IExtensionStateProvider<T> {
 	(extension: Extension): T;
@@ -665,14 +666,79 @@ export class ExtensionsWorkbenchService extends Disposable implements IExtension
 		if (extensions.length === 1) {
 			return extensions[0];
 		}
+
 		const enabledExtensions = extensions.filter(e => e.local && this.extensionEnablementService.isEnabled(e.local));
-		if (enabledExtensions.length === 0) {
-			return extensions[0];
-		}
 		if (enabledExtensions.length === 1) {
 			return enabledExtensions[0];
 		}
-		return enabledExtensions.find(e => e.server === this.extensionManagementServerService.remoteExtensionManagementServer) || enabledExtensions[0];
+
+		const extensionsToChoose = enabledExtensions.length ? enabledExtensions : extensions;
+
+		let extension = extensionsToChoose.find(extension => {
+			for (const extensionKind of getExtensionKind(extension.local!.manifest, this.productService, this.configurationService)) {
+				switch (extensionKind) {
+					case 'ui':
+						/* UI extension is chosen only if it is installed locally */
+						if (extension.server === this.extensionManagementServerService.localExtensionManagementServer) {
+							return true;
+						}
+						return false;
+					case 'workspace':
+						/* Choose remote workspace extension if exists */
+						if (extension.server === this.extensionManagementServerService.remoteExtensionManagementServer) {
+							return true;
+						}
+						return false;
+					case 'web':
+						/* Choose web extension if exists */
+						if (extension.server === this.extensionManagementServerService.webExtensionManagementServer) {
+							return true;
+						}
+						return false;
+				}
+			}
+			return false;
+		});
+
+		if (!extension && this.extensionManagementServerService.localExtensionManagementServer) {
+			extension = extensionsToChoose.find(extension => {
+				for (const extensionKind of getExtensionKind(extension.local!.manifest, this.productService, this.configurationService)) {
+					switch (extensionKind) {
+						case 'workspace':
+							/* Choose local workspace extension if exists */
+							if (extension.server === this.extensionManagementServerService.localExtensionManagementServer) {
+								return true;
+							}
+							return false;
+						case 'web':
+							/* Choose local web extension if exists */
+							if (extension.server === this.extensionManagementServerService.localExtensionManagementServer) {
+								return true;
+							}
+							return false;
+					}
+				}
+				return false;
+			});
+		}
+
+		if (!extension && this.extensionManagementServerService.remoteExtensionManagementServer) {
+			extension = extensionsToChoose.find(extension => {
+				for (const extensionKind of getExtensionKind(extension.local!.manifest, this.productService, this.configurationService)) {
+					switch (extensionKind) {
+						case 'web':
+							/* Choose remote web extension if exists */
+							if (extension.server === this.extensionManagementServerService.remoteExtensionManagementServer) {
+								return true;
+							}
+							return false;
+					}
+				}
+				return false;
+			});
+		}
+
+		return extension || extensions[0];
 	}
 
 	private fromGallery(gallery: IGalleryExtension, maliciousExtensionSet: Set<string>): IExtension {

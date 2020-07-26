@@ -22,6 +22,7 @@ module.exports = withBrowserDefaults({
 	resolve: {
 		alias: {
 			'./env/node': path.resolve(__dirname, 'src/env/browser'),
+			'./authServer': path.resolve(__dirname, 'src/env/browser/authServer'),
 			'buffer': path.resolve(__dirname, 'node_modules/buffer/index.js'),
 			'node-fetch': path.resolve(__dirname, 'node_modules/node-fetch/browser.js'),
 			'randombytes': path.resolve(__dirname, 'node_modules/randombytes/browser.js'),

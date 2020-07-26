@@ -43,12 +43,13 @@ export class SharedProcess implements ISharedProcess {
 			backgroundColor: this.themeMainService.getBackgroundColor(),
 			webPreferences: {
 				preload: URI.parse(require.toUrl('vs/base/parts/sandbox/electron-browser/preload.js')).fsPath,
-				images: false,
 				nodeIntegration: true,
-				webgl: false,
 				enableWebSQL: false,
 				enableRemoteModule: false,
+				spellcheck: false,
 				nativeWindowOpen: true,
+				images: false,
+				webgl: false,
 				disableBlinkFeatures: 'Auxclick' // do NOT change, allows us to identify this window as shared-process in the process explorer
 			}
 		});

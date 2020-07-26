@@ -7,7 +7,6 @@ import * as nls from 'vs/nls';
 import * as dom from 'vs/base/browser/dom';
 
 import { IAction, Action } from 'vs/base/common/actions';
-import { SelectActionViewItem } from 'vs/base/browser/ui/actionbar/actionbar';
 import { IThemeService } from 'vs/platform/theme/common/themeService';
 import { attachSelectBoxStyler } from 'vs/platform/theme/common/styler';
 import { IContextViewService } from 'vs/platform/contextview/browser/contextView';
@@ -19,6 +18,7 @@ import { isStringArray } from 'vs/base/common/types';
 import { IWorkbenchEnvironmentService } from 'vs/workbench/services/environment/common/environmentService';
 import { IStorageService, StorageScope } from 'vs/platform/storage/common/storage';
 import { IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
+import { SelectActionViewItem } from 'vs/base/browser/ui/actionbar/actionViewItems';
 
 export interface IRemoteSelectItem extends ISelectOptionItem {
 	authority: string[];

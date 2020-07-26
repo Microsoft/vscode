@@ -6,7 +6,7 @@
 import { IContextKey, IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
 import { INotebookTextModel, NotebookCellRunState } from 'vs/workbench/contrib/notebook/common/notebookCommon';
 import { BaseCellViewModel } from 'vs/workbench/contrib/notebook/browser/viewModel/baseCellViewModel';
-import { NOTEBOOK_CELL_TYPE, NOTEBOOK_VIEW_TYPE, NOTEBOOK_CELL_EDITABLE, NOTEBOOK_CELL_RUNNABLE, NOTEBOOK_CELL_MARKDOWN_EDIT_MODE, NOTEBOOK_CELL_RUN_STATE, NOTEBOOK_CELL_HAS_OUTPUTS, CellViewModelStateChangeEvent, CellEditState } from 'vs/workbench/contrib/notebook/browser/notebookBrowser';
+import { NOTEBOOK_CELL_TYPE, NOTEBOOK_VIEW_TYPE, NOTEBOOK_CELL_EDITABLE, NOTEBOOK_CELL_RUNNABLE, NOTEBOOK_CELL_MARKDOWN_EDIT_MODE, NOTEBOOK_CELL_RUN_STATE, NOTEBOOK_CELL_HAS_OUTPUTS, CellViewModelStateChangeEvent, CellEditState, NOTEBOOK_CELL_CONTENT_COLLAPSED, CellCollapseState, NOTEBOOK_CELL_OUTPUT_COLLAPSED } from 'vs/workbench/contrib/notebook/browser/notebookBrowser';
 import { CodeCellViewModel } from 'vs/workbench/contrib/notebook/browser/viewModel/codeCellViewModel';
 import { MarkdownCellViewModel } from 'vs/workbench/contrib/notebook/browser/viewModel/markdownCellViewModel';
 import { Disposable, DisposableStore } from 'vs/base/common/lifecycle';
@@ -19,6 +19,8 @@ export class CellContextKeyManager extends Disposable {
 	private cellRunnable: IContextKey<boolean>;
 	private cellRunState: IContextKey<string>;
 	private cellHasOutputs: IContextKey<boolean>;
+	private cellContentCollapsed: IContextKey<boolean>;
+	private cellOutputCollapsed: IContextKey<boolean>;
 
 	private markdownEditMode: IContextKey<boolean>;
 
@@ -38,6 +40,8 @@ export class CellContextKeyManager extends Disposable {
 		this.markdownEditMode = NOTEBOOK_CELL_MARKDOWN_EDIT_MODE.bindTo(this.contextKeyService);
 		this.cellRunState = NOTEBOOK_CELL_RUN_STATE.bindTo(this.contextKeyService);
 		this.cellHasOutputs = NOTEBOOK_CELL_HAS_OUTPUTS.bindTo(this.contextKeyService);
+		this.cellContentCollapsed = NOTEBOOK_CELL_CONTENT_COLLAPSED.bindTo(this.contextKeyService);
+		this.cellOutputCollapsed = NOTEBOOK_CELL_OUTPUT_COLLAPSED.bindTo(this.contextKeyService);
 
 		this.updateForElement(element);
 	}
@@ -59,6 +63,7 @@ export class CellContextKeyManager extends Disposable {
 
 		this.updateForMetadata();
 		this.updateForEditState();
+		this.updateForCollapseState();
 		this.updateForOutputs();
 
 		this.viewType.set(this.element.viewType);
@@ -71,6 +76,10 @@ export class CellContextKeyManager extends Disposable {
 
 		if (e.editStateChanged) {
 			this.updateForEditState();
+		}
+
+		if (e.collapseStateChanged) {
+			this.updateForCollapseState();
 		}
 	}
 
@@ -89,6 +98,11 @@ export class CellContextKeyManager extends Disposable {
 		} else {
 			this.markdownEditMode.set(false);
 		}
+	}
+
+	private updateForCollapseState() {
+		this.cellContentCollapsed.set(this.element.collapseState === CellCollapseState.Collapsed);
+		this.cellOutputCollapsed.set(this.element.outputCollapseState === CellCollapseState.Collapsed);
 	}
 
 	private updateForOutputs() {

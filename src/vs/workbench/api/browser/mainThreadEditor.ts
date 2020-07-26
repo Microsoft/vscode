@@ -269,6 +269,14 @@ export class MainThreadTextEditor {
 				}
 			}));
 
+			const isValidCodeEditor = () => {
+				// Due to event timings, it is possible that there is a model change event not yet delivered to us.
+				// > e.g. a model change event is emitted to a listener which then decides to update editor options
+				// > In this case the editor configuration change event reaches us first.
+				// So simply check that the model is still attached to this code editor
+				return (this._codeEditor && this._codeEditor.getModel() === this._model);
+			};
+
 			const updateProperties = (selectionChangeSource: string | null) => {
 				// Some editor events get delivered faster than model content changes. This is
 				// problematic, as this leads to editor properties reaching the extension host
@@ -287,18 +295,30 @@ export class MainThreadTextEditor {
 
 			this._codeEditorListeners.add(this._codeEditor.onDidChangeCursorSelection((e) => {
 				// selection
+				if (!isValidCodeEditor()) {
+					return;
+				}
 				updateProperties(e.source);
 			}));
-			this._codeEditorListeners.add(this._codeEditor.onDidChangeConfiguration(() => {
+			this._codeEditorListeners.add(this._codeEditor.onDidChangeConfiguration((e) => {
 				// options
+				if (!isValidCodeEditor()) {
+					return;
+				}
 				updateProperties(null);
 			}));
 			this._codeEditorListeners.add(this._codeEditor.onDidLayoutChange(() => {
 				// visibleRanges
+				if (!isValidCodeEditor()) {
+					return;
+				}
 				updateProperties(null);
 			}));
 			this._codeEditorListeners.add(this._codeEditor.onDidScrollChange(() => {
 				// visibleRanges
+				if (!isValidCodeEditor()) {
+					return;
+				}
 				updateProperties(null);
 			}));
 			this._updatePropertiesNow(null);

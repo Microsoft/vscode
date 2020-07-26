@@ -840,6 +840,9 @@ export class TerminalInstance extends Disposable implements ITerminalInstance {
 				setTimeout(() => this.layout(this._timeoutDimension!), 0);
 			}
 		}
+		if (!visible) {
+			this._widgetManager.hideHovers();
+		}
 	}
 
 	public scrollDownLine(): void {

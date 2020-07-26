@@ -205,7 +205,7 @@ export class FileWalker {
 			.map(arg => arg.match(/^-/) ? arg : `'${arg}'`)
 			.join(' ');
 
-		let rgCmd = `rg ${escapedArgs}\n - cwd: ${ripgrep.cwd}`;
+		let rgCmd = `${ripgrep.rgDiskPath} ${escapedArgs}\n - cwd: ${ripgrep.cwd}`;
 		if (ripgrep.rgArgs.siblingClauses) {
 			rgCmd += `\n - Sibling clauses: ${JSON.stringify(ripgrep.rgArgs.siblingClauses)}`;
 		}

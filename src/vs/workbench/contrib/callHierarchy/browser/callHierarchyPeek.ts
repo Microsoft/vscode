@@ -32,9 +32,9 @@ import { IStorageService, StorageScope } from 'vs/platform/storage/common/storag
 import { Color } from 'vs/base/common/color';
 import { TreeMouseEventTarget, ITreeNode } from 'vs/base/browser/ui/tree/tree';
 import { URI } from 'vs/base/common/uri';
-import { MenuId, IMenuService, MenuItemAction } from 'vs/platform/actions/common/actions';
+import { MenuId, IMenuService } from 'vs/platform/actions/common/actions';
 import { IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
-import { createAndFillInActionBarActions, MenuEntryActionViewItem } from 'vs/platform/actions/browser/menuEntryActionViewItem';
+import { createAndFillInActionBarActions } from 'vs/platform/actions/browser/menuEntryActionViewItem';
 
 const enum State {
 	Loading = 'loading',
@@ -94,7 +94,7 @@ export class CallHierarchyTreePeekWidget extends peekView.PeekViewWidget {
 		@IContextKeyService private readonly _contextKeyService: IContextKeyService,
 		@IInstantiationService private readonly _instantiationService: IInstantiationService,
 	) {
-		super(editor, { showFrame: true, showArrow: true, isResizeable: true, isAccessible: true });
+		super(editor, { showFrame: true, showArrow: true, isResizeable: true, isAccessible: true }, _instantiationService);
 		this.create();
 		this._peekViewService.addExclusiveWidget(editor, this);
 		this._applyTheme(themeService.getColorTheme());
@@ -142,8 +142,8 @@ export class CallHierarchyTreePeekWidget extends peekView.PeekViewWidget {
 
 	protected _getActionBarOptions(): IActionBarOptions {
 		return {
-			orientation: ActionsOrientation.HORIZONTAL,
-			actionViewItemProvider: action => action instanceof MenuItemAction ? this._instantiationService.createInstance(MenuEntryActionViewItem, action) : undefined
+			...super._getActionBarOptions(),
+			orientation: ActionsOrientation.HORIZONTAL
 		};
 	}
 

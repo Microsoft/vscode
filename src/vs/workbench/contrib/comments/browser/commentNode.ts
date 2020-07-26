@@ -6,8 +6,8 @@
 import * as nls from 'vs/nls';
 import * as dom from 'vs/base/browser/dom';
 import * as modes from 'vs/editor/common/modes';
-import { ActionsOrientation, ActionViewItem, ActionBar, Separator } from 'vs/base/browser/ui/actionbar/actionbar';
-import { Action, IActionRunner, IAction } from 'vs/base/common/actions';
+import { ActionsOrientation, ActionBar } from 'vs/base/browser/ui/actionbar/actionbar';
+import { Action, IActionRunner, IAction, Separator } from 'vs/base/common/actions';
 import { Disposable, IDisposable } from 'vs/base/common/lifecycle';
 import { URI } from 'vs/base/common/uri';
 import { ITextModel } from 'vs/editor/common/model';
@@ -23,17 +23,17 @@ import { Emitter, Event } from 'vs/base/common/event';
 import { INotificationService } from 'vs/platform/notification/common/notification';
 import { ToolBar } from 'vs/base/browser/ui/toolbar/toolbar';
 import { IContextMenuService } from 'vs/platform/contextview/browser/contextView';
-import { DropdownMenuActionViewItem } from 'vs/base/browser/ui/dropdown/dropdown';
 import { AnchorAlignment } from 'vs/base/browser/ui/contextview/contextview';
 import { ToggleReactionsAction, ReactionAction, ReactionActionViewItem } from './reactionsAction';
 import { ICodeEditor } from 'vs/editor/browser/editorBrowser';
 import { ICommentThreadWidget } from 'vs/workbench/contrib/comments/common/commentThreadWidget';
 import { MenuItemAction, SubmenuItemAction, IMenu } from 'vs/platform/actions/common/actions';
-import { ContextAwareMenuEntryActionViewItem } from 'vs/platform/actions/browser/menuEntryActionViewItem';
-import { IKeybindingService } from 'vs/platform/keybinding/common/keybinding';
+import { MenuEntryActionViewItem, SubmenuEntryActionViewItem } from 'vs/platform/actions/browser/menuEntryActionViewItem';
 import { IContextKeyService, IContextKey } from 'vs/platform/contextkey/common/contextkey';
 import { CommentFormActions } from 'vs/workbench/contrib/comments/browser/commentFormActions';
 import { MOUSE_CURSOR_TEXT_CSS_CLASS_NAME } from 'vs/base/browser/ui/mouseCursor/mouseCursor';
+import { ActionViewItem } from 'vs/base/browser/ui/actionbar/actionViewItems';
+import { DropdownMenuActionViewItem } from 'vs/base/browser/ui/dropdown/dropdownActionViewItem';
 
 export class CommentNode extends Disposable {
 	private _domNode: HTMLElement;
@@ -79,7 +79,6 @@ export class CommentNode extends Disposable {
 		@ICommentService private commentService: ICommentService,
 		@IModelService private modelService: IModelService,
 		@IModeService private modeService: IModeService,
-		@IKeybindingService private keybindingService: IKeybindingService,
 		@INotificationService private notificationService: INotificationService,
 		@IContextMenuService private contextMenuService: IContextMenuService,
 		@IContextKeyService contextKeyService: IContextKeyService
@@ -154,13 +153,12 @@ export class CommentNode extends Disposable {
 						action,
 						(<ToggleReactionsAction>action).menuActions,
 						this.contextMenuService,
-						action => {
-							return this.actionViewItemProvider(action as Action);
-						},
-						this.actionRunner!,
-						undefined,
-						'toolbar-toggle-pickReactions codicon codicon-reactions',
-						() => { return AnchorAlignment.RIGHT; }
+						{
+							actionViewItemProvider: action => this.actionViewItemProvider(action as Action),
+							actionRunner: this.actionRunner,
+							classNames: ['toolbar-toggle-pickReactions', 'codicon', 'codicon-reactions'],
+							anchorAlignmentProvider: () => AnchorAlignment.RIGHT
+						}
 					);
 				}
 				return this.actionViewItemProvider(action as Action);
@@ -221,8 +219,9 @@ export class CommentNode extends Disposable {
 			let item = new ReactionActionViewItem(action);
 			return item;
 		} else if (action instanceof MenuItemAction) {
-			let item = new ContextAwareMenuEntryActionViewItem(action, this.keybindingService, this.notificationService, this.contextMenuService);
-			return item;
+			return this.instantiationService.createInstance(MenuEntryActionViewItem, action);
+		} else if (action instanceof SubmenuItemAction) {
+			return this.instantiationService.createInstance(SubmenuEntryActionViewItem, action);
 		} else {
 			let item = new ActionViewItem({}, action, options);
 			return item;
@@ -259,16 +258,17 @@ export class CommentNode extends Disposable {
 			toggleReactionAction,
 			(<ToggleReactionsAction>toggleReactionAction).menuActions,
 			this.contextMenuService,
-			action => {
-				if (action.id === ToggleReactionsAction.ID) {
-					return toggleReactionActionViewItem;
-				}
-				return this.actionViewItemProvider(action as Action);
-			},
-			this.actionRunner!,
-			undefined,
-			'toolbar-toggle-pickReactions',
-			() => { return AnchorAlignment.RIGHT; }
+			{
+				actionViewItemProvider: action => {
+					if (action.id === ToggleReactionsAction.ID) {
+						return toggleReactionActionViewItem;
+					}
+					return this.actionViewItemProvider(action as Action);
+				},
+				actionRunner: this.actionRunner,
+				classNames: 'toolbar-toggle-pickReactions',
+				anchorAlignmentProvider: () => AnchorAlignment.RIGHT
+			}
 		);
 
 		return toggleReactionAction;
@@ -283,13 +283,12 @@ export class CommentNode extends Disposable {
 						action,
 						(<ToggleReactionsAction>action).menuActions,
 						this.contextMenuService,
-						action => {
-							return this.actionViewItemProvider(action as Action);
-						},
-						this.actionRunner!,
-						undefined,
-						'toolbar-toggle-pickReactions',
-						() => { return AnchorAlignment.RIGHT; }
+						{
+							actionViewItemProvider: action => this.actionViewItemProvider(action as Action),
+							actionRunner: this.actionRunner,
+							classNames: 'toolbar-toggle-pickReactions',
+							anchorAlignmentProvider: () => AnchorAlignment.RIGHT
+						}
 					);
 				}
 				return this.actionViewItemProvider(action as Action);

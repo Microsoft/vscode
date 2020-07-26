@@ -4,8 +4,8 @@
  *--------------------------------------------------------------------------------------------*/
 
 import TypeScriptServiceClientHost from '../typeScriptServiceClientHost';
-import { Command } from '../utils/commandManager';
 import { Lazy } from '../utils/lazy';
+import { Command } from './commandManager';
 
 export class ReloadTypeScriptProjectsCommand implements Command {
 	public readonly id = 'typescript.reloadProjects';

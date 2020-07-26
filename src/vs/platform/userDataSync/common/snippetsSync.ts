@@ -96,12 +96,12 @@ export class SnippetsSynchroniser extends AbstractSynchroniser implements IUserD
 		return this.getResourcePreviews(mergeResult, local, remoteSnippets || {});
 	}
 
-	protected async updateResourcePreview(resourcePreview: IFileResourcePreview, resource: URI, acceptedContent: string): Promise<IFileResourcePreview> {
+	protected async updateResourcePreview(resourcePreview: IFileResourcePreview, resource: URI, acceptedContent: string | null): Promise<IFileResourcePreview> {
 		return {
 			...resourcePreview,
-			acceptedContent: acceptedContent || null,
-			localChange: this.computeLocalChange(resourcePreview, resource, acceptedContent || null),
-			remoteChange: this.computeRemoteChange(resourcePreview, resource, acceptedContent || null),
+			acceptedContent,
+			localChange: this.computeLocalChange(resourcePreview, resource, acceptedContent),
+			remoteChange: this.computeRemoteChange(resourcePreview, resource, acceptedContent),
 		};
 	}
 

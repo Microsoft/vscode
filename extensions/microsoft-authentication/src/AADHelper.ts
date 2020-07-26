@@ -6,7 +6,7 @@
 import * as randomBytes from 'randombytes';
 import * as querystring from 'querystring';
 import * as vscode from 'vscode';
-import { createServer, startServer } from './env/node/authServer';
+import { createServer, startServer } from './authServer';
 
 import { v4 as uuid } from 'uuid';
 import { keychain } from './keychain';
@@ -339,7 +339,7 @@ export class AzureActiveDirectoryService {
 	}
 
 	private getCallbackEnvironment(callbackUri: vscode.Uri): string {
-		if (callbackUri.authority.endsWith('.workspaces.github.com')) {
+		if (callbackUri.authority.endsWith('.workspaces.github.com') || callbackUri.authority.endsWith('.github.dev')) {
 			return `${callbackUri.authority},`;
 		}
 
@@ -471,7 +471,10 @@ export class AzureActiveDirectoryService {
 				redirect_uri: redirectUrl
 			});
 
-			const result = await fetch(`${loginEndpointUrl}${tenant}/oauth2/v2.0/token`, {
+			const proxyEndpoints: { [providerId: string]: string } | undefined = await vscode.commands.executeCommand('workbench.getCodeExchangeProxyEndpoints');
+			const endpoint = proxyEndpoints && proxyEndpoints['microsoft'] || `${loginEndpointUrl}${tenant}/oauth2/v2.0/token`;
+
+			const result = await fetch(endpoint, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/x-www-form-urlencoded',

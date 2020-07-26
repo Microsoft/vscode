@@ -384,7 +384,7 @@ export abstract class AbstractSynchroniser extends Disposable {
 		}
 	}
 
-	async accept(resource: URI, content: string): Promise<ISyncResourcePreview | null> {
+	async accept(resource: URI, content: string | null): Promise<ISyncResourcePreview | null> {
 		await this.updateSyncResourcePreview(resource, async (resourcePreview) => {
 			const updatedResourcePreview = await this.updateResourcePreview(resourcePreview, resource, content);
 			return {
@@ -397,7 +397,7 @@ export abstract class AbstractSynchroniser extends Disposable {
 
 	async merge(resource: URI): Promise<ISyncResourcePreview | null> {
 		await this.updateSyncResourcePreview(resource, async (resourcePreview) => {
-			const updatedResourcePreview = await this.updateResourcePreview(resourcePreview, resourcePreview.previewResource, resourcePreview.previewContent || '');
+			const updatedResourcePreview = await this.updateResourcePreview(resourcePreview, resourcePreview.previewResource, resourcePreview.previewContent);
 			return {
 				...updatedResourcePreview,
 				mergeState: resourcePreview.hasConflicts ? MergeState.Conflict : MergeState.Accepted
@@ -409,7 +409,7 @@ export abstract class AbstractSynchroniser extends Disposable {
 	async discard(resource: URI): Promise<ISyncResourcePreview | null> {
 		await this.updateSyncResourcePreview(resource, async (resourcePreview) => {
 			await this.fileService.writeFile(resourcePreview.previewResource, VSBuffer.fromString(resourcePreview.previewContent || ''));
-			const updatedResourcePreview = await this.updateResourcePreview(resourcePreview, resourcePreview.previewResource, resourcePreview.previewContent || '');
+			const updatedResourcePreview = await this.updateResourcePreview(resourcePreview, resourcePreview.previewResource, resourcePreview.previewContent);
 			return {
 				...updatedResourcePreview,
 				mergeState: MergeState.Preview
@@ -448,7 +448,7 @@ export abstract class AbstractSynchroniser extends Disposable {
 		}
 	}
 
-	protected async updateResourcePreview(resourcePreview: IResourcePreview, resource: URI, acceptedContent: string): Promise<IResourcePreview> {
+	protected async updateResourcePreview(resourcePreview: IResourcePreview, resource: URI, acceptedContent: string | null): Promise<IResourcePreview> {
 		return {
 			...resourcePreview,
 			acceptedContent
@@ -550,13 +550,13 @@ export abstract class AbstractSynchroniser extends Disposable {
 		if (syncPreview) {
 			for (const resourcePreview of syncPreview.resourcePreviews) {
 				if (isEqual(resourcePreview.acceptedResource, uri)) {
-					return resourcePreview.acceptedContent || '';
+					return resourcePreview.acceptedContent;
 				}
 				if (isEqual(resourcePreview.remoteResource, uri)) {
-					return resourcePreview.remoteContent || '';
+					return resourcePreview.remoteContent;
 				}
 				if (isEqual(resourcePreview.localResource, uri)) {
-					return resourcePreview.localContent || '';
+					return resourcePreview.localContent;
 				}
 			}
 		}

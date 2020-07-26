@@ -297,7 +297,7 @@
 		],
 		"action": "close",
 		"addLabel": "*caused-by-extension",
-		"comment": "It looks like this is caused by the Powershell extension. Please file it with the repository [here](https://github.com/PowerShell/vscode-powershell). Make sure to check their issue reporting template and provide them relevant information such as the extension version you're using. See also our [issue reporting](https://aka.ms/vscodeissuereporting) guidelines for more information.\n\nHappy Coding!"
+		"comment": "It looks like this is caused by the PowerShell extension. Please file it with the repository [here](https://github.com/PowerShell/vscode-powershell). Make sure to check their issue reporting template and provide them relevant information such as the extension version you're using. See also our [issue reporting](https://aka.ms/vscodeissuereporting) guidelines for more information.\n\nHappy Coding!"
 	},
 	{
 		"type": "comment",
@@ -361,7 +361,7 @@
 			"IllusionMH"
 		],
 		"action": "comment",
-		"comment": "Thanks for reporting this issue! Unfortunately, it's hard for us to understand what issue you're seeing. Please help us out by providing a gif showing exactly what isn't working as expected. You may find https://gifcap.dev helpful as a browser-based gif recording tool.\n\nHappy coding!"
+		"comment": "Thanks for reporting this issue! Unfortunately, it's hard for us to understand what issue you're seeing. Please help us out by providing a screen recording showing exactly what isn't working as expected. While we can work with most standard formats, `.gif` files are preferred as they are displayed inline on GitHub. You may find https://gifcap.dev helpful as a browser-based gif recording tool.\n\nIf the issue depends on keyboard input, you can help us by enabling screencast mode for the recording (`Developer: Toggle Screencast Mode` in the command palette).\n\nHappy coding!"
 	},
 	{
 		"type": "comment",

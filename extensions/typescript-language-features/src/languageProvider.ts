@@ -5,15 +5,15 @@
 
 import { basename } from 'path';
 import * as vscode from 'vscode';
+import { DiagnosticKind } from './languageFeatures/diagnostics';
+import FileConfigurationManager from './languageFeatures/fileConfigurationManager';
 import { CachedResponse } from './tsServer/cachedResponse';
-import { DiagnosticKind } from './features/diagnostics';
-import FileConfigurationManager from './features/fileConfigurationManager';
 import TypeScriptServiceClient from './typescriptServiceClient';
-import { CommandManager } from './utils/commandManager';
+import { CommandManager } from './commands/commandManager';
 import { Disposable } from './utils/dispose';
+import { DocumentSelector } from './utils/documentSelector';
 import * as fileSchemes from './utils/fileSchemes';
 import { LanguageDescription } from './utils/languageDescription';
-import { memoize } from './utils/memoize';
 import { TelemetryReporter } from './utils/telemetry';
 import TypingsStatus from './utils/typingsStatus';
 
@@ -39,15 +39,17 @@ export default class LanguageProvider extends Disposable {
 		client.onReady(() => this.registerProviders());
 	}
 
-	@memoize
-	private get documentSelector(): vscode.DocumentFilter[] {
-		const documentSelector = [];
+	private get documentSelector(): DocumentSelector {
+		const semantic: vscode.DocumentFilter[] = [];
+		const syntax: vscode.DocumentFilter[] = [];
 		for (const language of this.description.modeIds) {
-			for (const scheme of fileSchemes.supportedSchemes) {
-				documentSelector.push({ language, scheme });
+			syntax.push({ language });
+			for (const scheme of fileSchemes.semanticSupportedSchemes) {
+				semantic.push({ language, scheme });
 			}
 		}
-		return documentSelector;
+
+		return { semantic, syntax };
 	}
 
 	private async registerProviders(): Promise<void> {
@@ -56,30 +58,30 @@ export default class LanguageProvider extends Disposable {
 		const cachedResponse = new CachedResponse();
 
 		await Promise.all([
-			import('./features/completions').then(provider => this._register(provider.register(selector, this.description.id, this.client, this.typingsStatus, this.fileConfigurationManager, this.commandManager, this.telemetryReporter, this.onCompletionAccepted))),
-			import('./features/definitions').then(provider => this._register(provider.register(selector, this.client))),
-			import('./features/directiveCommentCompletions').then(provider => this._register(provider.register(selector, this.client))),
-			import('./features/documentHighlight').then(provider => this._register(provider.register(selector, this.client))),
-			import('./features/documentSymbol').then(provider => this._register(provider.register(selector, this.client, cachedResponse))),
-			import('./features/folding').then(provider => this._register(provider.register(selector, this.client))),
-			import('./features/formatting').then(provider => this._register(provider.register(selector, this.description.id, this.client, this.fileConfigurationManager))),
-			import('./features/hover').then(provider => this._register(provider.register(selector, this.client))),
-			import('./features/implementations').then(provider => this._register(provider.register(selector, this.client))),
-			import('./features/implementationsCodeLens').then(provider => this._register(provider.register(selector, this.description.id, this.client, cachedResponse))),
-			import('./features/jsDocCompletions').then(provider => this._register(provider.register(selector, this.description.id, this.client))),
-			import('./features/organizeImports').then(provider => this._register(provider.register(selector, this.client, this.commandManager, this.fileConfigurationManager, this.telemetryReporter))),
-			import('./features/quickFix').then(provider => this._register(provider.register(selector, this.client, this.fileConfigurationManager, this.commandManager, this.client.diagnosticsManager, this.telemetryReporter))),
-			import('./features/fixAll').then(provider => this._register(provider.register(selector, this.client, this.fileConfigurationManager, this.client.diagnosticsManager))),
-			import('./features/refactor').then(provider => this._register(provider.register(selector, this.client, this.fileConfigurationManager, this.commandManager, this.telemetryReporter))),
-			import('./features/references').then(provider => this._register(provider.register(selector, this.client))),
-			import('./features/referencesCodeLens').then(provider => this._register(provider.register(selector, this.description.id, this.client, cachedResponse))),
-			import('./features/rename').then(provider => this._register(provider.register(selector, this.client, this.fileConfigurationManager))),
-			import('./features/smartSelect').then(provider => this._register(provider.register(selector, this.client))),
-			import('./features/signatureHelp').then(provider => this._register(provider.register(selector, this.client))),
-			import('./features/tagClosing').then(provider => this._register(provider.register(selector, this.description.id, this.client))),
-			import('./features/typeDefinitions').then(provider => this._register(provider.register(selector, this.client))),
-			import('./features/semanticTokens').then(provider => this._register(provider.register(selector, this.client))),
-			import('./features/callHierarchy').then(provider => this._register(provider.register(selector, this.client))),
+			import('./languageFeatures/completions').then(provider => this._register(provider.register(selector, this.description.id, this.client, this.typingsStatus, this.fileConfigurationManager, this.commandManager, this.telemetryReporter, this.onCompletionAccepted))),
+			import('./languageFeatures/definitions').then(provider => this._register(provider.register(selector, this.client))),
+			import('./languageFeatures/directiveCommentCompletions').then(provider => this._register(provider.register(selector, this.client))),
+			import('./languageFeatures/documentHighlight').then(provider => this._register(provider.register(selector, this.client))),
+			import('./languageFeatures/documentSymbol').then(provider => this._register(provider.register(selector, this.client, cachedResponse))),
+			import('./languageFeatures/folding').then(provider => this._register(provider.register(selector, this.client))),
+			import('./languageFeatures/formatting').then(provider => this._register(provider.register(selector, this.description.id, this.client, this.fileConfigurationManager))),
+			import('./languageFeatures/hover').then(provider => this._register(provider.register(selector, this.client))),
+			import('./languageFeatures/implementations').then(provider => this._register(provider.register(selector, this.client))),
+			import('./languageFeatures/codeLens/implementationsCodeLens').then(provider => this._register(provider.register(selector, this.description.id, this.client, cachedResponse))),
+			import('./languageFeatures/jsDocCompletions').then(provider => this._register(provider.register(selector, this.description.id, this.client))),
+			import('./languageFeatures/organizeImports').then(provider => this._register(provider.register(selector, this.client, this.commandManager, this.fileConfigurationManager, this.telemetryReporter))),
+			import('./languageFeatures/quickFix').then(provider => this._register(provider.register(selector, this.client, this.fileConfigurationManager, this.commandManager, this.client.diagnosticsManager, this.telemetryReporter))),
+			import('./languageFeatures/fixAll').then(provider => this._register(provider.register(selector, this.client, this.fileConfigurationManager, this.client.diagnosticsManager))),
+			import('./languageFeatures/refactor').then(provider => this._register(provider.register(selector, this.client, this.fileConfigurationManager, this.commandManager, this.telemetryReporter))),
+			import('./languageFeatures/references').then(provider => this._register(provider.register(selector, this.client))),
+			import('./languageFeatures/codeLens/referencesCodeLens').then(provider => this._register(provider.register(selector, this.description.id, this.client, cachedResponse))),
+			import('./languageFeatures/rename').then(provider => this._register(provider.register(selector, this.client, this.fileConfigurationManager))),
+			import('./languageFeatures/smartSelect').then(provider => this._register(provider.register(selector, this.client))),
+			import('./languageFeatures/signatureHelp').then(provider => this._register(provider.register(selector, this.client))),
+			import('./languageFeatures/tagClosing').then(provider => this._register(provider.register(selector, this.description.id, this.client))),
+			import('./languageFeatures/typeDefinitions').then(provider => this._register(provider.register(selector, this.client))),
+			import('./languageFeatures/semanticTokens').then(provider => this._register(provider.register(selector, this.client))),
+			import('./languageFeatures/callHierarchy').then(provider => this._register(provider.register(selector, this.client))),
 		]);
 	}
 

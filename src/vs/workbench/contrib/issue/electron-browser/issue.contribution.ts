@@ -23,7 +23,7 @@ const workbenchActionsRegistry = Registry.as<IWorkbenchActionRegistry>(Extension
 if (!!product.reportIssueUrl) {
 	workbenchActionsRegistry.registerWorkbenchAction(SyncActionDescriptor.from(ReportPerformanceIssueUsingReporterAction), 'Help: Report Performance Issue', helpCategory.value);
 
-	const OpenIssueReporterActionLabel = nls.localize({ key: 'reportIssueInEnglish', comment: ['Translate this to "Report Issue in English" in all languages please!'] }, "Report Issue");
+	const OpenIssueReporterActionLabel = nls.localize({ key: 'reportIssueInEnglish', comment: ['Translate this to "Report Issue in English" in all languages please!'] }, "Report Issue...");
 
 	CommandsRegistry.registerCommand(OpenIssueReporterActionId, function (accessor, args?: [string] | OpenIssueReporterArgs) {
 		const data: Partial<IssueReporterData> = Array.isArray(args)

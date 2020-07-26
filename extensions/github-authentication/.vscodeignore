@@ -1,8 +1,10 @@
+.gitignore
 src/**
 !src/common/config.json
 out/**
 build/**
 extension.webpack.config.js
+extension-browser.webpack.config.js
 tsconfig.json
 yarn.lock
 README.md

@@ -3,11 +3,11 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { IBaseActionViewItemOptions } from 'vs/base/browser/ui/actionbar/actionbar';
 import { CheckboxActionViewItem } from 'vs/base/browser/ui/checkbox/checkbox';
 import { IAction } from 'vs/base/common/actions';
 import { IThemeService } from 'vs/platform/theme/common/themeService';
 import { attachCheckboxStyler } from 'vs/platform/theme/common/styler';
+import { IBaseActionViewItemOptions } from 'vs/base/browser/ui/actionbar/actionViewItems';
 
 export class ThemableCheckboxActionViewItem extends CheckboxActionViewItem {
 

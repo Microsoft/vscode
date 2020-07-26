@@ -20,7 +20,7 @@ export class MenuService implements IMenuService {
 	}
 
 	createMenu(id: MenuId, contextKeyService: IContextKeyService): IMenu {
-		return new Menu(id, this._commandService, contextKeyService);
+		return new Menu(id, this._commandService, contextKeyService, this);
 	}
 }
 
@@ -38,7 +38,8 @@ class Menu implements IMenu {
 	constructor(
 		private readonly _id: MenuId,
 		@ICommandService private readonly _commandService: ICommandService,
-		@IContextKeyService private readonly _contextKeyService: IContextKeyService
+		@IContextKeyService private readonly _contextKeyService: IContextKeyService,
+		@IMenuService private readonly _menuService: IMenuService
 	) {
 		this._build();
 
@@ -114,7 +115,7 @@ class Menu implements IMenu {
 				if (this._contextKeyService.contextMatchesRules(item.when)) {
 					const action = isIMenuItem(item)
 						? new MenuItemAction(item.command, item.alt, options, this._contextKeyService, this._commandService)
-						: new SubmenuItemAction(item);
+						: new SubmenuItemAction(item, this._menuService, this._contextKeyService, options);
 
 					activeActions.push(action);
 				}

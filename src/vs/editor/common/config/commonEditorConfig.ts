@@ -381,7 +381,7 @@ export abstract class CommonEditorConfiguration extends Disposable implements IC
 					}
 					continue;
 				}
-				if (typeof baseValue === 'object' && typeof subsetValue === 'object') {
+				if (baseValue && typeof baseValue === 'object' && subsetValue && typeof subsetValue === 'object') {
 					if (!this._subsetEquals(baseValue, subsetValue)) {
 						return false;
 					}

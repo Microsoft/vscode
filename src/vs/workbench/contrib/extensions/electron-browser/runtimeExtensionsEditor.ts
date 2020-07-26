@@ -7,7 +7,7 @@ import 'vs/css!./media/runtimeExtensionsEditor';
 import * as nls from 'vs/nls';
 import * as os from 'os';
 import { IProductService } from 'vs/platform/product/common/productService';
-import { Action, IAction } from 'vs/base/common/actions';
+import { Action, IAction, Separator } from 'vs/base/common/actions';
 import { BaseEditor } from 'vs/workbench/browser/parts/editor/baseEditor';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 import { IInstantiationService, createDecorator } from 'vs/platform/instantiation/common/instantiation';
@@ -18,7 +18,7 @@ import { IExtensionService, IExtensionsStatus, IExtensionHostProfile } from 'vs/
 import { IListVirtualDelegate, IListRenderer } from 'vs/base/browser/ui/list/list';
 import { WorkbenchList } from 'vs/platform/list/browser/listService';
 import { append, $, addClass, toggleClass, Dimension, clearNode } from 'vs/base/browser/dom';
-import { ActionBar, Separator } from 'vs/base/browser/ui/actionbar/actionbar';
+import { ActionBar } from 'vs/base/browser/ui/actionbar/actionbar';
 import { dispose, IDisposable } from 'vs/base/common/lifecycle';
 import { RunOnceScheduler } from 'vs/base/common/async';
 import { IClipboardService } from 'vs/platform/clipboard/common/clipboardService';
@@ -157,23 +157,24 @@ export class RuntimeExtensionsEditor extends BaseEditor {
 		this._extensionService.getExtensions().then((extensions) => {
 			// We only deal with extensions with source code!
 			this._extensionsDescriptions = extensions.filter((extension) => {
-				return !!extension.main;
+				return Boolean(extension.main) || Boolean(extension.browser);
 			});
 			this._updateExtensions();
 		});
 		this._register(this._extensionService.onDidChangeExtensionsStatus(() => this._updateSoon.schedule()));
 	}
 
-	private _updateExtensions(): void {
-		this._elements = this._resolveExtensions();
+	private async _updateExtensions(): Promise<void> {
+		this._elements = await this._resolveExtensions();
 		if (this._list) {
 			this._list.splice(0, this._list.length, this._elements);
 		}
 	}
 
-	private _resolveExtensions(): IRuntimeExtension[] {
+	private async _resolveExtensions(): Promise<IRuntimeExtension[]> {
 		let marketplaceMap: { [id: string]: IExtension; } = Object.create(null);
-		for (let extension of this._extensionsWorkbenchService.local) {
+		const marketPlaceExtensions = await this._extensionsWorkbenchService.queryLocal();
+		for (let extension of marketPlaceExtensions) {
 			marketplaceMap[ExtensionIdentifier.toKey(extension.identifier.id)] = extension;
 		}
 
@@ -328,7 +329,7 @@ export class RuntimeExtensionsEditor extends BaseEditor {
 				} else {
 					data.icon.style.visibility = 'inherit';
 				}
-				data.name.textContent = element.marketplaceInfo ? element.marketplaceInfo.displayName : element.description.displayName || '';
+				data.name.textContent = element.marketplaceInfo.displayName;
 				data.version.textContent = element.description.version;
 
 				const activationTimes = element.status.activationTimes!;
@@ -462,11 +463,10 @@ export class RuntimeExtensionsEditor extends BaseEditor {
 			actions.push(new ReportExtensionIssueAction(e.element, this._openerService, this._clipboardService, this._productService));
 			actions.push(new Separator());
 
-			if (e.element.marketplaceInfo) {
-				actions.push(new Action('runtimeExtensionsEditor.action.disableWorkspace', nls.localize('disable workspace', "Disable (Workspace)"), undefined, true, () => this._extensionsWorkbenchService.setEnablement(e.element!.marketplaceInfo, EnablementState.DisabledWorkspace)));
-				actions.push(new Action('runtimeExtensionsEditor.action.disable', nls.localize('disable', "Disable"), undefined, true, () => this._extensionsWorkbenchService.setEnablement(e.element!.marketplaceInfo, EnablementState.DisabledGlobally)));
-				actions.push(new Separator());
-			}
+			actions.push(new Action('runtimeExtensionsEditor.action.disableWorkspace', nls.localize('disable workspace', "Disable (Workspace)"), undefined, true, () => this._extensionsWorkbenchService.setEnablement(e.element!.marketplaceInfo, EnablementState.DisabledWorkspace)));
+			actions.push(new Action('runtimeExtensionsEditor.action.disable', nls.localize('disable', "Disable"), undefined, true, () => this._extensionsWorkbenchService.setEnablement(e.element!.marketplaceInfo, EnablementState.DisabledGlobally)));
+			actions.push(new Separator());
+
 			const state = this._extensionHostProfileService.state;
 			if (state === ProfileSessionState.Running) {
 				actions.push(this._instantiationService.createInstance(StopExtensionHostProfileAction, StopExtensionHostProfileAction.ID, StopExtensionHostProfileAction.LABEL));

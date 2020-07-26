@@ -10,6 +10,12 @@ import { IDisposable, toDisposable, Disposable, DisposableStore } from 'vs/base/
 import { Range } from 'vs/base/common/range';
 import { BrowserFeatures } from 'vs/base/browser/canIUse';
 
+export const enum ContextViewDOMPosition {
+	ABSOLUTE = 1,
+	FIXED,
+	FIXED_SHADOW
+}
+
 export interface IAnchor {
 	x: number;
 	y: number;
@@ -105,32 +111,62 @@ export class ContextView extends Disposable {
 	private container: HTMLElement | null = null;
 	private view: HTMLElement;
 	private useFixedPosition: boolean;
+	private useShadowDOM: boolean;
 	private delegate: IDelegate | null = null;
 	private toDisposeOnClean: IDisposable = Disposable.None;
 	private toDisposeOnSetContainer: IDisposable = Disposable.None;
+	private shadowRoot: ShadowRoot | null = null;
+	private shadowRootHostElement: HTMLElement | null = null;
 
-	constructor(container: HTMLElement, useFixedPosition: boolean) {
+	constructor(container: HTMLElement, domPosition: ContextViewDOMPosition) {
 		super();
 
 		this.view = DOM.$('.context-view');
 		this.useFixedPosition = false;
+		this.useShadowDOM = false;
 
 		DOM.hide(this.view);
 
-		this.setContainer(container, useFixedPosition);
+		this.setContainer(container, domPosition);
 
-		this._register(toDisposable(() => this.setContainer(null, false)));
+		this._register(toDisposable(() => this.setContainer(null, ContextViewDOMPosition.ABSOLUTE)));
 	}
 
-	setContainer(container: HTMLElement | null, useFixedPosition: boolean): void {
+	setContainer(container: HTMLElement | null, domPosition: ContextViewDOMPosition): void {
 		if (this.container) {
 			this.toDisposeOnSetContainer.dispose();
-			this.container.removeChild(this.view);
+
+			if (this.shadowRoot) {
+				this.shadowRoot.removeChild(this.view);
+				this.shadowRoot = null;
+				DOM.removeNode(this.shadowRootHostElement!);
+				this.shadowRootHostElement = null;
+			} else {
+				this.container.removeChild(this.view);
+			}
+
 			this.container = null;
 		}
 		if (container) {
 			this.container = container;
-			this.container.appendChild(this.view);
+
+			this.useFixedPosition = domPosition !== ContextViewDOMPosition.ABSOLUTE;
+			this.useShadowDOM = domPosition === ContextViewDOMPosition.FIXED_SHADOW;
+
+			if (this.useShadowDOM) {
+				this.shadowRootHostElement = DOM.$('.shadow-root-host');
+				this.container.appendChild(this.shadowRootHostElement);
+				this.shadowRoot = this.shadowRootHostElement.attachShadow({ mode: 'open' });
+				this.shadowRoot.innerHTML = `
+					<style>
+						${SHADOW_ROOT_CSS}
+					</style>
+				`;
+				this.shadowRoot.appendChild(this.view);
+				this.shadowRoot.appendChild(DOM.$('slot'));
+			} else {
+				this.container.appendChild(this.view);
+			}
 
 			const toDisposeOnSetContainer = new DisposableStore();
 
@@ -148,8 +184,6 @@ export class ContextView extends Disposable {
 
 			this.toDisposeOnSetContainer = toDisposeOnSetContainer;
 		}
-
-		this.useFixedPosition = useFixedPosition;
 	}
 
 	show(delegate: IDelegate): void {
@@ -162,6 +196,7 @@ export class ContextView extends Disposable {
 		this.view.className = 'context-view';
 		this.view.style.top = '0px';
 		this.view.style.left = '0px';
+		this.view.style.zIndex = '2500';
 		this.view.style.position = this.useFixedPosition ? 'fixed' : 'absolute';
 		DOM.show(this.view);
 
@@ -300,3 +335,45 @@ export class ContextView extends Disposable {
 		super.dispose();
 	}
 }
+
+let SHADOW_ROOT_CSS = /* css */ `
+	:host {
+		all: initial; /* 1st rule so subsequent properties are reset. */
+	}
+
+	@font-face {
+		font-family: "codicon";
+		src: url("./codicon.ttf?5d4d76ab2ce5108968ad644d591a16a6") format("truetype");
+	}
+
+	.codicon[class*='codicon-'] {
+		font: normal normal normal 16px/1 codicon;
+		display: inline-block;
+		text-decoration: none;
+		text-rendering: auto;
+		text-align: center;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+		user-select: none;
+		-webkit-user-select: none;
+		-ms-user-select: none;
+	}
+
+	:host-context(.mac) { font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+	:host-context(.mac:lang(zh-Hans)) { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", sans-serif; }
+	:host-context(.mac:lang(zh-Hant)) { font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", sans-serif; }
+	:host-context(.mac:lang(ja)) { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic Pro", sans-serif; }
+	:host-context(.mac:lang(ko)) { font-family: -apple-system, BlinkMacSystemFont, "Nanum Gothic", "Apple SD Gothic Neo", "AppleGothic", sans-serif; }
+
+	:host-context(.windows) { font-family: "Segoe WPC", "Segoe UI", sans-serif; }
+	:host-context(.windows:lang(zh-Hans)) { font-family: "Segoe WPC", "Segoe UI", "Microsoft YaHei", sans-serif; }
+	:host-context(.windows:lang(zh-Hant)) { font-family: "Segoe WPC", "Segoe UI", "Microsoft Jhenghei", sans-serif; }
+	:host-context(.windows:lang(ja)) { font-family: "Segoe WPC", "Segoe UI", "Yu Gothic UI", "Meiryo UI", sans-serif; }
+	:host-context(.windows:lang(ko)) { font-family: "Segoe WPC", "Segoe UI", "Malgun Gothic", "Dotom", sans-serif; }
+
+	:host-context(.mac).linux) { font-family: system-ui, "Ubuntu", "Droid Sans", sans-serif; }
+	:host-context(.mac).linux:lang(zh-Hans)) { font-family: system-ui, "Ubuntu", "Droid Sans", "Source Han Sans SC", "Source Han Sans CN", "Source Han Sans", sans-serif; }
+	:host-context(.mac).linux:lang(zh-Hant)) { font-family: system-ui, "Ubuntu", "Droid Sans", "Source Han Sans TC", "Source Han Sans TW", "Source Han Sans", sans-serif; }
+	:host-context(.mac).linux:lang(ja)) { font-family: system-ui, "Ubuntu", "Droid Sans", "Source Han Sans J", "Source Han Sans JP", "Source Han Sans", sans-serif; }
+	:host-context(.mac).linux:lang(ko)) { font-family: system-ui, "Ubuntu", "Droid Sans", "Source Han Sans K", "Source Han Sans JR", "Source Han Sans", "UnDotum", "FBaekmuk Gulim", sans-serif; }
+`;

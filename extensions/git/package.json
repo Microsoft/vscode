@@ -1813,7 +1813,7 @@
           "Ignore",
           "ignore"
         ],
-        "filenames": [
+        "extensions": [
           ".gitignore_global",
           ".gitignore"
         ],

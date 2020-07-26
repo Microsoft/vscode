@@ -154,13 +154,13 @@ export class UserDataSyncTestServer implements IRequestService {
 	get responses(): { status: number }[] { return this._responses; }
 	reset(): void { this._requests = []; this._responses = []; this._requestsWithAllHeaders = []; }
 
-	constructor(private readonly rateLimit = Number.MAX_SAFE_INTEGER) { }
+	constructor(private readonly rateLimit = Number.MAX_SAFE_INTEGER, private readonly retryAfter?: number) { }
 
 	async resolveProxy(url: string): Promise<string | undefined> { return url; }
 
 	async request(options: IRequestOptions, token: CancellationToken): Promise<IRequestContext> {
 		if (this._requests.length === this.rateLimit) {
-			return this.toResponse(429);
+			return this.toResponse(429, this.retryAfter ? { 'retry-after': `${this.retryAfter}` } : undefined);
 		}
 		const headers: IHeaders = {};
 		if (options.headers) {

@@ -383,4 +383,22 @@ suite('UserDataAutoSyncService', () => {
 		assert.deepEqual((<UserDataSyncStoreError>e).code, UserDataSyncErrorCode.TooManyRequests);
 	});
 
+	test('test auto sync is suspended when server donot accepts requests', async () => {
+		const target = new UserDataSyncTestServer(5, 1);
+
+		// Set up and sync from the test client
+		const testClient = disposableStore.add(new UserDataSyncClient(target));
+		await testClient.setUp();
+		const testObject: TestUserDataAutoSyncService = testClient.instantiationService.createInstance(TestUserDataAutoSyncService);
+
+		while (target.requests.length < 5) {
+			await testObject.sync();
+		}
+
+		target.reset();
+		await testObject.sync();
+
+		assert.deepEqual(target.requests, []);
+	});
+
 });

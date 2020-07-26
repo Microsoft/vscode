@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import type * as Proto from '../protocol';
-import { TypeScriptVersion } from '../utils/versionProvider';
+import { TypeScriptVersion } from './versionProvider';
 
 
 export class TypeScriptServerError extends Error {

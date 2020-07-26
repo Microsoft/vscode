@@ -60,10 +60,12 @@ export class ProxyAuthHandler extends Disposable {
 			title: 'VS Code',
 			webPreferences: {
 				preload: URI.parse(require.toUrl('vs/base/parts/sandbox/electron-browser/preload.js')).fsPath,
-				enableWebSQL: false,
 				sandbox: true,
-				devTools: false,
+				contextIsolation: true,
+				enableWebSQL: false,
 				enableRemoteModule: false,
+				spellcheck: false,
+				devTools: false,
 				v8CacheOptions: 'bypassHeatCheck'
 			}
 		};

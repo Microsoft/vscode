@@ -168,10 +168,11 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 				webPreferences: {
 					preload: URI.parse(this.doGetPreloadUrl()).fsPath,
 					nodeIntegration: true,
-					webviewTag: true,
 					enableWebSQL: false,
 					enableRemoteModule: false,
+					spellcheck: false,
 					nativeWindowOpen: true,
+					webviewTag: true,
 					zoomFactor: zoomLevelToZoomFactor(windowConfig?.zoomLevel)
 				}
 			};

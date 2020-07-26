@@ -14,7 +14,7 @@ import {
 	IExtensionManagementService, IExtensionGalleryService, ILocalExtension, IGalleryExtension,
 	DidInstallExtensionEvent, DidUninstallExtensionEvent, InstallExtensionEvent, IGalleryExtensionAssets, IExtensionIdentifier, InstallOperation, IExtensionTipsService, IGalleryMetadata
 } from 'vs/platform/extensionManagement/common/extensionManagement';
-import { IWorkbenchExtensionEnablementService, EnablementState, IExtensionManagementServerService, IExtensionRecommendationsService } from 'vs/workbench/services/extensionManagement/common/extensionManagement';
+import { IWorkbenchExtensionEnablementService, EnablementState, IExtensionManagementServerService, IExtensionRecommendationsService, IExtensionManagementServer } from 'vs/workbench/services/extensionManagement/common/extensionManagement';
 import { getGalleryExtensionId } from 'vs/platform/extensionManagement/common/extensionManagementUtil';
 import { TestExtensionEnablementService } from 'vs/workbench/services/extensionManagement/test/browser/extensionEnablementService.test';
 import { ExtensionGalleryService } from 'vs/platform/extensionManagement/common/extensionGalleryService';
@@ -34,7 +34,7 @@ import { INotificationService } from 'vs/platform/notification/common/notificati
 import { NativeURLService } from 'vs/platform/url/common/urlService';
 import { URI } from 'vs/base/common/uri';
 import { CancellationToken } from 'vs/base/common/cancellation';
-import { ExtensionType } from 'vs/platform/extensions/common/extensions';
+import { ExtensionType, IExtension, ExtensionKind } from 'vs/platform/extensions/common/extensions';
 import { IRemoteAgentService } from 'vs/workbench/services/remote/common/remoteAgentService';
 import { RemoteAgentService } from 'vs/workbench/services/remote/electron-browser/remoteAgentServiceImpl';
 import { ISharedProcessService } from 'vs/platform/ipc/electron-browser/sharedProcessService';
@@ -46,6 +46,8 @@ import { TestLifecycleService } from 'vs/workbench/test/browser/workbenchTestSer
 import { IExperimentService } from 'vs/workbench/contrib/experiments/common/experimentService';
 import { TestExperimentService } from 'vs/workbench/contrib/experiments/test/electron-browser/experimentService.test';
 import { ExtensionTipsService } from 'vs/platform/extensionManagement/node/extensionTipsService';
+import { Schemas } from 'vs/base/common/network';
+import { REMOTE_HOST_SCHEME } from 'vs/platform/remote/common/remoteHosts';
 
 suite('ExtensionsWorkbenchServiceTest', () => {
 
@@ -981,6 +983,384 @@ suite('ExtensionsWorkbenchServiceTest', () => {
 		assert.equal(actual[0].enablementState, EnablementState.DisabledWorkspace);
 	});
 
+	test('test user extension is preferred when the same extension exists as system and user extension', async () => {
+		testObject = await aWorkbenchService();
+		const userExtension = aLocalExtension('pub.a');
+		const systemExtension = aLocalExtension('pub.a', {}, { type: ExtensionType.System });
+		instantiationService.stubPromise(IExtensionManagementService, 'getInstalled', [systemExtension, userExtension]);
+
+		const actual = await testObject.queryLocal();
+
+		assert.equal(actual.length, 1);
+		assert.equal(actual[0].local, userExtension);
+	});
+
+	test('test user extension is disabled when the same extension exists as system and user extension and system extension is disabled', async () => {
+		testObject = await aWorkbenchService();
+		const systemExtension = aLocalExtension('pub.a', {}, { type: ExtensionType.System });
+		await instantiationService.get(IWorkbenchExtensionEnablementService).setEnablement([systemExtension], EnablementState.DisabledGlobally);
+		const userExtension = aLocalExtension('pub.a');
+		instantiationService.stubPromise(IExtensionManagementService, 'getInstalled', [systemExtension, userExtension]);
+
+		const actual = await testObject.queryLocal();
+
+		assert.equal(actual.length, 1);
+		assert.equal(actual[0].local, userExtension);
+		assert.equal(actual[0].enablementState, EnablementState.DisabledGlobally);
+	});
+
+	test('Test local ui extension is chosen if it exists only in local server', async () => {
+		// multi server setup
+		const extensionKind: ExtensionKind[] = ['ui'];
+		const localExtension = aLocalExtension('a', { extensionKind }, { location: URI.file(`pub.a`) });
+
+		const extensionManagementServerService = aMultiExtensionManagementServerService(instantiationService, createExtensionManagementService([localExtension]), createExtensionManagementService([]));
+		instantiationService.stub(IExtensionManagementServerService, extensionManagementServerService);
+		instantiationService.stub(IWorkbenchExtensionEnablementService, new TestExtensionEnablementService(instantiationService));
+		testObject = await aWorkbenchService();
+
+		const actual = await testObject.queryLocal();
+
+		assert.equal(actual.length, 1);
+		assert.equal(actual[0].local, localExtension);
+	});
+
+	test('Test local workspace extension is chosen if it exists only in local server', async () => {
+		// multi server setup
+		const extensionKind: ExtensionKind[] = ['workspace'];
+		const localExtension = aLocalExtension('a', { extensionKind }, { location: URI.file(`pub.a`) });
+
+		const extensionManagementServerService = aMultiExtensionManagementServerService(instantiationService, createExtensionManagementService([localExtension]), createExtensionManagementService([]));
+		instantiationService.stub(IExtensionManagementServerService, extensionManagementServerService);
+		instantiationService.stub(IWorkbenchExtensionEnablementService, new TestExtensionEnablementService(instantiationService));
+		testObject = await aWorkbenchService();
+
+		const actual = await testObject.queryLocal();
+
+		assert.equal(actual.length, 1);
+		assert.equal(actual[0].local, localExtension);
+	});
+
+	test('Test local web extension is chosen if it exists only in local server', async () => {
+		// multi server setup
+		const extensionKind: ExtensionKind[] = ['web'];
+		const localExtension = aLocalExtension('a', { extensionKind }, { location: URI.file(`pub.a`) });
+
+		const extensionManagementServerService = aMultiExtensionManagementServerService(instantiationService, createExtensionManagementService([localExtension]), createExtensionManagementService([]));
+		instantiationService.stub(IExtensionManagementServerService, extensionManagementServerService);
+		instantiationService.stub(IWorkbenchExtensionEnablementService, new TestExtensionEnablementService(instantiationService));
+		testObject = await aWorkbenchService();
+
+		const actual = await testObject.queryLocal();
+
+		assert.equal(actual.length, 1);
+		assert.equal(actual[0].local, localExtension);
+	});
+
+	test('Test local ui,workspace extension is chosen if it exists only in local server', async () => {
+		// multi server setup
+		const extensionKind: ExtensionKind[] = ['ui', 'workspace'];
+		const localExtension = aLocalExtension('a', { extensionKind }, { location: URI.file(`pub.a`) });
+
+		const extensionManagementServerService = aMultiExtensionManagementServerService(instantiationService, createExtensionManagementService([localExtension]), createExtensionManagementService([]));
+		instantiationService.stub(IExtensionManagementServerService, extensionManagementServerService);
+		instantiationService.stub(IWorkbenchExtensionEnablementService, new TestExtensionEnablementService(instantiationService));
+		testObject = await aWorkbenchService();
+
+		const actual = await testObject.queryLocal();
+
+		assert.equal(actual.length, 1);
+		assert.equal(actual[0].local, localExtension);
+	});
+
+	test('Test local workspace,ui extension is chosen if it exists only in local server', async () => {
+		// multi server setup
+		const extensionKind: ExtensionKind[] = ['workspace', 'ui'];
+		const localExtension = aLocalExtension('a', { extensionKind }, { location: URI.file(`pub.a`) });
+
+		const extensionManagementServerService = aMultiExtensionManagementServerService(instantiationService, createExtensionManagementService([localExtension]), createExtensionManagementService([]));
+		instantiationService.stub(IExtensionManagementServerService, extensionManagementServerService);
+		instantiationService.stub(IWorkbenchExtensionEnablementService, new TestExtensionEnablementService(instantiationService));
+		testObject = await aWorkbenchService();
+
+		const actual = await testObject.queryLocal();
+
+		assert.equal(actual.length, 1);
+		assert.equal(actual[0].local, localExtension);
+	});
+
+	test('Test local ui,workspace,web extension is chosen if it exists only in local server', async () => {
+		// multi server setup
+		const extensionKind: ExtensionKind[] = ['ui', 'workspace', 'web'];
+		const localExtension = aLocalExtension('a', { extensionKind }, { location: URI.file(`pub.a`) });
+
+		const extensionManagementServerService = aMultiExtensionManagementServerService(instantiationService, createExtensionManagementService([localExtension]), createExtensionManagementService([]));
+		instantiationService.stub(IExtensionManagementServerService, extensionManagementServerService);
+		instantiationService.stub(IWorkbenchExtensionEnablementService, new TestExtensionEnablementService(instantiationService));
+		testObject = await aWorkbenchService();
+
+		const actual = await testObject.queryLocal();
+
+		assert.equal(actual.length, 1);
+		assert.equal(actual[0].local, localExtension);
+	});
+
+	test('Test local ui,web,workspace extension is chosen if it exists only in local server', async () => {
+		// multi server setup
+		const extensionKind: ExtensionKind[] = ['ui', 'web', 'workspace'];
+		const localExtension = aLocalExtension('a', { extensionKind }, { location: URI.file(`pub.a`) });
+
+		const extensionManagementServerService = aMultiExtensionManagementServerService(instantiationService, createExtensionManagementService([localExtension]), createExtensionManagementService([]));
+		instantiationService.stub(IExtensionManagementServerService, extensionManagementServerService);
+		instantiationService.stub(IWorkbenchExtensionEnablementService, new TestExtensionEnablementService(instantiationService));
+		testObject = await aWorkbenchService();
+
+		const actual = await testObject.queryLocal();
+
+		assert.equal(actual.length, 1);
+		assert.equal(actual[0].local, localExtension);
+	});
+
+	test('Test local web,ui,workspace extension is chosen if it exists only in local server', async () => {
+		// multi server setup
+		const extensionKind: ExtensionKind[] = ['web', 'ui', 'workspace'];
+		const localExtension = aLocalExtension('a', { extensionKind }, { location: URI.file(`pub.a`) });
+
+		const extensionManagementServerService = aMultiExtensionManagementServerService(instantiationService, createExtensionManagementService([localExtension]), createExtensionManagementService([]));
+		instantiationService.stub(IExtensionManagementServerService, extensionManagementServerService);
+		instantiationService.stub(IWorkbenchExtensionEnablementService, new TestExtensionEnablementService(instantiationService));
+		testObject = await aWorkbenchService();
+
+		const actual = await testObject.queryLocal();
+
+		assert.equal(actual.length, 1);
+		assert.equal(actual[0].local, localExtension);
+	});
+
+	test('Test local web,workspace,ui extension is chosen if it exists only in local server', async () => {
+		// multi server setup
+		const extensionKind: ExtensionKind[] = ['web', 'workspace', 'ui'];
+		const localExtension = aLocalExtension('a', { extensionKind }, { location: URI.file(`pub.a`) });
+
+		const extensionManagementServerService = aMultiExtensionManagementServerService(instantiationService, createExtensionManagementService([localExtension]), createExtensionManagementService([]));
+		instantiationService.stub(IExtensionManagementServerService, extensionManagementServerService);
+		instantiationService.stub(IWorkbenchExtensionEnablementService, new TestExtensionEnablementService(instantiationService));
+		testObject = await aWorkbenchService();
+
+		const actual = await testObject.queryLocal();
+
+		assert.equal(actual.length, 1);
+		assert.equal(actual[0].local, localExtension);
+	});
+
+	test('Test local workspace,web,ui extension is chosen if it exists only in local server', async () => {
+		// multi server setup
+		const extensionKind: ExtensionKind[] = ['workspace', 'web', 'ui'];
+		const localExtension = aLocalExtension('a', { extensionKind }, { location: URI.file(`pub.a`) });
+
+		const extensionManagementServerService = aMultiExtensionManagementServerService(instantiationService, createExtensionManagementService([localExtension]), createExtensionManagementService([]));
+		instantiationService.stub(IExtensionManagementServerService, extensionManagementServerService);
+		instantiationService.stub(IWorkbenchExtensionEnablementService, new TestExtensionEnablementService(instantiationService));
+		testObject = await aWorkbenchService();
+
+		const actual = await testObject.queryLocal();
+
+		assert.equal(actual.length, 1);
+		assert.equal(actual[0].local, localExtension);
+	});
+
+	test('Test local workspace,ui,web extension is chosen if it exists only in local server', async () => {
+		// multi server setup
+		const extensionKind: ExtensionKind[] = ['workspace', 'ui', 'web'];
+		const localExtension = aLocalExtension('a', { extensionKind }, { location: URI.file(`pub.a`) });
+
+		const extensionManagementServerService = aMultiExtensionManagementServerService(instantiationService, createExtensionManagementService([localExtension]), createExtensionManagementService([]));
+		instantiationService.stub(IExtensionManagementServerService, extensionManagementServerService);
+		instantiationService.stub(IWorkbenchExtensionEnablementService, new TestExtensionEnablementService(instantiationService));
+		testObject = await aWorkbenchService();
+
+		const actual = await testObject.queryLocal();
+
+		assert.equal(actual.length, 1);
+		assert.equal(actual[0].local, localExtension);
+	});
+
+	test('Test local UI extension is chosen if it exists in both servers', async () => {
+		// multi server setup
+		const extensionKind: ExtensionKind[] = ['ui'];
+		const localExtension = aLocalExtension('a', { extensionKind }, { location: URI.file(`pub.a`) });
+		const remoteExtension = aLocalExtension('a', { extensionKind }, { location: URI.file(`pub.a`).with({ scheme: Schemas.vscodeRemote }) });
+
+		const extensionManagementServerService = aMultiExtensionManagementServerService(instantiationService, createExtensionManagementService([localExtension]), createExtensionManagementService([remoteExtension]));
+		instantiationService.stub(IExtensionManagementServerService, extensionManagementServerService);
+		instantiationService.stub(IWorkbenchExtensionEnablementService, new TestExtensionEnablementService(instantiationService));
+		testObject = await aWorkbenchService();
+
+		const actual = await testObject.queryLocal();
+
+		assert.equal(actual.length, 1);
+		assert.equal(actual[0].local, localExtension);
+	});
+
+	test('Test local ui,workspace extension is chosen if it exists in both servers', async () => {
+		// multi server setup
+		const extensionKind: ExtensionKind[] = ['ui', 'workspace'];
+		const localExtension = aLocalExtension('a', { extensionKind }, { location: URI.file(`pub.a`) });
+		const remoteExtension = aLocalExtension('a', { extensionKind }, { location: URI.file(`pub.a`).with({ scheme: Schemas.vscodeRemote }) });
+
+		const extensionManagementServerService = aMultiExtensionManagementServerService(instantiationService, createExtensionManagementService([localExtension]), createExtensionManagementService([remoteExtension]));
+		instantiationService.stub(IExtensionManagementServerService, extensionManagementServerService);
+		instantiationService.stub(IWorkbenchExtensionEnablementService, new TestExtensionEnablementService(instantiationService));
+		testObject = await aWorkbenchService();
+
+		const actual = await testObject.queryLocal();
+
+		assert.equal(actual.length, 1);
+		assert.equal(actual[0].local, localExtension);
+	});
+
+	test('Test remote workspace extension is chosen if it exists in remote server', async () => {
+		// multi server setup
+		const extensionKind: ExtensionKind[] = ['workspace'];
+		const remoteExtension = aLocalExtension('a', { extensionKind }, { location: URI.file(`pub.a`).with({ scheme: Schemas.vscodeRemote }) });
+
+		const extensionManagementServerService = aMultiExtensionManagementServerService(instantiationService, createExtensionManagementService(), createExtensionManagementService([remoteExtension]));
+		instantiationService.stub(IExtensionManagementServerService, extensionManagementServerService);
+		instantiationService.stub(IWorkbenchExtensionEnablementService, new TestExtensionEnablementService(instantiationService));
+		testObject = await aWorkbenchService();
+
+		const actual = await testObject.queryLocal();
+
+		assert.equal(actual.length, 1);
+		assert.equal(actual[0].local, remoteExtension);
+	});
+
+	test('Test remote workspace extension is chosen if it exists in both servers', async () => {
+		// multi server setup
+		const extensionKind: ExtensionKind[] = ['workspace'];
+		const localExtension = aLocalExtension('a', { extensionKind }, { location: URI.file(`pub.a`) });
+		const remoteExtension = aLocalExtension('a', { extensionKind }, { location: URI.file(`pub.a`).with({ scheme: Schemas.vscodeRemote }) });
+
+		const extensionManagementServerService = aMultiExtensionManagementServerService(instantiationService, createExtensionManagementService([localExtension]), createExtensionManagementService([remoteExtension]));
+		instantiationService.stub(IExtensionManagementServerService, extensionManagementServerService);
+		instantiationService.stub(IWorkbenchExtensionEnablementService, new TestExtensionEnablementService(instantiationService));
+		testObject = await aWorkbenchService();
+
+		const actual = await testObject.queryLocal();
+
+		assert.equal(actual.length, 1);
+		assert.equal(actual[0].local, remoteExtension);
+	});
+
+	test('Test remote workspace extension is chosen if it exists in both servers and local is disabled', async () => {
+		// multi server setup
+		const extensionKind: ExtensionKind[] = ['workspace'];
+		const localExtension = aLocalExtension('a', { extensionKind }, { location: URI.file(`pub.a`) });
+		const remoteExtension = aLocalExtension('a', { extensionKind }, { location: URI.file(`pub.a`).with({ scheme: Schemas.vscodeRemote }) });
+
+		const extensionManagementServerService = aMultiExtensionManagementServerService(instantiationService, createExtensionManagementService([localExtension]), createExtensionManagementService([remoteExtension]));
+		instantiationService.stub(IExtensionManagementServerService, extensionManagementServerService);
+		instantiationService.stub(IWorkbenchExtensionEnablementService, new TestExtensionEnablementService(instantiationService));
+		await instantiationService.get(IWorkbenchExtensionEnablementService).setEnablement([localExtension], EnablementState.DisabledGlobally);
+		testObject = await aWorkbenchService();
+
+		const actual = await testObject.queryLocal();
+
+		assert.equal(actual.length, 1);
+		assert.equal(actual[0].local, remoteExtension);
+		assert.equal(actual[0].enablementState, EnablementState.DisabledGlobally);
+	});
+
+	test('Test remote workspace extension is chosen if it exists in both servers and remote is disabled in workspace', async () => {
+		// multi server setup
+		const extensionKind: ExtensionKind[] = ['workspace'];
+		const localExtension = aLocalExtension('a', { extensionKind }, { location: URI.file(`pub.a`) });
+		const remoteExtension = aLocalExtension('a', { extensionKind }, { location: URI.file(`pub.a`).with({ scheme: Schemas.vscodeRemote }) });
+
+		const extensionManagementServerService = aMultiExtensionManagementServerService(instantiationService, createExtensionManagementService([localExtension]), createExtensionManagementService([remoteExtension]));
+		instantiationService.stub(IExtensionManagementServerService, extensionManagementServerService);
+		instantiationService.stub(IWorkbenchExtensionEnablementService, new TestExtensionEnablementService(instantiationService));
+		await instantiationService.get(IWorkbenchExtensionEnablementService).setEnablement([remoteExtension], EnablementState.DisabledWorkspace);
+		testObject = await aWorkbenchService();
+
+		const actual = await testObject.queryLocal();
+
+		assert.equal(actual.length, 1);
+		assert.equal(actual[0].local, remoteExtension);
+		assert.equal(actual[0].enablementState, EnablementState.DisabledWorkspace);
+	});
+
+	test('Test local ui, workspace extension is chosen if it exists in both servers and local is disabled', async () => {
+		// multi server setup
+		const extensionKind: ExtensionKind[] = ['ui', 'workspace'];
+		const localExtension = aLocalExtension('a', { extensionKind }, { location: URI.file(`pub.a`) });
+		const remoteExtension = aLocalExtension('a', { extensionKind }, { location: URI.file(`pub.a`).with({ scheme: Schemas.vscodeRemote }) });
+
+		const extensionManagementServerService = aMultiExtensionManagementServerService(instantiationService, createExtensionManagementService([localExtension]), createExtensionManagementService([remoteExtension]));
+		instantiationService.stub(IExtensionManagementServerService, extensionManagementServerService);
+		instantiationService.stub(IWorkbenchExtensionEnablementService, new TestExtensionEnablementService(instantiationService));
+		await instantiationService.get(IWorkbenchExtensionEnablementService).setEnablement([localExtension], EnablementState.DisabledGlobally);
+		testObject = await aWorkbenchService();
+
+		const actual = await testObject.queryLocal();
+
+		assert.equal(actual.length, 1);
+		assert.equal(actual[0].local, localExtension);
+		assert.equal(actual[0].enablementState, EnablementState.DisabledGlobally);
+	});
+
+	test('Test local ui, workspace extension is chosen if it exists in both servers and local is disabled in workspace', async () => {
+		// multi server setup
+		const extensionKind: ExtensionKind[] = ['ui', 'workspace'];
+		const localExtension = aLocalExtension('a', { extensionKind }, { location: URI.file(`pub.a`) });
+		const remoteExtension = aLocalExtension('a', { extensionKind }, { location: URI.file(`pub.a`).with({ scheme: Schemas.vscodeRemote }) });
+
+		const extensionManagementServerService = aMultiExtensionManagementServerService(instantiationService, createExtensionManagementService([localExtension]), createExtensionManagementService([remoteExtension]));
+		instantiationService.stub(IExtensionManagementServerService, extensionManagementServerService);
+		instantiationService.stub(IWorkbenchExtensionEnablementService, new TestExtensionEnablementService(instantiationService));
+		await instantiationService.get(IWorkbenchExtensionEnablementService).setEnablement([localExtension], EnablementState.DisabledWorkspace);
+		testObject = await aWorkbenchService();
+
+		const actual = await testObject.queryLocal();
+
+		assert.equal(actual.length, 1);
+		assert.equal(actual[0].local, localExtension);
+		assert.equal(actual[0].enablementState, EnablementState.DisabledWorkspace);
+	});
+
+	test('Test local web extension is chosen if it exists in both servers', async () => {
+		// multi server setup
+		const extensionKind: ExtensionKind[] = ['web'];
+		const localExtension = aLocalExtension('a', { extensionKind }, { location: URI.file(`pub.a`) });
+		const remoteExtension = aLocalExtension('a', { extensionKind }, { location: URI.file(`pub.a`).with({ scheme: Schemas.vscodeRemote }) });
+
+		const extensionManagementServerService = aMultiExtensionManagementServerService(instantiationService, createExtensionManagementService([localExtension]), createExtensionManagementService([remoteExtension]));
+		instantiationService.stub(IExtensionManagementServerService, extensionManagementServerService);
+		instantiationService.stub(IWorkbenchExtensionEnablementService, new TestExtensionEnablementService(instantiationService));
+		testObject = await aWorkbenchService();
+
+		const actual = await testObject.queryLocal();
+
+		assert.equal(actual.length, 1);
+		assert.equal(actual[0].local, localExtension);
+	});
+
+	test('Test remote web extension is chosen if it exists only in remote', async () => {
+		// multi server setup
+		const extensionKind: ExtensionKind[] = ['web'];
+		const remoteExtension = aLocalExtension('a', { extensionKind }, { location: URI.file(`pub.a`).with({ scheme: Schemas.vscodeRemote }) });
+
+		const extensionManagementServerService = aMultiExtensionManagementServerService(instantiationService, createExtensionManagementService([]), createExtensionManagementService([remoteExtension]));
+		instantiationService.stub(IExtensionManagementServerService, extensionManagementServerService);
+		instantiationService.stub(IWorkbenchExtensionEnablementService, new TestExtensionEnablementService(instantiationService));
+		testObject = await aWorkbenchService();
+
+		const actual = await testObject.queryLocal();
+
+		assert.equal(actual.length, 1);
+		assert.equal(actual[0].local, remoteExtension);
+	});
+
 	async function aWorkbenchService(): Promise<ExtensionsWorkbenchService> {
 		const workbenchService: ExtensionsWorkbenchService = instantiationService.createInstance(ExtensionsWorkbenchService);
 		await workbenchService.queryLocal();
@@ -1030,5 +1410,50 @@ suite('ExtensionsWorkbenchServiceTest', () => {
 				}
 			});
 		});
+	}
+
+	function aMultiExtensionManagementServerService(instantiationService: TestInstantiationService, localExtensionManagementService?: IExtensionManagementService, remoteExtensionManagementService?: IExtensionManagementService): IExtensionManagementServerService {
+		const localExtensionManagementServer: IExtensionManagementServer = {
+			id: 'vscode-local',
+			label: 'local',
+			extensionManagementService: localExtensionManagementService || createExtensionManagementService()
+		};
+		const remoteExtensionManagementServer: IExtensionManagementServer = {
+			id: 'vscode-remote',
+			label: 'remote',
+			extensionManagementService: remoteExtensionManagementService || createExtensionManagementService()
+		};
+		return {
+			_serviceBrand: undefined,
+			localExtensionManagementServer,
+			remoteExtensionManagementServer,
+			webExtensionManagementServer: null,
+			getExtensionManagementServer: (extension: IExtension) => {
+				if (extension.location.scheme === Schemas.file) {
+					return localExtensionManagementServer;
+				}
+				if (extension.location.scheme === REMOTE_HOST_SCHEME) {
+					return remoteExtensionManagementServer;
+				}
+				throw new Error('');
+			}
+		};
+	}
+
+	function createExtensionManagementService(installed: ILocalExtension[] = []): IExtensionManagementService {
+		return <IExtensionManagementService>{
+			onInstallExtension: Event.None,
+			onDidInstallExtension: Event.None,
+			onUninstallExtension: Event.None,
+			onDidUninstallExtension: Event.None,
+			getInstalled: () => Promise.resolve<ILocalExtension[]>(installed),
+			installFromGallery: (extension: IGalleryExtension) => Promise.reject(new Error('not supported')),
+			updateMetadata: async (local: ILocalExtension, metadata: IGalleryMetadata) => {
+				local.identifier.uuid = metadata.id;
+				local.publisherDisplayName = metadata.publisherDisplayName;
+				local.publisherId = metadata.publisherId;
+				return local;
+			}
+		};
 	}
 });

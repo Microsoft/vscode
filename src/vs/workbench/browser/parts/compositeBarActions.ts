@@ -4,9 +4,8 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as nls from 'vs/nls';
-import { Action } from 'vs/base/common/actions';
+import { Action, Separator } from 'vs/base/common/actions';
 import * as dom from 'vs/base/browser/dom';
-import { BaseActionViewItem, IBaseActionViewItemOptions, Separator } from 'vs/base/browser/ui/actionbar/actionbar';
 import { ICommandService } from 'vs/platform/commands/common/commands';
 import { dispose, toDisposable, MutableDisposable } from 'vs/base/common/lifecycle';
 import { IContextMenuService } from 'vs/platform/contextview/browser/contextView';
@@ -21,6 +20,7 @@ import { Emitter, Event } from 'vs/base/common/event';
 import { CompositeDragAndDropObserver, ICompositeDragAndDrop, Before2D, toggleDropEffect } from 'vs/workbench/browser/dnd';
 import { Color } from 'vs/base/common/color';
 import { Codicon } from 'vs/base/common/codicons';
+import { IBaseActionViewItemOptions, BaseActionViewItem } from 'vs/base/browser/ui/actionbar/actionViewItems';
 
 export interface ICompositeActivity {
 	badge: IBadge;

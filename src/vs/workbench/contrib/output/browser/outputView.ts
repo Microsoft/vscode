@@ -4,8 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as nls from 'vs/nls';
-import { IAction } from 'vs/base/common/actions';
-import { IActionViewItem, SelectActionViewItem } from 'vs/base/browser/ui/actionbar/actionbar';
+import { IAction, IActionViewItem } from 'vs/base/common/actions';
 import { ICodeEditor } from 'vs/editor/browser/editorBrowser';
 import { IEditorOptions } from 'vs/editor/common/config/editorOptions';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
@@ -37,6 +36,7 @@ import { groupBy } from 'vs/base/common/arrays';
 import { SIDE_BAR_BACKGROUND } from 'vs/workbench/common/theme';
 import { editorBackground, selectBorder } from 'vs/platform/theme/common/colorRegistry';
 import { addClass } from 'vs/base/browser/dom';
+import { SelectActionViewItem } from 'vs/base/browser/ui/actionbar/actionViewItems';
 
 export class OutputViewPane extends ViewPane {
 

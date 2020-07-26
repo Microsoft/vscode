@@ -4,8 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 .monaco-editor .on-type-rename-decoration {
-	background: rgba(255, 0, 0, 0.3);
-	border-left: 1px solid rgba(255, 0, 0, 0.3);
+	border-left: 1px solid transparent;
 	/* So border can be transparent */
 	background-clip: padding-box;
 }

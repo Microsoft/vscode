@@ -9,7 +9,7 @@
 	"activationEvents": ["onLanguage:python"],
 	"main": "./out/pythonMain",
 	"browser": "./dist/browser/pythonMain",
-	"extensionKind": [ "ui", "workspace" ],
+	"extensionKind": [ "ui", "workspace", "web" ],
 	"contributes": {
 		"languages": [{
 			"id": "python",

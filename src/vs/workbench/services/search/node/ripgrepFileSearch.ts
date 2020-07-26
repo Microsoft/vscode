@@ -23,6 +23,7 @@ export function spawnRipgrepCmd(config: IFileQuery, folderQuery: IFolderQuery, i
 	const cwd = folderQuery.folder.fsPath;
 	return {
 		cmd: cp.spawn(rgDiskPath, rgArgs.args, { cwd }),
+		rgDiskPath,
 		siblingClauses: rgArgs.siblingClauses,
 		rgArgs,
 		cwd

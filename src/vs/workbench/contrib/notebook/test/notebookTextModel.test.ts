@@ -32,7 +32,7 @@ suite('NotebookTextModel', () => {
 				textModel.$applyEdit(textModel.versionId, [
 					{ editType: CellEditType.Insert, index: 1, cells: [new TestCell(viewModel.viewType, 5, ['var e = 5;'], 'javascript', CellKind.Code, [], textModelService)] },
 					{ editType: CellEditType.Insert, index: 3, cells: [new TestCell(viewModel.viewType, 6, ['var f = 6;'], 'javascript', CellKind.Code, [], textModelService)] },
-				], true, true);
+				], true);
 
 				assert.equal(textModel.cells.length, 6);
 
@@ -57,7 +57,7 @@ suite('NotebookTextModel', () => {
 				textModel.$applyEdit(textModel.versionId, [
 					{ editType: CellEditType.Insert, index: 1, cells: [new TestCell(viewModel.viewType, 5, ['var e = 5;'], 'javascript', CellKind.Code, [], textModelService)] },
 					{ editType: CellEditType.Insert, index: 1, cells: [new TestCell(viewModel.viewType, 6, ['var f = 6;'], 'javascript', CellKind.Code, [], textModelService)] },
-				], true, true);
+				], true);
 
 				assert.equal(textModel.cells.length, 6);
 
@@ -82,7 +82,7 @@ suite('NotebookTextModel', () => {
 				textModel.$applyEdit(textModel.versionId, [
 					{ editType: CellEditType.Delete, index: 1, count: 1 },
 					{ editType: CellEditType.Delete, index: 3, count: 1 },
-				], true, true);
+				], true);
 
 				assert.equal(textModel.cells[0].getValue(), 'var a = 1;');
 				assert.equal(textModel.cells[1].getValue(), 'var c = 3;');
@@ -105,7 +105,7 @@ suite('NotebookTextModel', () => {
 				textModel.$applyEdit(textModel.versionId, [
 					{ editType: CellEditType.Delete, index: 1, count: 1 },
 					{ editType: CellEditType.Insert, index: 3, cells: [new TestCell(viewModel.viewType, 5, ['var e = 5;'], 'javascript', CellKind.Code, [], textModelService)] },
-				], true, true);
+				], true);
 
 				assert.equal(textModel.cells.length, 4);
 
@@ -130,7 +130,7 @@ suite('NotebookTextModel', () => {
 				textModel.$applyEdit(textModel.versionId, [
 					{ editType: CellEditType.Delete, index: 1, count: 1 },
 					{ editType: CellEditType.Insert, index: 1, cells: [new TestCell(viewModel.viewType, 5, ['var e = 5;'], 'javascript', CellKind.Code, [], textModelService)] },
-				], true, true);
+				], true);
 
 				assert.equal(textModel.cells.length, 4);
 				assert.equal(textModel.cells[0].getValue(), 'var a = 1;');

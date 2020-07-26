@@ -153,9 +153,14 @@ export class LanguagesRegistry extends Disposable {
 		}
 
 		if (Array.isArray(lang.extensions)) {
+			if (lang.configuration) {
+				// insert first as this appears to be the 'primary' language definition
+				resolvedLanguage.extensions = lang.extensions.concat(resolvedLanguage.extensions);
+			} else {
+				resolvedLanguage.extensions = resolvedLanguage.extensions.concat(lang.extensions);
+			}
 			for (let extension of lang.extensions) {
 				mime.registerTextMime({ id: langId, mime: primaryMime, extension: extension }, this._warnOnOverwrite);
-				resolvedLanguage.extensions.push(extension);
 			}
 		}
 

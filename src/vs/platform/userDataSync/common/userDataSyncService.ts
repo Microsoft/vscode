@@ -5,7 +5,7 @@
 
 import {
 	IUserDataSyncService, SyncStatus, IUserDataSyncStoreService, SyncResource, IUserDataSyncLogService, IUserDataSynchroniser, UserDataSyncErrorCode,
-	UserDataSyncError, ISyncResourceHandle, IUserDataManifest, ISyncTask, IResourcePreview, IManualSyncTask, ISyncResourcePreview, HEADER_EXECUTION_ID
+	UserDataSyncError, ISyncResourceHandle, IUserDataManifest, ISyncTask, IResourcePreview, IManualSyncTask, ISyncResourcePreview, HEADER_EXECUTION_ID, MergeState, Change
 } from 'vs/platform/userDataSync/common/userDataSync';
 import { Disposable } from 'vs/base/common/lifecycle';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
@@ -102,11 +102,7 @@ export class UserDataSyncService extends Disposable implements IUserDataSyncServ
 		await this.checkEnablement();
 		try {
 			for (const synchroniser of this.synchronisers) {
-				try {
-					await synchroniser.pull();
-				} catch (e) {
-					this.handleSynchronizerError(e, synchroniser.resource);
-				}
+				await synchroniser.pull();
 			}
 			this.updateLastSyncTime();
 		} catch (error) {
@@ -121,11 +117,7 @@ export class UserDataSyncService extends Disposable implements IUserDataSyncServ
 		await this.checkEnablement();
 		try {
 			for (const synchroniser of this.synchronisers) {
-				try {
-					await synchroniser.push();
-				} catch (e) {
-					this.handleSynchronizerError(e, synchroniser.resource);
-				}
+				await synchroniser.push();
 			}
 			this.updateLastSyncTime();
 		} catch (error) {
@@ -264,7 +256,7 @@ export class UserDataSyncService extends Disposable implements IUserDataSyncServ
 		}
 	}
 
-	async accept(syncResource: SyncResource, resource: URI, content: string, apply: boolean): Promise<void> {
+	async accept(syncResource: SyncResource, resource: URI, content: string | null, apply: boolean): Promise<void> {
 		await this.checkEnablement();
 		const synchroniser = this.getSynchroniser(syncResource);
 		await synchroniser.accept(resource, content);
@@ -402,6 +394,7 @@ export class UserDataSyncService extends Disposable implements IUserDataSyncServ
 					throw new UserDataSyncError(e.message, e.code, source);
 
 				case UserDataSyncErrorCode.TooManyRequests:
+				case UserDataSyncErrorCode.TooManyRequestsAndRetryAfter:
 				case UserDataSyncErrorCode.LocalTooManyRequests:
 				case UserDataSyncErrorCode.Gone:
 				case UserDataSyncErrorCode.UpgradeRequired:
@@ -463,7 +456,7 @@ class ManualSyncTask extends Disposable implements IManualSyncTask {
 		return this.previews;
 	}
 
-	async accept(resource: URI, content: string): Promise<[SyncResource, ISyncResourcePreview][]> {
+	async accept(resource: URI, content: string | null): Promise<[SyncResource, ISyncResourcePreview][]> {
 		return this.performAction(resource, sychronizer => sychronizer.accept(resource, content));
 	}
 
@@ -527,11 +520,22 @@ class ManualSyncTask extends Disposable implements IManualSyncTask {
 		for (const [syncResource, preview] of this.previews) {
 			this.synchronizingResources.push([syncResource, preview.resourcePreviews.map(r => r.localResource)]);
 			this._onSynchronizeResources.fire(this.synchronizingResources);
+
 			const synchroniser = this.synchronisers.find(s => s.resource === syncResource)!;
+
+			/* merge those which are not yet merged */
+			for (const resourcePreview of preview.resourcePreviews) {
+				if ((resourcePreview.localChange !== Change.None || resourcePreview.remoteChange !== Change.None) && resourcePreview.mergeState === MergeState.Preview) {
+					await synchroniser.merge(resourcePreview.previewResource);
+				}
+			}
+
+			/* apply */
 			const newPreview = await synchroniser.apply(false, this.syncHeaders);
 			if (newPreview) {
 				previews.push(this.toSyncResourcePreview(synchroniser.resource, newPreview));
 			}
+
 			this.synchronizingResources.splice(this.synchronizingResources.findIndex(s => s[0] === syncResource), 1);
 			this._onSynchronizeResources.fire(this.synchronizingResources);
 		}
@@ -551,7 +555,7 @@ class ManualSyncTask extends Disposable implements IManualSyncTask {
 			this._onSynchronizeResources.fire(this.synchronizingResources);
 			const synchroniser = this.synchronisers.find(s => s.resource === syncResource)!;
 			for (const resourcePreview of preview.resourcePreviews) {
-				const content = await synchroniser.resolveContent(resourcePreview.remoteResource) || '';
+				const content = await synchroniser.resolveContent(resourcePreview.remoteResource);
 				await synchroniser.accept(resourcePreview.remoteResource, content);
 			}
 			await synchroniser.apply(true, this.syncHeaders);
@@ -573,7 +577,7 @@ class ManualSyncTask extends Disposable implements IManualSyncTask {
 			this._onSynchronizeResources.fire(this.synchronizingResources);
 			const synchroniser = this.synchronisers.find(s => s.resource === syncResource)!;
 			for (const resourcePreview of preview.resourcePreviews) {
-				const content = await synchroniser.resolveContent(resourcePreview.localResource) || '';
+				const content = await synchroniser.resolveContent(resourcePreview.localResource);
 				await synchroniser.accept(resourcePreview.localResource, content);
 			}
 			await synchroniser.apply(true, this.syncHeaders);

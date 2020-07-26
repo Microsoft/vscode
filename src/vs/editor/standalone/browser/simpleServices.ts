@@ -552,6 +552,9 @@ export class StandaloneTelemetryService implements ITelemetryService {
 	public setEnabled(value: boolean): void {
 	}
 
+	public setExperimentProperty(name: string, value: string): void {
+	}
+
 	public publicLog(eventName: string, data?: any): Promise<void> {
 		return Promise.resolve(undefined);
 	}

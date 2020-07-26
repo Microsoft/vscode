@@ -102,6 +102,7 @@ export class NotebookEditor extends BaseEditor {
 	setEditorVisible(visible: boolean, group: IEditorGroup | undefined): void {
 		super.setEditorVisible(visible, group);
 		if (group) {
+			this._groupListener.clear();
 			this._groupListener.add(group.onWillCloseEditor(e => this._saveEditorViewState(e.editor)));
 			this._groupListener.add(group.onDidGroupChange(() => {
 				if (this._editorGroupService.activeGroup !== group) {

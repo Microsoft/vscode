@@ -27,10 +27,15 @@
     "@types/node": "^12.11.7",
     "@types/rimraf": "2.0.2",
     "@types/semver": "^5.5.0",
+    "copy-webpack-plugin": "^6.0.3",
+    "terser": "^4.8.0",
+    "typescript-web-server": "git://github.com/mjbvz/ts-server-web-build",
     "vscode": "^1.1.36"
   },
   "scripts": {
-    "vscode:prepublish": "node ../../node_modules/gulp/bin/gulp.js --gulpfile ../../build/gulpfile.extensions.js compile-extension:typescript-language-features"
+    "vscode:prepublish": "node ../../node_modules/gulp/bin/gulp.js --gulpfile ../../build/gulpfile.extensions.js compile-extension:typescript-language-features",
+    "compile-web": "npx webpack-cli --config extension-browser.webpack.config --mode none",
+    "watch-web": "npx webpack-cli --config extension-browser.webpack.config --mode none --watch --info-verbosity verbose"
   },
   "activationEvents": [
     "onLanguage:javascript",
@@ -50,6 +55,7 @@
     "onLanguage:jsonc"
   ],
   "main": "./out/extension",
+  "browser": "./dist/browser/extension",
   "contributes": {
     "jsonValidation": [
       {
@@ -679,6 +685,22 @@
           "default": "auto",
           "description": "%typescript.preferences.importModuleSpecifierEnding%",
           "scope": "resource"
+        },
+        "typescript.preferences.includePackageJsonAutoImports": {
+          "type": "string",
+          "enum": [
+            "all",
+            "exclude-dev",
+            "none"
+          ],
+          "enumDescriptions": [
+            "%typescript.preferences.includePackageJsonAutoImports.all%",
+            "%typescript.preferences.includePackageJsonAutoImports.excludeDev%",
+            "%typescript.preferences.includePackageJsonAutoImports.none%"
+          ],
+          "default": "exclude-dev",
+          "markdownDescription": "%typescript.preferences.includePackageJsonAutoImports%",
+          "scope": "window"
         },
         "javascript.preferences.renameShorthandProperties": {
           "type": "boolean",

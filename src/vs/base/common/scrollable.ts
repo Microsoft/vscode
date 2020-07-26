@@ -332,6 +332,12 @@ export class Scrollable extends Disposable {
 
 		this._setState(newState);
 
+		if (!this._smoothScrolling) {
+			// Looks like someone canceled the smooth scrolling
+			// from the scroll event handler
+			return;
+		}
+
 		if (update.isDone) {
 			this._smoothScrolling.dispose();
 			this._smoothScrolling = null;

@@ -13,9 +13,8 @@ import { Variable, Scope, ErrorScope, StackFrame } from 'vs/workbench/contrib/de
 import { IContextMenuService } from 'vs/platform/contextview/browser/contextView';
 import { IKeybindingService } from 'vs/platform/keybinding/common/keybinding';
 import { renderViewTree, renderVariable, IInputBoxOptions, AbstractExpressionsRenderer, IExpressionTemplateData } from 'vs/workbench/contrib/debug/browser/baseDebugView';
-import { IAction, Action } from 'vs/base/common/actions';
+import { IAction, Action, Separator } from 'vs/base/common/actions';
 import { CopyValueAction } from 'vs/workbench/contrib/debug/browser/debugActions';
-import { Separator } from 'vs/base/browser/ui/actionbar/actionbar';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { ViewPane } from 'vs/workbench/browser/parts/views/viewPaneContainer';
 import { IListAccessibilityProvider } from 'vs/base/browser/ui/list/listWidget';

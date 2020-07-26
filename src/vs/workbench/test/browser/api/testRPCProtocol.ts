@@ -19,7 +19,8 @@ export function SingleProxyRPCProtocol(thing: any): IExtHostContext & IExtHostRp
 		set<T, R extends T>(identifier: ProxyIdentifier<T>, value: R): R {
 			return value;
 		},
-		assertRegistered: undefined!
+		assertRegistered: undefined!,
+		drain: undefined!
 	};
 }
 
@@ -38,6 +39,10 @@ export class TestRPCProtocol implements IExtHostContext, IExtHostRpcService {
 	constructor() {
 		this._locals = Object.create(null);
 		this._proxies = Object.create(null);
+	}
+
+	drain(): Promise<void> {
+		return Promise.resolve();
 	}
 
 	private get _callCount(): number {

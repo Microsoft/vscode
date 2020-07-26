@@ -32,6 +32,7 @@ suite('MainThreadDiagnostics', function () {
 						$acceptMarkersChange() { }
 					};
 				}
+				drain(): any { return null; }
 			},
 			markerService,
 			new class extends mock<IUriIdentityService>() {

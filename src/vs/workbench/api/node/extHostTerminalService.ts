@@ -200,7 +200,7 @@ export class ExtHostTerminalService extends BaseExtHostTerminalService {
 
 		this._proxy.$sendResolvedLaunchConfig(id, shellLaunchConfig);
 		// Fork the process and listen for messages
-		this._logService.debug(`Terminal process launching on ext host`, shellLaunchConfig, initialCwd, cols, rows, env);
+		this._logService.debug(`Terminal process launching on ext host`, { shellLaunchConfig, initialCwd, cols, rows, env });
 		// TODO: Support conpty on remote, it doesn't seem to work for some reason?
 		// TODO: When conpty is enabled, only enable it when accessibilityMode is off
 		const enableConpty = false; //terminalConfig.get('windowsEnableConpty') as boolean;

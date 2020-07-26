@@ -389,15 +389,30 @@ class ExtensionManifestValidator extends ExtensionManifestHandler {
 				notices.push(nls.localize('extensionDescription.main1', "property `{0}` can be omitted or must be of type `string`", 'main'));
 				return false;
 			} else {
-				let normalizedAbsolutePath = path.join(extensionFolderPath, extensionDescription.main);
-
-				if (normalizedAbsolutePath.indexOf(extensionFolderPath)) {
+				const normalizedAbsolutePath = path.join(extensionFolderPath, extensionDescription.main);
+				if (!normalizedAbsolutePath.startsWith(extensionFolderPath)) {
 					notices.push(nls.localize('extensionDescription.main2', "Expected `main` ({0}) to be included inside extension's folder ({1}). This might make the extension non-portable.", normalizedAbsolutePath, extensionFolderPath));
 					// not a failure case
 				}
 			}
 			if (typeof extensionDescription.activationEvents === 'undefined') {
 				notices.push(nls.localize('extensionDescription.main3', "properties `{0}` and `{1}` must both be specified or must both be omitted", 'activationEvents', 'main'));
+				return false;
+			}
+		}
+		if (typeof extensionDescription.browser !== 'undefined') {
+			if (typeof extensionDescription.browser !== 'string') {
+				notices.push(nls.localize('extensionDescription.browser1', "property `{0}` can be omitted or must be of type `string`", 'browser'));
+				return false;
+			} else {
+				const normalizedAbsolutePath = path.join(extensionFolderPath, extensionDescription.browser);
+				if (!normalizedAbsolutePath.startsWith(extensionFolderPath)) {
+					notices.push(nls.localize('extensionDescription.browser2', "Expected `browser` ({0}) to be included inside extension's folder ({1}). This might make the extension non-portable.", normalizedAbsolutePath, extensionFolderPath));
+					// not a failure case
+				}
+			}
+			if (typeof extensionDescription.activationEvents === 'undefined') {
+				notices.push(nls.localize('extensionDescription.browser3', "properties `{0}` and `{1}` must both be specified or must both be omitted", 'activationEvents', 'browser'));
 				return false;
 			}
 		}

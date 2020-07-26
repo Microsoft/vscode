@@ -9,7 +9,7 @@ import { NotebookProviderInfo } from 'vs/workbench/contrib/notebook/common/noteb
 import { NotebookExtensionDescription } from 'vs/workbench/api/common/extHost.protocol';
 import { Event } from 'vs/base/common/event';
 import {
-	INotebookTextModel, INotebookRendererInfo, NotebookDocumentMetadata, ICellDto2, INotebookKernelInfo, INotebookKernelInfoDto, INotebookTextModelBackup,
+	INotebookTextModel, INotebookRendererInfo, INotebookKernelInfo, INotebookKernelInfoDto,
 	IEditor, ICellEditOperation, NotebookCellOutputsSplice, IOrderedMimeType, IProcessedOutput, INotebookKernelProvider, INotebookKernelInfo2
 } from 'vs/workbench/contrib/notebook/common/notebookCommon';
 import { NotebookTextModel } from 'vs/workbench/contrib/notebook/common/model/notebookTextModel';
@@ -22,12 +22,16 @@ export const INotebookService = createDecorator<INotebookService>('notebookServi
 
 export interface IMainNotebookController {
 	kernel: INotebookKernelInfoDto | undefined;
-	createNotebook(viewType: string, uri: URI, backup: INotebookTextModelBackup | undefined, forceReload: boolean, editorId?: string, backupId?: string): Promise<NotebookTextModel | undefined>;
+	supportBackup: boolean;
+	createNotebook(textModel: NotebookTextModel, editorId?: string, backupId?: string): Promise<void>;
+	reloadNotebook(mainthreadTextModel: NotebookTextModel): Promise<void>;
 	resolveNotebookEditor(viewType: string, uri: URI, editorId: string): Promise<void>;
-	executeNotebookByAttachedKernel(viewType: string, uri: URI, token: CancellationToken): Promise<void>;
+	executeNotebookByAttachedKernel(viewType: string, uri: URI): Promise<void>;
+	cancelNotebookByAttachedKernel(viewType: string, uri: URI): Promise<void>;
 	onDidReceiveMessage(editorId: string, rendererType: string | undefined, message: any): void;
-	executeNotebookCell(uri: URI, handle: number, token: CancellationToken): Promise<void>;
-	removeNotebookDocument(notebook: INotebookTextModel): Promise<void>;
+	executeNotebookCell(uri: URI, handle: number): Promise<void>;
+	cancelNotebookCell(uri: URI, handle: number): Promise<void>;
+	removeNotebookDocument(uri: URI): Promise<void>;
 	save(uri: URI, token: CancellationToken): Promise<boolean>;
 	saveAs(uri: URI, target: URI, token: CancellationToken): Promise<boolean>;
 	backup(uri: URI, token: CancellationToken): Promise<string | undefined>;
@@ -58,11 +62,13 @@ export interface INotebookService {
 	getContributedNotebookKernels2(viewType: string, resource: URI, token: CancellationToken): Promise<INotebookKernelInfo2[]>;
 	getRendererInfo(id: string): INotebookRendererInfo | undefined;
 	resolveNotebook(viewType: string, uri: URI, forceReload: boolean, editorId?: string, backupId?: string): Promise<NotebookTextModel | undefined>;
-	createNotebookFromBackup(viewType: string, uri: URI, metadata: NotebookDocumentMetadata, languages: string[], cells: ICellDto2[], editorId?: string): Promise<NotebookTextModel | undefined>;
-	executeNotebook(viewType: string, uri: URI, token: CancellationToken): Promise<void>;
-	executeNotebookCell(viewType: string, uri: URI, handle: number, token: CancellationToken): Promise<void>;
-	executeNotebook2(viewType: string, uri: URI, kernelId: string, token: CancellationToken): Promise<void>;
-	executeNotebookCell2(viewType: string, uri: URI, handle: number, kernelId: string, token: CancellationToken): Promise<void>;
+	getNotebookTextModel(uri: URI): NotebookTextModel | undefined;
+	executeNotebook(viewType: string, uri: URI): Promise<void>;
+	cancelNotebook(viewType: string, uri: URI): Promise<void>;
+	executeNotebookCell(viewType: string, uri: URI, handle: number): Promise<void>;
+	cancelNotebookCell(viewType: string, uri: URI, handle: number): Promise<void>;
+	executeNotebook2(viewType: string, uri: URI, kernelId: string): Promise<void>;
+	executeNotebookCell2(viewType: string, uri: URI, handle: number, kernelId: string): Promise<void>;
 	getContributedNotebookProviders(resource: URI): readonly NotebookProviderInfo[];
 	getContributedNotebookProvider(viewType: string): NotebookProviderInfo | undefined;
 	getNotebookProviderResourceRoots(): URI[];

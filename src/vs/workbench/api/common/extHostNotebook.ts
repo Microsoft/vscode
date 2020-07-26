@@ -16,7 +16,7 @@ import { ExtHostCommands } from 'vs/workbench/api/common/extHostCommands';
 import { ExtHostDocumentsAndEditors } from 'vs/workbench/api/common/extHostDocumentsAndEditors';
 import { CellEditType, diff, ICellEditOperation, ICellInsertEdit, INotebookDisplayOrder, INotebookEditData, NotebookCellsChangedEvent, NotebookCellsSplice2, ICellDeleteEdit, notebookDocumentMetadataDefaults, NotebookCellsChangeType, NotebookDataDto, IOutputRenderRequest, IOutputRenderResponse, IOutputRenderResponseOutputInfo, IOutputRenderResponseCellInfo, IRawOutput, CellOutputKind, IProcessedOutput, INotebookKernelInfoDto2, IMainCellDto } from 'vs/workbench/contrib/notebook/common/notebookCommon';
 import * as extHostTypes from 'vs/workbench/api/common/extHostTypes';
-import { CancellationToken } from 'vs/base/common/cancellation';
+import { CancellationToken, CancellationTokenSource } from 'vs/base/common/cancellation';
 import { ExtHostDocumentData } from 'vs/workbench/api/common/extHostDocumentData';
 import { NotImplementedProxy } from 'vs/base/common/types';
 import * as typeConverters from 'vs/workbench/api/common/extHostTypeConverters';
@@ -830,7 +830,7 @@ export class ExtHostNotebookKernelProviderAdapter extends Disposable {
 		}
 	}
 
-	async executeNotebook(kernelId: string, document: ExtHostNotebookDocument, cell: ExtHostCell | undefined, token: CancellationToken) {
+	async executeNotebook(kernelId: string, document: ExtHostNotebookDocument, cell: ExtHostCell | undefined) {
 		const kernel = this._idToKernel.get(kernelId);
 
 		if (!kernel) {
@@ -838,10 +838,34 @@ export class ExtHostNotebookKernelProviderAdapter extends Disposable {
 		}
 
 		if (cell) {
-			return kernel.executeCell(document, cell, token);
+			return withToken(token => (kernel.executeCell as any)(document, cell, token));
 		} else {
-			return kernel.executeAllCells(document, token);
+			return withToken(token => (kernel.executeAllCells as any)(document, token));
 		}
+	}
+
+	async cancelNotebook(kernelId: string, document: ExtHostNotebookDocument, cell: ExtHostCell | undefined) {
+		const kernel = this._idToKernel.get(kernelId);
+
+		if (!kernel) {
+			return;
+		}
+
+		if (cell) {
+			return kernel.cancelCellExecution(document, cell);
+		} else {
+			return kernel.cancelAllCellsExecution(document);
+		}
+	}
+}
+
+// TODO@roblou remove 'token' passed to all execute APIs once extensions are updated
+async function withToken(cb: (token: CancellationToken) => any) {
+	const source = new CancellationTokenSource();
+	try {
+		await cb(source.token);
+	} finally {
+		source.dispose();
 	}
 }
 
@@ -934,7 +958,7 @@ export class ExtHostNotebookController implements ExtHostNotebookShape, ExtHostN
 
 		let extHostRenderer = new ExtHostNotebookOutputRenderer(type, filter, renderer);
 		this._notebookOutputRenderers.set(extHostRenderer.type, extHostRenderer);
-		this._proxy.$registerNotebookRenderer({ id: extension.identifier, location: extension.extensionLocation }, type, filter, renderer.preloads || []);
+		this._proxy.$registerNotebookRenderer({ id: extension.identifier, location: extension.extensionLocation, description: extension.description }, type, filter, renderer.preloads || []);
 		return new extHostTypes.Disposable(() => {
 			this._notebookOutputRenderers.delete(extHostRenderer.type);
 			this._proxy.$unregisterNotebookRenderer(extHostRenderer.type);
@@ -1059,7 +1083,7 @@ export class ExtHostNotebookController implements ExtHostNotebookShape, ExtHostN
 
 		const supportBackup = !!provider.backupNotebook;
 
-		this._proxy.$registerNotebookProvider({ id: extension.identifier, location: extension.extensionLocation }, viewType, supportBackup, provider.kernel ? { id: viewType, label: provider.kernel.label, extensionLocation: extension.extensionLocation, preloads: provider.kernel.preloads } : undefined);
+		this._proxy.$registerNotebookProvider({ id: extension.identifier, location: extension.extensionLocation, description: extension.description }, viewType, supportBackup, provider.kernel ? { id: viewType, label: provider.kernel.label, extensionLocation: extension.extensionLocation, preloads: provider.kernel.preloads } : undefined);
 
 		return new extHostTypes.Disposable(() => {
 			listener.dispose();
@@ -1072,7 +1096,7 @@ export class ExtHostNotebookController implements ExtHostNotebookShape, ExtHostN
 		const handle = ExtHostNotebookController._notebookKernelProviderHandlePool++;
 		const adapter = new ExtHostNotebookKernelProviderAdapter(this._proxy, handle, extension, provider);
 		this._notebookKernelProviders.set(handle, adapter);
-		this._proxy.$registerNotebookKernelProvider({ id: extension.identifier, location: extension.extensionLocation }, handle, {
+		this._proxy.$registerNotebookKernelProvider({ id: extension.identifier, location: extension.extensionLocation, description: extension.description }, handle, {
 			viewType: selector.viewType,
 			filenamePattern: selector.filenamePattern ? typeConverters.GlobPattern.from(selector.filenamePattern) : undefined,
 			excludeFileNamePattern: selector.excludeFileNamePattern ? typeConverters.GlobPattern.from(selector.excludeFileNamePattern) : undefined,
@@ -1125,7 +1149,7 @@ export class ExtHostNotebookController implements ExtHostNotebookShape, ExtHostN
 		this._notebookKernels.set(id, { kernel, extension });
 		const transformedSelectors = selectors.map(selector => typeConverters.GlobPattern.from(selector));
 
-		this._proxy.$registerNotebookKernel({ id: extension.identifier, location: extension.extensionLocation }, id, kernel.label, transformedSelectors, kernel.preloads || []);
+		this._proxy.$registerNotebookKernel({ id: extension.identifier, location: extension.extensionLocation, description: extension.description }, id, kernel.label, transformedSelectors, kernel.preloads || []);
 		return new extHostTypes.Disposable(() => {
 			this._notebookKernels.delete(id);
 			this._proxy.$unregisterNotebookKernel(id);
@@ -1220,7 +1244,7 @@ export class ExtHostNotebookController implements ExtHostNotebookShape, ExtHostN
 		}
 	}
 
-	async $executeNotebookByAttachedKernel(viewType: string, uri: UriComponents, cellHandle: number | undefined, token: CancellationToken): Promise<void> {
+	async $executeNotebookByAttachedKernel(viewType: string, uri: UriComponents, cellHandle: number | undefined): Promise<void> {
 		let document = this._documents.get(URI.revive(uri).toString());
 
 		if (!document) {
@@ -1233,23 +1257,44 @@ export class ExtHostNotebookController implements ExtHostNotebookShape, ExtHostN
 
 			if (provider.kernel) {
 				if (cell) {
-					return provider.kernel.executeCell(document, cell, token);
+					return withToken(token => (provider.kernel!.executeCell as any)(document, cell, token));
 				} else {
-					return provider.kernel.executeAllCells(document, token);
+					return withToken(token => (provider.kernel!.executeAllCells as any)(document, token));
 				}
 			}
 		}
 	}
 
-	async $executeNotebookKernelFromProvider(handle: number, uri: UriComponents, kernelId: string, cellHandle: number | undefined, token: CancellationToken): Promise<void> {
+	async $cancelNotebookByAttachedKernel(viewType: string, uri: UriComponents, cellHandle: number | undefined): Promise<void> {
+		const document = this._documents.get(URI.revive(uri).toString());
+
+		if (!document) {
+			return;
+		}
+
+		if (this._notebookContentProviders.has(viewType)) {
+			const cell = cellHandle !== undefined ? document.getCell(cellHandle) : undefined;
+			const provider = this._notebookContentProviders.get(viewType)!.provider;
+
+			if (provider.kernel) {
+				if (cell) {
+					return provider.kernel.cancelCellExecution(document, cell);
+				} else {
+					return provider.kernel.cancelAllCellsExecution(document);
+				}
+			}
+		}
+	}
+
+	async $executeNotebookKernelFromProvider(handle: number, uri: UriComponents, kernelId: string, cellHandle: number | undefined): Promise<void> {
 		await this._withAdapter(handle, uri, async (adapter, document) => {
 			let cell = cellHandle !== undefined ? document.getCell(cellHandle) : undefined;
 
-			return adapter.executeNotebook(kernelId, document, cell, token);
+			return adapter.executeNotebook(kernelId, document, cell);
 		});
 	}
 
-	async $executeNotebook2(kernelId: string, viewType: string, uri: UriComponents, cellHandle: number | undefined, token: CancellationToken): Promise<void> {
+	async $executeNotebook2(kernelId: string, viewType: string, uri: UriComponents, cellHandle: number | undefined): Promise<void> {
 		let document = this._documents.get(URI.revive(uri).toString());
 
 		if (!document || document.viewType !== viewType) {
@@ -1265,9 +1310,9 @@ export class ExtHostNotebookController implements ExtHostNotebookShape, ExtHostN
 		let cell = cellHandle !== undefined ? document.getCell(cellHandle) : undefined;
 
 		if (cell) {
-			return kernelInfo.kernel.executeCell(document, cell, token);
+			return withToken(token => (kernelInfo!.kernel.executeCell as any)(document, cell, token));
 		} else {
-			return kernelInfo.kernel.executeAllCells(document, token);
+			return withToken(token => (kernelInfo!.kernel.executeAllCells as any)(document, token));
 		}
 	}
 

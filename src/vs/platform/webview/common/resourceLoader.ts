@@ -99,7 +99,9 @@ function normalizeRequestPath(requestUri: URI) {
 		//
 		// vscode-webview-resource://id/scheme//authority?/path
 		//
-		const resourceUri = URI.parse(requestUri.path.replace(/^\/([a-z0-9\-]+)(\/{1,2})/i, (_: string, scheme: string, sep: string) => {
+
+		// Encode requestUri.path so that URI.parse can properly parse special characters like '#', '?', etc.
+		const resourceUri = URI.parse(encodeURIComponent(requestUri.path).replace(/%2F/g, '/').replace(/^\/([a-z0-9\-]+)\/{1,2}/i, (_: string, scheme: string, sep: string) => {
 			if (sep.length === 1) {
 				return `${scheme}:///`; // Add empty authority.
 			} else {

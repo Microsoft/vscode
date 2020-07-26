@@ -5,7 +5,7 @@
 
 import * as assert from 'assert';
 import 'mocha';
-import { templateToSnippet } from '../features/jsDocCompletions';
+import { templateToSnippet } from '../languageFeatures/jsDocCompletions';
 
 const joinLines = (...args: string[]) => args.join('\n');
 

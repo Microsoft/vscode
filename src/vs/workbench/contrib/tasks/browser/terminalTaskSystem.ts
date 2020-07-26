@@ -446,7 +446,7 @@ export class TerminalTaskSystem implements ITaskSystem {
 					let promise = this.activeTasks[key] ? this.activeTasks[key].promise : undefined;
 					if (!promise) {
 						this._onDidStateChange.fire(TaskEvent.create(TaskEventKind.DependsOnStarted, task));
-						promise = this.executeTask(dependencyTask, resolver, trigger, alreadyResolved);
+						promise = this.executeDependencyTask(dependencyTask, resolver, trigger, alreadyResolved);
 					}
 					promises.push(promise);
 					if (task.configurationProperties.dependsOrder === DependsOrder.sequence) {
@@ -496,6 +496,24 @@ export class TerminalTaskSystem implements ITaskSystem {
 		}
 	}
 
+	private async executeDependencyTask(task: Task, resolver: ITaskResolver, trigger: string, alreadyResolved?: Map<string, string>): Promise<ITaskSummary> {
+		// If the task is a background task with a watching problem matcher, we don't wait for the whole task to finish,
+		// just for the problem matcher to go inactive.
+		if (!task.configurationProperties.isBackground) {
+			return this.executeTask(task, resolver, trigger, alreadyResolved);
+		}
+
+		const inactivePromise = new Promise<ITaskSummary>(resolve => {
+			const taskInactiveDisposable = this._onDidStateChange.event(taskEvent => {
+				if ((taskEvent.kind === TaskEventKind.Inactive) && (taskEvent.__task === task)) {
+					taskInactiveDisposable.dispose();
+					resolve({ exitCode: 0 });
+				}
+			});
+		});
+		return Promise.race([inactivePromise, this.executeTask(task, resolver, trigger, alreadyResolved)]);
+	}
+
 	private async resolveAndFindExecutable(systemInfo: TaskSystemInfo | undefined, workspaceFolder: IWorkspaceFolder | undefined, task: CustomTask | ContributedTask, cwd: string | undefined, envPath: string | undefined): Promise<string> {
 		const command = this.configurationResolverService.resolve(workspaceFolder, CommandString.value(task.command.name!));
 		cwd = cwd ? this.configurationResolverService.resolve(workspaceFolder, cwd) : undefined;
@@ -528,7 +546,7 @@ export class TerminalTaskSystem implements ITaskSystem {
 		}
 	}
 
-	private resolveVariablesFromSet(taskSystemInfo: TaskSystemInfo | undefined, workspaceFolder: IWorkspaceFolder | undefined, task: CustomTask | ContributedTask, variables: Set<string>, alreadyResolved: Map<string, string>): Promise<ResolvedVariables> {
+	private resolveVariablesFromSet(taskSystemInfo: TaskSystemInfo | undefined, workspaceFolder: IWorkspaceFolder | undefined, task: CustomTask | ContributedTask, variables: Set<string>, alreadyResolved: Map<string, string>): Promise<ResolvedVariables | undefined> {
 		let isProcess = task.command && task.command.runtime === RuntimeType.Process;
 		let options = task.command && task.command.options ? task.command.options : undefined;
 		let cwd = options ? options.cwd : undefined;
@@ -544,7 +562,7 @@ export class TerminalTaskSystem implements ITaskSystem {
 			}
 		}
 		const unresolved = this.findUnresolvedVariables(variables, alreadyResolved);
-		let resolvedVariables: Promise<ResolvedVariables>;
+		let resolvedVariables: Promise<ResolvedVariables | undefined>;
 		if (taskSystemInfo && workspaceFolder) {
 			let resolveSet: ResolveSet = {
 				variables: unresolved
@@ -560,6 +578,10 @@ export class TerminalTaskSystem implements ITaskSystem {
 				}
 			}
 			resolvedVariables = taskSystemInfo.resolveVariables(workspaceFolder, resolveSet, TaskSourceKind.toConfigurationTarget(task._source.kind)).then(async (resolved) => {
+				if (!resolved) {
+					return undefined;
+				}
+
 				this.mergeMaps(alreadyResolved, resolved.variables);
 				resolved.variables = new Map(alreadyResolved);
 				if (isProcess) {
@@ -569,14 +591,14 @@ export class TerminalTaskSystem implements ITaskSystem {
 					}
 					resolved.variables.set(TerminalTaskSystem.ProcessVarName, process);
 				}
-				return Promise.resolve(resolved);
+				return resolved;
 			});
 			return resolvedVariables;
 		} else {
 			let variablesArray = new Array<string>();
 			unresolved.forEach(variable => variablesArray.push(variable));
 
-			return new Promise((resolve, reject) => {
+			return new Promise<ResolvedVariables | undefined>((resolve, reject) => {
 				this.configurationResolverService.resolveWithInteraction(workspaceFolder, variablesArray, 'tasks', undefined, TaskSourceKind.toConfigurationTarget(task._source.kind)).then(async (resolvedVariablesMap: Map<string, string> | undefined) => {
 					if (resolvedVariablesMap) {
 						this.mergeMaps(alreadyResolved, resolvedVariablesMap);
@@ -657,6 +679,9 @@ export class TerminalTaskSystem implements ITaskSystem {
 
 		if (!hasAllVariables) {
 			return this.resolveVariablesFromSet(lastTask.getVerifiedTask().systemInfo, lastTask.getVerifiedTask().workspaceFolder, task, variables, alreadyResolved).then((resolvedVariables) => {
+				if (!resolvedVariables) {
+					return { exitCode: 0 };
+				}
 				this.currentTask.resolvedVariables = resolvedVariables;
 				return this.executeInTerminal(task, trigger, new VariableResolver(lastTask.getVerifiedTask().workspaceFolder, lastTask.getVerifiedTask().systemInfo, resolvedVariables.variables, this.configurationResolverService), workspaceFolder!);
 			}, reason => {
@@ -1022,7 +1047,7 @@ export class TerminalTaskSystem implements ITaskSystem {
 		} else {
 			let commandExecutable = (task.command.runtime !== RuntimeType.CustomExecution) ? CommandString.value(command) : undefined;
 			let executable = !isShellCommand
-				? this.resolveVariable(variableResolver, '${' + TerminalTaskSystem.ProcessVarName + '}')
+				? this.resolveVariable(variableResolver, this.resolveVariable(variableResolver, '${' + TerminalTaskSystem.ProcessVarName + '}'))
 				: commandExecutable;
 
 			// When we have a process task there is no need to quote arguments. So we go ahead and take the string value.

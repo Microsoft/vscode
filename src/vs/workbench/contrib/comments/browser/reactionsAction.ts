@@ -5,9 +5,9 @@
 
 import * as nls from 'vs/nls';
 import * as dom from 'vs/base/browser/dom';
-import { ActionViewItem } from 'vs/base/browser/ui/actionbar/actionbar';
 import { Action, IAction } from 'vs/base/common/actions';
 import { URI, UriComponents } from 'vs/base/common/uri';
+import { ActionViewItem } from 'vs/base/browser/ui/actionbar/actionViewItems';
 
 export class ToggleReactionsAction extends Action {
 	static readonly ID = 'toolbar.toggle.pickReactions';

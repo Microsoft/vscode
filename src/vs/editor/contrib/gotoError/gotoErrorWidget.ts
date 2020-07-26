@@ -26,9 +26,9 @@ import { IActionBarOptions, ActionsOrientation } from 'vs/base/browser/ui/action
 import { SeverityIcon } from 'vs/platform/severityIcon/common/severityIcon';
 import { EditorOption } from 'vs/editor/common/config/editorOptions';
 import { IOpenerService } from 'vs/platform/opener/common/opener';
-import { MenuId, IMenuService, MenuItemAction } from 'vs/platform/actions/common/actions';
+import { MenuId, IMenuService } from 'vs/platform/actions/common/actions';
 import { IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
-import { createAndFillInActionBarActions, MenuEntryActionViewItem } from 'vs/platform/actions/browser/menuEntryActionViewItem';
+import { createAndFillInActionBarActions } from 'vs/platform/actions/browser/menuEntryActionViewItem';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 
 class MessageWidget {
@@ -246,10 +246,10 @@ export class MarkerNavigationWidget extends PeekViewWidget {
 		@IThemeService private readonly _themeService: IThemeService,
 		@IOpenerService private readonly _openerService: IOpenerService,
 		@IMenuService private readonly _menuService: IMenuService,
-		@IContextKeyService private readonly _contextKeyService: IContextKeyService,
-		@IInstantiationService private readonly _instantiationService: IInstantiationService,
+		@IInstantiationService instantiationService: IInstantiationService,
+		@IContextKeyService private readonly _contextKeyService: IContextKeyService
 	) {
-		super(editor, { showArrow: true, showFrame: true, isAccessible: true });
+		super(editor, { showArrow: true, showFrame: true, isAccessible: true }, instantiationService);
 		this._severity = MarkerSeverity.Warning;
 		this._backgroundColor = Color.white;
 
@@ -311,8 +311,8 @@ export class MarkerNavigationWidget extends PeekViewWidget {
 
 	protected _getActionBarOptions(): IActionBarOptions {
 		return {
-			orientation: ActionsOrientation.HORIZONTAL,
-			actionViewItemProvider: action => action instanceof MenuItemAction ? this._instantiationService.createInstance(MenuEntryActionViewItem, action) : undefined
+			...super._getActionBarOptions(),
+			orientation: ActionsOrientation.HORIZONTAL
 		};
 	}
 

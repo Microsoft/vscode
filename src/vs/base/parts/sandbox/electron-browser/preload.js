@@ -7,16 +7,13 @@
 (function () {
 	'use strict';
 
-	const { ipcRenderer, webFrame, crashReporter } = require('electron');
+	const { ipcRenderer, webFrame, crashReporter, contextBridge } = require('electron');
 
-	// @ts-ignore
-	window.vscode = {
+	const globals = {
 
 		/**
-		 * A minimal set of methods exposed from ipcRenderer
-		 * to support communication to electron-main
-		 *
-		 * @type {typeof import('../electron-sandbox/globals').ipcRenderer}
+		 * A minimal set of methods exposed from Electron's `ipcRenderer`
+		 * to support communication to main process.
 		 */
 		ipcRenderer: {
 
@@ -25,9 +22,9 @@
 			 * @param {any[]} args
 			 */
 			send(channel, ...args) {
-				validateIPC(channel);
-
-				ipcRenderer.send(channel, ...args);
+				if (validateIPC(channel)) {
+					ipcRenderer.send(channel, ...args);
+				}
 			},
 
 			/**
@@ -35,9 +32,9 @@
 			 * @param {(event: import('electron').IpcRendererEvent, ...args: any[]) => void} listener
 			 */
 			on(channel, listener) {
-				validateIPC(channel);
-
-				ipcRenderer.on(channel, listener);
+				if (validateIPC(channel)) {
+					ipcRenderer.on(channel, listener);
+				}
 			},
 
 			/**
@@ -45,9 +42,9 @@
 			 * @param {(event: import('electron').IpcRendererEvent, ...args: any[]) => void} listener
 			 */
 			once(channel, listener) {
-				validateIPC(channel);
-
-				ipcRenderer.once(channel, listener);
+				if (validateIPC(channel)) {
+					ipcRenderer.once(channel, listener);
+				}
 			},
 
 			/**
@@ -55,16 +52,14 @@
 			 * @param {(event: import('electron').IpcRendererEvent, ...args: any[]) => void} listener
 			 */
 			removeListener(channel, listener) {
-				validateIPC(channel);
-
-				ipcRenderer.removeListener(channel, listener);
+				if (validateIPC(channel)) {
+					ipcRenderer.removeListener(channel, listener);
+				}
 			}
 		},
 
 		/**
-		 * Support for methods of webFrame type.
-		 *
-		 * @type {typeof import('../electron-sandbox/globals').webFrame}
+		 * Support for subset of methods of Electron's `webFrame` type.
 		 */
 		webFrame: {
 
@@ -72,25 +67,70 @@
 			 * @param {number} level
 			 */
 			setZoomLevel(level) {
-				webFrame.setZoomLevel(level);
+				if (typeof level === 'number') {
+					webFrame.setZoomLevel(level);
+				}
 			}
 		},
 
 		/**
-		 * Support for methods of crashReporter type.
-		 *
-		 * @type {typeof import('../electron-sandbox/globals').crashReporter}
+		 * Support for subset of methods of Electron's `crashReporter` type.
 		 */
 		crashReporter: {
 
 			/**
-			 * @param {Electron.CrashReporterStartOptions} options
+			 * @param {string} key
+			 * @param {string} value
 			 */
-			start(options) {
-				crashReporter.start(options);
+			addExtraParameter(key, value) {
+				crashReporter.addExtraParameter(key, value);
 			}
+		},
+
+		/**
+		 * Support for a subset of access to node.js global `process`.
+		 */
+		process: {
+			platform: process.platform,
+			env: process.env,
+			on:
+				/**
+				 * @param {string} type
+				 * @param {() => void} callback
+				 */
+				function (type, callback) {
+					if (validateProcessEventType(type)) {
+						process.on(type, callback);
+					}
+				}
+		},
+
+		/**
+		 * Some information about the context we are running in.
+		 */
+		context: {
+			sandbox: process.argv.includes('--enable-sandbox')
 		}
 	};
+
+	// Use `contextBridge` APIs to expose globals to VSCode
+	// only if context isolation is enabled, otherwise just
+	// add to the DOM global.
+	let useContextBridge = process.argv.includes('--context-isolation');
+	if (useContextBridge) {
+		try {
+			contextBridge.exposeInMainWorld('vscode', globals);
+		} catch (error) {
+			console.error(error);
+
+			useContextBridge = false;
+		}
+	}
+
+	if (!useContextBridge) {
+		// @ts-ignore
+		window.vscode = globals;
+	}
 
 	//#region Utilities
 
@@ -101,6 +141,20 @@
 		if (!channel || !channel.startsWith('vscode:')) {
 			throw new Error(`Unsupported event IPC channel '${channel}'`);
 		}
+
+		return true;
+	}
+
+	/**
+	 * @param {string} type
+	 * @returns {type is 'uncaughtException'}
+	 */
+	function validateProcessEventType(type) {
+		if (type !== 'uncaughtException') {
+			throw new Error(`Unsupported process event '${type}'`);
+		}
+
+		return true;
 	}
 
 	//#endregion

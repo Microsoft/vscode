@@ -2739,6 +2739,11 @@ export enum NotebookCellRunState {
 	Error = 4
 }
 
+export enum NotebookRunState {
+	Running = 1,
+	Idle = 2
+}
+
 //#endregion
 
 //#region Timeline

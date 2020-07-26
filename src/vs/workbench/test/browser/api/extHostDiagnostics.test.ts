@@ -389,6 +389,9 @@ suite('ExtHostDiagnostics', () => {
 			assertRegistered(): void {
 
 			}
+			drain() {
+				return undefined!;
+			}
 		}, new NullLogService());
 
 		let collection1 = diags.createDiagnosticCollection(nullExtensionDescription.identifier, 'foo');
@@ -437,6 +440,9 @@ suite('ExtHostDiagnostics', () => {
 			}
 			assertRegistered(): void {
 
+			}
+			drain() {
+				return undefined!;
 			}
 		}, new NullLogService());
 

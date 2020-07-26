@@ -38,7 +38,7 @@
 	cursor: grabbing;
 }
 
-.monaco-workbench  .debug-toolbar .monaco-action-bar .action-item > .action-label {
+.monaco-workbench  .debug-toolbar .monaco-action-bar .action-item .action-label {
 	width: 32px;
 	height: 32px;
 	margin-right: 0;

@@ -419,6 +419,7 @@ export abstract class ExtHostTaskBase implements ExtHostTaskShape, IExtHostTask 
 		this._activeCustomExecutions2 = new Map<string, types.CustomExecution>();
 		this._logService = logService;
 		this._deprecationService = deprecationService;
+		this._proxy.$registerSupportedExecutions(true);
 	}
 
 	public registerTaskProvider(extension: IExtensionDescription, type: string, provider: vscode.TaskProvider): vscode.Disposable {
@@ -696,13 +697,11 @@ export class WorkerExtHostTask extends ExtHostTaskBase {
 		@IExtHostApiDeprecationService deprecationService: IExtHostApiDeprecationService
 	) {
 		super(extHostRpc, initData, workspaceService, editorService, configurationService, extHostTerminalService, logService, deprecationService);
-		if (initData.remote.isRemote && initData.remote.authority) {
-			this.registerTaskSystem(Schemas.vscodeRemote, {
-				scheme: Schemas.vscodeRemote,
-				authority: initData.remote.authority,
-				platform: Platform.PlatformToString(Platform.Platform.Web)
-			});
-		}
+		this.registerTaskSystem(Schemas.vscodeRemote, {
+			scheme: Schemas.vscodeRemote,
+			authority: '',
+			platform: Platform.PlatformToString(Platform.Platform.Web)
+		});
 	}
 
 	public async executeTask(extension: IExtensionDescription, task: vscode.Task): Promise<vscode.TaskExecution> {

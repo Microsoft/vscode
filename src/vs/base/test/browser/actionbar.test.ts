@@ -4,8 +4,8 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as assert from 'assert';
-import { Separator, prepareActions } from 'vs/base/browser/ui/actionbar/actionbar';
-import { Action } from 'vs/base/common/actions';
+import { prepareActions } from 'vs/base/browser/ui/actionbar/actionbar';
+import { Action, Separator } from 'vs/base/common/actions';
 
 suite('Actionbar', () => {
 

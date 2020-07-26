@@ -80,6 +80,7 @@ import { CancellationToken, CancellationTokenSource } from 'vs/base/common/cance
 import { IViewsService, IViewDescriptorService } from 'vs/workbench/common/views';
 import { isWorkspaceFolder, TaskQuickPickEntry, QUICKOPEN_DETAIL_CONFIG, TaskQuickPick, QUICKOPEN_SKIP_CONFIG } from 'vs/workbench/contrib/tasks/browser/taskQuickPick';
 import { ILogService } from 'vs/platform/log/common/log';
+import { once } from 'vs/base/common/functional';
 
 const QUICKOPEN_HISTORY_LIMIT_CONFIG = 'task.quickOpen.history';
 const PROBLEM_MATCHER_NEVER_CONFIG = 'task.problemMatchers.neverPrompt';
@@ -223,6 +224,8 @@ export abstract class AbstractTaskService extends Disposable implements ITaskSer
 
 	protected _outputChannel: IOutputChannel;
 	protected readonly _onDidStateChange: Emitter<TaskEvent>;
+	private _waitForSupportedExecutions: Promise<void>;
+	private _onDidRegisterSupportedExecutions: Emitter<void> = new Emitter();
 
 	constructor(
 		@IConfigurationService private readonly configurationService: IConfigurationService,
@@ -331,16 +334,26 @@ export abstract class AbstractTaskService extends Disposable implements ITaskSer
 			}
 			return task._label;
 		});
-		this.setExecutionContexts();
+
+		this._waitForSupportedExecutions = new Promise(resolve => {
+			once(this._onDidRegisterSupportedExecutions.event)(() => resolve());
+		});
 	}
 
-	protected setExecutionContexts(custom: boolean = true, shell: boolean = false, process: boolean = false): void {
-		const customContext = CustomExecutionSupportedContext.bindTo(this.contextKeyService);
-		customContext.set(custom);
-		const shellContext = ShellExecutionSupportedContext.bindTo(this.contextKeyService);
-		shellContext.set(shell);
-		const processContext = ProcessExecutionSupportedContext.bindTo(this.contextKeyService);
-		processContext.set(process);
+	public registerSupportedExecutions(custom?: boolean, shell?: boolean, process?: boolean) {
+		if (custom !== undefined) {
+			const customContext = CustomExecutionSupportedContext.bindTo(this.contextKeyService);
+			customContext.set(custom);
+		}
+		if (shell !== undefined) {
+			const shellContext = ShellExecutionSupportedContext.bindTo(this.contextKeyService);
+			shellContext.set(shell);
+		}
+		if (process !== undefined) {
+			const processContext = ProcessExecutionSupportedContext.bindTo(this.contextKeyService);
+			processContext.set(process);
+		}
+		this._onDidRegisterSupportedExecutions.fire();
 	}
 
 	public get onDidStateChange(): Event<TaskEvent> {
@@ -831,7 +844,7 @@ export abstract class AbstractTaskService extends Disposable implements ITaskSer
 		this.openerService.open(URI.parse('https://go.microsoft.com/fwlink/?LinkId=733558'));
 	}
 
-	public build(): Promise<ITaskSummary> {
+	public async build(): Promise<ITaskSummary> {
 		return this.getGroupedTasks().then((tasks) => {
 			let runnable = this.createRunnableTask(tasks, TaskGroup.Build);
 			if (!runnable || !runnable.task) {
@@ -841,7 +854,7 @@ export abstract class AbstractTaskService extends Disposable implements ITaskSer
 					throw new TaskError(Severity.Info, nls.localize('TaskService.noBuildTask2', 'No build task defined. Mark a task with as a \'build\' group in the tasks.json file.'), TaskErrors.NoBuildTask);
 				}
 			}
-			return this.executeTask(runnable.task, runnable.resolver);
+			return this.executeTask(runnable.task, runnable.resolver, TaskRunSource.User);
 		}).then(value => value, (error) => {
 			this.handleError(error);
 			return Promise.reject(error);
@@ -858,7 +871,7 @@ export abstract class AbstractTaskService extends Disposable implements ITaskSer
 					throw new TaskError(Severity.Info, nls.localize('TaskService.noTestTask2', 'No test task defined. Mark a task with as a \'test\' group in the tasks.json file.'), TaskErrors.NoTestTask);
 				}
 			}
-			return this.executeTask(runnable.task, runnable.resolver);
+			return this.executeTask(runnable.task, runnable.resolver, TaskRunSource.User);
 		}).then(value => value, (error) => {
 			this.handleError(error);
 			return Promise.reject(error);
@@ -875,12 +888,12 @@ export abstract class AbstractTaskService extends Disposable implements ITaskSer
 			if (options && options.attachProblemMatcher && this.shouldAttachProblemMatcher(task) && !InMemoryTask.is(task)) {
 				const toExecute = await this.attachProblemMatcher(task);
 				if (toExecute) {
-					resolve(this.executeTask(toExecute, resolver));
+					resolve(this.executeTask(toExecute, resolver, runSource));
 				} else {
 					resolve(undefined);
 				}
 			} else {
-				resolve(this.executeTask(task, resolver));
+				resolve(this.executeTask(task, resolver, runSource));
 			}
 		}).then((value) => {
 			if (runSource === TaskRunSource.User) {
@@ -1449,7 +1462,7 @@ export abstract class AbstractTaskService extends Disposable implements ITaskSer
 		};
 	}
 
-	private executeTask(task: Task, resolver: ITaskResolver): Promise<ITaskSummary> {
+	private executeTask(task: Task, resolver: ITaskResolver, runSource: TaskRunSource): Promise<ITaskSummary> {
 		enum SaveBeforeRunConfigOptions {
 			Always = 'always',
 			Never = 'never',
@@ -1461,7 +1474,7 @@ export abstract class AbstractTaskService extends Disposable implements ITaskSer
 		const execTask = async (task: Task, resolver: ITaskResolver): Promise<ITaskSummary> => {
 			return ProblemMatcherRegistry.onReady().then(() => {
 				let executeResult = this.getTaskSystem().run(task, resolver);
-				return this.handleExecuteResult(executeResult);
+				return this.handleExecuteResult(executeResult, runSource);
 			});
 		};
 
@@ -1498,7 +1511,7 @@ export abstract class AbstractTaskService extends Disposable implements ITaskSer
 		}
 	}
 
-	private async handleExecuteResult(executeResult: ITaskExecuteResult): Promise<ITaskSummary> {
+	private async handleExecuteResult(executeResult: ITaskExecuteResult, runSource?: TaskRunSource): Promise<ITaskSummary> {
 		if (executeResult.task.taskLoadMessages && executeResult.task.taskLoadMessages.length > 0) {
 			executeResult.task.taskLoadMessages.forEach(loadMessage => {
 				this._outputChannel.append(loadMessage + '\n');
@@ -1506,7 +1519,9 @@ export abstract class AbstractTaskService extends Disposable implements ITaskSer
 			this.showOutput();
 		}
 
-		await this.setRecentlyUsedTask(executeResult.task);
+		if (runSource === TaskRunSource.User) {
+			await this.setRecentlyUsedTask(executeResult.task);
+		}
 		if (executeResult.kind === TaskExecuteKind.Active) {
 			let active = executeResult.active;
 			if (active && active.same) {
@@ -1826,7 +1841,8 @@ export abstract class AbstractTaskService extends Disposable implements ITaskSer
 		return result;
 	}
 
-	public getWorkspaceTasks(runSource: TaskRunSource = TaskRunSource.User): Promise<Map<string, WorkspaceFolderTaskResult>> {
+	public async getWorkspaceTasks(runSource: TaskRunSource = TaskRunSource.User): Promise<Map<string, WorkspaceFolderTaskResult>> {
+		await this._waitForSupportedExecutions;
 		if (this._workspaceTasksPromise) {
 			return this._workspaceTasksPromise;
 		}

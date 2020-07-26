@@ -115,6 +115,13 @@ export class RPCProtocol extends Disposable implements IRPCProtocol {
 		});
 	}
 
+	public drain(): Promise<void> {
+		if (typeof this._protocol.drain === 'function') {
+			return this._protocol.drain();
+		}
+		return Promise.resolve();
+	}
+
 	private _onWillSendRequest(req: number): void {
 		if (this._unacknowledgedCount === 0) {
 			// Since this is the first request we are sending in a while,

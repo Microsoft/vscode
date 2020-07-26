@@ -3,6 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import 'vs/css!./menubar';
 import * as browser from 'vs/base/browser/browser';
 import * as DOM from 'vs/base/browser/dom';
 import * as strings from 'vs/base/common/strings';
@@ -10,8 +11,8 @@ import * as nls from 'vs/nls';
 import { domEvent } from 'vs/base/browser/event';
 import { StandardKeyboardEvent } from 'vs/base/browser/keyboardEvent';
 import { EventType, Gesture, GestureEvent } from 'vs/base/browser/touch';
-import { cleanMnemonic, IMenuOptions, Menu, MENU_ESCAPED_MNEMONIC_REGEX, MENU_MNEMONIC_REGEX, SubmenuAction, IMenuStyles, Direction } from 'vs/base/browser/ui/menu/menu';
-import { ActionRunner, IAction, IActionRunner } from 'vs/base/common/actions';
+import { cleanMnemonic, IMenuOptions, Menu, MENU_ESCAPED_MNEMONIC_REGEX, MENU_MNEMONIC_REGEX, IMenuStyles, Direction } from 'vs/base/browser/ui/menu/menu';
+import { ActionRunner, IAction, IActionRunner, SubmenuAction, Separator } from 'vs/base/common/actions';
 import { RunOnceScheduler } from 'vs/base/common/async';
 import { Event, Emitter } from 'vs/base/common/event';
 import { KeyCode, ResolvedKeybinding, KeyMod } from 'vs/base/common/keyCodes';
@@ -21,7 +22,6 @@ import { asArray } from 'vs/base/common/arrays';
 import { ScanCodeUtils, ScanCode } from 'vs/base/common/scanCode';
 import { isMacintosh } from 'vs/base/common/platform';
 import { StandardMouseEvent } from 'vs/base/browser/mouseEvent';
-import { Separator } from 'vs/base/browser/ui/actionbar/actionbar';
 import { Codicon, registerIcon } from 'vs/base/common/codicons';
 
 const $ = DOM.$;
@@ -39,7 +39,7 @@ export interface IMenuBarOptions {
 }
 
 export interface MenuBarMenu {
-	actions: ReadonlyArray<IAction>;
+	actions: IAction[];
 	label: string;
 }
 
@@ -58,7 +58,7 @@ export class MenuBar extends Disposable {
 		buttonElement: HTMLElement;
 		titleElement: HTMLElement;
 		label: string;
-		actions?: ReadonlyArray<IAction>;
+		actions?: IAction[];
 	}[];
 
 	private overflowMenu!: {
@@ -505,7 +505,7 @@ export class MenuBar extends Disposable {
 
 			this.overflowMenu.actions = [];
 			for (let idx = this.numMenusShown; idx < this.menuCache.length; idx++) {
-				this.overflowMenu.actions.push(new SubmenuAction(this.menuCache[idx].label, this.menuCache[idx].actions || []));
+				this.overflowMenu.actions.push(new SubmenuAction(`menubar.submenu.${this.menuCache[idx].label}`, this.menuCache[idx].label, this.menuCache[idx].actions || []));
 			}
 
 			if (this.overflowMenu.buttonElement.nextElementSibling !== this.menuCache[this.numMenusShown].buttonElement) {

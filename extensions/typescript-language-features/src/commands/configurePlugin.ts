@@ -3,8 +3,8 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Command } from '../utils/commandManager';
 import { PluginManager } from '../utils/plugins';
+import { Command } from './commandManager';
 
 export class ConfigurePluginCommand implements Command {
 	public readonly id = '_typescript.configurePlugin';

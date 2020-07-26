@@ -162,7 +162,7 @@ class Query {
 	withFilter(filterType: FilterType, ...values: string[]): Query {
 		const criteria = [
 			...this.state.criteria,
-			...values.map(value => ({ filterType, value }))
+			...values.length ? values.map(value => ({ filterType, value })) : [{ filterType }]
 		];
 
 		return new Query(assign({}, this.state, { criteria }));
@@ -438,6 +438,12 @@ export class ExtensionGalleryService implements IExtensionGalleryService {
 			// Use tag filter instead of "tag:debuggers"
 			text = text.replace(/\btag:("([^"]*)"|([^"]\S*))(\s+|\b|$)/g, (_, quotedTag, tag) => {
 				query = query.withFilter(FilterType.Tag, tag || quotedTag);
+				return '';
+			});
+
+			// Use featured filter
+			text = text.replace(/\bfeatured(\s+|\b|$)/g, () => {
+				query = query.withFilter(FilterType.Featured);
 				return '';
 			});
 

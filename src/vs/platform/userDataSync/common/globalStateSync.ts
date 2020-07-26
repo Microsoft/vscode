@@ -178,7 +178,7 @@ export class GlobalStateSynchroniser extends AbstractSynchroniser implements IUs
 		}
 	}
 
-	protected async updateResourcePreview(resourcePreview: IGlobalStateResourcePreview, resource: URI, acceptedContent: string): Promise<IGlobalStateResourcePreview> {
+	protected async updateResourcePreview(resourcePreview: IGlobalStateResourcePreview, resource: URI, acceptedContent: string | null): Promise<IGlobalStateResourcePreview> {
 		if (isEqual(this.localResource, resource)) {
 			return this.getPushPreview(resourcePreview.remoteContent);
 		}

@@ -23,6 +23,7 @@ import { IEditorInput } from 'vs/workbench/common/editor';
 import { IEditorGroup } from 'vs/workbench/services/editor/common/editorGroupsService';
 import { IEditorService, IOpenEditorOverride } from 'vs/workbench/services/editor/common/editorService';
 import { FOLDER_SETTINGS_PATH, IPreferencesService, USE_SPLIT_JSON_SETTING } from 'vs/workbench/services/preferences/common/preferences';
+import { workbenchConfigurationNodeBase } from 'vs/workbench/common/configuration';
 
 const schemaRegistry = Registry.as<JSONContributionRegistry.IJSONContributionRegistry>(JSONContributionRegistry.Extensions.JSONContribution);
 
@@ -153,6 +154,7 @@ export class PreferencesContribution implements IWorkbenchContribution {
 
 const registry = Registry.as<IConfigurationRegistry>(Extensions.Configuration);
 registry.registerConfiguration({
+	...workbenchConfigurationNodeBase,
 	'properties': {
 		'workbench.settings.enableNaturalLanguageSearch': {
 			'type': 'boolean',

@@ -54,7 +54,7 @@
         "url": "vscode://schemas/keybindings"
       },
       {
-        "fileMatch": "vscode://defaultsettings/*/*.json",
+        "fileMatch": "vscode://defaultsettings/defaultSettings.json",
         "url": "vscode://schemas/settings/default"
       },
       {

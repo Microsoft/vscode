@@ -183,7 +183,7 @@ export class ExtensionsSynchroniser extends AbstractSynchroniser implements IUse
 		}
 	}
 
-	protected async updateResourcePreview(resourcePreview: IExtensionResourcePreview, resource: URI, acceptedContent: string): Promise<IExtensionResourcePreview> {
+	protected async updateResourcePreview(resourcePreview: IExtensionResourcePreview, resource: URI, acceptedContent: string | null): Promise<IExtensionResourcePreview> {
 		if (isEqual(resource, this.localResource)) {
 			const remoteExtensions = resourcePreview.remoteContent ? JSON.parse(resourcePreview.remoteContent) : null;
 			return this.getPushPreview(remoteExtensions);

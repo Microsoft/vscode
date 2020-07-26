@@ -124,7 +124,7 @@ export class UserDataSyncWorkbenchContribution extends Disposable implements IWo
 		this.turningOnSyncContext = CONTEXT_TURNING_ON_STATE.bindTo(contextKeyService);
 		this.conflictsSources = CONTEXT_CONFLICTS_SOURCES.bindTo(contextKeyService);
 
-		if (this.userDataSyncWorkbenchService.authenticationProviders.length) {
+		if (userDataSyncWorkbenchService.enabled) {
 			registerConfiguration();
 
 			this.updateAccountBadge();
@@ -140,6 +140,7 @@ export class UserDataSyncWorkbenchContribution extends Disposable implements IWo
 				this.updateGlobalActivityBadge();
 			}));
 			this._register(userDataSyncService.onDidChangeConflicts(() => this.onDidChangeConflicts(this.userDataSyncService.conflicts)));
+			this._register(userDataAutoSyncService.onDidChangeEnablement(() => this.onDidChangeConflicts(this.userDataSyncService.conflicts)));
 			this._register(userDataSyncService.onSyncErrors(errors => this.onSynchronizerErrors(errors)));
 			this._register(userDataAutoSyncService.onError(error => this.onAutoSyncError(error)));
 
@@ -148,7 +149,18 @@ export class UserDataSyncWorkbenchContribution extends Disposable implements IWo
 
 			textModelResolverService.registerTextModelContentProvider(USER_DATA_SYNC_SCHEME, instantiationService.createInstance(UserDataRemoteContentProvider));
 			registerEditorContribution(AcceptChangesContribution.ID, AcceptChangesContribution);
+
+			this._register(Event.any(userDataSyncService.onDidChangeStatus, userDataAutoSyncService.onDidChangeEnablement)(() => this.turningOnSync = !userDataAutoSyncService.isEnabled() && userDataSyncService.status !== SyncStatus.Idle));
 		}
+	}
+
+	private get turningOnSync(): boolean {
+		return !!this.turningOnSyncContext.get();
+	}
+
+	private set turningOnSync(turningOn: boolean) {
+		this.turningOnSyncContext.set(turningOn);
+		this.updateGlobalActivityBadge();
 	}
 
 	private readonly conflictsDisposables = new Map<SyncResource, IDisposable>();
@@ -197,14 +209,14 @@ export class UserDataSyncWorkbenchContribution extends Disposable implements IWo
 								}
 							},
 							{
-								label: localize('accept local', "Accept Local"),
+								label: localize('accept merges', "Accept Merges"),
 								run: () => {
 									this.telemetryService.publicLog2<{ source: string, action: string }, SyncConflictsClassification>('sync/handleConflicts', { source: syncResource, action: 'acceptLocal' });
 									this.acceptLocal(syncResource, conflicts);
 								}
 							},
 							{
-								label: localize('show conflicts', "Show Conflicts"),
+								label: localize('show merges', "Show Merges"),
 								run: () => {
 									this.telemetryService.publicLog2<{ source: string, action?: string }, SyncConflictsClassification>('sync/showConflicts', { source: syncResource });
 									this.handleConflicts([syncResource, conflicts]);
@@ -308,10 +320,10 @@ export class UserDataSyncWorkbenchContribution extends Disposable implements IWo
 			case UserDataSyncErrorCode.IncompatibleRemoteContent:
 				this.notificationService.notify({
 					severity: Severity.Error,
-					message: localize('error reset required', "Preferences sync is disabled because your data in the cloud is older than that of in the client. Please reset your data in the cloud before turning on sync."),
+					message: localize('error reset required', "Preferences sync is disabled because your data in the cloud is older than that of the client. Please clear your data in the cloud before turning on sync."),
 					actions: {
 						primary: [
-							new Action('reset', localize('reset', "Reset Synced Data"), undefined, true, () => this.userDataSyncWorkbenchService.resetSyncedData()),
+							new Action('reset', localize('reset', "Clear Data in Cloud..."), undefined, true, () => this.userDataSyncWorkbenchService.resetSyncedData()),
 							new Action('show synced data', localize('show synced data action', "Show Synced Data"), undefined, true, () => this.userDataSyncWorkbenchService.showSyncActivity())
 						]
 					}
@@ -389,7 +401,7 @@ export class UserDataSyncWorkbenchContribution extends Disposable implements IWo
 		let clazz: string | undefined;
 		let priority: number | undefined = undefined;
 
-		if (this.userDataSyncService.conflicts.length) {
+		if (this.userDataSyncService.conflicts.length && this.userDataAutoSyncService.isEnabled()) {
 			badge = new NumberBadge(this.userDataSyncService.conflicts.reduce((result, [, conflicts]) => { return result + conflicts.length; }, 0), () => localize('has conflicts', "Preferences Sync: Conflicts Detected"));
 		} else if (this.turningOnSync) {
 			badge = new ProgressBadge(() => localize('turning on syncing', "Turning on Preferences Sync..."));
@@ -416,17 +428,7 @@ export class UserDataSyncWorkbenchContribution extends Disposable implements IWo
 		}
 	}
 
-	private get turningOnSync(): boolean {
-		return !!this.turningOnSyncContext.get();
-	}
-
-	private set turningOnSync(turningOn: boolean) {
-		this.turningOnSyncContext.set(turningOn);
-		this.updateGlobalActivityBadge();
-	}
-
 	private async turnOn(): Promise<void> {
-		this.turningOnSync = true;
 		try {
 			if (!this.storageService.getBoolean('sync.donotAskPreviewConfirmation', StorageScope.GLOBAL, false)) {
 				if (!await this.askForConfirmation()) {
@@ -464,10 +466,10 @@ export class UserDataSyncWorkbenchContribution extends Disposable implements IWo
 					case UserDataSyncErrorCode.IncompatibleRemoteContent:
 						this.notificationService.notify({
 							severity: Severity.Error,
-							message: localize('error reset required while starting sync', "Preferences sync cannot be turned on because your data in the cloud is older than that of in the client. Please reset your data in the cloud before turning on sync."),
+							message: localize('error reset required while starting sync', "Preferences sync cannot be turned on because your data in the cloud is older than that of the client. Please clear your data in the cloud before turning on sync."),
 							actions: {
 								primary: [
-									new Action('reset', localize('reset', "Reset Synced Data"), undefined, true, () => this.userDataSyncWorkbenchService.resetSyncedData()),
+									new Action('reset', localize('reset', "Clear Data in Cloud..."), undefined, true, () => this.userDataSyncWorkbenchService.resetSyncedData()),
 									new Action('show synced data', localize('show synced data action', "Show Synced Data"), undefined, true, () => this.userDataSyncWorkbenchService.showSyncActivity())
 								]
 							}
@@ -476,8 +478,6 @@ export class UserDataSyncWorkbenchContribution extends Disposable implements IWo
 				}
 			}
 			this.notificationService.error(localize('turn on failed', "Error while starting Sync: {0}", toErrorMessage(e)));
-		} finally {
-			this.turningOnSync = false;
 		}
 	}
 
@@ -650,18 +650,12 @@ export class UserDataSyncWorkbenchContribution extends Disposable implements IWo
 
 	private async handleConflicts([syncResource, conflicts]: [SyncResource, IResourcePreview[]]): Promise<void> {
 		for (const conflict of conflicts) {
-			let label: string | undefined = undefined;
-			if (syncResource === SyncResource.Settings) {
-				label = localize('settings conflicts preview', "Settings Conflicts (Remote ↔ Local)");
-			} else if (syncResource === SyncResource.Keybindings) {
-				label = localize('keybindings conflicts preview', "Keybindings Conflicts (Remote ↔ Local)");
-			} else if (syncResource === SyncResource.Snippets) {
-				label = localize('snippets conflicts preview', "User Snippet Conflicts (Remote ↔ Local) - {0}", basename(conflict.previewResource));
-			}
+			const leftResourceName = localize({ key: 'leftResourceName', comment: ['remote as in file in cloud'] }, "{0} (Remote)", basename(conflict.remoteResource));
+			const rightResourceName = localize('merges', "{0} (Merges)", basename(conflict.previewResource));
 			await this.editorService.openEditor({
 				leftResource: conflict.remoteResource,
 				rightResource: conflict.previewResource,
-				label,
+				label: localize('sideBySideLabels', "{0} ↔ {1}", leftResourceName, rightResourceName),
 				options: {
 					preserveFocus: false,
 					pinned: true,
@@ -1184,8 +1178,8 @@ class AcceptChangesContribution extends Disposable implements IEditorContributio
 			const [syncResource, conflicts] = this.getSyncResourceConflicts(resource)!;
 			const isRemote = conflicts.some(({ remoteResource }) => isEqual(remoteResource, resource));
 			const acceptRemoteLabel = localize('accept remote', "Accept Remote");
-			const acceptLocalLabel = localize('accept merge preview', "Accept Merge Preview");
-			this.acceptChangesButton = this.instantiationService.createInstance(FloatingClickWidget, this.editor, isRemote ? acceptRemoteLabel : acceptLocalLabel, null);
+			const acceptMergesLabel = localize('accept merges', "Accept Merges");
+			this.acceptChangesButton = this.instantiationService.createInstance(FloatingClickWidget, this.editor, isRemote ? acceptRemoteLabel : acceptMergesLabel, null);
 			this._register(this.acceptChangesButton.onClick(async () => {
 				const model = this.editor.getModel();
 				if (model) {
@@ -1195,11 +1189,11 @@ class AcceptChangesContribution extends Disposable implements IEditorContributio
 						type: 'info',
 						title: isRemote
 							? localize('Sync accept remote', "Preferences Sync: {0}", acceptRemoteLabel)
-							: localize('Sync accept local', "Preferences Sync: {0}", acceptLocalLabel),
+							: localize('Sync accept merges', "Preferences Sync: {0}", acceptMergesLabel),
 						message: isRemote
 							? localize('confirm replace and overwrite local', "Would you like to accept remote {0} and replace local {1}?", syncAreaLabel.toLowerCase(), syncAreaLabel.toLowerCase())
-							: localize('confirm replace and overwrite remote', "Would you like to accept local {0} and replace remote {1}?", syncAreaLabel.toLowerCase(), syncAreaLabel.toLowerCase()),
-						primaryButton: isRemote ? acceptRemoteLabel : acceptLocalLabel
+							: localize('confirm replace and overwrite remote', "Would you like to accept merges and replace remote {0}?", syncAreaLabel.toLowerCase()),
+						primaryButton: isRemote ? acceptRemoteLabel : acceptMergesLabel
 					});
 					if (result.confirmed) {
 						try {

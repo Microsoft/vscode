@@ -14,7 +14,7 @@ import * as UUID from 'vs/base/common/uuid';
 import { IEnvironmentService } from 'vs/platform/environment/common/environment';
 import { IOpenerService, matchesScheme } from 'vs/platform/opener/common/opener';
 import { CELL_MARGIN, CELL_RUN_GUTTER, CODE_CELL_LEFT_MARGIN, CELL_OUTPUT_PADDING } from 'vs/workbench/contrib/notebook/browser/constants';
-import { INotebookEditor } from 'vs/workbench/contrib/notebook/browser/notebookBrowser';
+import { CellCollapseState, INotebookEditor } from 'vs/workbench/contrib/notebook/browser/notebookBrowser';
 import { CodeCellViewModel } from 'vs/workbench/contrib/notebook/browser/viewModel/codeCellViewModel';
 import { CellOutputKind, IProcessedOutput } from 'vs/workbench/contrib/notebook/common/notebookCommon';
 import { INotebookService } from 'vs/workbench/contrib/notebook/common/notebookService';
@@ -219,7 +219,7 @@ export interface INotebookWebviewMessage {
 let version = 0;
 export class BackLayerWebView extends Disposable {
 	element: HTMLElement;
-	webview!: WebviewElement;
+	webview: WebviewElement | undefined = undefined;
 	insetMapping: Map<IProcessedOutput, ICachedInset> = new Map();
 	hiddenInsetMapping: Set<IProcessedOutput> = new Set();
 	reversedInsetMapping: Map<string, IProcessedOutput> = new Map();
@@ -561,6 +561,10 @@ ${loaderJs}
 			return;
 		}
 
+		if (cell.outputCollapseState === CellCollapseState.Collapsed) {
+			return false;
+		}
+
 		let outputCache = this.insetMapping.get(output)!;
 		let outputIndex = cell.outputs.indexOf(output);
 		let outputOffset = cellTop + cell.getOutputOffset(outputIndex);
@@ -714,7 +718,7 @@ ${loaderJs}
 			return;
 		}
 
-		this.webview.focus();
+		this.webview?.focus();
 	}
 
 	focusOutput(cellId: string) {
@@ -722,7 +726,7 @@ ${loaderJs}
 			return;
 		}
 
-		this.webview.focus();
+		this.webview?.focus();
 		setTimeout(() => { // Need this, or focus decoration is not shown. No clue.
 			this._sendMessageToWebview({
 				type: 'focus-output',
@@ -814,6 +818,10 @@ ${loaderJs}
 	}
 
 	private _updatePreloads(resources: IPreloadResource[], source: 'renderer' | 'kernel') {
+		if (!this.webview) {
+			return;
+		}
+
 		const mixedResourceRoots = [...(this.localResourceRootsCache || []), ...this.rendererRootsCache, ...this.kernelRootsCache];
 
 		this.webview.localResourcesRoot = mixedResourceRoots;
@@ -830,7 +838,7 @@ ${loaderJs}
 			return;
 		}
 
-		this.webview.postMessage(message);
+		this.webview?.postMessage(message);
 	}
 
 	clearPreloadsCache() {
@@ -839,7 +847,7 @@ ${loaderJs}
 
 	dispose() {
 		this._disposed = true;
-		this.webview.dispose();
+		this.webview?.dispose();
 		super.dispose();
 	}
 }

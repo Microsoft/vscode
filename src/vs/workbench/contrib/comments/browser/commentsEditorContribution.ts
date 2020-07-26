@@ -3,7 +3,6 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { ContextSubMenu } from 'vs/base/browser/contextmenu';
 import { $ } from 'vs/base/browser/dom';
 import { Action, IAction } from 'vs/base/common/actions';
 import { coalesce, findFirstInSorted } from 'vs/base/common/arrays';
@@ -547,8 +546,8 @@ export class CommentController implements IEditorContribution {
 		return picks;
 	}
 
-	private getContextMenuActions(commentInfos: { ownerId: string, extensionId: string | undefined, label: string | undefined, commentingRangesInfo: modes.CommentingRanges }[], lineNumber: number): (IAction | ContextSubMenu)[] {
-		const actions: (IAction | ContextSubMenu)[] = [];
+	private getContextMenuActions(commentInfos: { ownerId: string, extensionId: string | undefined, label: string | undefined, commentingRangesInfo: modes.CommentingRanges }[], lineNumber: number): IAction[] {
+		const actions: IAction[] = [];
 
 		commentInfos.forEach(commentInfo => {
 			const { ownerId, extensionId, label } = commentInfo;

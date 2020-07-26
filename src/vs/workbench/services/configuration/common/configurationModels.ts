@@ -4,14 +4,14 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { equals } from 'vs/base/common/objects';
-import { toValuesTree, IConfigurationModel, IConfigurationOverrides, IConfigurationValue, IConfigurationChange, overrideIdentifierFromKey } from 'vs/platform/configuration/common/configuration';
+import { toValuesTree, IConfigurationModel, IConfigurationOverrides, IConfigurationValue, IConfigurationChange } from 'vs/platform/configuration/common/configuration';
 import { Configuration as BaseConfiguration, ConfigurationModelParser, ConfigurationModel } from 'vs/platform/configuration/common/configurationModels';
 import { IStoredWorkspaceFolder } from 'vs/platform/workspaces/common/workspaces';
 import { Workspace } from 'vs/platform/workspace/common/workspace';
 import { ResourceMap } from 'vs/base/common/map';
 import { URI } from 'vs/base/common/uri';
 import { WORKSPACE_SCOPES } from 'vs/workbench/services/configuration/common/configuration';
-import { OVERRIDE_PROPERTY_PATTERN } from 'vs/platform/configuration/common/configurationRegistry';
+import { OVERRIDE_PROPERTY_PATTERN, overrideIdentifierFromKey } from 'vs/platform/configuration/common/configurationRegistry';
 
 export class WorkspaceConfigurationModelParser extends ConfigurationModelParser {
 

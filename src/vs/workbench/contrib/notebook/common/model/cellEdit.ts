@@ -31,7 +31,7 @@ export class InsertCellEdit implements IResourceUndoRedoElement {
 	) {
 	}
 
-	undo(): void | Promise<void> {
+	undo(): void {
 		if (!this.editingDelegate.deleteCell) {
 			throw new Error('Notebook Delete Cell not implemented for Undo/Redo');
 		}
@@ -41,7 +41,7 @@ export class InsertCellEdit implements IResourceUndoRedoElement {
 			this.editingDelegate.emitSelections(this.beforedSelections);
 		}
 	}
-	redo(): void | Promise<void> {
+	redo(): void {
 		if (!this.editingDelegate.insertCell) {
 			throw new Error('Notebook Insert Cell not implemented for Undo/Redo');
 		}
@@ -70,7 +70,7 @@ export class DeleteCellEdit implements IResourceUndoRedoElement {
 		// this._rawCell.source = [cell.getText()];
 	}
 
-	undo(): void | Promise<void> {
+	undo(): void {
 		if (!this.editingDelegate.insertCell) {
 			throw new Error('Notebook Insert Cell not implemented for Undo/Redo');
 		}
@@ -81,7 +81,7 @@ export class DeleteCellEdit implements IResourceUndoRedoElement {
 		}
 	}
 
-	redo(): void | Promise<void> {
+	redo(): void {
 		if (!this.editingDelegate.deleteCell) {
 			throw new Error('Notebook Delete Cell not implemented for Undo/Redo');
 		}
@@ -95,7 +95,7 @@ export class DeleteCellEdit implements IResourceUndoRedoElement {
 
 export class MoveCellEdit implements IResourceUndoRedoElement {
 	type: UndoRedoElementType.Resource = UndoRedoElementType.Resource;
-	label: string = 'Delete Cell';
+	label: string = 'Move Cell';
 
 	constructor(
 		public resource: URI,
@@ -107,7 +107,7 @@ export class MoveCellEdit implements IResourceUndoRedoElement {
 	) {
 	}
 
-	undo(): void | Promise<void> {
+	undo(): void {
 		if (!this.editingDelegate.moveCell) {
 			throw new Error('Notebook Move Cell not implemented for Undo/Redo');
 		}
@@ -118,7 +118,7 @@ export class MoveCellEdit implements IResourceUndoRedoElement {
 		}
 	}
 
-	redo(): void | Promise<void> {
+	redo(): void {
 		if (!this.editingDelegate.moveCell) {
 			throw new Error('Notebook Move Cell not implemented for Undo/Redo');
 		}
@@ -142,7 +142,7 @@ export class SpliceCellsEdit implements IResourceUndoRedoElement {
 	) {
 	}
 
-	undo(): void | Promise<void> {
+	undo(): void {
 		if (!this.editingDelegate.deleteCell || !this.editingDelegate.insertCell) {
 			throw new Error('Notebook Insert/Delete Cell not implemented for Undo/Redo');
 		}
@@ -162,7 +162,7 @@ export class SpliceCellsEdit implements IResourceUndoRedoElement {
 		}
 	}
 
-	redo(): void | Promise<void> {
+	redo(): void {
 		if (!this.editingDelegate.deleteCell || !this.editingDelegate.insertCell) {
 			throw new Error('Notebook Insert/Delete Cell not implemented for Undo/Redo');
 		}

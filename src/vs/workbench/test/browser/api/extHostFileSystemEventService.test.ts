@@ -15,7 +15,8 @@ suite('ExtHostFileSystemEventService', () => {
 		const protocol: IMainContext = {
 			getProxy: () => { return undefined!; },
 			set: undefined!,
-			assertRegistered: undefined!
+			assertRegistered: undefined!,
+			drain: undefined!
 		};
 
 		const watcher1 = new ExtHostFileSystemEventService(protocol, new NullLogService(), undefined!).createFileSystemWatcher('**/somethingInteresting', false, false, false);

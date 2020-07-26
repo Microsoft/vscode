@@ -749,6 +749,16 @@ export function getShadowRoot(domNode: Node): ShadowRoot | null {
 	return isShadowRoot(domNode) ? domNode : null;
 }
 
+export function getActiveElement(): Element | null {
+	let result = document.activeElement;
+
+	while (result?.shadowRoot) {
+		result = result.shadowRoot.activeElement;
+	}
+
+	return result;
+}
+
 export function createStyleSheet(container: HTMLElement = document.getElementsByTagName('head')[0]): HTMLStyleElement {
 	let style = document.createElement('style');
 	style.type = 'text/css';

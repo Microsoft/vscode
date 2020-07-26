@@ -473,11 +473,10 @@ export function range(arg: number, to?: number): number[] {
 }
 
 export function index<T>(array: ReadonlyArray<T>, indexer: (t: T) => string): { [key: string]: T; };
-export function index<T, R>(array: ReadonlyArray<T>, indexer: (t: T) => string, merger?: (t: T, r: R) => R): { [key: string]: R; };
-export function index<T, R>(array: ReadonlyArray<T>, indexer: (t: T) => string, merger: (t: T, r: R) => R = t => t as any): { [key: string]: R; } {
+export function index<T, R>(array: ReadonlyArray<T>, indexer: (t: T) => string, mapper: (t: T) => R): { [key: string]: R; };
+export function index<T, R>(array: ReadonlyArray<T>, indexer: (t: T) => string, mapper?: (t: T) => R): { [key: string]: R; } {
 	return array.reduce((r, t) => {
-		const key = indexer(t);
-		r[key] = merger(t, r[key]);
+		r[indexer(t)] = mapper ? mapper(t) : t;
 		return r;
 	}, Object.create(null));
 }

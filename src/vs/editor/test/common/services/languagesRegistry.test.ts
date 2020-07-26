@@ -221,6 +221,32 @@ suite('LanguagesRegistry', () => {
 		assert.deepEqual(registry.getExtensions('aName'), ['aExt', 'aExt2']);
 	});
 
+	test('extensions of primary language registration come first', () => {
+		let registry = new LanguagesRegistry(false);
+
+		registry._registerLanguages([{
+			id: 'a',
+			extensions: ['aExt3']
+		}]);
+
+		assert.deepEqual(registry.getExtensions('a')[0], 'aExt3');
+
+		registry._registerLanguages([{
+			id: 'a',
+			configuration: URI.file('conf.json'),
+			extensions: ['aExt']
+		}]);
+
+		assert.deepEqual(registry.getExtensions('a')[0], 'aExt');
+
+		registry._registerLanguages([{
+			id: 'a',
+			extensions: ['aExt2']
+		}]);
+
+		assert.deepEqual(registry.getExtensions('a')[0], 'aExt');
+	});
+
 	test('filenames', () => {
 		let registry = new LanguagesRegistry(false);
 

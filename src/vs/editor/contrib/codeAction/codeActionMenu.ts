@@ -4,9 +4,8 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { getDomNodePagePosition } from 'vs/base/browser/dom';
-import { Separator } from 'vs/base/browser/ui/actionbar/actionbar';
 import { IAnchor } from 'vs/base/browser/ui/contextview/contextview';
-import { Action, IAction } from 'vs/base/common/actions';
+import { Action, IAction, Separator } from 'vs/base/common/actions';
 import { canceled } from 'vs/base/common/errors';
 import { ResolvedKeybinding } from 'vs/base/common/keyCodes';
 import { Lazy } from 'vs/base/common/lazy';
@@ -90,6 +89,7 @@ export class CodeActionMenu extends Disposable {
 		const resolver = this._keybindingResolver.getResolver();
 
 		this._contextMenuService.showContextMenu({
+			domForShadowRoot: this._editor.getDomNode()!,
 			getAnchor: () => anchor,
 			getActions: () => menuActions,
 			onHide: () => {

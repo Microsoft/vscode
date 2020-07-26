@@ -957,10 +957,6 @@ export class ExtHostDebugSession implements vscode.DebugSession {
 	public customRequest(command: string, args: any): Promise<any> {
 		return this._debugServiceProxy.$customDebugAdapterRequest(this._id, command, args);
 	}
-
-	public terminate(): Promise<void> {
-		return this._debugServiceProxy.$terminateDebugSession(this._id);
-	}
 }
 
 export class ExtHostDebugConsole implements vscode.DebugConsole {

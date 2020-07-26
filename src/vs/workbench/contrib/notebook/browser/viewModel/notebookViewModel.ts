@@ -3,7 +3,6 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { CancellationTokenSource } from 'vs/base/common/cancellation';
 import { onUnexpectedError } from 'vs/base/common/errors';
 import { Emitter, Event } from 'vs/base/common/event';
 import { Disposable, DisposableStore } from 'vs/base/common/lifecycle';
@@ -153,16 +152,6 @@ export class NotebookViewModel extends Disposable implements EditorFoldingStateD
 	private _localStore: DisposableStore = this._register(new DisposableStore());
 	private _viewCells: CellViewModel[] = [];
 	private _handleToViewCellMapping = new Map<number, CellViewModel>();
-
-	private _currentTokenSource: CancellationTokenSource | undefined;
-
-	get currentTokenSource(): CancellationTokenSource | undefined {
-		return this._currentTokenSource;
-	}
-
-	set currentTokenSource(v: CancellationTokenSource | undefined) {
-		this._currentTokenSource = v;
-	}
 
 	get viewCells(): ICellViewModel[] {
 		return this._viewCells;

@@ -10,7 +10,7 @@ import { IUpdateRequest, IStorageDatabase, IStorageItemsChangeEvent } from 'vs/b
 import { Disposable, IDisposable, dispose } from 'vs/base/common/lifecycle';
 import { ILogService } from 'vs/platform/log/common/log';
 import { generateUuid } from 'vs/base/common/uuid';
-import { instanceStorageKey, firstSessionDateStorageKey, lastSessionDateStorageKey, currentSessionDateStorageKey, crashReporterIdStorageKey } from 'vs/platform/telemetry/common/telemetry';
+import { instanceStorageKey, firstSessionDateStorageKey, lastSessionDateStorageKey, currentSessionDateStorageKey } from 'vs/platform/telemetry/common/telemetry';
 
 type Key = string;
 type Value = string;
@@ -47,16 +47,6 @@ export class GlobalStorageDatabaseChannel extends Disposable implements IServerC
 			await this.storageMainService.initialize();
 		} catch (error) {
 			this.logService.error(`[storage] init(): Unable to init global storage due to ${error}`);
-		}
-
-		// This is unique to the application instance and thereby
-		// should be written from the main process once.
-		//
-		// THIS SHOULD NEVER BE SENT TO TELEMETRY.
-		//
-		const crashReporterId = this.storageMainService.get(crashReporterIdStorageKey, undefined);
-		if (crashReporterId === undefined) {
-			this.storageMainService.store(crashReporterIdStorageKey, generateUuid());
 		}
 
 		// Apply global telemetry values as part of the initialization

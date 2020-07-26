@@ -96,10 +96,10 @@ let onTerminate = function () {
 	nativeExit();
 };
 
-function _createExtHostProtocol(): Promise<IMessagePassingProtocol> {
+function _createExtHostProtocol(): Promise<PersistentProtocol> {
 	if (process.env.VSCODE_EXTHOST_WILL_SEND_SOCKET) {
 
-		return new Promise<IMessagePassingProtocol>((resolve, reject) => {
+		return new Promise<PersistentProtocol>((resolve, reject) => {
 
 			let protocol: PersistentProtocol | null = null;
 
@@ -163,7 +163,7 @@ function _createExtHostProtocol(): Promise<IMessagePassingProtocol> {
 
 		const pipeName = process.env.VSCODE_IPC_HOOK_EXTHOST!;
 
-		return new Promise<IMessagePassingProtocol>((resolve, reject) => {
+		return new Promise<PersistentProtocol>((resolve, reject) => {
 
 			const socket = net.createConnection(pipeName, () => {
 				socket.removeListener('error', reject);
@@ -202,6 +202,10 @@ async function createExtHostProtocol(): Promise<IMessagePassingProtocol> {
 			if (!this._terminating) {
 				protocol.send(msg);
 			}
+		}
+
+		drain(): Promise<void> {
+			return protocol.drain();
 		}
 	};
 }

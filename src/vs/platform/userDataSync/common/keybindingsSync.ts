@@ -177,42 +177,58 @@ export class KeybindingsSynchroniser extends AbstractJsonFileSynchroniser implem
 		}];
 	}
 
+	protected async updateResourcePreview(resourcePreview: IFileResourcePreview, resource: URI, acceptedContent: string | null): Promise<IFileResourcePreview> {
+		return {
+			...resourcePreview,
+			acceptedContent,
+			localChange: isEqual(resource, this.localResource) ? Change.None : Change.Modified,
+			remoteChange: isEqual(resource, this.remoteResource) ? Change.None : Change.Modified,
+		};
+	}
+
 	protected async applyPreview(remoteUserData: IRemoteUserData, lastSyncUserData: IRemoteUserData | null, resourcePreviews: IFileResourcePreview[], force: boolean): Promise<void> {
 		let { fileContent, acceptedContent: content, localChange, remoteChange } = resourcePreviews[0];
 
-		if (content !== null) {
-			if (this.hasErrors(content)) {
-				throw new UserDataSyncError(localize('errorInvalidSettings', "Unable to sync keybindings because the content in the file is not valid. Please open the file and correct it."), UserDataSyncErrorCode.LocalInvalidContent, this.resource);
-			}
-
-			if (localChange !== Change.None) {
-				this.logService.trace(`${this.syncResourceLogLabel}: Updating local keybindings...`);
-				if (fileContent) {
-					await this.backupLocal(this.toSyncContent(fileContent.value.toString(), null));
-				}
-				await this.updateLocalFileContent(content, fileContent, force);
-				this.logService.info(`${this.syncResourceLogLabel}: Updated local keybindings`);
-			}
-
-			if (remoteChange !== Change.None) {
-				this.logService.trace(`${this.syncResourceLogLabel}: Updating remote keybindings...`);
-				const remoteContents = this.toSyncContent(content, remoteUserData.syncData ? remoteUserData.syncData.content : null);
-				remoteUserData = await this.updateRemoteUserData(remoteContents, force ? null : remoteUserData.ref);
-				this.logService.info(`${this.syncResourceLogLabel}: Updated remote keybindings`);
-			}
-
-			// Delete the preview
-			try {
-				await this.fileService.del(this.previewResource);
-			} catch (e) { /* ignore */ }
-		} else {
+		if (localChange === Change.None && remoteChange === Change.None) {
 			this.logService.info(`${this.syncResourceLogLabel}: No changes found during synchronizing keybindings.`);
 		}
 
+		if (content !== null && this.hasErrors(content)) {
+			throw new UserDataSyncError(localize('errorInvalidSettings', "Unable to sync keybindings because the content in the file is not valid. Please open the file and correct it."), UserDataSyncErrorCode.LocalInvalidContent, this.resource);
+		}
+
+		if (localChange !== Change.None) {
+			this.logService.trace(`${this.syncResourceLogLabel}: Updating local keybindings...`);
+			if (fileContent) {
+				await this.backupLocal(this.toSyncContent(fileContent.value.toString(), null));
+			}
+			await this.updateLocalFileContent(content || '[]', fileContent, force);
+			this.logService.info(`${this.syncResourceLogLabel}: Updated local keybindings`);
+		}
+
+		if (remoteChange !== Change.None) {
+			this.logService.trace(`${this.syncResourceLogLabel}: Updating remote keybindings...`);
+			const remoteContents = this.toSyncContent(content || '[]', remoteUserData.syncData ? remoteUserData.syncData.content : null);
+			remoteUserData = await this.updateRemoteUserData(remoteContents, force ? null : remoteUserData.ref);
+			this.logService.info(`${this.syncResourceLogLabel}: Updated remote keybindings`);
+		}
+
+		// Delete the preview
+		try {
+			await this.fileService.del(this.previewResource);
+		} catch (e) { /* ignore */ }
+
 		if (lastSyncUserData?.ref !== remoteUserData.ref) {
 			this.logService.trace(`${this.syncResourceLogLabel}: Updating last synchronized keybindings...`);
-			const lastSyncContent = content !== null || fileContent !== null ? this.toSyncContent(content !== null ? content : fileContent!.value.toString(), null) : null;
-			await this.updateLastSyncUserData({ ref: remoteUserData.ref, syncData: lastSyncContent ? { version: remoteUserData.syncData!.version, machineId: remoteUserData.syncData!.machineId, content: lastSyncContent } : null });
+			const lastSyncContent = content !== null ? this.toSyncContent(content, null) : null;
+			await this.updateLastSyncUserData({
+				ref: remoteUserData.ref,
+				syncData: lastSyncContent ? {
+					version: remoteUserData.syncData ? remoteUserData.syncData.version : this.version,
+					machineId: remoteUserData.syncData!.machineId,
+					content: lastSyncContent
+				} : null
+			});
 			this.logService.info(`${this.syncResourceLogLabel}: Updated last synchronized keybindings`);
 		}
 

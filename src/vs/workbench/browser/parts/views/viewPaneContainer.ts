@@ -12,8 +12,8 @@ import { SIDE_BAR_DRAG_AND_DROP_BACKGROUND, SIDE_BAR_SECTION_HEADER_FOREGROUND, 
 import { append, $, trackFocus, toggleClass, EventType, isAncestor, Dimension, addDisposableListener, removeClass, addClass, createCSSRule, asCSSUrl, addClasses } from 'vs/base/browser/dom';
 import { IDisposable, combinedDisposable, dispose, toDisposable, Disposable, DisposableStore } from 'vs/base/common/lifecycle';
 import { firstIndex } from 'vs/base/common/arrays';
-import { IAction } from 'vs/base/common/actions';
-import { IActionViewItem, ActionsOrientation, Separator, prepareActions } from 'vs/base/browser/ui/actionbar/actionbar';
+import { IAction, Separator, IActionViewItem } from 'vs/base/common/actions';
+import { ActionsOrientation, prepareActions } from 'vs/base/browser/ui/actionbar/actionbar';
 import { Registry } from 'vs/platform/registry/common/platform';
 import { ToolBar } from 'vs/base/browser/ui/toolbar/toolbar';
 import { IKeybindingService } from 'vs/platform/keybinding/common/keybinding';
@@ -33,8 +33,8 @@ import { IViewletViewOptions } from 'vs/workbench/browser/parts/views/viewsViewl
 import { IExtensionService } from 'vs/workbench/services/extensions/common/extensions';
 import { IWorkspaceContextService } from 'vs/platform/workspace/common/workspace';
 import { Component } from 'vs/workbench/common/component';
-import { MenuId, MenuItemAction, registerAction2, Action2, IAction2Options } from 'vs/platform/actions/common/actions';
-import { ContextAwareMenuEntryActionViewItem } from 'vs/platform/actions/browser/menuEntryActionViewItem';
+import { MenuId, MenuItemAction, registerAction2, Action2, IAction2Options, SubmenuItemAction } from 'vs/platform/actions/common/actions';
+import { MenuEntryActionViewItem, SubmenuEntryActionViewItem } from 'vs/platform/actions/browser/menuEntryActionViewItem';
 import { ViewMenuActions } from 'vs/workbench/browser/parts/views/viewMenuActions';
 import { parseLinkedText } from 'vs/base/common/linkedText';
 import { IOpenerService } from 'vs/platform/opener/common/opener';
@@ -482,7 +482,9 @@ export abstract class ViewPane extends Pane implements IView {
 
 	getActionViewItem(action: IAction): IActionViewItem | undefined {
 		if (action instanceof MenuItemAction) {
-			return this.instantiationService.createInstance(ContextAwareMenuEntryActionViewItem, action);
+			return this.instantiationService.createInstance(MenuEntryActionViewItem, action);
+		} else if (action instanceof SubmenuItemAction) {
+			return this.instantiationService.createInstance(SubmenuEntryActionViewItem, action);
 		}
 		return undefined;
 	}

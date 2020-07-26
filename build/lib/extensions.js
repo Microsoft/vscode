@@ -22,22 +22,28 @@ const fancyLog = require("fancy-log");
 const ansiColors = require("ansi-colors");
 const buffer = require('gulp-buffer');
 const json = require("gulp-json-editor");
+const jsoncParser = require("jsonc-parser");
 const webpack = require('webpack');
 const webpackGulp = require('webpack-stream');
 const util = require('./util');
 const root = path.dirname(path.dirname(__dirname));
 const commit = util.getVersion(root);
 const sourceMappingURLBase = `https://ticino.blob.core.windows.net/sourcemaps/${commit}`;
-function minimizeLanguageJSON(input) {
-    const tmLanguageJsonFilter = filter('**/*.tmLanguage.json', { restore: true });
+function minifyExtensionResources(input) {
+    const jsonFilter = filter(['**/*.json', '**/*.code-snippets'], { restore: true });
     return input
-        .pipe(tmLanguageJsonFilter)
+        .pipe(jsonFilter)
         .pipe(buffer())
         .pipe(es.mapSync((f) => {
-        f.contents = Buffer.from(JSON.stringify(JSON.parse(f.contents.toString('utf8'))));
+        const errors = [];
+        const value = jsoncParser.parse(f.contents.toString('utf8'), errors);
+        if (errors.length === 0) {
+            // file parsed OK => just stringify to drop whitespace and comments
+            f.contents = Buffer.from(JSON.stringify(value));
+        }
         return f;
     }))
-        .pipe(tmLanguageJsonFilter.restore);
+        .pipe(jsonFilter.restore);
 }
 function updateExtensionPackageJSON(input, update) {
     const packageJsonFilter = filter('extensions/*/package.json', { restore: true });
@@ -57,24 +63,18 @@ function fromLocal(extensionPath, forWeb) {
     let input = isWebPacked
         ? fromLocalWebpack(extensionPath, webpackConfigFileName)
         : fromLocalNormal(extensionPath);
-    if (forWeb) {
+    if (isWebPacked) {
         input = updateExtensionPackageJSON(input, (data) => {
-            if (data.browser) {
-                data.main = data.browser;
-            }
-            data.extensionKind = ['web'];
-            return data;
-        });
-    }
-    else if (isWebPacked) {
-        input = updateExtensionPackageJSON(input, (data) => {
+            delete data.scripts;
+            delete data.dependencies;
+            delete data.devDependencies;
             if (data.main) {
                 data.main = data.main.replace('/out/', /dist/);
             }
             return data;
         });
     }
-    return minimizeLanguageJSON(input);
+    return input;
 }
 function fromLocalWebpack(extensionPath, webpackConfigFileName) {
     const result = es.through();
@@ -215,8 +215,8 @@ function packageLocalExtensionsStream() {
             .pipe(rename(p => p.dirname = `extensions/${extension.name}/${p.dirname}`));
     });
     const nodeModules = gulp.src('extensions/node_modules/**', { base: '.' });
-    return es.merge(nodeModules, ...localExtensions)
-        .pipe(util2.setExecutableBit(['**/*.sh']));
+    return minifyExtensionResources(es.merge(nodeModules, ...localExtensions)
+        .pipe(util2.setExecutableBit(['**/*.sh'])));
 }
 exports.packageLocalExtensionsStream = packageLocalExtensionsStream;
 function packageLocalWebExtensionsStream() {
@@ -230,10 +230,10 @@ function packageLocalWebExtensionsStream() {
         const extensionName = path.basename(extensionPath);
         return { name: extensionName, path: extensionPath };
     });
-    return es.merge(...localExtensionDescriptions.map(extension => {
+    return minifyExtensionResources(es.merge(...localExtensionDescriptions.map(extension => {
         return fromLocal(extension.path, true)
             .pipe(rename(p => p.dirname = `extensions/${extension.name}/${p.dirname}`));
-    }));
+    })));
 }
 exports.packageLocalWebExtensionsStream = packageLocalWebExtensionsStream;
 function packageMarketplaceExtensionsStream() {
@@ -241,8 +241,8 @@ function packageMarketplaceExtensionsStream() {
         return fromMarketplace(extension.name, extension.version, extension.metadata)
             .pipe(rename(p => p.dirname = `extensions/${extension.name}/${p.dirname}`));
     });
-    return es.merge(extensions)
-        .pipe(util2.setExecutableBit(['**/*.sh']));
+    return minifyExtensionResources(es.merge(extensions)
+        .pipe(util2.setExecutableBit(['**/*.sh'])));
 }
 exports.packageMarketplaceExtensionsStream = packageMarketplaceExtensionsStream;
 function packageMarketplaceWebExtensionsStream(builtInExtensions) {
@@ -258,7 +258,7 @@ function packageMarketplaceWebExtensionsStream(builtInExtensions) {
             return data;
         });
     });
-    return es.merge(extensions);
+    return minifyExtensionResources(es.merge(extensions));
 }
 exports.packageMarketplaceWebExtensionsStream = packageMarketplaceWebExtensionsStream;
 function scanBuiltinExtensions(extensionsRoot, forWeb) {

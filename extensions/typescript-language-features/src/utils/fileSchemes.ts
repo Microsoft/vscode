@@ -8,12 +8,7 @@ export const untitled = 'untitled';
 export const git = 'git';
 export const walkThroughSnippet = 'walkThroughSnippet';
 
-export const supportedSchemes = [
+export const semanticSupportedSchemes = [
 	file,
 	untitled,
-	walkThroughSnippet
 ];
-
-export function isSupportedScheme(scheme: string): boolean {
-	return supportedSchemes.indexOf(scheme) >= 0;
-}

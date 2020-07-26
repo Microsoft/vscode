@@ -5,7 +5,7 @@
 
 import * as DOM from 'vs/base/browser/dom';
 import { IKeyboardEvent, StandardKeyboardEvent } from 'vs/base/browser/keyboardEvent';
-import { ActionBar, ActionsOrientation, BaseActionViewItem } from 'vs/base/browser/ui/actionbar/actionbar';
+import { ActionBar, ActionsOrientation } from 'vs/base/browser/ui/actionbar/actionbar';
 import { IInputOptions, InputBox } from 'vs/base/browser/ui/inputbox/inputBox';
 import { Widget } from 'vs/base/browser/ui/widget';
 import { Action, IAction } from 'vs/base/common/actions';
@@ -36,6 +36,7 @@ import { ISettingsGroup, IPreferencesService } from 'vs/workbench/services/prefe
 import { EditorOption } from 'vs/editor/common/config/editorOptions';
 import { isEqual } from 'vs/base/common/resources';
 import { registerIcon, Codicon } from 'vs/base/common/codicons';
+import { BaseActionViewItem } from 'vs/base/browser/ui/actionbar/actionViewItems';
 
 export class SettingsHeaderWidget extends Widget implements IViewZone {
 

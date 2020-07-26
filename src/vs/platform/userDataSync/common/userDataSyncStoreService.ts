@@ -19,7 +19,9 @@ import { assign } from 'vs/base/common/objects';
 import { generateUuid } from 'vs/base/common/uuid';
 import { isWeb } from 'vs/base/common/platform';
 import { Emitter, Event } from 'vs/base/common/event';
+import { createCancelablePromise, timeout, CancelablePromise } from 'vs/base/common/async';
 
+const DONOT_MAKE_REQUESTS_UNTIL_KEY = 'sync.donot-make-requests-until';
 const USER_SESSION_ID_KEY = 'sync.user-session-id';
 const MACHINE_SESSION_ID_KEY = 'sync.machine-session-id';
 const REQUEST_SESSION_LIMIT = 100;
@@ -39,6 +41,11 @@ export class UserDataSyncStoreService extends Disposable implements IUserDataSyn
 
 	private _onTokenSucceed: Emitter<void> = this._register(new Emitter<void>());
 	readonly onTokenSucceed: Event<void> = this._onTokenSucceed.event;
+
+	private _donotMakeRequestsUntil: Date | undefined = undefined;
+	get donotMakeRequestsUntil() { return this._donotMakeRequestsUntil; }
+	private _onDidChangeDonotMakeRequestsUntil = this._register(new Emitter<void>());
+	readonly onDidChangeDonotMakeRequestsUntil = this._onDidChangeDonotMakeRequestsUntil.event;
 
 	constructor(
 		@IProductService productService: IProductService,
@@ -66,10 +73,39 @@ export class UserDataSyncStoreService extends Disposable implements IUserDataSyn
 
 		/* A requests session that limits requests per sessions */
 		this.session = new RequestsSession(REQUEST_SESSION_LIMIT, REQUEST_SESSION_INTERVAL, this.requestService, this.logService);
+		this.initDonotMakeRequestsUntil();
 	}
 
 	setAuthToken(token: string, type: string): void {
 		this.authToken = { token, type };
+	}
+
+	private initDonotMakeRequestsUntil(): void {
+		const donotMakeRequestsUntil = this.storageService.getNumber(DONOT_MAKE_REQUESTS_UNTIL_KEY, StorageScope.GLOBAL);
+		if (donotMakeRequestsUntil && Date.now() < donotMakeRequestsUntil) {
+			this.setDonotMakeRequestsUntil(new Date(donotMakeRequestsUntil));
+		}
+	}
+
+	private resetDonotMakeRequestsUntilPromise: CancelablePromise<void> | undefined = undefined;
+	private setDonotMakeRequestsUntil(donotMakeRequestsUntil: Date | undefined): void {
+		if (this._donotMakeRequestsUntil?.getTime() !== donotMakeRequestsUntil?.getTime()) {
+			this._donotMakeRequestsUntil = donotMakeRequestsUntil;
+
+			if (this.resetDonotMakeRequestsUntilPromise) {
+				this.resetDonotMakeRequestsUntilPromise.cancel();
+				this.resetDonotMakeRequestsUntilPromise = undefined;
+			}
+
+			if (this._donotMakeRequestsUntil) {
+				this.storageService.store(DONOT_MAKE_REQUESTS_UNTIL_KEY, this._donotMakeRequestsUntil.getTime(), StorageScope.GLOBAL);
+				this.resetDonotMakeRequestsUntilPromise = createCancelablePromise(token => timeout(this._donotMakeRequestsUntil!.getTime() - Date.now(), token).then(() => this.setDonotMakeRequestsUntil(undefined)));
+			} else {
+				this.storageService.remove(DONOT_MAKE_REQUESTS_UNTIL_KEY, StorageScope.GLOBAL);
+			}
+
+			this._onDidChangeDonotMakeRequestsUntil.fire();
+		}
 	}
 
 	async getAllRefs(resource: ServerResource): Promise<IResourceRefHandle[]> {
@@ -244,6 +280,11 @@ export class UserDataSyncStoreService extends Disposable implements IUserDataSyn
 			throw new UserDataSyncStoreError('No Auth Token Available', UserDataSyncErrorCode.Unauthorized, undefined);
 		}
 
+		if (this._donotMakeRequestsUntil && Date.now() < this._donotMakeRequestsUntil.getTime()) {
+			throw new UserDataSyncStoreError(`${options.type} request '${options.url?.toString()}' failed because of too many requests (429).`, UserDataSyncErrorCode.TooManyRequestsAndRetryAfter, undefined);
+		}
+		this.setDonotMakeRequestsUntil(undefined);
+
 		const commonHeaders = await this.commonHeadersPromise;
 		options.headers = assign(options.headers || {}, commonHeaders, {
 			'X-Account-Type': this.authToken.type,
@@ -299,7 +340,13 @@ export class UserDataSyncStoreService extends Disposable implements IUserDataSyn
 		}
 
 		if (context.res.statusCode === 429) {
-			throw new UserDataSyncStoreError(`${options.type} request '${options.url?.toString()}' failed because of too many requests (429).`, UserDataSyncErrorCode.TooManyRequests, operationId);
+			const retryAfter = context.res.headers['retry-after'];
+			if (retryAfter) {
+				this.setDonotMakeRequestsUntil(new Date(Date.now() + (parseInt(retryAfter) * 1000)));
+				throw new UserDataSyncStoreError(`${options.type} request '${options.url?.toString()}' failed because of too many requests (429).`, UserDataSyncErrorCode.TooManyRequestsAndRetryAfter, operationId);
+			} else {
+				throw new UserDataSyncStoreError(`${options.type} request '${options.url?.toString()}' failed because of too many requests (429).`, UserDataSyncErrorCode.TooManyRequests, operationId);
+			}
 		}
 
 		return context;

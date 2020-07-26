@@ -3,8 +3,6 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { CrashReporterStartOptions } from 'vs/base/parts/sandbox/common/electronTypes';
-
 export const ipcRenderer = (window as any).vscode.ipcRenderer as {
 
 	/**
@@ -54,30 +52,48 @@ export const webFrame = (window as any).vscode.webFrame as {
 export const crashReporter = (window as any).vscode.crashReporter as {
 
 	/**
-	 * You are required to call this method before using any other `crashReporter` APIs
-	 * and in each process (main/renderer) from which you want to collect crash
-	 * reports. You can pass different options to `crashReporter.start` when calling
-	 * from different processes.
+	 * Set an extra parameter to be sent with the crash report. The values specified
+	 * here will be sent in addition to any values set via the `extra` option when
+	 * `start` was called.
 	 *
-	 * **Note** Child processes created via the `child_process` module will not have
-	 * access to the Electron modules. Therefore, to collect crash reports from them,
-	 * use `process.crashReporter.start` instead. Pass the same options as above along
-	 * with an additional one called `crashesDirectory` that should point to a
-	 * directory to store the crash reports temporarily. You can test this out by
-	 * calling `process.crash()` to crash the child process.
+	 * Parameters added in this fashion (or via the `extra` parameter to
+	 * `crashReporter.start`) are specific to the calling process. Adding extra
+	 * parameters in the main process will not cause those parameters to be sent along
+	 * with crashes from renderer or other child processes. Similarly, adding extra
+	 * parameters in a renderer process will not result in those parameters being sent
+	 * with crashes that occur in other renderer processes or in the main process.
 	 *
-	 * **Note:** If you need send additional/updated `extra` parameters after your
-	 * first call `start` you can call `addExtraParameter` on macOS or call `start`
-	 * again with the new/updated `extra` parameters on Linux and Windows.
-	 *
-	 * **Note:** On macOS and windows, Electron uses a new `crashpad` client for crash
-	 * collection and reporting. If you want to enable crash reporting, initializing
-	 * `crashpad` from the main process using `crashReporter.start` is required
-	 * regardless of which process you want to collect crashes from. Once initialized
-	 * this way, the crashpad handler collects crashes from all processes. You still
-	 * have to call `crashReporter.start` from the renderer or child process, otherwise
-	 * crashes from them will get reported without `companyName`, `productName` or any
-	 * of the `extra` information.
+	 * **Note:** Parameters have limits on the length of the keys and values. Key names
+	 * must be no longer than 39 bytes, and values must be no longer than 127 bytes.
+	 * Keys with names longer than the maximum will be silently ignored. Key values
+	 * longer than the maximum length will be truncated.
 	 */
-	start(options: CrashReporterStartOptions): void;
+	addExtraParameter(key: string, value: string): void;
+};
+
+export const process = (window as any).vscode.process as {
+
+	/**
+	 * The process.platform property returns a string identifying the operating system platform
+	 * on which the Node.js process is running.
+	 */
+	platform: 'win32' | 'linux' | 'darwin';
+
+	/**
+	 * The process.env property returns an object containing the user environment. See environ(7).
+	 */
+	env: { [key: string]: string | undefined };
+
+	/**
+	 * A listener on the process. Only a small subset of listener types are allowed.
+	 */
+	on: (type: string, callback: Function) => void;
+};
+
+export const context = (window as any).vscode.context as {
+
+	/**
+	 * Wether the renderer runs with `sandbox` enabled or not.
+	 */
+	sandbox: boolean;
 };

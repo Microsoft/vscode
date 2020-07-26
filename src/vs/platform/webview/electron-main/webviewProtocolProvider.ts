@@ -174,7 +174,7 @@ export class WebviewProtocolProvider extends Disposable {
 
 				const fileService = {
 					readFileStream: async (resource: URI): Promise<VSBufferReadableStream> => {
-						if (uri.scheme === Schemas.file) {
+						if (resource.scheme === Schemas.file) {
 							return (await this.fileService.readFileStream(resource)).value;
 						}
 

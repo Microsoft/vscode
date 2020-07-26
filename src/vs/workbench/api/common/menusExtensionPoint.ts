@@ -10,14 +10,166 @@ import { IJSONSchema } from 'vs/base/common/jsonSchema';
 import { forEach } from 'vs/base/common/collections';
 import { IExtensionPointUser, ExtensionMessageCollector, ExtensionsRegistry } from 'vs/workbench/services/extensions/common/extensionsRegistry';
 import { ContextKeyExpr } from 'vs/platform/contextkey/common/contextkey';
-import { MenuId, MenuRegistry, ILocalizedString, IMenuItem, ICommandAction } from 'vs/platform/actions/common/actions';
+import { MenuId, MenuRegistry, ILocalizedString, IMenuItem, ICommandAction, ISubmenuItem } from 'vs/platform/actions/common/actions';
 import { URI } from 'vs/base/common/uri';
 import { DisposableStore } from 'vs/base/common/lifecycle';
 import { ThemeIcon } from 'vs/platform/theme/common/themeService';
+import { Iterable } from 'vs/base/common/iterator';
+import { index } from 'vs/base/common/arrays';
+
+interface IAPIMenu {
+	readonly key: string;
+	readonly id: MenuId;
+	readonly description: string;
+	readonly proposed?: boolean; // defaults to false
+	readonly supportsSubmenus?: boolean; // defaults to true
+}
+
+const apiMenus: IAPIMenu[] = [
+	{
+		key: 'commandPalette',
+		id: MenuId.CommandPalette,
+		description: localize('menus.commandPalette', "The Command Palette"),
+		supportsSubmenus: false
+	},
+	{
+		key: 'touchBar',
+		id: MenuId.TouchBarContext,
+		description: localize('menus.touchBar', "The touch bar (macOS only)"),
+		supportsSubmenus: false
+	},
+	{
+		key: 'editor/title',
+		id: MenuId.EditorTitle,
+		description: localize('menus.editorTitle', "The editor title menu")
+	},
+	{
+		key: 'editor/context',
+		id: MenuId.EditorContext,
+		description: localize('menus.editorContext', "The editor context menu")
+	},
+	{
+		key: 'explorer/context',
+		id: MenuId.ExplorerContext,
+		description: localize('menus.explorerContext', "The file explorer context menu")
+	},
+	{
+		key: 'editor/title/context',
+		id: MenuId.EditorTitleContext,
+		description: localize('menus.editorTabContext', "The editor tabs context menu")
+	},
+	{
+		key: 'debug/callstack/context',
+		id: MenuId.DebugCallStackContext,
+		description: localize('menus.debugCallstackContext', "The debug callstack context menu")
+	},
+	{
+		key: 'debug/toolBar',
+		id: MenuId.DebugToolBar,
+		description: localize('menus.debugToolBar', "The debug toolbar menu")
+	},
+	{
+		key: 'menuBar/webNavigation',
+		id: MenuId.MenubarWebNavigationMenu,
+		description: localize('menus.webNavigation', "The top level navigational menu (web only)"),
+		proposed: true,
+		supportsSubmenus: false
+	},
+	{
+		key: 'scm/title',
+		id: MenuId.SCMTitle,
+		description: localize('menus.scmTitle', "The Source Control title menu")
+	},
+	{
+		key: 'scm/sourceControl',
+		id: MenuId.SCMSourceControl,
+		description: localize('menus.scmSourceControl', "The Source Control menu")
+	},
+	{
+		key: 'scm/resourceState/context',
+		id: MenuId.SCMResourceContext,
+		description: localize('menus.resourceGroupContext', "The Source Control resource group context menu")
+	},
+	{
+		key: 'scm/resourceFolder/context',
+		id: MenuId.SCMResourceFolderContext,
+		description: localize('menus.resourceStateContext', "The Source Control resource state context menu")
+	},
+	{
+		key: 'scm/resourceGroup/context',
+		id: MenuId.SCMResourceGroupContext,
+		description: localize('menus.resourceFolderContext', "The Source Control resource folder context menu")
+	},
+	{
+		key: 'scm/change/title',
+		id: MenuId.SCMChangeContext,
+		description: localize('menus.changeTitle', "The Source Control inline change menu")
+	},
+	{
+		key: 'statusBar/windowIndicator',
+		id: MenuId.StatusBarWindowIndicatorMenu,
+		description: localize('menus.statusBarWindowIndicator', "The window indicator menu in the status bar"),
+		proposed: true,
+		supportsSubmenus: false
+	},
+	{
+		key: 'view/title',
+		id: MenuId.ViewTitle,
+		description: localize('view.viewTitle', "The contributed view title menu")
+	},
+	{
+		key: 'view/item/context',
+		id: MenuId.ViewItemContext,
+		description: localize('view.itemContext', "The contributed view item context menu")
+	},
+	{
+		key: 'comments/commentThread/title',
+		id: MenuId.CommentThreadTitle,
+		description: localize('commentThread.title', "The contributed comment thread title menu")
+	},
+	{
+		key: 'comments/commentThread/context',
+		id: MenuId.CommentThreadActions,
+		description: localize('commentThread.actions', "The contributed comment thread context menu, rendered as buttons below the comment editor"),
+		supportsSubmenus: false
+	},
+	{
+		key: 'comments/comment/title',
+		id: MenuId.CommentTitle,
+		description: localize('comment.title', "The contributed comment title menu")
+	},
+	{
+		key: 'comments/comment/context',
+		id: MenuId.CommentActions,
+		description: localize('comment.actions', "The contributed comment context menu, rendered as buttons below the comment editor"),
+		supportsSubmenus: false
+	},
+	{
+		key: 'notebook/cell/title',
+		id: MenuId.NotebookCellTitle,
+		description: localize('notebook.cell.title', "The contributed notebook cell title menu"),
+		proposed: true
+	},
+	{
+		key: 'extension/context',
+		id: MenuId.ExtensionContext,
+		description: localize('menus.extensionContext', "The extension context menu")
+	},
+	{
+		key: 'timeline/title',
+		id: MenuId.TimelineTitle,
+		description: localize('view.timelineTitle', "The Timeline view title menu")
+	},
+	{
+		key: 'timeline/item/context',
+		id: MenuId.TimelineItemContext,
+		description: localize('view.timelineContext', "The Timeline view item context menu")
+	},
+];
 
 namespace schema {
 
-	// --- menus contribution point
+	// --- menus, submenus contribution point
 
 	export interface IUserFriendlyMenuItem {
 		command: string;
@@ -26,73 +178,94 @@ namespace schema {
 		group?: string;
 	}
 
-	export function parseMenuId(value: string): MenuId | undefined {
-		switch (value) {
-			case 'commandPalette': return MenuId.CommandPalette;
-			case 'touchBar': return MenuId.TouchBarContext;
-			case 'editor/title': return MenuId.EditorTitle;
-			case 'editor/context': return MenuId.EditorContext;
-			case 'explorer/context': return MenuId.ExplorerContext;
-			case 'editor/title/context': return MenuId.EditorTitleContext;
-			case 'debug/callstack/context': return MenuId.DebugCallStackContext;
-			case 'debug/toolbar': return MenuId.DebugToolBar;
-			case 'debug/toolBar': return MenuId.DebugToolBar;
-			case 'menuBar/webNavigation': return MenuId.MenubarWebNavigationMenu;
-			case 'scm/title': return MenuId.SCMTitle;
-			case 'scm/sourceControl': return MenuId.SCMSourceControl;
-			case 'scm/resourceState/context': return MenuId.SCMResourceContext;//
-			case 'scm/resourceFolder/context': return MenuId.SCMResourceFolderContext;
-			case 'scm/resourceGroup/context': return MenuId.SCMResourceGroupContext;
-			case 'scm/change/title': return MenuId.SCMChangeContext;//
-			case 'statusBar/windowIndicator': return MenuId.StatusBarWindowIndicatorMenu;
-			case 'view/title': return MenuId.ViewTitle;
-			case 'view/item/context': return MenuId.ViewItemContext;
-			case 'comments/commentThread/title': return MenuId.CommentThreadTitle;
-			case 'comments/commentThread/context': return MenuId.CommentThreadActions;
-			case 'comments/comment/title': return MenuId.CommentTitle;
-			case 'comments/comment/context': return MenuId.CommentActions;
-			case 'notebook/cell/title': return MenuId.NotebookCellTitle;
-			case 'extension/context': return MenuId.ExtensionContext;
-			case 'timeline/title': return MenuId.TimelineTitle;
-			case 'timeline/item/context': return MenuId.TimelineItemContext;
-		}
-
-		return undefined;
+	export interface IUserFriendlySubmenuItem {
+		submenu: string;
+		when?: string;
+		group?: string;
 	}
 
-	export function isProposedAPI(menuId: MenuId): boolean {
-		switch (menuId) {
-			case MenuId.StatusBarWindowIndicatorMenu:
-			case MenuId.MenubarWebNavigationMenu:
-			case MenuId.NotebookCellTitle:
-				return true;
-		}
-		return false;
+	export interface IUserFriendlySubmenu {
+		id: string;
+		label: string;
+		icon?: IUserFriendlyIcon;
 	}
 
-	export function isValidMenuItems(menu: IUserFriendlyMenuItem[], collector: ExtensionMessageCollector): boolean {
-		if (!Array.isArray(menu)) {
-			collector.error(localize('requirearray', "menu items must be an array"));
+	export function isMenuItem(item: IUserFriendlyMenuItem | IUserFriendlySubmenuItem): item is IUserFriendlyMenuItem {
+		return typeof (item as IUserFriendlyMenuItem).command === 'string';
+	}
+
+	export function isValidMenuItem(item: IUserFriendlyMenuItem, collector: ExtensionMessageCollector): boolean {
+		if (typeof item.command !== 'string') {
+			collector.error(localize('requirestring', "property `{0}` is mandatory and must be of type `string`", 'command'));
+			return false;
+		}
+		if (item.alt && typeof item.alt !== 'string') {
+			collector.error(localize('optstring', "property `{0}` can be omitted or must be of type `string`", 'alt'));
+			return false;
+		}
+		if (item.when && typeof item.when !== 'string') {
+			collector.error(localize('optstring', "property `{0}` can be omitted or must be of type `string`", 'when'));
+			return false;
+		}
+		if (item.group && typeof item.group !== 'string') {
+			collector.error(localize('optstring', "property `{0}` can be omitted or must be of type `string`", 'group'));
 			return false;
 		}
 
-		for (let item of menu) {
-			if (typeof item.command !== 'string') {
-				collector.error(localize('requirestring', "property `{0}` is mandatory and must be of type `string`", 'command'));
-				return false;
+		return true;
+	}
+
+	export function isValidSubmenuItem(item: IUserFriendlySubmenuItem, collector: ExtensionMessageCollector): boolean {
+		if (typeof item.submenu !== 'string') {
+			collector.error(localize('requirestring', "property `{0}` is mandatory and must be of type `string`", 'submenu'));
+			return false;
+		}
+		if (item.when && typeof item.when !== 'string') {
+			collector.error(localize('optstring', "property `{0}` can be omitted or must be of type `string`", 'when'));
+			return false;
+		}
+		if (item.group && typeof item.group !== 'string') {
+			collector.error(localize('optstring', "property `{0}` can be omitted or must be of type `string`", 'group'));
+			return false;
+		}
+
+		return true;
+	}
+
+	export function isValidItems(items: (IUserFriendlyMenuItem | IUserFriendlySubmenuItem)[], collector: ExtensionMessageCollector): boolean {
+		if (!Array.isArray(items)) {
+			collector.error(localize('requirearray', "submenu items must be an array"));
+			return false;
+		}
+
+		for (let item of items) {
+			if (isMenuItem(item)) {
+				if (!isValidMenuItem(item, collector)) {
+					return false;
+				}
+			} else {
+				if (!isValidSubmenuItem(item, collector)) {
+					return false;
+				}
 			}
-			if (item.alt && typeof item.alt !== 'string') {
-				collector.error(localize('optstring', "property `{0}` can be omitted or must be of type `string`", 'alt'));
-				return false;
-			}
-			if (item.when && typeof item.when !== 'string') {
-				collector.error(localize('optstring', "property `{0}` can be omitted or must be of type `string`", 'when'));
-				return false;
-			}
-			if (item.group && typeof item.group !== 'string') {
-				collector.error(localize('optstring', "property `{0}` can be omitted or must be of type `string`", 'group'));
-				return false;
-			}
+		}
+
+		return true;
+	}
+
+	export function isValidSubmenu(submenu: IUserFriendlySubmenu, collector: ExtensionMessageCollector): boolean {
+		if (typeof submenu !== 'object') {
+			collector.error(localize('require', "submenu items must be an object"));
+			return false;
+		}
+
+		if (typeof submenu.id !== 'string') {
+			collector.error(localize('requirestring', "property `{0}` is mandatory and must be of type `string`", 'id'));
+			return false;
+		}
+		if (typeof submenu.label !== 'string') {
+			collector.error(localize('requirestring', "property `{0}` is mandatory and must be of type `string`", 'label'));
+			return false;
 		}
 
 		return true;
@@ -100,6 +273,7 @@ namespace schema {
 
 	const menuItem: IJSONSchema = {
 		type: 'object',
+		required: ['command'],
 		properties: {
 			command: {
 				description: localize('vscode.extension.contributes.menuItem.command', 'Identifier of the command to execute. The command must be declared in the \'commands\'-section'),
@@ -120,136 +294,73 @@ namespace schema {
 		}
 	};
 
+	const submenuItem: IJSONSchema = {
+		type: 'object',
+		required: ['submenu'],
+		properties: {
+			submenu: {
+				description: localize('vscode.extension.contributes.menuItem.submenu', 'Identifier of the submenu to display in this item.'),
+				type: 'string'
+			},
+			when: {
+				description: localize('vscode.extension.contributes.menuItem.when', 'Condition which must be true to show this item'),
+				type: 'string'
+			},
+			group: {
+				description: localize('vscode.extension.contributes.menuItem.group', 'Group into which this command belongs'),
+				type: 'string'
+			}
+		}
+	};
+
+	const submenu: IJSONSchema = {
+		type: 'object',
+		required: ['id', 'label'],
+		properties: {
+			id: {
+				description: localize('vscode.extension.contributes.submenu.id', 'Identifier of the menu to display as a submenu.'),
+				type: 'string'
+			},
+			label: {
+				description: localize('vscode.extension.contributes.submenu.label', 'The label of the menu item which leads to this submenu.'),
+				type: 'string'
+			},
+			icon: {
+				description: localize('vscode.extension.contributes.submenu.icon', '(Optional) Icon which is used to represent the submenu in the UI. Either a file path, an object with file paths for dark and light themes, or a theme icon references, like `\\$(zap)`'),
+				anyOf: [{
+					type: 'string'
+				},
+				{
+					type: 'object',
+					properties: {
+						light: {
+							description: localize('vscode.extension.contributes.submenu.icon.light', 'Icon path when a light theme is used'),
+							type: 'string'
+						},
+						dark: {
+							description: localize('vscode.extension.contributes.submenu.icon.dark', 'Icon path when a dark theme is used'),
+							type: 'string'
+						}
+					}
+				}]
+			}
+		}
+	};
+
 	export const menusContribution: IJSONSchema = {
 		description: localize('vscode.extension.contributes.menus', "Contributes menu items to the editor"),
 		type: 'object',
-		properties: {
-			'commandPalette': {
-				description: localize('menus.commandPalette', "The Command Palette"),
-				type: 'array',
-				items: menuItem
-			},
-			'touchBar': {
-				description: localize('menus.touchBar', "The touch bar (macOS only)"),
-				type: 'array',
-				items: menuItem
-			},
-			'editor/title': {
-				description: localize('menus.editorTitle', "The editor title menu"),
-				type: 'array',
-				items: menuItem
-			},
-			'editor/context': {
-				description: localize('menus.editorContext', "The editor context menu"),
-				type: 'array',
-				items: menuItem
-			},
-			'explorer/context': {
-				description: localize('menus.explorerContext', "The file explorer context menu"),
-				type: 'array',
-				items: menuItem
-			},
-			'editor/title/context': {
-				description: localize('menus.editorTabContext', "The editor tabs context menu"),
-				type: 'array',
-				items: menuItem
-			},
-			'debug/callstack/context': {
-				description: localize('menus.debugCallstackContext', "The debug callstack context menu"),
-				type: 'array',
-				items: menuItem
-			},
-			'debug/toolBar': {
-				description: localize('menus.debugToolBar', "The debug toolbar menu"),
-				type: 'array',
-				items: menuItem
-			},
-			'menuBar/webNavigation': {
-				description: localize('menus.webNavigation', "The top level navigational menu (web only)"),
-				type: 'array',
-				items: menuItem
-			},
-			'scm/title': {
-				description: localize('menus.scmTitle', "The Source Control title menu"),
-				type: 'array',
-				items: menuItem
-			},
-			'scm/sourceControl': {
-				description: localize('menus.scmSourceControl', "The Source Control menu"),
-				type: 'array',
-				items: menuItem
-			},
-			'scm/resourceGroup/context': {
-				description: localize('menus.resourceGroupContext', "The Source Control resource group context menu"),
-				type: 'array',
-				items: menuItem
-			},
-			'scm/resourceState/context': {
-				description: localize('menus.resourceStateContext', "The Source Control resource state context menu"),
-				type: 'array',
-				items: menuItem
-			},
-			'scm/resourceFolder/context': {
-				description: localize('menus.resourceFolderContext', "The Source Control resource folder context menu"),
-				type: 'array',
-				items: menuItem
-			},
-			'scm/change/title': {
-				description: localize('menus.changeTitle', "The Source Control inline change menu"),
-				type: 'array',
-				items: menuItem
-			},
-			'view/title': {
-				description: localize('view.viewTitle', "The contributed view title menu"),
-				type: 'array',
-				items: menuItem
-			},
-			'view/item/context': {
-				description: localize('view.itemContext', "The contributed view item context menu"),
-				type: 'array',
-				items: menuItem
-			},
-			'comments/commentThread/title': {
-				description: localize('commentThread.title', "The contributed comment thread title menu"),
-				type: 'array',
-				items: menuItem
-			},
-			'comments/commentThread/context': {
-				description: localize('commentThread.actions', "The contributed comment thread context menu, rendered as buttons below the comment editor"),
-				type: 'array',
-				items: menuItem
-			},
-			'comments/comment/title': {
-				description: localize('comment.title', "The contributed comment title menu"),
-				type: 'array',
-				items: menuItem
-			},
-			'comments/comment/context': {
-				description: localize('comment.actions', "The contributed comment context menu, rendered as buttons below the comment editor"),
-				type: 'array',
-				items: menuItem
-			},
-			'notebook/cell/title': {
-				description: localize('notebook.cell.title', "The contributed notebook cell title menu"),
-				type: 'array',
-				items: menuItem
-			},
-			'extension/context': {
-				description: localize('menus.extensionContext', "The extension context menu"),
-				type: 'array',
-				items: menuItem
-			},
-			'timeline/title': {
-				description: localize('view.timelineTitle', "The Timeline view title menu"),
-				type: 'array',
-				items: menuItem
-			},
-			'timeline/item/context': {
-				description: localize('view.timelineContext', "The Timeline view item context menu"),
-				type: 'array',
-				items: menuItem
-			},
-		}
+		properties: index(apiMenus, menu => menu.key, menu => ({
+			description: menu.proposed ? `(${localize('proposed', "Proposed API")}) ${menu.description}` : menu.description,
+			type: 'array',
+			items: menu.supportsSubmenus === false ? menuItem : { oneOf: [menuItem, submenuItem] }
+		}))
+	};
+
+	export const submenusContribution: IJSONSchema = {
+		description: localize('vscode.extension.contributes.submenus', "(Proposed API) Contributes submenu items to the editor"),
+		type: 'array',
+		items: submenu
 	};
 
 	// --- commands contribution point
@@ -430,74 +541,175 @@ commandsExtensionPoint.setHandler(extensions => {
 	_commandRegistrations.add(MenuRegistry.addCommands(newCommands));
 });
 
-const _menuRegistrations = new DisposableStore();
+interface IRegisteredSubmenu {
+	readonly id: MenuId;
+	readonly label: string;
+	readonly icon?: { dark: URI; light?: URI; } | ThemeIcon;
+}
 
-ExtensionsRegistry.registerExtensionPoint<{ [loc: string]: schema.IUserFriendlyMenuItem[] }>({
-	extensionPoint: 'menus',
-	jsonSchema: schema.menusContribution
-}).setHandler(extensions => {
+const _submenus = new Map<string, IRegisteredSubmenu>();
 
-	// remove all previous menu registrations
-	_menuRegistrations.clear();
+const submenusExtensionPoint = ExtensionsRegistry.registerExtensionPoint<schema.IUserFriendlySubmenu[]>({
+	extensionPoint: 'submenus',
+	jsonSchema: schema.submenusContribution
+});
 
-	const items: { id: MenuId, item: IMenuItem }[] = [];
+submenusExtensionPoint.setHandler(extensions => {
+
+	_submenus.clear();
 
 	for (let extension of extensions) {
 		const { value, collector } = extension;
 
 		forEach(value, entry => {
-			if (!schema.isValidMenuItems(entry.value, collector)) {
+			if (!schema.isValidSubmenu(entry.value, collector)) {
 				return;
 			}
 
-			const menu = schema.parseMenuId(entry.key);
-			if (typeof menu === 'undefined') {
+			if (!entry.value.id) {
+				collector.warn(localize('submenuId.invalid.id', "`{0}` is not a valid submenu identifier", entry.value.id));
+				return;
+			}
+			if (!entry.value.label) {
+				collector.warn(localize('submenuId.invalid.label', "`{0}` is not a valid submenu label", entry.value.label));
+				return;
+			}
+
+			if (!extension.description.enableProposedApi) {
+				collector.error(localize('submenu.proposedAPI.invalid', "Submenus are proposed API and are only available when running out of dev or with the following command line switch: --enable-proposed-api {1}", extension.description.identifier.value));
+				return;
+			}
+
+			let absoluteIcon: { dark: URI; light?: URI; } | ThemeIcon | undefined;
+			if (entry.value.icon) {
+				if (typeof entry.value.icon === 'string') {
+					absoluteIcon = ThemeIcon.fromString(entry.value.icon) || { dark: resources.joinPath(extension.description.extensionLocation, entry.value.icon) };
+				} else {
+					absoluteIcon = {
+						dark: resources.joinPath(extension.description.extensionLocation, entry.value.icon.dark),
+						light: resources.joinPath(extension.description.extensionLocation, entry.value.icon.light)
+					};
+				}
+			}
+
+			const item: IRegisteredSubmenu = {
+				id: new MenuId(`api:${entry.value.id}`),
+				label: entry.value.label,
+				icon: absoluteIcon
+			};
+
+			_submenus.set(entry.value.id, item);
+		});
+	}
+});
+
+const _apiMenusByKey = new Map(Iterable.map(Iterable.from(apiMenus), menu => ([menu.key, menu])));
+const _menuRegistrations = new DisposableStore();
+
+const menusExtensionPoint = ExtensionsRegistry.registerExtensionPoint<{ [loc: string]: (schema.IUserFriendlyMenuItem | schema.IUserFriendlySubmenuItem)[] }>({
+	extensionPoint: 'menus',
+	jsonSchema: schema.menusContribution,
+	deps: [submenusExtensionPoint]
+});
+
+menusExtensionPoint.setHandler(extensions => {
+
+	// remove all previous menu registrations
+	_menuRegistrations.clear();
+
+	const items: { id: MenuId, item: IMenuItem | ISubmenuItem }[] = [];
+
+	for (let extension of extensions) {
+		const { value, collector } = extension;
+
+		forEach(value, entry => {
+			if (!schema.isValidItems(entry.value, collector)) {
+				return;
+			}
+
+			let menu = _apiMenusByKey.get(entry.key);
+			let isSubmenu = false;
+
+			if (!menu) {
+				const submenu = _submenus.get(entry.key);
+
+				if (submenu) {
+					menu = {
+						key: entry.key,
+						id: submenu.id,
+						description: ''
+					};
+					isSubmenu = true;
+				}
+			}
+
+			if (!menu) {
 				collector.warn(localize('menuId.invalid', "`{0}` is not a valid menu identifier", entry.key));
 				return;
 			}
 
-			if (schema.isProposedAPI(menu) && !extension.description.enableProposedApi) {
+			if (menu.proposed && !extension.description.enableProposedApi) {
 				collector.error(localize('proposedAPI.invalid', "{0} is a proposed menu identifier and is only available when running out of dev or with the following command line switch: --enable-proposed-api {1}", entry.key, extension.description.identifier.value));
 				return;
 			}
 
-			for (let item of entry.value) {
-				let command = MenuRegistry.getCommand(item.command);
-				let alt = item.alt && MenuRegistry.getCommand(item.alt) || undefined;
+			if (isSubmenu && !extension.description.enableProposedApi) {
+				collector.error(localize('proposedAPI.invalid.submenu', "{0} is a submenu identifier and is only available when running out of dev or with the following command line switch: --enable-proposed-api {1}", entry.key, extension.description.identifier.value));
+				return;
+			}
 
-				if (!command) {
-					collector.error(localize('missing.command', "Menu item references a command `{0}` which is not defined in the 'commands' section.", item.command));
-					continue;
-				}
-				if (item.alt && !alt) {
-					collector.warn(localize('missing.altCommand', "Menu item references an alt-command `{0}` which is not defined in the 'commands' section.", item.alt));
-				}
-				if (item.command === item.alt) {
-					collector.info(localize('dupe.command', "Menu item references the same command as default and alt-command"));
+			for (const menuItem of entry.value) {
+				let item: IMenuItem | ISubmenuItem;
+
+				if (schema.isMenuItem(menuItem)) {
+					const command = MenuRegistry.getCommand(menuItem.command);
+					const alt = menuItem.alt && MenuRegistry.getCommand(menuItem.alt) || undefined;
+
+					if (!command) {
+						collector.error(localize('missing.command', "Menu item references a command `{0}` which is not defined in the 'commands' section.", menuItem.command));
+						continue;
+					}
+					if (menuItem.alt && !alt) {
+						collector.warn(localize('missing.altCommand', "Menu item references an alt-command `{0}` which is not defined in the 'commands' section.", menuItem.alt));
+					}
+					if (menuItem.command === menuItem.alt) {
+						collector.info(localize('dupe.command', "Menu item references the same command as default and alt-command"));
+					}
+
+					item = { command, alt, group: undefined, order: undefined, when: undefined };
+				} else {
+					if (!extension.description.enableProposedApi) {
+						collector.error(localize('proposedAPI.invalid.submenureference', "Menu item references a submenu which is only available when running out of dev or with the following command line switch: --enable-proposed-api {0}", extension.description.identifier.value));
+						continue;
+					}
+
+					if (menu.supportsSubmenus === false) {
+						collector.error(localize('proposedAPI.unsupported.submenureference', "Menu item references a submenu for a menu which doesn't have submenu support."));
+						continue;
+					}
+
+					const submenu = _submenus.get(menuItem.submenu);
+
+					if (!submenu) {
+						collector.error(localize('missing.submenu', "Menu item references a submenu `{0}` which is not defined in the 'submenus' section.", menuItem.submenu));
+						continue;
+					}
+
+					item = { submenu: submenu.id, icon: submenu.icon, title: submenu.label, group: undefined, order: undefined, when: undefined };
 				}
 
-				let group: string | undefined;
-				let order: number | undefined;
-				if (item.group) {
-					const idx = item.group.lastIndexOf('@');
+				if (menuItem.group) {
+					const idx = menuItem.group.lastIndexOf('@');
 					if (idx > 0) {
-						group = item.group.substr(0, idx);
-						order = Number(item.group.substr(idx + 1)) || undefined;
+						item.group = menuItem.group.substr(0, idx);
+						item.order = Number(menuItem.group.substr(idx + 1)) || undefined;
 					} else {
-						group = item.group;
+						item.group = menuItem.group;
 					}
 				}
 
-				items.push({
-					id: menu,
-					item: {
-						command,
-						alt,
-						group,
-						order,
-						when: ContextKeyExpr.deserialize(item.when)
-					}
-				});
+				item.when = ContextKeyExpr.deserialize(menuItem.when);
+				items.push({ id: menu.id, item });
 			}
 		});
 	}

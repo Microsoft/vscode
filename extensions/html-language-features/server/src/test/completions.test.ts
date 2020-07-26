@@ -57,7 +57,7 @@ export async function testCompletionFor(value: string, expected: { count?: numbe
 
 	let document = TextDocument.create(uri, 'html', 0, value);
 	let position = document.positionAt(offset);
-	const context = getDocumentContext(uri, workspace.folders)
+	const context = getDocumentContext(uri, workspace.folders);
 
 	const languageModes = getLanguageModes({ css: true, javascript: true }, workspace, ClientCapabilities.LATEST, getNodeFSRequestService());
 	const mode = languageModes.getModeAtPosition(document, position)!;

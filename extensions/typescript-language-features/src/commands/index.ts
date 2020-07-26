@@ -4,22 +4,22 @@
  *--------------------------------------------------------------------------------------------*/
 
 import TypeScriptServiceClientHost from '../typeScriptServiceClientHost';
-import { CommandManager } from '../utils/commandManager';
 import { Lazy } from '../utils/lazy';
 import { PluginManager } from '../utils/plugins';
+import { CommandManager } from './commandManager';
 import { ConfigurePluginCommand } from './configurePlugin';
 import { JavaScriptGoToProjectConfigCommand, TypeScriptGoToProjectConfigCommand } from './goToProjectConfiguration';
+import { LearnMoreAboutRefactoringsCommand } from './learnMoreAboutRefactorings';
 import { OpenTsServerLogCommand } from './openTsServerLog';
 import { ReloadJavaScriptProjectsCommand, ReloadTypeScriptProjectsCommand } from './reloadProject';
 import { RestartTsServerCommand } from './restartTsServer';
 import { SelectTypeScriptVersionCommand } from './selectTypeScriptVersion';
-import { LearnMoreAboutRefactoringsCommand } from './learnMoreAboutRefactorings';
 
-export function registerCommands(
+export function registerBaseCommands(
 	commandManager: CommandManager,
 	lazyClientHost: Lazy<TypeScriptServiceClientHost>,
 	pluginManager: PluginManager
-) {
+): void {
 	commandManager.register(new ReloadTypeScriptProjectsCommand(lazyClientHost));
 	commandManager.register(new ReloadJavaScriptProjectsCommand(lazyClientHost));
 	commandManager.register(new SelectTypeScriptVersionCommand(lazyClientHost));

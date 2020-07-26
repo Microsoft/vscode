@@ -552,7 +552,7 @@ suite('vscode API - workspace', () => {
 
 	test('findFiles', () => {
 		return vscode.workspace.findFiles('**/*.png').then((res) => {
-			assert.equal(res.length, 2);
+			assert.equal(res.length, 3);
 			assert.equal(basename(vscode.workspace.asRelativePath(res[0])), 'image.png');
 		});
 	});
@@ -573,14 +573,14 @@ suite('vscode API - workspace', () => {
 
 	test('findFiles - exclude', () => {
 		return vscode.workspace.findFiles('**/*.png').then((res) => {
-			assert.equal(res.length, 2);
+			assert.equal(res.length, 3);
 			assert.equal(basename(vscode.workspace.asRelativePath(res[0])), 'image.png');
 		});
 	});
 
 	test('findFiles, exclude', () => {
 		return vscode.workspace.findFiles('**/*.png', '**/sub/**').then((res) => {
-			assert.equal(res.length, 1);
+			assert.equal(res.length, 2);
 			assert.equal(basename(vscode.workspace.asRelativePath(res[0])), 'image.png');
 		});
 	});

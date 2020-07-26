@@ -8,7 +8,7 @@ import * as env from 'vs/base/common/platform';
 import * as dom from 'vs/base/browser/dom';
 import { URI } from 'vs/base/common/uri';
 import severity from 'vs/base/common/severity';
-import { IAction, Action } from 'vs/base/common/actions';
+import { IAction, Action, SubmenuAction } from 'vs/base/common/actions';
 import { Range } from 'vs/editor/common/core/range';
 import { ICodeEditor, IEditorMouseEvent, MouseTargetType, IContentWidget, IActiveCodeEditor, IContentWidgetPosition, ContentWidgetPositionPreference } from 'vs/editor/browser/editorBrowser';
 import { IModelDecorationOptions, IModelDeltaDecoration, TrackedRangeStickiness, ITextModel, OverviewRulerLane, IModelDecorationOverviewRulerOptions } from 'vs/editor/common/model';
@@ -18,7 +18,6 @@ import { IContextMenuService } from 'vs/platform/contextview/browser/contextView
 import { RemoveBreakpointAction } from 'vs/workbench/contrib/debug/browser/debugActions';
 import { IDebugService, IBreakpoint, CONTEXT_BREAKPOINT_WIDGET_VISIBLE, BreakpointWidgetContext, IBreakpointEditorContribution, IBreakpointUpdateData, IDebugConfiguration, State, IDebugSession } from 'vs/workbench/contrib/debug/common/debug';
 import { IMarginData } from 'vs/editor/browser/controller/mouseTarget';
-import { ContextSubMenu } from 'vs/base/browser/contextmenu';
 import { IDialogService } from 'vs/platform/dialogs/common/dialogs';
 import { BreakpointWidget } from 'vs/workbench/contrib/debug/browser/breakpointWidget';
 import { IDisposable, dispose } from 'vs/base/common/lifecycle';
@@ -288,8 +287,8 @@ export class BreakpointEditorContribution implements IBreakpointEditorContributi
 		}));
 	}
 
-	private getContextMenuActions(breakpoints: ReadonlyArray<IBreakpoint>, uri: URI, lineNumber: number, column?: number): Array<IAction | ContextSubMenu> {
-		const actions: Array<IAction | ContextSubMenu> = [];
+	private getContextMenuActions(breakpoints: ReadonlyArray<IBreakpoint>, uri: URI, lineNumber: number, column?: number): IAction[] {
+		const actions: IAction[] = [];
 		if (breakpoints.length === 1) {
 			const breakpointType = breakpoints[0].logMessage ? nls.localize('logPoint', "Logpoint") : nls.localize('breakpoint', "Breakpoint");
 			actions.push(new RemoveBreakpointAction(RemoveBreakpointAction.ID, nls.localize('removeBreakpoint', "Remove {0}", breakpointType), this.debugService));
@@ -310,7 +309,7 @@ export class BreakpointEditorContribution implements IBreakpointEditorContributi
 			));
 		} else if (breakpoints.length > 1) {
 			const sorted = breakpoints.slice().sort((first, second) => (first.column && second.column) ? first.column - second.column : 1);
-			actions.push(new ContextSubMenu(nls.localize('removeBreakpoints', "Remove Breakpoints"), sorted.map(bp => new Action(
+			actions.push(new SubmenuAction('debug.removeBreakpoints', nls.localize('removeBreakpoints', "Remove Breakpoints"), sorted.map(bp => new Action(
 				'removeInlineBreakpoint',
 				bp.column ? nls.localize('removeInlineBreakpointOnColumn', "Remove Inline Breakpoint on Column {0}", bp.column) : nls.localize('removeLineBreakpoint', "Remove Line Breakpoint"),
 				undefined,
@@ -318,7 +317,7 @@ export class BreakpointEditorContribution implements IBreakpointEditorContributi
 				() => this.debugService.removeBreakpoints(bp.getId())
 			))));
 
-			actions.push(new ContextSubMenu(nls.localize('editBreakpoints', "Edit Breakpoints"), sorted.map(bp =>
+			actions.push(new SubmenuAction('debug.editBReakpoints', nls.localize('editBreakpoints', "Edit Breakpoints"), sorted.map(bp =>
 				new Action('editBreakpoint',
 					bp.column ? nls.localize('editInlineBreakpointOnColumn', "Edit Inline Breakpoint on Column {0}", bp.column) : nls.localize('editLineBrekapoint', "Edit Line Breakpoint"),
 					undefined,
@@ -327,7 +326,7 @@ export class BreakpointEditorContribution implements IBreakpointEditorContributi
 				)
 			)));
 
-			actions.push(new ContextSubMenu(nls.localize('enableDisableBreakpoints', "Enable/Disable Breakpoints"), sorted.map(bp => new Action(
+			actions.push(new SubmenuAction('debug.enableDisableBreakpoints', nls.localize('enableDisableBreakpoints', "Enable/Disable Breakpoints"), sorted.map(bp => new Action(
 				bp.enabled ? 'disableColumnBreakpoint' : 'enableColumnBreakpoint',
 				bp.enabled ? (bp.column ? nls.localize('disableInlineColumnBreakpoint', "Disable Inline Breakpoint on Column {0}", bp.column) : nls.localize('disableBreakpointOnLine', "Disable Line Breakpoint"))
 					: (bp.column ? nls.localize('enableBreakpoints', "Enable Inline Breakpoint on Column {0}", bp.column) : nls.localize('enableBreakpointOnLine', "Enable Line Breakpoint")),
@@ -548,7 +547,7 @@ class InlineBreakpointWidget implements IContentWidget, IDisposable {
 		private readonly breakpoint: IBreakpoint | undefined,
 		private readonly debugService: IDebugService,
 		private readonly contextMenuService: IContextMenuService,
-		private readonly getContextMenuActions: () => ReadonlyArray<IAction | ContextSubMenu>
+		private readonly getContextMenuActions: () => IAction[]
 	) {
 		this.range = this.editor.getModel().getDecorationRange(decorationId);
 		this.toDispose.push(this.editor.onDidChangeModelDecorations(() => {

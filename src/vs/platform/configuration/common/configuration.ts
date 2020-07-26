@@ -10,7 +10,7 @@ import { Event } from 'vs/base/common/event';
 import { Registry } from 'vs/platform/registry/common/platform';
 import { IWorkspaceFolder } from 'vs/platform/workspace/common/workspace';
 import { createDecorator } from 'vs/platform/instantiation/common/instantiation';
-import { IConfigurationRegistry, Extensions, OVERRIDE_PROPERTY_PATTERN } from 'vs/platform/configuration/common/configurationRegistry';
+import { IConfigurationRegistry, Extensions, OVERRIDE_PROPERTY_PATTERN, overrideIdentifierFromKey } from 'vs/platform/configuration/common/configurationRegistry';
 import { IStringDictionary } from 'vs/base/common/collections';
 
 export const IConfigurationService = createDecorator<IConfigurationService>('configurationService');
@@ -352,10 +352,6 @@ export function getDefaultValues(): any {
 	}
 
 	return valueTreeRoot;
-}
-
-export function overrideIdentifierFromKey(key: string): string {
-	return key.substring(1, key.length - 1);
 }
 
 export function keyFromOverrideIdentifier(overrideIdentifier: string): string {

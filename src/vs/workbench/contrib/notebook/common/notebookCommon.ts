@@ -53,6 +53,11 @@ export const ACCESSIBLE_NOTEBOOK_DISPLAY_ORDER = [
 
 export const BUILTIN_RENDERER_ID = '_builtin';
 
+export enum NotebookRunState {
+	Running = 1,
+	Idle = 2
+}
+
 export const notebookDocumentMetadataDefaults: Required<NotebookDocumentMetadata> = {
 	editable: true,
 	runnable: true,
@@ -60,7 +65,8 @@ export const notebookDocumentMetadataDefaults: Required<NotebookDocumentMetadata
 	cellRunnable: true,
 	cellHasExecutionOrder: true,
 	displayOrder: NOTEBOOK_DISPLAY_ORDER,
-	custom: {}
+	custom: {},
+	runState: NotebookRunState.Idle
 };
 
 export interface NotebookDocumentMetadata {
@@ -71,6 +77,7 @@ export interface NotebookDocumentMetadata {
 	cellHasExecutionOrder: boolean;
 	displayOrder?: (string | glob.IRelativePattern)[];
 	custom?: { [key: string]: unknown };
+	runState?: NotebookRunState;
 }
 
 export enum NotebookCellRunState {
@@ -119,7 +126,7 @@ export interface INotebookKernelInfo {
 	extensionLocation: URI,
 	preloads: URI[];
 	providerHandle?: number;
-	executeNotebook(viewType: string, uri: URI, handle: number | undefined, token: CancellationToken): Promise<void>;
+	executeNotebook(viewType: string, uri: URI, handle: number | undefined): Promise<void>;
 
 }
 
@@ -651,13 +658,16 @@ export interface INotebookKernelInfoDto2 {
 
 export interface INotebookKernelInfo2 extends INotebookKernelInfoDto2 {
 	resolve(uri: URI, editorId: string, token: CancellationToken): Promise<void>;
-	executeNotebookCell?(uri: URI, handle: number | undefined, token: CancellationToken): Promise<void>;
+	executeNotebookCell?(uri: URI, handle: number | undefined): Promise<void>;
+	cancelNotebookCell?(uri: URI, handle: number | undefined): Promise<void>;
 }
 
 export interface INotebookKernelProvider {
+	providerExtensionId: string;
+	providerDescription?: string;
 	selector: INotebookDocumentFilter;
 	onDidChangeKernels: Event<void>;
 	provideKernels(uri: URI, token: CancellationToken): Promise<INotebookKernelInfoDto2[]>;
 	resolveKernel(editorId: string, uri: UriComponents, kernelId: string, token: CancellationToken): Promise<void>;
-	executeNotebook(uri: URI, kernelId: string, handle: number | undefined, token: CancellationToken): Promise<void>;
+	executeNotebook(uri: URI, kernelId: string, handle: number | undefined): Promise<void>;
 }

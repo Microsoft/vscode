@@ -49,6 +49,13 @@ export interface IProductConfiguration {
 	readonly settingsSearchBuildId?: number;
 	readonly settingsSearchUrl?: string;
 
+	readonly tasConfig?: {
+		endpoint: string;
+		telemetryEventName: string;
+		featuresTelemetryPropertyName: string;
+		assignmentContextTelemetryPropertyName: string;
+	};
+
 	readonly experimentsUrl?: string;
 
 	readonly extensionsGallery?: {

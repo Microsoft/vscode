@@ -4,8 +4,8 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
-import { Command } from '../utils/commandManager';
 import { isTypeScriptDocument } from '../utils/languageModeIds';
+import { Command } from './commandManager';
 
 export class LearnMoreAboutRefactoringsCommand implements Command {
 	public static readonly id = '_typescript.learnMoreAboutRefactorings';

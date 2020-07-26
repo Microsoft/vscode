@@ -476,6 +476,7 @@ export namespace Codicon {
 	export const debugAltSmall = new Codicon('debug-alt-small', { character: '\\eba8' });
 	export const vmConnect = new Codicon('vm-connect', { character: '\\eba9' });
 	export const cloud = new Codicon('cloud', { character: '\\ebaa' });
+	export const merge = new Codicon('merge', { character: '\\ebab' });
 }
 
 

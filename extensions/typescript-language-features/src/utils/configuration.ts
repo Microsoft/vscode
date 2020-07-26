@@ -66,6 +66,7 @@ export class TypeScriptServiceConfiguration {
 	public readonly maxTsServerMemory: number;
 	public readonly enablePromptUseWorkspaceTsdk: boolean;
 	public readonly watchOptions: protocol.WatchOptions | undefined;
+	public readonly includePackageJsonAutoImports: string | undefined;
 
 	public static loadFromWorkspace(): TypeScriptServiceConfiguration {
 		return new TypeScriptServiceConfiguration();
@@ -88,6 +89,7 @@ export class TypeScriptServiceConfiguration {
 		this.maxTsServerMemory = TypeScriptServiceConfiguration.readMaxTsServerMemory(configuration);
 		this.enablePromptUseWorkspaceTsdk = TypeScriptServiceConfiguration.readEnablePromptUseWorkspaceTsdk(configuration);
 		this.watchOptions = TypeScriptServiceConfiguration.readWatchOptions(configuration);
+		this.includePackageJsonAutoImports = TypeScriptServiceConfiguration.readIncludePackageJsonAutoImports(configuration);
 	}
 
 	public isEqualTo(other: TypeScriptServiceConfiguration): boolean {
@@ -104,7 +106,8 @@ export class TypeScriptServiceConfiguration {
 			&& this.enableProjectDiagnostics === other.enableProjectDiagnostics
 			&& this.maxTsServerMemory === other.maxTsServerMemory
 			&& objects.equals(this.watchOptions, other.watchOptions)
-			&& this.enablePromptUseWorkspaceTsdk === other.enablePromptUseWorkspaceTsdk;
+			&& this.enablePromptUseWorkspaceTsdk === other.enablePromptUseWorkspaceTsdk
+			&& this.includePackageJsonAutoImports === other.includePackageJsonAutoImports;
 	}
 
 	private static fixPathPrefixes(inspectValue: string): string {
@@ -176,6 +179,10 @@ export class TypeScriptServiceConfiguration {
 
 	private static readWatchOptions(configuration: vscode.WorkspaceConfiguration): protocol.WatchOptions | undefined {
 		return configuration.get<protocol.WatchOptions>('typescript.tsserver.watchOptions');
+	}
+
+	private static readIncludePackageJsonAutoImports(configuration: vscode.WorkspaceConfiguration): string | undefined {
+		return configuration.get<string>('typescript.preferences.includePackageJsonAutoImports');
 	}
 
 	private static readMaxTsServerMemory(configuration: vscode.WorkspaceConfiguration): number {

@@ -273,6 +273,12 @@ suite('vscode API - webview', () => {
 			assert.strictEqual(response.value, true);
 		}
 		{
+			// #102188. Resource filename containing special characters like '%', '#', '?'.
+			const imagePath = webview.webview.asWebviewUri(workspaceFile('image%02.png'));
+			const response = await sendRecieveMessage(webview, { src: imagePath.toString() });
+			assert.strictEqual(response.value, true);
+		}
+		{
 			const imagePath = webview.webview.asWebviewUri(workspaceFile('no-such-image.png'));
 			const response = await sendRecieveMessage(webview, { src: imagePath.toString() });
 			assert.strictEqual(response.value, false);

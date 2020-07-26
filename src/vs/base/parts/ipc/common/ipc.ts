@@ -70,6 +70,10 @@ interface IHandler {
 export interface IMessagePassingProtocol {
 	send(buffer: VSBuffer): void;
 	onMessage: Event<VSBuffer>;
+	/**
+	 * Wait for the write buffer (if applicable) to become empty.
+	 */
+	drain?(): Promise<void>;
 }
 
 enum State {
@@ -482,10 +486,7 @@ export class ChannelClient implements IChannelClient, IDisposable {
 				return e(errors.canceled());
 			}
 
-			let uninitializedPromise: CancelablePromise<void> | null = createCancelablePromise(_ => this.whenInitialized());
-			uninitializedPromise.then(() => {
-				uninitializedPromise = null;
-
+			const doRequest = () => {
 				const handler: IHandler = response => {
 					switch (response.type) {
 						case ResponseType.PromiseSuccess:
@@ -510,7 +511,18 @@ export class ChannelClient implements IChannelClient, IDisposable {
 
 				this.handlers.set(id, handler);
 				this.sendRequest(request);
-			});
+			};
+
+			let uninitializedPromise: CancelablePromise<void> | null = null;
+			if (this.state === State.Idle) {
+				doRequest();
+			} else {
+				uninitializedPromise = createCancelablePromise(_ => this.whenInitialized());
+				uninitializedPromise.then(() => {
+					uninitializedPromise = null;
+					doRequest();
+				});
+			}
 
 			const cancel = () => {
 				if (uninitializedPromise) {

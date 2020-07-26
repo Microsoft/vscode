@@ -83,4 +83,20 @@ suite('KeybindingsSync', () => {
 		assert.equal(testObject.getKeybindingsContentFromSyncContent(lastSyncUserData!.syncData!.content!), '[]');
 	});
 
+	test('test apply remote when keybindings file does not exist', async () => {
+		const fileService = client.instantiationService.get(IFileService);
+		const keybindingsResource = client.instantiationService.get(IEnvironmentService).keybindingsResource;
+		if (await fileService.exists(keybindingsResource)) {
+			await fileService.del(keybindingsResource);
+		}
+
+		const preview = (await testObject.preview(await client.manifest()))!;
+
+		server.reset();
+		const content = await testObject.resolveContent(preview.resourcePreviews[0].remoteResource);
+		await testObject.accept(preview.resourcePreviews[0].remoteResource, content);
+		await testObject.apply(false);
+		assert.deepEqual(server.requests, []);
+	});
+
 });

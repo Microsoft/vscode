@@ -44,7 +44,7 @@ export class RipgrepTextSearchEngine {
 			const escapedArgs = rgArgs
 				.map(arg => arg.match(/^-/) ? arg : `'${arg}'`)
 				.join(' ');
-			this.outputChannel.appendLine(`rg ${escapedArgs}\n - cwd: ${cwd}`);
+			this.outputChannel.appendLine(`${rgDiskPath} ${escapedArgs}\n - cwd: ${cwd}`);
 
 			let rgProc: Maybe<cp.ChildProcess> = cp.spawn(rgDiskPath, rgArgs, { cwd });
 			rgProc.on('error', e => {
@@ -57,6 +57,7 @@ export class RipgrepTextSearchEngine {
 			const ripgrepParser = new RipgrepParser(options.maxResults, cwd, options.previewOptions);
 			ripgrepParser.on('result', (match: TextSearchResult) => {
 				gotResult = true;
+				dataWithoutResult = '';
 				progress.report(match);
 			});
 
@@ -79,8 +80,12 @@ export class RipgrepTextSearchEngine {
 				cancel();
 			});
 
+			let dataWithoutResult = '';
 			rgProc.stdout!.on('data', data => {
 				ripgrepParser.handleData(data);
+				if (!gotResult) {
+					dataWithoutResult += data;
+				}
 			});
 
 			let gotData = false;
@@ -96,7 +101,12 @@ export class RipgrepTextSearchEngine {
 			rgProc.on('close', () => {
 				this.outputChannel.appendLine(gotData ? 'Got data from stdout' : 'No data from stdout');
 				this.outputChannel.appendLine(gotResult ? 'Got result from parser' : 'No result from parser');
+				if (dataWithoutResult) {
+					this.outputChannel.appendLine(`Got data without result: ${dataWithoutResult}`);
+				}
+
 				this.outputChannel.appendLine('');
+
 				if (isDone) {
 					resolve({ limitHit });
 				} else {

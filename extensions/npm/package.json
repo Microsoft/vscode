@@ -40,13 +40,13 @@
     "languages": [
       {
         "id": "ignore",
-        "filenames": [
+        "extensions": [
           ".npmignore"
         ]
       },
       {
         "id": "properties",
-        "filenames": [
+        "extensions": [
           ".npmrc"
         ]
       }

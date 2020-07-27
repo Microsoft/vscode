@@ -25,6 +25,7 @@ import { GitTimelineProvider } from './timelineProvider';
 import { registerAPICommands } from './api/api1';
 import { TerminalEnvironmentManager } from './terminal';
 import { createIPCServer, IIPCServer } from './ipc/ipcServer';
+import { GitCommitFileSystemProvider } from './commitFileSystemProvider';
 
 const deactivateTasks: { (): Promise<any>; }[] = [];
 
@@ -82,6 +83,7 @@ async function createModel(context: ExtensionContext, outputChannel: OutputChann
 	disposables.push(
 		new CommandCenter(git, model, outputChannel, telemetryReporter),
 		new GitFileSystemProvider(model),
+		new GitCommitFileSystemProvider(),
 		new GitDecorations(model),
 		new GitProtocolHandler(),
 		new GitTimelineProvider(model)

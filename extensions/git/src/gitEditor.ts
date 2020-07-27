@@ -3,7 +3,9 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import * as path from 'path';
-import { workspace, window, Uri, Position, Selection } from 'vscode';
+import { workspace, window, Uri } from 'vscode';
+import { v4 as uuid } from 'uuid';
+
 
 import { IIPCHandler, IIPCServer } from './ipc/ipcServer';
 import { IDisposable, EmptyDisposable } from './util';
@@ -24,19 +26,19 @@ export class GitEditor implements IIPCHandler {
 
 	async handle({ commitMessagePath }: GitEditorRequest): Promise<any> {
 		if (commitMessagePath) {
-			const file = Uri.file(commitMessagePath);
-			const doc = await workspace.openTextDocument(file);
-			const editor = await window.showTextDocument(doc);
-
-			// We don't want to remember the cursor position.
-			// One should be able to start writing the message immediately.
-			const position = new Position(0, 0);
-			editor.selection = new Selection(position, position);
+			const id = uuid();
+			const uri = Uri.parse(`gitcommit://${id}/${commitMessagePath}`);
+			const doc = await workspace.openTextDocument(uri);
+			await window.showTextDocument(doc);
 
 			return new Promise((c) => {
-				const onDidChange = window.onDidChangeVisibleTextEditors((editors) => {
-					if (editors.indexOf(editor) < 0) {
+				const onDidChange = window.onDidChangeVisibleTextEditors(async (editors) => {
+					if (!editors.find(editor => `${editor.document.uri}` === `${uri}`)) {
 						onDidChange.dispose();
+
+						// dump in-memory content to actual COMMIT_MESSAGE file
+						await workspace.fs.writeFile(Uri.file(commitMessagePath), await workspace.fs.readFile(uri));
+						await workspace.fs.delete(uri);
 						return c(true);
 					}
 				});

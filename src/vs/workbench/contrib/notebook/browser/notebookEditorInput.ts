@@ -14,6 +14,7 @@ import { INotebookEditorModelResolverService } from 'vs/workbench/contrib/notebo
 import { IReference } from 'vs/base/common/lifecycle';
 import { INotebookEditorModel } from 'vs/workbench/contrib/notebook/common/notebookCommon';
 import { IPathService } from 'vs/workbench/services/path/common/pathService';
+import { IFileService } from 'vs/platform/files/common/files';
 
 interface NotebookEditorInputOptions {
 	startDirty?: boolean;
@@ -39,10 +40,33 @@ export class NotebookEditorInput extends EditorInput {
 		@IFilesConfigurationService private readonly _filesConfigurationService: IFilesConfigurationService,
 		@IFileDialogService private readonly _fileDialogService: IFileDialogService,
 		@IPathService private readonly _pathService: IPathService,
-		@IInstantiationService private readonly _instantiationService: IInstantiationService
+		@IInstantiationService private readonly _instantiationService: IInstantiationService,
+		@IFileService private readonly fileService: IFileService,
 	) {
 		super();
 		this._defaultDirtyState = !!options.startDirty;
+
+		this._register(this.fileService.watch(this.resource));
+		this.setupListeners();
+	}
+
+	async setupListeners() {
+		this._register(this.fileService.onDidFilesChange(async e => {
+			if (this._textModel && !this.isDirty() && e.contains(this.resource)) {
+				const lastResolvedFileStat = this._textModel.object.lastResolvedFileStat;
+
+				if (!lastResolvedFileStat) {
+					return;
+				}
+
+				const newStats = await this.fileService.resolve(this.resource, { resolveMetadata: true });
+
+				if (lastResolvedFileStat && newStats && newStats.mtime > lastResolvedFileStat.mtime) {
+					console.log(newStats);
+					await this._textModel.object.revert();
+				}
+			}
+		}));
 	}
 
 	getTypeId(): string {

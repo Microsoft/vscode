@@ -44,6 +44,10 @@ export class NotebookEditorModel extends EditorModel implements IWorkingCopy, IN
 	private _notebook!: NotebookTextModel;
 	private _lastResolvedFileStat: IFileStatWithMetadata | undefined;
 
+	get lastResolvedFileStat() {
+		return this._lastResolvedFileStat;
+	}
+
 	get notebook() {
 		return this._notebook;
 	}

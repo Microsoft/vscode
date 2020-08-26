@@ -1615,7 +1615,7 @@ declare module 'vscode' {
 
 	export namespace notebook {
 		export function registerNotebookContentProvider(
-			notebookType: string,
+			selector: string,
 			provider: NotebookContentProvider
 		): Disposable;
 

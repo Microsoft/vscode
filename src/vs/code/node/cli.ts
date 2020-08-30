@@ -13,7 +13,7 @@ import product from 'vs/platform/product/common/product';
 import * as paths from 'vs/base/common/path';
 import { whenDeleted, writeFileSync } from 'vs/base/node/pfs';
 import { findFreePort, randomPort } from 'vs/base/node/ports';
-import { isWindows, isLinux } from 'vs/base/common/platform';
+import { isWindows, isLinux, isMacintosh } from 'vs/base/common/platform';
 import { ProfilingSession, Target } from 'v8-inspect-profiler';
 import { isString } from 'vs/base/common/types';
 import { hasStdinWithoutTty, stdinDataListener, getStdinFilePath, readFromStdin } from 'vs/platform/environment/node/stdin';
@@ -148,6 +148,7 @@ export async function main(argv: string[]): Promise<any> {
 			argv = argv.filter(a => a !== '-');
 		}
 
+		const canReadFromStdin = isLinux || isWindows || (isMacintosh && process.env['VSCODE_DEV']);
 		let stdinFilePath: string | undefined;
 		if (hasStdinWithoutTty()) {
 
@@ -157,24 +158,26 @@ export async function main(argv: string[]): Promise<any> {
 
 			if (args._.length === 0) {
 				if (hasReadStdinArg) {
-					stdinFilePath = getStdinFilePath();
+					if (canReadFromStdin) {
+						stdinFilePath = getStdinFilePath();
 
-					// returns a file path where stdin input is written into (write in progress).
-					try {
-						readFromStdin(stdinFilePath, !!verbose); // throws error if file can not be written
+						// returns a file path where stdin input is written into (write in progress).
+						try {
+							readFromStdin(stdinFilePath, !!verbose); // throws error if file can not be written
 
-						// Make sure to open tmp file
-						addArg(argv, stdinFilePath);
+							// Make sure to open tmp file
+							addArg(argv, stdinFilePath);
 
-						// Enable --wait to get all data and ignore adding this to history
-						addArg(argv, '--wait');
-						addArg(argv, '--skip-add-to-recently-opened');
-						args.wait = true;
+							// Enable --wait to get all data and ignore adding this to history
+							addArg(argv, '--wait');
+							addArg(argv, '--skip-add-to-recently-opened');
+							args.wait = true;
 
-						console.log(`Reading from stdin via: ${stdinFilePath}`);
-					} catch (e) {
-						console.log(`Failed to create file to read via stdin: ${e.toString()}`);
-						stdinFilePath = undefined;
+							console.log(`Reading from stdin via: ${stdinFilePath}`);
+						} catch (e) {
+							console.log(`Failed to create file to read via stdin: ${e.toString()}`);
+							stdinFilePath = undefined;
+						}
 					}
 				} else {
 
@@ -328,7 +331,71 @@ export async function main(argv: string[]): Promise<any> {
 			addArg(argv, '--no-sandbox'); // Electron 6 introduces a chrome-sandbox that requires root to run. This can fail. Disable sandbox via --no-sandbox
 		}
 
-		const child = spawn(process.execPath, argv.slice(2), options);
+		let child: ChildProcess;
+		let conditionalCallback = Promise.resolve();
+		if (isMacintosh && !process.env['VSCODE_DEV']) {
+			let appArgs = ['-a', process.execPath];
+			// Open a new instance of the application even if one is already running.
+			appArgs.push('--new');
+			if (args.wait) {
+				// Blocks until the used applications are closed (even if they were already running).
+				appArgs.push('--wait-apps');
+			}
+			if (hasReadStdinArg) {
+				// Reads input from standard input.
+				appArgs.push('-f');
+			}
+			if (args.status) {
+				// Does not bring the application to the foreground.
+				appArgs.push('--background');
+			}
+			const cliArgs = argv.slice(2);
+			const resolvedArgs = cliArgs.map(arg => {
+				if (arg === '.' || arg.startsWith('../')) {
+					return paths.resolve(arg);
+				} else if (arg.startsWith('-') || arg.startsWith('--')) {
+					return arg;
+				} else {
+					try {
+						const result = fs.statSync(arg);
+						if (result.isFile() || result.isDirectory()) {
+							return paths.resolve(arg);
+						} else {
+							return arg;
+						}
+					} catch (err) {
+						return arg;
+					}
+				}
+			});
+			// All remaining arguments are passed in argv to the application's main() function instead of opened.
+			appArgs.push('--args');
+			if (hasReadStdinArg) {
+				appArgs.push('--skip-add-to-recently-opened');
+			}
+			if (args.status) {
+				let lastModifiedTimeMs = 0;
+				const statusResource = paths.join(os.tmpdir(), `${product.applicationName}-status.log`);
+				conditionalCallback = new Promise((resolve) => {
+					const poll = setInterval(async () => {
+						try {
+							const stat = fs.statSync(statusResource);
+							if (lastModifiedTimeMs === stat.mtimeMs) {
+								clearInterval(poll);
+								const result = await fs.promises.readFile(statusResource);
+								console.log(result.toString());
+								await fs.promises.unlink(statusResource);
+								resolve();
+							}
+							lastModifiedTimeMs = stat.mtimeMs;
+						} catch (err) { }
+					}, 100);
+				});
+			}
+			child = spawn('open', appArgs.concat(resolvedArgs), options);
+		} else {
+			child = spawn(process.execPath, argv.slice(2), options);
+		}
 
 		if (args.wait && waitMarkerFilePath) {
 			return new Promise<void>(c => {
@@ -347,7 +414,7 @@ export async function main(argv: string[]): Promise<any> {
 			});
 		}
 
-		return Promise.all(processCallbacks.map(callback => callback(child)));
+		return Promise.all(processCallbacks.map(callback => callback(child)).concat(conditionalCallback));
 	}
 }
 

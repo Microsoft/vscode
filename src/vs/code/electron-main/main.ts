@@ -5,7 +5,9 @@
 
 import 'vs/platform/update/common/update.config.contribution';
 import { app, dialog } from 'electron';
-import { isWindows, IProcessEnvironment } from 'vs/base/common/platform';
+import { tmpdir } from 'os';
+import { join } from 'vs/base/common/path';
+import { isWindows, IProcessEnvironment, isMacintosh } from 'vs/base/common/platform';
 import product from 'vs/platform/product/common/product';
 import { parseMainProcessArgv, addArg } from 'vs/platform/environment/node/argvHelper';
 import { createWaitMarkerFile } from 'vs/platform/environment/node/waitMarkerFile';
@@ -298,6 +300,11 @@ class CodeMain {
 					const mainProcessInfo = await launchService.getMainProcessInfo();
 					const remoteDiagnostics = await launchService.getRemoteDiagnostics({ includeProcesses: true, includeWorkspaceMetadata: true });
 					const diagnostics = await diagnosticsService.getDiagnostics(mainProcessInfo, remoteDiagnostics);
+					if (isMacintosh) {
+						// the cli wrapper reads this file vs/code/node/cli.ts
+						// https://github.com/microsoft/vscode/pull/104470
+						await fs.promises.writeFile(join(tmpdir(), `${product.applicationName}-status.log`), diagnostics);
+					}
 					console.log(diagnostics);
 
 					throw new ExpectedError();

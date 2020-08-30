@@ -63,7 +63,7 @@ export interface ISerializedDraggedEditor extends ISerializedDraggedResource, ID
 
 export const CodeDataTransfers = {
 	EDITORS: 'CodeEditors',
-	FILES: 'CodeFiles'
+	FILES: 'CodeFiles',
 };
 
 export function extractResources(e: DragEvent, externalOnly?: boolean): Array<IDraggedResource | IDraggedEditor> {

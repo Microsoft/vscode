@@ -948,9 +948,16 @@ export class FileDragAndDrop implements ITreeDragAndDrop<ExplorerItem> {
 
 			// The only custom data transfer we set from the explorer is a file transfer
 			// to be able to DND between multiple code file explorers across windows
-			const fileResources = items.filter(s => !s.isDirectory && s.resource.scheme === Schemas.file).map(r => r.resource.fsPath);
+			const fileResources = items.filter(s => !s.isDirectory && (s.resource.scheme === Schemas.file)).map(r => r.resource.fsPath);
 			if (fileResources.length) {
 				originalEvent.dataTransfer.setData(CodeDataTransfers.FILES, JSON.stringify(fileResources));
+			}
+			const remoteResources = items.filter(s => !s.isDirectory && (s.resource.scheme === Schemas.vscodeRemote)).map(i => i.resource);
+			if (remoteResources.length) {
+				remoteResources.forEach(async resource => {
+					const content = await this.fileService.readFile(resource);
+					originalEvent.dataTransfer!.items.add(new File([content.value.buffer], content.name));
+				});
 			}
 		}
 	}
@@ -980,7 +987,8 @@ export class FileDragAndDrop implements ITreeDragAndDrop<ExplorerItem> {
 
 		// Desktop DND (Import file)
 		if (data instanceof DesktopDragAndDropData) {
-			if (isWeb) {
+			const droppedResources = extractResources(originalEvent, true);
+			if (isWeb || droppedResources.some(d => d.resource.scheme === Schemas.vscodeRemote)) {
 				this.handleWebExternalDrop(data, target, originalEvent).then(undefined, e => this.notificationService.warn(e));
 			} else {
 				this.handleExternalDrop(data, target, originalEvent).then(undefined, e => this.notificationService.warn(e));

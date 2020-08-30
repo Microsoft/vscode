@@ -22,7 +22,7 @@
 		}
 	},
 	{
-		"c": " *  Copyright (c) Microsoft Corporation. All rights reserved.",
+		"c": " *  Copyright (c) Microsoft Corporation.",
 		"t": "source.js comment.block.js",
 		"r": {
 			"dark_plus": "comment: #6A9955",
@@ -33,7 +33,7 @@
 		}
 	},
 	{
-		"c": " *  Licensed under the MIT License. See License.txt in the project root for license information.",
+		"c": " *  Licensed under the MIT License. See LICENSE.txt in the project root for license information.",
 		"t": "source.js comment.block.js",
 		"r": {
 			"dark_plus": "comment: #6A9955",

@@ -872,10 +872,14 @@ export class SelectBoxList extends Disposable implements ISelectBoxDelegate, ILi
 
 		this.selectionDetailsPane.innerText = '';
 		const selectedIndex = e.indexes[0];
-		const description = this.options[selectedIndex].description;
-		const descriptionIsMarkdown = this.options[selectedIndex].descriptionIsMarkdown;
+		if (!selectedIndex || !this.options[selectedIndex]) {
+			return;
+		}
 
-		if (description) {
+		const description = (typeof this.options[selectedIndex].description === 'string') ? this.options[selectedIndex].description : null;
+		const descriptionIsMarkdown = (typeof this.options[selectedIndex].descriptionIsMarkdown === 'boolean') ? this.options[selectedIndex].descriptionIsMarkdown : false;
+
+		if (!!description) {
 			if (descriptionIsMarkdown) {
 				const actionHandler = this.options[selectedIndex].descriptionMarkdownActionHandler;
 				this.selectionDetailsPane.appendChild(this.renderDescriptionMarkdown(description, actionHandler));

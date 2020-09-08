@@ -22,7 +22,12 @@ import { colorThemeSchemaId } from 'vs/workbench/services/themes/common/colorThe
 import { onUnexpectedError } from 'vs/base/common/errors';
 import { IQuickInputService, QuickPickInput } from 'vs/platform/quickinput/common/quickInput';
 import { ConfigurationTarget } from 'vs/platform/configuration/common/configuration';
+import { INotificationService } from 'vs/platform/notification/common/notification';
 import { DEFAULT_PRODUCT_ICON_THEME_ID } from 'vs/workbench/services/themes/browser/productIconThemeData';
+
+interface SelectColorThemeActionEvent {
+	id: string;
+}
 
 export class SelectColorThemeAction extends Action {
 
@@ -32,6 +37,7 @@ export class SelectColorThemeAction extends Action {
 	constructor(
 		id: string,
 		label: string,
+		@INotificationService private readonly notificationService: INotificationService,
 		@IQuickInputService private readonly quickInputService: IQuickInputService,
 		@IWorkbenchThemeService private readonly themeService: IWorkbenchThemeService,
 		@IExtensionGalleryService private readonly extensionGalleryService: IExtensionGalleryService,
@@ -40,65 +46,80 @@ export class SelectColorThemeAction extends Action {
 		super(id, label);
 	}
 
-	run(): Promise<void> {
-		return this.themeService.getColorThemes().then(themes => {
-			const currentTheme = this.themeService.getColorTheme();
+	async run(e?: SelectColorThemeActionEvent): Promise<void> {
+		const themes = await this.themeService.getColorThemes();
+		const currentTheme = this.themeService.getColorTheme();
 
-			const picks: QuickPickInput<ThemeItem>[] = [
-				...toEntries(themes.filter(t => t.type === LIGHT), localize('themes.category.light', "light themes")),
-				...toEntries(themes.filter(t => t.type === DARK), localize('themes.category.dark', "dark themes")),
-				...toEntries(themes.filter(t => t.type === HIGH_CONTRAST), localize('themes.category.hc', "high contrast themes")),
-				...configurationEntries(this.extensionGalleryService, localize('installColorThemes', "Install Additional Color Themes..."))
-			];
-
-			let selectThemeTimeout: number | undefined;
-
-			const selectTheme = (theme: ThemeItem, applyTheme: boolean) => {
-				if (selectThemeTimeout) {
-					clearTimeout(selectThemeTimeout);
+		if (e?.id) {
+			try {
+				const theme = themes.find(theme => theme.settingsId === e.id);
+				if (!theme) {
+					this.notificationService.error(localize('colorThemeError', "Theme is unknown or not installed."));
+					return;
 				}
-				selectThemeTimeout = window.setTimeout(() => {
-					selectThemeTimeout = undefined;
-					const themeId = theme && theme.id !== undefined ? theme.id : currentTheme.id;
 
-					this.themeService.setColorTheme(themeId, applyTheme ? 'auto' : undefined).then(undefined,
-						err => {
-							onUnexpectedError(err);
-							this.themeService.setColorTheme(currentTheme.id, undefined);
-						}
-					);
-				}, applyTheme ? 0 : 200);
-			};
+				await this.themeService.setColorTheme(theme.id, 'auto');
+			} catch (err) {
+				onUnexpectedError(err);
+				await this.themeService.setColorTheme(currentTheme.id, 'auto');
+			}
+			return;
+		}
 
-			return new Promise((s, _) => {
-				let isCompleted = false;
+		const picks: QuickPickInput<ThemeItem>[] = [
+			...toEntries(themes.filter(t => t.type === LIGHT), localize('themes.category.light', "light themes")),
+			...toEntries(themes.filter(t => t.type === DARK), localize('themes.category.dark', "dark themes")),
+			...toEntries(themes.filter(t => t.type === HIGH_CONTRAST), localize('themes.category.hc', "high contrast themes")),
+			...configurationEntries(this.extensionGalleryService, localize('installColorThemes', "Install Additional Color Themes..."))
+		];
 
-				const autoFocusIndex = firstIndex(picks, p => isItem(p) && p.id === currentTheme.id);
-				const quickpick = this.quickInputService.createQuickPick<ThemeItem>();
-				quickpick.items = picks;
-				quickpick.placeholder = localize('themes.selectTheme', "Select Color Theme (Up/Down Keys to Preview)");
-				quickpick.activeItems = [picks[autoFocusIndex] as ThemeItem];
-				quickpick.canSelectMany = false;
-				quickpick.onDidAccept(_ => {
-					const theme = quickpick.activeItems[0];
-					if (!theme || typeof theme.id === 'undefined') { // 'pick in marketplace' entry
-						openExtensionViewlet(this.viewletService, `category:themes ${quickpick.value}`);
-					} else {
-						selectTheme(theme, true);
+		let selectThemeTimeout: number | undefined;
+
+		const selectTheme = (theme: ThemeItem, applyTheme: boolean) => {
+			if (selectThemeTimeout) {
+				clearTimeout(selectThemeTimeout);
+			}
+			selectThemeTimeout = window.setTimeout(() => {
+				selectThemeTimeout = undefined;
+				const themeId = theme && theme.id !== undefined ? theme.id : currentTheme.id;
+
+				this.themeService.setColorTheme(themeId, applyTheme ? 'auto' : undefined).then(undefined,
+					err => {
+						onUnexpectedError(err);
+						this.themeService.setColorTheme(currentTheme.id, undefined);
 					}
-					isCompleted = true;
-					quickpick.hide();
-					s();
-				});
-				quickpick.onDidChangeActive(themes => selectTheme(themes[0], false));
-				quickpick.onDidHide(() => {
-					if (!isCompleted) {
-						selectTheme(currentTheme, true);
-						s();
-					}
-				});
-				quickpick.show();
+				);
+			}, applyTheme ? 0 : 200);
+		};
+
+		return new Promise((s, _) => {
+			let isCompleted = false;
+
+			const autoFocusIndex = firstIndex(picks, p => isItem(p) && p.id === currentTheme.id);
+			const quickpick = this.quickInputService.createQuickPick<ThemeItem>();
+			quickpick.items = picks;
+			quickpick.placeholder = localize('themes.selectTheme', "Select Color Theme (Up/Down Keys to Preview)");
+			quickpick.activeItems = [picks[autoFocusIndex] as ThemeItem];
+			quickpick.canSelectMany = false;
+			quickpick.onDidAccept(_ => {
+				const theme = quickpick.activeItems[0];
+				if (!theme || typeof theme.id === 'undefined') { // 'pick in marketplace' entry
+					openExtensionViewlet(this.viewletService, `category:themes ${quickpick.value}`);
+				} else {
+					selectTheme(theme, true);
+				}
+				isCompleted = true;
+				quickpick.hide();
+				s();
 			});
+			quickpick.onDidChangeActive(themes => selectTheme(themes[0], false));
+			quickpick.onDidHide(() => {
+				if (!isCompleted) {
+					selectTheme(currentTheme, true);
+					s();
+				}
+			});
+			quickpick.show();
 		});
 	}
 }

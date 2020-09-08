@@ -148,7 +148,7 @@ export abstract class AbstractCommandsQuickAccessProvider extends PickerQuickAcc
 					// Add to history
 					this.commandsHistory.push(commandPick.commandId);
 
-					// Telementry
+					// Telemetry
 					this.telemetryService.publicLog2<WorkbenchActionExecutedEvent, WorkbenchActionExecutedClassification>('workbenchActionExecuted', {
 						id: commandPick.commandId,
 						from: 'quick open'
@@ -302,4 +302,3 @@ export class CommandsHistory extends Disposable {
 		CommandsHistory.saveState(storageService);
 	}
 }
-

@@ -102,6 +102,8 @@
 	"config.ignoreWindowsGit27Warning": "Ignores the warning when Git 2.25 - 2.26 is installed on Windows.",
 	"config.ignoreLimitWarning": "Ignores the warning when there are too many changes in a repository.",
 	"config.defaultCloneDirectory": "The default location to clone a git repository.",
+	"config.useEditorToCommit": "Use a full sized editor to write commit messages.",
+	"config.verboseCommit": "Enable verbose output in the COMMIT_EDITMSG file. Only works when useEditorToCommit is enabled.",
 	"config.enableSmartCommit": "Commit all changes when there are no staged changes.",
 	"config.smartCommitChanges": "Control which changes are automatically staged by Smart Commit.",
 	"config.smartCommitChanges.all": "Automatically stage all changes.",

@@ -13,6 +13,7 @@ import { CommandCenter } from './commands';
 import { GitFileSystemProvider } from './fileSystemProvider';
 import { GitDecorations } from './decorationProvider';
 import { Askpass } from './askpass';
+import { GitEditor } from './gitEditor';
 import { toDisposable, filterEvent, eventToPromise } from './util';
 import TelemetryReporter from 'vscode-extension-telemetry';
 import { GitExtension } from './api/git';
@@ -23,6 +24,8 @@ import * as fs from 'fs';
 import { GitTimelineProvider } from './timelineProvider';
 import { registerAPICommands } from './api/api1';
 import { TerminalEnvironmentManager } from './terminal';
+import { createIPCServer, IIPCServer } from './ipc/ipcServer';
+import { GitCommitFileSystemProvider } from './commitFileSystemProvider';
 
 const deactivateTasks: { (): Promise<any>; }[] = [];
 
@@ -36,10 +39,21 @@ async function createModel(context: ExtensionContext, outputChannel: OutputChann
 	const pathHint = workspace.getConfiguration('git').get<string>('path');
 	const info = await findGit(pathHint, path => outputChannel.appendLine(localize('looking', "Looking for git in: {0}", path)));
 
-	const askpass = await Askpass.create(outputChannel, context.storagePath);
+	let ipc: IIPCServer | undefined = undefined;
+
+	try {
+		ipc = await createIPCServer(context.storagePath);
+	} catch (err) {
+		outputChannel.appendLine(`[error] Failed to create git askpass IPC: ${err}`);
+	}
+
+	const askpass = new Askpass(ipc);
 	disposables.push(askpass);
 
-	const env = askpass.getEnv();
+	const gitEditor = new GitEditor(ipc);
+	disposables.push(gitEditor);
+
+	const env = { ...askpass.getEnv(), ...gitEditor.getEnv() };
 	const terminalEnvironmentManager = new TerminalEnvironmentManager(context, env);
 	disposables.push(terminalEnvironmentManager);
 
@@ -69,6 +83,7 @@ async function createModel(context: ExtensionContext, outputChannel: OutputChann
 	disposables.push(
 		new CommandCenter(git, model, outputChannel, telemetryReporter),
 		new GitFileSystemProvider(model),
+		new GitCommitFileSystemProvider(),
 		new GitDecorations(model),
 		new GitProtocolHandler(),
 		new GitTimelineProvider(model)

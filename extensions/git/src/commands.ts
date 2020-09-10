@@ -1424,6 +1424,19 @@ export class CommandCenter {
 			opts.signoff = true;
 		}
 
+		if (config.get<boolean>('useEditorToCommit')) {
+			opts.useEditor = true;
+		}
+
+		if (config.get<boolean>('verboseCommit')) {
+			opts.verbose = true;
+			if (!opts.useEditor) {
+				window.showInformationMessage(
+					localize('useless verbose commit', "Verbose committing has no effect. The setting 'git.useEditorToCommit' is not enabled.")
+				);
+			}
+		}
+
 		const smartCommitChanges = config.get<'all' | 'tracked'>('smartCommitChanges');
 
 		if (
@@ -1443,7 +1456,7 @@ export class CommandCenter {
 
 		const message = await getCommitMessage();
 
-		if (!message) {
+		if (!message && !opts.useEditor) {
 			return false;
 		}
 
@@ -1473,10 +1486,13 @@ export class CommandCenter {
 
 	private async commitWithAnyInput(repository: Repository, opts?: CommitOptions): Promise<void> {
 		const message = repository.inputBox.value;
+		const root = Uri.file(repository.root);
+		const config = workspace.getConfiguration('git', root);
+
 		const getCommitMessage = async () => {
 			let _message: string | undefined = message;
 
-			if (!_message) {
+			if (!_message && !config.get<boolean>('useEditorToCommit')) {
 				let value: string | undefined = undefined;
 
 				if (opts && opts.amend && repository.HEAD && repository.HEAD.commit) {
@@ -2515,6 +2531,11 @@ export class CommandCenter {
 					case GitErrorCodes.NoUserEmailConfigured:
 						message = localize('missing user info', "Make sure you configure your 'user.name' and 'user.email' in git.");
 						choices.set(localize('learn more', "Learn More"), () => commands.executeCommand('vscode.open', Uri.parse('https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup')));
+						break;
+					case GitErrorCodes.EmptyCommitMessage:
+						message = localize('empty commit', "Aborting commit due to empty commit message.");
+						type = 'warning';
+						options.modal = false;
 						break;
 					default:
 						const hint = (err.stderr || err.message || String(err))

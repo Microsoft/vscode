@@ -328,6 +328,8 @@ function getGitErrorCode(stderr: string): string | undefined {
 		return GitErrorCodes.InvalidBranchName;
 	} else if (/Please,? commit your changes or stash them/.test(stderr)) {
 		return GitErrorCodes.DirtyWorkTree;
+	} else if (/Aborting commit due to empty commit message/.test(stderr)) {
+		return GitErrorCodes.EmptyCommitMessage;
 	}
 
 	return undefined;
@@ -1304,8 +1306,16 @@ export class Repository {
 		}
 	}
 
-	async commit(message: string, opts: CommitOptions = Object.create(null)): Promise<void> {
-		const args = ['commit', '--quiet', '--allow-empty-message', '--file', '-'];
+	async commit(message?: string, opts: CommitOptions = Object.create(null)): Promise<void> {
+		const args = ['commit', '--quiet'];
+		const options: SpawnOptions = {};
+
+		if (!opts.useEditor || message) {
+			options.input = message;
+			args.push(...['--allow-empty-message', '--file', '-']);
+		} else if (opts.verbose) {
+			args.push('--verbose');
+		}
 
 		if (opts.all) {
 			args.push('--all');
@@ -1327,7 +1337,7 @@ export class Repository {
 		}
 
 		try {
-			await this.run(args, { input: message || '' });
+			await this.run(args, options);
 		} catch (commitErr) {
 			await this.handleCommitError(commitErr);
 		}

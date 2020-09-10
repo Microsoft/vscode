@@ -1529,6 +1529,18 @@
           "default": null,
           "description": "%config.defaultCloneDirectory%"
         },
+        "git.useEditorToCommit": {
+          "type": "boolean",
+          "scope": "resource",
+          "description": "%config.useEditorToCommit%",
+          "default": false
+        },
+        "git.verboseCommit": {
+          "type": "boolean",
+          "scope": "resource",
+          "description": "%config.verboseCommit%",
+          "default": false
+        },
         "git.enableSmartCommit": {
           "type": "boolean",
           "scope": "resource",
@@ -1975,6 +1987,7 @@
     "file-type": "^7.2.0",
     "iconv-lite-umd": "0.6.8",
     "jschardet": "2.2.1",
+    "uuid": "^8.2.0",
     "vscode-extension-telemetry": "0.1.1",
     "vscode-nls": "^4.0.0",
     "vscode-uri": "^2.0.0",
@@ -1985,6 +1998,7 @@
     "@types/file-type": "^5.2.1",
     "@types/mocha": "2.2.43",
     "@types/node": "^12.12.31",
+    "@types/uuid": "^8.0.0",
     "@types/which": "^1.0.28",
     "mocha": "^3.2.0",
     "mocha-junit-reporter": "^1.23.3",

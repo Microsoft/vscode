@@ -4,8 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Disposable } from 'vs/base/common/lifecycle';
-import { FeedbackDropdown, IFeedback, IFeedbackDelegate } from 'vs/workbench/contrib/feedback/browser/feedback';
-import { IContextViewService } from 'vs/platform/contextview/browser/contextView';
+import { FeedbackWidget, IFeedback, IFeedbackDelegate } from 'vs/workbench/contrib/feedback/browser/feedback';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { IProductService } from 'vs/platform/product/common/productService';
 import { IWorkbenchContribution } from 'vs/workbench/common/contributions';
@@ -50,15 +49,13 @@ class TwitterFeedbackService implements IFeedbackDelegate {
 }
 
 export class FeedbackStatusbarConribution extends Disposable implements IWorkbenchContribution {
-	private dropdown: FeedbackDropdown | undefined;
+	private widget: FeedbackWidget | undefined;
 	private entry: IStatusbarEntryAccessor | undefined;
 
 	constructor(
 		@IStatusbarService statusbarService: IStatusbarService,
 		@IProductService productService: IProductService,
-		@IInstantiationService private instantiationService: IInstantiationService,
-		@IContextViewService private contextViewService: IContextViewService
-	) {
+		@IInstantiationService private instantiationService: IInstantiationService) {
 		super();
 
 		if (productService.sendASmile) {
@@ -76,26 +73,18 @@ export class FeedbackStatusbarConribution extends Disposable implements IWorkben
 	}
 
 	private toggleFeedback(): void {
-		if (!this.dropdown) {
-			const statusContainr = document.getElementById('status.feedback');
-			if (statusContainr) {
-				const icon = statusContainr.getElementsByClassName('codicon').item(0) as HTMLElement | null;
-				if (!icon) {
-					throw new Error('Could not find icon');
-				}
-				this.dropdown = this._register(this.instantiationService.createInstance(FeedbackDropdown, icon, {
-					contextViewProvider: this.contextViewService,
-					feedbackService: this.instantiationService.createInstance(TwitterFeedbackService),
-					onFeedbackVisibilityChange: visible => this.entry!.update(this.getStatusEntry(visible))
-				}));
-			}
+		if (!this.widget) {
+			this.widget = this._register(this.instantiationService.createInstance(FeedbackWidget, {
+				feedbackService: this.instantiationService.createInstance(TwitterFeedbackService),
+				onFeedbackVisibilityChange: visible => this.entry!.update(this.getStatusEntry(visible))
+			}));
 		}
 
-		if (this.dropdown) {
-			if (!this.dropdown.isVisible()) {
-				this.dropdown.show();
+		if (this.widget) {
+			if (!this.widget.isVisible()) {
+				this.widget.show();
 			} else {
-				this.dropdown.hide();
+				this.widget.hide();
 			}
 		}
 	}

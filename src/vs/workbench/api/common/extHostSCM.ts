@@ -414,6 +414,21 @@ class ExtHostSourceControl implements vscode.SourceControl {
 		this._proxy.$updateSourceControl(this.handle, { commitTemplate });
 	}
 
+	private _visibleName: string | undefined;
+
+	get visibleName(): string | undefined {
+		return this._visibleName;
+	}
+
+	set visibleName(visibleName: string | undefined) {
+		if (this._visibleName === visibleName) {
+			return;
+		}
+
+		this._visibleName = visibleName;
+		this._proxy.$updateSourceControl(this.handle, { visibleName });
+	}
+
 	private _acceptInputDisposables = new MutableDisposable<DisposableStore>();
 	private _acceptInputCommand: vscode.Command | undefined = undefined;
 

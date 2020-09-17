@@ -115,12 +115,16 @@ class MainThreadSCMProvider implements ISCMProvider {
 	get contextValue(): string { return this._contextValue; }
 
 	get commitTemplate(): string { return this.features.commitTemplate || ''; }
+	get visibleName(): string { return this.features.visibleName || ''; }
 	get acceptInputCommand(): Command | undefined { return this.features.acceptInputCommand; }
 	get statusBarCommands(): Command[] | undefined { return this.features.statusBarCommands; }
 	get count(): number | undefined { return this.features.count; }
 
 	private readonly _onDidChangeCommitTemplate = new Emitter<string>();
 	readonly onDidChangeCommitTemplate: Event<string> = this._onDidChangeCommitTemplate.event;
+
+	private readonly _onDidChangeVisibleName = new Emitter<string>();
+	readonly onDidChangeVisibleName: Event<string> = this._onDidChangeVisibleName.event;
 
 	private readonly _onDidChangeStatusBarCommands = new Emitter<Command[]>();
 	get onDidChangeStatusBarCommands(): Event<Command[]> { return this._onDidChangeStatusBarCommands.event; }
@@ -143,6 +147,10 @@ class MainThreadSCMProvider implements ISCMProvider {
 
 		if (typeof features.commitTemplate !== 'undefined') {
 			this._onDidChangeCommitTemplate.fire(this.commitTemplate!);
+		}
+
+		if (typeof features.visibleName !== 'undefined') {
+			this._onDidChangeVisibleName.fire(this.visibleName);
 		}
 
 		if (typeof features.statusBarCommands !== 'undefined') {

@@ -261,7 +261,8 @@ export class Model implements IRemoteSourceProviderRegistry, IPushErrorHandlerRe
 			// This can happen whenever `path` has the wrong case sensitivity in
 			// case insensitive file systems
 			// https://github.com/Microsoft/vscode/issues/33498
-			const repositoryRoot = Uri.file(rawRoot).fsPath;
+			const repositoryRootUri = Uri.file(rawRoot);
+			const repositoryRoot = repositoryRootUri.fsPath;
 
 			if (this.getRepository(repositoryRoot)) {
 				return;
@@ -272,7 +273,14 @@ export class Model implements IRemoteSourceProviderRegistry, IPushErrorHandlerRe
 			}
 
 			const dotGit = await this.git.getRepositoryDotGit(repositoryRoot);
-			const repository = new Repository(this.git.open(repositoryRoot, dotGit), this, this, this.globalState, this.outputChannel);
+			const repository = new Repository(
+				this.git.open(repositoryRoot, dotGit),
+				this,
+				this,
+				this.globalState,
+				this.outputChannel,
+				this.getRepositoryForSubmodule(repositoryRootUri)
+			);
 
 			this.open(repository);
 			await repository.status();

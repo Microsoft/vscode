@@ -836,6 +836,7 @@ export interface SCMProviderFeatures {
 	hasQuickDiffProvider?: boolean;
 	count?: number;
 	commitTemplate?: string;
+	visibleName?: string;
 	acceptInputCommand?: modes.Command;
 	statusBarCommands?: ICommandDto[];
 }

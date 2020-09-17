@@ -10858,6 +10858,12 @@ declare module 'vscode' {
 		 * input with this value when appropriate.
 		 */
 		commitTemplate?: string;
+		
+		/**
+		 * The optional human-readable name of the source control
+		 * that replaces the default name if specified.
+		 */
+		visibleName?: string;
 
 		/**
 		 * Optional accept input command.

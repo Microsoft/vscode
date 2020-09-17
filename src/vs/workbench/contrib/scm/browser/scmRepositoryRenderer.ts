@@ -74,15 +74,24 @@ export class RepositoryRenderer implements ICompressibleTreeRenderer<ISCMReposit
 		const disposables = new DisposableStore();
 		const repository = isSCMRepository(arg) ? arg : arg.element;
 
-		if (repository.provider.rootUri) {
-			templateData.label.title = `${repository.provider.label}: ${repository.provider.rootUri.fsPath}`;
-			templateData.name.textContent = basename(repository.provider.rootUri);
-			templateData.description.textContent = repository.provider.label;
-		} else {
-			templateData.label.title = repository.provider.label;
-			templateData.name.textContent = repository.provider.label;
-			templateData.description.textContent = '';
-		}
+		const updateLabels = () => {
+			if (repository.provider.visibleName || repository.provider.rootUri) {
+				if (repository.provider.visibleName) {
+					templateData.label.title = `${repository.provider.label}: ${repository.provider.visibleName}`;
+					templateData.name.textContent = repository.provider.visibleName;
+				} else if (repository.provider.rootUri) {
+					templateData.label.title = `${repository.provider.label}: ${repository.provider.rootUri.fsPath}`;
+					templateData.name.textContent = basename(repository.provider.rootUri);
+				}
+				templateData.description.textContent = repository.provider.label;
+			} else {
+				templateData.label.title = repository.provider.label;
+				templateData.name.textContent = repository.provider.label;
+				templateData.description.textContent = '';
+			}
+		};
+		disposables.add(repository.provider.onDidChangeVisibleName(updateLabels));
+		updateLabels();
 
 		let statusPrimaryActions: IAction[] = [];
 		let menuPrimaryActions: IAction[] = [];

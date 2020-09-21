@@ -147,8 +147,12 @@ export class CursorConfiguration {
 		};
 
 		let autoClosingPairs = CursorConfiguration._getAutoClosingPairs(languageIdentifier);
+		let preventAutoClosingPairs = options.get(EditorOption.preventAutoClosingPairs).split(',');
 		if (autoClosingPairs) {
 			for (const pair of autoClosingPairs) {
+				if (preventAutoClosingPairs.includes(pair.open)) {
+					continue;
+				}
 				appendEntry(this.autoClosingPairsOpen2, pair.open.charAt(pair.open.length - 1), pair);
 				if (pair.close.length === 1) {
 					appendEntry(this.autoClosingPairsClose2, pair.close, pair);

@@ -316,6 +316,7 @@ function getSuggestEnabledInputOptions(ariaLabel?: string): IEditorOptions {
 		ariaLabel: ariaLabel || '',
 		snippetSuggestions: 'none',
 		suggest: { filterGraceful: false, showIcons: false },
-		autoClosingBrackets: 'never'
+		autoClosingBrackets: 'never',
+		preventAutoClosingPairs: '',
 	};
 }

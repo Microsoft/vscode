@@ -394,6 +394,10 @@ export interface IEditorOptions {
 	 */
 	autoClosingBrackets?: EditorAutoClosingStrategy;
 	/**
+	 * Prevents auto close for specified pairs.
+	 */
+	preventAutoClosingPairs?: string;
+	/**
 	 * Options for auto closing quotes.
 	 * Defaults to language defined behavior.
 	 */
@@ -3624,6 +3628,7 @@ export const enum EditorOption {
 	parameterHints,
 	peekWidgetDefaultFocus,
 	definitionLinkOpensInPeek,
+	preventAutoClosingPairs,
 	quickSuggestions,
 	quickSuggestionsDelay,
 	readOnly,
@@ -3728,6 +3733,10 @@ export const EditorOptions = {
 			],
 			description: nls.localize('autoClosingBrackets', "Controls whether the editor should automatically close brackets after the user adds an opening bracket.")
 		}
+	)),
+	preventAutoClosingPairs: register(new EditorStringOption(
+		EditorOption.preventAutoClosingPairs, 'preventAutoClosingPairs', '',
+		{ description: nls.localize('preventAutoClosingPairs', "Prevents specified text from automatically entering its associated closing text. Entries are comma delimited.") }
 	)),
 	autoClosingOvertype: register(new EditorStringEnumOption(
 		EditorOption.autoClosingOvertype, 'autoClosingOvertype',

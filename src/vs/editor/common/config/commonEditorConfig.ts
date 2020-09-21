@@ -165,6 +165,11 @@ function migrateOptions(options: IEditorOptions): void {
 		options.autoSurround = 'never';
 	}
 
+	const preventAutoClosingPairs = options.preventAutoClosingPairs;
+	if (<any>preventAutoClosingPairs === false) {
+		options.preventAutoClosingPairs = '';
+	}
+
 	const cursorBlinking = options.cursorBlinking;
 	if (<any>cursorBlinking === 'visible') {
 		options.cursorBlinking = 'solid';

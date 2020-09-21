@@ -2933,6 +2933,10 @@ declare namespace monaco.editor {
 		 */
 		autoClosingBrackets?: EditorAutoClosingStrategy;
 		/**
+		 * Prevents auto close for specified pairs.
+		 */
+		preventAutoClosingPairs?: string;
+		/**
 		 * Options for auto closing quotes.
 		 * Defaults to language defined behavior.
 		 */
@@ -3922,54 +3926,55 @@ declare namespace monaco.editor {
 		parameterHints = 67,
 		peekWidgetDefaultFocus = 68,
 		definitionLinkOpensInPeek = 69,
-		quickSuggestions = 70,
-		quickSuggestionsDelay = 71,
-		readOnly = 72,
-		renameOnType = 73,
-		renderControlCharacters = 74,
-		renderIndentGuides = 75,
-		renderFinalNewline = 76,
-		renderLineHighlight = 77,
-		renderLineHighlightOnlyWhenFocus = 78,
-		renderValidationDecorations = 79,
-		renderWhitespace = 80,
-		revealHorizontalRightPadding = 81,
-		roundedSelection = 82,
-		rulers = 83,
-		scrollbar = 84,
-		scrollBeyondLastColumn = 85,
-		scrollBeyondLastLine = 86,
-		scrollPredominantAxis = 87,
-		selectionClipboard = 88,
-		selectionHighlight = 89,
-		selectOnLineNumbers = 90,
-		showFoldingControls = 91,
-		showUnused = 92,
-		snippetSuggestions = 93,
-		smoothScrolling = 94,
-		stopRenderingLineAfter = 95,
-		suggest = 96,
-		suggestFontSize = 97,
-		suggestLineHeight = 98,
-		suggestOnTriggerCharacters = 99,
-		suggestSelection = 100,
-		tabCompletion = 101,
-		unusualLineTerminators = 102,
-		useTabStops = 103,
-		wordSeparators = 104,
-		wordWrap = 105,
-		wordWrapBreakAfterCharacters = 106,
-		wordWrapBreakBeforeCharacters = 107,
-		wordWrapColumn = 108,
-		wordWrapMinified = 109,
-		wrappingIndent = 110,
-		wrappingStrategy = 111,
-		showDeprecated = 112,
-		editorClassName = 113,
-		pixelRatio = 114,
-		tabFocusMode = 115,
-		layoutInfo = 116,
-		wrappingInfo = 117
+		preventAutoClosingPairs = 70,
+		quickSuggestions = 71,
+		quickSuggestionsDelay = 72,
+		readOnly = 73,
+		renameOnType = 74,
+		renderControlCharacters = 75,
+		renderIndentGuides = 76,
+		renderFinalNewline = 77,
+		renderLineHighlight = 78,
+		renderLineHighlightOnlyWhenFocus = 79,
+		renderValidationDecorations = 80,
+		renderWhitespace = 81,
+		revealHorizontalRightPadding = 82,
+		roundedSelection = 83,
+		rulers = 84,
+		scrollbar = 85,
+		scrollBeyondLastColumn = 86,
+		scrollBeyondLastLine = 87,
+		scrollPredominantAxis = 88,
+		selectionClipboard = 89,
+		selectionHighlight = 90,
+		selectOnLineNumbers = 91,
+		showFoldingControls = 92,
+		showUnused = 93,
+		snippetSuggestions = 94,
+		smoothScrolling = 95,
+		stopRenderingLineAfter = 96,
+		suggest = 97,
+		suggestFontSize = 98,
+		suggestLineHeight = 99,
+		suggestOnTriggerCharacters = 100,
+		suggestSelection = 101,
+		tabCompletion = 102,
+		unusualLineTerminators = 103,
+		useTabStops = 104,
+		wordSeparators = 105,
+		wordWrap = 106,
+		wordWrapBreakAfterCharacters = 107,
+		wordWrapBreakBeforeCharacters = 108,
+		wordWrapColumn = 109,
+		wordWrapMinified = 110,
+		wrappingIndent = 111,
+		wrappingStrategy = 112,
+		showDeprecated = 113,
+		editorClassName = 114,
+		pixelRatio = 115,
+		tabFocusMode = 116,
+		layoutInfo = 117,
+		wrappingInfo = 118
 	}
 	export const EditorOptions: {
 		acceptSuggestionOnCommitCharacter: IEditorOption<EditorOption.acceptSuggestionOnCommitCharacter, boolean>;
@@ -3978,6 +3983,7 @@ declare namespace monaco.editor {
 		accessibilityPageSize: IEditorOption<EditorOption.accessibilityPageSize, number>;
 		ariaLabel: IEditorOption<EditorOption.ariaLabel, string>;
 		autoClosingBrackets: IEditorOption<EditorOption.autoClosingBrackets, EditorAutoClosingStrategy>;
+		preventAutoClosingPairs: IEditorOption<EditorOption.preventAutoClosingPairs, string>;
 		autoClosingOvertype: IEditorOption<EditorOption.autoClosingOvertype, EditorAutoClosingOvertypeStrategy>;
 		autoClosingQuotes: IEditorOption<EditorOption.autoClosingQuotes, EditorAutoClosingStrategy>;
 		autoIndent: IEditorOption<EditorOption.autoIndent, EditorAutoIndentStrategy>;

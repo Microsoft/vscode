@@ -44,6 +44,8 @@ async function createModel(context: ExtensionContext, outputChannel: OutputChann
 	disposables.push(terminalEnvironmentManager);
 
 	const git = new Git({ gitPath: info.path, version: info.version, env });
+	await git.sshAgent.start().catch(() => null);
+
 	const model = new Model(git, askpass, context.globalState, outputChannel);
 	disposables.push(model);
 

@@ -12,16 +12,19 @@ import { EventEmitter } from 'events';
 import * as iconv from 'iconv-lite-umd';
 import * as filetype from 'file-type';
 import { assign, groupBy, IDisposable, toDisposable, dispose, mkdirp, readBytes, detectUnicodeEncoding, Encoding, onceEvent, splitInChunks, Limiter } from './util';
-import { CancellationToken, Progress, Uri } from 'vscode';
+import { CancellationToken, Progress, Uri, window, workspace } from 'vscode';
+import * as nls from 'vscode-nls';
 import { URI } from 'vscode-uri';
 import { detectEncoding } from './encoding';
 import { Ref, RefType, Branch, Remote, GitErrorCodes, LogOptions, Change, Status, CommitOptions, BranchQuery } from './api/git';
 import * as byline from 'byline';
 import { StringDecoder } from 'string_decoder';
+import * as pty from 'node-pty';
 
 // https://github.com/microsoft/vscode/issues/65693
 const MAX_CLI_LENGTH = 30000;
 const isWindows = process.platform === 'win32';
+const localize = nls.loadMessageBundle();
 
 export interface IGit {
 	path: string;
@@ -313,6 +316,155 @@ export interface IGitOptions {
 	env?: any;
 }
 
+class SshAgent {
+
+	private _sshAgentPid = '';
+	private _sshAuthSock = '';
+
+	private _sshBinDir: string | undefined;
+
+	get env() {
+		return Object.assign(
+			this._sshBinDir ? { 'GIT_SSH': path.join(this._sshBinDir, 'ssh') } : {},
+			this._sshAgentPid ? { 'SSH_AGENT_PID': this._sshAgentPid } : {},
+			this._sshAuthSock ? { 'SSH_AUTH_SOCK': this._sshAuthSock } : {}
+		);
+	}
+
+	async start(): Promise<void> {
+		if ('SSH_AUTH_SOCK' in process.env && process.env['SSH_AUTH_SOCK']) {
+			this._sshAuthSock = process.env['SSH_AUTH_SOCK'];
+			return Promise.resolve();
+		}
+
+		return this.getCommand('ssh-agent')
+			.then(sshAgentCommand => exec(cp.spawn(sshAgentCommand, ['-s'])))
+			.then(sshAgentResult => {
+				if (sshAgentResult.exitCode !== 0) {
+					window.showErrorMessage(localize('failed to start ssh-agent', "Failed to start ssh-agent: {0}", sshAgentResult.stderr));
+				}
+				return sshAgentResult.stdout
+					.toString()
+					.split('\n')
+					.forEach(outputLine => {
+						const sshAgentPidMatch = outputLine.match(/SSH_AGENT_PID=([^;]*)/);
+						if (sshAgentPidMatch && sshAgentPidMatch.length === 2) {
+							this._sshAgentPid = sshAgentPidMatch[1];
+						}
+
+						const sshAuthSockMatch = outputLine.match(/SSH_AUTH_SOCK=([^;]*)/);
+						if (sshAuthSockMatch && sshAuthSockMatch.length === 2) {
+							this._sshAuthSock = sshAuthSockMatch[1];
+						}
+					});
+			});
+	}
+
+	async addKey(privateKeyPath: string): Promise<void> {
+		if (await this.hasKey(privateKeyPath)) {
+			return;
+		}
+
+		return this.getCommand('ssh-add').then(sshAddCommand => {
+			let success = false;
+			const env: { [key: string]: string } = {};
+			Object.entries(Object.assign({}, process.env, this.env)).forEach(([key, value]) => {
+				if (value !== undefined && value !== '') {
+					env[key] = value;
+				}
+			});
+
+			// ssh-add requires a TTY, so child_process.spawn is not enough here
+			const sshAddProcess = pty.spawn(sshAddCommand, [privateKeyPath], { env });
+
+			sshAddProcess.on('data', data => {
+				const message = this.removeAnsiEscapeSequences(data).replace(/[\x0a\x0d]/g, '');
+
+				if (
+					message.match(/^Enter passphrase for .*:/) ||
+					message.match(/^Bad passphrase, try again for .*:/)
+				) {
+					window.showInputBox({ password: true, prompt: message }).then(password => {
+						sshAddProcess.write(`${password || ''}\n`);
+					});
+				} else if (message.match(/^Identity added: /)) {
+					success = true;
+				} else if (message) {
+					window.showErrorMessage(message);
+				}
+			});
+
+			return new Promise((resolve, reject) => {
+				sshAddProcess.on('exit', () => success ? resolve() : reject());
+			});
+		});
+	}
+
+	async listKeys(): Promise<string> {
+		return this.getCommand('ssh-add')
+			.then(sshAddCommand => exec(cp.spawn(sshAddCommand, ['-l'])))
+			.then(result => result.stdout.toString());
+	}
+
+	async hasKey(privateKeyPath: string): Promise<boolean> {
+		return this.listKeys()
+			.then(list => list.includes(privateKeyPath));
+	}
+
+	private async getCommand(commandName: string): Promise<string> {
+		if (this._sshBinDir) {
+			return which(path.join(this._sshBinDir, commandName));
+		}
+
+		const gitConfig = workspace.getConfiguration('git');
+		const sshAgentDirectoryConfig = gitConfig.get<string>('sshAgentDirectory');
+
+		const basePromise = sshAgentDirectoryConfig
+			? which(path.join(sshAgentDirectoryConfig, commandName)).catch(() => which(commandName))
+			: which(commandName);
+		const directoriesToSearch = isWindows ? [
+			'C:\\Program Files\\OpenSSH-Win64',
+			'C:\\Program Files\\OpenSSH',
+			'C:\\Program Files\\Git\\usr\\bin',
+		] : [];
+
+		return directoriesToSearch
+			.map(directoryName => path.join(directoryName, commandName))
+			.reduce(
+				(previousPromise: Promise<string>, commandName: string) => previousPromise.catch(() => which(commandName)),
+				basePromise
+			).then(commandPath => {
+				const commandDir = path.dirname(commandPath);
+				if (commandDir !== '.') {
+					this._sshBinDir = commandDir;
+				}
+				return commandPath;
+			}).catch(reason => {
+				window.showErrorMessage(localize('failed to find command', "Failed to find command '{0}'", commandName));
+				return Promise.reject(reason);
+			});
+	}
+
+	private removeAnsiEscapeSequences(str: string): string {
+		if (!str) {
+			return str;
+		}
+
+		// Escape sequences
+		// http://en.wikipedia.org/wiki/ANSI_escape_code
+		const OSC_STRING = /\x1B\].*?((\x1B\\)|\x07)/g; // Operating system command
+		const CUF = /\x1B\[\d*C/g; // Cursor forward
+		const CUP = /\x1B\[\d*;?\d*H/g; // Cursor position
+		const ED = /\x1B\[[012]?J/g; // Erase in display
+		const EL = /\x1B\[[012]?K/g; // Erase in line
+		const SGR = /\x1B\[\d*m/g; // Select graphic rendition
+		const SHOW_CURSOR = /\x1B\[\?25h/g; // Show the cursor
+		const ESCAPE_SEQUENCES = [OSC_STRING, CUF, CUP, ED, EL, SGR, SHOW_CURSOR];
+
+		return ESCAPE_SEQUENCES.reduce((to_escape: string, escape_sequence: RegExp) => to_escape.replace(escape_sequence, ''), str);
+	}
+}
+
 function getGitErrorCode(stderr: string): string | undefined {
 	if (/Another git process seems to be running in this repository|If no other git process is currently running/.test(stderr)) {
 		return GitErrorCodes.RepositoryIsLocked;
@@ -355,6 +507,7 @@ export class Git {
 
 	readonly path: string;
 	private env: any;
+	readonly sshAgent = new SshAgent;
 
 	private _onOutput = new EventEmitter();
 	get onOutput(): EventEmitter { return this._onOutput; }
@@ -546,7 +699,7 @@ export class Git {
 			options.stdio = ['ignore', null, null]; // Unless provided, ignore stdin and leave default streams for stdout and stderr
 		}
 
-		options.env = assign({}, process.env, this.env, options.env || {}, {
+		options.env = assign({}, process.env, this.env, this.sshAgent.env, options.env || {}, {
 			VSCODE_GIT_COMMAND: args[0],
 			LC_ALL: 'en_US.UTF-8',
 			LANG: 'en_US.UTF-8',

@@ -158,6 +158,8 @@
 	"config.untrackedChanges.hidden": "Untracked changes are hidden and excluded from several actions.",
 	"config.showCommitInput": "Controls whether to show the commit input in the Git source control panel.",
 	"config.terminalAuthentication": "Controls whether to enable VS Code to be the authentication handler for git processes spawned in the integrated terminal. Note: terminals need to be restarted to pick up a change in this setting.",
+	"config.sshPrivateKeyPath": "Path of the ssh private key associated with your remote.",
+	"config.sshAgentDirectory": "Path of the directory of the ssh-agent executable, e.g. `C:\\Program Files\\Git\\usr\\bin` (Windows).",
 	"submenu.commit": "Commit",
 	"submenu.commit.amend": "Amend",
 	"submenu.commit.signoff": "Sign Off",

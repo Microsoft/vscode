@@ -15,6 +15,7 @@ import { IProcessEnvironment } from 'vs/base/common/platform';
 import { BaseConfigurationResolverService } from 'vs/workbench/services/configurationResolver/browser/configurationResolverService';
 import { process } from 'vs/base/parts/sandbox/electron-sandbox/globals';
 import { ILabelService } from 'vs/platform/label/common/label';
+import { IUriIdentityService } from 'vs/workbench/services/uriIdentity/common/uriIdentity';
 
 export class ConfigurationResolverService extends BaseConfigurationResolverService {
 
@@ -25,13 +26,14 @@ export class ConfigurationResolverService extends BaseConfigurationResolverServi
 		@ICommandService commandService: ICommandService,
 		@IWorkspaceContextService workspaceContextService: IWorkspaceContextService,
 		@IQuickInputService quickInputService: IQuickInputService,
-		@ILabelService labelService: ILabelService
+		@ILabelService labelService: ILabelService,
+		@IUriIdentityService uriIdentityService: IUriIdentityService
 	) {
 		super({
 			getExecPath: (): string | undefined => {
 				return environmentService.execPath;
 			}
-		}, process.env as IProcessEnvironment, editorService, configurationService, commandService, workspaceContextService, quickInputService, labelService);
+		}, process.env as IProcessEnvironment, editorService, configurationService, commandService, workspaceContextService, quickInputService, labelService, uriIdentityService);
 	}
 }
 

@@ -7,6 +7,7 @@ import * as paths from 'vs/base/common/path';
 import * as process from 'vs/base/common/process';
 import * as types from 'vs/base/common/types';
 import * as objects from 'vs/base/common/objects';
+import * as resources from 'vs/base/common/resources';
 import { IStringDictionary } from 'vs/base/common/collections';
 import { IProcessEnvironment, isWindows, isMacintosh, isLinux } from 'vs/base/common/platform';
 import { normalizeDriveLetter } from 'vs/base/common/labels';
@@ -15,13 +16,14 @@ import { URI as uri } from 'vs/base/common/uri';
 import { IConfigurationResolverService } from 'vs/workbench/services/configurationResolver/common/configurationResolver';
 import { IWorkspaceFolder } from 'vs/platform/workspace/common/workspace';
 import { ILabelService } from 'vs/platform/label/common/label';
+import { IUriIdentityService } from 'vs/workbench/services/uriIdentity/common/uriIdentity';
 
 export interface IVariableResolveContext {
 	getFolderUri(folderName: string): uri | undefined;
 	getWorkspaceFolderCount(): number;
 	getConfigurationValue(folderUri: uri, section: string): string | undefined;
 	getExecPath(): string | undefined;
-	getFilePath(): string | undefined;
+	getFileUri(): uri | undefined;
 	getSelectedText(): string | undefined;
 	getLineNumber(): string | undefined;
 }
@@ -34,13 +36,15 @@ export class AbstractVariableResolverService implements IConfigurationResolverSe
 
 	private _context: IVariableResolveContext;
 	private _labelService?: ILabelService;
+	private _uriIdentityService?: IUriIdentityService;
 	private _envVariables?: IProcessEnvironment;
 	protected _contributedVariables: Map<string, () => Promise<string | undefined>> = new Map();
 
 
-	constructor(_context: IVariableResolveContext, _labelService?: ILabelService, _envVariables?: IProcessEnvironment, private _ignoreEditorVariables = false) {
+	constructor(_context: IVariableResolveContext, _uriIdentityService?: IUriIdentityService, _labelService?: ILabelService, _envVariables?: IProcessEnvironment, private _ignoreEditorVariables = false) {
 		this._context = _context;
 		this._labelService = _labelService;
+		this._uriIdentityService = _uriIdentityService;
 		if (_envVariables) {
 			if (isWindows) {
 				// windows env variables are case insensitive
@@ -147,6 +151,16 @@ export class AbstractVariableResolverService implements IConfigurationResolverSe
 		return this._labelService ? this._labelService.getUriLabel(displayUri, { noPrefix: true }) : displayUri.fsPath;
 	}
 
+	private relative(from: uri, to: uri): string {
+		if (this._uriIdentityService) {
+			const relativePath = this._uriIdentityService.extUri.relativePath(from, to);
+			if (relativePath !== undefined) {
+				return relativePath;
+			}
+		}
+		return paths.relative(this.fsPath(from), this.fsPath(to));
+	}
+
 	private evaluateSingleVariable(match: string, variable: string, folderUri: uri | undefined, commandValueMapping: IStringDictionary<string> | undefined): string {
 
 		// try to separate variable arguments from variable name
@@ -158,13 +172,17 @@ export class AbstractVariableResolverService implements IConfigurationResolverSe
 		}
 
 		// common error handling for all variables that require an open editor
-		const getFilePath = (): string => {
+		const getFileUri = (): uri => {
 
-			const filePath = this._context.getFilePath();
+			const filePath = this._context.getFileUri();
 			if (filePath) {
 				return filePath;
 			}
 			throw new Error(localize('canNotResolveFile', "'{0}' can not be resolved. Please open an editor.", match));
+		};
+
+		const getFilePath = (): string => {
+			return this.fsPath(getFileUri());
 		};
 
 		// common error handling for all variables that require an open folder and accept a folder name argument
@@ -268,7 +286,7 @@ export class AbstractVariableResolverService implements IConfigurationResolverSe
 							return match;
 						}
 						if (folderUri || argument) {
-							return paths.relative(this.fsPath(getFolderUri()), getFilePath());
+							return this.relative(getFolderUri(), getFileUri());
 						}
 						return getFilePath();
 
@@ -276,11 +294,11 @@ export class AbstractVariableResolverService implements IConfigurationResolverSe
 						if (this._ignoreEditorVariables) {
 							return match;
 						}
-						const dirname = paths.dirname(getFilePath());
+						const dirname = resources.dirname(getFileUri());
 						if (folderUri || argument) {
-							return paths.relative(this.fsPath(getFolderUri()), dirname);
+							return this.relative(getFolderUri(), dirname);
 						}
-						return dirname;
+						return this.fsPath(dirname);
 
 					case 'fileDirname':
 						if (this._ignoreEditorVariables) {

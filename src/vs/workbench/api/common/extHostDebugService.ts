@@ -3,7 +3,6 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as path from 'vs/base/common/path';
 import { URI, UriComponents } from 'vs/base/common/uri';
 import { Event, Emitter } from 'vs/base/common/event';
 import { asPromise } from 'vs/base/common/async';
@@ -1005,11 +1004,11 @@ export class ExtHostVariableResolverService extends AbstractVariableResolverServ
 			getExecPath: (): string | undefined => {
 				return env ? env['VSCODE_EXEC_PATH'] : undefined;
 			},
-			getFilePath: (): string | undefined => {
+			getFileUri: (): URI | undefined => {
 				if (editorService) {
 					const activeEditor = editorService.activeEditor();
 					if (activeEditor) {
-						return path.normalize(activeEditor.document.uri.fsPath);
+						return activeEditor.document.uri;
 					}
 				}
 				return undefined;
@@ -1032,7 +1031,7 @@ export class ExtHostVariableResolverService extends AbstractVariableResolverServ
 				}
 				return undefined;
 			}
-		}, undefined, env, !editorService);
+		}, undefined, undefined, env, !editorService);
 	}
 }
 

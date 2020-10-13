@@ -21,6 +21,7 @@ import { ConfiguredInput, IConfigurationResolverService } from 'vs/workbench/ser
 import { IProcessEnvironment } from 'vs/base/common/platform';
 import { registerSingleton } from 'vs/platform/instantiation/common/extensions';
 import { ILabelService } from 'vs/platform/label/common/label';
+import { IUriIdentityService } from 'vs/workbench/services/uriIdentity/common/uriIdentity';
 
 export abstract class BaseConfigurationResolverService extends AbstractVariableResolverService {
 
@@ -34,7 +35,8 @@ export abstract class BaseConfigurationResolverService extends AbstractVariableR
 		private readonly commandService: ICommandService,
 		private readonly workspaceContextService: IWorkspaceContextService,
 		private readonly quickInputService: IQuickInputService,
-		private readonly labelService: ILabelService
+		readonly labelService: ILabelService,
+		readonly uriIdentityService: IUriIdentityService
 	) {
 		super({
 			getFolderUri: (folderName: string): uri | undefined => {
@@ -50,7 +52,7 @@ export abstract class BaseConfigurationResolverService extends AbstractVariableR
 			getExecPath: (): string | undefined => {
 				return context.getExecPath();
 			},
-			getFilePath: (): string | undefined => {
+			getFileUri: (): uri | undefined => {
 				const fileResource = EditorResourceAccessor.getOriginalUri(editorService.activeEditor, {
 					supportSideBySide: SideBySideEditor.PRIMARY,
 					filterByScheme: [Schemas.file, Schemas.userData, Schemas.vscodeRemote]
@@ -58,7 +60,7 @@ export abstract class BaseConfigurationResolverService extends AbstractVariableR
 				if (!fileResource) {
 					return undefined;
 				}
-				return this.labelService.getUriLabel(fileResource, { noPrefix: true });
+				return fileResource;
 			},
 			getSelectedText: (): string | undefined => {
 				const activeTextEditorControl = editorService.activeTextEditorControl;
@@ -82,7 +84,7 @@ export abstract class BaseConfigurationResolverService extends AbstractVariableR
 				}
 				return undefined;
 			}
-		}, labelService, envVariables);
+		}, uriIdentityService, labelService, envVariables);
 	}
 
 	public async resolveWithInteractionReplace(folder: IWorkspaceFolder | undefined, config: any, section?: string, variables?: IStringDictionary<string>, target?: ConfigurationTarget): Promise<any> {
@@ -347,9 +349,10 @@ export class ConfigurationResolverService extends BaseConfigurationResolverServi
 		@ICommandService commandService: ICommandService,
 		@IWorkspaceContextService workspaceContextService: IWorkspaceContextService,
 		@IQuickInputService quickInputService: IQuickInputService,
-		@ILabelService labelService: ILabelService
+		@ILabelService labelService: ILabelService,
+		@IUriIdentityService uriIdentityService: IUriIdentityService
 	) {
-		super({ getExecPath: () => undefined }, Object.create(null), editorService, configurationService, commandService, workspaceContextService, quickInputService, labelService);
+		super({ getExecPath: () => undefined }, Object.create(null), editorService, configurationService, commandService, workspaceContextService, quickInputService, labelService, uriIdentityService);
 	}
 }
 

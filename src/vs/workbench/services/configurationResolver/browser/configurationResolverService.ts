@@ -6,6 +6,7 @@
 import { URI as uri } from 'vs/base/common/uri';
 import * as nls from 'vs/nls';
 import * as Types from 'vs/base/common/types';
+import * as objects from 'vs/base/common/objects';
 import { Schemas } from 'vs/base/common/network';
 import { SideBySideEditor, EditorResourceAccessor } from 'vs/workbench/common/editor';
 import { IStringDictionary, forEach, fromMap } from 'vs/base/common/collections';
@@ -22,9 +23,18 @@ import { IProcessEnvironment } from 'vs/base/common/platform';
 import { registerSingleton } from 'vs/platform/instantiation/common/extensions';
 import { ILabelService } from 'vs/platform/label/common/label';
 
+interface Variable {
+	command: string;
+	original: string;
+	content: string;
+	type: string;
+}
+
 export abstract class BaseConfigurationResolverService extends AbstractVariableResolverService {
 
 	static readonly INPUT_OR_COMMAND_VARIABLES_PATTERN = /\${((input|command):(.*?))}/g;
+
+	static readonly CONTRIBUTEDVARIABLE_TYPE = 'contributed';
 
 	constructor(
 		context: { getExecPath: () => string | undefined },
@@ -132,7 +142,9 @@ export abstract class BaseConfigurationResolverService extends AbstractVariableR
 
 	/**
 	 * Finds and executes all input and command variables in the given configuration and returns their values as a dictionary.
-	 * Please note: this method does not substitute the input or command variables (so the configuration is not modified).
+	 * Please note:
+	 *   - this method does not substitute the input or command variables (so the configuration is not modified).
+	 * 	 - this method clones the configuration to enable dependant variables #80219.
 	 * The returned dictionary can be passed to "resolvePlatform" for the actual substitution.
 	 * See #6569.
 	 *
@@ -143,6 +155,9 @@ export abstract class BaseConfigurationResolverService extends AbstractVariableR
 		if (!configuration) {
 			return Promise.resolve(undefined);
 		}
+
+		// Allows multi-stage resolve without affecting the instance of the configuration, therefore not causing side effects.
+		configuration = objects.deepClone(configuration);
 
 		// get all "inputs"
 		let inputs: ConfiguredInput[] = [];
@@ -162,41 +177,50 @@ export abstract class BaseConfigurationResolverService extends AbstractVariableR
 			}
 		}
 
-		// extract and dedupe all "input" and "command" variables and preserve their order in an array
-		const variables: string[] = [];
-		this.findVariables(configuration, variables);
+		// find all "input" and "command" variables and preserve their order in an array
+		const variables: Variable[] = this.findVariables(configuration);
 
 		const variableValues: IStringDictionary<string> = Object.create(null);
 
-		for (const variable of variables) {
+		const resolved = await this.resolveAnyMap(folder, configuration);
+		const allVariableMapping: Map<string, string> = resolved.resolvedVariables;
+		const intermediateVariableValues: IStringDictionary<string> = Object.create(null);
 
-			const [type, name] = variable.split(':', 2);
+		for (const variable of variables) {
+			intermediateVariableValues[variable.content] = variable.original;
+		}
+
+		for (const variable of variables) {
 
 			let result: string | undefined;
 
-			switch (type) {
+			switch (variable.type) {
 
 				case 'input':
-					result = await this.showUserInput(name, inputs);
+					result = await this.showUserInput(variable.command, inputs);
 					break;
 
 				case 'command':
 					// use the name as a command ID #12735
-					const commandId = (variableToCommandMap ? variableToCommandMap[name] : undefined) || name;
+					const commandId = (variableToCommandMap ? variableToCommandMap[variable.command] : undefined) || variable.command;
 					result = await this.commandService.executeCommand(commandId, configuration);
 					if (typeof result !== 'string' && !Types.isUndefinedOrNull(result)) {
 						throw new Error(nls.localize('commandVariable.noStringType', "Cannot substitute command variable '{0}' because command did not return a result of type string.", commandId));
 					}
 					break;
-				default:
+				case BaseConfigurationResolverService.CONTRIBUTEDVARIABLE_TYPE:
 					// Try to resolve it as a contributed variable
-					if (this._contributedVariables.has(variable)) {
-						result = await this._contributedVariables.get(variable)!();
+					if (this._contributedVariables.has(variable.content)) {
+						result = await this._contributedVariables.get(variable.content)!();
 					}
 			}
 
 			if (typeof result === 'string') {
-				variableValues[variable] = result;
+				variableValues[variable.content] = result;
+				intermediateVariableValues[variable.content] = result;
+
+				this.updateMapping(intermediateVariableValues, allVariableMapping);
+				configuration = await this.resolveAny(folder, configuration, fromMap(allVariableMapping));
 			} else {
 				return undefined;
 			}
@@ -206,36 +230,60 @@ export abstract class BaseConfigurationResolverService extends AbstractVariableR
 	}
 
 	/**
-	 * Recursively finds all command or input variables in object and pushes them into variables.
+	 * Recursively finds all command or input variables in object and returns them.
 	 * @param object object is searched for variables.
-	 * @param variables All found variables are returned in variables.
 	 */
-	private findVariables(object: any, variables: string[]) {
-		if (typeof object === 'string') {
-			let matches;
-			while ((matches = BaseConfigurationResolverService.INPUT_OR_COMMAND_VARIABLES_PATTERN.exec(object)) !== null) {
-				if (matches.length === 4) {
-					const command = matches[1];
-					if (variables.indexOf(command) < 0) {
-						variables.push(command);
+	private findVariables(object: any): Variable[] {
+
+		const variables: Variable[] = [];
+		let contributedVariables = this._contributedVariables;
+
+		function findAndAdd(object: any) {
+			if (typeof object === 'string') {
+				let matches;
+				while ((matches = BaseConfigurationResolverService.INPUT_OR_COMMAND_VARIABLES_PATTERN.exec(object)) !== null) {
+					if (matches.length === 4) {
+
+						const variable: Variable = {
+							command: matches[3],
+							type: matches[2],
+							original: matches[0],
+							content: matches[1]
+						};
+
+						if (variables.filter(item => item.command === variable.command && item.type === variable.type).length === 0) {
+							variables.push(variable);
+						}
 					}
 				}
+				contributedVariables.forEach((value, contributed: string) => {
+
+					const variable: Variable = {
+						command: '',
+						type: BaseConfigurationResolverService.CONTRIBUTEDVARIABLE_TYPE,
+						original: '${' + contributed + '}',
+						content: contributed
+					};
+
+					if (variables.filter(item => item.content === contributed).length === 0 && (object.indexOf('${' + contributed + '}') >= 0)) {
+						variables.push(variable);
+					}
+				});
+			} else if (Types.isArray(object)) {
+				object.forEach(value => {
+					findAndAdd(value);
+				});
+			} else if (object) {
+				Object.keys(object).forEach(key => {
+					const value = object[key];
+					findAndAdd(value);
+				});
 			}
-			this._contributedVariables.forEach((value, contributed: string) => {
-				if ((variables.indexOf(contributed) < 0) && (object.indexOf('${' + contributed + '}') >= 0)) {
-					variables.push(contributed);
-				}
-			});
-		} else if (Types.isArray(object)) {
-			object.forEach(value => {
-				this.findVariables(value, variables);
-			});
-		} else if (object) {
-			Object.keys(object).forEach(key => {
-				const value = object[key];
-				this.findVariables(value, variables);
-			});
 		}
+
+		findAndAdd(object);
+
+		return variables;
 	}
 
 	/**

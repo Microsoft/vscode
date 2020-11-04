@@ -679,6 +679,27 @@ export interface CodeActionProvider {
 	_getAdditionalMenuItems?(context: CodeActionContext, actions: readonly CodeAction[]): Command[];
 }
 
+export interface CopyPasteActionProvider<T = unknown> {
+	id: string;
+
+	onDidCopy?(
+		model: model.ITextModel,
+		selection: Selection,
+		context: { clipboardText: string },
+		token: CancellationToken,
+	): Promise<T | undefined>;
+
+	onWillPaste(
+		model: model.ITextModel,
+		selection: Selection,
+		content: {
+			clipboardText: string;
+			clipboardData?: T;
+		},
+		token: CancellationToken,
+	): Promise<WorkspaceEdit | undefined>;
+}
+
 /**
  * Represents a parameter of a callable-signature. A parameter can
  * have a label and a doc-comment.
@@ -1749,6 +1770,11 @@ export const CodeLensProviderRegistry = new LanguageFeatureRegistry<CodeLensProv
  * @internal
  */
 export const CodeActionProviderRegistry = new LanguageFeatureRegistry<CodeActionProvider>();
+
+/**
+ * @internal
+ */
+export const CopyPasteActionProviderRegistry = new LanguageFeatureRegistry<CopyPasteActionProvider>();
 
 /**
  * @internal

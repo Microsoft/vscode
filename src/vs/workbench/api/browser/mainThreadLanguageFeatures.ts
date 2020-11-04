@@ -324,6 +324,26 @@ export class MainThreadLanguageFeatures implements MainThreadLanguageFeaturesSha
 		this._registrations.set(handle, modes.CodeActionProviderRegistry.register(selector, provider));
 	}
 
+	// --- copy paste action provider
+
+	$registerCopyPasteActionProvider(handle: number, selector: IDocumentFilterDto[], id: string, supportsCopy: boolean): void {
+		const provider: modes.CopyPasteActionProvider<string> = {
+			id,
+			onDidCopy: supportsCopy
+				? (model: ITextModel, selection: Selection, context: { clipboardText: string }, token: CancellationToken): Promise<string | undefined> => {
+					return this._proxy.$onDidCopy(handle, model.uri, selection, context, token);
+				}
+				: undefined,
+
+			onWillPaste: async (model: ITextModel, selection: Selection, context: { clipboardText: string, clipboardData?: string }, token: CancellationToken) => {
+				const result = await this._proxy.$onWillPaste(handle, model.uri, selection, { clipboardText: context.clipboardText, handle: context.clipboardData }, token);
+				return result && reviveWorkspaceEditDto(result);
+			}
+		};
+
+		this._registrations.set(handle, modes.CopyPasteActionProviderRegistry.register(selector, provider));
+	}
+
 	// --- formatting
 
 	$registerDocumentFormattingSupport(handle: number, selector: IDocumentFilterDto[], extensionId: ExtensionIdentifier, displayName: string): void {

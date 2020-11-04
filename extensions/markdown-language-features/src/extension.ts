@@ -21,6 +21,8 @@ import { githubSlugifier } from './slugify';
 import { loadDefaultTelemetryReporter, TelemetryReporter } from './telemetryReporter';
 
 
+type ClipboardData = { count: number };
+
 export function activate(context: vscode.ExtensionContext) {
 	const telemetryReporter = loadDefaultTelemetryReporter();
 	context.subscriptions.push(telemetryReporter);
@@ -44,6 +46,42 @@ export function activate(context: vscode.ExtensionContext) {
 		logger.updateConfiguration();
 		previewManager.updateConfiguration();
 	}));
+
+	// Example copy paste provider that includes the number of times
+	// you've copied something in the pasted text.
+
+	let copyCount = 0;
+
+	vscode.languages.registerCopyPasteActionProvider({ language: 'markdown', }, new class implements vscode.CopyPasteActionProvider<ClipboardData> {
+
+		async onDidCopy(
+			_document: vscode.TextDocument,
+			_selection: vscode.Selection,
+			_context: { clipboardText: string },
+			_token: vscode.CancellationToken,
+		): Promise<ClipboardData | undefined> {
+			return { count: copyCount++ };
+		}
+
+		async onWillPaste(
+			document: vscode.TextDocument,
+			selection: vscode.Selection,
+			context: { clipboardText: string; clipboardData?: ClipboardData; },
+			_token: vscode.CancellationToken,
+		): Promise<vscode.WorkspaceEdit | undefined> {
+
+			await new Promise(resolve => setTimeout(resolve, 100));
+
+			const edit = new vscode.WorkspaceEdit();
+
+			const newText = `(copy #${context.clipboardData?.count}) ${context.clipboardText}`;
+			edit.replace(document.uri, selection, newText);
+
+			return edit;
+		}
+	}, {
+		kind: vscode.CodeActionKind.Empty
+	});
 }
 
 function registerMarkdownLanguageFeatures(

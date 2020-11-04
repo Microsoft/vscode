@@ -1850,6 +1850,7 @@ export class EditorModeContext extends Disposable {
 		// update when registries change
 		this._register(modes.CompletionProviderRegistry.onDidChange(update));
 		this._register(modes.CodeActionProviderRegistry.onDidChange(update));
+		this._register(modes.CopyPasteActionProviderRegistry.onDidChange(update));
 		this._register(modes.CodeLensProviderRegistry.onDidChange(update));
 		this._register(modes.DefinitionProviderRegistry.onDidChange(update));
 		this._register(modes.DeclarationProviderRegistry.onDidChange(update));

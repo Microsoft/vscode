@@ -484,6 +484,49 @@ class CodeActionAdapter {
 	}
 }
 
+class CopyPasteActionProvider {
+
+	private readonly _idPool = new IdGenerator('');
+
+	private storedValue?: { handle: string, data: unknown };
+
+	constructor(
+		private readonly _documents: ExtHostDocuments,
+		private readonly _provider: vscode.CopyPasteActionProvider
+	) { }
+
+	async onDidCopy(resource: URI, selection: ISelection, context: { readonly clipboardText: string; }, token: CancellationToken): Promise<undefined | string> {
+		if (!this._provider.onDidCopy) {
+			return undefined;
+		}
+
+		const doc = this._documents.getDocument(resource);
+		const vscodeSelection = typeConvert.Selection.to(selection);
+
+		const result = await this._provider.onDidCopy(doc, vscodeSelection, context, token);
+		if (!result) {
+			return undefined;
+		}
+
+		const handle = this._idPool.nextId();
+		this.storedValue = { handle, data: result };
+		return handle;
+	}
+
+	async onWillPaste(resource: URI, selection: ISelection, context: { clipboardText: string; handle: string | undefined; }, token: CancellationToken): Promise<undefined | extHostProtocol.IWorkspaceEditDto> {
+		const doc = this._documents.getDocument(resource);
+		const vscodeSelection = typeConvert.Selection.to(selection);
+
+		const data = context.handle && this.storedValue?.handle === context.handle ? this.storedValue.data : undefined;
+		const result = await this._provider.onWillPaste(doc, vscodeSelection, { clipboardText: context.clipboardText, clipboardData: data }, token);
+		if (!result) {
+			return;
+		}
+
+		return typeConvert.WorkspaceEdit.from(result);
+	}
+}
+
 class DocumentFormattingAdapter {
 
 	constructor(
@@ -1324,7 +1367,7 @@ class CallHierarchyAdapter {
 }
 
 type Adapter = DocumentSymbolAdapter | CodeLensAdapter | DefinitionAdapter | HoverAdapter
-	| DocumentHighlightAdapter | ReferenceAdapter | CodeActionAdapter | DocumentFormattingAdapter
+	| DocumentHighlightAdapter | ReferenceAdapter | CodeActionAdapter | CopyPasteActionProvider | DocumentFormattingAdapter
 	| RangeFormattingAdapter | OnTypeFormattingAdapter | NavigateTypeAdapter | RenameAdapter
 	| SuggestAdapter | SignatureHelpAdapter | LinkProviderAdapter | ImplementationAdapter
 	| TypeDefinitionAdapter | ColorProviderAdapter | FoldingProviderAdapter | DeclarationAdapter
@@ -1632,6 +1675,24 @@ export class ExtHostLanguageFeatures implements extHostProtocol.ExtHostLanguageF
 
 	$releaseCodeActions(handle: number, cacheId: number): void {
 		this._withAdapter(handle, CodeActionAdapter, adapter => Promise.resolve(adapter.releaseCodeActions(cacheId)), undefined);
+	}
+
+	// --- copy/paste actions
+
+	registerCopyPasteActionProvider(extension: IExtensionDescription, selector: vscode.DocumentSelector, provider: vscode.CopyPasteActionProvider, metadata: vscode.CopyPasteActionProviderMetadata): vscode.Disposable {
+		const store = new DisposableStore();
+		const handle = this._addNewAdapter(new CopyPasteActionProvider(this._documents, provider), extension);
+		this._proxy.$registerCopyPasteActionProvider(handle, this._transformDocumentSelector(selector), 'todo', !!provider.onDidCopy);
+		store.add(this._createDisposable(handle));
+		return store;
+	}
+
+	$onDidCopy(handle: number, resource: UriComponents, selection: ISelection, context: { readonly clipboardText: string; }, token: CancellationToken): Promise<string | undefined> {
+		return this._withAdapter(handle, CopyPasteActionProvider, adapter => adapter.onDidCopy(URI.revive(resource), selection, context, token), undefined);
+	}
+
+	$onWillPaste(handle: number, resource: UriComponents, selection: ISelection, context: { clipboardText: string; handle: string | undefined; }, token: CancellationToken): Promise<extHostProtocol.IWorkspaceEditDto | undefined> {
+		return this._withAdapter(handle, CopyPasteActionProvider, adapter => adapter.onWillPaste(URI.revive(resource), selection, context, token), undefined);
 	}
 
 	// --- formatting

@@ -64,7 +64,7 @@ export class ElectronIframeWebview extends IFrameWebview {
 
 	protected initElement(extension: WebviewExtensionDescription | undefined, options: WebviewOptions) {
 		// The extensionId and purpose in the URL are used for filtering in js-debug:
-		this.element!.setAttribute('src', `${Schemas.vscodeWebview}://${this.id}/index.html?id=${this.id}&platform=electron&extensionId=${extension?.id.value ?? ''}&purpose=${options.purpose}`);
+		this.element!.setAttribute('src', `${Schemas.vscodeWebview}://${this.id}/index.html?id=${this.id}&P&extensionId=${extension?.id.value ?? ''}&purpose=${options.purpose}`);
 	}
 
 	public set contentOptions(options: WebviewContentOptions) {

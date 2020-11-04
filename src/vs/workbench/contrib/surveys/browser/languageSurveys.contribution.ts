@@ -36,6 +36,7 @@ class LanguageSurvey extends Disposable {
 	) {
 		super();
 
+		const SESSION_COUNT_THRESHOLD = 9;
 		const SESSION_COUNT_KEY = `${data.surveyId}.sessionCount`;
 		const LAST_SESSION_DATE_KEY = `${data.surveyId}.lastSessionDate`;
 		const SKIP_VERSION_KEY = `${data.surveyId}.skipVersion`;
@@ -83,7 +84,7 @@ class LanguageSurvey extends Disposable {
 		storageService.store(LAST_SESSION_DATE_KEY, date, StorageScope.GLOBAL);
 		storageService.store(SESSION_COUNT_KEY, sessionCount, StorageScope.GLOBAL);
 
-		if (sessionCount < 9) {
+		if (sessionCount < SESSION_COUNT_THRESHOLD) {
 			return;
 		}
 
@@ -121,7 +122,7 @@ class LanguageSurvey extends Disposable {
 				label: nls.localize('remindLater', "Remind Me later"),
 				run: () => {
 					telemetryService.publicLog(`${data.surveyId}.survey/remindMeLater`);
-					storageService.store(SESSION_COUNT_KEY, sessionCount - 3, StorageScope.GLOBAL);
+					storageService.store(SESSION_COUNT_KEY, SESSION_COUNT_THRESHOLD - 3, StorageScope.GLOBAL);
 				}
 			}, {
 				label: nls.localize('neverAgain', "Don't Show Again"),

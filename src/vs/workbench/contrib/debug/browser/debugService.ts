@@ -49,6 +49,7 @@ import { DebugCompoundRoot } from 'vs/workbench/contrib/debug/common/debugCompou
 import { ICommandService } from 'vs/platform/commands/common/commands';
 import { IQuickInputService } from 'vs/platform/quickinput/common/quickInput';
 import { IUriIdentityService } from 'vs/workbench/services/uriIdentity/common/uriIdentity';
+import { SaveReason } from 'vs/workbench/common/editor';
 
 export class DebugService implements IDebugService {
 	declare readonly _serviceBrand: undefined;
@@ -281,7 +282,7 @@ export class DebugService implements IDebugService {
 			// make sure to save all files and that the configuration is up to date
 			await this.extensionService.activateByEvent('onDebug');
 			if (!options?.parentSession) {
-				await this.editorService.saveAll();
+				await this.saveAllEditors();
 			}
 			await this.configurationService.reloadConfiguration(launch ? launch.workspace : undefined);
 			await this.extensionService.whenInstalledExtensionsRegistered();
@@ -634,7 +635,7 @@ export class DebugService implements IDebugService {
 	}
 
 	async restartSession(session: IDebugSession, restartData?: any): Promise<any> {
-		await this.editorService.saveAll();
+		await this.saveAllEditors();
 		const isAutoRestart = !!restartData;
 
 		const runTasks: () => Promise<TaskRunResult> = async () => {
@@ -784,6 +785,12 @@ export class DebugService implements IDebugService {
 		}
 
 		return undefined;
+	}
+
+	private async saveAllEditors() {
+		const formatOnSaveBeforeRunTaskConfig = this.configurationService.getValue<boolean>('editor.formatOnSaveBeforeRun');
+		const saveReason = formatOnSaveBeforeRunTaskConfig ? SaveReason.EXPLICIT : SaveReason.AUTO;
+		this.editorService.saveAll({ reason: saveReason });
 	}
 
 	//---- focus management

@@ -379,6 +379,12 @@ configurationRegistry.registerConfiguration({
 			'markdownDescription': nls.localize('formatOnSaveMode', "Controls if format on save formats the whole file or only modifications. Only applies when `#editor.formatOnSave#` is `true`."),
 			'scope': ConfigurationScope.LANGUAGE_OVERRIDABLE,
 		},
+		'editor.formatOnSaveBeforeRun': {
+			'type': 'boolean',
+			'markdownDescription': nls.localize('formatOnSaveBeforeRun', "Controls whether formatting on save is also done when saving happens automatically before running a task (if `#task.saveBeforeRun#` is on) or before debugging. Only applies when `#editor.formatOnSave#` is `true`."),
+			'default': true,
+			'scope': ConfigurationScope.LANGUAGE_OVERRIDABLE,
+		},
 	}
 });
 

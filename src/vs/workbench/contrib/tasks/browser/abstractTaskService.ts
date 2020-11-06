@@ -1466,7 +1466,7 @@ export abstract class AbstractTaskService extends Disposable implements ITaskSer
 		};
 	}
 
-	private executeTask(task: Task, resolver: ITaskResolver, runSource: TaskRunSource): Promise<ITaskSummary> {
+	private optionallySaveAllEditorsAndDoAction<ReturnType>(action: () => Promise<ReturnType>): Promise<ReturnType> {
 		enum SaveBeforeRunConfigOptions {
 			Always = 'always',
 			Never = 'never',
@@ -1475,20 +1475,15 @@ export abstract class AbstractTaskService extends Disposable implements ITaskSer
 
 		const saveBeforeRunTaskConfig: SaveBeforeRunConfigOptions = this.configurationService.getValue('task.saveBeforeRun');
 
-		const execTask = async (task: Task, resolver: ITaskResolver): Promise<ITaskSummary> => {
-			return ProblemMatcherRegistry.onReady().then(() => {
-				let executeResult = this.getTaskSystem().run(task, resolver);
-				return this.handleExecuteResult(executeResult, runSource);
+		const saveAllEditorsAndDoAction = async (): Promise<ReturnType> => {
+			const formatOnSaveBeforeRunTaskConfig = this.configurationService.getValue<boolean>('editor.formatOnSaveBeforeRun');
+			const saveReason = formatOnSaveBeforeRunTaskConfig ? SaveReason.EXPLICIT : SaveReason.AUTO;
+			return this.editorService.saveAll({ reason: saveReason }).then(() => {
+				return action();
 			});
 		};
 
-		const saveAllEditorsAndExecTask = async (task: Task, resolver: ITaskResolver): Promise<ITaskSummary> => {
-			return this.editorService.saveAll({ reason: SaveReason.AUTO }).then(() => {
-				return execTask(task, resolver);
-			});
-		};
-
-		const promptAsk = async (task: Task, resolver: ITaskResolver): Promise<ITaskSummary> => {
+		const promptAsk = async (): Promise<ReturnType> => {
 			const dialogOptions = await this.dialogService.show(
 				Severity.Info,
 				nls.localize('TaskSystem.saveBeforeRun.prompt.title', 'Save all editors?'),
@@ -1500,19 +1495,28 @@ export abstract class AbstractTaskService extends Disposable implements ITaskSer
 			);
 
 			if (dialogOptions.choice === 0) {
-				return saveAllEditorsAndExecTask(task, resolver);
+				return saveAllEditorsAndDoAction();
 			} else {
-				return execTask(task, resolver);
+				return action();
 			}
 		};
 
 		if (saveBeforeRunTaskConfig === SaveBeforeRunConfigOptions.Never) {
-			return execTask(task, resolver);
+			return action();
 		} else if (saveBeforeRunTaskConfig === SaveBeforeRunConfigOptions.Prompt) {
-			return promptAsk(task, resolver);
+			return promptAsk();
 		} else {
-			return saveAllEditorsAndExecTask(task, resolver);
+			return saveAllEditorsAndDoAction();
 		}
+	}
+
+	private executeTask(task: Task, resolver: ITaskResolver, runSource: TaskRunSource): Promise<ITaskSummary> {
+		return this.optionallySaveAllEditorsAndDoAction(async () => {
+			return ProblemMatcherRegistry.onReady().then(() => {
+				let executeResult = this.getTaskSystem().run(task, resolver);
+				return this.handleExecuteResult(executeResult, runSource);
+			});
+		});
 	}
 
 	private async handleExecuteResult(executeResult: ITaskExecuteResult, runSource?: TaskRunSource): Promise<ITaskSummary> {
@@ -2502,16 +2506,14 @@ export abstract class AbstractTaskService extends Disposable implements ITaskSer
 			return;
 		}
 
-		ProblemMatcherRegistry.onReady().then(() => {
-			return this.editorService.saveAll({ reason: SaveReason.AUTO }).then(() => { // make sure all dirty editors are saved
-				let executeResult = this.getTaskSystem().rerun();
-				if (executeResult) {
-					return this.handleExecuteResult(executeResult);
-				} else {
-					this.doRunTaskCommand();
-					return Promise.resolve(undefined);
-				}
-			});
+		this.optionallySaveAllEditorsAndDoAction(async () => {
+			let executeResult = this.getTaskSystem().rerun();
+			if (executeResult) {
+				return this.handleExecuteResult(executeResult);
+			} else {
+				this.doRunTaskCommand();
+				return Promise.resolve(undefined);
+			}
 		});
 	}
 

@@ -304,6 +304,10 @@ export class MainThreadDebugService implements MainThreadDebugServiceShape, IDeb
 		this.getDebugAdapter(handle).fireExit(handle, code, signal);
 	}
 
+	public $acceptDAOutput(handle: number, output: string) {
+		this.getDebugAdapter(handle).fireOutput(handle, output);
+	}
+
 	private getDebugAdapter(handle: number): ExtensionHostDebugAdapter {
 		const adapter = this._debugAdapters.get(handle);
 		if (!adapter) {
@@ -401,6 +405,10 @@ class ExtensionHostDebugAdapter extends AbstractDebugAdapter {
 
 	fireExit(handle: number, code: number, signal: string) {
 		this._onExit.fire(code);
+	}
+
+	fireOutput(handle: number, output: string) {
+		this._onOutput.fire(output);
 	}
 
 	startSession(): Promise<void> {

@@ -21,6 +21,7 @@ export abstract class AbstractDebugAdapter implements IDebugAdapter {
 	private queue: DebugProtocol.ProtocolMessage[] = [];
 	protected readonly _onError = new Emitter<Error>();
 	protected readonly _onExit = new Emitter<number | null>();
+	protected readonly _onOutput = new Emitter<string>();
 
 	constructor() {
 		this.sequence = 1;
@@ -38,6 +39,10 @@ export abstract class AbstractDebugAdapter implements IDebugAdapter {
 
 	get onExit(): Event<number | null> {
 		return this._onExit.event;
+	}
+
+	get onOutput(): Event<string> {
+		return this._onOutput.event;
 	}
 
 	onMessage(callback: (message: DebugProtocol.ProtocolMessage) => void): void {

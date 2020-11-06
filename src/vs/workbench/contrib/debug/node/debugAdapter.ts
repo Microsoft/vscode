@@ -251,6 +251,10 @@ export class ExecutableDebugAdapter extends StreamDebugAdapter {
 				this._onError.fire(error);
 			});
 
+			this.serverProcess.stderr!.on('data', (data: Buffer) => {
+				this._onOutput.fire(data.toString());
+			});
+
 			const outputService = this.outputService;
 			if (outputService) {
 				const sanitize = (s: string) => s.toString().replace(/\r?\n$/mg, '');

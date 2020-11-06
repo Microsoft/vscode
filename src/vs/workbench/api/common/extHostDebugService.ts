@@ -496,6 +496,12 @@ export abstract class ExtHostDebugServiceBase implements IExtHostDebugService, E
 					}
 					this._debugServiceProxy.$acceptDAExit(debugAdapterHandle, withNullAsUndefined(code), undefined);
 				});
+				debugAdapter.onOutput((output: string) => {
+					if (tracker && tracker.onOutput) {
+						tracker.onOutput(output);
+					}
+					this._debugServiceProxy.$acceptDAOutput(debugAdapterHandle, output);
+				});
 
 				if (tracker && tracker.onWillStartSession) {
 					tracker.onWillStartSession();
@@ -1081,6 +1087,10 @@ class MultiTracker implements vscode.DebugAdapterTracker {
 
 	onExit(code: number, signal: string): void {
 		this.trackers.forEach(t => t.onExit ? t.onExit(code, signal) : undefined);
+	}
+
+	onOutput(output: string): void {
+		this.trackers.forEach(t => t.onOutput ? t.onOutput(output) : undefined);
 	}
 }
 

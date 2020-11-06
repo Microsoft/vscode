@@ -11300,6 +11300,10 @@ declare module 'vscode' {
 		 * The debug adapter has exited with the given exit code or signal.
 		 */
 		onExit?(code: number | undefined, signal: string | undefined): void;
+		/**
+		 * The debug adapter has produced the given output string.
+		 */
+		onOutput?(output: string): void;
 	}
 
 	export interface DebugAdapterTrackerFactory {

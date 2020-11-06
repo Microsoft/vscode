@@ -1459,6 +1459,11 @@ export class Repository {
 		await this.run(args);
 	}
 
+	async deleteRemoteTag(remote: string, tag: string): Promise<void> {
+		let args = ['push', '--delete', remote, tag];
+		await this.run(args);
+	}
+
 	async clean(paths: string[]): Promise<void> {
 		const pathsByGroup = groupBy(paths.map(sanitizePath), p => path.dirname(p));
 		const groups = Object.keys(pathsByGroup).map(k => pathsByGroup[k]);

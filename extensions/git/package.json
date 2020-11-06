@@ -319,6 +319,11 @@
         "category": "Git"
       },
       {
+        "command": "git.deleteRemoteTag",
+        "title": "%command.deleteRemoteTag%",
+        "category": "Git"
+      },
+      {
         "command": "git.fetch",
         "title": "%command.fetch%",
         "category": "Git"

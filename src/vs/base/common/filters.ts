@@ -12,6 +12,10 @@ export interface IFilter {
 	(word: string, wordToMatchAgainst: string): IMatch[] | null;
 }
 
+export interface IInvertibleFilter {
+	(word: string, wordToMatchAgainst: string, invertResult: boolean): IMatch[] | null;
+}
+
 export interface IMatch {
 	start: number;
 	end: number;

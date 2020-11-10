@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { IFilter, matchesFuzzy, matchesFuzzy2 } from 'vs/base/common/filters';
+import { IFilter, IInvertibleFilter, matchesFuzzy, matchesFuzzy2 } from 'vs/base/common/filters';
 import { IExpression, splitGlobAware, getEmptyExpression } from 'vs/base/common/glob';
 import * as strings from 'vs/base/common/strings';
 import { URI } from 'vs/base/common/uri';
@@ -12,7 +12,21 @@ import { ResourceGlobMatcher } from 'vs/base/common/resources';
 export class FilterOptions {
 
 	static readonly _filter: IFilter = matchesFuzzy2;
-	static readonly _messageFilter: IFilter = matchesFuzzy;
+	static readonly _messageFilter: IInvertibleFilter = (word, wordToMatchAgainst, invertResult) => {
+		let match = matchesFuzzy(word, wordToMatchAgainst);
+		if (match) {
+			if (invertResult) {
+				return null;
+			}
+		}
+		else {
+			if (invertResult) {
+				return [{ start: 0, end: wordToMatchAgainst.length }];
+			}
+		}
+
+		return match;
+	}
 
 	readonly showWarnings: boolean = false;
 	readonly showErrors: boolean = false;

@@ -6,6 +6,7 @@
 import * as dom from 'vs/base/browser/dom';
 import * as network from 'vs/base/common/network';
 import * as paths from 'vs/base/common/path';
+import * as strings from 'vs/base/common/strings';
 import { CountBadge } from 'vs/base/browser/ui/countBadge/countBadge';
 import { ResourceLabels, IResourceLabel } from 'vs/workbench/browser/labels';
 import { HighlightedLabel } from 'vs/base/browser/ui/highlightedlabel/highlightedLabel';
@@ -568,8 +569,16 @@ export class Filter implements ITreeFilter<TreeElement, FilterData> {
 		}
 
 		const lineMatches: IMatch[][] = [];
-		for (const line of marker.lines) {
-			lineMatches.push(FilterOptions._messageFilter(this.options.textFilter, line) || []);
+		if (strings.startsWith(this.options.textFilter, '@!')) {
+			let filter = strings.ltrim(this.options.textFilter, '@!');
+			for (const line of marker.lines) {
+				lineMatches.push(FilterOptions._messageFilter(filter, line, true) || []);
+			}
+		}
+		else {
+			for (const line of marker.lines) {
+				lineMatches.push(FilterOptions._messageFilter(this.options.textFilter, line, false) || []);
+			}
 		}
 		const sourceMatches = marker.marker.source && FilterOptions._filter(this.options.textFilter, marker.marker.source);
 
@@ -594,7 +603,7 @@ export class Filter implements ITreeFilter<TreeElement, FilterData> {
 		}
 
 		const uriMatches = FilterOptions._filter(this.options.textFilter, basename(relatedInformation.raw.resource));
-		const messageMatches = FilterOptions._messageFilter(this.options.textFilter, paths.basename(relatedInformation.raw.message));
+		const messageMatches = FilterOptions._messageFilter(this.options.textFilter, paths.basename(relatedInformation.raw.message), false);
 
 		if (uriMatches || messageMatches) {
 			return { visibility: true, data: { type: FilterDataType.RelatedInformation, uriMatches: uriMatches || [], messageMatches: messageMatches || [] } };

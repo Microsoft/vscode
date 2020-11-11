@@ -13,7 +13,7 @@ import { ICodeEditor } from 'vs/editor/browser/editorBrowser';
 import { Position } from 'vs/editor/common/core/position';
 import { IRange, Range } from 'vs/editor/common/core/range';
 import { ModelDecorationOptions } from 'vs/editor/common/model/textModel';
-import { DocumentColorProvider, Hover as MarkdownHover, HoverProviderRegistry, IColor, TokenizationRegistry, CodeActionTriggerType } from 'vs/editor/common/modes';
+import { DocumentColorProvider, Hover as MarkdownHover, HoverProviderRegistry, IColor, TokenizationRegistry, CodeActionTriggerType, IColorInformation } from 'vs/editor/common/modes';
 import { getColorPresentations } from 'vs/editor/contrib/colorPicker/color';
 import { ColorDetector } from 'vs/editor/contrib/colorPicker/colorDetector';
 import { ColorPickerModel } from 'vs/editor/contrib/colorPicker/colorPickerModel';
@@ -396,53 +396,102 @@ export class ModesContentHoverWidget extends ContentHoverWidget {
 				}
 
 				const editorModel = this._editor.getModel();
-				let range = new Range(msg.range.startLineNumber, msg.range.startColumn, msg.range.endLineNumber, msg.range.endColumn);
-				let colorInfo = { range: msg.range, color: msg.color };
 
-				// create blank olor picker model and widget first to ensure it's positioned correctly.
-				const model = new ColorPickerModel(color, [], 0);
-				const widget = new ColorPickerWidget(fragment, model, this._editor.getOption(EditorOption.pixelRatio), this._themeService);
+				let targetIndex = 0;
+				let models: ColorPickerModel[] = [];
+				let colorInfos: IColorInformation[] = [];
+				let ranges: Range[] = [];
 
-				getColorPresentations(editorModel, colorInfo, msg.provider, CancellationToken.None).then(colorPresentations => {
-					model.colorPresentations = colorPresentations || [];
+				const selections = this._editor.getSelections();
+				const rangesIncludingHover = [Range.lift(msg.range),
+				...selections.filter(selection => !selection.intersectRanges(msg.range))];
+				const foundHoveredRangeInSelections = (rangesIncludingHover.length === selections.length);
+
+				const colorDetector = ColorDetector.get(this._editor);
+				rangesIncludingHover.forEach(range => {
+					const colorData = colorDetector.getColorData(range.getStartPosition());
+					if (colorData) {
+						const colorRange = Range.lift(colorData.colorInfo.range);
+
+						// Filter same color ranges
+						let hasIdenticalRange = false;
+						for (let i = 0; i < ranges.length; i++) {
+							hasIdenticalRange = hasIdenticalRange || !!ranges[i].intersectRanges(colorRange);
+						}
+						if (hasIdenticalRange) {
+							return;
+						}
+
+						// Find target (hovered)
+						if (colorRange.intersectRanges(msg.range)) {
+							targetIndex = models.length;
+						}
+						// If hovered range does not belongs to selections, multi-selects will be ignored.
+						else if (!foundHoveredRangeInSelections) {
+							return;
+						}
+
+						const { red, green, blue, alpha } = colorData.colorInfo.color;
+						const rgba = new RGBA(Math.round(red * 255), Math.round(green * 255), Math.round(blue * 255), alpha);
+						const color = new Color(rgba);
+						const model = new ColorPickerModel(color, [], 0);
+						models.push(model);
+						ranges.push(colorRange);
+						colorInfos.push(colorData.colorInfo);
+						const originalText = this._editor.getModel()!.getValueInRange(colorData.colorInfo.range);
+						model.guessColorPresentation(color, originalText);
+					}
+				});
+
+				// create blank color picker model and widget first to ensure it's positioned correctly.
+				const widget = new ColorPickerWidget(fragment, models[targetIndex], this._editor.getOption(EditorOption.pixelRatio), this._themeService);
+
+				Promise.all(colorInfos.map(colorInfo => getColorPresentations(editorModel, colorInfo, msg.provider, CancellationToken.None))).then(colorPresentationsList => {
 					if (!this._editor.hasModel()) {
 						// gone...
 						return;
 					}
-					const originalText = this._editor.getModel().getValueInRange(msg.range);
-					model.guessColorPresentation(color, originalText);
+
+					for (let i = 0; i < models.length; i++) {
+						models[i].colorPresentations = colorPresentationsList[i] || [];
+						const originalText = this._editor.getModel().getValueInRange(colorInfos[i].range);
+						models[i].guessColorPresentation(color, originalText);
+					}
 
 					const updateEditorModel = () => {
 						let textEdits: IIdentifiedSingleEditOperation[];
 						let newRange: Range;
-						if (model.presentation.textEdit) {
-							textEdits = [model.presentation.textEdit as IIdentifiedSingleEditOperation];
-							newRange = new Range(
-								model.presentation.textEdit.range.startLineNumber,
-								model.presentation.textEdit.range.startColumn,
-								model.presentation.textEdit.range.endLineNumber,
-								model.presentation.textEdit.range.endColumn
-							);
-							newRange = newRange.setEndPosition(newRange.endLineNumber, newRange.startColumn + model.presentation.textEdit.text.length);
-						} else {
-							textEdits = [{ identifier: null, range, text: model.presentation.label, forceMoveMarkers: false }];
-							newRange = range.setEndPosition(range.endLineNumber, range.startColumn + model.presentation.label.length);
-						}
-
 						this._editor.pushUndoStop();
-						this._editor.executeEdits('colorpicker', textEdits);
+						models.forEach((model, i) => {
+							const range = ranges[i];
+							if (model.presentation.textEdit) {
+								textEdits = [model.presentation.textEdit as IIdentifiedSingleEditOperation];
+								newRange = new Range(
+									model.presentation.textEdit.range.startLineNumber,
+									model.presentation.textEdit.range.startColumn,
+									model.presentation.textEdit.range.endLineNumber,
+									model.presentation.textEdit.range.endColumn
+								);
+								newRange = newRange.setEndPosition(newRange.endLineNumber, newRange.startColumn + model.presentation.textEdit.text.length);
+							} else {
+								textEdits = [{ identifier: null, range, text: model.presentation.label, forceMoveMarkers: false }];
+								newRange = range.setEndPosition(range.endLineNumber, range.startColumn + model.presentation.label.length);
+							}
 
-						if (model.presentation.additionalTextEdits) {
-							textEdits = [...model.presentation.additionalTextEdits as IIdentifiedSingleEditOperation[]];
 							this._editor.executeEdits('colorpicker', textEdits);
-							this.hide();
-						}
+
+							if (model.presentation.additionalTextEdits) {
+								textEdits = [...model.presentation.additionalTextEdits as IIdentifiedSingleEditOperation[]];
+								this._editor.executeEdits('colorpicker', textEdits);
+								this.hide();
+							}
+							ranges[i] = newRange;
+						});
 						this._editor.pushUndoStop();
-						range = newRange;
 					};
 
 					const updateColorPresentations = (color: Color) => {
-						return getColorPresentations(editorModel, {
+						return Promise.all(ranges.map(range => getColorPresentations(editorModel, {
 							range: range,
 							color: {
 								red: color.rgba.r / 255,
@@ -450,18 +499,20 @@ export class ModesContentHoverWidget extends ContentHoverWidget {
 								blue: color.rgba.b / 255,
 								alpha: color.rgba.a
 							}
-						}, msg.provider, CancellationToken.None).then((colorPresentations) => {
-							model.colorPresentations = colorPresentations || [];
+						}, msg.provider, CancellationToken.None))).then((colorPresentationsList) => {
+							for (let i = 0; i < models.length; i++) {
+								models[i].colorPresentations = colorPresentationsList[i] || [];
+							}
 						});
 					};
 
-					const colorListener = model.onColorFlushed((color: Color) => {
+					const colorListener = models[targetIndex].onColorFlushed((color: Color) => {
 						updateColorPresentations(color).then(updateEditorModel);
 					});
-					const colorChangeListener = model.onDidChangeColor(updateColorPresentations);
+					const colorChangeListener = models[targetIndex].onDidChangeColor(updateColorPresentations);
 
 					this._colorPicker = widget;
-					this.showAt(range.getStartPosition(), range, this._shouldFocus);
+					this.showAt(ranges[targetIndex].getStartPosition(), ranges[targetIndex], this._shouldFocus);
 					this.updateContents(fragment);
 					this._colorPicker.layout();
 

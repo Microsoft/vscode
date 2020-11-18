@@ -1302,9 +1302,6 @@ export const pasteFileHandler = async (accessor: ServicesAccessor) => {
 
 		if (stats.length >= 1) {
 			const stat = stats[0];
-			if (stat && !stat.isDirectory && stats.length === 1) {
-				await editorService.openEditor({ resource: stat.resource, options: { pinned: true, preserveFocus: true } });
-			}
 			if (stat) {
 				await explorerService.select(stat.resource);
 			}

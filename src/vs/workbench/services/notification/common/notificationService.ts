@@ -82,7 +82,7 @@ export class NotificationService extends Disposable implements INotificationServ
 					handle.close();
 
 					// Remember choice
-					this.storageService.store2(id, true, scope, StorageTarget.USER);
+					this.storageService.store(id, true, scope, StorageTarget.USER);
 
 					return Promise.resolve();
 				}));
@@ -126,7 +126,7 @@ export class NotificationService extends Disposable implements INotificationServ
 
 			const neverShowAgainChoice = {
 				label: nls.localize('neverShowAgain', "Don't Show Again"),
-				run: () => this.storageService.store2(id, true, scope, StorageTarget.USER),
+				run: () => this.storageService.store(id, true, scope, StorageTarget.USER),
 				isSecondary: options.neverShowAgain.isSecondary
 			};
 

@@ -44,7 +44,7 @@ export abstract class BaseConfigurationResolverService extends AbstractVariableR
 			getWorkspaceFolderCount: (): number => {
 				return workspaceContextService.getWorkspace().folders.length;
 			},
-			getConfigurationValue: (folderUri: uri, suffix: string): string | undefined => {
+			getConfigurationValue: (folderUri: uri | undefined, suffix: string): string | undefined => {
 				return configurationService.getValue<string>(suffix, folderUri ? { resource: folderUri } : {});
 			},
 			getExecPath: (): string | undefined => {
@@ -59,6 +59,20 @@ export abstract class BaseConfigurationResolverService extends AbstractVariableR
 					return undefined;
 				}
 				return this.labelService.getUriLabel(fileResource, { noPrefix: true });
+			},
+			getWorkspaceFolderPathForFile: (): string | undefined => {
+				const fileResource = EditorResourceAccessor.getOriginalUri(editorService.activeEditor, {
+					supportSideBySide: SideBySideEditor.PRIMARY,
+					filterByScheme: [Schemas.file, Schemas.userData, Schemas.vscodeRemote]
+				});
+				if (!fileResource) {
+					return undefined;
+				}
+				const wsFolder = workspaceContextService.getWorkspaceFolder(fileResource);
+				if (!wsFolder) {
+					return undefined;
+				}
+				return this.labelService.getUriLabel(wsFolder.uri, { noPrefix: true });
 			},
 			getSelectedText: (): string | undefined => {
 				const activeTextEditorControl = editorService.activeTextEditorControl;

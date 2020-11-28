@@ -94,7 +94,7 @@ export class HoverWidget extends Widget {
 				callback: (content) => this._linkHandler(content),
 				disposeables: this._messageListeners
 			},
-			codeBlockRenderCallback: () => {
+			asyncRenderCallback: () => {
 				contentsElement.classList.add('code-hover-contents');
 				// This changes the dimensions of the hover so trigger a layout
 				this._onRequestLayout.fire();

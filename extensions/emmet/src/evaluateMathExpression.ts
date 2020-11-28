@@ -6,24 +6,42 @@
 /* Based on @sergeche's work in his emmet plugin */
 
 import * as vscode from 'vscode';
-import evaluate from '@emmetio/math-expression';
+import evaluate, { extract } from '@emmetio/math-expression';
 import { DocumentStreamReader } from './bufferStream';
 
-export function evaluateMathExpression() {
+export function evaluateMathExpression(): Thenable<boolean> {
 	if (!vscode.window.activeTextEditor) {
 		vscode.window.showInformationMessage('No editor is active');
-		return;
+		return Promise.resolve(false);
 	}
 	const editor = vscode.window.activeTextEditor;
 	const stream = new DocumentStreamReader(editor.document);
-	editor.edit(editBuilder => {
+	return editor.edit(editBuilder => {
 		editor.selections.forEach(selection => {
-			const pos = selection.isReversed ? selection.anchor : selection.active;
-			stream.pos = pos;
+			// startpos always comes before endpos
+			const startpos = selection.isReversed ? selection.active : selection.anchor;
+			const endpos = selection.isReversed ? selection.anchor : selection.active;
+			const selectionText = stream.substring(startpos, endpos);
 
 			try {
-				const result = String(evaluate(stream, true));
-				editBuilder.replace(new vscode.Range(stream.pos, pos), result);
+				if (selectionText) {
+					// respect selections
+					const result = String(evaluate(selectionText));
+					editBuilder.replace(new vscode.Range(startpos, endpos), result);
+				} else {
+					// no selection made, extract expression from line
+					const lineToSelectionEnd = stream.substring(new vscode.Position(selection.end.line, 0), endpos);
+					const extractedIndices = extract(lineToSelectionEnd);
+					if (!extractedIndices) {
+						throw new Error('Invalid extracted indices');
+					}
+					const result = String(evaluate(lineToSelectionEnd.substr(extractedIndices[0], extractedIndices[1])));
+					const rangeToReplace = new vscode.Range(
+						new vscode.Position(selection.end.line, extractedIndices[0]),
+						new vscode.Position(selection.end.line, extractedIndices[1])
+					);
+					editBuilder.replace(rangeToReplace, result);
+				}
 			} catch (err) {
 				vscode.window.showErrorMessage('Could not evaluate expression');
 				// Ignore error since most likely it’s because of non-math expression
@@ -31,5 +49,4 @@ export function evaluateMathExpression() {
 			}
 		});
 	});
-
 }

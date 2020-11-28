@@ -95,6 +95,10 @@ function hasDriveLetter(path: string): boolean {
 	return !!(isWindows && path && path[1] === ':');
 }
 
+export function extractDriveLetter(path: string): string | undefined {
+	return hasDriveLetter(path) ? path[0] : undefined;
+}
+
 export function normalizeDriveLetter(path: string): string {
 	if (hasDriveLetter(path)) {
 		return path.charAt(0).toUpperCase() + path.slice(1);

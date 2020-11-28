@@ -13,15 +13,15 @@ import { NullLogService } from 'vs/platform/log/common/log';
 import { Schemas } from 'vs/base/common/network';
 import { URI } from 'vs/base/common/uri';
 import { FileUserDataProvider } from 'vs/workbench/services/userData/common/fileUserDataProvider';
-import { joinPath, dirname } from 'vs/base/common/resources';
+import { dirname, isEqual, joinPath } from 'vs/base/common/resources';
 import { VSBuffer } from 'vs/base/common/buffer';
 import { DiskFileSystemProvider } from 'vs/platform/files/node/diskFileSystemProvider';
 import { DisposableStore, IDisposable, Disposable } from 'vs/base/common/lifecycle';
-import { BrowserWorkbenchEnvironmentService } from 'vs/workbench/services/environment/browser/environmentService';
 import { Emitter, Event } from 'vs/base/common/event';
-import { timeout } from 'vs/base/common/async';
 import { IWorkbenchEnvironmentService } from 'vs/workbench/services/environment/common/environmentService';
 import { TestProductService } from 'vs/workbench/test/browser/workbenchTestServices';
+import { NativeWorkbenchEnvironmentService } from 'vs/workbench/services/environment/electron-browser/environmentService';
+import { TestWorkbenchConfiguration } from 'vs/workbench/test/electron-browser/workbenchTestServices';
 
 suite('FileUserDataProvider', () => {
 
@@ -43,15 +43,15 @@ suite('FileUserDataProvider', () => {
 		disposables.add(testObject.registerProvider(Schemas.file, diskFileSystemProvider));
 
 		const workspaceId = 'workspaceId';
-		environmentService = new BrowserWorkbenchEnvironmentService({ remoteAuthority: 'remote', workspaceId, logsPath: URI.file('logFile') }, TestProductService);
-
 		rootResource = URI.file(path.join(os.tmpdir(), 'vsctests', uuid.generateUuid()));
-		userDataHomeOnDisk = joinPath(rootResource, 'user');
+		userDataHomeOnDisk = joinPath(rootResource, 'User');
 		const backupHome = joinPath(rootResource, 'Backups');
 		backupWorkspaceHomeOnDisk = joinPath(backupHome, workspaceId);
 		await Promise.all([testObject.createFolder(userDataHomeOnDisk), testObject.createFolder(backupWorkspaceHomeOnDisk)]);
 
-		fileUserDataProvider = new FileUserDataProvider(userDataHomeOnDisk, backupWorkspaceHomeOnDisk, diskFileSystemProvider, environmentService, logService);
+		environmentService = new NativeWorkbenchEnvironmentService({ ...TestWorkbenchConfiguration, 'user-data-dir': rootResource.fsPath, backupPath: backupWorkspaceHomeOnDisk.fsPath }, TestProductService);
+
+		fileUserDataProvider = new FileUserDataProvider(Schemas.file, diskFileSystemProvider, Schemas.userData, logService);
 		disposables.add(fileUserDataProvider);
 		disposables.add(testObject.registerProvider(Schemas.userData, fileUserDataProvider));
 	});
@@ -250,30 +250,30 @@ suite('FileUserDataProvider', () => {
 
 	test('read backup file', async () => {
 		await testObject.writeFile(joinPath(backupWorkspaceHomeOnDisk, 'backup.json'), VSBuffer.fromString('{}'));
-		const result = await testObject.readFile(joinPath(environmentService.backupWorkspaceHome!, `backup.json`));
+		const result = await testObject.readFile(joinPath(backupWorkspaceHomeOnDisk.with({ scheme: environmentService.userRoamingDataHome.scheme }), `backup.json`));
 		assert.equal(result.value, '{}');
 	});
 
 	test('create backup file', async () => {
-		await testObject.createFile(joinPath(environmentService.backupWorkspaceHome!, `backup.json`), VSBuffer.fromString('{}'));
+		await testObject.createFile(joinPath(backupWorkspaceHomeOnDisk.with({ scheme: environmentService.userRoamingDataHome.scheme }), `backup.json`), VSBuffer.fromString('{}'));
 		const result = await testObject.readFile(joinPath(backupWorkspaceHomeOnDisk, 'backup.json'));
 		assert.equal(result.value.toString(), '{}');
 	});
 
 	test('write backup file', async () => {
 		await testObject.writeFile(joinPath(backupWorkspaceHomeOnDisk, 'backup.json'), VSBuffer.fromString('{}'));
-		await testObject.writeFile(joinPath(environmentService.backupWorkspaceHome!, `backup.json`), VSBuffer.fromString('{a:1}'));
+		await testObject.writeFile(joinPath(backupWorkspaceHomeOnDisk.with({ scheme: environmentService.userRoamingDataHome.scheme }), `backup.json`), VSBuffer.fromString('{a:1}'));
 		const result = await testObject.readFile(joinPath(backupWorkspaceHomeOnDisk, 'backup.json'));
 		assert.equal(result.value.toString(), '{a:1}');
 	});
 
 	test('resolve backups folder', async () => {
 		await testObject.writeFile(joinPath(backupWorkspaceHomeOnDisk, 'backup.json'), VSBuffer.fromString('{}'));
-		const result = await testObject.resolve(environmentService.backupWorkspaceHome!);
+		const result = await testObject.resolve(backupWorkspaceHomeOnDisk.with({ scheme: environmentService.userRoamingDataHome.scheme }));
 		assert.ok(result.isDirectory);
 		assert.ok(result.children !== undefined);
 		assert.equal(result.children!.length, 1);
-		assert.equal(result.children![0].resource.toString(), joinPath(environmentService.backupWorkspaceHome!, `backup.json`).toString());
+		assert.equal(result.children![0].resource.toString(), joinPath(backupWorkspaceHomeOnDisk.with({ scheme: environmentService.userRoamingDataHome.scheme }), `backup.json`).toString());
 	});
 });
 
@@ -305,41 +305,29 @@ class TestFileSystemProvider implements IFileSystemProviderWithFileReadWriteCapa
 
 suite('FileUserDataProvider - Watching', () => {
 
-	let testObject: IFileService;
-	let localBackupsResource: URI;
-	let localUserDataResource: URI;
-	let environmentService: IWorkbenchEnvironmentService;
+	let testObject: FileUserDataProvider;
 	const disposables = new DisposableStore();
+	const rootFileResource = URI.file(path.join(os.tmpdir(), 'vsctests', uuid.generateUuid()));
+	const rootUserDataResource = rootFileResource.with({ scheme: Schemas.userData });
 
 	const fileEventEmitter: Emitter<readonly IFileChange[]> = new Emitter<readonly IFileChange[]>();
 	disposables.add(fileEventEmitter);
 
 	setup(() => {
-
-		environmentService = new BrowserWorkbenchEnvironmentService({ remoteAuthority: 'remote', workspaceId: 'workspaceId', logsPath: URI.file('logFile') }, TestProductService);
-
-		const rootResource = URI.file(path.join(os.tmpdir(), 'vsctests', uuid.generateUuid()));
-		localUserDataResource = joinPath(rootResource, 'user');
-		localBackupsResource = joinPath(rootResource, 'Backups');
-
-		const userDataFileSystemProvider = new FileUserDataProvider(localUserDataResource, localBackupsResource, new TestFileSystemProvider(fileEventEmitter.event), environmentService, new NullLogService());
-		disposables.add(userDataFileSystemProvider);
-
-		testObject = new FileService(new NullLogService());
-		disposables.add(testObject);
-		disposables.add(testObject.registerProvider(Schemas.userData, userDataFileSystemProvider));
+		testObject = disposables.add(new FileUserDataProvider(Schemas.file, new TestFileSystemProvider(fileEventEmitter.event), Schemas.userData, new NullLogService()));
 	});
 
 	teardown(() => disposables.clear());
 
 	test('file added change event', done => {
-		const expected = environmentService.settingsResource;
-		const target = joinPath(localUserDataResource, 'settings.json');
-		testObject.onDidFilesChange(e => {
-			if (e.contains(expected, FileChangeType.ADDED)) {
+		disposables.add(testObject.watch(rootUserDataResource, { excludes: [], recursive: false }));
+		const expected = joinPath(rootUserDataResource, 'settings.json');
+		const target = joinPath(rootFileResource, 'settings.json');
+		disposables.add(testObject.onDidChangeFile(e => {
+			if (isEqual(e[0].resource, expected) && e[0].type === FileChangeType.ADDED) {
 				done();
 			}
-		});
+		}));
 		fileEventEmitter.fire([{
 			resource: target,
 			type: FileChangeType.ADDED
@@ -347,13 +335,14 @@ suite('FileUserDataProvider - Watching', () => {
 	});
 
 	test('file updated change event', done => {
-		const expected = environmentService.settingsResource;
-		const target = joinPath(localUserDataResource, 'settings.json');
-		testObject.onDidFilesChange(e => {
-			if (e.contains(expected, FileChangeType.UPDATED)) {
+		disposables.add(testObject.watch(rootUserDataResource, { excludes: [], recursive: false }));
+		const expected = joinPath(rootUserDataResource, 'settings.json');
+		const target = joinPath(rootFileResource, 'settings.json');
+		disposables.add(testObject.onDidChangeFile(e => {
+			if (isEqual(e[0].resource, expected) && e[0].type === FileChangeType.UPDATED) {
 				done();
 			}
-		});
+		}));
 		fileEventEmitter.fire([{
 			resource: target,
 			type: FileChangeType.UPDATED
@@ -361,13 +350,14 @@ suite('FileUserDataProvider - Watching', () => {
 	});
 
 	test('file deleted change event', done => {
-		const expected = environmentService.settingsResource;
-		const target = joinPath(localUserDataResource, 'settings.json');
-		testObject.onDidFilesChange(e => {
-			if (e.contains(expected, FileChangeType.DELETED)) {
+		disposables.add(testObject.watch(rootUserDataResource, { excludes: [], recursive: false }));
+		const expected = joinPath(rootUserDataResource, 'settings.json');
+		const target = joinPath(rootFileResource, 'settings.json');
+		disposables.add(testObject.onDidChangeFile(e => {
+			if (isEqual(e[0].resource, expected) && e[0].type === FileChangeType.DELETED) {
 				done();
 			}
-		});
+		}));
 		fileEventEmitter.fire([{
 			resource: target,
 			type: FileChangeType.DELETED
@@ -375,13 +365,14 @@ suite('FileUserDataProvider - Watching', () => {
 	});
 
 	test('file under folder created change event', done => {
-		const expected = joinPath(environmentService.snippetsHome, 'settings.json');
-		const target = joinPath(localUserDataResource, 'snippets', 'settings.json');
-		testObject.onDidFilesChange(e => {
-			if (e.contains(expected, FileChangeType.ADDED)) {
+		disposables.add(testObject.watch(rootUserDataResource, { excludes: [], recursive: false }));
+		const expected = joinPath(rootUserDataResource, 'snippets', 'settings.json');
+		const target = joinPath(rootFileResource, 'snippets', 'settings.json');
+		disposables.add(testObject.onDidChangeFile(e => {
+			if (isEqual(e[0].resource, expected) && e[0].type === FileChangeType.ADDED) {
 				done();
 			}
-		});
+		}));
 		fileEventEmitter.fire([{
 			resource: target,
 			type: FileChangeType.ADDED
@@ -389,13 +380,14 @@ suite('FileUserDataProvider - Watching', () => {
 	});
 
 	test('file under folder updated change event', done => {
-		const expected = joinPath(environmentService.snippetsHome, 'settings.json');
-		const target = joinPath(localUserDataResource, 'snippets', 'settings.json');
-		testObject.onDidFilesChange(e => {
-			if (e.contains(expected, FileChangeType.UPDATED)) {
+		disposables.add(testObject.watch(rootUserDataResource, { excludes: [], recursive: false }));
+		const expected = joinPath(rootUserDataResource, 'snippets', 'settings.json');
+		const target = joinPath(rootFileResource, 'snippets', 'settings.json');
+		disposables.add(testObject.onDidChangeFile(e => {
+			if (isEqual(e[0].resource, expected) && e[0].type === FileChangeType.UPDATED) {
 				done();
 			}
-		});
+		}));
 		fileEventEmitter.fire([{
 			resource: target,
 			type: FileChangeType.UPDATED
@@ -403,72 +395,45 @@ suite('FileUserDataProvider - Watching', () => {
 	});
 
 	test('file under folder deleted change event', done => {
-		const expected = joinPath(environmentService.snippetsHome, 'settings.json');
-		const target = joinPath(localUserDataResource, 'snippets', 'settings.json');
-		testObject.onDidFilesChange(e => {
-			if (e.contains(expected, FileChangeType.DELETED)) {
+		disposables.add(testObject.watch(rootUserDataResource, { excludes: [], recursive: false }));
+		const expected = joinPath(rootUserDataResource, 'snippets', 'settings.json');
+		const target = joinPath(rootFileResource, 'snippets', 'settings.json');
+		disposables.add(testObject.onDidChangeFile(e => {
+			if (isEqual(e[0].resource, expected) && e[0].type === FileChangeType.DELETED) {
 				done();
 			}
-		});
+		}));
 		fileEventEmitter.fire([{
 			resource: target,
 			type: FileChangeType.DELETED
 		}]);
 	});
 
-	test('event is not triggered if file is not under user data', async () => {
-		const target = joinPath(dirname(localUserDataResource), 'settings.json');
+	test('event is not triggered if not watched', async () => {
+		const target = joinPath(rootFileResource, 'settings.json');
 		let triggered = false;
-		testObject.onDidFilesChange(() => triggered = true);
+		testObject.onDidChangeFile(() => triggered = true);
 		fileEventEmitter.fire([{
 			resource: target,
 			type: FileChangeType.DELETED
 		}]);
-		await timeout(0);
 		if (triggered) {
 			assert.fail('event should not be triggered');
 		}
 	});
 
-	test('backup file created change event', done => {
-		const expected = joinPath(environmentService.backupWorkspaceHome!, 'settings.json');
-		const target = joinPath(localBackupsResource, 'settings.json');
-		testObject.onDidFilesChange(e => {
-			if (e.contains(expected, FileChangeType.ADDED)) {
-				done();
-			}
-		});
-		fileEventEmitter.fire([{
-			resource: target,
-			type: FileChangeType.ADDED
-		}]);
-	});
-
-	test('backup file update change event', done => {
-		const expected = joinPath(environmentService.backupWorkspaceHome!, 'settings.json');
-		const target = joinPath(localBackupsResource, 'settings.json');
-		testObject.onDidFilesChange(e => {
-			if (e.contains(expected, FileChangeType.UPDATED)) {
-				done();
-			}
-		});
-		fileEventEmitter.fire([{
-			resource: target,
-			type: FileChangeType.UPDATED
-		}]);
-	});
-
-	test('backup file delete change event', done => {
-		const expected = joinPath(environmentService.backupWorkspaceHome!, 'settings.json');
-		const target = joinPath(localBackupsResource, 'settings.json');
-		testObject.onDidFilesChange(e => {
-			if (e.contains(expected, FileChangeType.DELETED)) {
-				done();
-			}
-		});
+	test('event is not triggered if not watched 2', async () => {
+		disposables.add(testObject.watch(rootUserDataResource, { excludes: [], recursive: false }));
+		const target = joinPath(dirname(rootFileResource), 'settings.json');
+		let triggered = false;
+		testObject.onDidChangeFile(() => triggered = true);
 		fileEventEmitter.fire([{
 			resource: target,
 			type: FileChangeType.DELETED
 		}]);
+		if (triggered) {
+			assert.fail('event should not be triggered');
+		}
 	});
+
 });

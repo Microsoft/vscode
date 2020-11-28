@@ -226,8 +226,7 @@ class MinimapLayout {
 	 * Compute a desired `scrollPosition` such that the slider moves by `delta`.
 	 */
 	public getDesiredScrollTopFromDelta(delta: number): number {
-		const desiredSliderPosition = this.sliderTop + delta;
-		return Math.round(desiredSliderPosition / this._computedSliderRatio);
+		return Math.round(this.scrollTop + delta / this._computedSliderRatio);
 	}
 
 	public getDesiredScrollTopFromTouchLocation(pageY: number): number {
@@ -332,8 +331,9 @@ class MinimapLayout {
 			}
 
 			const endLineNumber = Math.min(lineCount, startLineNumber + minimapLinesFitting - 1);
+			const sliderTopAligned = (scrollTop / lineHeight - startLineNumber + 1) * minimapLineHeight / pixelRatio;
 
-			return new MinimapLayout(scrollTop, scrollHeight, true, computedSliderRatio, sliderTop, sliderHeight, startLineNumber, endLineNumber);
+			return new MinimapLayout(scrollTop, scrollHeight, true, computedSliderRatio, sliderTopAligned, sliderHeight, startLineNumber, endLineNumber);
 		}
 	}
 }

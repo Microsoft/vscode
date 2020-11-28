@@ -58,3 +58,73 @@ exports.removeGlobalNodeModuleLookupPaths = function () {
 		return paths.slice(0, paths.length - commonSuffixLength);
 	};
 };
+
+/**
+ * Helper to enable portable mode.
+ *
+ * @param {{ portable?: string; applicationName: string; }} product
+ * @returns {{ portableDataPath: string; isPortable: boolean; }}
+ */
+exports.configurePortable = function (product) {
+	const fs = require('fs');
+	const path = require('path');
+
+	const appRoot = path.dirname(__dirname);
+
+	/**
+	 * @param {import('path')} path
+	 */
+	function getApplicationPath(path) {
+		if (process.env['VSCODE_DEV']) {
+			return appRoot;
+		}
+
+		if (process.platform === 'darwin') {
+			return path.dirname(path.dirname(path.dirname(appRoot)));
+		}
+
+		return path.dirname(path.dirname(appRoot));
+	}
+
+	/**
+	 * @param {import('path')} path
+	 */
+	function getPortableDataPath(path) {
+		if (process.env['VSCODE_PORTABLE']) {
+			return process.env['VSCODE_PORTABLE'];
+		}
+
+		if (process.platform === 'win32' || process.platform === 'linux') {
+			return path.join(getApplicationPath(path), 'data');
+		}
+
+		// @ts-ignore
+		const portableDataName = product.portable || `${product.applicationName}-portable-data`;
+		return path.join(path.dirname(getApplicationPath(path)), portableDataName);
+	}
+
+	const portableDataPath = getPortableDataPath(path);
+	const isPortable = !('target' in product) && fs.existsSync(portableDataPath);
+	const portableTempPath = path.join(portableDataPath, 'tmp');
+	const isTempPortable = isPortable && fs.existsSync(portableTempPath);
+
+	if (isPortable) {
+		process.env['VSCODE_PORTABLE'] = portableDataPath;
+	} else {
+		delete process.env['VSCODE_PORTABLE'];
+	}
+
+	if (isTempPortable) {
+		if (process.platform === 'win32') {
+			process.env['TMP'] = portableTempPath;
+			process.env['TEMP'] = portableTempPath;
+		} else {
+			process.env['TMPDIR'] = portableTempPath;
+		}
+	}
+
+	return {
+		portableDataPath,
+		isPortable
+	};
+};

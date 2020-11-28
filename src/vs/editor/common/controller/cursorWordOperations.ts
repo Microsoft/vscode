@@ -384,7 +384,7 @@ export class WordOperations {
 			return selection;
 		}
 
-		if (DeleteOperations.isAutoClosingPairDelete(ctx.autoClosingBrackets, ctx.autoClosingQuotes, ctx.autoClosingPairs.autoClosingPairsOpen, ctx.model, [ctx.selection])) {
+		if (DeleteOperations.isAutoClosingPairDelete(ctx.autoClosingBrackets, ctx.autoClosingQuotes, ctx.autoClosingPairs.autoClosingPairsOpenByEnd, ctx.model, [ctx.selection])) {
 			const position = ctx.selection.getPosition();
 			return new Range(position.lineNumber, position.column - 1, position.lineNumber, position.column + 1);
 		}
@@ -436,6 +436,122 @@ export class WordOperations {
 		}
 
 		return new Range(lineNumber, column, position.lineNumber, position.column);
+	}
+
+	public static deleteInsideWord(wordSeparators: WordCharacterClassifier, model: ITextModel, selection: Selection): Range {
+		if (!selection.isEmpty()) {
+			return selection;
+		}
+
+		const position = new Position(selection.positionLineNumber, selection.positionColumn);
+
+		let r = this._deleteInsideWordWhitespace(model, position);
+		if (r) {
+			return r;
+		}
+
+		return this._deleteInsideWordDetermineDeleteRange(wordSeparators, model, position);
+	}
+
+	private static _charAtIsWhitespace(str: string, index: number): boolean {
+		const charCode = str.charCodeAt(index);
+		return (charCode === CharCode.Space || charCode === CharCode.Tab);
+	}
+
+	private static _deleteInsideWordWhitespace(model: ICursorSimpleModel, position: Position): Range | null {
+		const lineContent = model.getLineContent(position.lineNumber);
+		const lineContentLength = lineContent.length;
+
+		if (lineContentLength === 0) {
+			// empty line
+			return null;
+		}
+
+		let leftIndex = Math.max(position.column - 2, 0);
+		if (!this._charAtIsWhitespace(lineContent, leftIndex)) {
+			// touches a non-whitespace character to the left
+			return null;
+		}
+
+		let rightIndex = Math.min(position.column - 1, lineContentLength - 1);
+		if (!this._charAtIsWhitespace(lineContent, rightIndex)) {
+			// touches a non-whitespace character to the right
+			return null;
+		}
+
+		// walk over whitespace to the left
+		while (leftIndex > 0 && this._charAtIsWhitespace(lineContent, leftIndex - 1)) {
+			leftIndex--;
+		}
+
+		// walk over whitespace to the right
+		while (rightIndex + 1 < lineContentLength && this._charAtIsWhitespace(lineContent, rightIndex + 1)) {
+			rightIndex++;
+		}
+
+		return new Range(position.lineNumber, leftIndex + 1, position.lineNumber, rightIndex + 2);
+	}
+
+	private static _deleteInsideWordDetermineDeleteRange(wordSeparators: WordCharacterClassifier, model: ICursorSimpleModel, position: Position): Range {
+		const lineContent = model.getLineContent(position.lineNumber);
+		const lineLength = lineContent.length;
+		if (lineLength === 0) {
+			// empty line
+			if (position.lineNumber > 1) {
+				return new Range(position.lineNumber - 1, model.getLineMaxColumn(position.lineNumber - 1), position.lineNumber, 1);
+			} else {
+				if (position.lineNumber < model.getLineCount()) {
+					return new Range(position.lineNumber, 1, position.lineNumber + 1, 1);
+				} else {
+					// empty model
+					return new Range(position.lineNumber, 1, position.lineNumber, 1);
+				}
+			}
+		}
+
+		const touchesWord = (word: IFindWordResult) => {
+			return (word.start + 1 <= position.column && position.column <= word.end + 1);
+		};
+		const createRangeWithPosition = (startColumn: number, endColumn: number) => {
+			startColumn = Math.min(startColumn, position.column);
+			endColumn = Math.max(endColumn, position.column);
+			return new Range(position.lineNumber, startColumn, position.lineNumber, endColumn);
+		};
+		const deleteWordAndAdjacentWhitespace = (word: IFindWordResult) => {
+			let startColumn = word.start + 1;
+			let endColumn = word.end + 1;
+			let expandedToTheRight = false;
+			while (endColumn - 1 < lineLength && this._charAtIsWhitespace(lineContent, endColumn - 1)) {
+				expandedToTheRight = true;
+				endColumn++;
+			}
+			if (!expandedToTheRight) {
+				while (startColumn > 1 && this._charAtIsWhitespace(lineContent, startColumn - 2)) {
+					startColumn--;
+				}
+			}
+			return createRangeWithPosition(startColumn, endColumn);
+		};
+
+		const prevWordOnLine = WordOperations._findPreviousWordOnLine(wordSeparators, model, position);
+		if (prevWordOnLine && touchesWord(prevWordOnLine)) {
+			return deleteWordAndAdjacentWhitespace(prevWordOnLine);
+		}
+		const nextWordOnLine = WordOperations._findNextWordOnLine(wordSeparators, model, position);
+		if (nextWordOnLine && touchesWord(nextWordOnLine)) {
+			return deleteWordAndAdjacentWhitespace(nextWordOnLine);
+		}
+		if (prevWordOnLine && nextWordOnLine) {
+			return createRangeWithPosition(prevWordOnLine.end + 1, nextWordOnLine.start + 1);
+		}
+		if (prevWordOnLine) {
+			return createRangeWithPosition(prevWordOnLine.start + 1, prevWordOnLine.end + 1);
+		}
+		if (nextWordOnLine) {
+			return createRangeWithPosition(nextWordOnLine.start + 1, nextWordOnLine.end + 1);
+		}
+
+		return createRangeWithPosition(1, lineLength + 1);
 	}
 
 	public static _deleteWordPartLeft(model: ICursorSimpleModel, selection: Selection): Range {

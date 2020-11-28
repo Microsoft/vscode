@@ -7,13 +7,12 @@ import * as modes from 'vs/editor/common/modes';
 import * as types from './extHostTypes';
 import * as search from 'vs/workbench/contrib/search/common/search';
 import { ITextEditorOptions } from 'vs/platform/editor/common/editor';
-import { EditorViewColumn } from 'vs/workbench/api/common/shared/editor';
 import { IDecorationOptions, IThemeDecorationRenderOptions, IDecorationRenderOptions, IContentDecorationRenderOptions } from 'vs/editor/common/editorCommon';
 import { EndOfLineSequence, TrackedRangeStickiness } from 'vs/editor/common/model';
 import type * as vscode from 'vscode';
 import { URI, UriComponents } from 'vs/base/common/uri';
 import { ProgressLocation as MainProgressLocation } from 'vs/platform/progress/common/progress';
-import { SaveReason } from 'vs/workbench/common/editor';
+import { EditorGroupColumn, SaveReason } from 'vs/workbench/common/editor';
 import { IPosition } from 'vs/editor/common/core/position';
 import * as editorRange from 'vs/editor/common/core/range';
 import { ISelection } from 'vs/editor/common/core/selection';
@@ -33,6 +32,7 @@ import { RenderLineNumbersType } from 'vs/editor/common/config/editorOptions';
 import { CommandsConverter } from 'vs/workbench/api/common/extHostCommands';
 import { ExtHostNotebookController } from 'vs/workbench/api/common/extHostNotebook';
 import { CellOutputKind, IDisplayOutput, INotebookDecorationRenderOptions } from 'vs/workbench/contrib/notebook/common/notebookCommon';
+import { ITestItem, ITestState } from 'vs/workbench/contrib/testing/common/testCollection';
 
 export interface PositionLike {
 	line: number;
@@ -220,7 +220,7 @@ export namespace DiagnosticSeverity {
 }
 
 export namespace ViewColumn {
-	export function from(column?: vscode.ViewColumn): EditorViewColumn {
+	export function from(column?: vscode.ViewColumn): EditorGroupColumn {
 		if (typeof column === 'number' && column >= types.ViewColumn.One) {
 			return column - 1; // adjust zero index (ViewColumn.ONE => 0)
 		}
@@ -232,12 +232,12 @@ export namespace ViewColumn {
 		return ACTIVE_GROUP; // default is always the active group
 	}
 
-	export function to(position: EditorViewColumn): vscode.ViewColumn {
+	export function to(position: EditorGroupColumn): vscode.ViewColumn {
 		if (typeof position === 'number' && position >= 0) {
 			return position + 1; // adjust to index (ViewColumn.ONE => 1)
 		}
 
-		throw new Error(`invalid 'EditorViewColumn'`);
+		throw new Error(`invalid 'EditorGroupColumn'`);
 	}
 }
 
@@ -1183,6 +1183,7 @@ export namespace FoldingRangeKind {
 
 export interface TextEditorOpenOptions extends vscode.TextDocumentShowOptions {
 	background?: boolean;
+	override?: boolean;
 }
 
 export namespace TextEditorOpenOptions {
@@ -1194,6 +1195,7 @@ export namespace TextEditorOpenOptions {
 				inactive: options.background,
 				preserveFocus: options.preserveFocus,
 				selection: typeof options.selection === 'object' ? Range.from(options.selection) : undefined,
+				override: typeof options.override === 'boolean' ? false : undefined
 			};
 		}
 
@@ -1249,50 +1251,6 @@ export namespace LanguageSelector {
 				pattern: typeof selector.pattern === 'undefined' ? undefined : GlobPattern.from(selector.pattern),
 				exclusive: selector.exclusive
 			};
-		}
-	}
-}
-
-export namespace LogLevel {
-	export function from(extLevel: types.LogLevel): _MainLogLevel {
-		switch (extLevel) {
-			case types.LogLevel.Trace:
-				return _MainLogLevel.Trace;
-			case types.LogLevel.Debug:
-				return _MainLogLevel.Debug;
-			case types.LogLevel.Info:
-				return _MainLogLevel.Info;
-			case types.LogLevel.Warning:
-				return _MainLogLevel.Warning;
-			case types.LogLevel.Error:
-				return _MainLogLevel.Error;
-			case types.LogLevel.Critical:
-				return _MainLogLevel.Critical;
-			case types.LogLevel.Off:
-				return _MainLogLevel.Off;
-			default:
-				return _MainLogLevel.Info;
-		}
-	}
-
-	export function to(mainLevel: _MainLogLevel): types.LogLevel {
-		switch (mainLevel) {
-			case _MainLogLevel.Trace:
-				return types.LogLevel.Trace;
-			case _MainLogLevel.Debug:
-				return types.LogLevel.Debug;
-			case _MainLogLevel.Info:
-				return types.LogLevel.Info;
-			case _MainLogLevel.Warning:
-				return types.LogLevel.Warning;
-			case _MainLogLevel.Error:
-				return types.LogLevel.Error;
-			case _MainLogLevel.Critical:
-				return types.LogLevel.Critical;
-			case _MainLogLevel.Off:
-				return types.LogLevel.Off;
-			default:
-				return types.LogLevel.Info;
 		}
 	}
 }
@@ -1392,6 +1350,67 @@ export namespace NotebookDecorationRenderOptions {
 			backgroundColor: <string | types.ThemeColor>options.backgroundColor,
 			borderColor: <string | types.ThemeColor>options.borderColor,
 			top: options.top ? ThemableDecorationAttachmentRenderOptions.from(options.top) : undefined
+		};
+	}
+}
+
+export namespace TestState {
+	export function from(item: vscode.TestState): ITestState {
+		return {
+			runState: item.runState,
+			duration: item.duration,
+			messages: item.messages.map(message => ({
+				message: MarkdownString.fromStrict(message.message) || '',
+				severity: message.severity,
+				expectedOutput: message.expectedOutput,
+				actualOutput: message.actualOutput,
+				location: message.location ? location.from(message.location) : undefined,
+			})),
+		};
+	}
+
+	export function to(item: ITestState): vscode.TestState {
+		return new types.TestState(
+			item.runState,
+			item.messages.map(message => ({
+				message: typeof message.message === 'string' ? message.message : MarkdownString.to(message.message),
+				severity: message.severity,
+				expectedOutput: message.expectedOutput,
+				actualOutput: message.actualOutput,
+				location: message.location && location.to({
+					range: message.location.range,
+					uri: URI.revive(message.location.uri)
+				}),
+			})),
+			item.duration,
+		);
+	}
+}
+
+
+export namespace TestItem {
+	export function from(item: vscode.TestItem): ITestItem {
+		return {
+			label: item.label,
+			location: item.location ? location.from(item.location) : undefined,
+			debuggable: item.debuggable,
+			description: item.description,
+			runnable: item.runnable,
+			state: TestState.from(item.state),
+		};
+	}
+
+	export function to(item: ITestItem): vscode.TestItem {
+		return {
+			label: item.label,
+			location: item.location && location.to({
+				range: item.location.range,
+				uri: URI.revive(item.location.uri)
+			}),
+			debuggable: item.debuggable,
+			description: item.description,
+			runnable: item.runnable,
+			state: TestState.to(item.state),
 		};
 	}
 }

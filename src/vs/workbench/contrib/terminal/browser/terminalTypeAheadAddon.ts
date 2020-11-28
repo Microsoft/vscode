@@ -8,10 +8,11 @@ import { Color } from 'vs/base/common/color';
 import { debounce } from 'vs/base/common/decorators';
 import { Emitter } from 'vs/base/common/event';
 import { Disposable, toDisposable } from 'vs/base/common/lifecycle';
+import { escapeRegExpCharacters } from 'vs/base/common/strings';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 import { TerminalConfigHelper } from 'vs/workbench/contrib/terminal/browser/terminalConfigHelper';
 import { XTermAttributes, XTermCore } from 'vs/workbench/contrib/terminal/browser/xterm-private';
-import { IBeforeProcessDataEvent, ITerminalConfiguration, ITerminalProcessManager } from 'vs/workbench/contrib/terminal/common/terminal';
+import { DEFAULT_LOCAL_ECHO_EXCLUDE, IBeforeProcessDataEvent, ITerminalConfiguration, ITerminalProcessManager } from 'vs/workbench/contrib/terminal/common/terminal';
 import type { IBuffer, IBufferCell, IDisposable, ITerminalAddon, Terminal } from 'xterm';
 
 const ESC = '\x1b';
@@ -22,7 +23,6 @@ const DELETE_CHAR = `${CSI}X`;
 const DELETE_REST_OF_LINE = `${CSI}K`;
 const CSI_STYLE_RE = /^\x1b\[[0-9;]*m/;
 const CSI_MOVE_RE = /^\x1b\[([0-9]*)(;[35])?O?([DC])/;
-const PASSWORD_INPUT_RE = /(?:\W|^)(?:pat|token|password|passphrase|passwd)(\W.*:|:)/i;
 const NOT_WORD_RE = /[^a-z0-9]/i;
 
 const statsBufferSize = 24;
@@ -323,12 +323,10 @@ class HardBoundary implements IPrediction {
  * through its `matches` request.
  */
 class TentativeBoundary implements IPrediction {
-	private expected?: Cursor;
-	constructor(private readonly inner: IPrediction) { }
+	constructor(public readonly inner: IPrediction) { }
 
 	public apply(buffer: IBuffer, cursor: Cursor) {
-		this.expected = cursor.clone();
-		this.inner.apply(buffer, this.expected);
+		this.inner.apply(buffer, cursor);
 		return '';
 	}
 
@@ -337,10 +335,6 @@ class TentativeBoundary implements IPrediction {
 	}
 
 	public rollForwards(cursor: Cursor, withInput: string) {
-		if (this.expected) {
-			cursor.moveTo(this.expected);
-		}
-
 		return withInput;
 	}
 
@@ -349,13 +343,16 @@ class TentativeBoundary implements IPrediction {
 	}
 }
 
+export const isTenativeCharacterPrediction = (p: unknown): p is (TentativeBoundary & { inner: CharacterPrediction }) =>
+	p instanceof TentativeBoundary && p.inner instanceof CharacterPrediction;
+
 /**
  * Prediction for a single alphanumeric character.
  */
 class CharacterPrediction implements IPrediction {
 	public readonly affectsStyle = true;
 
-	protected appliedAt?: {
+	public appliedAt?: {
 		pos: ICoordinate;
 		oldAttributes: string;
 		oldChar: string;
@@ -798,7 +795,7 @@ export class PredictionTimeline {
 		ReadLoop: while (this.expected.length && reader.remaining > 0) {
 			emitPredictionOmitted();
 
-			const prediction = this.expected[0].p;
+			const { p: prediction, gen } = this.expected[0];
 			const cursor = this.getCursor(buffer);
 			let beforeTestReaderIndex = reader.index;
 			switch (prediction.matches(reader)) {
@@ -806,7 +803,13 @@ export class PredictionTimeline {
 					// if the input character matches what the next prediction expected, undo
 					// the prediction and write the real character out.
 					const eaten = input.slice(beforeTestReaderIndex, reader.index);
-					output += prediction.rollForwards?.(cursor, eaten);
+					if (gen === startingGen) {
+						output += prediction.rollForwards?.(cursor, eaten);
+					} else {
+						prediction.apply(buffer, this.getCursor(buffer)); // move cursor for additional apply
+						output += eaten;
+					}
+
 					this.succeededEmitter.fire(prediction);
 					this.expected.shift();
 					break;
@@ -904,25 +907,27 @@ export class PredictionTimeline {
 	 * pty output/
 	 */
 	public addBoundary(): void;
-	public addBoundary(buffer: IBuffer, prediction: IPrediction): void;
+	public addBoundary(buffer: IBuffer, prediction: IPrediction): boolean;
 	public addBoundary(buffer?: IBuffer, prediction?: IPrediction) {
+		let applied = false;
 		if (buffer && prediction) {
-			this.addPrediction(buffer, prediction);
+			applied = this.addPrediction(buffer, prediction);
 		}
 		this.currentGen++;
+		return applied;
 	}
 
 	/**
 	 * Peeks the last prediction written.
 	 */
-	public peekEnd() {
+	public peekEnd(): IPrediction | undefined {
 		return this.expected[this.expected.length - 1]?.p;
 	}
 
 	/**
 	 * Peeks the first pending prediction.
 	 */
-	public peekStart() {
+	public peekStart(): IPrediction | undefined {
 		return this.expected[0]?.p;
 	}
 
@@ -1178,11 +1183,25 @@ class TypeAheadStyle implements IDisposable {
 	}
 }
 
+const compileExcludeRegexp = (programs = DEFAULT_LOCAL_ECHO_EXCLUDE) =>
+	new RegExp(`\\b(${programs.map(escapeRegExpCharacters).join('|')})\\b`, 'i');
+
+export const enum CharPredictState {
+	/** No characters typed on this line yet */
+	Unknown,
+	/** Has a pending character prediction */
+	HasPendingChar,
+	/** Character validated on this line */
+	Validated,
+}
+
 export class TypeAheadAddon extends Disposable implements ITerminalAddon {
 	private typeaheadStyle?: TypeAheadStyle;
 	private typeaheadThreshold = this.config.config.localEchoLatencyThreshold;
-	protected lastRow?: { y: number; startingX: number };
-	private timeline?: PredictionTimeline;
+	private excludeProgramRe = compileExcludeRegexp(this.config.config.localEchoExcludePrograms);
+	protected lastRow?: { y: number; startingX: number; charState: CharPredictState };
+	protected timeline?: PredictionTimeline;
+	private terminalTitle = '';
 	public stats?: PredictionStats;
 
 	/**
@@ -1206,6 +1225,10 @@ export class TypeAheadAddon extends Disposable implements ITerminalAddon {
 
 		timeline.setShowPredictions(this.typeaheadThreshold === 0);
 		this._register(terminal.onData(e => this.onUserData(e)));
+		this._register(terminal.onTitleChange(title => {
+			this.terminalTitle = title;
+			this.reevaluatePredictorState(stats, timeline);
+		}));
 		this._register(terminal.onResize(() => {
 			timeline.setShowPredictions(false);
 			timeline.clearCursor();
@@ -1214,7 +1237,15 @@ export class TypeAheadAddon extends Disposable implements ITerminalAddon {
 		this._register(this.config.onConfigChanged(() => {
 			style.onUpdate(this.config.config.localEchoStyle);
 			this.typeaheadThreshold = this.config.config.localEchoLatencyThreshold;
+			this.excludeProgramRe = compileExcludeRegexp(this.config.config.localEchoExcludePrograms);
 			this.reevaluatePredictorState(stats, timeline);
+		}));
+		this._register(this.timeline.onPredictionSucceeded(p => {
+			if (this.lastRow?.charState === CharPredictState.HasPendingChar && isTenativeCharacterPrediction(p) && p.inner.appliedAt) {
+				if (p.inner.appliedAt.pos.y + p.inner.appliedAt.pos.baseY === this.lastRow.y) {
+					this.lastRow.charState = CharPredictState.Validated;
+				}
+			}
 		}));
 		this._register(this.processManager.onBeforeProcessData(e => this.onBeforeProcessData(e)));
 
@@ -1241,13 +1272,18 @@ export class TypeAheadAddon extends Disposable implements ITerminalAddon {
 		}
 
 		this.clearPredictionDebounce?.dispose();
-		if (this.timeline.length === 0 || this.timeline.peekStart().clearAfterTimeout === false) {
+		if (this.timeline.length === 0 || this.timeline.peekStart()?.clearAfterTimeout === false) {
 			this.clearPredictionDebounce = undefined;
 			return;
 		}
 
 		this.clearPredictionDebounce = disposableTimeout(
-			() => this.timeline?.undoAllPredictions(),
+			() => {
+				this.timeline?.undoAllPredictions();
+				if (this.lastRow?.charState === CharPredictState.HasPendingChar) {
+					this.lastRow.charState = CharPredictState.Unknown;
+				}
+			},
 			Math.max(500, this.stats.maxLatency * 3 / 2),
 		);
 	}
@@ -1260,8 +1296,14 @@ export class TypeAheadAddon extends Disposable implements ITerminalAddon {
 	 * terminal cursor is not updated, causes issues.
 	 */
 	@debounce(100)
-	private reevaluatePredictorState(stats: PredictionStats, timeline: PredictionTimeline) {
-		if (this.typeaheadThreshold < 0) {
+	protected reevaluatePredictorState(stats: PredictionStats, timeline: PredictionTimeline) {
+		this.reevaluatePredictorStateNow(stats, timeline);
+	}
+
+	protected reevaluatePredictorStateNow(stats: PredictionStats, timeline: PredictionTimeline) {
+		if (this.excludeProgramRe.test(this.terminalTitle)) {
+			timeline.setShowPredictions(false);
+		} else if (this.typeaheadThreshold < 0) {
 			timeline.setShowPredictions(false);
 		} else if (this.typeaheadThreshold === 0) {
 			timeline.setShowPredictions(true);
@@ -1314,7 +1356,7 @@ export class TypeAheadAddon extends Disposable implements ITerminalAddon {
 		// the user gave input, and mark all additions before that as tentative.
 		const actualY = buffer.baseY + buffer.cursorY;
 		if (actualY !== this.lastRow?.y) {
-			this.lastRow = { y: actualY, startingX: buffer.cursorX };
+			this.lastRow = { y: actualY, startingX: buffer.cursorX, charState: CharPredictState.Unknown };
 		} else {
 			this.lastRow.startingX = Math.min(this.lastRow.startingX, buffer.cursorX);
 		}
@@ -1345,7 +1387,16 @@ export class TypeAheadAddon extends Disposable implements ITerminalAddon {
 
 			if (reader.eatCharCode(32, 126)) { // alphanum
 				const char = data[reader.index - 1];
-				if (this.timeline.addPrediction(buffer, new CharacterPrediction(this.typeaheadStyle!, char)) && this.timeline.getCursor(buffer).x === terminal.cols) {
+				const prediction = new CharacterPrediction(this.typeaheadStyle!, char);
+				let applied: boolean;
+				if (this.lastRow.charState === CharPredictState.Unknown) {
+					applied = this.timeline.addBoundary(buffer, new TentativeBoundary(prediction));
+					this.lastRow.charState = CharPredictState.HasPendingChar;
+				} else {
+					applied = this.timeline.addPrediction(buffer, prediction);
+				}
+
+				if (applied && this.timeline.getCursor(buffer).x >= terminal.cols) {
 					this.timeline.addBoundary(buffer, new TentativeBoundary(new LinewrapPrediction()));
 				}
 				continue;
@@ -1397,14 +1448,6 @@ export class TypeAheadAddon extends Disposable implements ITerminalAddon {
 		// console.log('incoming data:', JSON.stringify(event.data));
 		event.data = this.timeline.beforeServerInput(event.data);
 		// console.log('emitted data:', JSON.stringify(event.data));
-
-		// If there's something that looks like a password prompt, omit giving
-		// input. This is approximate since there's no TTY "password here" code,
-		// but should be enough to cover common cases like sudo
-		if (PASSWORD_INPUT_RE.test(event.data)) {
-			const terminal = this.timeline.terminal;
-			this.timeline.addBoundary(terminal.buffer.active, new HardBoundary());
-		}
 
 		this.deferClearingPredictions();
 	}

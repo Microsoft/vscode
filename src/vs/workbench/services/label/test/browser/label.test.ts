@@ -9,7 +9,8 @@ import { TestEnvironmentService, TestPathService } from 'vs/workbench/test/brows
 import { URI } from 'vs/base/common/uri';
 import { LabelService } from 'vs/workbench/services/label/common/labelService';
 import { TestContextService } from 'vs/workbench/test/common/workbenchTestServices';
-import { Workspace, WorkspaceFolder } from 'vs/platform/workspace/common/workspace';
+import { WorkspaceFolder } from 'vs/platform/workspace/common/workspace';
+import { Workspace } from 'vs/platform/workspace/test/common/testWorkspace';
 
 suite('URI Label', () => {
 	let labelService: LabelService;

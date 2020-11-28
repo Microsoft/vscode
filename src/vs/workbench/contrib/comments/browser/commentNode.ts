@@ -34,6 +34,7 @@ import { CommentFormActions } from 'vs/workbench/contrib/comments/browser/commen
 import { MOUSE_CURSOR_TEXT_CSS_CLASS_NAME } from 'vs/base/browser/ui/mouseCursor/mouseCursor';
 import { ActionViewItem } from 'vs/base/browser/ui/actionbar/actionViewItems';
 import { DropdownMenuActionViewItem } from 'vs/base/browser/ui/dropdown/dropdownActionViewItem';
+import { Codicon } from 'vs/base/common/codicons';
 
 export class CommentNode extends Disposable {
 	private _domNode: HTMLElement;
@@ -156,7 +157,7 @@ export class CommentNode extends Disposable {
 						{
 							actionViewItemProvider: action => this.actionViewItemProvider(action as Action),
 							actionRunner: this.actionRunner,
-							classNames: ['toolbar-toggle-pickReactions', 'codicon', 'codicon-reactions'],
+							classNames: ['toolbar-toggle-pickReactions', ...Codicon.reactions.classNamesArray],
 							anchorAlignmentProvider: () => AnchorAlignment.RIGHT
 						}
 					);

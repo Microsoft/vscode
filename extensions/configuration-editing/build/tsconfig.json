@@ -1,0 +1,7 @@
+{
+	"extends": "../../shared.tsconfig.json",
+	"compilerOptions": {
+		"resolveJsonModule": true,
+		"outDir": "./out"
+	}
+}

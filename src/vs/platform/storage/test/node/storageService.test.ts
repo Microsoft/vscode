@@ -52,9 +52,9 @@ suite('NativeStorageService', function () {
 		const storage = new NativeStorageService(new InMemoryStorageDatabase(), new NullLogService(), new StorageTestEnvironmentService(URI.file(storageDir), storageDir));
 		await storage.initialize({ id: String(Date.now()) });
 
-		storage.store2('bar', 'foo', StorageScope.WORKSPACE, StorageTarget.MACHINE);
-		storage.store2('barNumber', 55, StorageScope.WORKSPACE, StorageTarget.MACHINE);
-		storage.store2('barBoolean', true, StorageScope.GLOBAL, StorageTarget.MACHINE);
+		storage.store('bar', 'foo', StorageScope.WORKSPACE, StorageTarget.MACHINE);
+		storage.store('barNumber', 55, StorageScope.WORKSPACE, StorageTarget.MACHINE);
+		storage.store('barBoolean', true, StorageScope.GLOBAL, StorageTarget.MACHINE);
 
 		equal(storage.get('bar', StorageScope.WORKSPACE), 'foo');
 		equal(storage.getNumber('barNumber', StorageScope.WORKSPACE), 55);

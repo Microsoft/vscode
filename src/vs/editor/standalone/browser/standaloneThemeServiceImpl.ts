@@ -16,7 +16,7 @@ import { ColorIdentifier, Extensions, IColorRegistry } from 'vs/platform/theme/c
 import { Extensions as ThemingExtensions, ICssStyleCollector, IFileIconTheme, IThemingRegistry, ITokenStyle } from 'vs/platform/theme/common/themeService';
 import { IDisposable, Disposable } from 'vs/base/common/lifecycle';
 import { ColorScheme } from 'vs/platform/theme/common/theme';
-import { CodiconStyles } from 'vs/base/browser/ui/codicons/codiconStyles';
+import { getIconRegistry } from 'vs/platform/theme/common/iconRegistry';
 
 const VS_THEME_NAME = 'vs';
 const VS_DARK_THEME_NAME = 'vs-dark';
@@ -208,15 +208,18 @@ export class StandaloneThemeServiceImpl extends Disposable implements IStandalon
 		this._knownThemes.set(VS_THEME_NAME, newBuiltInTheme(VS_THEME_NAME));
 		this._knownThemes.set(VS_DARK_THEME_NAME, newBuiltInTheme(VS_DARK_THEME_NAME));
 		this._knownThemes.set(HC_BLACK_THEME_NAME, newBuiltInTheme(HC_BLACK_THEME_NAME));
-		this._codiconCSS = CodiconStyles.getCSS();
+
+		const iconRegistry = getIconRegistry();
+
+		this._codiconCSS = iconRegistry.getCSS();
 		this._themeCSS = '';
 		this._allCSS = `${this._codiconCSS}\n${this._themeCSS}`;
 		this._globalStyleElement = null;
 		this._styleElements = [];
 		this.setTheme(VS_THEME_NAME);
 
-		CodiconStyles.onDidChange(() => {
-			this._codiconCSS = CodiconStyles.getCSS();
+		iconRegistry.onDidChange(() => {
+			this._codiconCSS = iconRegistry.getCSS();
 			this._updateCSS();
 		});
 	}

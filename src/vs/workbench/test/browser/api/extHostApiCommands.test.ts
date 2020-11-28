@@ -28,7 +28,7 @@ import 'vs/workbench/contrib/search/browser/search.contribution';
 import { NullLogService } from 'vs/platform/log/common/log';
 import { ITextModel } from 'vs/editor/common/model';
 import { nullExtensionDescription, IExtensionService } from 'vs/workbench/services/extensions/common/extensions';
-import { dispose } from 'vs/base/common/lifecycle';
+import { dispose, ImmortalReference } from 'vs/base/common/lifecycle';
 import { IEditorWorkerService } from 'vs/editor/common/services/editorWorkerService';
 import { mock } from 'vs/base/test/common/mock';
 import { NullApiDeprecationService } from 'vs/workbench/api/common/extHostApiDeprecationService';
@@ -48,6 +48,7 @@ import 'vs/editor/contrib/parameterHints/provideSignatureHelp';
 import 'vs/editor/contrib/smartSelect/smartSelect';
 import 'vs/editor/contrib/suggest/suggest';
 import 'vs/editor/contrib/rename/rename';
+import { IResolvedTextEditorModel, ITextModelService } from 'vs/editor/common/services/resolverService';
 
 const defaultSelector = { scheme: 'far' };
 const model: ITextModel = createTextModel(
@@ -107,6 +108,13 @@ suite('ExtHostLanguageFeatureCommands', function () {
 		services.set(IMarkerService, new MarkerService());
 		services.set(IModelService, new class extends mock<IModelService>() {
 			getModel() { return model; }
+		});
+		services.set(ITextModelService, new class extends mock<ITextModelService>() {
+			async createModelReference() {
+				return new ImmortalReference<IResolvedTextEditorModel>(new class extends mock<IResolvedTextEditorModel>() {
+					textEditorModel = model;
+				});
+			}
 		});
 		services.set(IEditorWorkerService, new class extends mock<IEditorWorkerService>() {
 			async computeMoreMinimalEdits(_uri: any, edits: any) {

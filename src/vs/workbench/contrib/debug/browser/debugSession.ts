@@ -394,7 +394,18 @@ export class DebugSession implements IDebugSession {
 		}
 
 		if (this.raw.readyForBreakpoints) {
-			await this.raw.setExceptionBreakpoints({ filters: exbpts.map(exb => exb.filter) });
+			const args: DebugProtocol.SetExceptionBreakpointsArguments = this.capabilities.supportsExceptionFilterOptions ? {
+				filters: [],
+				filterOptions: exbpts.map(exb => {
+					if (exb.condition) {
+						return { filterId: exb.filter, condition: exb.condition };
+					}
+
+					return { filterId: exb.filter };
+				})
+			} : { filters: exbpts.map(exb => exb.filter) };
+
+			await this.raw.setExceptionBreakpoints(args);
 		}
 	}
 

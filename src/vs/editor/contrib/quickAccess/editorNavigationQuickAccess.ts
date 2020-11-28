@@ -26,6 +26,20 @@ export interface IEditorNavigationQuickAccessOptions {
 	canAcceptInBackground?: boolean;
 }
 
+export interface IQuickAccessTextEditorContext {
+
+	/**
+	 * The current active editor.
+	 */
+	readonly editor: IEditor;
+
+	/**
+	 * If defined, allows to restore the original view state
+	 * the text editor had before quick access opened.
+	 */
+	restoreViewState?: () => void;
+}
+
 /**
  * A reusable quick access provider for the editor with support
  * for adding decorations for navigating in the currently active file
@@ -69,6 +83,7 @@ export abstract class AbstractEditorNavigationQuickAccessProvider implements IQu
 		// With text control
 		const editor = this.activeTextEditorControl;
 		if (editor && this.canProvideWithTextEditor(editor)) {
+			const context: IQuickAccessTextEditorContext = { editor };
 
 			// Restore any view state if this picker was closed
 			// without actually going to a line
@@ -84,18 +99,20 @@ export abstract class AbstractEditorNavigationQuickAccessProvider implements IQu
 					lastKnownEditorViewState = withNullAsUndefined(editor.saveViewState());
 				}));
 
-				disposables.add(once(token.onCancellationRequested)(() => {
+				context.restoreViewState = () => {
 					if (lastKnownEditorViewState && editor === this.activeTextEditorControl) {
 						editor.restoreViewState(lastKnownEditorViewState);
 					}
-				}));
+				};
+
+				disposables.add(once(token.onCancellationRequested)(() => context.restoreViewState?.()));
 			}
 
 			// Clean up decorations on dispose
 			disposables.add(toDisposable(() => this.clearDecorations(editor)));
 
 			// Ask subclass for entries
-			disposables.add(this.provideWithTextEditor(editor, picker, token));
+			disposables.add(this.provideWithTextEditor(context, picker, token));
 		}
 
 		// Without text control
@@ -116,14 +133,14 @@ export abstract class AbstractEditorNavigationQuickAccessProvider implements IQu
 	/**
 	 * Subclasses to implement to provide picks for the picker when an editor is active.
 	 */
-	protected abstract provideWithTextEditor(editor: IEditor, picker: IQuickPick<IQuickPickItem>, token: CancellationToken): IDisposable;
+	protected abstract provideWithTextEditor(context: IQuickAccessTextEditorContext, picker: IQuickPick<IQuickPickItem>, token: CancellationToken): IDisposable;
 
 	/**
 	 * Subclasses to implement to provide picks for the picker when no editor is active.
 	 */
 	protected abstract provideWithoutTextEditor(picker: IQuickPick<IQuickPickItem>, token: CancellationToken): IDisposable;
 
-	protected gotoLocation(editor: IEditor, options: { range: IRange, keyMods: IKeyMods, forceSideBySide?: boolean, preserveFocus?: boolean }): void {
+	protected gotoLocation({ editor }: IQuickAccessTextEditorContext, options: { range: IRange, keyMods: IKeyMods, forceSideBySide?: boolean, preserveFocus?: boolean }): void {
 		editor.setSelection(options.range);
 		editor.revealRangeInCenter(options.range, ScrollType.Smooth);
 		if (!options.preserveFocus) {

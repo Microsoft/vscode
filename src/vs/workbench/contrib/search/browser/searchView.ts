@@ -22,6 +22,7 @@ import { URI } from 'vs/base/common/uri';
 import 'vs/css!./media/searchview';
 import { ICodeEditor, isCodeEditor, isDiffEditor, getCodeEditor } from 'vs/editor/browser/editorBrowser';
 import { IEditorOptions } from 'vs/editor/common/config/editorOptions';
+import { CommonFindController } from 'vs/editor/contrib/find/findController';
 import * as nls from 'vs/nls';
 import { createAndFillInContextMenuActions } from 'vs/platform/actions/browser/menuEntryActionViewItem';
 import { IMenu, IMenuService, MenuId } from 'vs/platform/actions/common/actions';
@@ -37,7 +38,7 @@ import { IProgressService, IProgressStep, IProgress } from 'vs/platform/progress
 import { IPatternInfo, ISearchComplete, ISearchConfiguration, ISearchConfigurationProperties, ITextQuery, SearchSortOrder, SearchCompletionExitCode } from 'vs/workbench/services/search/common/search';
 import { ISearchHistoryService, ISearchHistoryValues } from 'vs/workbench/contrib/search/common/searchHistoryService';
 import { diffInserted, diffInsertedOutline, diffRemoved, diffRemovedOutline, editorFindMatchHighlight, editorFindMatchHighlightBorder, listActiveSelectionForeground, foreground } from 'vs/platform/theme/common/colorRegistry';
-import { ICssStyleCollector, IColorTheme, IThemeService, registerThemingParticipant } from 'vs/platform/theme/common/themeService';
+import { ICssStyleCollector, IColorTheme, IThemeService, registerThemingParticipant, ThemeIcon } from 'vs/platform/theme/common/themeService';
 import { IWorkspaceContextService, WorkbenchState } from 'vs/platform/workspace/common/workspace';
 import { OpenFileFolderAction, OpenFolderAction } from 'vs/workbench/browser/actions/workspaceActions';
 import { ResourceLabels } from 'vs/workbench/browser/labels';
@@ -282,7 +283,7 @@ export class SearchView extends ViewPane {
 
 		// Toggle query details button
 		this.toggleQueryDetailsButton = dom.append(this.queryDetails,
-			$('.more' + searchDetailsIcon.cssSelector, { tabindex: 0, role: 'button', title: nls.localize('moreSearch', "Toggle Search Details") }));
+			$('.more' + ThemeIcon.asCSSSelector(searchDetailsIcon), { tabindex: 0, role: 'button', title: nls.localize('moreSearch', "Toggle Search Details") }));
 
 		this._register(dom.addDisposableListener(this.toggleQueryDetailsButton, dom.EventType.CLICK, e => {
 			dom.EventHelper.stop(e);
@@ -888,28 +889,63 @@ export class SearchView extends ViewPane {
 		}
 	}
 
-	updateTextFromSelection({ allowUnselectedWord = true, allowSearchOnType = true }): boolean {
-		let updatedText = false;
-		const seedSearchStringFromSelection = this.configurationService.getValue<IEditorOptions>('editor').find!.seedSearchStringFromSelection;
-		if (seedSearchStringFromSelection) {
-			let selectedText = this.getSearchTextFromEditor(allowUnselectedWord);
-			if (selectedText) {
-				if (this.searchWidget.searchInput.getRegex()) {
-					selectedText = strings.escapeRegExpCharacters(selectedText);
-				}
-
-				if (allowSearchOnType && !this.viewModel.searchResult.isDirty) {
-					this.searchWidget.setValue(selectedText);
-				} else {
-					this.pauseSearching = true;
-					this.searchWidget.setValue(selectedText);
-					this.pauseSearching = false;
-				}
-				updatedText = true;
+	updateTextFromFindWidgetOrSelection({ allowUnselectedWord = true, allowSearchOnType = true }): boolean {
+		const activeEditor = this.editorService.activeTextEditorControl;
+		if (isCodeEditor(activeEditor)) {
+			const controller = CommonFindController.get(activeEditor as ICodeEditor);
+			if (controller.isFindInputFocused()) {
+				return this.updateTextFromFindWidget(controller, { allowSearchOnType });
 			}
 		}
 
-		return updatedText;
+		return this.updateTextFromSelection({ allowUnselectedWord, allowSearchOnType });
+	}
+
+	private updateTextFromFindWidget(controller: CommonFindController, { allowSearchOnType = true }): boolean {
+		if (!this.searchConfig.seedWithNearestWord && (window.getSelection()?.toString() ?? '') === '') {
+			return false;
+		}
+
+		const searchString = controller.getState().searchString;
+		if (searchString === '') {
+			return false;
+		}
+
+		this.searchWidget.searchInput.setCaseSensitive(controller.getState().matchCase);
+		this.searchWidget.searchInput.setWholeWords(controller.getState().wholeWord);
+		this.searchWidget.searchInput.setRegex(controller.getState().isRegex);
+		this.updateText(searchString, allowSearchOnType);
+
+		return true;
+	}
+
+	private updateTextFromSelection({ allowUnselectedWord = true, allowSearchOnType = true }): boolean {
+		const seedSearchStringFromSelection = this.configurationService.getValue<IEditorOptions>('editor').find!.seedSearchStringFromSelection;
+		if (!seedSearchStringFromSelection) {
+			return false;
+		}
+
+		let selectedText = this.getSearchTextFromEditor(allowUnselectedWord);
+		if (selectedText === null) {
+			return false;
+		}
+
+		if (this.searchWidget.searchInput.getRegex()) {
+			selectedText = strings.escapeRegExpCharacters(selectedText);
+		}
+
+		this.updateText(selectedText, allowSearchOnType);
+		return true;
+	}
+
+	private updateText(text: string, allowSearchOnType: boolean = true) {
+		if (allowSearchOnType && !this.viewModel.searchResult.isDirty) {
+			this.searchWidget.setValue(text);
+		} else {
+			this.pauseSearching = true;
+			this.searchWidget.setValue(text);
+			this.pauseSearching = false;
+		}
 	}
 
 	focusNextInputBox(): void {

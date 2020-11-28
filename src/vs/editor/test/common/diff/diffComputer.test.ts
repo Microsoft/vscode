@@ -852,4 +852,31 @@ suite('Editor Diff - DiffComputer', () => {
 		];
 		assertDiff(original, modified, expected, false, false, false);
 	});
+
+	test('gives preference to matching longer lines', () => {
+		let original = [
+			'A',
+			'A',
+			'BB',
+			'C',
+		];
+		let modified = [
+			'A',
+			'BB',
+			'A',
+			'D',
+			'E',
+			'A',
+			'C',
+		];
+		let expected = [
+			createLineChange(
+				2, 2, 1, 0
+			),
+			createLineChange(
+				3, 0, 3, 6
+			)
+		];
+		assertDiff(original, modified, expected, false, false, false);
+	});
 });

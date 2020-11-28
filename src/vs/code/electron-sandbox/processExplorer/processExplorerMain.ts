@@ -68,16 +68,19 @@ class ProcessExplorer {
 
 	private getProcessList(rootProcess: ProcessItem, isLocal: boolean, totalMem: number): FormattedProcessItem[] {
 		const processes: FormattedProcessItem[] = [];
+		const handledProcesses = new Set<number>();
 
 		if (rootProcess) {
-			this.getProcessItem(processes, rootProcess, 0, isLocal, totalMem);
+			this.getProcessItem(processes, rootProcess, 0, isLocal, totalMem, handledProcesses);
 		}
 
 		return processes;
 	}
 
-	private getProcessItem(processes: FormattedProcessItem[], item: ProcessItem, indent: number, isLocal: boolean, totalMem: number): void {
+	private getProcessItem(processes: FormattedProcessItem[], item: ProcessItem, indent: number, isLocal: boolean, totalMem: number, handledProcesses: Set<number>): void {
 		const isRoot = (indent === 0);
+
+		handledProcesses.add(item.pid);
 
 		let name = item.name;
 		if (isRoot) {
@@ -104,9 +107,11 @@ class ProcessExplorer {
 		// Recurse into children if any
 		if (Array.isArray(item.children)) {
 			item.children.forEach(child => {
-				if (child) {
-					this.getProcessItem(processes, child, indent + 1, isLocal, totalMem);
+				if (!child || handledProcesses.has(child.pid)) {
+					return; // prevent loops
 				}
+
+				this.getProcessItem(processes, child, indent + 1, isLocal, totalMem, handledProcesses);
 			});
 		}
 	}

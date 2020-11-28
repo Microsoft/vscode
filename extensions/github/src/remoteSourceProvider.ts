@@ -8,6 +8,12 @@ import { getOctokit } from './auth';
 import { Octokit } from '@octokit/rest';
 import { publishRepository } from './publish';
 
+function parse(url: string): { owner: string, repo: string } | undefined {
+	const match = /^https:\/\/github\.com\/([^/]+)\/([^/]+)\.git/i.exec(url)
+		|| /^git@github\.com:([^/]+)\/([^/]+)\.git/i.exec(url);
+	return (match && { owner: match[1], repo: match[2] }) ?? undefined;
+}
+
 function asRemoteSource(raw: any): RemoteSource {
 	return {
 		name: `$(github) ${raw.full_name}`,
@@ -28,17 +34,30 @@ export class GithubRemoteSourceProvider implements RemoteSourceProvider {
 
 	async getRemoteSources(query?: string): Promise<RemoteSource[]> {
 		const octokit = await getOctokit();
-		const [fromUser, fromQuery] = await Promise.all([
+
+		if (query) {
+			const repository = parse(query);
+
+			if (repository) {
+				const raw = await octokit.repos.get(repository);
+				return [asRemoteSource(raw.data)];
+			}
+		}
+
+		const all = await Promise.all([
 			this.getUserRemoteSources(octokit, query),
 			this.getQueryRemoteSources(octokit, query)
 		]);
 
-		const userRepos = new Set(fromUser.map(r => r.name));
+		const map = new Map<string, RemoteSource>();
 
-		return [
-			...fromUser,
-			...fromQuery.filter(r => !userRepos.has(r.name))
-		];
+		for (const group of all) {
+			for (const remoteSource of group) {
+				map.set(remoteSource.name, remoteSource);
+			}
+		}
+
+		return [...map.values()];
 	}
 
 	private async getUserRemoteSources(octokit: Octokit, query?: string): Promise<RemoteSource[]> {
@@ -59,6 +78,35 @@ export class GithubRemoteSourceProvider implements RemoteSourceProvider {
 
 		const raw = await octokit.search.repos({ q: query, sort: 'updated' });
 		return raw.data.items.map(asRemoteSource);
+	}
+
+	async getBranches(url: string): Promise<string[]> {
+		const repository = parse(url);
+
+		if (!repository) {
+			return [];
+		}
+
+		const octokit = await getOctokit();
+
+		const branches: string[] = [];
+		let page = 1;
+
+		while (true) {
+			let res = await octokit.repos.listBranches({ ...repository, per_page: 100, page });
+
+			if (res.data.length === 0) {
+				break;
+			}
+
+			branches.push(...res.data.map(b => b.name));
+			page++;
+		}
+
+		const repo = await octokit.repos.get(repository);
+		const defaultBranch = repo.data.default_branch;
+
+		return branches.sort((a, b) => a === defaultBranch ? -1 : b === defaultBranch ? 1 : 0);
 	}
 
 	publishRepository(repository: Repository): Promise<void> {

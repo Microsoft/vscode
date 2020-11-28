@@ -15,6 +15,8 @@ import { ViewLineRenderingData } from 'vs/editor/common/viewModel/viewModel';
 import { IStandaloneThemeService } from 'vs/editor/standalone/common/standaloneThemeService';
 import { MonarchTokenizer } from 'vs/editor/standalone/common/monarch/monarchLexer';
 
+const ttPolicy = window.trustedTypes?.createPolicy('standaloneColorizer', { createHTML: value => value });
+
 export interface IColorizerOptions {
 	tabSize?: number;
 }
@@ -40,7 +42,8 @@ export class Colorizer {
 		let text = domNode.firstChild ? domNode.firstChild.nodeValue : '';
 		domNode.className += ' ' + theme;
 		let render = (str: string) => {
-			domNode.innerHTML = str;
+			const trustedhtml = ttPolicy ? ttPolicy.createHTML(str) : str;
+			domNode.innerHTML = trustedhtml as unknown as string;
 		};
 		return this.colorize(modeService, text || '', mimeType, options).then(render, (err) => console.error(err));
 	}

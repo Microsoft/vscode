@@ -16,8 +16,8 @@ jobs:
         if: github.event_name != 'issues' || contains(github.event.issue.labels.*.name, 'author-verification-requested')
         uses: actions/checkout@v2
         with:
-          repository: 'microsoft/vscode-github-triage-actions'
-          ref: v39
+          repository: "microsoft/vscode-github-triage-actions"
+          ref: v40
           path: ./actions
       - name: Install Actions
         if: github.event_name != 'issues' || contains(github.event.issue.labels.*.name, 'author-verification-requested')
@@ -34,7 +34,7 @@ jobs:
         with:
           appInsightsKey: ${{secrets.TRIAGE_ACTIONS_APP_INSIGHTS}}
           token: ${{secrets.VSCODE_ISSUE_TRIAGE_BOT_PAT}}
-          requestVerificationComment: "This bug has been fixed in to the latest release of [VS Code Insiders](https://code.visualstudio.com/insiders/)!\n\n@${author}, you can help us out by commenting `/verified` if things are now working as expected.\n\nIf things still don't seem right, please ensure you're on version ${commit} of Insiders (today's or later - you can use `Help: About` in the command pallette to check), and leave a comment letting us know what isn't working as expected.\n\nHappy Coding!"
+          requestVerificationComment: "This bug has been fixed in to the latest release of [VS Code Insiders](https://code.visualstudio.com/insiders/)!\n\n@${author}, you can help us out by commenting `/verified` if things are now working as expected.\n\nIf things still don't seem right, please ensure you're on version ${commit} of Insiders (today's or later - you can use `Help: About` in the command palette to check), and leave a comment letting us know what isn't working as expected.\n\nHappy Coding!"
           pendingReleaseLabel: awaiting-insiders-release
           verifiedLabel: verified
           authorVerificationRequestedLabel: author-verification-requested

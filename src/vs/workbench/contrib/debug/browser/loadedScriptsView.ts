@@ -16,7 +16,7 @@ import { IDebugSession, IDebugService, CONTEXT_LOADED_SCRIPTS_ITEM_TYPE } from '
 import { Source } from 'vs/workbench/contrib/debug/common/debugSource';
 import { IWorkspaceContextService, IWorkspaceFolder } from 'vs/platform/workspace/common/workspace';
 import { IContextKey, IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
-import { tildify } from 'vs/base/common/labels';
+import { normalizeDriveLetter, tildify } from 'vs/base/common/labels';
 import { isWindows } from 'vs/base/common/platform';
 import { URI } from 'vs/base/common/uri';
 import { ltrim } from 'vs/base/common/strings';
@@ -350,7 +350,9 @@ class SessionTreeItem extends BaseTreeItem {
 				} else {
 					// on unix try to tildify absolute paths
 					path = normalize(path);
-					if (!isWindows) {
+					if (isWindows) {
+						path = normalizeDriveLetter(path);
+					} else {
 						path = tildify(path, (await this._pathService.userHome()).fsPath);
 					}
 				}

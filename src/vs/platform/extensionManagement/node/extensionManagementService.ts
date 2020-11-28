@@ -20,7 +20,8 @@ import {
 	INSTALL_ERROR_MALICIOUS,
 	INSTALL_ERROR_INCOMPATIBLE,
 	ExtensionManagementError,
-	InstallOptions
+	InstallOptions,
+	UninstallOptions
 } from 'vs/platform/extensionManagement/common/extensionManagement';
 import { areSameExtensions, getGalleryExtensionId, getMaliciousExtensionsSet, getGalleryExtensionTelemetryData, getLocalExtensionTelemetryData, ExtensionIdentifierWithVersion } from 'vs/platform/extensionManagement/common/extensionManagementUtil';
 import { INativeEnvironmentService } from 'vs/platform/environment/common/environment';
@@ -297,11 +298,13 @@ export class ExtensionManagementService extends Disposable implements IExtension
 
 			try { await this.extensionsDownloader.delete(URI.file(installableExtension.zipPath)); } catch (error) { /* Ignore */ }
 
-			try {
-				await this.installDependenciesAndPackExtensions(local, existingExtension, options);
-			} catch (error) {
-				try { await this.uninstall(local); } catch (error) { /* Ignore */ }
-				throw error;
+			if (!options.donotIncludePackAndDependencies) {
+				try {
+					await this.installDependenciesAndPackExtensions(local, existingExtension, options);
+				} catch (error) {
+					try { await this.uninstall(local); } catch (error) { /* Ignore */ }
+					throw error;
+				}
 			}
 
 			if (existingExtension && semver.neq(existingExtension.manifest.version, extension.version)) {
@@ -471,7 +474,7 @@ export class ExtensionManagementService extends Disposable implements IExtension
 		await Promise.all(extensionsToUninstall.map(local => this.uninstall(local)));
 	}
 
-	async uninstall(extension: ILocalExtension): Promise<void> {
+	async uninstall(extension: ILocalExtension, options: UninstallOptions = {}): Promise<void> {
 		this.logService.trace('ExtensionManagementService#uninstall', extension.identifier.id);
 		const installed = await this.getInstalled(ExtensionType.User);
 		const extensionToUninstall = installed.find(e => areSameExtensions(e.identifier, extension.identifier));
@@ -480,7 +483,7 @@ export class ExtensionManagementService extends Disposable implements IExtension
 		}
 
 		try {
-			await this.checkForDependenciesAndUninstall(extensionToUninstall, installed);
+			await this.checkForDependenciesAndUninstall(extensionToUninstall, installed, options);
 		} catch (error) {
 			throw this.joinErrors(error);
 		}
@@ -533,15 +536,11 @@ export class ExtensionManagementService extends Disposable implements IExtension
 		}, new Error(''));
 	}
 
-	private async checkForDependenciesAndUninstall(extension: ILocalExtension, installed: ILocalExtension[]): Promise<void> {
+	private async checkForDependenciesAndUninstall(extension: ILocalExtension, installed: ILocalExtension[], options: UninstallOptions): Promise<void> {
 		try {
 			await this.preUninstallExtension(extension);
-			const packedExtensions = this.getAllPackExtensionsToUninstall(extension, installed);
-			if (packedExtensions.length) {
-				await this.uninstallExtensions(extension, packedExtensions, installed);
-			} else {
-				await this.uninstallExtensions(extension, [], installed);
-			}
+			const packedExtensions = options.donotIncludePack ? [] : this.getAllPackExtensionsToUninstall(extension, installed);
+			await this.uninstallExtensions(extension, packedExtensions, installed, options);
 		} catch (error) {
 			await this.postUninstallExtension(extension, new ExtensionManagementError(error instanceof Error ? error.message : error, INSTALL_ERROR_LOCAL));
 			throw error;
@@ -549,10 +548,12 @@ export class ExtensionManagementService extends Disposable implements IExtension
 		await this.postUninstallExtension(extension);
 	}
 
-	private async uninstallExtensions(extension: ILocalExtension, otherExtensionsToUninstall: ILocalExtension[], installed: ILocalExtension[]): Promise<void> {
+	private async uninstallExtensions(extension: ILocalExtension, otherExtensionsToUninstall: ILocalExtension[], installed: ILocalExtension[], options: UninstallOptions): Promise<void> {
 		const extensionsToUninstall = [extension, ...otherExtensionsToUninstall];
-		for (const e of extensionsToUninstall) {
-			this.checkForDependents(e, extensionsToUninstall, installed, extension);
+		if (!options.donotCheckDependents) {
+			for (const e of extensionsToUninstall) {
+				this.checkForDependents(e, extensionsToUninstall, installed, extension);
+			}
 		}
 		await Promise.all([this.uninstallExtension(extension), ...otherExtensionsToUninstall.map(d => this.doUninstall(d))]);
 	}

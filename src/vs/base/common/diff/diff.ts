@@ -880,7 +880,79 @@ export class LcsDiff {
 			change.modifiedStart -= bestDelta;
 		}
 
+		// There could be multiple longest common substrings.
+		// Give preference to the ones containing longer lines
+		if (this._hasStrings) {
+			for (let i = 1, len = changes.length; i < len; i++) {
+				const aChange = changes[i - 1];
+				const bChange = changes[i];
+				const matchedLength = bChange.originalStart - aChange.originalStart - aChange.originalLength;
+				const aOriginalStart = aChange.originalStart;
+				const bOriginalEnd = bChange.originalStart + bChange.originalLength;
+				const abOriginalLength = bOriginalEnd - aOriginalStart;
+				const aModifiedStart = aChange.modifiedStart;
+				const bModifiedEnd = bChange.modifiedStart + bChange.modifiedLength;
+				const abModifiedLength = bModifiedEnd - aModifiedStart;
+				// Avoid wasting a lot of time with these searches
+				if (matchedLength < 5 && abOriginalLength < 20 && abModifiedLength < 20) {
+					const t = this._findBetterContiguousSequence(
+						aOriginalStart, abOriginalLength,
+						aModifiedStart, abModifiedLength,
+						matchedLength
+					);
+					if (t) {
+						const [originalMatchStart, modifiedMatchStart] = t;
+						if (originalMatchStart !== aChange.originalStart + aChange.originalLength || modifiedMatchStart !== aChange.modifiedStart + aChange.modifiedLength) {
+							// switch to another sequence that has a better score
+							aChange.originalLength = originalMatchStart - aChange.originalStart;
+							aChange.modifiedLength = modifiedMatchStart - aChange.modifiedStart;
+							bChange.originalStart = originalMatchStart + matchedLength;
+							bChange.modifiedStart = modifiedMatchStart + matchedLength;
+							bChange.originalLength = bOriginalEnd - bChange.originalStart;
+							bChange.modifiedLength = bModifiedEnd - bChange.modifiedStart;
+						}
+					}
+				}
+			}
+		}
+
 		return changes;
+	}
+
+	private _findBetterContiguousSequence(originalStart: number, originalLength: number, modifiedStart: number, modifiedLength: number, desiredLength: number): [number, number] | null {
+		if (originalLength < desiredLength || modifiedLength < desiredLength) {
+			return null;
+		}
+		const originalMax = originalStart + originalLength - desiredLength + 1;
+		const modifiedMax = modifiedStart + modifiedLength - desiredLength + 1;
+		let bestScore = 0;
+		let bestOriginalStart = 0;
+		let bestModifiedStart = 0;
+		for (let i = originalStart; i < originalMax; i++) {
+			for (let j = modifiedStart; j < modifiedMax; j++) {
+				const score = this._contiguousSequenceScore(i, j, desiredLength);
+				if (score > 0 && score > bestScore) {
+					bestScore = score;
+					bestOriginalStart = i;
+					bestModifiedStart = j;
+				}
+			}
+		}
+		if (bestScore > 0) {
+			return [bestOriginalStart, bestModifiedStart];
+		}
+		return null;
+	}
+
+	private _contiguousSequenceScore(originalStart: number, modifiedStart: number, length: number): number {
+		let score = 0;
+		for (let l = 0; l < length; l++) {
+			if (!this.ElementsAreEqual(originalStart + l, modifiedStart + l)) {
+				return 0;
+			}
+			score += this._originalStringElements[originalStart + l].length;
+		}
+		return score;
 	}
 
 	private _OriginalIsBoundary(index: number): boolean {

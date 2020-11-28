@@ -162,6 +162,15 @@ export class ModesHoverController implements IEditorContribution {
 			return;
 		}
 
+
+		if (
+			!this._isHoverSticky && targetType === MouseTargetType.CONTENT_WIDGET && mouseEvent.target.detail === ModesContentHoverWidget.ID
+			&& this._contentWidget.value?.isColorPickerVisible()
+		) {
+			// though the hover is not sticky, the color picker needs to.
+			return;
+		}
+
 		if (this._isHoverSticky && targetType === MouseTargetType.OVERLAY_WIDGET && mouseEvent.target.detail === ModesGlyphHoverWidget.ID) {
 			// mouse moved on top of overlay hover widget
 			return;

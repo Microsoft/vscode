@@ -13,6 +13,7 @@ import { INativeHostMainService } from 'vs/platform/native/electron-main/nativeH
 import { IEncryptionMainService } from 'vs/platform/encryption/electron-main/encryptionMainService';
 import { generateUuid } from 'vs/base/common/uuid';
 import product from 'vs/platform/product/common/product';
+import { CancellationToken } from 'vs/base/common/cancellation';
 
 interface ElectronAuthenticationResponseDetails extends AuthenticationResponseDetails {
 	firstAuthAttempt?: boolean; // https://github.com/electron/electron/blob/84a42a050e7d45225e69df5bd2d2bf9f1037ea41/shell/browser/login_handler.cc#L70
@@ -192,7 +193,7 @@ export class ProxyAuthHandler2 extends Disposable {
 			password: this.sessionCredentials?.password ?? storedPassword, // prefer to show already used password (if any) over stored
 			replyChannel: `vscode:proxyAuthResponse:${generateUuid()}`
 		};
-		window.sendWhenReady('vscode:openProxyAuthenticationDialog', payload);
+		window.sendWhenReady('vscode:openProxyAuthenticationDialog', CancellationToken.None, payload);
 		this.state = ProxyAuthState.LoginDialogShown;
 
 		// Handle reply

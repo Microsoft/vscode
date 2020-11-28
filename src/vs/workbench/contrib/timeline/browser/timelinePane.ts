@@ -42,6 +42,8 @@ import { MenuItemAction, IMenuService, MenuId, registerAction2, Action2, MenuReg
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 import { ActionViewItem } from 'vs/base/browser/ui/actionbar/actionViewItems';
 import { ColorScheme } from 'vs/platform/theme/common/theme';
+import { Codicon } from 'vs/base/common/codicons';
+import { registerIcon } from 'vs/platform/theme/common/iconRegistry';
 
 const ItemHeight = 22;
 
@@ -208,7 +210,7 @@ class LoadMoreCommand {
 		return this.loading ? localize('timeline.loadingMore', "Loading...") : localize('timeline.loadMore', "Load more");
 	}
 
-	get themeIcon(): { id: string; } | undefined {
+	get themeIcon(): ThemeIcon | undefined {
 		return undefined; //this.loading ? { id: 'sync~spin' } : undefined;
 	}
 }
@@ -1150,6 +1152,11 @@ class TimelineTreeRenderer implements ITreeRenderer<TreeElement, FuzzyScore, Tim
 	}
 }
 
+
+const timelineRefresh = registerIcon('timeline-refresh', Codicon.refresh, localize('timelineRefresh', 'Icon for the refresh timeline action.'));
+const timelinePin = registerIcon('timeline-pin', Codicon.pin, localize('timelinePin', 'Icon for the pin timeline action.'));
+const timelineUnpin = registerIcon('timeline-unpin', Codicon.pinned, localize('timelineUnpin', 'Icon for the unpin timeline action.'));
+
 class TimelinePaneCommands extends Disposable {
 	private sourceDisposables: DisposableStore;
 
@@ -1169,7 +1176,7 @@ class TimelinePaneCommands extends Disposable {
 				super({
 					id: 'timeline.refresh',
 					title: { value: localize('refresh', "Refresh"), original: 'Refresh' },
-					icon: { id: 'codicon/refresh' },
+					icon: timelineRefresh,
 					category: { value: localize('timeline', "Timeline"), original: 'Timeline' },
 					menu: {
 						id: MenuId.TimelineTitle,
@@ -1191,7 +1198,7 @@ class TimelinePaneCommands extends Disposable {
 			command: {
 				id: 'timeline.toggleFollowActiveEditor',
 				title: { value: localize('timeline.toggleFollowActiveEditorCommand.follow', "Pin the Current Timeline"), original: 'Pin the Current Timeline' },
-				icon: { id: 'codicon/pin' },
+				icon: timelinePin,
 				category: { value: localize('timeline', "Timeline"), original: 'Timeline' },
 			},
 			group: 'navigation',
@@ -1203,7 +1210,7 @@ class TimelinePaneCommands extends Disposable {
 			command: {
 				id: 'timeline.toggleFollowActiveEditor',
 				title: { value: localize('timeline.toggleFollowActiveEditorCommand.unfollow', "Unpin the Current Timeline"), original: 'Unpin the Current Timeline' },
-				icon: { id: 'codicon/pinned' },
+				icon: timelineUnpin,
 				category: { value: localize('timeline', "Timeline"), original: 'Timeline' },
 			},
 			group: 'navigation',

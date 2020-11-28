@@ -19,8 +19,7 @@ export interface IssueReporterData {
 	includeWorkspaceInfo: boolean;
 	includeProcessInfo: boolean;
 	includeExtensions: boolean;
-	includeSearchedExtensions: boolean;
-	includeSettingsSearchDetails: boolean;
+	includeExperiments: boolean;
 
 	numberOfThemeExtesions?: number;
 	allExtensions: IssueReporterExtensionData[];
@@ -31,6 +30,7 @@ export interface IssueReporterData {
 	actualSearchResults?: ISettingSearchResult[];
 	query?: string;
 	filterResultCount?: number;
+	experimentInfo?: string;
 }
 
 export class IssueReporterModel {
@@ -43,8 +43,7 @@ export class IssueReporterModel {
 			includeWorkspaceInfo: true,
 			includeProcessInfo: true,
 			includeExtensions: true,
-			includeSearchedExtensions: true,
-			includeSettingsSearchDetails: true,
+			includeExperiments: true,
 			allExtensions: []
 		};
 
@@ -133,6 +132,12 @@ ${this.getInfos()}
 			}
 		}
 
+		if (this._data.issueType === IssueType.Bug || this._data.issueType === IssueType.PerformanceIssue) {
+			if (this._data.includeExperiments && this._data.experimentInfo) {
+				info += this.generateExperimentsInfoMd();
+			}
+		}
+
 		return info;
 	}
 
@@ -150,7 +155,7 @@ ${this.getInfos()}
 |GPU Status|${Object.keys(this._data.systemInfo.gpuStatus).map(key => `${key}: ${this._data.systemInfo!.gpuStatus[key]}`).join('<br>')}|
 |Load (avg)|${this._data.systemInfo.load}|
 |Memory (System)|${this._data.systemInfo.memory}|
-|Process Argv|${this._data.systemInfo.processArgs}|
+|Process Argv|${this._data.systemInfo.processArgs.replace(/\\/g, '\\\\')}|
 |Screen Reader|${this._data.systemInfo.screenReader}|
 |VM|${this._data.systemInfo.vmHint}|`;
 
@@ -201,6 +206,18 @@ ${this._data.processInfo}
 
 \`\`\`
 ${this._data.workspaceInfo};
+\`\`\`
+
+</details>
+`;
+	}
+
+	private generateExperimentsInfoMd(): string {
+		return `<details>
+<summary>A/B Experiments</summary>
+
+\`\`\`
+${this._data.experimentInfo}
 \`\`\`
 
 </details>

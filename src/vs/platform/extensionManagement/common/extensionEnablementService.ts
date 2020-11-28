@@ -152,7 +152,7 @@ export class StorageManager extends Disposable {
 	private _set(key: string, value: string | undefined, scope: StorageScope): void {
 		if (value) {
 			// Enablement state is synced separately through extensions
-			this.storageService.store2(key, value, scope, StorageTarget.MACHINE);
+			this.storageService.store(key, value, scope, StorageTarget.MACHINE);
 		} else {
 			this.storageService.remove(key, scope);
 		}

@@ -8,11 +8,11 @@ import { clearNode, addDisposableListener, EventType, EventHelper, $ } from 'vs/
 import { IOpenerService } from 'vs/platform/opener/common/opener';
 import { URI } from 'vs/base/common/uri';
 import { localize } from 'vs/nls';
-import { ButtonGroup } from 'vs/base/browser/ui/button/button';
+import { ButtonBar } from 'vs/base/browser/ui/button/button';
 import { attachButtonStyler, attachProgressBarStyler } from 'vs/platform/theme/common/styler';
 import { IThemeService } from 'vs/platform/theme/common/themeService';
 import { ActionBar } from 'vs/base/browser/ui/actionbar/actionbar';
-import { IAction, IActionRunner } from 'vs/base/common/actions';
+import { ActionRunner, ActionWithMenuAction, IAction, IActionRunner } from 'vs/base/common/actions';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { dispose, DisposableStore, Disposable } from 'vs/base/common/lifecycle';
 import { IContextMenuService } from 'vs/platform/contextview/browser/contextView';
@@ -285,7 +285,8 @@ export class NotificationTemplateRenderer extends Disposable {
 		@IOpenerService private readonly openerService: IOpenerService,
 		@IInstantiationService private readonly instantiationService: IInstantiationService,
 		@IThemeService private readonly themeService: IThemeService,
-		@IKeybindingService private readonly keybindingService: IKeybindingService
+		@IKeybindingService private readonly keybindingService: IKeybindingService,
+		@IContextMenuService private readonly contextMenuService: IContextMenuService,
 	) {
 		super();
 
@@ -441,27 +442,40 @@ export class NotificationTemplateRenderer extends Disposable {
 
 		const primaryActions = notification.actions ? notification.actions.primary : undefined;
 		if (notification.expanded && isNonEmptyArray(primaryActions)) {
-			const buttonGroup = new ButtonGroup(this.template.buttonsContainer, primaryActions.length, { title: true /* assign titles to buttons in case they overflow */ });
-			buttonGroup.buttons.forEach((button, index) => {
-				const action = primaryActions[index];
-				button.label = action.label;
-
-				this.inputDisposables.add(button.onDidClick(e => {
-					EventHelper.stop(e, true);
-
+			const that = this;
+			const actionRunner: IActionRunner = new class extends ActionRunner {
+				protected async runAction(action: IAction): Promise<void> {
 					// Run action
-					this.actionRunner.run(action, notification);
+					that.actionRunner.run(action, notification);
 
 					// Hide notification (unless explicitly prevented)
 					if (!(action instanceof ChoiceAction) || !action.keepOpen) {
 						notification.close();
 					}
+				}
+			}();
+			const buttonToolbar = this.inputDisposables.add(new ButtonBar(this.template.buttonsContainer));
+			for (const action of primaryActions) {
+				const buttonOptions = { title: true, /* assign titles to buttons in case they overflow */ };
+				const dropdownActions = action instanceof ChoiceAction ? action.menu
+					: action instanceof ActionWithMenuAction ? action.actions : undefined;
+				const button = this.inputDisposables.add(
+					dropdownActions
+						? buttonToolbar.addButtonWithDropdown({
+							...buttonOptions,
+							contextMenuProvider: this.contextMenuService,
+							actions: dropdownActions,
+							actionRunner
+						})
+						: buttonToolbar.addButton(buttonOptions));
+				button.label = action.label;
+				this.inputDisposables.add(button.onDidClick(e => {
+					EventHelper.stop(e, true);
+					actionRunner.run(action);
 				}));
 
 				this.inputDisposables.add(attachButtonStyler(button, this.themeService));
-			});
-
-			this.inputDisposables.add(buttonGroup);
+			}
 		}
 	}
 

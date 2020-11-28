@@ -18,11 +18,13 @@ import { IActivity } from 'vs/workbench/common/activity';
 import { IEditorGroupsService } from 'vs/workbench/services/editor/common/editorGroupsService';
 import { ActivePanelContext, PanelPositionContext } from 'vs/workbench/common/panel';
 import { ContextKeyExpression } from 'vs/platform/contextkey/common/contextkey';
-import { Codicon, registerIcon } from 'vs/base/common/codicons';
+import { Codicon } from 'vs/base/common/codicons';
+import { registerIcon } from 'vs/platform/theme/common/iconRegistry';
+import { ThemeIcon } from 'vs/platform/theme/common/themeService';
 
-const maximizeIcon = registerIcon('panel-maximize', Codicon.chevronUp);
-const restoreIcon = registerIcon('panel-restore', Codicon.chevronDown);
-const closeIcon = registerIcon('panel-close', Codicon.close);
+const maximizeIcon = registerIcon('panel-maximize', Codicon.chevronUp, nls.localize('maximizeIcon', 'Icon to maximize a panel.'));
+const restoreIcon = registerIcon('panel-restore', Codicon.chevronDown, nls.localize('restoreIcon', 'Icon to restore a panel.'));
+const closeIcon = registerIcon('panel-close', Codicon.close, nls.localize('closeIcon', 'Icon to close a panel.'));
 
 export class ClosePanelAction extends Action {
 
@@ -34,7 +36,7 @@ export class ClosePanelAction extends Action {
 		name: string,
 		@IWorkbenchLayoutService private readonly layoutService: IWorkbenchLayoutService
 	) {
-		super(id, name, closeIcon.classNames);
+		super(id, name, ThemeIcon.asClassName(closeIcon));
 	}
 
 	async run(): Promise<void> {
@@ -106,11 +108,11 @@ export class ToggleMaximizedPanelAction extends Action {
 		@IWorkbenchLayoutService private readonly layoutService: IWorkbenchLayoutService,
 		@IEditorGroupsService editorGroupsService: IEditorGroupsService
 	) {
-		super(id, label, layoutService.isPanelMaximized() ? restoreIcon.classNames : maximizeIcon.classNames);
+		super(id, label, layoutService.isPanelMaximized() ? ThemeIcon.asClassName(restoreIcon) : ThemeIcon.asClassName(maximizeIcon));
 
 		this.toDispose.add(editorGroupsService.onDidLayout(() => {
 			const maximized = this.layoutService.isPanelMaximized();
-			this.class = maximized ? restoreIcon.classNames : maximizeIcon.classNames;
+			this.class = maximized ? ThemeIcon.asClassName(restoreIcon) : ThemeIcon.asClassName(maximizeIcon);
 			this.label = maximized ? ToggleMaximizedPanelAction.RESTORE_LABEL : ToggleMaximizedPanelAction.MAXIMIZE_LABEL;
 		}));
 	}

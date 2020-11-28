@@ -48,7 +48,7 @@
     "minimist": "^1.2.3",
     "request": "^2.85.0",
     "terser": "4.3.8",
-    "typescript": "^4.2.0-dev.20201104",
+    "typescript": "^4.2.0-dev.20201119",
     "vsce": "1.48.0",
     "vscode-telemetry-extractor": "^1.6.0",
     "xml2js": "^0.4.17"
@@ -60,6 +60,6 @@
     "npmCheckJs": "tsc --noEmit"
   },
   "dependencies": {
-    "@azure/cosmos": "^3.4.0"
+    "@azure/cosmos": "^3.9.3"
   }
 }

@@ -33,6 +33,8 @@ export interface IKeybindingEditingService {
 
 	readonly _serviceBrand: undefined;
 
+	addKeybinding(keybindingItem: ResolvedKeybindingItem, key: string, when: string | undefined): Promise<void>;
+
 	editKeybinding(keybindingItem: ResolvedKeybindingItem, key: string, when: string | undefined): Promise<void>;
 
 	removeKeybinding(keybindingItem: ResolvedKeybindingItem): Promise<void>;
@@ -58,8 +60,12 @@ export class KeybindingsEditingService extends Disposable implements IKeybinding
 		this.queue = new Queue<void>();
 	}
 
+	addKeybinding(keybindingItem: ResolvedKeybindingItem, key: string, when: string | undefined): Promise<void> {
+		return this.queue.queue(() => this.doEditKeybinding(keybindingItem, key, when, true)); // queue up writes to prevent race conditions
+	}
+
 	editKeybinding(keybindingItem: ResolvedKeybindingItem, key: string, when: string | undefined): Promise<void> {
-		return this.queue.queue(() => this.doEditKeybinding(keybindingItem, key, when)); // queue up writes to prevent race conditions
+		return this.queue.queue(() => this.doEditKeybinding(keybindingItem, key, when, false)); // queue up writes to prevent race conditions
 	}
 
 	resetKeybinding(keybindingItem: ResolvedKeybindingItem): Promise<void> {
@@ -70,18 +76,24 @@ export class KeybindingsEditingService extends Disposable implements IKeybinding
 		return this.queue.queue(() => this.doRemoveKeybinding(keybindingItem)); // queue up writes to prevent race conditions
 	}
 
-	private doEditKeybinding(keybindingItem: ResolvedKeybindingItem, key: string, when: string | undefined): Promise<void> {
-		return this.resolveAndValidate()
-			.then(reference => {
-				const model = reference.object.textEditorModel;
-				const userKeybindingEntries = <IUserFriendlyKeybinding[]>json.parse(model.getValue());
-				const userKeybindingEntryIndex = this.findUserKeybindingEntryIndex(keybindingItem, userKeybindingEntries);
-				this.updateKeybinding(keybindingItem, key, when, model, userKeybindingEntryIndex);
-				if (keybindingItem.isDefault && keybindingItem.resolvedKeybinding) {
-					this.removeDefaultKeybinding(keybindingItem, model);
-				}
-				return this.save().finally(() => reference.dispose());
-			});
+	private async doEditKeybinding(keybindingItem: ResolvedKeybindingItem, key: string, when: string | undefined, add: boolean): Promise<void> {
+		const reference = await this.resolveAndValidate();
+		const model = reference.object.textEditorModel;
+		if (add) {
+			this.updateKeybinding(keybindingItem, key, when, model, -1);
+		} else {
+			const userKeybindingEntries = <IUserFriendlyKeybinding[]>json.parse(model.getValue());
+			const userKeybindingEntryIndex = this.findUserKeybindingEntryIndex(keybindingItem, userKeybindingEntries);
+			this.updateKeybinding(keybindingItem, key, when, model, userKeybindingEntryIndex);
+			if (keybindingItem.isDefault && keybindingItem.resolvedKeybinding) {
+				this.removeDefaultKeybinding(keybindingItem, model);
+			}
+		}
+		try {
+			await this.save();
+		} finally {
+			reference.dispose();
+		}
 	}
 
 	private doRemoveKeybinding(keybindingItem: ResolvedKeybindingItem): Promise<void> {

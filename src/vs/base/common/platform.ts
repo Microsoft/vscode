@@ -33,8 +33,8 @@ export interface INodeProcess {
 	versions?: {
 		electron?: string;
 	};
+	sandboxed?: boolean; // Electron
 	type?: string;
-	getuid(): number;
 	cwd(): string;
 }
 declare const process: INodeProcess;
@@ -55,11 +55,12 @@ if (typeof process !== 'undefined') {
 	// Native environment (non-sandboxed)
 	nodeProcess = process;
 } else if (typeof _globals.vscode !== 'undefined') {
-	// Native envionment (sandboxed)
+	// Native environment (sandboxed)
 	nodeProcess = _globals.vscode.process;
 }
 
 const isElectronRenderer = typeof nodeProcess?.versions?.electron === 'string' && nodeProcess.type === 'renderer';
+export const isElectronSandboxed = isElectronRenderer && nodeProcess?.sandboxed;
 
 // Web environment
 if (typeof navigator === 'object' && !isElectronRenderer) {
@@ -132,10 +133,6 @@ export const isWeb = _isWeb;
 export const isIOS = _isIOS;
 export const platform = _platform;
 export const userAgent = _userAgent;
-
-export function isRootUser(): boolean {
-	return !!nodeProcess && !_isWindows && (nodeProcess.getuid() === 0);
-}
 
 /**
  * The language used for the user interface. The format of

@@ -151,6 +151,16 @@ export class MarkersModel {
 		this.resourcesByUri = new Map<string, ResourceMarkers>();
 	}
 
+	reset(): void {
+		const removed = new Set<ResourceMarkers>();
+		for (const resourceMarker of this.resourcesByUri.values()) {
+			removed.add(resourceMarker);
+		}
+		this.resourcesByUri.clear();
+		this._total = 0;
+		this._onDidChange.fire({ removed, added: new Set<ResourceMarkers>(), updated: new Set<ResourceMarkers>() });
+	}
+
 	private _total: number = 0;
 	get total(): number {
 		return this._total;

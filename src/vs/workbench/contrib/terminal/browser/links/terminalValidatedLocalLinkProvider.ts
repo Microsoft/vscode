@@ -49,6 +49,8 @@ export const unixLineAndColumnMatchIndex = 11;
 // Each line and column clause have 6 groups (ie no. of expressions in round brackets)
 export const lineAndColumnClauseGroupCount = 6;
 
+const MAX_LENGTH = 2000;
+
 export class TerminalValidatedLocalLinkProvider extends TerminalBaseLinkProvider {
 	constructor(
 		private readonly _xterm: Terminal,
@@ -85,6 +87,9 @@ export class TerminalValidatedLocalLinkProvider extends TerminalBaseLinkProvider
 		}
 
 		const text = getXtermLineContent(this._xterm.buffer.active, startLine, endLine, this._xterm.cols);
+		if (text.length > MAX_LENGTH) {
+			return [];
+		}
 
 		// clone regex to do a global search on text
 		const rex = new RegExp(this._localLinkRegex, 'g');

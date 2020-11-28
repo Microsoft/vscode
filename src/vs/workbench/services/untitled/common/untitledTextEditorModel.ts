@@ -22,6 +22,7 @@ import { ILabelService } from 'vs/platform/label/common/label';
 import { ensureValidWordDefinition } from 'vs/editor/common/model/wordHelper';
 import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
 import { CancellationToken } from 'vs/base/common/cancellation';
+import { getCharContainingOffset } from 'vs/base/common/strings';
 
 export interface IUntitledTextEditorModel extends ITextEditorModel, IModeSupport, IEncodingSupport, IWorkingCopy {
 
@@ -362,15 +363,18 @@ export class UntitledTextEditorModel extends BaseTextEditorModel implements IUnt
 
 		let modelFirstWordsCandidate: string | undefined = undefined;
 
-		const firstLineText = textEditorModel
+		let firstLineText = textEditorModel
 			.getValueInRange({
 				startLineNumber: 1,
 				endLineNumber: 1,
 				startColumn: 1,
 				endColumn: UntitledTextEditorModel.FIRST_LINE_NAME_CANDIDATE_MAX_LENGTH + 1		// first cap at FIRST_LINE_NAME_CANDIDATE_MAX_LENGTH
 			})
-			.trim().replace(/\s+/g, ' ') 														// normalize whitespaces
-			.substr(0, UntitledTextEditorModel.FIRST_LINE_NAME_MAX_LENGTH); 					// finally cap at FIRST_LINE_NAME_MAX_LENGTH
+			.trim().replace(/\s+/g, ' '); 														// normalize whitespaces
+		firstLineText = firstLineText.substr(0, getCharContainingOffset(						// finally cap at FIRST_LINE_NAME_MAX_LENGTH (grapheme aware #111235)
+			firstLineText,
+			UntitledTextEditorModel.FIRST_LINE_NAME_MAX_LENGTH)[0]
+		);
 
 		if (firstLineText && ensureValidWordDefinition().exec(firstLineText)) {
 			modelFirstWordsCandidate = firstLineText;

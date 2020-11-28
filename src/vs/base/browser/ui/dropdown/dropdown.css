@@ -12,3 +12,7 @@
 	cursor: pointer;
 	height: 100%;
 }
+
+.monaco-dropdown > .dropdown-label > .action-label.disabled {
+	cursor: default;
+}

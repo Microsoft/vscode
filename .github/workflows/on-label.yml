@@ -10,8 +10,8 @@ jobs:
       - name: Checkout Actions
         uses: actions/checkout@v2
         with:
-          repository: 'microsoft/vscode-github-triage-actions'
-          ref: v39
+          repository: "microsoft/vscode-github-triage-actions"
+          ref: v40
           path: ./actions
       - name: Install Actions
         run: npm install --production --prefix ./actions
@@ -28,7 +28,7 @@ jobs:
         uses: ./actions/author-verified
         with:
           appInsightsKey: ${{secrets.TRIAGE_ACTIONS_APP_INSIGHTS}}
-          requestVerificationComment: "This bug has been fixed in to the latest release of [VS Code Insiders](https://code.visualstudio.com/insiders/)!\n\n@${author}, you can help us out by confirming things are working as expected in the latest Insiders release. If things look good, please leave a comment with the text `/verified` to let us know. If not, please ensure you're on version ${commit} of Insiders (today's or later - you can use `Help: About` in the command pallete to check), and leave a comment letting us know what isn't working as expected.\n\nHappy Coding!"
+          requestVerificationComment: "This bug has been fixed in to the latest release of [VS Code Insiders](https://code.visualstudio.com/insiders/)!\n\n@${author}, you can help us out by confirming things are working as expected in the latest Insiders release. If things look good, please leave a comment with the text `/verified` to let us know. If not, please ensure you're on version ${commit} of Insiders (today's or later - you can use `Help: About` in the command palette to check), and leave a comment letting us know what isn't working as expected.\n\nHappy Coding!"
           pendingReleaseLabel: awaiting-insiders-release
           verifiedLabel: verified
           authorVerificationRequestedLabel: author-verification-requested

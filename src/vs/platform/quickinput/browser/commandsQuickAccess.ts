@@ -273,8 +273,8 @@ export class CommandsHistory extends Disposable {
 		const serializedCache: ISerializedCommandHistory = { usesLRU: true, entries: [] };
 		CommandsHistory.cache.forEach((value, key) => serializedCache.entries.push({ key, value }));
 
-		storageService.store2(CommandsHistory.PREF_KEY_CACHE, JSON.stringify(serializedCache), StorageScope.GLOBAL, StorageTarget.USER);
-		storageService.store2(CommandsHistory.PREF_KEY_COUNTER, CommandsHistory.counter, StorageScope.GLOBAL, StorageTarget.USER);
+		storageService.store(CommandsHistory.PREF_KEY_CACHE, JSON.stringify(serializedCache), StorageScope.GLOBAL, StorageTarget.USER);
+		storageService.store(CommandsHistory.PREF_KEY_COUNTER, CommandsHistory.counter, StorageScope.GLOBAL, StorageTarget.USER);
 	}
 
 	static getConfiguredCommandHistoryLength(configurationService: IConfigurationService): number {

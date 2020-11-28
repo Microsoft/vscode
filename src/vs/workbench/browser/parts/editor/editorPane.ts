@@ -220,18 +220,7 @@ export class EditorMemento<T> implements IEditorMemento<T> {
 
 		// Automatically clear when editor input gets disposed if any
 		if (resourceOrEditor instanceof EditorInput) {
-			const editor = resourceOrEditor;
-
-			if (!this.editorDisposables) {
-				this.editorDisposables = new Map<EditorInput, IDisposable>();
-			}
-
-			if (!this.editorDisposables.has(editor)) {
-				this.editorDisposables.set(editor, Event.once(resourceOrEditor.onDispose)(() => {
-					this.clearEditorState(resource);
-					this.editorDisposables?.delete(editor);
-				}));
-			}
+			this.clearEditorStateOnDispose(resource, resourceOrEditor);
 		}
 	}
 
@@ -240,7 +229,7 @@ export class EditorMemento<T> implements IEditorMemento<T> {
 	loadEditorState(group: IEditorGroup, resourceOrEditor: URI | EditorInput, fallbackToOtherGroupState?: boolean): T | undefined {
 		const resource = this.doGetResource(resourceOrEditor);
 		if (!resource || !group) {
-			return undefined; // we are not in a good state to load any state for a resource
+			return; // we are not in a good state to load any state for a resource
 		}
 
 		const cache = this.doLoad();
@@ -261,12 +250,16 @@ export class EditorMemento<T> implements IEditorMemento<T> {
 			}
 		}
 
-		return undefined;
+		return;
 	}
 
 	clearEditorState(resource: URI, group?: IEditorGroup): void;
 	clearEditorState(editor: EditorInput, group?: IEditorGroup): void;
 	clearEditorState(resourceOrEditor: URI | EditorInput, group?: IEditorGroup): void {
+		if (resourceOrEditor instanceof EditorInput) {
+			this.editorDisposables?.delete(resourceOrEditor);
+		}
+
 		const resource = this.doGetResource(resourceOrEditor);
 		if (resource) {
 			const cache = this.doLoad();
@@ -283,6 +276,19 @@ export class EditorMemento<T> implements IEditorMemento<T> {
 			} else {
 				cache.delete(resource.toString());
 			}
+		}
+	}
+
+	clearEditorStateOnDispose(resource: URI, editor: EditorInput): void {
+		if (!this.editorDisposables) {
+			this.editorDisposables = new Map<EditorInput, IDisposable>();
+		}
+
+		if (!this.editorDisposables.has(editor)) {
+			this.editorDisposables.set(editor, Event.once(editor.onDispose)(() => {
+				this.clearEditorState(resource);
+				this.editorDisposables?.delete(editor);
+			}));
 		}
 	}
 
@@ -342,7 +348,7 @@ export class EditorMemento<T> implements IEditorMemento<T> {
 	saveState(): void {
 		const cache = this.doLoad();
 
-		// Cleanup once during shutdown
+		// Cleanup once during session
 		if (!this.cleanedUp) {
 			this.cleanUp();
 			this.cleanedUp = true;

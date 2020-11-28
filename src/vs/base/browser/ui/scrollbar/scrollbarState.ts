@@ -203,6 +203,28 @@ export class ScrollbarState {
 	}
 
 	/**
+	 * Compute a desired `scrollPosition` from if offset is before or after the slider position.
+	 * If offset is before slider, treat as a page up (or left).  If after, page down (or right).
+	 * `offset` and `_computedSliderPosition` are based on the same coordinate system.
+	 * `_visibleSize` corresponds to a "page" of lines in the returned coordinate system.
+	 */
+	public getDesiredScrollPositionFromOffsetPaged(offset: number): number {
+		if (!this._computedIsNeeded) {
+			// no need for a slider
+			return 0;
+		}
+
+		let correctedOffset = offset - this._arrowSize;  // compensate if has arrows
+		let desiredScrollPosition = this._scrollPosition;
+		if (correctedOffset < this._computedSliderPosition) {
+			desiredScrollPosition -= this._visibleSize;  // page up/left
+		} else {
+			desiredScrollPosition += this._visibleSize;  // page down/right
+		}
+		return desiredScrollPosition;
+	}
+
+	/**
 	 * Compute a desired `scrollPosition` such that the slider moves by `delta`.
 	 */
 	public getDesiredScrollPositionFromDelta(delta: number): number {

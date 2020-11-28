@@ -64,6 +64,7 @@ import './mainThreadLabelService';
 import './mainThreadTunnelService';
 import './mainThreadAuthentication';
 import './mainThreadTimeline';
+import './mainThreadTesting';
 import 'vs/workbench/api/common/apiCommands';
 
 export class ExtensionPoints implements IWorkbenchContribution {

@@ -23,7 +23,7 @@ import { DiskFileSystemProvider } from 'vs/platform/files/node/diskFileSystemPro
 import { NativeWorkbenchEnvironmentService } from 'vs/workbench/services/environment/electron-browser/environmentService';
 import { snapshotToString } from 'vs/workbench/services/textfile/common/textfiles';
 import { IFileService } from 'vs/platform/files/common/files';
-import { hashPath, BackupFileService } from 'vs/workbench/services/backup/node/backupFileService';
+import { hashPath, NativeBackupFileService } from 'vs/workbench/services/backup/electron-browser/backupFileService';
 import { FileUserDataProvider } from 'vs/workbench/services/userData/common/fileUserDataProvider';
 import { VSBuffer } from 'vs/base/common/buffer';
 import { TestWorkbenchConfiguration } from 'vs/workbench/test/electron-browser/workbenchTestServices';
@@ -53,7 +53,7 @@ class TestWorkbenchEnvironmentService extends NativeWorkbenchEnvironmentService 
 	}
 }
 
-export class NodeTestBackupFileService extends BackupFileService {
+export class NodeTestBackupFileService extends NativeBackupFileService {
 
 	readonly fileService: IFileService;
 
@@ -67,7 +67,7 @@ export class NodeTestBackupFileService extends BackupFileService {
 		const fileService = new FileService(logService);
 		const diskFileSystemProvider = new DiskFileSystemProvider(logService);
 		fileService.registerProvider(Schemas.file, diskFileSystemProvider);
-		fileService.registerProvider(Schemas.userData, new FileUserDataProvider(environmentService.appSettingsHome, URI.file(workspaceBackupPath), diskFileSystemProvider, environmentService, logService));
+		fileService.registerProvider(Schemas.userData, new FileUserDataProvider(Schemas.file, diskFileSystemProvider, Schemas.userData, logService));
 
 		super(environmentService, fileService, logService);
 

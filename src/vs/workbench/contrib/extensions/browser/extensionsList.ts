@@ -26,6 +26,8 @@ import { foreground, listActiveSelectionForeground, listActiveSelectionBackgroun
 import { WORKBENCH_BACKGROUND } from 'vs/workbench/common/theme';
 import { IContextMenuService } from 'vs/platform/contextview/browser/contextView';
 
+export const EXTENSION_LIST_ELEMENT_HEIGHT = 62;
+
 export interface IExtensionsViewState {
 	onFocus: Event<IExtension>;
 	onBlur: Event<IExtension>;
@@ -47,7 +49,7 @@ export interface ITemplateData {
 }
 
 export class Delegate implements IListVirtualDelegate<IExtension> {
-	getHeight() { return 62; }
+	getHeight() { return EXTENSION_LIST_ELEMENT_HEIGHT; }
 	getTemplateId() { return 'extension'; }
 }
 
@@ -221,10 +223,14 @@ export class Renderer implements IPagedRenderer<IExtension, ITemplateData> {
 				});
 			}
 		}, this, data.extensionDisposables);
+	}
 
+	disposeElement(extension: IExtension, index: number, data: ITemplateData): void {
+		data.extensionDisposables = dispose(data.extensionDisposables);
 	}
 
 	disposeTemplate(data: ITemplateData): void {
+		data.extensionDisposables = dispose(data.extensionDisposables);
 		data.disposables = dispose(data.disposables);
 	}
 }

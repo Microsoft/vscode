@@ -57,13 +57,15 @@ export class LineCommentCommand implements ICommand {
 	private _selectionId: string | null;
 	private _deltaColumn: number;
 	private _moveEndPositionDown: boolean;
+	private _ignoreFirstLine: boolean;
 
 	constructor(
 		selection: Selection,
 		tabSize: number,
 		type: Type,
 		insertSpace: boolean,
-		ignoreEmptyLines: boolean
+		ignoreEmptyLines: boolean,
+		ignoreFirstLine?: boolean
 	) {
 		this._selection = selection;
 		this._tabSize = tabSize;
@@ -73,6 +75,7 @@ export class LineCommentCommand implements ICommand {
 		this._deltaColumn = 0;
 		this._moveEndPositionDown = false;
 		this._ignoreEmptyLines = ignoreEmptyLines;
+		this._ignoreFirstLine = ignoreFirstLine || false;
 	}
 
 	/**
@@ -108,7 +111,7 @@ export class LineCommentCommand implements ICommand {
 	 * Analyze lines and decide which lines are relevant and what the toggle should do.
 	 * Also, build up several offsets and lengths useful in the generation of editor operations.
 	 */
-	public static _analyzeLines(type: Type, insertSpace: boolean, model: ISimpleModel, lines: ILinePreflightData[], startLineNumber: number, ignoreEmptyLines: boolean): IPreflightData {
+	public static _analyzeLines(type: Type, insertSpace: boolean, model: ISimpleModel, lines: ILinePreflightData[], startLineNumber: number, ignoreEmptyLines: boolean, ignoreFirstLine: boolean): IPreflightData {
 		let onlyWhitespaceLines = true;
 
 		let shouldRemoveComments: boolean;
@@ -123,6 +126,12 @@ export class LineCommentCommand implements ICommand {
 		for (let i = 0, lineCount = lines.length; i < lineCount; i++) {
 			const lineData = lines[i];
 			const lineNumber = startLineNumber + i;
+
+			if (lineNumber === startLineNumber && ignoreFirstLine) {
+				// first line ignored
+				lineData.ignore = true;
+				continue;
+			}
 
 			const lineContent = model.getLineContent(lineNumber);
 			const lineContentStartOffset = strings.firstNonWhitespaceIndex(lineContent);
@@ -178,7 +187,7 @@ export class LineCommentCommand implements ICommand {
 	/**
 	 * Analyze all lines and decide exactly what to do => not supported | insert line comments | remove line comments
 	 */
-	public static _gatherPreflightData(type: Type, insertSpace: boolean, model: ITextModel, startLineNumber: number, endLineNumber: number, ignoreEmptyLines: boolean): IPreflightData {
+	public static _gatherPreflightData(type: Type, insertSpace: boolean, model: ITextModel, startLineNumber: number, endLineNumber: number, ignoreEmptyLines: boolean, ignoreFirstLine: boolean): IPreflightData {
 		const lines = LineCommentCommand._gatherPreflightCommentStrings(model, startLineNumber, endLineNumber);
 		if (lines === null) {
 			return {
@@ -186,7 +195,7 @@ export class LineCommentCommand implements ICommand {
 			};
 		}
 
-		return LineCommentCommand._analyzeLines(type, insertSpace, model, lines, startLineNumber, ignoreEmptyLines);
+		return LineCommentCommand._analyzeLines(type, insertSpace, model, lines, startLineNumber, ignoreEmptyLines, ignoreFirstLine);
 	}
 
 	/**
@@ -323,6 +332,12 @@ export class LineCommentCommand implements ICommand {
 		let s = this._selection;
 		this._moveEndPositionDown = false;
 
+		if (s.startLineNumber === s.endLineNumber && this._ignoreFirstLine) {
+			builder.addEditOperation(new Range(s.startLineNumber, model.getLineMaxColumn(s.startLineNumber), s.startLineNumber + 1, 1), s.startLineNumber === model.getLineCount() ? '' : '\n');
+			this._selectionId = builder.trackSelection(s);
+			return;
+		}
+
 		if (s.startLineNumber < s.endLineNumber && s.endColumn === 1) {
 			this._moveEndPositionDown = true;
 			s = s.setEndPosition(s.endLineNumber - 1, model.getLineMaxColumn(s.endLineNumber - 1));
@@ -334,7 +349,8 @@ export class LineCommentCommand implements ICommand {
 			model,
 			s.startLineNumber,
 			s.endLineNumber,
-			this._ignoreEmptyLines
+			this._ignoreEmptyLines,
+			this._ignoreFirstLine
 		);
 
 		if (data.supported) {

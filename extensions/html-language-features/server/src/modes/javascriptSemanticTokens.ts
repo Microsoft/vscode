@@ -99,7 +99,7 @@ function classifySymbol(symbol: ts.Symbol) {
 }
 
 export const enum TokenType {
-	class, enum, interface, namespace, typeParameter, type, parameter, variable, property, function, member, _
+	class, enum, interface, namespace, typeParameter, type, parameter, variable, property, function, method, _
 }
 
 export const enum TokenModifier {
@@ -117,7 +117,7 @@ tokenTypes[TokenType.parameter] = 'parameter';
 tokenTypes[TokenType.variable] = 'variable';
 tokenTypes[TokenType.property] = 'property';
 tokenTypes[TokenType.function] = 'function';
-tokenTypes[TokenType.member] = 'member';
+tokenTypes[TokenType.method] = 'method';
 
 const tokenModifiers: string[] = [];
 tokenModifiers[TokenModifier.async] = 'async';
@@ -133,9 +133,9 @@ const tokenFromDeclarationMapping: { [name: string]: TokenType } = {
 	[ts.SyntaxKind.EnumDeclaration]: TokenType.enum,
 	[ts.SyntaxKind.EnumMember]: TokenType.property,
 	[ts.SyntaxKind.ClassDeclaration]: TokenType.class,
-	[ts.SyntaxKind.MethodDeclaration]: TokenType.member,
+	[ts.SyntaxKind.MethodDeclaration]: TokenType.method,
 	[ts.SyntaxKind.FunctionDeclaration]: TokenType.function,
-	[ts.SyntaxKind.MethodSignature]: TokenType.member,
+	[ts.SyntaxKind.MethodSignature]: TokenType.method,
 	[ts.SyntaxKind.GetAccessor]: TokenType.property,
 	[ts.SyntaxKind.PropertySignature]: TokenType.property,
 	[ts.SyntaxKind.InterfaceDeclaration]: TokenType.interface,

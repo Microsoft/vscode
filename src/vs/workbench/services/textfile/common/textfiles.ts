@@ -125,11 +125,6 @@ export interface IWriteTextFileOptions extends IWriteFileOptions {
 	encoding?: string;
 
 	/**
-	 * If set to true, will enforce the selected encoding and not perform any detection using BOMs.
-	 */
-	overwriteEncoding?: boolean;
-
-	/**
 	 * Whether to overwrite a file even if it is readonly.
 	 */
 	overwriteReadonly?: boolean;
@@ -369,11 +364,6 @@ export interface ITextFileSaveOptions extends ISaveOptions {
 	 * Makes the file writable if it is readonly.
 	 */
 	overwriteReadonly?: boolean;
-
-	/**
-	 * Overwrite the encoding of the file on disk as configured.
-	 */
-	overwriteEncoding?: boolean;
 
 	/**
 	 * Save the file with elevated privileges.

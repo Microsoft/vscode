@@ -20,9 +20,10 @@ import { MarkerNavigationWidget } from './gotoErrorWidget';
 import { ICodeEditorService } from 'vs/editor/browser/services/codeEditorService';
 import { MenuId } from 'vs/platform/actions/common/actions';
 import { TextEditorSelectionRevealType } from 'vs/platform/editor/common/editor';
-import { Codicon, registerIcon } from 'vs/base/common/codicons';
+import { Codicon } from 'vs/base/common/codicons';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { IMarkerNavigationService, MarkerList } from 'vs/editor/contrib/gotoError/markerNavigationService';
+import { registerIcon } from 'vs/platform/theme/common/iconRegistry';
 
 export class MarkerController implements IEditorContribution {
 
@@ -199,7 +200,7 @@ export class NextMarkerAction extends MarkerNavigationAction {
 			menuOpts: {
 				menuId: MarkerNavigationWidget.TitleMenu,
 				title: NextMarkerAction.LABEL,
-				icon: registerIcon('marker-navigation-next', Codicon.chevronDown),
+				icon: registerIcon('marker-navigation-next', Codicon.chevronDown, nls.localize('nextMarkerIcon', 'Icon for goto next marker.')),
 				group: 'navigation',
 				order: 1
 			}
@@ -224,7 +225,7 @@ class PrevMarkerAction extends MarkerNavigationAction {
 			menuOpts: {
 				menuId: MarkerNavigationWidget.TitleMenu,
 				title: NextMarkerAction.LABEL,
-				icon: registerIcon('marker-navigation-previous', Codicon.chevronUp),
+				icon: registerIcon('marker-navigation-previous', Codicon.chevronUp, nls.localize('previousMarkerIcon', 'Icon for goto previous marker.')),
 				group: 'navigation',
 				order: 2
 			}

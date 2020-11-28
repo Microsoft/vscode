@@ -273,18 +273,14 @@ export class CachedExtensionScanner {
 			finalBuiltinExtensions = ExtensionScanner.mergeBuiltinExtensions(builtinExtensions, extraBuiltinExtensions);
 		}
 
-		const userExtensions = (
-			!environmentService.extensionsPath
-				? Promise.resolve([])
-				: this._scanExtensionsWithCache(
-					hostService,
-					notificationService,
-					environmentService,
-					USER_MANIFEST_CACHE_FILE,
-					new ExtensionScannerInput(version, commit, locale, devMode, environmentService.extensionsPath, false, false, translations),
-					log
-				)
-		);
+		const userExtensions = (this._scanExtensionsWithCache(
+			hostService,
+			notificationService,
+			environmentService,
+			USER_MANIFEST_CACHE_FILE,
+			new ExtensionScannerInput(version, commit, locale, devMode, environmentService.extensionsPath, false, false, translations),
+			log
+		));
 
 		// Always load developed extensions while extensions development
 		let developedExtensions: Promise<IExtensionDescription[]> = Promise.resolve([]);

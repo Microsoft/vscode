@@ -38,7 +38,7 @@ import { IKeybindingService } from 'vs/platform/keybinding/common/keybinding';
 import { IOpenerService } from 'vs/platform/opener/common/opener';
 import { editorBackground, errorForeground, focusBorder, foreground, inputValidationErrorBackground, inputValidationErrorBorder, inputValidationErrorForeground } from 'vs/platform/theme/common/colorRegistry';
 import { attachButtonStyler, attachInputBoxStyler, attachSelectBoxStyler, attachStyler } from 'vs/platform/theme/common/styler';
-import { ICssStyleCollector, IColorTheme, IThemeService, registerThemingParticipant } from 'vs/platform/theme/common/themeService';
+import { ICssStyleCollector, IColorTheme, IThemeService, registerThemingParticipant, ThemeIcon } from 'vs/platform/theme/common/themeService';
 import { getIgnoredSettings } from 'vs/platform/userDataSync/common/settingsMerge';
 import { ITOCEntry } from 'vs/workbench/contrib/preferences/browser/settingsLayout';
 import { ISettingsEditorViewState, settingKeyToDisplayFormat, SettingsTreeElement, SettingsTreeGroupChild, SettingsTreeGroupElement, SettingsTreeNewExtensionsElement, SettingsTreeSettingElement } from 'vs/workbench/contrib/preferences/browser/settingsTreeModels';
@@ -55,6 +55,8 @@ import { IList } from 'vs/base/browser/ui/tree/indexTreeModel';
 import { IListService, WorkbenchObjectTree } from 'vs/platform/list/browser/listService';
 import { IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
 import { IAccessibilityService } from 'vs/platform/accessibility/common/accessibility';
+import { ILogService } from 'vs/platform/log/common/log';
+import { settingsMoreActionIcon } from 'vs/workbench/contrib/preferences/browser/preferencesIcons';
 
 const $ = DOM.$;
 
@@ -257,15 +259,15 @@ function getListDisplayValue(element: SettingsTreeSettingElement): IListDataItem
 	});
 }
 
-export function resolveSettingsTree(tocData: ITOCEntry, coreSettingsGroups: ISettingsGroup[]): { tree: ITOCEntry, leftoverSettings: Set<ISetting> } {
+export function resolveSettingsTree(tocData: ITOCEntry<string>, coreSettingsGroups: ISettingsGroup[], logService: ILogService): { tree: ITOCEntry<ISetting>, leftoverSettings: Set<ISetting> } {
 	const allSettings = getFlatSettings(coreSettingsGroups);
 	return {
-		tree: _resolveSettingsTree(tocData, allSettings),
+		tree: _resolveSettingsTree(tocData, allSettings, logService),
 		leftoverSettings: allSettings
 	};
 }
 
-export function resolveExtensionsSettings(groups: ISettingsGroup[]): ITOCEntry {
+export function resolveExtensionsSettings(groups: ISettingsGroup[]): ITOCEntry<ISetting> {
 	const settingsGroupToEntry = (group: ISettingsGroup) => {
 		const flatSettings = arrays.flatten(
 			group.sections.map(section => section.settings));
@@ -288,17 +290,17 @@ export function resolveExtensionsSettings(groups: ISettingsGroup[]): ITOCEntry {
 	};
 }
 
-function _resolveSettingsTree(tocData: ITOCEntry, allSettings: Set<ISetting>): ITOCEntry {
-	let children: ITOCEntry[] | undefined;
+function _resolveSettingsTree(tocData: ITOCEntry<string>, allSettings: Set<ISetting>, logService: ILogService): ITOCEntry<ISetting> {
+	let children: ITOCEntry<ISetting>[] | undefined;
 	if (tocData.children) {
 		children = tocData.children
-			.map(child => _resolveSettingsTree(child, allSettings))
+			.map(child => _resolveSettingsTree(child, allSettings, logService))
 			.filter(child => (child.children && child.children.length) || (child.settings && child.settings.length));
 	}
 
 	let settings: ISetting[] | undefined;
 	if (tocData.settings) {
-		settings = arrays.flatten(tocData.settings.map(pattern => getMatchingSettings(allSettings, <string>pattern)));
+		settings = arrays.flatten(tocData.settings.map(pattern => getMatchingSettings(allSettings, pattern, logService)));
 	}
 
 	if (!children && !settings) {
@@ -313,7 +315,7 @@ function _resolveSettingsTree(tocData: ITOCEntry, allSettings: Set<ISetting>): I
 	};
 }
 
-function getMatchingSettings(allSettings: Set<ISetting>, pattern: string): ISetting[] {
+function getMatchingSettings(allSettings: Set<ISetting>, pattern: string, logService: ILogService): ISetting[] {
 	const result: ISetting[] = [];
 
 	allSettings.forEach(s => {
@@ -323,17 +325,20 @@ function getMatchingSettings(allSettings: Set<ISetting>, pattern: string): ISett
 		}
 	});
 
+	if (!result.length) {
+		logService.warn(`Settings pattern "${pattern}" doesn't match any settings`);
+	}
 
 	return result.sort((a, b) => a.key.localeCompare(b.key));
 }
 
 const settingPatternCache = new Map<string, RegExp>();
 
-function createSettingMatchRegExp(pattern: string): RegExp {
+export function createSettingMatchRegExp(pattern: string): RegExp {
 	pattern = escapeRegExpCharacters(pattern)
 		.replace(/\\\*/g, '.*');
 
-	return new RegExp(`^${pattern}`, 'i');
+	return new RegExp(`^${pattern}$`, 'i');
 }
 
 function settingMatches(s: ISetting, pattern: string): boolean {
@@ -631,20 +636,10 @@ export abstract class AbstractSettingRenderer extends Disposable implements ITre
 
 		const toolbar = new ToolBar(container, this._contextMenuService, {
 			toggleMenuTitle,
-			renderDropdownAsChildElement: true
+			renderDropdownAsChildElement: true,
+			moreIcon: ThemeIcon.asCSSIcon(settingsMoreActionIcon) // change icon from ellipsis to gear
 		});
 		return toolbar;
-	}
-
-	private fixToolbarIcon(toolbar: ToolBar): void {
-		const button = toolbar.getElement().querySelector('.codicon-toolbar-more');
-		if (button) {
-			(<HTMLElement>button).tabIndex = 0;
-
-			// change icon from ellipsis to gear
-			(<HTMLElement>button).classList.add('codicon-gear');
-			(<HTMLElement>button).classList.remove('codicon-toolbar-more');
-		}
 	}
 
 	protected renderSettingElement(node: ITreeNode<SettingsTreeSettingElement, never>, index: number, template: ISettingItemTemplate | ISettingBoolItemTemplate): void {
@@ -654,7 +649,6 @@ export abstract class AbstractSettingRenderer extends Disposable implements ITre
 		const actions = this.disposableActionFactory(element.setting);
 		actions.forEach(a => template.elementDisposables?.add(a));
 		template.toolbar.setActions([], [...this.settingActions, ...actions]);
-		this.fixToolbarIcon(template.toolbar);
 
 		const setting = element.setting;
 
@@ -1332,7 +1326,8 @@ export class SettingEnumRenderer extends AbstractSettingRenderer implements ITre
 				const description = (enumDescriptions && enumDescriptions[index] && (enumDescriptionsAreMarkdown ? fixSettingLinks(enumDescriptions[index], false) : enumDescriptions[index]));
 				return <ISelectOptionItem>{
 					text: enumItemLabels && enumItemLabels[index] ? enumItemLabels[index] : data,
-					description: enumItemLabels && enumItemLabels[index] ? `[${data}] ${description}` : description,
+					detail: enumItemLabels && enumItemLabels[index] ? data : '',
+					description,
 					descriptionIsMarkdown: enumDescriptionsAreMarkdown,
 					descriptionMarkdownActionHandler: {
 						callback: (content) => {
@@ -1897,8 +1892,11 @@ export class SettingsTree extends WorkbenchObjectTree<SettingsTreeElement> {
 				// applying an opacity to the link color.
 				const fgWithOpacity = new Color(new RGBA(foregroundColor.rgba.r, foregroundColor.rgba.g, foregroundColor.rgba.b, 0.9));
 				collector.addRule(`.settings-editor > .settings-body > .settings-tree-container .setting-item-contents .setting-item-description { color: ${fgWithOpacity}; }`);
-
 				collector.addRule(`.settings-editor > .settings-body .settings-toc-container .monaco-list-row:not(.selected) { color: ${fgWithOpacity}; }`);
+
+				// Hack for subpixel antialiasing
+				collector.addRule(`.settings-editor > .settings-body > .settings-tree-container .setting-item-contents .setting-item-title .setting-item-overrides,
+					.settings-editor > .settings-body > .settings-tree-container .setting-item-contents .setting-item-title .setting-item-ignored { color: ${fgWithOpacity}; }`);
 			}
 
 			const errorColor = theme.getColor(errorForeground);

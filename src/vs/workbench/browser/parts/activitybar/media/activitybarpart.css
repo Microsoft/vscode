@@ -51,10 +51,6 @@
 	position: relative;
 	width: 100%;
 	height: 48px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	order: -1;
 }
 
 .monaco-workbench .activitybar > .content > .home-bar > .home-bar-icon-badge {
@@ -86,10 +82,6 @@
 
 .monaco-workbench .activitybar > .content > .composite-bar {
 	margin-bottom: auto;
-}
-
-.monaco-workbench .activitybar > .content > .composite-bar-excess {
-	height: 100%;
 }
 
 /** Menu Bar */

@@ -9,8 +9,7 @@ import { URI, UriComponents } from 'vs/base/common/uri';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 import { MainThreadWebviews, reviveWebviewExtension, reviveWebviewOptions } from 'vs/workbench/api/browser/mainThreadWebviews';
 import * as extHostProtocol from 'vs/workbench/api/common/extHost.protocol';
-import { editorGroupToViewColumn, EditorViewColumn, viewColumnToEditorGroup } from 'vs/workbench/api/common/shared/editor';
-import { IEditorInput } from 'vs/workbench/common/editor';
+import { editorGroupToViewColumn, EditorGroupColumn, IEditorInput, viewColumnToEditorGroup } from 'vs/workbench/common/editor';
 import { DiffEditorInput } from 'vs/workbench/common/editor/diffEditorInput';
 import { WebviewIcons } from 'vs/workbench/contrib/webview/browser/webview';
 import { WebviewInput } from 'vs/workbench/contrib/webviewPanel/browser/webviewEditorInput';
@@ -150,7 +149,7 @@ export class MainThreadWebviewPanels extends Disposable implements extHostProtoc
 		handle: extHostProtocol.WebviewHandle,
 		viewType: string,
 		title: string,
-		showOptions: { viewColumn?: EditorViewColumn, preserveFocus?: boolean; },
+		showOptions: { viewColumn?: EditorGroupColumn, preserveFocus?: boolean; },
 		options: WebviewInputOptions
 	): void {
 		const mainThreadShowOptions: ICreateWebViewShowOptions = Object.create(null);

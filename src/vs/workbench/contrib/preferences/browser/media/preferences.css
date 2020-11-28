@@ -194,22 +194,6 @@
 	justify-content: center;
 }
 
-.monaco-editor .settings-group-title-widget .title-container.collapsed .codicon::before {
-	transform: rotate(-90deg);
-}
-
-.monaco-editor .codicon-edit {
-	transform: rotate(-90deg);
-	width:16px;
-	height: 16px;
-	cursor: pointer;
-}
-
-.monaco-editor .codicon-edit.hidden {
-	display: none;
-	visibility: hidden;
-}
-
 .monaco-editor .dim-configuration {
 	color: #b1b1b1;
 }

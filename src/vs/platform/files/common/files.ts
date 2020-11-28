@@ -521,19 +521,19 @@ export class FileChangesEvent {
 			switch (change.type) {
 				case FileChangeType.ADDED:
 					if (!this.added) {
-						this.added = TernarySearchTree.forUris<IFileChange>(this.ignorePathCasing);
+						this.added = TernarySearchTree.forUris<IFileChange>(() => this.ignorePathCasing);
 					}
 					this.added.set(change.resource, change);
 					break;
 				case FileChangeType.UPDATED:
 					if (!this.updated) {
-						this.updated = TernarySearchTree.forUris<IFileChange>(this.ignorePathCasing);
+						this.updated = TernarySearchTree.forUris<IFileChange>(() => this.ignorePathCasing);
 					}
 					this.updated.set(change.resource, change);
 					break;
 				case FileChangeType.DELETED:
 					if (!this.deleted) {
-						this.deleted = TernarySearchTree.forUris<IFileChange>(this.ignorePathCasing);
+						this.deleted = TernarySearchTree.forUris<IFileChange>(() => this.ignorePathCasing);
 					}
 					this.deleted.set(change.resource, change);
 					break;

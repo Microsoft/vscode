@@ -138,6 +138,31 @@
           ],
           "description": "%html.format.wrapAttributes.desc%"
         },
+        "html.format.wrapAttributesIndentSize": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "scope": "resource",
+          "default": "null",
+          "description": "%html.format.wrapAttributesIndentSize.desc%"
+        },
+        "html.format.templating": {
+          "type": [
+            "boolean"
+          ],
+          "scope": "resource",
+          "default": false,
+          "description": "%html.format.templating.desc%"
+        },
+        "html.format.unformattedContentDelimiter": {
+          "type": [
+            "string"
+          ],
+          "scope": "resource",
+          "default": "",
+          "markdownDescription": "%html.format.unformattedContentDelimiter.desc%"
+        },
         "html.suggest.html5": {
           "type": "boolean",
           "scope": "resource",

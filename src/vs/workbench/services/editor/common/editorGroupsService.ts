@@ -21,16 +21,6 @@ export const enum GroupDirection {
 	RIGHT
 }
 
-export function preferredSideBySideGroupDirection(configurationService: IConfigurationService): GroupDirection.DOWN | GroupDirection.RIGHT {
-	const openSideBySideDirection = configurationService.getValue<'right' | 'down'>('workbench.editor.openSideBySideDirection');
-
-	if (openSideBySideDirection === 'down') {
-		return GroupDirection.DOWN;
-	}
-
-	return GroupDirection.RIGHT;
-}
-
 export const enum GroupOrientation {
 	HORIZONTAL,
 	VERTICAL
@@ -595,3 +585,18 @@ export interface IEditorGroup {
 	 */
 	focus(): void;
 }
+
+
+//#region Editor Group Helpers
+
+export function preferredSideBySideGroupDirection(configurationService: IConfigurationService): GroupDirection.DOWN | GroupDirection.RIGHT {
+	const openSideBySideDirection = configurationService.getValue<'right' | 'down'>('workbench.editor.openSideBySideDirection');
+
+	if (openSideBySideDirection === 'down') {
+		return GroupDirection.DOWN;
+	}
+
+	return GroupDirection.RIGHT;
+}
+
+//#endregion

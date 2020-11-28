@@ -64,6 +64,11 @@
 		"body": ["1. ${1:first}", "2. ${2:second}", "3. ${3:third}", "$0"],
 		"description": "Insert ordered list"
 	},
+	"Insert definition list": {
+	        "prefix": "definition list",
+		"body": ["${1:term}", ": ${2:definition}", "$0"],
+		"description": "Insert definition list"
+	},
 	"Insert horizontal rule": {
 		"prefix": "horizontal rule",
 		"body": "----------\n",
@@ -83,5 +88,5 @@
 		"prefix": "strikethrough",
 		"body": "~~${1:${TM_SELECTED_TEXT}}~~",
 		"description": "Insert strikethrough"
-	}
+	},	
 }

@@ -47,6 +47,8 @@ export interface IMemoryInfo {
 		"timers.ellapsedRequire" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
 		"timers.ellapsedWorkspaceStorageInit" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
 		"timers.ellapsedWorkspaceServiceInit" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
+		"timers.ellapsedRequiredUserDataInit" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
+		"timers.ellapsedOtherUserDataInit" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
 		"timers.ellapsedViewletRestore" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
 		"timers.ellapsedPanelRestore" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
 		"timers.ellapsedEditorRestore" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
@@ -187,6 +189,15 @@ export interface IStartupMetrics {
 		readonly ellapsedWindowLoadToRequire: number;
 
 		/**
+		 * The time it took to wait for resolving the shell environment. This time the workbench
+		 * will not continue to load and be blocked entirely.
+		 *
+		 * * Happens in the renderer-process
+		 * * Measured with the `willWaitForShellEnv` and `didWaitForShellEnv` performance marks.
+		 */
+		readonly ellapsedWaitForShellEnv: number;
+
+		/**
 		 * The time it took to require the workspace storage DB, connect to it
 		 * and load the initial set of values.
 		 *
@@ -202,6 +213,22 @@ export interface IStartupMetrics {
 		 * * Measured with the `willInitWorkspaceService` and `didInitWorkspaceService` performance marks.
 		 */
 		readonly ellapsedWorkspaceServiceInit: number;
+
+		/**
+		 * The time it took to initialize required user data (settings & global state) using settings sync service.
+		 *
+		 * * Happens in the renderer-process (only in Web)
+		 * * Measured with the `willInitRequiredUserData` and `didInitRequiredUserData` performance marks.
+		 */
+		readonly ellapsedRequiredUserDataInit: number;
+
+		/**
+		 * The time it took to initialize other user data (keybindings, snippets & extensions) using settings sync service.
+		 *
+		 * * Happens in the renderer-process (only in Web)
+		 * * Measured with the `willInitOtherUserData` and `didInitOtherUserData` performance marks.
+		 */
+		readonly ellapsedOtherUserDataInit: number;
 
 		/**
 		 * The time it took to load the main-bundle of the workbench, e.g. `workbench.desktop.main.js`.
@@ -388,8 +415,11 @@ export abstract class AbstractTimerService implements ITimerService {
 				ellapsedWindowLoad: initialStartup ? perf.getDuration('main:appReady', 'main:loadWindow') : undefined,
 				ellapsedWindowLoadToRequire: perf.getDuration('main:loadWindow', 'willLoadWorkbenchMain'),
 				ellapsedRequire: perf.getDuration('willLoadWorkbenchMain', 'didLoadWorkbenchMain'),
+				ellapsedWaitForShellEnv: perf.getDuration('willWaitForShellEnv', 'didWaitForShellEnv'),
 				ellapsedWorkspaceStorageInit: perf.getDuration('willInitWorkspaceStorage', 'didInitWorkspaceStorage'),
 				ellapsedWorkspaceServiceInit: perf.getDuration('willInitWorkspaceService', 'didInitWorkspaceService'),
+				ellapsedRequiredUserDataInit: perf.getDuration('willInitRequiredUserData', 'didInitRequiredUserData'),
+				ellapsedOtherUserDataInit: perf.getDuration('willInitOtherUserData', 'didInitOtherUserData'),
 				ellapsedExtensions: perf.getDuration('willLoadExtensions', 'didLoadExtensions'),
 				ellapsedEditorRestore: perf.getDuration('willRestoreEditors', 'didRestoreEditors'),
 				ellapsedViewletRestore: perf.getDuration('willRestoreViewlet', 'didRestoreViewlet'),

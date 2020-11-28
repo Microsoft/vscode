@@ -12,6 +12,7 @@ import { Range } from 'vs/editor/common/core/range';
 import { Disposable } from 'vs/base/common/lifecycle';
 import { ITextModelService } from 'vs/editor/common/services/resolverService';
 import { hash } from 'vs/base/common/hash';
+import { createTextBuffer } from 'vs/editor/common/model/textModel';
 
 export class NotebookCellTextModel extends Disposable implements ICell {
 	private _onDidChangeOutputs = new Emitter<NotebookCellOutputsSplice[]>();
@@ -171,6 +172,9 @@ export class NotebookCellTextModel extends Disposable implements ICell {
 	}
 
 	dispose() {
+		// Manually release reference to previous text buffer to avoid large leaks
+		// in case someone leaks a CellTextModel reference
+		this._textBuffer = createTextBuffer('', model.DefaultEndOfLine.LF);
 		super.dispose();
 	}
 }

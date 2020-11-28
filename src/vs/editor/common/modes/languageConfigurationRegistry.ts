@@ -622,6 +622,12 @@ export class LanguageConfigurationRegistryImpl {
 			return null;
 		}
 		const scopedLineTokens = this.getScopedLineTokens(model, range.startLineNumber, range.startColumn);
+
+		if (scopedLineTokens.firstCharOffset) {
+			// this line has mixed languages and indentation rules will not work
+			return null;
+		}
+
 		const indentRulesSupport = this.getIndentRulesSupport(scopedLineTokens.languageId);
 		if (!indentRulesSupport) {
 			return null;

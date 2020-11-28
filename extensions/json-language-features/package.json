@@ -97,6 +97,11 @@
                     "default": 5000,
                     "description": "%json.maxItemsComputed.desc%"
                 },
+                "json.maxItemsExceededInformation": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "%json.maxItemsExceededInformation.desc%"
+                },
                 "json.schemaDownload.enable": {
                   "type": "boolean",
                   "default": true,

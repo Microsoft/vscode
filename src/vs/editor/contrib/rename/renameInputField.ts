@@ -100,7 +100,7 @@ export class RenameInputField implements IContentWidget {
 
 		const widgetShadowColor = theme.getColor(widgetShadow);
 		this._domNode.style.backgroundColor = String(theme.getColor(editorWidgetBackground) ?? '');
-		this._domNode.style.boxShadow = widgetShadowColor ? ` 0 2px 8px ${widgetShadowColor}` : '';
+		this._domNode.style.boxShadow = widgetShadowColor ? ` 0 0 8px 2px ${widgetShadowColor}` : '';
 		this._domNode.style.color = String(theme.getColor(inputForeground) ?? '');
 
 		this._input.style.backgroundColor = String(theme.getColor(inputBackground) ?? '');

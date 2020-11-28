@@ -4,8 +4,8 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { localize } from 'vs/nls';
-import { raceTimeout } from 'vs/base/common/async';
-import { CancellationTokenSource } from 'vs/base/common/cancellation';
+import { raceCancellation } from 'vs/base/common/async';
+import { CancellationToken, CancellationTokenSource } from 'vs/base/common/cancellation';
 import { ILogService } from 'vs/platform/log/common/log';
 import { IProgressService, ProgressLocation } from 'vs/platform/progress/common/progress';
 import { IDisposable, Disposable, toDisposable } from 'vs/base/common/lifecycle';
@@ -13,11 +13,11 @@ import { IWorkingCopyFileOperationParticipant } from 'vs/workbench/services/work
 import { URI } from 'vs/base/common/uri';
 import { FileOperation } from 'vs/platform/files/common/files';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
-import { insert } from 'vs/base/common/arrays';
+import { LinkedList } from 'vs/base/common/linkedList';
 
 export class WorkingCopyFileOperationParticipant extends Disposable {
 
-	private readonly participants: IWorkingCopyFileOperationParticipant[] = [];
+	private readonly participants = new LinkedList<IWorkingCopyFileOperationParticipant>();
 
 	constructor(
 		@IProgressService private readonly progressService: IProgressService,
@@ -28,22 +28,24 @@ export class WorkingCopyFileOperationParticipant extends Disposable {
 	}
 
 	addFileOperationParticipant(participant: IWorkingCopyFileOperationParticipant): IDisposable {
-		const remove = insert(this.participants, participant);
-
+		const remove = this.participants.push(participant);
 		return toDisposable(() => remove());
 	}
 
-	async participate(files: { source?: URI, target: URI }[], operation: FileOperation): Promise<void> {
+	async participate(files: { source?: URI, target: URI }[], operation: FileOperation, undoRedoGroupId: number | undefined, isUndoing: boolean | undefined, token: CancellationToken | undefined): Promise<void> {
 		const timeout = this.configurationService.getValue<number>('files.participants.timeout');
 		if (timeout <= 0) {
 			return; // disabled
 		}
 
-		const cts = new CancellationTokenSource();
+		const cts = new CancellationTokenSource(token);
+		const timer = setTimeout(() => cts.cancel(), timeout);
 
 		return this.progressService.withProgress({
-			location: ProgressLocation.Window,
-			title: this.progressLabel(operation)
+			location: ProgressLocation.Notification,
+			title: this.progressLabel(operation),
+			cancellable: true,
+			delay: Math.min(timeout / 2, 3000)
 		}, async progress => {
 
 			// For each participant
@@ -51,14 +53,21 @@ export class WorkingCopyFileOperationParticipant extends Disposable {
 				if (cts.token.isCancellationRequested) {
 					break;
 				}
-
 				try {
-					const promise = participant.participate(files, operation, progress, timeout, cts.token);
-					await raceTimeout(promise, timeout, () => cts.dispose(true /* cancel */));
+					const promise = participant.participate(files, operation, undoRedoGroupId, isUndoing, progress, timeout, cts.token);
+					await raceCancellation(promise, cts.token);
 				} catch (err) {
 					this.logService.warn(err);
 				}
 			}
+		}, () => {
+			// user cancel
+			cts.cancel();
+
+		}).finally(() => {
+			// cleanup
+			cts.dispose();
+			clearTimeout(timer);
 		});
 	}
 
@@ -76,6 +85,6 @@ export class WorkingCopyFileOperationParticipant extends Disposable {
 	}
 
 	dispose(): void {
-		this.participants.splice(0, this.participants.length);
+		this.participants.clear();
 	}
 }

@@ -17,6 +17,10 @@ import { isWindows } from 'vs/base/common/platform';
 import { TestContextService } from 'vs/workbench/test/common/workbenchTestServices';
 import { IThemeService } from 'vs/platform/theme/common/themeService';
 import { TestThemeService } from 'vs/platform/theme/test/common/testThemeService';
+import { FileService } from 'vs/platform/files/common/fileService';
+import { NullLogService } from 'vs/platform/log/common/log';
+import { IUriIdentityService } from 'vs/workbench/services/uriIdentity/common/uriIdentity';
+import { UriIdentityService } from 'vs/workbench/services/uriIdentity/common/uriIdentityService';
 
 suite('Search - Viewlet', () => {
 	let instantiation: TestInstantiationService;
@@ -25,6 +29,7 @@ suite('Search - Viewlet', () => {
 		instantiation = new TestInstantiationService();
 		instantiation.stub(IModelService, stubModelService(instantiation));
 		instantiation.set(IWorkspaceContextService, new TestContextService(TestWorkspace));
+		instantiation.stub(IUriIdentityService, new UriIdentityService(new FileService(new NullLogService())));
 	});
 
 	test('Data Source', function () {

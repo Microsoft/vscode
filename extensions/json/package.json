@@ -33,8 +33,7 @@
         ],
         "filenames": [
           "composer.lock",
-          ".watchmanconfig",
-          ".ember-cli"
+          ".watchmanconfig"
         ],
         "mimetypes": [
           "application/json",
@@ -56,6 +55,9 @@
           ".swcrc",
           ".hintrc",
           ".babelrc"
+        ],
+        "filenames": [
+          ".ember-cli"
         ],
         "configuration": "./language-configuration.json"
       }

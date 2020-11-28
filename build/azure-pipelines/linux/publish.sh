@@ -52,11 +52,9 @@ RPM_PATH="$REPO/.build/linux/rpm/$RPM_ARCH/$RPM_FILENAME"
 
 node build/azure-pipelines/common/createAsset.js "$PLATFORM_RPM" package "$RPM_FILENAME" "$RPM_PATH"
 
-if [ "$VSCODE_ARCH" == "x64" ]; then
-	# Publish Snap
-	# Pack snap tarball artifact, in order to preserve file perms
-	mkdir -p $REPO/.build/linux/snap-tarball
-	SNAP_TARBALL_PATH="$REPO/.build/linux/snap-tarball/snap-$VSCODE_ARCH.tar.gz"
-	rm -rf $SNAP_TARBALL_PATH
-	(cd .build/linux && tar -czf $SNAP_TARBALL_PATH snap)
-fi
+# Publish Snap
+# Pack snap tarball artifact, in order to preserve file perms
+mkdir -p $REPO/.build/linux/snap-tarball
+SNAP_TARBALL_PATH="$REPO/.build/linux/snap-tarball/snap-$VSCODE_ARCH.tar.gz"
+rm -rf $SNAP_TARBALL_PATH
+(cd .build/linux && tar -czf $SNAP_TARBALL_PATH snap)

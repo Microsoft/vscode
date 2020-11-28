@@ -11,12 +11,16 @@ import { isString, isUndefinedOrNull, isObject } from 'vs/base/common/types';
 import { basenameOrAuthority } from 'vs/base/common/resources';
 import { URI } from 'vs/base/common/uri';
 import { generateUuid } from 'vs/base/common/uuid';
-import { Emitter } from 'vs/base/common/event';
+import { Emitter, Event } from 'vs/base/common/event';
 
 const MAX_REPL_LENGTH = 10000;
 let topReplElementCounter = 0;
 
 export class SimpleReplElement implements IReplElement {
+
+	private _count = 1;
+	private _onDidChangeCount = new Emitter<void>();
+
 	constructor(
 		public session: IDebugSession,
 		private id: string,
@@ -32,6 +36,19 @@ export class SimpleReplElement implements IReplElement {
 
 	getId(): string {
 		return this.id;
+	}
+
+	set count(value: number) {
+		this._count = value;
+		this._onDidChangeCount.fire();
+	}
+
+	get count(): number {
+		return this._count;
+	}
+
+	get onDidChangeCount(): Event<void> {
+		return this._onDidChangeCount.event;
 	}
 }
 
@@ -202,13 +219,21 @@ export class ReplModel {
 
 		if (typeof data === 'string') {
 			const previousElement = this.replElements.length ? this.replElements[this.replElements.length - 1] : undefined;
-			if (previousElement instanceof SimpleReplElement && previousElement.severity === sev && !previousElement.value.endsWith('\n') && !previousElement.value.endsWith('\r\n')) {
-				previousElement.value += data;
-				this._onDidChangeElements.fire();
-			} else {
-				const element = new SimpleReplElement(session, `topReplElement:${topReplElementCounter++}`, data, sev, source);
-				this.addReplElement(element);
+			if (previousElement instanceof SimpleReplElement && previousElement.severity === sev) {
+				if (previousElement.value === data) {
+					previousElement.count++;
+					// No need to fire an event, just the count updates and badge will adjust automatically
+					return;
+				}
+				if (!previousElement.value.endsWith('\n') && !previousElement.value.endsWith('\r\n') && previousElement.count === 1) {
+					previousElement.value += data;
+					this._onDidChangeElements.fire();
+					return;
+				}
 			}
+
+			const element = new SimpleReplElement(session, `topReplElement:${topReplElementCounter++}`, data, sev, source);
+			this.addReplElement(element);
 		} else {
 			// TODO@Isidor hack, we should introduce a new type which is an output that can fetch children like an expression
 			(<any>data).severity = sev;

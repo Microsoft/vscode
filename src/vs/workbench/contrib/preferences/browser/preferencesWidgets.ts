@@ -28,15 +28,15 @@ import { ILabelService } from 'vs/platform/label/common/label';
 import { Schemas } from 'vs/base/common/network';
 import { activeContrastBorder, badgeBackground, badgeForeground, contrastBorder, focusBorder } from 'vs/platform/theme/common/colorRegistry';
 import { attachInputBoxStyler, attachStylerCallback } from 'vs/platform/theme/common/styler';
-import { ICssStyleCollector, IColorTheme, IThemeService, registerThemingParticipant } from 'vs/platform/theme/common/themeService';
+import { ICssStyleCollector, IColorTheme, IThemeService, registerThemingParticipant, ThemeIcon } from 'vs/platform/theme/common/themeService';
 import { IWorkspaceContextService, IWorkspaceFolder, WorkbenchState } from 'vs/platform/workspace/common/workspace';
 import { PANEL_ACTIVE_TITLE_BORDER, PANEL_ACTIVE_TITLE_FOREGROUND, PANEL_INACTIVE_TITLE_FOREGROUND } from 'vs/workbench/common/theme';
 import { IWorkbenchEnvironmentService } from 'vs/workbench/services/environment/common/environmentService';
 import { ISettingsGroup, IPreferencesService } from 'vs/workbench/services/preferences/common/preferences';
 import { EditorOption } from 'vs/editor/common/config/editorOptions';
 import { isEqual } from 'vs/base/common/resources';
-import { registerIcon, Codicon } from 'vs/base/common/codicons';
 import { BaseActionViewItem } from 'vs/base/browser/ui/actionbar/actionViewItems';
+import { settingsEditIcon, settingsGroupCollapsedIcon, settingsGroupExpandedIcon, settingsScopeDropDownIcon } from 'vs/workbench/contrib/preferences/browser/preferencesIcons';
 
 export class SettingsHeaderWidget extends Widget implements IViewZone {
 
@@ -171,11 +171,21 @@ export class SettingsGroupTitleWidget extends Widget implements IViewZone {
 		this._register(focusTracker.onDidFocus(() => this.toggleFocus(true)));
 		this._register(focusTracker.onDidBlur(() => this.toggleFocus(false)));
 
-		this.icon = DOM.append(this.titleContainer, DOM.$('.codicon.codicon-chevron-down'));
+		this.icon = DOM.append(this.titleContainer, DOM.$(''));
 		this.title = DOM.append(this.titleContainer, DOM.$('.title'));
 		this.title.textContent = this.settingsGroup.title + ` (${this.settingsGroup.sections.reduce((count, section) => count + section.settings.length, 0)})`;
 
+		this.updateTwisty(false);
 		this.layout();
+	}
+
+	private getTwistyIcon(isCollapsed: boolean): ThemeIcon {
+		return isCollapsed ? settingsGroupCollapsedIcon : settingsGroupExpandedIcon;
+	}
+
+	private updateTwisty(collapse: boolean) {
+		this.icon.classList.remove(...ThemeIcon.asClassNameArray(this.getTwistyIcon(!collapse)));
+		this.icon.classList.add(...ThemeIcon.asClassNameArray(this.getTwistyIcon(collapse)));
 	}
 
 	render() {
@@ -193,6 +203,7 @@ export class SettingsGroupTitleWidget extends Widget implements IViewZone {
 
 	toggleCollapse(collapse: boolean) {
 		this.titleContainer.classList.toggle('collapsed', collapse);
+		this.updateTwisty(collapse);
 	}
 
 	toggleFocus(focus: boolean): void {
@@ -257,6 +268,7 @@ export class SettingsGroupTitleWidget extends Widget implements IViewZone {
 	private collapse(collapse: boolean) {
 		if (collapse !== this.isCollapsed()) {
 			this.titleContainer.classList.toggle('collapsed', collapse);
+			this.updateTwisty(collapse);
 			this._onToggled.fire(collapse);
 		}
 	}
@@ -345,7 +357,7 @@ export class FolderSettingsActionViewItem extends BaseActionViewItem {
 		this.container = container;
 		this.labelElement = DOM.$('.action-title');
 		this.detailsElement = DOM.$('.action-details');
-		this.dropDownElement = DOM.$('.dropdown-icon.codicon.codicon-triangle-down.hide');
+		this.dropDownElement = DOM.$('.dropdown-icon.hide' + ThemeIcon.asCSSSelector(settingsScopeDropDownIcon));
 		this.anchorElement = DOM.$('a.action-label.folder-settings', {
 			role: 'button',
 			'aria-haspopup': 'true',
@@ -746,8 +758,6 @@ export class SearchWidget extends Widget {
 	}
 }
 
-export const preferencesEditIcon = registerIcon('preferences-edit', Codicon.edit, localize('preferencesEditIcon', 'Icon for the edit action in preferences.'));
-
 export class EditPreferenceWidget<T> extends Disposable {
 
 	private _line: number = -1;
@@ -785,7 +795,7 @@ export class EditPreferenceWidget<T> extends Disposable {
 		this._line = line;
 		newDecoration.push({
 			options: {
-				glyphMarginClassName: preferencesEditIcon.classNames,
+				glyphMarginClassName: ThemeIcon.asClassName(settingsEditIcon),
 				glyphMarginHoverMessage: new MarkdownString().appendText(hoverMessage),
 				stickiness: TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
 			},

@@ -5,7 +5,7 @@
 
 import { toDisposable } from 'vs/base/common/lifecycle';
 import { globals } from 'vs/base/common/platform';
-import BaseErrorTelemetry, { ErrorEvent } from '../common/errorTelemetry';
+import BaseErrorTelemetry, { ErrorEvent } from 'vs/platform/telemetry/common/errorTelemetry';
 
 export default class ErrorTelemetry extends BaseErrorTelemetry {
 	protected installErrorListeners(): void {

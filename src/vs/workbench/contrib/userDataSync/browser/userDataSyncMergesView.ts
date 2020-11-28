@@ -318,6 +318,7 @@ export class UserDataSyncMergesViewPane extends TreeViewPane {
 				leftResource,
 				rightResource,
 				label: localize('sideBySideLabels', "{0} ↔ {1}", leftResourceName, rightResourceName),
+				description: localize('sideBySideDescription', "Settings Sync"),
 				options: {
 					preserveFocus: true,
 					revealIfVisible: true,

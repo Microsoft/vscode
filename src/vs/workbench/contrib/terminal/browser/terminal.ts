@@ -423,6 +423,11 @@ export interface ITerminalInstance {
 	notifyFindWidgetFocusChanged(isFocused: boolean): void;
 
 	/**
+	 * Notifies the terminal to refresh its focus state based on the active document elemnet in DOM
+	 */
+	refreshFocusState(): void;
+
+	/**
 	 * Focuses the terminal instance if it's able to (xterm.js instance exists).
 	 *
 	 * @param focus Force focus even if there is a selection.

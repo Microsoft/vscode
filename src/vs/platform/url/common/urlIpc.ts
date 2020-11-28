@@ -19,7 +19,7 @@ export class URLHandlerChannel implements IServerChannel {
 
 	call(_: unknown, command: string, arg?: any): Promise<any> {
 		switch (command) {
-			case 'handleURL': return this.handler.handleURL(URI.revive(arg));
+			case 'handleURL': return this.handler.handleURL(URI.revive(arg[0]), arg[1]);
 		}
 
 		throw new Error(`Call not found: ${command}`);
@@ -31,7 +31,7 @@ export class URLHandlerChannelClient implements IURLHandler {
 	constructor(private channel: IChannel) { }
 
 	handleURL(uri: URI, options?: IOpenURLOptions): Promise<boolean> {
-		return this.channel.call('handleURL', uri.toJSON());
+		return this.channel.call('handleURL', [uri.toJSON(), options]);
 	}
 }
 

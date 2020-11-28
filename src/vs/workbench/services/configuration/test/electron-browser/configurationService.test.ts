@@ -54,6 +54,7 @@ import product from 'vs/platform/product/common/product';
 import { BrowserWorkbenchEnvironmentService } from 'vs/workbench/services/environment/browser/environmentService';
 import { INativeWorkbenchEnvironmentService } from 'vs/workbench/services/environment/electron-sandbox/environmentService';
 import { Event } from 'vs/base/common/event';
+import { UriIdentityService } from 'vs/workbench/services/uriIdentity/common/uriIdentityService';
 
 class TestWorkbenchEnvironmentService extends NativeWorkbenchEnvironmentService {
 
@@ -105,6 +106,7 @@ function setUpWorkspace(folders: string[]): Promise<{ parentDir: string, configP
 suite('WorkspaceContextService - Folder', () => {
 
 	let workspaceName = `testWorkspace${uuid.generateUuid()}`, parentResource: string, workspaceResource: string, workspaceContextService: IWorkspaceContextService;
+	const disposables = new DisposableStore();
 
 	setup(() => {
 		return setUpFolderWorkspace(workspaceName)
@@ -112,19 +114,17 @@ suite('WorkspaceContextService - Folder', () => {
 				parentResource = parentDir;
 				workspaceResource = folderDir;
 				const environmentService = new TestWorkbenchEnvironmentService(URI.file(parentDir));
-				const fileService = new FileService(new NullLogService());
-				const diskFileSystemProvider = new DiskFileSystemProvider(new NullLogService());
+				const fileService = disposables.add(new FileService(new NullLogService()));
+				const diskFileSystemProvider = disposables.add(new DiskFileSystemProvider(new NullLogService()));
 				fileService.registerProvider(Schemas.file, diskFileSystemProvider);
-				fileService.registerProvider(Schemas.userData, new FileUserDataProvider(environmentService.appSettingsHome, undefined, new DiskFileSystemProvider(new NullLogService()), environmentService, new NullLogService()));
-				workspaceContextService = new WorkspaceService({ configurationCache: new ConfigurationCache(environmentService) }, environmentService, fileService, new RemoteAgentService(environmentService, { _serviceBrand: undefined, ...product }, new RemoteAuthorityResolverService(), new SignService(undefined), new NullLogService()), new NullLogService());
+				fileService.registerProvider(Schemas.userData, disposables.add(new FileUserDataProvider(Schemas.file, new DiskFileSystemProvider(new NullLogService()), Schemas.userData, new NullLogService())));
+				workspaceContextService = disposables.add(new WorkspaceService({ configurationCache: new ConfigurationCache(environmentService) }, environmentService, fileService, new RemoteAgentService(environmentService, { _serviceBrand: undefined, ...product }, new RemoteAuthorityResolverService(), new SignService(undefined), new NullLogService()), new UriIdentityService(fileService), new NullLogService()));
 				return (<WorkspaceService>workspaceContextService).initialize(convertToWorkspacePayload(URI.file(folderDir)));
 			});
 	});
 
 	teardown(() => {
-		if (workspaceContextService) {
-			(<WorkspaceService>workspaceContextService).dispose();
-		}
+		disposables.clear();
 		if (parentResource) {
 			return pfs.rimraf(parentResource, pfs.RimRafMode.MOVE);
 		}
@@ -167,6 +167,7 @@ suite('WorkspaceContextService - Folder', () => {
 suite('WorkspaceContextService - Workspace', () => {
 
 	let parentResource: string, testObject: WorkspaceService, instantiationService: TestInstantiationService;
+	const disposables = new DisposableStore();
 
 	setup(() => {
 		return setUpWorkspace(['a', 'b'])
@@ -178,11 +179,11 @@ suite('WorkspaceContextService - Workspace', () => {
 				const environmentService = new TestWorkbenchEnvironmentService(URI.file(parentDir));
 				const remoteAgentService = instantiationService.createInstance(RemoteAgentService);
 				instantiationService.stub(IRemoteAgentService, remoteAgentService);
-				const fileService = new FileService(new NullLogService());
-				const diskFileSystemProvider = new DiskFileSystemProvider(new NullLogService());
+				const fileService = disposables.add(new FileService(new NullLogService()));
+				const diskFileSystemProvider = disposables.add(new DiskFileSystemProvider(new NullLogService()));
 				fileService.registerProvider(Schemas.file, diskFileSystemProvider);
-				fileService.registerProvider(Schemas.userData, new FileUserDataProvider(environmentService.appSettingsHome, undefined, diskFileSystemProvider, environmentService, new NullLogService()));
-				const workspaceService = new WorkspaceService({ configurationCache: new ConfigurationCache(environmentService) }, environmentService, fileService, remoteAgentService, new NullLogService());
+				fileService.registerProvider(Schemas.userData, disposables.add(new FileUserDataProvider(Schemas.file, diskFileSystemProvider, Schemas.userData, new NullLogService())));
+				const workspaceService = disposables.add(new WorkspaceService({ configurationCache: new ConfigurationCache(environmentService) }, environmentService, fileService, remoteAgentService, new UriIdentityService(fileService), new NullLogService()));
 
 				instantiationService.stub(IWorkspaceContextService, workspaceService);
 				instantiationService.stub(IConfigurationService, workspaceService);
@@ -196,9 +197,7 @@ suite('WorkspaceContextService - Workspace', () => {
 	});
 
 	teardown(() => {
-		if (testObject) {
-			(<WorkspaceService>testObject).dispose();
-		}
+		disposables.clear();
 		if (parentResource) {
 			return pfs.rimraf(parentResource, pfs.RimRafMode.MOVE);
 		}
@@ -227,6 +226,7 @@ suite('WorkspaceContextService - Workspace', () => {
 suite('WorkspaceContextService - Workspace Editing', () => {
 
 	let parentResource: string, testObject: WorkspaceService, instantiationService: TestInstantiationService;
+	const disposables = new DisposableStore();
 
 	setup(() => {
 		return setUpWorkspace(['a', 'b'])
@@ -238,11 +238,11 @@ suite('WorkspaceContextService - Workspace Editing', () => {
 				const environmentService = new TestWorkbenchEnvironmentService(URI.file(parentDir));
 				const remoteAgentService = instantiationService.createInstance(RemoteAgentService);
 				instantiationService.stub(IRemoteAgentService, remoteAgentService);
-				const fileService = new FileService(new NullLogService());
-				const diskFileSystemProvider = new DiskFileSystemProvider(new NullLogService());
+				const fileService = disposables.add(new FileService(new NullLogService()));
+				const diskFileSystemProvider = disposables.add(new DiskFileSystemProvider(new NullLogService()));
 				fileService.registerProvider(Schemas.file, diskFileSystemProvider);
-				fileService.registerProvider(Schemas.userData, new FileUserDataProvider(environmentService.appSettingsHome, undefined, diskFileSystemProvider, environmentService, new NullLogService()));
-				const workspaceService = new WorkspaceService({ configurationCache: new ConfigurationCache(environmentService) }, environmentService, fileService, remoteAgentService, new NullLogService());
+				fileService.registerProvider(Schemas.userData, disposables.add(new FileUserDataProvider(Schemas.file, diskFileSystemProvider, Schemas.userData, new NullLogService())));
+				const workspaceService = disposables.add(new WorkspaceService({ configurationCache: new ConfigurationCache(environmentService) }, environmentService, fileService, remoteAgentService, new UriIdentityService(fileService), new NullLogService()));
 
 				instantiationService.stub(IWorkspaceContextService, workspaceService);
 				instantiationService.stub(IConfigurationService, workspaceService);
@@ -260,9 +260,7 @@ suite('WorkspaceContextService - Workspace Editing', () => {
 	});
 
 	teardown(() => {
-		if (testObject) {
-			(<WorkspaceService>testObject).dispose();
-		}
+		disposables.clear();
 		if (parentResource) {
 			return pfs.rimraf(parentResource, pfs.RimRafMode.MOVE);
 		}
@@ -467,6 +465,7 @@ suite('WorkspaceService - Initialization', () => {
 
 	let parentResource: string, workspaceConfigPath: URI, testObject: WorkspaceService, globalSettingsFile: string;
 	const configurationRegistry = Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration);
+	const disposables = new DisposableStore();
 
 	suiteSetup(() => {
 		configurationRegistry.registerConfiguration({
@@ -499,11 +498,11 @@ suite('WorkspaceService - Initialization', () => {
 				const environmentService = new TestWorkbenchEnvironmentService(URI.file(parentDir));
 				const remoteAgentService = instantiationService.createInstance(RemoteAgentService);
 				instantiationService.stub(IRemoteAgentService, remoteAgentService);
-				const fileService = new FileService(new NullLogService());
-				const diskFileSystemProvider = new DiskFileSystemProvider(new NullLogService());
+				const fileService = disposables.add(new FileService(new NullLogService()));
+				const diskFileSystemProvider = disposables.add(new DiskFileSystemProvider(new NullLogService()));
 				fileService.registerProvider(Schemas.file, diskFileSystemProvider);
-				fileService.registerProvider(Schemas.userData, new FileUserDataProvider(environmentService.appSettingsHome, undefined, diskFileSystemProvider, environmentService, new NullLogService()));
-				const workspaceService = new WorkspaceService({ configurationCache: new ConfigurationCache(environmentService) }, environmentService, fileService, remoteAgentService, new NullLogService());
+				fileService.registerProvider(Schemas.userData, disposables.add(new FileUserDataProvider(Schemas.file, diskFileSystemProvider, Schemas.userData, new NullLogService())));
+				const workspaceService = disposables.add(new WorkspaceService({ configurationCache: new ConfigurationCache(environmentService) }, environmentService, fileService, remoteAgentService, new UriIdentityService(fileService), new NullLogService()));
 				instantiationService.stub(IWorkspaceContextService, workspaceService);
 				instantiationService.stub(IConfigurationService, workspaceService);
 				instantiationService.stub(IEnvironmentService, environmentService);
@@ -519,9 +518,7 @@ suite('WorkspaceService - Initialization', () => {
 	});
 
 	teardown(() => {
-		if (testObject) {
-			(<WorkspaceService>testObject).dispose();
-		}
+		disposables.clear();
 		if (parentResource) {
 			return pfs.rimraf(parentResource, pfs.RimRafMode.MOVE);
 		}
@@ -727,7 +724,7 @@ suite('WorkspaceConfigurationService - Folder', () => {
 	let workspaceName = `testWorkspace${uuid.generateUuid()}`, parentResource: string, workspaceDir: string, testObject: IConfigurationService, globalSettingsFile: string, globalTasksFile: string, workspaceService: WorkspaceService;
 	const configurationRegistry = Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration);
 	let fileService: IFileService;
-	let disposableStore: DisposableStore = new DisposableStore();
+	const disposables: DisposableStore = new DisposableStore();
 
 	suiteSetup(() => {
 		configurationRegistry.registerConfiguration({
@@ -776,17 +773,17 @@ suite('WorkspaceConfigurationService - Folder', () => {
 				const environmentService = new TestWorkbenchEnvironmentService(URI.file(parentDir));
 				const remoteAgentService = instantiationService.createInstance(RemoteAgentService);
 				instantiationService.stub(IRemoteAgentService, remoteAgentService);
-				fileService = new FileService(new NullLogService());
-				const diskFileSystemProvider = new DiskFileSystemProvider(new NullLogService());
+				fileService = disposables.add(new FileService(new NullLogService()));
+				const diskFileSystemProvider = disposables.add(new DiskFileSystemProvider(new NullLogService()));
 				fileService.registerProvider(Schemas.file, diskFileSystemProvider);
-				fileService.registerProvider(Schemas.userData, new FileUserDataProvider(environmentService.appSettingsHome, undefined, diskFileSystemProvider, environmentService, new NullLogService()));
-				workspaceService = disposableStore.add(new WorkspaceService({ configurationCache: new ConfigurationCache(environmentService) }, environmentService, fileService, remoteAgentService, new NullLogService()));
+				fileService.registerProvider(Schemas.userData, disposables.add(new FileUserDataProvider(Schemas.file, diskFileSystemProvider, Schemas.userData, new NullLogService())));
+				workspaceService = disposables.add(new WorkspaceService({ configurationCache: new ConfigurationCache(environmentService) }, environmentService, fileService, remoteAgentService, new UriIdentityService(fileService), new NullLogService()));
 				instantiationService.stub(IWorkspaceContextService, workspaceService);
 				instantiationService.stub(IConfigurationService, workspaceService);
 				instantiationService.stub(IEnvironmentService, environmentService);
 
 				// Watch workspace configuration directory
-				disposableStore.add(fileService.watch(joinPath(URI.file(workspaceDir), '.vscode')));
+				disposables.add(fileService.watch(joinPath(URI.file(workspaceDir), '.vscode')));
 
 				return workspaceService.initialize(convertToWorkspacePayload(URI.file(folderDir))).then(() => {
 					instantiationService.stub(IFileService, fileService);
@@ -800,7 +797,7 @@ suite('WorkspaceConfigurationService - Folder', () => {
 	});
 
 	teardown(() => {
-		disposableStore.clear();
+		disposables.clear();
 		if (parentResource) {
 			return pfs.rimraf(parentResource, pfs.RimRafMode.MOVE);
 		}
@@ -1232,6 +1229,7 @@ suite('WorkspaceConfigurationService-Multiroot', () => {
 
 	let parentResource: string, workspaceContextService: IWorkspaceContextService, jsonEditingServce: IJSONEditingService, testObject: IConfigurationService, globalSettingsFile: string;
 	const configurationRegistry = Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration);
+	const disposables = new DisposableStore();
 
 	suiteSetup(() => {
 		configurationRegistry.registerConfiguration({
@@ -1282,11 +1280,11 @@ suite('WorkspaceConfigurationService-Multiroot', () => {
 				const environmentService = new TestWorkbenchEnvironmentService(URI.file(parentDir));
 				const remoteAgentService = instantiationService.createInstance(RemoteAgentService);
 				instantiationService.stub(IRemoteAgentService, remoteAgentService);
-				const fileService = new FileService(new NullLogService());
-				const diskFileSystemProvider = new DiskFileSystemProvider(new NullLogService());
+				const fileService = disposables.add(new FileService(new NullLogService()));
+				const diskFileSystemProvider = disposables.add(new DiskFileSystemProvider(new NullLogService()));
 				fileService.registerProvider(Schemas.file, diskFileSystemProvider);
-				fileService.registerProvider(Schemas.userData, new FileUserDataProvider(environmentService.appSettingsHome, undefined, diskFileSystemProvider, environmentService, new NullLogService()));
-				const workspaceService = new WorkspaceService({ configurationCache: new ConfigurationCache(environmentService) }, environmentService, fileService, remoteAgentService, new NullLogService());
+				fileService.registerProvider(Schemas.userData, disposables.add(new FileUserDataProvider(Schemas.file, diskFileSystemProvider, Schemas.userData, new NullLogService())));
+				const workspaceService = disposables.add(new WorkspaceService({ configurationCache: new ConfigurationCache(environmentService) }, environmentService, fileService, remoteAgentService, new UriIdentityService(fileService), new NullLogService()));
 
 				instantiationService.stub(IWorkspaceContextService, workspaceService);
 				instantiationService.stub(IConfigurationService, workspaceService);
@@ -1308,9 +1306,7 @@ suite('WorkspaceConfigurationService-Multiroot', () => {
 	});
 
 	teardown(() => {
-		if (testObject) {
-			(<WorkspaceService>testObject).dispose();
-		}
+		disposables.clear();
 		if (parentResource) {
 			return pfs.rimraf(parentResource, pfs.RimRafMode.MOVE);
 		}
@@ -1841,7 +1837,8 @@ suite('WorkspaceConfigurationService - Remote Folder', () => {
 	let workspaceName = `testWorkspace${uuid.generateUuid()}`, parentResource: string, workspaceDir: string, testObject: WorkspaceService, globalSettingsFile: string, remoteSettingsFile: string, remoteSettingsResource: URI, instantiationService: TestInstantiationService, resolveRemoteEnvironment: () => void;
 	const remoteAuthority = 'configuraiton-tests';
 	const configurationRegistry = Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration);
-	const diskFileSystemProvider = new DiskFileSystemProvider(new NullLogService());
+	const disposables = new DisposableStore();
+	let diskFileSystemProvider: DiskFileSystemProvider;
 
 	suiteSetup(() => {
 		configurationRegistry.registerConfiguration({
@@ -1886,11 +1883,12 @@ suite('WorkspaceConfigurationService - Remote Folder', () => {
 				const environmentService = new TestWorkbenchEnvironmentService(URI.file(parentDir));
 				const remoteEnvironmentPromise = new Promise<Partial<IRemoteAgentEnvironment>>(c => resolveRemoteEnvironment = () => c({ settingsPath: remoteSettingsResource }));
 				const remoteAgentService = instantiationService.stub(IRemoteAgentService, <Partial<IRemoteAgentService>>{ getEnvironment: () => remoteEnvironmentPromise });
-				const fileService = new FileService(new NullLogService());
+				const fileService = disposables.add(new FileService(new NullLogService()));
+				diskFileSystemProvider = disposables.add(new DiskFileSystemProvider(new NullLogService()));
 				fileService.registerProvider(Schemas.file, diskFileSystemProvider);
-				fileService.registerProvider(Schemas.userData, new FileUserDataProvider(environmentService.appSettingsHome, undefined, diskFileSystemProvider, environmentService, new NullLogService()));
+				fileService.registerProvider(Schemas.userData, disposables.add(new FileUserDataProvider(Schemas.file, diskFileSystemProvider, Schemas.userData, new NullLogService())));
 				const configurationCache: IConfigurationCache = { read: () => Promise.resolve(''), write: () => Promise.resolve(), remove: () => Promise.resolve(), needsCaching: () => false };
-				testObject = new WorkspaceService({ configurationCache, remoteAuthority }, environmentService, fileService, remoteAgentService, new NullLogService());
+				testObject = disposables.add(new WorkspaceService({ configurationCache, remoteAuthority }, environmentService, fileService, remoteAgentService, new UriIdentityService(fileService), new NullLogService()));
 				instantiationService.stub(IWorkspaceContextService, testObject);
 				instantiationService.stub(IConfigurationService, testObject);
 				instantiationService.stub(IEnvironmentService, environmentService);
@@ -1919,9 +1917,7 @@ suite('WorkspaceConfigurationService - Remote Folder', () => {
 	}
 
 	teardown(() => {
-		if (testObject) {
-			(<WorkspaceService>testObject).dispose();
-		}
+		disposables.clear();
 		if (parentResource) {
 			return pfs.rimraf(parentResource, pfs.RimRafMode.MOVE);
 		}
@@ -2096,7 +2092,7 @@ suite('ConfigurationService - Configuration Defaults', () => {
 		const remoteAgentService = (<TestInstantiationService>workbenchInstantiationService()).createInstance(RemoteAgentService);
 		const environmentService = new BrowserWorkbenchEnvironmentService({ logsPath: URI.file(''), workspaceId: '', configurationDefaults }, TestProductService);
 		const fileService = new FileService(new NullLogService());
-		return disposableStore.add(new WorkspaceService({ configurationCache: new BrowserConfigurationCache() }, environmentService, fileService, remoteAgentService, new NullLogService()));
+		return disposableStore.add(new WorkspaceService({ configurationCache: new BrowserConfigurationCache() }, environmentService, fileService, remoteAgentService, new UriIdentityService(fileService), new NullLogService()));
 	}
 
 });

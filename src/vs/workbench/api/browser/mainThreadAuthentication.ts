@@ -22,7 +22,7 @@ import { IEncryptionService } from 'vs/workbench/services/encryption/common/encr
 import { IProductService } from 'vs/platform/product/common/productService';
 import { ICredentialsService } from 'vs/workbench/services/credentials/common/credentials';
 
-const VSO_ALLOWED_EXTENSIONS = ['github.vscode-pull-request-github', 'github.vscode-pull-request-github-insiders', 'vscode.git', 'ms-vsonline.vsonline', 'vscode.github-browser', 'ms-vscode.github-browser'];
+const VSO_ALLOWED_EXTENSIONS = ['github.vscode-pull-request-github', 'github.vscode-pull-request-github-insiders', 'vscode.git', 'ms-vsonline.vsonline', 'vscode.github-browser', 'ms-vscode.github-browser', 'github.codespaces'];
 
 interface IAccountUsage {
 	extensionId: string;
@@ -69,7 +69,7 @@ function addAccountUsage(storageService: IStorageService, providerId: string, ac
 		});
 	}
 
-	storageService.store(accountKey, JSON.stringify(usages), StorageScope.GLOBAL);
+	storageService.store(accountKey, JSON.stringify(usages), StorageScope.GLOBAL, StorageTarget.MACHINE);
 }
 
 export class MainThreadAuthenticationProvider extends Disposable {
@@ -126,7 +126,7 @@ export class MainThreadAuthenticationProvider extends Disposable {
 
 		quickPick.onDidAccept(() => {
 			const updatedAllowedList = quickPick.selectedItems.map(item => item.extension);
-			this.storageService.store2(`${this.id}-${accountName}`, JSON.stringify(updatedAllowedList), StorageScope.GLOBAL, StorageTarget.USER);
+			this.storageService.store(`${this.id}-${accountName}`, JSON.stringify(updatedAllowedList), StorageScope.GLOBAL, StorageTarget.USER);
 
 			quickPick.dispose();
 		});
@@ -385,10 +385,10 @@ export class MainThreadAuthentication extends Disposable implements MainThreadAu
 				const allowList = readAllowedExtensions(this.storageService, providerId, accountName);
 				if (!allowList.find(allowed => allowed.id === extensionId)) {
 					allowList.push({ id: extensionId, name: extensionName });
-					this.storageService.store2(`${providerId}-${accountName}`, JSON.stringify(allowList), StorageScope.GLOBAL, StorageTarget.USER);
+					this.storageService.store(`${providerId}-${accountName}`, JSON.stringify(allowList), StorageScope.GLOBAL, StorageTarget.USER);
 				}
 
-				this.storageService.store(`${extensionName}-${providerId}`, session.id, StorageScope.GLOBAL);
+				this.storageService.store(`${extensionName}-${providerId}`, session.id, StorageScope.GLOBAL, StorageTarget.MACHINE);
 
 				quickPick.dispose();
 				resolve(session);
@@ -437,7 +437,7 @@ export class MainThreadAuthentication extends Disposable implements MainThreadAu
 		if (allow) {
 			addAccountUsage(this.storageService, providerId, accountName, extensionId, extensionName);
 			allowList.push({ id: extensionId, name: extensionName });
-			this.storageService.store2(`${providerId}-${accountName}`, JSON.stringify(allowList), StorageScope.GLOBAL, StorageTarget.USER);
+			this.storageService.store(`${providerId}-${accountName}`, JSON.stringify(allowList), StorageScope.GLOBAL, StorageTarget.USER);
 		}
 
 		return allow;
@@ -460,10 +460,10 @@ export class MainThreadAuthentication extends Disposable implements MainThreadAu
 		const allowList = readAllowedExtensions(this.storageService, providerId, accountName);
 		if (!allowList.find(allowed => allowed.id === extensionId)) {
 			allowList.push({ id: extensionId, name: extensionName });
-			this.storageService.store2(`${providerId}-${accountName}`, JSON.stringify(allowList), StorageScope.GLOBAL, StorageTarget.USER);
+			this.storageService.store(`${providerId}-${accountName}`, JSON.stringify(allowList), StorageScope.GLOBAL, StorageTarget.USER);
 		}
 
-		this.storageService.store(`${extensionName}-${providerId}`, sessionId, StorageScope.GLOBAL);
+		this.storageService.store(`${extensionName}-${providerId}`, sessionId, StorageScope.GLOBAL, StorageTarget.MACHINE);
 		addAccountUsage(this.storageService, providerId, accountName, extensionId, extensionName);
 	}
 

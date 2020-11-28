@@ -61,6 +61,8 @@ export interface IViewLayout {
 	getWhitespaces(): IEditorWhitespace[];
 
 	isAfterLines(verticalOffset: number): boolean;
+	isInTopPadding(verticalOffset: number): boolean;
+	isInBottomPadding(verticalOffset: number): boolean;
 	getLineNumberAtVerticalOffset(verticalOffset: number): number;
 	getVerticalOffsetForLineNumber(lineNumber: number): number;
 	getWhitespaceAtVerticalOffset(verticalOffset: number): IViewWhitespaceViewportData | null;
@@ -82,6 +84,65 @@ export interface ICoordinatesConverter {
 	convertModelPositionToViewPosition(modelPosition: Position): Position;
 	convertModelRangeToViewRange(modelRange: Range): Range;
 	modelPositionIsVisible(modelPosition: Position): boolean;
+	getModelLineViewLineCount(modelLineNumber: number): number;
+}
+
+export class OutputPosition {
+	outputLineIndex: number;
+	outputOffset: number;
+
+	constructor(outputLineIndex: number, outputOffset: number) {
+		this.outputLineIndex = outputLineIndex;
+		this.outputOffset = outputOffset;
+	}
+}
+
+export class LineBreakData {
+	constructor(
+		public breakOffsets: number[],
+		public breakOffsetsVisibleColumn: number[],
+		public wrappedTextIndentLength: number
+	) { }
+
+	public static getInputOffsetOfOutputPosition(breakOffsets: number[], outputLineIndex: number, outputOffset: number): number {
+		if (outputLineIndex === 0) {
+			return outputOffset;
+		} else {
+			return breakOffsets[outputLineIndex - 1] + outputOffset;
+		}
+	}
+
+	public static getOutputPositionOfInputOffset(breakOffsets: number[], inputOffset: number): OutputPosition {
+		let low = 0;
+		let high = breakOffsets.length - 1;
+		let mid = 0;
+		let midStart = 0;
+
+		while (low <= high) {
+			mid = low + ((high - low) / 2) | 0;
+
+			const midStop = breakOffsets[mid];
+			midStart = mid > 0 ? breakOffsets[mid - 1] : 0;
+
+			if (inputOffset < midStart) {
+				high = mid - 1;
+			} else if (inputOffset >= midStop) {
+				low = mid + 1;
+			} else {
+				break;
+			}
+		}
+
+		return new OutputPosition(mid, inputOffset - midStart);
+	}
+}
+
+export interface ILineBreaksComputer {
+	/**
+	 * Pass in `previousLineBreakData` if the only difference is in breaking columns!!!
+	 */
+	addRequest(lineText: string, previousLineBreakData: LineBreakData | null): void;
+	finalize(): (LineBreakData | null)[];
 }
 
 export interface IViewModel extends ICursorSimpleModel {
@@ -142,6 +203,7 @@ export interface IViewModel extends ICursorSimpleModel {
 
 	//#endregion
 
+	createLineBreaksComputer(): ILineBreaksComputer;
 
 	//#region cursor
 	getPrimaryCursorState(): CursorState;

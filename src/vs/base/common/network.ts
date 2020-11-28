@@ -78,6 +78,12 @@ export namespace Schemas {
 	 * Scheme used for extension pages
 	 */
 	export const extension = 'extension';
+
+	/**
+	 * Scheme used as a replacement of `file` scheme to load
+	 * files with our custom protocol handler (desktop only).
+	 */
+	export const vscodeFileResource = 'vscode-file';
 }
 
 class RemoteAuthoritiesImpl {
@@ -132,6 +138,8 @@ export const RemoteAuthorities = new RemoteAuthoritiesImpl();
 
 class FileAccessImpl {
 
+	private readonly FALLBACK_AUTHORITY = 'vscode-app';
+
 	/**
 	 * Returns a URI to use in contexts where the browser is responsible
 	 * for loading (e.g. fetch()) or when used within the DOM.
@@ -143,11 +151,41 @@ class FileAccessImpl {
 	asBrowserUri(uriOrModule: URI | string, moduleIdToUrl?: { toUrl(moduleId: string): string }): URI {
 		const uri = this.toUri(uriOrModule, moduleIdToUrl);
 
+		// Handle remote URIs via `RemoteAuthorities`
 		if (uri.scheme === Schemas.vscodeRemote) {
 			return RemoteAuthorities.rewrite(uri);
 		}
 
+		// Only convert the URI if we are in a native context and it has `file:` scheme
+		if (platform.isElectronSandboxed && platform.isNative && uri.scheme === Schemas.file) {
+			return this.toCodeFileUri(uri);
+		}
+
 		return uri;
+	}
+
+	/**
+	 * TODO@bpasero remove me eventually when vscode-file is adopted everywhere
+	 */
+	_asCodeFileUri(uri: URI): URI;
+	_asCodeFileUri(moduleId: string, moduleIdToUrl: { toUrl(moduleId: string): string }): URI;
+	_asCodeFileUri(uriOrModule: URI | string, moduleIdToUrl?: { toUrl(moduleId: string): string }): URI {
+		const uri = this.toUri(uriOrModule, moduleIdToUrl);
+
+		return this.toCodeFileUri(uri);
+	}
+
+	private toCodeFileUri(uri: URI): URI {
+		return uri.with({
+			scheme: Schemas.vscodeFileResource,
+			// We need to provide an authority here so that it can serve
+			// as origin for network and loading matters in chromium.
+			// If the URI is not coming with an authority already, we
+			// add our own
+			authority: uri.authority || this.FALLBACK_AUTHORITY,
+			query: null,
+			fragment: null
+		});
 	}
 
 	/**
@@ -158,6 +196,19 @@ class FileAccessImpl {
 	asFileUri(moduleId: string, moduleIdToUrl: { toUrl(moduleId: string): string }): URI;
 	asFileUri(uriOrModule: URI | string, moduleIdToUrl?: { toUrl(moduleId: string): string }): URI {
 		const uri = this.toUri(uriOrModule, moduleIdToUrl);
+
+		// Only convert the URI if it is `vscode-file:` scheme
+		if (uri.scheme === Schemas.vscodeFileResource) {
+			return uri.with({
+				scheme: Schemas.file,
+				// Only preserve the `authority` if it is different from
+				// our fallback authority. This ensures we properly preserve
+				// Windows UNC paths that come with their own authority.
+				authority: uri.authority !== this.FALLBACK_AUTHORITY ? uri.authority : null,
+				query: null,
+				fragment: null
+			});
+		}
 
 		return uri;
 	}

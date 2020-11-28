@@ -8,7 +8,7 @@
   {
     "kind": 2,
     "language": "github-issues",
-    "value": "// list of repos we work in\n$repos=repo:microsoft/vscode repo:microsoft/vscode-remote-release repo:microsoft/vscode-js-debug repo:microsoft/vscode-pull-request-github repo:microsoft/vscode-github-issue-notebooks\n\n// current milestone name\n$milestone=milestone:\"November 2020\"",
+    "value": "// list of repos we work in\n$repos=repo:microsoft/vscode repo:microsoft/vscode-remote-release repo:microsoft/vscode-js-debug repo:microsoft/vscode-pull-request-github repo:microsoft/vscode-github-issue-notebooks repo:microsoft/vscode-internalbacklog\n\n// current milestone name\n$milestone=milestone:\"November 2020\"",
     "editable": true
   },
   {

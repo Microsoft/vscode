@@ -19,6 +19,9 @@ export const IEnvironmentMainService = createDecorator<IEnvironmentMainService>(
  */
 export interface IEnvironmentMainService extends INativeEnvironmentService {
 
+	// --- NLS cache path
+	cachedLanguagesPath: string;
+
 	// --- backup paths
 	backupHome: string;
 	backupWorkspacesPath: string;
@@ -35,7 +38,10 @@ export interface IEnvironmentMainService extends INativeEnvironmentService {
 	disableUpdates: boolean;
 }
 
-export class EnvironmentMainService extends NativeEnvironmentService {
+export class EnvironmentMainService extends NativeEnvironmentService implements IEnvironmentMainService {
+
+	@memoize
+	get cachedLanguagesPath(): string { return join(this.userDataPath, 'clp'); }
 
 	@memoize
 	get backupHome(): string { return join(this.userDataPath, 'Backups'); }

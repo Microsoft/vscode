@@ -983,6 +983,7 @@
                             "collapse",
                             "create",
                             "delete",
+                            "discover",
                             "dispose",
                             "edit",
                             "end",

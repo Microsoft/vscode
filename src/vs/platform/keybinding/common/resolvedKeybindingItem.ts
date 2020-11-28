@@ -18,8 +18,9 @@ export class ResolvedKeybindingItem {
 	public readonly when: ContextKeyExpression | undefined;
 	public readonly isDefault: boolean;
 	public readonly extensionId: string | null;
+	public readonly isBuiltinExtension: boolean;
 
-	constructor(resolvedKeybinding: ResolvedKeybinding | undefined, command: string | null, commandArgs: any, when: ContextKeyExpression | undefined, isDefault: boolean, extensionId: string | null) {
+	constructor(resolvedKeybinding: ResolvedKeybinding | undefined, command: string | null, commandArgs: any, when: ContextKeyExpression | undefined, isDefault: boolean, extensionId: string | null, isBuiltinExtension: boolean) {
 		this.resolvedKeybinding = resolvedKeybinding;
 		this.keypressParts = resolvedKeybinding ? removeElementsAfterNulls(resolvedKeybinding.getDispatchParts()) : [];
 		this.bubble = (command ? command.charCodeAt(0) === CharCode.Caret : false);
@@ -28,6 +29,7 @@ export class ResolvedKeybindingItem {
 		this.when = when;
 		this.isDefault = isDefault;
 		this.extensionId = extensionId;
+		this.isBuiltinExtension = isBuiltinExtension;
 	}
 }
 

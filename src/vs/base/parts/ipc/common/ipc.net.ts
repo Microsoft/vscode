@@ -126,7 +126,8 @@ const enum ProtocolMessageType {
 	Control = 2,
 	Ack = 3,
 	KeepAlive = 4,
-	Disconnect = 5
+	Disconnect = 5,
+	ReplayRequest = 6
 }
 
 export const enum ProtocolConstants {
@@ -274,7 +275,11 @@ class ProtocolWriter {
 	}
 
 	public dispose(): void {
-		this.flush();
+		try {
+			this.flush();
+		} catch (err) {
+			// ignore error, since the socket could be already closed
+		}
 		this._isDisposed = true;
 	}
 
@@ -601,6 +606,8 @@ export class PersistentProtocol implements IMessagePassingProtocol {
 	private _outgoingKeepAliveTimeout: any | null;
 	private _incomingKeepAliveTimeout: any | null;
 
+	private _lastReplayRequestTime: number;
+
 	private _socket: ISocket;
 	private _socketWriter: ProtocolWriter;
 	private _socketReader: ProtocolReader;
@@ -641,6 +648,8 @@ export class PersistentProtocol implements IMessagePassingProtocol {
 
 		this._outgoingKeepAliveTimeout = null;
 		this._incomingKeepAliveTimeout = null;
+
+		this._lastReplayRequestTime = 0;
 
 		this._socketDisposables = [];
 		this._socket = socket;
@@ -747,6 +756,8 @@ export class PersistentProtocol implements IMessagePassingProtocol {
 		this._onSocketTimeout.flushBuffer();
 		this._socket.dispose();
 
+		this._lastReplayRequestTime = 0;
+
 		this._socket = socket;
 		this._socketWriter = new ProtocolWriter(this._socket);
 		this._socketDisposables.push(this._socketWriter);
@@ -792,17 +803,31 @@ export class PersistentProtocol implements IMessagePassingProtocol {
 		if (msg.type === ProtocolMessageType.Regular) {
 			if (msg.id > this._incomingMsgId) {
 				if (msg.id !== this._incomingMsgId + 1) {
-					console.error(`PROTOCOL CORRUPTION, LAST SAW MSG ${this._incomingMsgId} AND HAVE NOW RECEIVED MSG ${msg.id}`);
+					// in case we missed some messages we ask the other party to resend them
+					const now = Date.now();
+					if (now - this._lastReplayRequestTime > 10000) {
+						// send a replay request at most once every 10s
+						this._lastReplayRequestTime = now;
+						this._socketWriter.write(new ProtocolMessage(ProtocolMessageType.ReplayRequest, 0, 0, getEmptyBuffer()));
+					}
+				} else {
+					this._incomingMsgId = msg.id;
+					this._incomingMsgLastTime = Date.now();
+					this._sendAckCheck();
+					this._onMessage.fire(msg.data);
 				}
-				this._incomingMsgId = msg.id;
-				this._incomingMsgLastTime = Date.now();
-				this._sendAckCheck();
-				this._onMessage.fire(msg.data);
 			}
 		} else if (msg.type === ProtocolMessageType.Control) {
 			this._onControlMessage.fire(msg.data);
 		} else if (msg.type === ProtocolMessageType.Disconnect) {
 			this._onClose.fire();
+		} else if (msg.type === ProtocolMessageType.ReplayRequest) {
+			// Send again all unacknowledged messages
+			const toSend = this._outgoingUnackMsg.toArray();
+			for (let i = 0, len = toSend.length; i < len; i++) {
+				this._socketWriter.write(toSend[i]);
+			}
+			this._recvAckCheck();
 		}
 	}
 

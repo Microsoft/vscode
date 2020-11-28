@@ -38,7 +38,8 @@ export class MainThreadDialogs implements MainThreadDiaglogsShape {
 			canSelectFolders: options?.canSelectFolders,
 			canSelectMany: options?.canSelectMany,
 			defaultUri: options?.defaultUri ? URI.revive(options.defaultUri) : undefined,
-			title: options?.title || undefined
+			title: options?.title || undefined,
+			availableFileSystems: []
 		};
 		if (options?.filters) {
 			result.filters = [];

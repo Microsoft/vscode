@@ -51,7 +51,7 @@ const isNPMPreferred = (pkgPath: string) => {
 };
 
 export async function findPreferredPM(pkgPath: string): Promise<{ name: string, multiplePMDetected: boolean }> {
-	const detectedPackageManagers = [];
+	const detectedPackageManagers: string[] = [];
 
 	if (await isNPMPreferred(pkgPath)) {
 		detectedPackageManagers.push('npm');
@@ -65,10 +65,10 @@ export async function findPreferredPM(pkgPath: string): Promise<{ name: string, 
 		detectedPackageManagers.push('pnpm');
 	}
 
-	const { name: pmUsedForInstallation } = await whichPM(pkgPath);
+	const pmUsedForInstallation: { name: string } | null = await whichPM(pkgPath);
 
-	if (!detectedPackageManagers.includes(pmUsedForInstallation)) {
-		detectedPackageManagers.push(pmUsedForInstallation);
+	if (pmUsedForInstallation && !detectedPackageManagers.includes(pmUsedForInstallation.name)) {
+		detectedPackageManagers.push(pmUsedForInstallation.name);
 	}
 
 	const multiplePMDetected = detectedPackageManagers.length > 1;

@@ -60,8 +60,9 @@ export class SharedProcess implements ISharedProcess {
 			windowId: this.window.id
 		};
 
-		const windowUrl = FileAccess
-			.asBrowserUri('vs/code/electron-browser/sharedProcess/sharedProcess.html', require)
+		const windowUrl = (this.environmentService.sandbox ?
+			FileAccess._asCodeFileUri('vs/code/electron-browser/sharedProcess/sharedProcess.html', require) :
+			FileAccess.asBrowserUri('vs/code/electron-browser/sharedProcess/sharedProcess.html', require))
 			.with({ query: `config=${encodeURIComponent(JSON.stringify(config))}` });
 		this.window.loadURL(windowUrl.toString(true));
 

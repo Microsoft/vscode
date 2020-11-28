@@ -94,11 +94,6 @@ export interface IStorageService {
 	getNumber(key: string, scope: StorageScope, fallbackValue?: number): number | undefined;
 
 	/**
-	 * @deprecated use store2 instead
-	 */
-	store(key: string, value: string | boolean | number | undefined | null, scope: StorageScope): void;
-
-	/**
 	 * Store a value under the given key to storage. The value will be
 	 * converted to a `string`. Storing either `undefined` or `null` will
 	 * remove the entry under the key.
@@ -109,7 +104,7 @@ export interface IStorageService {
 	 * @param target allows to define the target of the storage operation
 	 * to either the current machine or user.
 	 */
-	store2(key: string, value: string | boolean | number | undefined | null, scope: StorageScope, target: StorageTarget): void;
+	store(key: string, value: string | boolean | number | undefined | null, scope: StorageScope, target: StorageTarget): void;
 
 	/**
 	 * Delete an element stored under the provided key from storage.
@@ -262,7 +257,7 @@ export abstract class AbstractStorageService extends Disposable implements IStor
 		this._onWillSaveState.fire({ reason });
 	}
 
-	store2(key: string, value: string | boolean | number | undefined | null, scope: StorageScope, target: StorageTarget): void {
+	store(key: string, value: string | boolean | number | undefined | null, scope: StorageScope, target: StorageTarget): void {
 
 		// We remove the key for undefined/null values
 		if (isUndefinedOrNull(value)) {
@@ -279,10 +274,6 @@ export abstract class AbstractStorageService extends Disposable implements IStor
 			// Store actual value
 			this.doStore(key, value, scope);
 		});
-	}
-
-	store(key: string, value: string | boolean | number | undefined | null, scope: StorageScope): void {
-		this.store2(key, value, scope, StorageTarget.MACHINE);
 	}
 
 	remove(key: string, scope: StorageScope): void {

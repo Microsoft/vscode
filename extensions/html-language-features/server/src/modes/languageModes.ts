@@ -48,7 +48,7 @@ export interface LanguageMode {
 	doHover?: (document: TextDocument, position: Position) => Promise<Hover | null>;
 	doSignatureHelp?: (document: TextDocument, position: Position) => Promise<SignatureHelp | null>;
 	doRename?: (document: TextDocument, position: Position, newName: string) => Promise<WorkspaceEdit | null>;
-	doOnTypeRename?: (document: TextDocument, position: Position) => Promise<Range[] | null>;
+	doLinkedEditing?: (document: TextDocument, position: Position) => Promise<Range[] | null>;
 	findDocumentHighlight?: (document: TextDocument, position: Position) => Promise<DocumentHighlight[]>;
 	findDocumentSymbols?: (document: TextDocument) => Promise<SymbolInformation[]>;
 	findDocumentLinks?: (document: TextDocument, documentContext: DocumentContext) => Promise<DocumentLink[]>;

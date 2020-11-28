@@ -55,6 +55,7 @@ export interface IssueReporterData extends WindowData {
 	enabledExtensions: IssueReporterExtensionData[];
 	issueType?: IssueType;
 	extensionId?: string;
+	experiments?: string;
 	readonly issueTitle?: string;
 	readonly issueBody?: string;
 }

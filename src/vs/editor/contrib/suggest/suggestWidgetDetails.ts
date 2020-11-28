@@ -91,6 +91,7 @@ export class SuggestDetailsWidget {
 		const lineHeightPx = `${lineHeight}px`;
 
 		this.domNode.style.fontSize = fontSizePx;
+		this.domNode.style.lineHeight = lineHeightPx;
 		this.domNode.style.fontWeight = fontWeight;
 		this.domNode.style.fontFeatureSettings = fontInfo.fontFeatureSettings;
 		this._type.style.fontFamily = fontFamily;
@@ -127,9 +128,10 @@ export class SuggestDetailsWidget {
 
 		if (explainMode) {
 			let md = '';
-			md += `score: ${item.score[0]}${item.word ? `, compared '${item.completion.filterText && (item.completion.filterText + ' (filterText)') || item.completion.label}' with '${item.word}'` : ' (no prefix)'}\n`;
+			md += `score: ${item.score[0]}${item.word ? `, compared '${item.completion.filterText && (item.completion.filterText + ' (filterText)') || typeof item.completion.label === 'string' ? item.completion.label : item.completion.label.name}' with '${item.word}'` : ' (no prefix)'}\n`;
 			md += `distance: ${item.distance}, see localityBonus-setting\n`;
 			md += `index: ${item.idx}, based on ${item.completion.sortText && `sortText: "${item.completion.sortText}"` || 'label'}\n`;
+			md += `commit characters: ${item.completion.commitCharacters}\n`;
 			documentation = new MarkdownString().appendCodeblock('empty', md);
 			detail = `Provider: ${item.provider._debugDisplayName}`;
 		}
@@ -168,7 +170,7 @@ export class SuggestDetailsWidget {
 			const renderedContents = this._markdownRenderer.render(documentation);
 			this._docs.appendChild(renderedContents.element);
 			this._renderDisposeable.add(renderedContents);
-			this._renderDisposeable.add(this._markdownRenderer.onDidRenderCodeBlock(() => {
+			this._renderDisposeable.add(this._markdownRenderer.onDidRenderAsync(() => {
 				this.layout(this._size.width, this._type.clientHeight + this._docs.clientHeight);
 				this._onDidChangeContents.fire(this);
 			}));

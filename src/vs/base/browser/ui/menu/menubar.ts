@@ -21,11 +21,11 @@ import { asArray } from 'vs/base/common/arrays';
 import { ScanCodeUtils, ScanCode } from 'vs/base/common/scanCode';
 import { isMacintosh } from 'vs/base/common/platform';
 import { StandardMouseEvent } from 'vs/base/browser/mouseEvent';
-import { Codicon, registerIcon } from 'vs/base/common/codicons';
+import { Codicon, registerCodicon } from 'vs/base/common/codicons';
 
 const $ = DOM.$;
 
-const menuBarMoreIcon = registerIcon('menubar-more', Codicon.more);
+const menuBarMoreIcon = registerCodicon('menubar-more', Codicon.more);
 
 export interface IMenuBarOptions {
 	enableMnemonics?: boolean;
@@ -115,7 +115,7 @@ export class MenuBar extends Disposable {
 		this.menuUpdater = this._register(new RunOnceScheduler(() => this.update(), 200));
 
 		this.actionRunner = this._register(new ActionRunner());
-		this._register(this.actionRunner.onDidBeforeRun(() => {
+		this._register(this.actionRunner.onBeforeRun(() => {
 			this.setUnfocusedState();
 		}));
 

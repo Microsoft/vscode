@@ -32,7 +32,7 @@ registerEditorAction(class FormatDocumentMultipleAction extends EditorAction {
 			alias: 'Format Document',
 			precondition: ContextKeyExpr.and(EditorContextKeys.writable, EditorContextKeys.hasDocumentFormattingProvider.toNegated()),
 			kbOpts: {
-				kbExpr: ContextKeyExpr.and(EditorContextKeys.editorTextFocus, EditorContextKeys.hasDocumentFormattingProvider.toNegated()),
+				kbExpr: EditorContextKeys.editorTextFocus,
 				primary: KeyMod.Shift | KeyMod.Alt | KeyCode.KEY_F,
 				linux: { primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KEY_I },
 				weight: KeybindingWeight.EditorContrib,
@@ -55,6 +55,8 @@ registerEditorAction(class FormatDocumentMultipleAction extends EditorAction {
 			return commandService.executeCommand('editor.action.formatDocument.multiple');
 		} else if (formatterCount === 1) {
 			return commandService.executeCommand('editor.action.formatDocument');
+		} else if (model.isTooLargeForSyncing()) {
+			notificationService.prompt(Severity.Info, nls.localize('too.large', "This file cannot be formatted because it is too large"), []);
 		} else {
 			const langName = model.getLanguageIdentifier().language;
 			const message = nls.localize('no.provider', "There is no formatter for '{0}' files installed.", langName);

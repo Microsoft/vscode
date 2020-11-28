@@ -102,8 +102,8 @@ export class NativeHostService extends Disposable implements IHostService {
 		return this.nativeHostService.relaunch();
 	}
 
-	reload(): Promise<void> {
-		return this.nativeHostService.reload();
+	reload(options?: { disableExtensions?: boolean }): Promise<void> {
+		return this.nativeHostService.reload(options);
 	}
 
 	close(): Promise<void> {

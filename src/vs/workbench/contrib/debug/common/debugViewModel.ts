@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Event, Emitter } from 'vs/base/common/event';
-import { CONTEXT_EXPRESSION_SELECTED, IViewModel, IStackFrame, IDebugSession, IThread, IExpression, IFunctionBreakpoint, CONTEXT_BREAKPOINT_SELECTED, CONTEXT_LOADED_SCRIPTS_SUPPORTED, CONTEXT_STEP_BACK_SUPPORTED, CONTEXT_FOCUSED_SESSION_IS_ATTACH, CONTEXT_RESTART_FRAME_SUPPORTED, CONTEXT_JUMP_TO_CURSOR_SUPPORTED, CONTEXT_STEP_INTO_TARGETS_SUPPORTED, CONTEXT_SET_VARIABLE_SUPPORTED } from 'vs/workbench/contrib/debug/common/debug';
+import { CONTEXT_EXPRESSION_SELECTED, IViewModel, IStackFrame, IDebugSession, IThread, IExpression, IFunctionBreakpoint, CONTEXT_BREAKPOINT_SELECTED, CONTEXT_LOADED_SCRIPTS_SUPPORTED, CONTEXT_STEP_BACK_SUPPORTED, CONTEXT_FOCUSED_SESSION_IS_ATTACH, CONTEXT_RESTART_FRAME_SUPPORTED, CONTEXT_JUMP_TO_CURSOR_SUPPORTED, CONTEXT_STEP_INTO_TARGETS_SUPPORTED, CONTEXT_SET_VARIABLE_SUPPORTED, IExceptionBreakpoint } from 'vs/workbench/contrib/debug/common/debug';
 import { IContextKeyService, IContextKey } from 'vs/platform/contextkey/common/contextkey';
 import { isSessionAttach } from 'vs/workbench/contrib/debug/common/debugUtils';
 
@@ -16,7 +16,7 @@ export class ViewModel implements IViewModel {
 	private _focusedSession: IDebugSession | undefined;
 	private _focusedThread: IThread | undefined;
 	private selectedExpression: IExpression | undefined;
-	private selectedFunctionBreakpoint: IFunctionBreakpoint | undefined;
+	private selectedBreakpoint: IFunctionBreakpoint | IExceptionBreakpoint | undefined;
 	private readonly _onDidFocusSession = new Emitter<IDebugSession | undefined>();
 	private readonly _onDidFocusStackFrame = new Emitter<{ stackFrame: IStackFrame | undefined, explicit: boolean }>();
 	private readonly _onDidSelectExpression = new Emitter<IExpression | undefined>();
@@ -112,8 +112,8 @@ export class ViewModel implements IViewModel {
 		return this._onDidSelectExpression.event;
 	}
 
-	getSelectedFunctionBreakpoint(): IFunctionBreakpoint | undefined {
-		return this.selectedFunctionBreakpoint;
+	getSelectedBreakpoint(): IFunctionBreakpoint | IExceptionBreakpoint | undefined {
+		return this.selectedBreakpoint;
 	}
 
 	updateViews(): void {
@@ -124,9 +124,9 @@ export class ViewModel implements IViewModel {
 		return this._onWillUpdateViews.event;
 	}
 
-	setSelectedFunctionBreakpoint(functionBreakpoint: IFunctionBreakpoint | undefined): void {
-		this.selectedFunctionBreakpoint = functionBreakpoint;
-		this.breakpointSelectedContextKey.set(!!functionBreakpoint);
+	setSelectedBreakpoint(breakpoint: IFunctionBreakpoint | IExceptionBreakpoint | undefined): void {
+		this.selectedBreakpoint = breakpoint;
+		this.breakpointSelectedContextKey.set(!!breakpoint);
 	}
 
 	isMultiSessionView(): boolean {

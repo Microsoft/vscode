@@ -7,7 +7,7 @@ import 'vs/css!./messageController';
 import * as nls from 'vs/nls';
 import { TimeoutTimer } from 'vs/base/common/async';
 import { KeyCode } from 'vs/base/common/keyCodes';
-import { IDisposable, Disposable, DisposableStore, MutableDisposable } from 'vs/base/common/lifecycle';
+import { IDisposable, DisposableStore, MutableDisposable } from 'vs/base/common/lifecycle';
 import { alert } from 'vs/base/browser/ui/aria/aria';
 import { Range } from 'vs/editor/common/core/range';
 import { IEditorContribution, ScrollType } from 'vs/editor/common/editorCommon';
@@ -20,7 +20,7 @@ import { inputValidationInfoBorder, inputValidationInfoBackground, inputValidati
 import { KeybindingWeight } from 'vs/platform/keybinding/common/keybindingsRegistry';
 import { ColorScheme } from 'vs/platform/theme/common/theme';
 
-export class MessageController extends Disposable implements IEditorContribution {
+export class MessageController implements IEditorContribution {
 
 	public static readonly ID = 'editor.contrib.messageController';
 
@@ -32,21 +32,24 @@ export class MessageController extends Disposable implements IEditorContribution
 
 	private readonly _editor: ICodeEditor;
 	private readonly _visible: IContextKey<boolean>;
-	private readonly _messageWidget = this._register(new MutableDisposable<MessageWidget>());
-	private readonly _messageListeners = this._register(new DisposableStore());
+	private readonly _messageWidget = new MutableDisposable<MessageWidget>();
+	private readonly _messageListeners = new DisposableStore();
+	private readonly _editorListener: IDisposable;
 
 	constructor(
 		editor: ICodeEditor,
 		@IContextKeyService contextKeyService: IContextKeyService
 	) {
-		super();
+
 		this._editor = editor;
 		this._visible = MessageController.MESSAGE_VISIBLE.bindTo(contextKeyService);
-		this._register(this._editor.onDidAttemptReadOnlyEdit(() => this._onDidAttemptReadOnlyEdit()));
+		this._editorListener = this._editor.onDidAttemptReadOnlyEdit(() => this._onDidAttemptReadOnlyEdit());
 	}
 
 	dispose(): void {
-		super.dispose();
+		this._editorListener.dispose();
+		this._messageListeners.dispose();
+		this._messageWidget.dispose();
 		this._visible.reset();
 	}
 
@@ -150,14 +153,18 @@ class MessageWidget implements IContentWidget {
 		this._domNode = document.createElement('div');
 		this._domNode.classList.add('monaco-editor-overlaymessage');
 
+		const anchorTop = document.createElement('div');
+		anchorTop.classList.add('anchor', 'top');
+		this._domNode.appendChild(anchorTop);
+
 		const message = document.createElement('div');
 		message.classList.add('message');
 		message.textContent = text;
 		this._domNode.appendChild(message);
 
-		const anchor = document.createElement('div');
-		anchor.classList.add('anchor');
-		this._domNode.appendChild(anchor);
+		const anchorBottom = document.createElement('div');
+		anchorBottom.classList.add('anchor', 'below');
+		this._domNode.appendChild(anchorBottom);
 
 		this._editor.addContentWidget(this);
 		this._domNode.classList.add('fadeIn');
@@ -178,6 +185,11 @@ class MessageWidget implements IContentWidget {
 	getPosition(): IContentWidgetPosition {
 		return { position: this._position, preference: [ContentWidgetPositionPreference.ABOVE, ContentWidgetPositionPreference.BELOW] };
 	}
+
+	afterRender(position: ContentWidgetPositionPreference | null): void {
+		this._domNode.classList.toggle('below', position === ContentWidgetPositionPreference.BELOW);
+	}
+
 }
 
 registerEditorContribution(MessageController.ID, MessageController);
@@ -186,7 +198,8 @@ registerThemingParticipant((theme, collector) => {
 	const border = theme.getColor(inputValidationInfoBorder);
 	if (border) {
 		let borderWidth = theme.type === ColorScheme.HIGH_CONTRAST ? 2 : 1;
-		collector.addRule(`.monaco-editor .monaco-editor-overlaymessage .anchor { border-top-color: ${border}; }`);
+		collector.addRule(`.monaco-editor .monaco-editor-overlaymessage .anchor.below { border-top-color: ${border}; }`);
+		collector.addRule(`.monaco-editor .monaco-editor-overlaymessage .anchor.top { border-bottom-color: ${border}; }`);
 		collector.addRule(`.monaco-editor .monaco-editor-overlaymessage .message { border: ${borderWidth}px solid ${border}; }`);
 	}
 	const background = theme.getColor(inputValidationInfoBackground);

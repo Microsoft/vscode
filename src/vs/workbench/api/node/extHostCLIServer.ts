@@ -15,13 +15,18 @@ import { ILogService } from 'vs/platform/log/common/log';
 export interface OpenCommandPipeArgs {
 	type: 'open';
 	fileURIs?: string[];
-	folderURIs: string[];
+	folderURIs?: string[];
 	forceNewWindow?: boolean;
 	diffMode?: boolean;
 	addMode?: boolean;
 	gotoLineMode?: boolean;
 	forceReuseWindow?: boolean;
 	waitMarkerFilePath?: string;
+}
+
+export interface OpenExternalCommandPipeArgs {
+	type: 'openExternal';
+	uris: string[];
 }
 
 export interface StatusPipeArgs {
@@ -33,6 +38,8 @@ export interface RunCommandPipeArgs {
 	command: string;
 	args: any[];
 }
+
+export type PipeCommand = OpenCommandPipeArgs | StatusPipeArgs | RunCommandPipeArgs | OpenExternalCommandPipeArgs;
 
 export interface ICommandsExecuter {
 	executeCommand<T>(id: string, ...args: any[]): Promise<T>;
@@ -73,10 +80,13 @@ export class CLIServerBase {
 		req.setEncoding('utf8');
 		req.on('data', (d: string) => chunks.push(d));
 		req.on('end', () => {
-			const data: OpenCommandPipeArgs | StatusPipeArgs | RunCommandPipeArgs | any = JSON.parse(chunks.join(''));
+			const data: PipeCommand | any = JSON.parse(chunks.join(''));
 			switch (data.type) {
 				case 'open':
 					this.open(data, res);
+					break;
+				case 'openExternal':
+					this.openExternal(data, res);
 					break;
 				case 'status':
 					this.getStatus(data, res);
@@ -128,6 +138,14 @@ export class CLIServerBase {
 			const preferNewWindow = !forceReuseWindow && !waitMarkerFileURI && !addMode;
 			const windowOpenArgs: IOpenWindowOptions = { forceNewWindow, diffMode, addMode, gotoLineMode, forceReuseWindow, preferNewWindow, waitMarkerFileURI };
 			this._commands.executeCommand('_files.windowOpen', urisToOpen, windowOpenArgs);
+		}
+		res.writeHead(200);
+		res.end();
+	}
+
+	private openExternal(data: OpenExternalCommandPipeArgs, res: http.ServerResponse) {
+		for (const uri of data.uris) {
+			this._commands.executeCommand('_workbench.openExternal', URI.parse(uri), { allowTunneling: true });
 		}
 		res.writeHead(200);
 		res.end();

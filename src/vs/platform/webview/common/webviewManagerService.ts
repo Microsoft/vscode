@@ -11,6 +11,14 @@ import { IWebviewPortMapping } from 'vs/platform/webview/common/webviewPortMappi
 
 export const IWebviewManagerService = createDecorator<IWebviewManagerService>('webviewManagerService');
 
+export interface WebviewWebContentsId {
+	readonly webContentsId: number;
+}
+
+export interface WebviewWindowId {
+	readonly windowId: number;
+}
+
 export interface IWebviewManagerService {
 	_serviceBrand: unknown;
 
@@ -20,7 +28,7 @@ export interface IWebviewManagerService {
 
 	didLoadResource(requestId: number, content: VSBuffer | undefined): void;
 
-	setIgnoreMenuShortcuts(webContentsId: number, enabled: boolean): Promise<void>;
+	setIgnoreMenuShortcuts(id: WebviewWebContentsId | WebviewWindowId, enabled: boolean): Promise<void>;
 }
 
 export interface RegisterWebviewMetadata {

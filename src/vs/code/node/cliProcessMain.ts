@@ -31,7 +31,7 @@ import { mkdirp, writeFile } from 'vs/base/node/pfs';
 import { getBaseLabel } from 'vs/base/common/labels';
 import { IStateService } from 'vs/platform/state/node/state';
 import { StateService } from 'vs/platform/state/node/stateService';
-import { ILogService, getLogLevel } from 'vs/platform/log/common/log';
+import { ILogService, getLogLevel, LogLevel, ConsoleLogService, MultiplexLogService } from 'vs/platform/log/common/log';
 import { isPromiseCanceledError } from 'vs/base/common/errors';
 import { areSameExtensions, adoptToGalleryExtensionId, getGalleryExtensionId } from 'vs/platform/extensionManagement/common/extensionManagementUtil';
 import { URI } from 'vs/base/common/uri';
@@ -78,7 +78,7 @@ export class Main {
 		@IInstantiationService private readonly instantiationService: IInstantiationService,
 		@INativeEnvironmentService private readonly environmentService: INativeEnvironmentService,
 		@IExtensionManagementService private readonly extensionManagementService: IExtensionManagementService,
-		@IExtensionGalleryService private readonly extensionGalleryService: IExtensionGalleryService
+		@IExtensionGalleryService private readonly extensionGalleryService: IExtensionGalleryService,
 	) { }
 
 	async run(argv: NativeParsedArgs): Promise<void> {
@@ -93,7 +93,7 @@ export class Main {
 		} else if (argv['locate-extension']) {
 			await this.locateExtension(argv['locate-extension']);
 		} else if (argv['telemetry']) {
-			console.log(buildTelemetryMessage(this.environmentService.appRoot, this.environmentService.extensionsPath ? this.environmentService.extensionsPath : undefined));
+			console.log(buildTelemetryMessage(this.environmentService.appRoot, this.environmentService.extensionsPath));
 		}
 	}
 
@@ -126,13 +126,28 @@ export class Main {
 		extensions.forEach(e => console.log(getId(e.manifest, showVersions)));
 	}
 
-	private async installExtensions(extensions: string[], builtinExtensionIds: string[], isMachineScoped: boolean, force: boolean): Promise<void> {
+	async installExtensions(extensions: string[], builtinExtensionIds: string[], isMachineScoped: boolean, force: boolean): Promise<void> {
 		const failed: string[] = [];
 		const installedExtensionsManifests: IExtensionManifest[] = [];
 		if (extensions.length) {
 			console.log(localize('installingExtensions', "Installing extensions..."));
 		}
 
+		const installed = await this.extensionManagementService.getInstalled(ExtensionType.User);
+		const checkIfNotInstalled = (id: string, version?: string): boolean => {
+			const installedExtension = installed.find(i => areSameExtensions(i.identifier, { id }));
+			if (installedExtension) {
+				if (!version && !force) {
+					console.log(localize('alreadyInstalled-checkAndUpdate', "Extension '{0}' v{1} is already installed. Use '--force' option to update to latest version or provide '@<version>' to install a specific version, for example: '{2}@1.2.3'.", id, installedExtension.manifest.version, id));
+					return false;
+				}
+				if (version && installedExtension.manifest.version === version) {
+					console.log(localize('alreadyInstalled', "Extension '{0}' is already installed.", `${id}@${version}`));
+					return false;
+				}
+			}
+			return true;
+		};
 		const vsixs: string[] = [];
 		const installExtensionInfos: InstallExtensionInfo[] = [];
 		for (const extension of extensions) {
@@ -140,12 +155,16 @@ export class Main {
 				vsixs.push(extension);
 			} else {
 				const [id, version] = getIdAndVersion(extension);
-				installExtensionInfos.push({ id, version, installOptions: { isBuiltin: false, isMachineScoped } });
+				if (checkIfNotInstalled(id, version)) {
+					installExtensionInfos.push({ id, version, installOptions: { isBuiltin: false, isMachineScoped } });
+				}
 			}
 		}
 		for (const extension of builtinExtensionIds) {
 			const [id, version] = getIdAndVersion(extension);
-			installExtensionInfos.push({ id, version, installOptions: { isBuiltin: true, isMachineScoped: false } });
+			if (checkIfNotInstalled(id, version)) {
+				installExtensionInfos.push({ id, version, installOptions: { isBuiltin: true, isMachineScoped: false } });
+			}
 		}
 
 		if (vsixs.length) {
@@ -162,28 +181,29 @@ export class Main {
 			}));
 		}
 
-		const [galleryExtensions, installed] = await Promise.all([
-			this.getGalleryExtensions(installExtensionInfos),
-			this.extensionManagementService.getInstalled(ExtensionType.User)
-		]);
+		if (installExtensionInfos.length) {
 
-		await Promise.all(installExtensionInfos.map(async extensionInfo => {
-			const gallery = galleryExtensions.get(extensionInfo.id.toLowerCase());
-			if (gallery) {
-				try {
-					const manifest = await this.installFromGallery(extensionInfo, gallery, installed, force);
-					if (manifest) {
-						installedExtensionsManifests.push(manifest);
+			const galleryExtensions = await this.getGalleryExtensions(installExtensionInfos);
+
+			await Promise.all(installExtensionInfos.map(async extensionInfo => {
+				const gallery = galleryExtensions.get(extensionInfo.id.toLowerCase());
+				if (gallery) {
+					try {
+						const manifest = await this.installFromGallery(extensionInfo, gallery, installed, force);
+						if (manifest) {
+							installedExtensionsManifests.push(manifest);
+						}
+					} catch (err) {
+						console.error(err.message || err.stack || err);
+						failed.push(extensionInfo.id);
 					}
-				} catch (err) {
-					console.error(err.message || err.stack || err);
+				} else {
+					console.error(`${notFound(extensionInfo.version ? `${extensionInfo.id}@${extensionInfo.version}` : extensionInfo.id)}\n${useId}`);
 					failed.push(extensionInfo.id);
 				}
-			} else {
-				console.error(`${notFound(extensionInfo.version ? `${extensionInfo.id}@${extensionInfo.version}` : extensionInfo.id)}\n${useId}`);
-				failed.push(extensionInfo.id);
-			}
-		}));
+			}));
+
+		}
 
 		if (installedExtensionsManifests.some(manifest => isLanguagePackExtension(manifest))) {
 			await this.updateLocalizationsCache();
@@ -242,10 +262,6 @@ export class Main {
 		if (installedExtension) {
 			if (galleryExtension.version === installedExtension.manifest.version) {
 				console.log(localize('alreadyInstalled', "Extension '{0}' is already installed.", version ? `${id}@${version}` : id));
-				return null;
-			}
-			if (!version && !force) {
-				console.log(localize('forceUpdate', "Extension '{0}' v{1} is already installed, but a newer version {2} is available in the marketplace. Use '--force' option to update to newer version.", id, installedExtension.manifest.version, galleryExtension.version));
 				return null;
 			}
 			console.log(localize('updateMessage', "Updating the extension '{0}' to the version {1}", id, galleryExtension.version));
@@ -315,7 +331,7 @@ export class Main {
 				return;
 			}
 			console.log(localize('uninstalling', "Uninstalling {0}...", id));
-			await this.extensionManagementService.uninstall(extensionToUninstall, true);
+			await this.extensionManagementService.uninstall(extensionToUninstall);
 			uninstalledExtensions.push(extensionToUninstall);
 			console.log(localize('successUninstall', "Extension '{0}' was successfully uninstalled!", id));
 		}
@@ -353,7 +369,13 @@ export async function main(argv: NativeParsedArgs): Promise<void> {
 	const disposables = new DisposableStore();
 
 	const environmentService = new NativeEnvironmentService(argv);
-	const logService: ILogService = new SpdLogService('cli', environmentService.logsPath, getLogLevel(environmentService));
+	const logLevel = getLogLevel(environmentService);
+	const loggers: ILogService[] = [];
+	loggers.push(new SpdLogService('cli', environmentService.logsPath, logLevel));
+	if (logLevel === LogLevel.Trace) {
+		loggers.push(new ConsoleLogService(logLevel));
+	}
+	const logService = new MultiplexLogService(loggers);
 	process.once('exit', () => logService.dispose());
 	logService.info('main', argv);
 
@@ -403,7 +425,7 @@ export async function main(argv: NativeParsedArgs): Promise<void> {
 				appender: combinedAppender(...appenders),
 				sendErrorTelemetry: false,
 				commonProperties: resolveCommonProperties(product.commit, product.version, stateService.getItem('telemetry.machineId'), product.msftInternalDomains, installSourcePath),
-				piiPaths: extensionsPath ? [appRoot, extensionsPath] : [appRoot]
+				piiPaths: [appRoot, extensionsPath]
 			};
 
 			services.set(ITelemetryService, new SyncDescriptor(TelemetryService, [config]));

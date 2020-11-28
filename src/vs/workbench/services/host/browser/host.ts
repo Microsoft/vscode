@@ -81,7 +81,7 @@ export interface IHostService {
 	/**
 	 * Reload the currently active window.
 	 */
-	reload(): Promise<void>;
+	reload(options?: { disableExtensions?: boolean }): Promise<void>;
 
 	/**
 	 * Attempt to close the active window.

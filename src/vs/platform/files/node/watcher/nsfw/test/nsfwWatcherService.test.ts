@@ -5,23 +5,27 @@
 
 import * as assert from 'assert';
 import * as platform from 'vs/base/common/platform';
-import { NsfwWatcherService } from 'vs/platform/files/node/watcher/nsfw/nsfwWatcherService';
 import { IWatcherRequest } from 'vs/platform/files/node/watcher/nsfw/watcher';
 
-class TestNsfwWatcherService extends NsfwWatcherService {
+suite('NSFW Watcher Service', async () => {
 
-	normalizeRoots(roots: string[]): string[] {
+	// Load `nsfwWatcherService` within the suite to prevent all tests
+	// from failing to start if `vscode-nsfw` was not properly installed
+	const { NsfwWatcherService } = await import('vs/platform/files/node/watcher/nsfw/nsfwWatcherService');
 
-		// Work with strings as paths to simplify testing
-		const requests: IWatcherRequest[] = roots.map(r => {
-			return { path: r, excludes: [] };
-		});
+	class TestNsfwWatcherService extends NsfwWatcherService {
 
-		return this._normalizeRoots(requests).map(r => r.path);
+		normalizeRoots(roots: string[]): string[] {
+
+			// Work with strings as paths to simplify testing
+			const requests: IWatcherRequest[] = roots.map(r => {
+				return { path: r, excludes: [] };
+			});
+
+			return this._normalizeRoots(requests).map(r => r.path);
+		}
 	}
-}
 
-suite('NSFW Watcher Service', () => {
 	suite('_normalizeRoots', () => {
 		test('should not impacts roots that don\'t overlap', () => {
 			const service = new TestNsfwWatcherService();

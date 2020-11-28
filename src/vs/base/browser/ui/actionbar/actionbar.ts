@@ -60,6 +60,9 @@ export class ActionBar extends Disposable implements IActionRunner {
 	protected focusedItem?: number;
 	private focusTracker: DOM.IFocusTracker;
 
+	// Trigger Key Tracking
+	private triggerKeyDown: boolean = false;
+
 	// Elements
 	domNode: HTMLElement;
 	protected actionsList: HTMLElement;
@@ -74,8 +77,8 @@ export class ActionBar extends Disposable implements IActionRunner {
 	private _onDidRun = this._register(new Emitter<IRunEvent>());
 	readonly onDidRun = this._onDidRun.event;
 
-	private _onDidBeforeRun = this._register(new Emitter<IRunEvent>());
-	readonly onDidBeforeRun = this._onDidBeforeRun.event;
+	private _onBeforeRun = this._register(new Emitter<IRunEvent>());
+	readonly onBeforeRun = this._onBeforeRun.event;
 
 	constructor(container: HTMLElement, options: IActionBarOptions = {}) {
 		super();
@@ -96,7 +99,7 @@ export class ActionBar extends Disposable implements IActionRunner {
 		}
 
 		this._register(this._actionRunner.onDidRun(e => this._onDidRun.fire(e)));
-		this._register(this._actionRunner.onDidBeforeRun(e => this._onDidBeforeRun.fire(e)));
+		this._register(this._actionRunner.onBeforeRun(e => this._onBeforeRun.fire(e)));
 
 		this._actionIds = [];
 		this.viewItems = [];
@@ -148,6 +151,8 @@ export class ActionBar extends Disposable implements IActionRunner {
 				// Staying out of the else branch even if not triggered
 				if (this._triggerKeys.keyDown) {
 					this.doTrigger(event);
+				} else {
+					this.triggerKeyDown = true;
 				}
 			} else {
 				eventHandled = false;
@@ -164,7 +169,8 @@ export class ActionBar extends Disposable implements IActionRunner {
 
 			// Run action on Enter/Space
 			if (this.isTriggerKeyEvent(event)) {
-				if (!this._triggerKeys.keyDown) {
+				if (!this._triggerKeys.keyDown && this.triggerKeyDown) {
+					this.triggerKeyDown = false;
 					this.doTrigger(event);
 				}
 
@@ -183,6 +189,7 @@ export class ActionBar extends Disposable implements IActionRunner {
 			if (DOM.getActiveElement() === this.domNode || !DOM.isAncestor(DOM.getActiveElement(), this.domNode)) {
 				this._onDidBlur.fire();
 				this.focusedItem = undefined;
+				this.triggerKeyDown = false;
 			}
 		}));
 

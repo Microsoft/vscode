@@ -5,3 +5,5 @@ out/**
 extension.webpack.config.js
 extension-browser.webpack.config.js
 yarn.lock
+build/**
+schemas/*.schema.src.json

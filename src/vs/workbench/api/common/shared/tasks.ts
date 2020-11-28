@@ -113,7 +113,7 @@ export interface TaskProcessStartedDTO {
 
 export interface TaskProcessEndedDTO {
 	id: string;
-	exitCode: number;
+	exitCode: number | undefined;
 }
 
 

@@ -10,7 +10,6 @@
 	padding: 4px;
 	text-align: center;
 	cursor: pointer;
-	outline-offset: 2px !important;
 	justify-content: center;
 	align-items: center;
 }
@@ -24,7 +23,15 @@
 	cursor: default;
 }
 
-.monaco-button > .codicon {
+.monaco-text-button > .codicon {
 	margin: 0 0.2em;
 	color: inherit !important;
+}
+
+.monaco-button-dropdown {
+	display: flex;
+}
+
+.monaco-button-dropdown > .monaco-dropdown-button {
+	margin-left: 1px;
 }

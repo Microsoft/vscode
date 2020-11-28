@@ -162,7 +162,7 @@ suite('EditorSimpleWorker', () => {
 			'f f'	// 2
 		]);
 
-		return worker.textualSuggest(model.uri.toString(), { lineNumber: 2, column: 2 }, '[a-z]+', 'img').then((result) => {
+		return worker.textualSuggest([model.uri.toString()], 'f', '[a-z]+', 'img').then((result) => {
 			if (!result) {
 				assert.ok(false);
 				return;

@@ -101,18 +101,30 @@ function webviewPreloads() {
 		}
 	};
 
-	const runScript = async (url: string, originalUri: string, globals: { [name: string]: unknown } = {}): Promise<string | undefined> => {
-		const res = await fetch(url);
-		const text = await res.text();
-		if (!res.ok) {
-			throw new Error(`Unexpected ${res.status} requesting ${originalUri}: ${text || res.statusText}`);
+	const runScript = async (url: string, originalUri: string, globals: { [name: string]: unknown } = {}): Promise<() => (PreloadResult)> => {
+		let text: string;
+		try {
+			const res = await fetch(url);
+			text = await res.text();
+			if (!res.ok) {
+				throw new Error(`Unexpected ${res.status} requesting ${originalUri}: ${text || res.statusText}`);
+			}
+
+			globals.scriptUrl = url;
+		} catch (e) {
+			return () => ({ state: PreloadState.Error, error: e.message });
 		}
 
-		globals.scriptUrl = url;
-
 		const args = Object.entries(globals);
-		new Function(...args.map(([k]) => k), text)(...args.map(([, v]) => v));
-		return undefined;
+		return () => {
+			try {
+				new Function(...args.map(([k]) => k), text)(...args.map(([, v]) => v));
+				return { state: PreloadState.Ok };
+			} catch (e) {
+				console.error(e);
+				return { state: PreloadState.Error, error: e.message };
+			}
+		};
 	};
 
 	const outputObservers = new Map<string, ResizeObserver>();
@@ -125,14 +137,27 @@ function webviewPreloads() {
 				}
 
 				if (entry.target.id === id && entry.contentRect) {
-					vscode.postMessage({
-						__vscode_notebook_message: true,
-						type: 'dimension',
-						id: id,
-						data: {
-							height: entry.contentRect.height + __outputNodePadding__ * 2
-						}
-					});
+					if (entry.contentRect.height !== 0) {
+						entry.target.style.padding = `${__outputNodePadding__}px`;
+						vscode.postMessage({
+							__vscode_notebook_message: true,
+							type: 'dimension',
+							id: id,
+							data: {
+								height: entry.contentRect.height + __outputNodePadding__ * 2
+							}
+						});
+					} else {
+						entry.target.style.padding = `0px`;
+						vscode.postMessage({
+							__vscode_notebook_message: true,
+							type: 'dimension',
+							id: id,
+							data: {
+								height: entry.contentRect.height
+							}
+						});
+					}
 				}
 			}
 		});
@@ -326,11 +351,18 @@ function webviewPreloads() {
 		};
 	};
 
+	const enum PreloadState {
+		Ok,
+		Error
+	}
+
+	type PreloadResult = { state: PreloadState.Ok } | { state: PreloadState.Error, error: string };
+
 	/**
 	 * Map of preload resource URIs to promises that resolve one the resource
 	 * loads or errors.
 	 */
-	const preloadPromises = new Map<string, Promise<string | undefined /* error string, or undefined if ok */>>();
+	const preloadPromises = new Map<string, Promise<PreloadResult>>();
 	const queuedOuputActions = new Map<string, Promise<void>>();
 
 	/**
@@ -363,7 +395,7 @@ function webviewPreloads() {
 		switch (event.data.type) {
 			case 'html':
 				enqueueOutputAction(event.data, async data => {
-					const preloadErrs = await Promise.all(data.requiredPreloads.map(p => preloadPromises.get(p.uri)));
+					const preloadResults = await Promise.all(data.requiredPreloads.map(p => preloadPromises.get(p.uri)));
 					if (!queuedOuputActions.has(data.outputId)) { // output was cleared while loading
 						return;
 					}
@@ -391,7 +423,8 @@ function webviewPreloads() {
 					outputNode.style.top = data.top + 'px';
 					outputNode.style.left = data.left + 'px';
 					outputNode.style.width = 'calc(100% - ' + data.left + 'px)';
-					outputNode.style.minHeight = '32px';
+					// outputNode.style.minHeight = '32px';
+					outputNode.style.padding = '0px';
 					outputNode.id = outputId;
 
 					addMouseoverListeners(outputNode, outputId);
@@ -400,13 +433,13 @@ function webviewPreloads() {
 						outputNode.innerHTML = content.htmlContent;
 						cellOutputContainer.appendChild(outputNode);
 						domEval(outputNode);
-					} else if (preloadErrs.some(e => !!e)) {
+					} else if (preloadResults.some(e => e?.state === PreloadState.Error)) {
 						outputNode.innerText = `Error loading preloads:`;
 						const errList = document.createElement('ul');
-						for (const err of preloadErrs) {
-							if (err) {
+						for (const result of preloadResults) {
+							if (result?.state === PreloadState.Error) {
 								const item = document.createElement('li');
-								item.innerText = err;
+								item.innerText = result.error;
 								errList.appendChild(item);
 							}
 						}
@@ -500,11 +533,20 @@ function webviewPreloads() {
 			case 'preload':
 				const resources = event.data.resources;
 				const globals = event.data.type === 'preload' ? { acquireVsCodeApi } : {};
+				let queue: Promise<PreloadResult> = Promise.resolve({ state: PreloadState.Ok });
 				for (const { uri, originalUri } of resources) {
-					preloadPromises.set(uri, runScript(uri, originalUri, globals).catch(err => {
-						console.error(err);
-						return err.message || String(err);
+					// create the promise so that the scripts download in parallel, but
+					// only invoke them in series within the queue
+					const promise = runScript(uri, originalUri, globals);
+					queue = queue.then(() => promise.then(fn => {
+						const result = fn();
+						if (result.state === PreloadState.Error) {
+							console.error(result.error);
+						}
+
+						return result;
 					}));
+					preloadPromises.set(uri, queue);
 				}
 				break;
 			case 'focus-output':

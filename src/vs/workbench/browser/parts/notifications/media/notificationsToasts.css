@@ -26,7 +26,7 @@
 }
 
 .monaco-workbench > .notifications-toasts .notification-toast-container > .notification-toast {
-	margin: 5px; /* enables separation and drop shadows around toasts */
+	margin: 8px; /* enables separation and drop shadows around toasts */
 	transform: translate3d(0px, 100%, 0px); /* move the notification 50px to the bottom (to prevent bleed through) */
 	opacity: 0; /*  fade the toast in */
 	transition:	transform 300ms ease-out, opacity 300ms ease-out;

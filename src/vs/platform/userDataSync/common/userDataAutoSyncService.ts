@@ -73,7 +73,7 @@ export class UserDataAutoSyncEnablementService extends Disposable implements _IU
 	}
 
 	setEnablement(enabled: boolean): void {
-		this.storageService.store2(enablementKey, enabled, StorageScope.GLOBAL, StorageTarget.MACHINE);
+		this.storageService.store(enablementKey, enabled, StorageScope.GLOBAL, StorageTarget.MACHINE);
 	}
 
 	private onDidStorageChange(storageChangeEvent: IStorageValueChangeEvent): void {
@@ -110,7 +110,7 @@ export class UserDataAutoSyncService extends Disposable implements IUserDataAuto
 	}
 	private set syncUrl(syncUrl: URI | undefined) {
 		if (syncUrl) {
-			this.storageService.store2(storeUrlKey, syncUrl.toString(), StorageScope.GLOBAL, StorageTarget.MACHINE);
+			this.storageService.store(storeUrlKey, syncUrl.toString(), StorageScope.GLOBAL, StorageTarget.MACHINE);
 		} else {
 			this.storageService.remove(storeUrlKey, StorageScope.GLOBAL);
 		}
@@ -325,7 +325,7 @@ export class UserDataAutoSyncService extends Disposable implements IUserDataAuto
 	}
 
 	private async disableMachineEventually(): Promise<void> {
-		this.storageService.store2(disableMachineEventuallyKey, true, StorageScope.GLOBAL, StorageTarget.MACHINE);
+		this.storageService.store(disableMachineEventuallyKey, true, StorageScope.GLOBAL, StorageTarget.MACHINE);
 		await timeout(1000 * 60 * 10);
 
 		// Return if got stopped meanwhile.
@@ -526,7 +526,7 @@ class AutoSync extends Disposable {
 
 			// Update local session id
 			if (manifest && manifest.session !== sessionId) {
-				this.storageService.store2(sessionIdKey, manifest.session, StorageScope.GLOBAL, StorageTarget.MACHINE);
+				this.storageService.store(sessionIdKey, manifest.session, StorageScope.GLOBAL, StorageTarget.MACHINE);
 			}
 
 			// Return if cancellation is requested

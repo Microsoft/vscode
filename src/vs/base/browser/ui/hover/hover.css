@@ -87,7 +87,6 @@
 
 .monaco-hover .monaco-tokenized-source {
 	white-space: pre-wrap;
-	word-break: break-all;
 }
 
 .monaco-hover .hover-row.status-bar {

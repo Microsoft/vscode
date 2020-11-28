@@ -383,14 +383,9 @@ function printWhenExplanation(when: ContextKeyExpression | undefined): string {
 }
 
 function printSourceExplanation(kb: ResolvedKeybindingItem): string {
-	if (kb.isDefault) {
-		if (kb.extensionId) {
-			return `built-in extension ${kb.extensionId}`;
-		}
-		return `built-in`;
-	}
-	if (kb.extensionId) {
-		return `user extension ${kb.extensionId}`;
-	}
-	return `user`;
+	return (
+		kb.extensionId
+			? (kb.isBuiltinExtension ? `built-in extension ${kb.extensionId}` : `user extension ${kb.extensionId}`)
+			: (kb.isDefault ? `built-in` : `user`)
+	);
 }

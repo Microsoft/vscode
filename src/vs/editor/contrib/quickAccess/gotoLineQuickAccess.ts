@@ -9,7 +9,7 @@ import { CancellationToken } from 'vs/base/common/cancellation';
 import { DisposableStore, IDisposable, Disposable, toDisposable } from 'vs/base/common/lifecycle';
 import { IEditor, ScrollType } from 'vs/editor/common/editorCommon';
 import { IRange } from 'vs/editor/common/core/range';
-import { AbstractEditorNavigationQuickAccessProvider } from 'vs/editor/contrib/quickAccess/editorNavigationQuickAccess';
+import { AbstractEditorNavigationQuickAccessProvider, IQuickAccessTextEditorContext } from 'vs/editor/contrib/quickAccess/editorNavigationQuickAccess';
 import { IPosition } from 'vs/editor/common/core/position';
 import { getCodeEditor } from 'vs/editor/browser/editorBrowser';
 import { EditorOption, RenderLineNumbersType } from 'vs/editor/common/config/editorOptions';
@@ -33,7 +33,8 @@ export abstract class AbstractGotoLineQuickAccessProvider extends AbstractEditor
 		return Disposable.None;
 	}
 
-	protected provideWithTextEditor(editor: IEditor, picker: IQuickPick<IGotoLineQuickPickItem>, token: CancellationToken): IDisposable {
+	protected provideWithTextEditor(context: IQuickAccessTextEditorContext, picker: IQuickPick<IGotoLineQuickPickItem>, token: CancellationToken): IDisposable {
+		const editor = context.editor;
 		const disposables = new DisposableStore();
 
 		// Goto line once picked
@@ -44,7 +45,7 @@ export abstract class AbstractGotoLineQuickAccessProvider extends AbstractEditor
 					return;
 				}
 
-				this.gotoLocation(editor, { range: this.toRange(item.lineNumber, item.column), keyMods: picker.keyMods, preserveFocus: event.inBackground });
+				this.gotoLocation(context, { range: this.toRange(item.lineNumber, item.column), keyMods: picker.keyMods, preserveFocus: event.inBackground });
 
 				if (!event.inBackground) {
 					picker.hide();

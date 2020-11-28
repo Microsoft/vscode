@@ -16,19 +16,26 @@ import { ILogService } from 'vs/platform/log/common/log';
 import { UserDataSyncStoreClient } from 'vs/platform/userDataSync/common/userDataSyncStoreService';
 import { IProductService } from 'vs/platform/product/common/productService';
 import { IRequestService } from 'vs/platform/request/common/request';
-import { IUserDataInitializer, IUserDataSyncStoreClient, IUserDataSyncStoreManagementService, SyncResource } from 'vs/platform/userDataSync/common/userDataSync';
+import { ISyncExtension, IUserDataInitializer, IUserDataSyncLogService, IUserDataSyncStoreClient, IUserDataSyncStoreManagementService, SyncResource } from 'vs/platform/userDataSync/common/userDataSync';
 import { getCurrentAuthenticationSessionInfo } from 'vs/workbench/services/authentication/browser/authenticationService';
 import { getSyncAreaLabel } from 'vs/workbench/services/userDataSync/common/userDataSync';
 import { IWorkbenchContribution, IWorkbenchContributionsRegistry, Extensions } from 'vs/workbench/common/contributions';
 import { Registry } from 'vs/platform/registry/common/platform';
 import { LifecyclePhase } from 'vs/workbench/services/lifecycle/common/lifecycle';
 import { isWeb } from 'vs/base/common/platform';
+import { Barrier } from 'vs/base/common/async';
+import { IExtensionGalleryService, IExtensionManagementService, IGlobalExtensionEnablementService, ILocalExtension } from 'vs/platform/extensionManagement/common/extensionManagement';
+import { IEnvironmentService } from 'vs/platform/environment/common/environment';
+import { IExtensionService, toExtensionDescription } from 'vs/workbench/services/extensions/common/extensions';
+import { areSameExtensions } from 'vs/platform/extensionManagement/common/extensionManagementUtil';
+import { mark } from 'vs/base/common/performance';
 
 export const IUserDataInitializationService = createDecorator<IUserDataInitializationService>('IUserDataInitializationService');
 export interface IUserDataInitializationService {
 	_serviceBrand: any;
 
 	requiresInitialization(): Promise<boolean>;
+	whenInitializationFinished(): Promise<void>;
 	initializeRequiredResources(): Promise<void>;
 	initializeOtherResources(instantiationService: IInstantiationService): Promise<void>;
 }
@@ -38,6 +45,7 @@ export class UserDataInitializationService implements IUserDataInitializationSer
 	_serviceBrand: any;
 
 	private readonly initialized: SyncResource[] = [];
+	private readonly initializationFinished = new Barrier();
 
 	constructor(
 		@IWorkbenchEnvironmentService private readonly environmentService: IWorkbenchEnvironmentService,
@@ -47,7 +55,13 @@ export class UserDataInitializationService implements IUserDataInitializationSer
 		@IProductService private readonly productService: IProductService,
 		@IRequestService private readonly requestService: IRequestService,
 		@ILogService private readonly logService: ILogService
-	) { }
+	) {
+		this.createUserDataSyncStoreClient().then(userDataSyncStoreClient => {
+			if (!userDataSyncStoreClient) {
+				this.initializationFinished.open();
+			}
+		});
+	}
 
 	private _userDataSyncStoreClientPromise: Promise<IUserDataSyncStoreClient | undefined> | undefined;
 	private createUserDataSyncStoreClient(): Promise<IUserDataSyncStoreClient | undefined> {
@@ -104,6 +118,10 @@ export class UserDataInitializationService implements IUserDataInitializationSer
 		return this._userDataSyncStoreClientPromise;
 	}
 
+	async whenInitializationFinished(): Promise<void> {
+		await this.initializationFinished.wait();
+	}
+
 	async requiresInitialization(): Promise<boolean> {
 		this.logService.trace(`UserDataInitializationService#requiresInitialization`);
 		const userDataSyncStoreClient = await this.createUserDataSyncStoreClient();
@@ -116,8 +134,12 @@ export class UserDataInitializationService implements IUserDataInitializationSer
 	}
 
 	async initializeOtherResources(instantiationService: IInstantiationService): Promise<void> {
-		this.logService.trace(`UserDataInitializationService#initializeOtherResources`);
-		return this.initialize([SyncResource.Extensions, SyncResource.Keybindings, SyncResource.Snippets], instantiationService);
+		try {
+			this.logService.trace(`UserDataInitializationService#initializeOtherResources`);
+			await this.initialize([SyncResource.Extensions, SyncResource.Keybindings, SyncResource.Snippets], instantiationService);
+		} finally {
+			this.initializationFinished.open();
+		}
 	}
 
 	private async initialize(syncResources: SyncResource[], instantiationService?: IInstantiationService): Promise<void> {
@@ -155,10 +177,51 @@ export class UserDataInitializationService implements IUserDataInitializationSer
 				if (!instantiationService) {
 					throw new Error('Instantiation Service is required to initialize extension');
 				}
-				return instantiationService.createInstance(ExtensionsInitializer);
+				return instantiationService.createInstance(WorkbenchExtensionsInitializer);
 		}
 	}
 
+}
+
+class WorkbenchExtensionsInitializer extends ExtensionsInitializer {
+
+	constructor(
+		@IExtensionService private readonly extensionService: IExtensionService,
+		@IExtensionManagementService extensionManagementService: IExtensionManagementService,
+		@IExtensionGalleryService galleryService: IExtensionGalleryService,
+		@IGlobalExtensionEnablementService extensionEnablementService: IGlobalExtensionEnablementService,
+		@IStorageService storageService: IStorageService,
+		@IFileService fileService: IFileService,
+		@IEnvironmentService environmentService: IEnvironmentService,
+		@IUserDataSyncLogService logService: IUserDataSyncLogService,
+	) {
+		super(extensionManagementService, galleryService, extensionEnablementService, storageService, fileService, environmentService, logService);
+	}
+
+	protected async initializeRemoteExtensions(remoteExtensions: ISyncExtension[]): Promise<ILocalExtension[]> {
+		const newlyEnabledExtensions = (await super.initializeRemoteExtensions(remoteExtensions));
+		const canEnabledExtensions = newlyEnabledExtensions.filter(e => this.extensionService.canAddExtension(toExtensionDescription(e)));
+		if (!(await this.areExtensionsRunning(canEnabledExtensions))) {
+			await new Promise<void>((c, e) => {
+				const disposable = this.extensionService.onDidChangeExtensions(async () => {
+					try {
+						if (await this.areExtensionsRunning(canEnabledExtensions)) {
+							disposable.dispose();
+							c();
+						}
+					} catch (error) {
+						e(error);
+					}
+				});
+			});
+		}
+		return newlyEnabledExtensions;
+	}
+
+	private async areExtensionsRunning(extensions: ILocalExtension[]): Promise<boolean> {
+		const runningExtensions = await this.extensionService.getExtensions();
+		return extensions.every(e => runningExtensions.some(r => areSameExtensions({ id: r.identifier.value }, e.identifier)));
+	}
 }
 
 class InitializeOtherResourcesContribution implements IWorkbenchContribution {
@@ -166,7 +229,15 @@ class InitializeOtherResourcesContribution implements IWorkbenchContribution {
 		@IUserDataInitializationService userDataInitializeService: IUserDataInitializationService,
 		@IInstantiationService instantiationService: IInstantiationService
 	) {
-		userDataInitializeService.initializeOtherResources(instantiationService);
+		this.initializeOtherResource(userDataInitializeService, instantiationService);
+	}
+
+	private async initializeOtherResource(userDataInitializeService: IUserDataInitializationService, instantiationService: IInstantiationService): Promise<void> {
+		if (await userDataInitializeService.requiresInitialization()) {
+			mark('willInitOtherUserData');
+			await userDataInitializeService.initializeOtherResources(instantiationService);
+			mark('didInitOtherUserData');
+		}
 	}
 }
 

@@ -58,7 +58,7 @@ suite('Telemetry - common properties', function () {
 
 	test('lastSessionDate when aviablale', async function () {
 
-		testStorageService.store2('telemetry.lastSessionDate', new Date().toUTCString(), StorageScope.GLOBAL, StorageTarget.MACHINE);
+		testStorageService.store('telemetry.lastSessionDate', new Date().toUTCString(), StorageScope.GLOBAL, StorageTarget.MACHINE);
 
 		const props = await resolveWorkbenchCommonProperties(testStorageService, commit, version, 'someMachineId', undefined, installSource);
 		assert.ok('common.lastSessionDate' in props); // conditional, see below

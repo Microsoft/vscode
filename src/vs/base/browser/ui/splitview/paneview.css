@@ -53,10 +53,6 @@
 	margin-bottom: 2px;
 }
 
-.monaco-pane-view .pane > .pane-header.expanded > .twisties::before {
-	transform: rotate(90deg);
-}
-
 /* TODO: actions should be part of the pane, but they aren't yet */
 .monaco-pane-view .pane > .pane-header > .actions {
 	display: none;

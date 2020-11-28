@@ -3,9 +3,15 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import * as vscode from 'vscode';
+import * as nls from 'vscode-nls';
 import type * as Proto from '../protocol';
 import { TypeScriptServiceConfiguration } from '../utils/configuration';
+import { memoize } from '../utils/memoize';
 import { TsServerProcess, TsServerProcessKind } from './server';
+
+
+const localize = nls.loadMessageBundle();
 
 declare const Worker: any;
 declare type Worker = any;
@@ -37,11 +43,21 @@ export class WorkerServerProcess implements TsServerProcess {
 		args: readonly string[],
 	) {
 		worker.addEventListener('message', (msg: any) => {
+			if (msg.data.type === 'log') {
+				this.output.appendLine(msg.data.body);
+				return;
+			}
+
 			for (const handler of this._onDataHandlers) {
 				handler(msg.data);
 			}
 		});
 		worker.postMessage(args);
+	}
+
+	@memoize
+	private get output(): vscode.OutputChannel {
+		return vscode.window.createOutputChannel(localize('channelName', 'TypeScript Server Log'));
 	}
 
 	write(serverRequest: Proto.Request): void {

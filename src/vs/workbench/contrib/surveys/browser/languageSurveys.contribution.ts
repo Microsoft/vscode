@@ -55,8 +55,8 @@ class LanguageSurvey extends Disposable {
 				models.forEach(m => {
 					if (m.getMode() === data.languageId && date !== storageService.get(EDITED_LANGUAGE_DATE_KEY, StorageScope.GLOBAL)) {
 						const editedCount = storageService.getNumber(EDITED_LANGUAGE_COUNT_KEY, StorageScope.GLOBAL, 0) + 1;
-						storageService.store2(EDITED_LANGUAGE_COUNT_KEY, editedCount, StorageScope.GLOBAL, StorageTarget.USER);
-						storageService.store2(EDITED_LANGUAGE_DATE_KEY, date, StorageScope.GLOBAL, StorageTarget.USER);
+						storageService.store(EDITED_LANGUAGE_COUNT_KEY, editedCount, StorageScope.GLOBAL, StorageTarget.USER);
+						storageService.store(EDITED_LANGUAGE_DATE_KEY, date, StorageScope.GLOBAL, StorageTarget.USER);
 					}
 				});
 			}, 250));
@@ -70,8 +70,8 @@ class LanguageSurvey extends Disposable {
 		}
 
 		const sessionCount = storageService.getNumber(SESSION_COUNT_KEY, StorageScope.GLOBAL, 0) + 1;
-		storageService.store2(LAST_SESSION_DATE_KEY, date, StorageScope.GLOBAL, StorageTarget.USER);
-		storageService.store2(SESSION_COUNT_KEY, sessionCount, StorageScope.GLOBAL, StorageTarget.USER);
+		storageService.store(LAST_SESSION_DATE_KEY, date, StorageScope.GLOBAL, StorageTarget.USER);
+		storageService.store(SESSION_COUNT_KEY, sessionCount, StorageScope.GLOBAL, StorageTarget.USER);
 
 		if (sessionCount < 9) {
 			return;
@@ -84,10 +84,10 @@ class LanguageSurvey extends Disposable {
 		const isCandidate = storageService.getBoolean(IS_CANDIDATE_KEY, StorageScope.GLOBAL, false)
 			|| Math.random() < data.userProbability;
 
-		storageService.store2(IS_CANDIDATE_KEY, isCandidate, StorageScope.GLOBAL, StorageTarget.USER);
+		storageService.store(IS_CANDIDATE_KEY, isCandidate, StorageScope.GLOBAL, StorageTarget.USER);
 
 		if (!isCandidate) {
-			storageService.store2(SKIP_VERSION_KEY, productService.version, StorageScope.GLOBAL, StorageTarget.USER);
+			storageService.store(SKIP_VERSION_KEY, productService.version, StorageScope.GLOBAL, StorageTarget.USER);
 			return;
 		}
 
@@ -103,23 +103,23 @@ class LanguageSurvey extends Disposable {
 					telemetryService.publicLog(`${data.surveyId}.survey/takeShortSurvey`);
 					telemetryService.getTelemetryInfo().then(info => {
 						openerService.open(URI.parse(`${data.surveyUrl}?o=${encodeURIComponent(platform)}&v=${encodeURIComponent(productService.version)}&m=${encodeURIComponent(info.machineId)}`));
-						storageService.store2(IS_CANDIDATE_KEY, false, StorageScope.GLOBAL, StorageTarget.USER);
-						storageService.store2(SKIP_VERSION_KEY, productService.version, StorageScope.GLOBAL, StorageTarget.USER);
+						storageService.store(IS_CANDIDATE_KEY, false, StorageScope.GLOBAL, StorageTarget.USER);
+						storageService.store(SKIP_VERSION_KEY, productService.version, StorageScope.GLOBAL, StorageTarget.USER);
 					});
 				}
 			}, {
 				label: nls.localize('remindLater', "Remind Me later"),
 				run: () => {
 					telemetryService.publicLog(`${data.surveyId}.survey/remindMeLater`);
-					storageService.store2(SESSION_COUNT_KEY, sessionCount - 3, StorageScope.GLOBAL, StorageTarget.USER);
+					storageService.store(SESSION_COUNT_KEY, sessionCount - 3, StorageScope.GLOBAL, StorageTarget.USER);
 				}
 			}, {
 				label: nls.localize('neverAgain', "Don't Show Again"),
 				isSecondary: true,
 				run: () => {
 					telemetryService.publicLog(`${data.surveyId}.survey/dontShowAgain`);
-					storageService.store2(IS_CANDIDATE_KEY, false, StorageScope.GLOBAL, StorageTarget.USER);
-					storageService.store2(SKIP_VERSION_KEY, productService.version, StorageScope.GLOBAL, StorageTarget.USER);
+					storageService.store(IS_CANDIDATE_KEY, false, StorageScope.GLOBAL, StorageTarget.USER);
+					storageService.store(SKIP_VERSION_KEY, productService.version, StorageScope.GLOBAL, StorageTarget.USER);
 				}
 			}],
 			{ sticky: true }

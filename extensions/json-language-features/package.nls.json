@@ -13,5 +13,6 @@
 	"json.schemaResolutionErrorMessage": "Unable to resolve schema.",
 	"json.clickToRetry": "Click to retry.",
 	"json.maxItemsComputed.desc": "The maximum number of outline symbols and folding regions computed (limited for performance reasons).",
+	"json.maxItemsExceededInformation.desc": "Show notification when exceeding the maximum number of outline symbols and folding regions.",
 	"json.enableSchemaDownload.desc": "When enabled, JSON schemas can be fetched from http and https locations."
 }

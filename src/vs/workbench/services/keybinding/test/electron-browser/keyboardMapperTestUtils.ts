@@ -10,7 +10,7 @@ import { Keybinding, ResolvedKeybinding, SimpleKeybinding } from 'vs/base/common
 import { ScanCodeBinding } from 'vs/base/common/scanCode';
 import { readFile, writeFile } from 'vs/base/node/pfs';
 import { IKeyboardEvent } from 'vs/platform/keybinding/common/keybinding';
-import { IKeyboardMapper } from 'vs/workbench/services/keybinding/common/keyboardMapper';
+import { IKeyboardMapper } from 'vs/platform/keyboardLayout/common/keyboardMapper';
 
 export interface IResolvedKeybinding {
 	label: string | null;

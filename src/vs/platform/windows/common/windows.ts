@@ -4,7 +4,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { isMacintosh, isLinux, isWeb, IProcessEnvironment } from 'vs/base/common/platform';
-import { IEnvironmentService } from 'vs/platform/environment/common/environment';
 import { URI, UriComponents } from 'vs/base/common/uri';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { IWorkspaceIdentifier, ISingleFolderWorkspaceIdentifier } from 'vs/platform/workspaces/common/workspaces';
@@ -85,8 +84,8 @@ export function isFileToOpen(uriToOpen: IWindowOpenable): uriToOpen is IFileToOp
 
 export type MenuBarVisibility = 'default' | 'visible' | 'toggle' | 'hidden' | 'compact';
 
-export function getMenuBarVisibility(configurationService: IConfigurationService, environment: IEnvironmentService, isExtensionDevelopment = environment.isExtensionDevelopment): MenuBarVisibility {
-	const titleBarStyle = getTitleBarStyle(configurationService, environment, isExtensionDevelopment);
+export function getMenuBarVisibility(configurationService: IConfigurationService): MenuBarVisibility {
+	const titleBarStyle = getTitleBarStyle(configurationService);
 	const menuBarVisibility = configurationService.getValue<MenuBarVisibility>('window.menuBarVisibility');
 
 	if (titleBarStyle === 'native' && menuBarVisibility === 'compact') {
@@ -104,7 +103,7 @@ export interface IWindowSettings {
 	openFilesInNewWindow: 'on' | 'off' | 'default';
 	openFoldersInNewWindow: 'on' | 'off' | 'default';
 	openWithoutArgumentsInNewWindow: 'on' | 'off';
-	restoreWindows: 'all' | 'folders' | 'one' | 'none';
+	restoreWindows: 'preserve' | 'all' | 'folders' | 'one' | 'none';
 	restoreFullscreen: boolean;
 	zoomLevel: number;
 	titleBarStyle: 'native' | 'custom';
@@ -119,17 +118,12 @@ export interface IWindowSettings {
 	enableExperimentalProxyLoginDialog: boolean;
 }
 
-export function getTitleBarStyle(configurationService: IConfigurationService, environment: IEnvironmentService, isExtensionDevelopment = environment.isExtensionDevelopment): 'native' | 'custom' {
+export function getTitleBarStyle(configurationService: IConfigurationService): 'native' | 'custom' {
 	if (isWeb) {
 		return 'custom';
 	}
 
-	const configuration = configurationService.getValue<IWindowSettings>('window');
-
-	const isDev = !environment.isBuilt || isExtensionDevelopment;
-	if (isMacintosh && isDev) {
-		return 'native'; // not enabled when developing due to https://github.com/electron/electron/issues/3647
-	}
+	const configuration = configurationService.getValue<IWindowSettings | undefined>('window');
 
 	if (configuration) {
 		const useNativeTabs = isMacintosh && configuration.nativeTabs === true;
@@ -230,6 +224,10 @@ export interface IWindowConfiguration {
 	filesToDiff?: IPath[];
 }
 
+export interface IOSConfiguration {
+	release: string;
+}
+
 export interface INativeWindowConfiguration extends IWindowConfiguration, NativeParsedArgs {
 	mainPid: number;
 
@@ -256,6 +254,8 @@ export interface INativeWindowConfiguration extends IWindowConfiguration, Native
 
 	userEnv: IProcessEnvironment;
 	filesToWait?: IPathsToWaitFor;
+
+	os: IOSConfiguration;
 }
 
 /**

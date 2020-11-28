@@ -20,7 +20,7 @@ if (isWeb || typeof require === 'undefined' || typeof require.__$__nodeRequire !
 	// Running out of sources
 	if (Object.keys(product).length === 0) {
 		Object.assign(product, {
-			version: '1.51.0-dev',
+			version: '1.52.0-dev',
 			nameShort: isWeb ? 'Code Web - OSS Dev' : 'Code - OSS Dev',
 			nameLong: isWeb ? 'Code Web - OSS Dev' : 'Code - OSS Dev',
 			applicationName: 'code-oss',

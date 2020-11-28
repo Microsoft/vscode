@@ -52,7 +52,7 @@ export function parseMainProcessArgv(processArgv: string[]): NativeParsedArgs {
 	}
 
 	// If called from CLI, don't report warnings as they are already reported.
-	let reportWarnings = !process.env['VSCODE_CLI'];
+	const reportWarnings = !isLaunchedFromCli(process.env);
 	return parseAndValidate(args, reportWarnings);
 }
 
@@ -60,7 +60,7 @@ export function parseMainProcessArgv(processArgv: string[]): NativeParsedArgs {
  * Use this to parse raw code CLI process.argv such as: `Electron cli.js . --verbose --wait`
  */
 export function parseCLIProcessArgv(processArgv: string[]): NativeParsedArgs {
-	let [, , ...args] = processArgv; // remove the first non-option argument: it's always the app location
+	const [, , ...args] = processArgv; // remove the first non-option argument: it's always the app location
 
 	return parseAndValidate(args, true);
 }
@@ -77,4 +77,8 @@ export function addArg(argv: string[], ...args: string[]): string[] {
 	}
 
 	return argv;
+}
+
+export function isLaunchedFromCli(env: NodeJS.ProcessEnv): boolean {
+	return env['VSCODE_CLI'] === '1';
 }

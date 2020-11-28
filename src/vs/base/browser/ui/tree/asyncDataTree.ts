@@ -110,10 +110,11 @@ class AsyncDataTreeRenderer<TInput, T, TFilterData, TTemplateData> implements IT
 	renderTwistie(element: IAsyncDataTreeNode<TInput, T>, twistieElement: HTMLElement): boolean {
 		if (element.slow) {
 			twistieElement.classList.add(...treeItemLoadingIcon.classNamesArray);
+			return true;
 		} else {
 			twistieElement.classList.remove(...treeItemLoadingIcon.classNamesArray);
+			return false;
 		}
-		return false;
 	}
 
 	disposeElement(node: ITreeNode<IAsyncDataTreeNode<TInput, T>, TFilterData>, index: number, templateData: IDataTreeListTemplateData<TTemplateData>, height: number | undefined): void {
@@ -1053,10 +1054,11 @@ class CompressibleAsyncDataTreeRenderer<TInput, T, TFilterData, TTemplateData> i
 	renderTwistie(element: IAsyncDataTreeNode<TInput, T>, twistieElement: HTMLElement): boolean {
 		if (element.slow) {
 			twistieElement.classList.add(...treeItemLoadingIcon.classNamesArray);
+			return true;
 		} else {
 			twistieElement.classList.remove(...treeItemLoadingIcon.classNamesArray);
+			return false;
 		}
-		return false;
 	}
 
 	disposeElement(node: ITreeNode<IAsyncDataTreeNode<TInput, T>, TFilterData>, index: number, templateData: IDataTreeListTemplateData<TTemplateData>, height: number | undefined): void {

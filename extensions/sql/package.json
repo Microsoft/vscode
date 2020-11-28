@@ -5,21 +5,32 @@
 	"version": "1.0.0",
 	"publisher": "vscode",
 	"license": "MIT",
-	"engines": { "vscode": "*" },
+	"engines": {
+		"vscode": "*"
+	},
 	"scripts": {
-		"update-grammar": "node ../../build/npm/update-grammar.js microsoft/vscode-mssql syntaxes/SQL.plist ./syntaxes/sql.tmLanguage.json"
+		"update-grammar": "node ./build/update-grammar.js"
 	},
 	"contributes": {
-		"languages": [{
-			"id": "sql",
-			"extensions": [ ".sql", ".dsql" ],
-			"aliases": [ "SQL" ],
-			"configuration": "./language-configuration.json"
-		}],
-		"grammars": [{
-			"language": "sql",
-			"scopeName": "source.sql",
-			"path": "./syntaxes/sql.tmLanguage.json"
-		}]
+		"languages": [
+			{
+				"id": "sql",
+				"extensions": [
+					".sql",
+					".dsql"
+				],
+				"aliases": [
+					"SQL"
+				],
+				"configuration": "./language-configuration.json"
+			}
+		],
+		"grammars": [
+			{
+				"language": "sql",
+				"scopeName": "source.sql",
+				"path": "./syntaxes/sql.tmLanguage.json"
+			}
+		]
 	}
 }

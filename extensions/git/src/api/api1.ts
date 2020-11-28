@@ -357,7 +357,7 @@ export function registerAPICommands(extension: GitExtensionImpl): Disposable {
 			return;
 		}
 
-		return pickRemoteSource(extension.model, opts);
+		return pickRemoteSource(extension.model, opts as any);
 	}));
 
 	return Disposable.from(...disposables);

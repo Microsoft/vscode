@@ -15,8 +15,8 @@ import { TestNotificationService } from 'vs/platform/notification/test/common/te
 import { Registry } from 'vs/platform/registry/common/platform';
 import { SyncDescriptor } from 'vs/platform/instantiation/common/descriptors';
 import { TestInstantiationService } from 'vs/platform/instantiation/test/common/instantiationServiceMock';
-import { CustomTreeView } from 'vs/workbench/contrib/views/browser/treeView';
 import { ViewDescriptorService } from 'vs/workbench/services/views/browser/viewDescriptorService';
+import { CustomTreeView } from 'vs/workbench/browser/parts/views/treeView';
 
 suite('MainThreadHostTreeView', function () {
 	const testTreeViewId = 'testTreeView';

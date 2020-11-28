@@ -7,7 +7,7 @@ import { URI } from 'vs/base/common/uri';
 import * as resources from 'vs/base/common/resources';
 import { Event, Emitter } from 'vs/base/common/event';
 import * as errors from 'vs/base/common/errors';
-import { Disposable, IDisposable, dispose, toDisposable, MutableDisposable } from 'vs/base/common/lifecycle';
+import { Disposable, IDisposable, dispose, toDisposable, MutableDisposable, combinedDisposable } from 'vs/base/common/lifecycle';
 import { RunOnceScheduler } from 'vs/base/common/async';
 import { FileChangeType, FileChangesEvent, IFileService, whenProviderRegistered, FileOperationError, FileOperationResult } from 'vs/platform/files/common/files';
 import { ConfigurationModel, ConfigurationModelParser, UserSettings } from 'vs/platform/configuration/common/configurationModels';
@@ -92,6 +92,7 @@ class FileServiceBasedConfiguration extends Disposable {
 	) {
 		super();
 		this.allResources = [...this.settingsResources, ...this.standAloneConfigurationResources.map(([, resource]) => resource)];
+		this._register(combinedDisposable(...this.allResources.map(resource => this.fileService.watch(resources.dirname(resource)))));
 		this._folderSettingsModelParser = new ConfigurationModelParser(name, this.scopes);
 		this._standAloneConfigurations = [];
 		this._cache = new ConfigurationModel();

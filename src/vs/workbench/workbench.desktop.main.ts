@@ -66,15 +66,13 @@ import 'vs/workbench/electron-browser/desktop.main';
 
 import 'vs/workbench/services/integrity/node/integrityService';
 import 'vs/workbench/services/search/electron-browser/searchService';
-import 'vs/workbench/services/output/electron-browser/outputChannelModelService';
 import 'vs/workbench/services/textfile/electron-browser/nativeTextFileService';
-import 'vs/workbench/services/keybinding/electron-browser/nativeKeymapService';
 import 'vs/workbench/services/extensions/electron-browser/extensionService';
 import 'vs/workbench/services/extensionManagement/electron-browser/extensionManagementServerService';
 import 'vs/workbench/services/extensionManagement/electron-browser/extensionTipsService';
 import 'vs/workbench/services/remote/electron-browser/remoteAgentServiceImpl';
 import 'vs/workbench/services/telemetry/electron-browser/telemetryService';
-import 'vs/workbench/services/backup/node/backupFileService';
+import 'vs/workbench/services/backup/electron-browser/backupFileService';
 import 'vs/workbench/services/userDataSync/electron-browser/userDataSyncMachinesService';
 import 'vs/workbench/services/userDataSync/electron-browser/userDataSyncService';
 import 'vs/workbench/services/userDataSync/electron-browser/userDataSyncAccountService';
@@ -118,6 +116,9 @@ registerSingleton(ITunnelService, TunnelService);
 
 
 //#region --- workbench contributions
+
+// Output
+import 'vs/workbench/contrib/output/electron-browser/outputChannelModelService';
 
 // Tags
 import 'vs/workbench/contrib/tags/electron-browser/workspaceTagsService';

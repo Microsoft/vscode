@@ -128,10 +128,11 @@ class CompressibleRenderer<T extends NonNullable<any>, TFilterData, TTemplateDat
 		this.renderer.disposeTemplate(templateData.data);
 	}
 
-	renderTwistie?(element: T, twistieElement: HTMLElement): void {
+	renderTwistie?(element: T, twistieElement: HTMLElement): boolean {
 		if (this.renderer.renderTwistie) {
-			this.renderer.renderTwistie(element, twistieElement);
+			return this.renderer.renderTwistie(element, twistieElement);
 		}
+		return false;
 	}
 }
 

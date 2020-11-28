@@ -39,7 +39,7 @@ export class UserDataSyncResourceEnablementService extends Disposable implements
 		if (this.isResourceEnabled(resource) !== enabled) {
 			const resourceEnablementKey = getEnablementKey(resource);
 			this.telemetryService.publicLog2<{ enabled: boolean }, SyncEnablementClassification>(resourceEnablementKey, { enabled });
-			this.storageService.store2(resourceEnablementKey, enabled, StorageScope.GLOBAL, StorageTarget.MACHINE);
+			this.storageService.store(resourceEnablementKey, enabled, StorageScope.GLOBAL, StorageTarget.MACHINE);
 		}
 	}
 

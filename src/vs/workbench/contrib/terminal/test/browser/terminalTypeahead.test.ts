@@ -7,8 +7,8 @@ import * as assert from 'assert';
 import { Terminal } from 'xterm';
 import { SinonStub, stub, useFakeTimers } from 'sinon';
 import { Emitter } from 'vs/base/common/event';
-import { IPrediction, PredictionStats, TypeAheadAddon } from 'vs/workbench/contrib/terminal/browser/terminalTypeAheadAddon';
-import { IBeforeProcessDataEvent, ITerminalConfiguration, ITerminalProcessManager } from 'vs/workbench/contrib/terminal/common/terminal';
+import { CharPredictState, IPrediction, PredictionStats, TypeAheadAddon } from 'vs/workbench/contrib/terminal/browser/terminalTypeAheadAddon';
+import { DEFAULT_LOCAL_ECHO_EXCLUDE, IBeforeProcessDataEvent, ITerminalConfiguration, ITerminalProcessManager } from 'vs/workbench/contrib/terminal/common/terminal';
 import { TerminalConfigHelper } from 'vs/workbench/contrib/terminal/browser/terminalConfigHelper';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 
@@ -92,7 +92,8 @@ suite('Workbench - Terminal Typeahead', () => {
 		setup(() => {
 			config = upcastPartial<ITerminalConfiguration>({
 				localEchoStyle: 'italic',
-				localEchoLatencyThreshold: 0
+				localEchoLatencyThreshold: 0,
+				localEchoExcludePrograms: DEFAULT_LOCAL_ECHO_EXCLUDE,
 			});
 			publicLog = stub();
 			addon = new TestTypeAheadAddon(
@@ -100,6 +101,7 @@ suite('Workbench - Terminal Typeahead', () => {
 				upcastPartial<TerminalConfigHelper>({ config, onConfigChanged: onConfigChanged.event }),
 				upcastPartial<ITelemetryService>({ publicLog })
 			);
+			addon.unlockMakingPredictions();
 		});
 
 		teardown(() => {
@@ -243,29 +245,56 @@ suite('Workbench - Terminal Typeahead', () => {
 			t.expectWritten(`${CSI}2;6H${CSI}X`);
 		});
 
-		test('avoids predicting password input', () => {
+		test('waits for first valid prediction on a line', () => {
+			const t = createMockTerminal({ lines: ['hello|'] });
+			addon.lockMakingPredictions();
+			addon.activate(t.terminal);
+
+			t.onData('o');
+			t.expectWritten('');
+			expectProcessed('o', 'o');
+
+			t.onData('o');
+			t.expectWritten(`${CSI}3mo${CSI}23m`);
+		});
+
+		test('disables on title change', () => {
 			const t = createMockTerminal({ lines: ['hello|'] });
 			addon.activate(t.terminal);
 
-			const tcases = ['Your password:', 'Password here:', 'PAT:', 'Access token:'];
-			for (const tcase of tcases) {
-				expectProcessed(tcase, tcase);
+			addon.reevaluateNow();
+			assert.strictEqual(addon.isShowing, true, 'expected to show initially');
 
-				t.onData('mellon\r\n');
-				t.expectWritten('');
-				expectProcessed('\r\n', '\r\n');
+			t.onTitleChange.fire('foo - VIM.exe');
+			addon.reevaluateNow();
+			assert.strictEqual(addon.isShowing, false, 'expected to hide when vim is open');
 
-				t.onData('o'); // back to normal mode
-				t.expectWritten(`${CSI}3mo${CSI}23m`);
-				onBeforeProcessData.fire({ data: 'o' });
-			}
+			t.onTitleChange.fire('foo - git.exe');
+			addon.reevaluateNow();
+			assert.strictEqual(addon.isShowing, true, 'expected to show again after vim closed');
 		});
 	});
 });
 
 class TestTypeAheadAddon extends TypeAheadAddon {
+	public unlockMakingPredictions() {
+		this.lastRow = { y: 1, startingX: 100, charState: CharPredictState.Validated };
+	}
+
+	public lockMakingPredictions() {
+		this.lastRow = undefined;
+	}
+
 	public unlockLeftNavigating() {
-		this.lastRow = { y: 1, startingX: 1 };
+		this.lastRow = { y: 1, startingX: 1, charState: CharPredictState.Validated };
+	}
+
+	public reevaluateNow() {
+		this.reevaluatePredictorStateNow(this.stats!, this.timeline!);
+	}
+
+	public get isShowing() {
+		return !!this.timeline?.isShowingPredictions;
 	}
 }
 
@@ -292,6 +321,7 @@ function createMockTerminal({ lines, cursorAttrs }: {
 }) {
 	const written: string[] = [];
 	const cursor = { y: 1, x: 1 };
+	const onTitleChange = new Emitter<string>();
 	const onData = new Emitter<string>();
 	const csiEmitter = new Emitter<number[]>();
 
@@ -315,11 +345,13 @@ function createMockTerminal({ lines, cursorAttrs }: {
 		clearWritten: () => written.splice(0, written.length),
 		onData: (s: string) => onData.fire(s),
 		csiEmitter,
+		onTitleChange,
 		terminal: {
 			cols: 80,
 			rows: 5,
 			onResize: new Emitter<void>().event,
 			onData: onData.event,
+			onTitleChange: onTitleChange.event,
 			parser: {
 				registerCsiHandler(_: unknown, callback: () => void) {
 					csiEmitter.event(callback);

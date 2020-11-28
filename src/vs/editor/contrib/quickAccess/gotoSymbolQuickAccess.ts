@@ -7,10 +7,10 @@ import { localize } from 'vs/nls';
 import { IQuickPick, IQuickPickItem, IQuickPickSeparator } from 'vs/platform/quickinput/common/quickInput';
 import { CancellationToken, CancellationTokenSource } from 'vs/base/common/cancellation';
 import { DisposableStore, IDisposable, Disposable, toDisposable } from 'vs/base/common/lifecycle';
-import { IEditor, ScrollType } from 'vs/editor/common/editorCommon';
+import { ScrollType } from 'vs/editor/common/editorCommon';
 import { ITextModel } from 'vs/editor/common/model';
 import { IRange, Range } from 'vs/editor/common/core/range';
-import { AbstractEditorNavigationQuickAccessProvider, IEditorNavigationQuickAccessOptions } from 'vs/editor/contrib/quickAccess/editorNavigationQuickAccess';
+import { AbstractEditorNavigationQuickAccessProvider, IEditorNavigationQuickAccessOptions, IQuickAccessTextEditorContext } from 'vs/editor/contrib/quickAccess/editorNavigationQuickAccess';
 import { DocumentSymbol, SymbolKinds, SymbolTag, DocumentSymbolProviderRegistry, SymbolKind } from 'vs/editor/common/modes';
 import { OutlineModel, OutlineElement } from 'vs/editor/contrib/documentSymbols/outlineModel';
 import { trim, format } from 'vs/base/common/strings';
@@ -48,7 +48,8 @@ export abstract class AbstractGotoSymbolQuickAccessProvider extends AbstractEdit
 		return Disposable.None;
 	}
 
-	protected provideWithTextEditor(editor: IEditor, picker: IQuickPick<IGotoSymbolQuickPickItem>, token: CancellationToken): IDisposable {
+	protected provideWithTextEditor(context: IQuickAccessTextEditorContext, picker: IQuickPick<IGotoSymbolQuickPickItem>, token: CancellationToken): IDisposable {
+		const editor = context.editor;
 		const model = this.getModel(editor);
 		if (!model) {
 			return Disposable.None;
@@ -56,16 +57,16 @@ export abstract class AbstractGotoSymbolQuickAccessProvider extends AbstractEdit
 
 		// Provide symbols from model if available in registry
 		if (DocumentSymbolProviderRegistry.has(model)) {
-			return this.doProvideWithEditorSymbols(editor, model, picker, token);
+			return this.doProvideWithEditorSymbols(context, model, picker, token);
 		}
 
 		// Otherwise show an entry for a model without registry
 		// But give a chance to resolve the symbols at a later
 		// point if possible
-		return this.doProvideWithoutEditorSymbols(editor, model, picker, token);
+		return this.doProvideWithoutEditorSymbols(context, model, picker, token);
 	}
 
-	private doProvideWithoutEditorSymbols(editor: IEditor, model: ITextModel, picker: IQuickPick<IGotoSymbolQuickPickItem>, token: CancellationToken): IDisposable {
+	private doProvideWithoutEditorSymbols(context: IQuickAccessTextEditorContext, model: ITextModel, picker: IQuickPick<IGotoSymbolQuickPickItem>, token: CancellationToken): IDisposable {
 		const disposables = new DisposableStore();
 
 		// Generic pick for not having any symbol information
@@ -82,7 +83,7 @@ export abstract class AbstractGotoSymbolQuickAccessProvider extends AbstractEdit
 				return;
 			}
 
-			disposables.add(this.doProvideWithEditorSymbols(editor, model, picker, token));
+			disposables.add(this.doProvideWithEditorSymbols(context, model, picker, token));
 		})();
 
 		return disposables;
@@ -116,14 +117,15 @@ export abstract class AbstractGotoSymbolQuickAccessProvider extends AbstractEdit
 		return symbolProviderRegistryPromise;
 	}
 
-	private doProvideWithEditorSymbols(editor: IEditor, model: ITextModel, picker: IQuickPick<IGotoSymbolQuickPickItem>, token: CancellationToken): IDisposable {
+	private doProvideWithEditorSymbols(context: IQuickAccessTextEditorContext, model: ITextModel, picker: IQuickPick<IGotoSymbolQuickPickItem>, token: CancellationToken): IDisposable {
+		const editor = context.editor;
 		const disposables = new DisposableStore();
 
 		// Goto symbol once picked
 		disposables.add(picker.onDidAccept(event => {
 			const [item] = picker.selectedItems;
 			if (item && item.range) {
-				this.gotoLocation(editor, { range: item.range.selection, keyMods: picker.keyMods, preserveFocus: event.inBackground });
+				this.gotoLocation(context, { range: item.range.selection, keyMods: picker.keyMods, preserveFocus: event.inBackground });
 
 				if (!event.inBackground) {
 					picker.hide();
@@ -134,7 +136,7 @@ export abstract class AbstractGotoSymbolQuickAccessProvider extends AbstractEdit
 		// Goto symbol side by side if enabled
 		disposables.add(picker.onDidTriggerItemButton(({ item }) => {
 			if (item && item.range) {
-				this.gotoLocation(editor, { range: item.range.selection, keyMods: picker.keyMods, forceSideBySide: true });
+				this.gotoLocation(context, { range: item.range.selection, keyMods: picker.keyMods, forceSideBySide: true });
 
 				picker.hide();
 			}

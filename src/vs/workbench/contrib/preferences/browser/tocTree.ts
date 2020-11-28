@@ -90,7 +90,11 @@ export class TOCTreeModel {
 
 			// Check everything that the SettingsFilter checks except whether it's filtered by a category
 			const isRemote = !!this.environmentService.remoteAuthority;
-			return child.matchesScope(this._viewState.settingsTarget, isRemote) && child.matchesAllTags(this._viewState.tagFilters) && child.matchesAnyExtension(this._viewState.extensionFilters);
+			return child.matchesScope(this._viewState.settingsTarget, isRemote) &&
+				child.matchesAllTags(this._viewState.tagFilters) &&
+				child.matchesAnyFeature(this._viewState.featureFilters) &&
+				child.matchesAnyExtension(this._viewState.extensionFilters) &&
+				child.matchesAnyId(this._viewState.idFilters);
 		}).length;
 	}
 }

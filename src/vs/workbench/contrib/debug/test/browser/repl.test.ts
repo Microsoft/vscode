@@ -64,6 +64,41 @@ suite('Debug - REPL', () => {
 		assert.equal(elements[0], '1\n');
 		assert.equal(elements[1], '23\n45\n');
 		assert.equal(elements[2], '6');
+
+		repl.removeReplExpressions();
+		repl.appendToRepl(session, 'first line\n', severity.Info);
+		repl.appendToRepl(session, 'first line\n', severity.Info);
+		repl.appendToRepl(session, 'first line\n', severity.Info);
+		repl.appendToRepl(session, 'second line', severity.Info);
+		repl.appendToRepl(session, 'second line', severity.Info);
+		repl.appendToRepl(session, 'third line', severity.Info);
+		elements = <SimpleReplElement[]>repl.getReplElements();
+		assert.equal(elements.length, 3);
+		assert.equal(elements[0], 'first line\n');
+		assert.equal(elements[0].count, 3);
+		assert.equal(elements[1], 'second line');
+		assert.equal(elements[1].count, 2);
+		assert.equal(elements[2], 'third line');
+		assert.equal(elements[2].count, 1);
+	});
+
+	test('repl output count', () => {
+		const session = createMockSession(model);
+		const repl = new ReplModel();
+		repl.appendToRepl(session, 'first line\n', severity.Info);
+		repl.appendToRepl(session, 'first line\n', severity.Info);
+		repl.appendToRepl(session, 'first line\n', severity.Info);
+		repl.appendToRepl(session, 'second line', severity.Info);
+		repl.appendToRepl(session, 'second line', severity.Info);
+		repl.appendToRepl(session, 'third line', severity.Info);
+		const elements = <SimpleReplElement[]>repl.getReplElements();
+		assert.equal(elements.length, 3);
+		assert.equal(elements[0], 'first line\n');
+		assert.equal(elements[0].count, 3);
+		assert.equal(elements[1], 'second line');
+		assert.equal(elements[1].count, 2);
+		assert.equal(elements[2], 'third line');
+		assert.equal(elements[2].count, 1);
 	});
 
 	test('repl merging', () => {
@@ -85,7 +120,7 @@ suite('Debug - REPL', () => {
 		assert.equal(grandChild.getReplElements().length, 1);
 		assert.equal(child3.getReplElements().length, 0);
 
-		grandChild.appendToRepl('1\n', severity.Info);
+		grandChild.appendToRepl('2\n', severity.Info);
 		assert.equal(parentChanges, 2);
 		assert.equal(parent.getReplElements().length, 2);
 		assert.equal(child1.getReplElements().length, 0);
@@ -93,7 +128,7 @@ suite('Debug - REPL', () => {
 		assert.equal(grandChild.getReplElements().length, 2);
 		assert.equal(child3.getReplElements().length, 0);
 
-		child3.appendToRepl('1\n', severity.Info);
+		child3.appendToRepl('3\n', severity.Info);
 		assert.equal(parentChanges, 2);
 		assert.equal(parent.getReplElements().length, 2);
 		assert.equal(child1.getReplElements().length, 0);
@@ -101,7 +136,7 @@ suite('Debug - REPL', () => {
 		assert.equal(grandChild.getReplElements().length, 2);
 		assert.equal(child3.getReplElements().length, 1);
 
-		child1.appendToRepl('1\n', severity.Info);
+		child1.appendToRepl('4\n', severity.Info);
 		assert.equal(parentChanges, 2);
 		assert.equal(parent.getReplElements().length, 2);
 		assert.equal(child1.getReplElements().length, 1);

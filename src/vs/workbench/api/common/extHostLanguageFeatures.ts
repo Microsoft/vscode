@@ -32,7 +32,6 @@ import { IdGenerator } from 'vs/base/common/idGenerator';
 import { IExtHostApiDeprecationService } from 'vs/workbench/api/common/extHostApiDeprecationService';
 import { Cache } from './cache';
 import { StopWatch } from 'vs/base/common/stopwatch';
-import { checkProposedApiEnabled } from 'vs/workbench/services/extensions/common/extensions';
 
 // --- adapter
 
@@ -117,65 +116,57 @@ class CodeLensAdapter {
 		private readonly _provider: vscode.CodeLensProvider
 	) { }
 
-	provideCodeLenses(resource: URI, token: CancellationToken): Promise<extHostProtocol.ICodeLensListDto | undefined> {
+	async provideCodeLenses(resource: URI, token: CancellationToken): Promise<extHostProtocol.ICodeLensListDto | undefined> {
 		const doc = this._documents.getDocument(resource);
 
-		return asPromise(() => this._provider.provideCodeLenses(doc, token)).then(lenses => {
-
-			if (!lenses || token.isCancellationRequested) {
-				return undefined;
-			}
-
-			const cacheId = this._cache.add(lenses);
-			const disposables = new DisposableStore();
-			this._disposables.set(cacheId, disposables);
-
-			const result: extHostProtocol.ICodeLensListDto = {
-				cacheId,
-				lenses: [],
-			};
-
-			for (let i = 0; i < lenses.length; i++) {
-				result.lenses.push({
-					cacheId: [cacheId, i],
-					range: typeConvert.Range.from(lenses[i].range),
-					command: this._commands.toInternal(lenses[i].command, disposables)
-				});
-			}
-
-			return result;
-		});
+		const lenses = await this._provider.provideCodeLenses(doc, token);
+		if (!lenses || token.isCancellationRequested) {
+			return undefined;
+		}
+		const cacheId = this._cache.add(lenses);
+		const disposables = new DisposableStore();
+		this._disposables.set(cacheId, disposables);
+		const result: extHostProtocol.ICodeLensListDto = {
+			cacheId,
+			lenses: [],
+		};
+		for (let i = 0; i < lenses.length; i++) {
+			result.lenses.push({
+				cacheId: [cacheId, i],
+				range: typeConvert.Range.from(lenses[i].range),
+				command: this._commands.toInternal(lenses[i].command, disposables)
+			});
+		}
+		return result;
 	}
 
-	resolveCodeLens(symbol: extHostProtocol.ICodeLensDto, token: CancellationToken): Promise<extHostProtocol.ICodeLensDto | undefined> {
+	async resolveCodeLens(symbol: extHostProtocol.ICodeLensDto, token: CancellationToken): Promise<extHostProtocol.ICodeLensDto | undefined> {
 
 		const lens = symbol.cacheId && this._cache.get(...symbol.cacheId);
 		if (!lens) {
-			return Promise.resolve(undefined);
+			return undefined;
 		}
 
-		let resolve: Promise<vscode.CodeLens | undefined | null>;
+		let resolvedLens: vscode.CodeLens | undefined | null;
 		if (typeof this._provider.resolveCodeLens !== 'function' || lens.isResolved) {
-			resolve = Promise.resolve(lens);
+			resolvedLens = lens;
 		} else {
-			resolve = asPromise(() => this._provider.resolveCodeLens!(lens, token));
+			resolvedLens = await this._provider.resolveCodeLens(lens, token);
+		}
+		if (!resolvedLens) {
+			resolvedLens = lens;
 		}
 
-		return resolve.then(newLens => {
-			if (token.isCancellationRequested) {
-				return undefined;
-			}
-
-			const disposables = symbol.cacheId && this._disposables.get(symbol.cacheId[0]);
-			if (!disposables) {
-				// We've already been disposed of
-				return undefined;
-			}
-
-			newLens = newLens || lens;
-			symbol.command = this._commands.toInternal(newLens.command || CodeLensAdapter._badCmd, disposables);
-			return symbol;
-		});
+		if (token.isCancellationRequested) {
+			return undefined;
+		}
+		const disposables = symbol.cacheId && this._disposables.get(symbol.cacheId[0]);
+		if (!disposables) {
+			// disposed in the meantime
+			return undefined;
+		}
+		symbol.command = this._commands.toInternal(resolvedLens.command ?? CodeLensAdapter._badCmd, disposables);
+		return symbol;
 	}
 
 	releaseCodeLenses(cachedId: number): void {
@@ -320,18 +311,18 @@ class DocumentHighlightAdapter {
 	}
 }
 
-class OnTypeRenameAdapter {
+class LinkedEditingRangeAdapter {
 	constructor(
 		private readonly _documents: ExtHostDocuments,
-		private readonly _provider: vscode.OnTypeRenameProvider
+		private readonly _provider: vscode.LinkedEditingRangeProvider
 	) { }
 
-	provideOnTypeRenameRanges(resource: URI, position: IPosition, token: CancellationToken): Promise<{ ranges: IRange[]; wordPattern?: RegExp; } | undefined> {
+	provideLinkedEditingRanges(resource: URI, position: IPosition, token: CancellationToken): Promise<modes.LinkedEditingRanges | undefined> {
 
 		const doc = this._documents.getDocument(resource);
 		const pos = typeConvert.Position.to(position);
 
-		return asPromise(() => this._provider.provideOnTypeRenameRanges(doc, pos, token)).then(value => {
+		return asPromise(() => this._provider.provideLinkedEditingRanges(doc, pos, token)).then(value => {
 			if (value && Array.isArray(value.ranges)) {
 				return {
 					ranges: coalesce(value.ranges.map(typeConvert.Range.from)),
@@ -1329,7 +1320,7 @@ type Adapter = DocumentSymbolAdapter | CodeLensAdapter | DefinitionAdapter | Hov
 	| SuggestAdapter | SignatureHelpAdapter | LinkProviderAdapter | ImplementationAdapter
 	| TypeDefinitionAdapter | ColorProviderAdapter | FoldingProviderAdapter | DeclarationAdapter
 	| SelectionRangeAdapter | CallHierarchyAdapter | DocumentSemanticTokensAdapter | DocumentRangeSemanticTokensAdapter | EvaluatableExpressionAdapter
-	| OnTypeRenameAdapter;
+	| LinkedEditingRangeAdapter;
 
 class AdapterData {
 	constructor(
@@ -1571,18 +1562,17 @@ export class ExtHostLanguageFeatures implements extHostProtocol.ExtHostLanguageF
 		return this._withAdapter(handle, DocumentHighlightAdapter, adapter => adapter.provideDocumentHighlights(URI.revive(resource), position, token), undefined);
 	}
 
-	// --- on type rename
+	// --- linked editing
 
-	registerOnTypeRenameProvider(extension: IExtensionDescription, selector: vscode.DocumentSelector, provider: vscode.OnTypeRenameProvider, wordPattern?: RegExp): vscode.Disposable {
-		const handle = this._addNewAdapter(new OnTypeRenameAdapter(this._documents, provider), extension);
-		const serializedWordPattern = wordPattern ? ExtHostLanguageFeatures._serializeRegExp(wordPattern) : undefined;
-		this._proxy.$registerOnTypeRenameProvider(handle, this._transformDocumentSelector(selector), serializedWordPattern);
+	registerLinkedEditingRangeProvider(extension: IExtensionDescription, selector: vscode.DocumentSelector, provider: vscode.LinkedEditingRangeProvider): vscode.Disposable {
+		const handle = this._addNewAdapter(new LinkedEditingRangeAdapter(this._documents, provider), extension);
+		this._proxy.$registerLinkedEditingRangeProvider(handle, this._transformDocumentSelector(selector));
 		return this._createDisposable(handle);
 	}
 
-	$provideOnTypeRenameRanges(handle: number, resource: UriComponents, position: IPosition, token: CancellationToken): Promise<{ ranges: IRange[]; wordPattern?: extHostProtocol.IRegExpDto; } | undefined> {
-		return this._withAdapter(handle, OnTypeRenameAdapter, async adapter => {
-			const res = await adapter.provideOnTypeRenameRanges(URI.revive(resource), position, token);
+	$provideLinkedEditingRanges(handle: number, resource: UriComponents, position: IPosition, token: CancellationToken): Promise<extHostProtocol.ILinkedEditingRangesDto | undefined> {
+		return this._withAdapter(handle, LinkedEditingRangeAdapter, async adapter => {
+			const res = await adapter.provideLinkedEditingRanges(URI.revive(resource), position, token);
 			if (res) {
 				return {
 					ranges: res.ranges,
@@ -1814,7 +1804,7 @@ export class ExtHostLanguageFeatures implements extHostProtocol.ExtHostLanguageF
 		return this._withAdapter(handle, ColorProviderAdapter, adapter => adapter.provideColorPresentations(URI.revive(resource), colorInfo, token), undefined);
 	}
 
-	registerFoldingRangeProvider(extension: IExtensionDescription, selector: vscode.DocumentSelector, provider: vscode.FoldingRangeProvider2): vscode.Disposable {
+	registerFoldingRangeProvider(extension: IExtensionDescription, selector: vscode.DocumentSelector, provider: vscode.FoldingRangeProvider): vscode.Disposable {
 		const handle = this._nextHandle();
 		const eventHandle = typeof provider.onDidChangeFoldingRanges === 'function' ? this._nextHandle() : undefined;
 
@@ -1823,8 +1813,7 @@ export class ExtHostLanguageFeatures implements extHostProtocol.ExtHostLanguageF
 		let result = this._createDisposable(handle);
 
 		if (eventHandle !== undefined) {
-			checkProposedApiEnabled(extension);
-			const subscription = provider.onDidChangeFoldingRanges!(_ => this._proxy.$emitFoldingRangeEvent(eventHandle));
+			const subscription = provider.onDidChangeFoldingRanges!(() => this._proxy.$emitFoldingRangeEvent(eventHandle));
 			result = Disposable.from(result, subscription);
 		}
 

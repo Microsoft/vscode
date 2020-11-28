@@ -5,13 +5,14 @@
 
 import { IWorkbenchContribution } from 'vs/workbench/common/contributions';
 import { CommandsRegistry } from 'vs/platform/commands/common/commands';
-import { MenuRegistry, MenuId } from 'vs/platform/actions/common/actions';
+import { MenuRegistry, MenuId, Action2, registerAction2 } from 'vs/platform/actions/common/actions';
 import { localize } from 'vs/nls';
 import { Disposable, toDisposable } from 'vs/base/common/lifecycle';
 import { IExtensionManagementServerService } from 'vs/workbench/services/extensionManagement/common/extensionManagement';
 import { ILabelService } from 'vs/platform/label/common/label';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
-import { InstallLocalExtensionsInRemoteAction } from 'vs/workbench/contrib/extensions/browser/extensionsActions';
+import { InstallLocalExtensionsInRemoteAction, InstallRemoteExtensionsInLocalAction } from 'vs/workbench/contrib/extensions/browser/extensionsActions';
+import { ServicesAccessor } from 'vs/editor/browser/editorExtensions';
 
 export class RemoteExtensionsInstaller extends Disposable implements IWorkbenchContribution {
 
@@ -38,6 +39,20 @@ export class RemoteExtensionsInstaller extends Disposable implements IWorkbenchC
 			appendMenuItem();
 			this._register(labelService.onDidChangeFormatters(e => appendMenuItem()));
 			this._register(toDisposable(() => disposable.dispose()));
+
+			this._register(registerAction2(class InstallRemoteExtensionsInLocalAction2 extends Action2 {
+				constructor() {
+					super({
+						id: 'workbench.extensions.actions.installLocalExtensionsInRemote',
+						title: { value: localize('install remote in local', "Install Remote Extensions Locally..."), original: 'Install Remote Extensions Locally...' },
+						category: localize({ key: 'remote', comment: ['Remote as in remote machine'] }, "Remote"),
+						f1: true
+					});
+				}
+				run(accessor: ServicesAccessor): Promise<void> {
+					return accessor.get(IInstantiationService).createInstance(InstallRemoteExtensionsInLocalAction, 'workbench.extensions.actions.installLocalExtensionsInRemote').run();
+				}
+			}));
 		}
 	}
 

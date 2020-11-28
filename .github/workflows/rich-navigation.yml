@@ -9,24 +9,28 @@ jobs:
   richnav:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - uses: actions/cache@v2
-      id: caching-stage
-      name: Cache VS Code dependencies
-      with:
-        path: node_modules
-        key: ${{ runner.os }}-dependencies-${{ hashfiles('yarn.lock') }}
-        restore-keys: ${{ runner.os }}-dependencies-
+      - uses: actions/cache@v2
+        id: caching-stage
+        name: Cache VS Code dependencies
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-dependencies-${{ hashfiles('yarn.lock') }}
+          restore-keys: ${{ runner.os }}-dependencies-
 
-    - name: Install dependencies
-      if: steps.caching-stage.outputs.cache-hit != 'true'
-      run: yarn --frozen-lockfile
-      env:
-        CHILD_CONCURRENCY: 1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 10
 
-    - uses: microsoft/RichCodeNavIndexer@v0.1
-      with:
-        languages: typescript
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-      continue-on-error: true
+      - name: Install dependencies
+        if: steps.caching-stage.outputs.cache-hit != 'true'
+        run: yarn --frozen-lockfile
+        env:
+          CHILD_CONCURRENCY: 1
+
+      - uses: microsoft/RichCodeNavIndexer@v0.1
+        with:
+          languages: typescript
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true

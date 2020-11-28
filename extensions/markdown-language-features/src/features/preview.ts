@@ -408,7 +408,7 @@ class MarkdownPreview extends Disposable implements WebviewResourceProvider {
 			}
 		}
 
-		OpenDocumentLinkCommand.execute(this.engine, { path: hrefPath, fragment, fromResource: this.resource.toJSON() });
+		OpenDocumentLinkCommand.execute(this.engine, { parts: { path: hrefPath }, fragment, fromResource: this.resource.toJSON() });
 	}
 
 	//#region WebviewResourceProvider

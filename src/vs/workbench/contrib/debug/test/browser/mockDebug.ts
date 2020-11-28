@@ -7,7 +7,7 @@ import { URI as uri } from 'vs/base/common/uri';
 import { Event } from 'vs/base/common/event';
 import { IWorkspaceFolder } from 'vs/platform/workspace/common/workspace';
 import { Position, IPosition } from 'vs/editor/common/core/position';
-import { ILaunch, IDebugService, State, IDebugSession, IConfigurationManager, IStackFrame, IBreakpointData, IBreakpointUpdateData, IConfig, IDebugModel, IViewModel, IBreakpoint, LoadedSourceEvent, IThread, IRawModelUpdate, IFunctionBreakpoint, IExceptionBreakpoint, IDebugger, IExceptionInfo, AdapterEndEvent, IReplElement, IExpression, IReplElementSource, IDataBreakpoint, IDebugSessionOptions, IEvaluate } from 'vs/workbench/contrib/debug/common/debug';
+import { ILaunch, IDebugService, State, IDebugSession, IConfigurationManager, IStackFrame, IBreakpointData, IBreakpointUpdateData, IConfig, IDebugModel, IViewModel, IBreakpoint, LoadedSourceEvent, IThread, IRawModelUpdate, IFunctionBreakpoint, IExceptionBreakpoint, IDebugger, IExceptionInfo, AdapterEndEvent, IReplElement, IExpression, IReplElementSource, IDataBreakpoint, IDebugSessionOptions, IEvaluate, IAdapterManager } from 'vs/workbench/contrib/debug/common/debug';
 import { Source } from 'vs/workbench/contrib/debug/common/debugSource';
 import Severity from 'vs/base/common/severity';
 import { AbstractDebugAdapter } from 'vs/workbench/contrib/debug/common/abstractDebugAdapter';
@@ -17,6 +17,7 @@ import { DebugCompoundRoot } from 'vs/workbench/contrib/debug/common/debugCompou
 import { CancellationToken } from 'vs/base/common/cancellation';
 import { TestFileService } from 'vs/workbench/test/browser/workbenchTestServices';
 import { UriIdentityService } from 'vs/workbench/services/uriIdentity/common/uriIdentityService';
+import { ITextModel } from 'vs/editor/common/model';
 
 const fileService = new TestFileService();
 export const mockUriIdentityService = new UriIdentityService(fileService);
@@ -49,6 +50,14 @@ export class MockDebugService implements IDebugService {
 		throw new Error('not implemented');
 	}
 
+	getAdapterManager(): IAdapterManager {
+		throw new Error('Method not implemented.');
+	}
+
+	canSetBreakpointsIn(model: ITextModel): boolean {
+		throw new Error('Method not implemented.');
+	}
+
 	public focusStackFrame(focusedStackFrame: IStackFrame): Promise<void> {
 		throw new Error('not implemented');
 	}
@@ -75,6 +84,10 @@ export class MockDebugService implements IDebugService {
 
 	public removeBreakpoints(): Promise<any> {
 		throw new Error('not implemented');
+	}
+
+	setExceptionBreakpointCondition(breakpoint: IExceptionBreakpoint, condition: string): Promise<void> {
+		throw new Error('Method not implemented.');
 	}
 
 	public addFunctionBreakpoint(): void { }

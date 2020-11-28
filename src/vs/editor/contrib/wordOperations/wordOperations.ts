@@ -480,6 +480,34 @@ export class DeleteWordRight extends DeleteWordRightCommand {
 	}
 }
 
+export class DeleteInsideWord extends EditorCommand {
+
+	constructor() {
+		super({
+			id: 'deleteInsideWord',
+			precondition: EditorContextKeys.writable
+		});
+	}
+
+	public runEditorCommand(accessor: ServicesAccessor, editor: ICodeEditor, args: any): void {
+		if (!editor.hasModel()) {
+			return;
+		}
+		const wordSeparators = getMapForWordSeparators(editor.getOption(EditorOption.wordSeparators));
+		const model = editor.getModel();
+		const selections = editor.getSelections();
+
+		const commands = selections.map((sel) => {
+			const deleteRange = WordOperations.deleteInsideWord(wordSeparators, model, sel);
+			return new ReplaceCommand(deleteRange, '');
+		});
+
+		editor.pushUndoStop();
+		editor.executeCommands(this.id, commands);
+		editor.pushUndoStop();
+	}
+}
+
 registerEditorCommand(new CursorWordStartLeft());
 registerEditorCommand(new CursorWordEndLeft());
 registerEditorCommand(new CursorWordLeft());
@@ -502,3 +530,4 @@ registerEditorCommand(new DeleteWordLeft());
 registerEditorCommand(new DeleteWordStartRight());
 registerEditorCommand(new DeleteWordEndRight());
 registerEditorCommand(new DeleteWordRight());
+registerEditorCommand(new DeleteInsideWord());

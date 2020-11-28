@@ -1,146 +1,158 @@
 steps:
-- script: |
-    mkdir -p .build
-    echo -n $BUILD_SOURCEVERSION > .build/commit
-    echo -n $VSCODE_QUALITY > .build/quality
-  displayName: Prepare cache flag
+  - script: |
+      mkdir -p .build
+      echo -n $BUILD_SOURCEVERSION > .build/commit
+      echo -n $VSCODE_QUALITY > .build/quality
+      echo -n $ENABLE_TERRAPIN > .build/terrapin
+      echo -n $VSCODE_ARCH > .build/arch
+    displayName: Prepare cache flag
 
-- task: 1ESLighthouseEng.PipelineArtifactCaching.RestoreCacheV1.RestoreCache@1
-  inputs:
-    keyfile: 'build/.cachesalt, .build/commit, .build/quality'
-    targetfolder: '.build, out-build, out-vscode-min, out-vscode-reh-min, out-vscode-reh-web-min'
-    vstsFeed: 'npm-vscode'
-    platformIndependent: true
-    alias: 'Compilation'
-    dryRun: true
+  - task: 1ESLighthouseEng.PipelineArtifactCaching.RestoreCacheV1.RestoreCache@1
+    inputs:
+      keyfile: "build/.cachesalt, .build/commit, .build/quality, .build/terrapin"
+      targetfolder: ".build, out-build, out-vscode-min, out-vscode-reh-min, out-vscode-reh-web-min"
+      vstsFeed: "npm-vscode"
+      platformIndependent: true
+      alias: "Compilation"
+      dryRun: true
 
-- task: NodeTool@0
-  inputs:
-    versionSpec: "12.14.1"
-  condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'))
+  - task: NodeTool@0
+    inputs:
+      versionSpec: "12.18.3"
+    condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'))
 
-- task: geeklearningio.gl-vsts-tasks-yarn.yarn-installer-task.YarnInstaller@2
-  inputs:
-    versionSpec: "1.x"
-  condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'))
+  - task: geeklearningio.gl-vsts-tasks-yarn.yarn-installer-task.YarnInstaller@2
+    inputs:
+      versionSpec: "1.x"
+    condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'))
 
-- task: AzureKeyVault@1
-  displayName: 'Azure Key Vault: Get Secrets'
-  inputs:
-    azureSubscription: 'vscode-builds-subscription'
-    KeyVaultName: vscode
-  condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'))
+  - task: AzureKeyVault@1
+    displayName: "Azure Key Vault: Get Secrets"
+    inputs:
+      azureSubscription: "vscode-builds-subscription"
+      KeyVaultName: vscode
+    condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'))
 
-- script: |
-    set -e
-    cat << EOF > ~/.netrc
-    machine github.com
-    login vscode
-    password $(github-distro-mixin-password)
-    EOF
+  - script: |
+      set -e
+      cat << EOF > ~/.netrc
+      machine github.com
+      login vscode
+      password $(github-distro-mixin-password)
+      EOF
 
-    git config user.email "vscode@microsoft.com"
-    git config user.name "VSCode"
-  displayName: Prepare tooling
-  condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'))
+      git config user.email "vscode@microsoft.com"
+      git config user.name "VSCode"
+    displayName: Prepare tooling
+    condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'))
 
-- script: |
-    set -e
-    git remote add distro "https://github.com/$(VSCODE_MIXIN_REPO).git"
-    git fetch distro
-    git merge $(node -p "require('./package.json').distro")
-  displayName: Merge distro
-  condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'))
+  - script: |
+      set -e
+      git remote add distro "https://github.com/$(VSCODE_MIXIN_REPO).git"
+      git fetch distro
+      git merge $(node -p "require('./package.json').distro")
+    displayName: Merge distro
+    condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'))
 
-- script: |
-    echo -n $VSCODE_ARCH > .build/arch
-  displayName: Prepare arch cache flag
+  - script: |
+      npx https://aka.ms/enablesecurefeed standAlone
+    displayName: Switch to Terrapin packages
+    timeoutInMinutes: 5
+    condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'), eq(variables['ENABLE_TERRAPIN'], 'true'))
 
-- task: 1ESLighthouseEng.PipelineArtifactCaching.RestoreCacheV1.RestoreCache@1
-  inputs:
-    keyfile: '.build/arch, build/.cachesalt, .yarnrc, remote/.yarnrc, **/yarn.lock, !**/node_modules/**/yarn.lock, !**/.*/**/yarn.lock'
-    targetfolder: '**/node_modules, !**/node_modules/**/node_modules'
-    vstsFeed: 'npm-vscode'
-  condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'))
+  - task: 1ESLighthouseEng.PipelineArtifactCaching.RestoreCacheV1.RestoreCache@1
+    inputs:
+      keyfile: ".build/arch, .build/terrapin, build/.cachesalt, .yarnrc, remote/.yarnrc, **/yarn.lock, !**/node_modules/**/yarn.lock, !**/.*/**/yarn.lock"
+      targetfolder: "**/node_modules, !**/node_modules/**/node_modules"
+      vstsFeed: "npm-vscode"
+    condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'))
 
-- script: |
-    set -e
-    CHILD_CONCURRENCY=1 yarn --frozen-lockfile
-  displayName: Install dependencies
-  condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'), ne(variables['CacheRestored'], 'true'))
+  - script: |
+      set -e
+      export CHILD_CONCURRENCY="1"
+      for i in {1..3}; do # try 3 times, for Terrapin
+        yarn --frozen-lockfile && break
+        if [ $i -eq 3 ]; then
+          echo "Yarn failed too many times" >&2
+          exit 1
+        fi
+        echo "Yarn failed $i, trying again..."
+      done
+    displayName: Install dependencies
+    condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'), ne(variables['CacheRestored'], 'true'))
 
-- task: 1ESLighthouseEng.PipelineArtifactCaching.SaveCacheV1.SaveCache@1
-  inputs:
-    keyfile: '.build/arch, build/.cachesalt, .yarnrc, remote/.yarnrc, **/yarn.lock, !**/node_modules/**/yarn.lock, !**/.*/**/yarn.lock'
-    targetfolder: '**/node_modules, !**/node_modules/**/node_modules'
-    vstsFeed: 'npm-vscode'
-  condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'), ne(variables['CacheRestored'], 'true'))
+  - task: 1ESLighthouseEng.PipelineArtifactCaching.SaveCacheV1.SaveCache@1
+    inputs:
+      keyfile: ".build/arch, .build/terrapin, build/.cachesalt, .yarnrc, remote/.yarnrc, **/yarn.lock, !**/node_modules/**/yarn.lock, !**/.*/**/yarn.lock"
+      targetfolder: "**/node_modules, !**/node_modules/**/node_modules"
+      vstsFeed: "npm-vscode"
+    condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'), ne(variables['CacheRestored'], 'true'))
 
-- script: |
-    set -e
-    yarn postinstall
-  displayName: Run postinstall scripts
-  condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'), eq(variables['CacheRestored'], 'true'))
+  - script: |
+      set -e
+      yarn postinstall
+    displayName: Run postinstall scripts
+    condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'), eq(variables['CacheRestored'], 'true'))
 
-# Mixin must run before optimize, because the CSS loader will
-# inline small SVGs
-- script: |
-    set -e
-    node build/azure-pipelines/mixin
-  displayName: Mix in quality
-  condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'))
+  # Mixin must run before optimize, because the CSS loader will
+  # inline small SVGs
+  - script: |
+      set -e
+      node build/azure-pipelines/mixin
+    displayName: Mix in quality
+    condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'))
 
-- script: |
-    set -e
-    yarn gulp hygiene
-    yarn monaco-compile-check
-    yarn valid-layers-check
-  displayName: Run hygiene, monaco compile & valid layers checks
-  condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'), eq(variables['VSCODE_STEP_ON_IT'], 'false'))
+  - script: |
+      set -e
+      yarn gulp hygiene
+      yarn monaco-compile-check
+      yarn valid-layers-check
+    displayName: Run hygiene, monaco compile & valid layers checks
+    condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'), eq(variables['VSCODE_STEP_ON_IT'], 'false'))
 
-- script: |
-    set -
-    ./build/azure-pipelines/common/extract-telemetry.sh
-  displayName: Extract Telemetry
-  condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'))
+  - script: |
+      set -
+      ./build/azure-pipelines/common/extract-telemetry.sh
+    displayName: Extract Telemetry
+    condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'))
 
-- script: |
-    set -e
-    AZURE_WEBVIEW_STORAGE_ACCESS_KEY="$(vscode-webview-storage-key)" \
-    ./build/azure-pipelines/common/publish-webview.sh
-  displayName: Publish Webview
-  condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'))
+  - script: |
+      set -e
+      AZURE_WEBVIEW_STORAGE_ACCESS_KEY="$(vscode-webview-storage-key)" \
+      ./build/azure-pipelines/common/publish-webview.sh
+    displayName: Publish Webview
+    condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'))
 
-- script: |
-    set -e
-    yarn gulp compile-build
-    yarn gulp compile-extensions-build
-    yarn gulp minify-vscode
-    yarn gulp minify-vscode-reh
-    yarn gulp minify-vscode-reh-web
-  displayName: Compile
-  condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'))
+  - script: |
+      set -e
+      yarn gulp compile-build
+      yarn gulp compile-extensions-build
+      yarn gulp minify-vscode
+      yarn gulp minify-vscode-reh
+      yarn gulp minify-vscode-reh-web
+    displayName: Compile
+    condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'))
 
-- script: |
-    set -e
-    AZURE_STORAGE_ACCESS_KEY="$(ticino-storage-key)" \
-      node build/azure-pipelines/upload-sourcemaps
-  displayName: Upload sourcemaps
-  condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'))
+  - script: |
+      set -e
+      AZURE_STORAGE_ACCESS_KEY="$(ticino-storage-key)" \
+        node build/azure-pipelines/upload-sourcemaps
+    displayName: Upload sourcemaps
+    condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'))
 
-- script: |
-    set -e
-    VERSION=`node -p "require(\"./package.json\").version"`
-    AZURE_DOCUMENTDB_MASTERKEY="$(builds-docdb-key-readwrite)" \
-      node build/azure-pipelines/common/createBuild.js $VERSION
-  displayName: Create build
-  condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'))
+  - script: |
+      set -e
+      VERSION=`node -p "require(\"./package.json\").version"`
+      AZURE_DOCUMENTDB_MASTERKEY="$(builds-docdb-key-readwrite)" \
+        node build/azure-pipelines/common/createBuild.js $VERSION
+    displayName: Create build
+    condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'))
 
-- task: 1ESLighthouseEng.PipelineArtifactCaching.SaveCacheV1.SaveCache@1
-  inputs:
-    keyfile: 'build/.cachesalt, .build/commit, .build/quality'
-    targetfolder: '.build, out-build, out-vscode-min, out-vscode-reh-min, out-vscode-reh-web-min'
-    vstsFeed: 'npm-vscode'
-    platformIndependent: true
-    alias: 'Compilation'
-  condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'))
+  - task: 1ESLighthouseEng.PipelineArtifactCaching.SaveCacheV1.SaveCache@1
+    inputs:
+      keyfile: "build/.cachesalt, .build/commit, .build/quality, .build/terrapin"
+      targetfolder: ".build, out-build, out-vscode-min, out-vscode-reh-min, out-vscode-reh-web-min"
+      vstsFeed: "npm-vscode"
+      platformIndependent: true
+      alias: "Compilation"
+    condition: and(succeeded(), ne(variables['CacheExists-Compilation'], 'true'))

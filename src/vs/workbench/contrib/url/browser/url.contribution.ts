@@ -37,7 +37,7 @@ class OpenUrlAction extends Action2 {
 		return quickInputService.input({ prompt: localize('urlToOpen', "URL to open") }).then(input => {
 			if (input) {
 				const uri = URI.parse(input);
-				urlService.open(uri, { trusted: true });
+				urlService.open(uri, { originalUrl: input });
 			}
 		});
 	}

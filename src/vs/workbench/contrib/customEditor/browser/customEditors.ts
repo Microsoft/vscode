@@ -4,6 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { coalesce, distinct } from 'vs/base/common/arrays';
+import { Codicon } from 'vs/base/common/codicons';
 import { Emitter, Event } from 'vs/base/common/event';
 import { Lazy } from 'vs/base/common/lazy';
 import { Disposable, IDisposable, toDisposable } from 'vs/base/common/lifecycle';
@@ -173,7 +174,7 @@ export class CustomEditorService extends Disposable implements ICustomEditorServ
 				: undefined,
 			detail: editorDescriptor.providerDisplayName,
 			buttons: resourceExt ? [{
-				iconClass: 'codicon-settings-gear',
+				iconClass: Codicon.settingsGear.classNames,
 				tooltip: nls.localize('promptOpenWith.setDefaultTooltip', "Set as default editor for '{0}' files", resourceExt)
 			}] : undefined
 		}));
@@ -447,6 +448,7 @@ export class CustomEditorContribution extends Disposable implements IWorkbenchCo
 	constructor(
 		@IEditorService private readonly editorService: IEditorService,
 		@ICustomEditorService private readonly customEditorService: ICustomEditorService,
+		@IInstantiationService private readonly instantiationService: IInstantiationService
 	) {
 		super();
 
@@ -651,7 +653,7 @@ export class CustomEditorContribution extends Disposable implements IWorkbenchCo
 		if (modifiedOverride || originalOverride) {
 			return {
 				override: (async () => {
-					const input = new DiffEditorInput(editor.getName(), editor.getDescription(), originalOverride || editor.originalInput, modifiedOverride || editor.modifiedInput, true);
+					const input = this.instantiationService.createInstance(DiffEditorInput, editor.getName(), editor.getDescription(), originalOverride || editor.originalInput, modifiedOverride || editor.modifiedInput, true);
 					return this.editorService.openEditor(input, { ...options, override: false }, group);
 				})(),
 			};

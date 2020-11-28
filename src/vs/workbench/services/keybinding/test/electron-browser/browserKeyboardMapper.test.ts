@@ -6,7 +6,7 @@ import * as assert from 'assert';
 import 'vs/workbench/services/keybinding/browser/keyboardLayouts/en.darwin'; // 15%
 import 'vs/workbench/services/keybinding/browser/keyboardLayouts/de.darwin';
 import { KeyboardLayoutContribution } from 'vs/workbench/services/keybinding/browser/keyboardLayouts/_.contribution';
-import { BrowserKeyboardMapperFactoryBase } from 'vs/workbench/services/keybinding/browser/keymapService';
+import { BrowserKeyboardMapperFactoryBase } from 'vs/workbench/services/keybinding/browser/keyboardLayoutService';
 import { KeymapInfo, IKeymapInfo } from 'vs/workbench/services/keybinding/common/keymapInfo';
 import { TestInstantiationService } from 'vs/platform/instantiation/test/common/instantiationServiceMock';
 import { INotificationService } from 'vs/platform/notification/common/notification';

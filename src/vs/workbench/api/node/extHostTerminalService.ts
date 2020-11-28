@@ -23,6 +23,7 @@ import { BaseExtHostTerminalService, ExtHostTerminal } from 'vs/workbench/api/co
 import { IExtHostRpcService } from 'vs/workbench/api/common/extHostRpcService';
 import { MergedEnvironmentVariableCollection } from 'vs/workbench/contrib/terminal/common/environmentVariableCollection';
 import { IExtHostInitDataService } from 'vs/workbench/api/common/extHostInitDataService';
+import { withNullAsUndefined } from 'vs/base/common/types';
 
 export class ExtHostTerminalService extends BaseExtHostTerminalService {
 
@@ -56,7 +57,15 @@ export class ExtHostTerminalService extends BaseExtHostTerminalService {
 	public createTerminalFromOptions(options: vscode.TerminalOptions, isFeatureTerminal?: boolean): vscode.Terminal {
 		const terminal = new ExtHostTerminal(this._proxy, options, options.name);
 		this._terminals.push(terminal);
-		terminal.create(options.shellPath, options.shellArgs, options.cwd, options.env, /*options.waitOnExit*/ undefined, options.strictEnv, options.hideFromUser, isFeatureTerminal);
+		terminal.create(
+			withNullAsUndefined(options.shellPath),
+			withNullAsUndefined(options.shellArgs),
+			withNullAsUndefined(options.cwd),
+			withNullAsUndefined(options.env),
+			/*options.waitOnExit*/ undefined,
+			withNullAsUndefined(options.strictEnv),
+			withNullAsUndefined(options.hideFromUser),
+			withNullAsUndefined(isFeatureTerminal));
 		return terminal;
 	}
 

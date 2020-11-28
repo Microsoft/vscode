@@ -3,13 +3,14 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { MarkedString, CompletionItemKind, CompletionItem, DocumentSelector, SnippetString, workspace, MarkdownString } from 'vscode';
+import { MarkedString, CompletionItemKind, CompletionItem, DocumentSelector, SnippetString, workspace, MarkdownString, Uri } from 'vscode';
 import { IJSONContribution, ISuggestionsCollector } from './jsonContributions';
 import { XHRRequest } from 'request-light';
 import { Location } from 'jsonc-parser';
 
 import * as cp from 'child_process';
 import * as nls from 'vscode-nls';
+import { dirname } from 'path';
 const localize = nls.loadMessageBundle();
 
 const LIMIT = 40;
@@ -35,7 +36,7 @@ export class PackageJSONContribution implements IJSONContribution {
 	public constructor(private xhr: XHRRequest, private canRunNPM: boolean) {
 	}
 
-	public collectDefaultSuggestions(_fileName: string, result: ISuggestionsCollector): Thenable<any> {
+	public collectDefaultSuggestions(_resource: Uri, result: ISuggestionsCollector): Thenable<any> {
 		const defaultValue = {
 			'name': '${1:name}',
 			'description': '${2:description}',
@@ -60,7 +61,7 @@ export class PackageJSONContribution implements IJSONContribution {
 	}
 
 	public collectPropertySuggestions(
-		_resource: string,
+		_resource: Uri,
 		location: Location,
 		currentWord: string,
 		addValue: boolean,
@@ -183,7 +184,7 @@ export class PackageJSONContribution implements IJSONContribution {
 		return Promise.resolve(null);
 	}
 
-	public async collectValueSuggestions(_fileName: string, location: Location, result: ISuggestionsCollector): Promise<any> {
+	public async collectValueSuggestions(resource: Uri, location: Location, result: ISuggestionsCollector): Promise<any> {
 		if (!this.isEnabled()) {
 			return null;
 		}
@@ -191,7 +192,7 @@ export class PackageJSONContribution implements IJSONContribution {
 		if ((location.matches(['dependencies', '*']) || location.matches(['devDependencies', '*']) || location.matches(['optionalDependencies', '*']) || location.matches(['peerDependencies', '*']))) {
 			const currentKey = location.path[location.path.length - 1];
 			if (typeof currentKey === 'string') {
-				const info = await this.fetchPackageInfo(currentKey);
+				const info = await this.fetchPackageInfo(currentKey, resource);
 				if (info && info.version) {
 
 					let name = JSON.stringify(info.version);
@@ -236,9 +237,9 @@ export class PackageJSONContribution implements IJSONContribution {
 		return str;
 	}
 
-	public resolveSuggestion(item: CompletionItem): Thenable<CompletionItem | null> | null {
+	public resolveSuggestion(resource: Uri | undefined, item: CompletionItem): Thenable<CompletionItem | null> | null {
 		if (item.kind === CompletionItemKind.Property && !item.documentation) {
-			return this.fetchPackageInfo(item.label).then(info => {
+			return this.fetchPackageInfo(item.label, resource).then(info => {
 				if (info) {
 					item.documentation = this.getDocumentation(info.description, info.version, info.homepage);
 					return item;
@@ -266,13 +267,13 @@ export class PackageJSONContribution implements IJSONContribution {
 		return false;
 	}
 
-	private async fetchPackageInfo(pack: string): Promise<ViewPackageInfo | undefined> {
+	private async fetchPackageInfo(pack: string, resource: Uri | undefined): Promise<ViewPackageInfo | undefined> {
 		if (!this.isValidNPMName(pack)) {
 			return undefined; // avoid unnecessary lookups
 		}
 		let info: ViewPackageInfo | undefined;
 		if (this.canRunNPM) {
-			info = await this.npmView(pack);
+			info = await this.npmView(pack, resource);
 		}
 		if (!info && this.onlineEnabled()) {
 			info = await this.npmjsView(pack);
@@ -280,10 +281,11 @@ export class PackageJSONContribution implements IJSONContribution {
 		return info;
 	}
 
-	private npmView(pack: string): Promise<ViewPackageInfo | undefined> {
+	private npmView(pack: string, resource: Uri | undefined): Promise<ViewPackageInfo | undefined> {
 		return new Promise((resolve, _reject) => {
 			const args = ['view', '--json', pack, 'description', 'dist-tags.latest', 'homepage', 'version'];
-			cp.execFile(process.platform === 'win32' ? 'npm.cmd' : 'npm', args, (error, stdout) => {
+			let cwd = resource && resource.scheme === 'file' ? dirname(resource.fsPath) : undefined;
+			cp.execFile(process.platform === 'win32' ? 'npm.cmd' : 'npm', args, { cwd }, (error, stdout) => {
 				if (!error) {
 					try {
 						const content = JSON.parse(stdout);
@@ -325,14 +327,14 @@ export class PackageJSONContribution implements IJSONContribution {
 		return undefined;
 	}
 
-	public getInfoContribution(_fileName: string, location: Location): Thenable<MarkedString[] | null> | null {
+	public getInfoContribution(resource: Uri, location: Location): Thenable<MarkedString[] | null> | null {
 		if (!this.isEnabled()) {
 			return null;
 		}
 		if ((location.matches(['dependencies', '*']) || location.matches(['devDependencies', '*']) || location.matches(['optionalDependencies', '*']) || location.matches(['peerDependencies', '*']))) {
 			const pack = location.path[location.path.length - 1];
 			if (typeof pack === 'string') {
-				return this.fetchPackageInfo(pack).then(info => {
+				return this.fetchPackageInfo(pack, resource).then(info => {
 					if (info) {
 						return [this.getDocumentation(info.description, info.version, info.homepage)];
 					}

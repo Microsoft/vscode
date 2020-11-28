@@ -1,0 +1,357 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"description": "Defines a dev container",
+	"allowComments": true,
+	"allowTrailingCommas": true,
+	"definitions": {
+		"devContainerCommon": {
+			"type": "object",
+			"properties": {
+				"name": {
+					"type": "string",
+					"description": "A name to show for the workspace folder."
+				},
+				"extensions": {
+					"type": "array",
+					"description": "An array of extensions that should be installed into the container.",
+					"items": {
+						"type": "string",
+						"pattern": "^([a-z0-9A-Z][a-z0-9\\-A-Z]*)\\.([a-z0-9A-Z][a-z0-9\\-A-Z]*)(@(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?)?$",
+						"errorMessage": "Expected format: '${publisher}.${name}' or '${publisher}.${name}@${version}'. Example: 'ms-dotnettools.csharp'."
+					}
+				},
+				"settings": {
+					"$ref": "vscode://schemas/settings/machine",
+					"description": "Machine specific settings that should be copied into the container. These are only copied when connecting to the container for the first time, rebuilding the container then triggers it again."
+				},
+				"forwardPorts": {
+					"type": "array",
+					"description": "Ports that are forwarded from the container to the local machine.",
+					"items": {
+						"type": "integer",
+						"maximum": 65535,
+						"minimum": 0
+					}
+				},
+				"remoteEnv": {
+					"type": "object",
+					"additionalProperties": {
+						"type": [
+							"string",
+							"null"
+						]
+					},
+					"description": "Remote environment variables. If these are used in the Integrated Terminal, make sure the 'Terminal > Integrated: Inherit Env' setting is enabled."
+				},
+				"remoteUser": {
+					"type": "string",
+					"description": "The user VS Code Server will be started with. The default is the same user as the container."
+				},
+				"initializeCommand": {
+					"type": [
+						"string",
+						"array"
+					],
+					"description": "A command to run locally before anything else. If this is a single string, it will be run in a shell. If this is an array of strings, it will be run as a single command without shell.",
+					"items": {
+						"type": "string"
+					}
+				},
+				"postCreateCommand": {
+					"type": [
+						"string",
+						"array"
+					],
+					"description": "A command to run after creating the container. If this is a single string, it will be run in a shell. If this is an array of strings, it will be run as a single command without shell.",
+					"items": {
+						"type": "string"
+					}
+				},
+				"postStartCommand": {
+					"type": [
+						"string",
+						"array"
+					],
+					"description": "A command to run after starting the container. If this is a single string, it will be run in a shell. If this is an array of strings, it will be run as a single command without shell.",
+					"items": {
+						"type": "string"
+					}
+				},
+				"postAttachCommand": {
+					"type": [
+						"string",
+						"array"
+					],
+					"description": "A command to run after attaching to the container. If this is a single string, it will be run in a shell. If this is an array of strings, it will be run as a single command without shell.",
+					"items": {
+						"type": "string"
+					}
+				},
+				"devPort": {
+					"type": "integer",
+					"description": "The port VS Code can use to connect to its backend."
+				},
+				"userEnvProbe": {
+					"type": "string",
+					"enum": [
+						"none",
+						"loginShell",
+						"loginInteractiveShell",
+						"interactiveShell"
+					],
+					"description": "User environment probe to run. The default is none."
+				},
+				"codespaces": {
+					"type": "object",
+					"additionalProperties": true,
+					"description": "Codespaces-specific configuration."
+				}
+			}
+		},
+		"nonComposeBase": {
+			"type": "object",
+			"properties": {
+				"appPort": {
+					"type": [
+						"integer",
+						"string",
+						"array"
+					],
+					"description": "Application ports that are exposed by the container. This can be a single port or an array of ports. Each port can be a number or a string. A number is mapped to the same port on the host. A string is passed to Docker unchanged and can be used to map ports differently, e.g. \"8000:8010\".",
+					"items": {
+						"type": [
+							"integer",
+							"string"
+						]
+					}
+				},
+				"containerEnv": {
+					"type": "object",
+					"additionalProperties": {
+						"type": "string"
+					},
+					"description": "Container environment variables."
+				},
+				"containerUser": {
+					"type": "string",
+					"description": "The user the container will be started with. The default is the user on the Docker image."
+				},
+				"updateRemoteUserUID": {
+					"type": "boolean",
+					"description": "Controls whether on Linux the container's user should be updated with the local user's UID and GID. On by default."
+				},
+				"mounts": {
+					"type": "array",
+					"description": "Mount points to set up when creating the container. See Docker's documentation for the --mount option for the supported syntax.",
+					"items": {
+						"type": "string"
+					}
+				},
+				"runArgs": {
+					"type": "array",
+					"description": "The arguments required when starting in the container.",
+					"items": {
+						"type": "string"
+					}
+				},
+				"shutdownAction": {
+					"type": "string",
+					"enum": [
+						"none",
+						"stopContainer"
+					],
+					"description": "Action to take when the VS Code window is closed. The default is to stop the container."
+				},
+				"overrideCommand": {
+					"type": "boolean",
+					"description": "Whether to overwrite the command specified in the image. The default is true."
+				},
+				"workspaceFolder": {
+					"type": "string",
+					"description": "The path of the workspace folder inside the container."
+				},
+				"workspaceMount": {
+					"type": "string",
+					"description": "The --mount parameter for docker run. The default is to mount the project folder at /workspaces/$project."
+				}
+			}
+		},
+		"dockerfileContainer": {
+			"oneOf": [
+				{
+					"type": "object",
+					"properties": {
+						"build": {
+							"type": "object",
+							"description": "Docker build-related options.",
+							"allOf": [
+								{
+									"type": "object",
+									"properties": {
+										"dockerfile": {
+											"type": "string",
+											"description": "The location of the Dockerfile that defines the contents of the container. The path is relative to the folder containing the `devcontainer.json` file."
+										},
+										"context": {
+											"type": "string",
+											"description": "The location of the context folder for building the Docker image. The path is relative to the folder containing the `devcontainer.json` file."
+										}
+									},
+									"required": [
+										"dockerfile"
+									]
+								},
+								{
+									"$ref": "#/definitions/buildOptions"
+								}
+							]
+					}
+					},
+					"required": [
+						"build"
+					]
+				},
+				{
+					"allOf": [
+						{
+							"type": "object",
+							"properties": {
+								"dockerFile": {
+									"type": "string",
+									"description": "The location of the Dockerfile that defines the contents of the container. The path is relative to the folder containing the `devcontainer.json` file."
+								},
+								"context": {
+									"type": "string",
+									"description": "The location of the context folder for building the Docker image. The path is relative to the folder containing the `devcontainer.json` file."
+								}
+							},
+							"required": [
+								"dockerFile"
+							]
+						},
+						{
+							"type": "object",
+							"properties": {
+								"build": {
+									"description": "Docker build-related options.",
+									"$ref": "#/definitions/buildOptions"
+								}
+							}
+						}
+					]
+				}
+			]
+		},
+		"buildOptions": {
+			"type": "object",
+			"properties": {
+				"target": {
+					"type": "string",
+					"description": "Target stage in a multi-stage build."
+				},
+				"args": {
+					"type": "object",
+					"additionalProperties": {
+						"type": [
+							"string"
+						]
+					},
+					"description": "Build arguments."
+				}
+			}
+		},
+		"imageContainer": {
+			"type": "object",
+			"properties": {
+				"image": {
+					"type": "string",
+					"description": "The docker image that will be used to create the container."
+				}
+			},
+			"required": [
+				"image"
+			]
+		},
+		"composeContainer": {
+			"type": "object",
+			"properties": {
+				"dockerComposeFile": {
+					"type": [
+						"string",
+						"array"
+					],
+					"description": "The name of the docker-compose file(s) used to start the services.",
+					"items": {
+						"type": "string"
+					}
+				},
+				"service": {
+					"type": "string",
+					"description": "The service you want to work on."
+				},
+				"runServices": {
+					"type": "array",
+					"description": "An array of services that should be started and stopped.",
+					"items": {
+						"type": "string"
+					}
+				},
+				"workspaceFolder": {
+					"type": "string",
+					"description": "The path of the workspace folder inside the container. This is typically the target path of a volume mount in the docker-compose.yml."
+				},
+				"shutdownAction": {
+					"type": "string",
+					"enum": [
+						"none",
+						"stopCompose"
+					],
+					"description": "Action to take when the VS Code window is closed. The default is to stop the containers."
+				}
+			},
+			"required": [
+				"dockerComposeFile",
+				"service",
+				"workspaceFolder"
+			]
+		}
+	},
+	"oneOf": [
+		{
+			"allOf": [
+				{
+					"oneOf": [
+						{
+							"allOf": [
+								{
+									"oneOf": [
+										{
+											"$ref": "#/definitions/dockerfileContainer"
+										},
+										{
+											"$ref": "#/definitions/imageContainer"
+										}
+									]
+								},
+								{
+									"$ref": "#/definitions/nonComposeBase"
+								}
+							]
+						},
+						{
+							"$ref": "#/definitions/composeContainer"
+						}
+					]
+				},
+				{
+					"$ref": "#/definitions/devContainerCommon"
+				}
+			]
+		},
+		{
+			"type": "object",
+			"$ref": "#/definitions/devContainerCommon",
+			"additionalProperties": false
+		}
+	]
+}

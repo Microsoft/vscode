@@ -13,7 +13,7 @@ const bootstrapNode = require('./bootstrap-node');
 bootstrapNode.removeGlobalNodeModuleLookupPaths();
 
 // Enable ASAR in our forked processes
-bootstrap.enableASARSupport();
+bootstrap.enableASARSupport(undefined);
 
 if (process.env['VSCODE_INJECT_NODE_MODULE_LOOKUP_PATH']) {
 	bootstrapNode.injectNodeModuleLookupPath(process.env['VSCODE_INJECT_NODE_MODULE_LOOKUP_PATH']);
@@ -81,7 +81,9 @@ function pipeLoggingToParent() {
 		// to start the stacktrace where the console message was being written
 		if (process.env.VSCODE_LOG_STACK === 'true') {
 			const stack = new Error().stack;
-			argsArray.push({ __$stack: stack.split('\n').slice(3).join('\n') });
+			if (stack) {
+				argsArray.push({ __$stack: stack.split('\n').slice(3).join('\n') });
+			}
 		}
 
 		try {
@@ -114,7 +116,9 @@ function pipeLoggingToParent() {
 	 */
 	function safeSend(arg) {
 		try {
-			process.send(arg);
+			if (process.send) {
+				process.send(arg);
+			}
 		} catch (error) {
 			// Can happen if the parent channel is closed meanwhile
 		}

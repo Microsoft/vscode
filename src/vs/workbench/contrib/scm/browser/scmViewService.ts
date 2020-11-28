@@ -5,10 +5,21 @@
 
 import { DisposableStore } from 'vs/base/common/lifecycle';
 import { Emitter, Event } from 'vs/base/common/event';
-import { ISCMViewService, ISCMRepository, ISCMService, ISCMViewVisibleRepositoryChangeEvent, ISCMMenus } from 'vs/workbench/contrib/scm/common/scm';
+import { ISCMViewService, ISCMRepository, ISCMService, ISCMViewVisibleRepositoryChangeEvent, ISCMMenus, ISCMProvider } from 'vs/workbench/contrib/scm/common/scm';
 import { Iterable } from 'vs/base/common/iterator';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { SCMMenus } from 'vs/workbench/contrib/scm/browser/menus';
+import { IStorageService, StorageScope, StorageTarget } from 'vs/platform/storage/common/storage';
+import { debounce } from 'vs/base/common/decorators';
+
+function getProviderStorageKey(provider: ISCMProvider): string {
+	return `${provider.contextValue}:${provider.label}${provider.rootUri ? `:${provider.rootUri.toString()}` : ''}`;
+}
+
+export interface ISCMViewServiceState {
+	readonly all: string[];
+	readonly visible: number[];
+}
 
 export class SCMViewService implements ISCMViewService {
 
@@ -16,6 +27,9 @@ export class SCMViewService implements ISCMViewService {
 
 	readonly menus: ISCMMenus;
 
+	private didFinishLoading: boolean = false;
+	private provisionalVisibleRepository: ISCMRepository | undefined;
+	private previousState: ISCMViewServiceState | undefined;
 	private disposables = new DisposableStore();
 
 	private _visibleRepositoriesSet = new Set<ISCMRepository>();
@@ -84,7 +98,8 @@ export class SCMViewService implements ISCMViewService {
 
 	constructor(
 		@ISCMService private readonly scmService: ISCMService,
-		@IInstantiationService instantiationService: IInstantiationService
+		@IInstantiationService instantiationService: IInstantiationService,
+		@IStorageService private readonly storageService: IStorageService
 	) {
 		this.menus = instantiationService.createInstance(SCMMenus);
 
@@ -94,13 +109,63 @@ export class SCMViewService implements ISCMViewService {
 		for (const repository of scmService.repositories) {
 			this.onDidAddRepository(repository);
 		}
+
+		try {
+			this.previousState = JSON.parse(storageService.get('scm:view:visibleRepositories', StorageScope.WORKSPACE, ''));
+			this.eventuallyFinishLoading();
+		} catch {
+			// noop
+		}
+
+		storageService.onWillSaveState(this.onWillSaveState, this, this.disposables);
 	}
 
 	private onDidAddRepository(repository: ISCMRepository): void {
+		if (!this.didFinishLoading) {
+			this.eventuallyFinishLoading();
+		}
+
+		let removed: Iterable<ISCMRepository> = Iterable.empty();
+
+		if (this.previousState) {
+			const index = this.previousState.all.indexOf(getProviderStorageKey(repository.provider));
+
+			if (index === -1) { // saw a repo we did not expect
+				const added: ISCMRepository[] = [];
+				for (const repo of this.scmService.repositories) { // all should be visible
+					if (!this._visibleRepositoriesSet.has(repo)) {
+						added.push(repository);
+					}
+				}
+
+				this._visibleRepositories = [...this.scmService.repositories];
+				this._visibleRepositoriesSet = new Set(this.scmService.repositories);
+				this._onDidChangeRepositories.fire({ added, removed: Iterable.empty() });
+				this.finishLoading();
+				return;
+			}
+
+			const visible = this.previousState.visible.indexOf(index) > -1;
+
+			if (!visible) {
+				if (this._visibleRepositories.length === 0) { // should make it visible, until other repos come along
+					this.provisionalVisibleRepository = repository;
+				} else {
+					return;
+				}
+			} else {
+				if (this.provisionalVisibleRepository) {
+					this._visibleRepositories = [];
+					this._visibleRepositoriesSet = new Set();
+					removed = [this.provisionalVisibleRepository];
+					this.provisionalVisibleRepository = undefined;
+				}
+			}
+		}
+
 		this._visibleRepositories.push(repository);
 		this._visibleRepositoriesSet.add(repository);
-
-		this._onDidChangeRepositories.fire({ added: [repository], removed: Iterable.empty() });
+		this._onDidChangeRepositories.fire({ added: [repository], removed });
 
 		if (!this._focusedRepository) {
 			this.focus(repository);
@@ -108,6 +173,10 @@ export class SCMViewService implements ISCMViewService {
 	}
 
 	private onDidRemoveRepository(repository: ISCMRepository): void {
+		if (!this.didFinishLoading) {
+			this.eventuallyFinishLoading();
+		}
+
 		const index = this._visibleRepositories.indexOf(repository);
 
 		if (index > -1) {
@@ -164,6 +233,32 @@ export class SCMViewService implements ISCMViewService {
 
 		this._focusedRepository = repository;
 		this._onDidFocusRepository.fire(repository);
+	}
+
+	private onWillSaveState(): void {
+		if (!this.didFinishLoading) { // don't remember state, if the workbench didn't really finish loading
+			return;
+		}
+
+		const all = this.scmService.repositories.map(r => getProviderStorageKey(r.provider));
+		const visible = this.visibleRepositories.map(r => all.indexOf(getProviderStorageKey(r.provider)));
+		const raw = JSON.stringify({ all, visible });
+
+		this.storageService.store('scm:view:visibleRepositories', raw, StorageScope.WORKSPACE, StorageTarget.MACHINE);
+	}
+
+	@debounce(2000)
+	private eventuallyFinishLoading(): void {
+		this.finishLoading();
+	}
+
+	private finishLoading(): void {
+		if (this.didFinishLoading) {
+			return;
+		}
+
+		this.didFinishLoading = true;
+		this.previousState = undefined;
 	}
 
 	dispose(): void {

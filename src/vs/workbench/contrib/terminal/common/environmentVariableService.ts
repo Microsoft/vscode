@@ -85,7 +85,7 @@ export class EnvironmentVariableService implements IEnvironmentVariableService {
 			}
 		});
 		const stringifiedJson = JSON.stringify(collectionsJson);
-		this._storageService.store2(ENVIRONMENT_VARIABLE_COLLECTIONS_KEY, stringifiedJson, StorageScope.WORKSPACE, StorageTarget.MACHINE);
+		this._storageService.store(ENVIRONMENT_VARIABLE_COLLECTIONS_KEY, stringifiedJson, StorageScope.WORKSPACE, StorageTarget.MACHINE);
 	}
 
 	@debounce(1000)

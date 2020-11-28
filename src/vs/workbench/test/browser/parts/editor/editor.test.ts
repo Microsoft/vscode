@@ -75,7 +75,7 @@ suite('Workbench editor', () => {
 		assert.equal(EditorResourceAccessor.getOriginalUri(file, { filterByScheme: [Schemas.file, Schemas.untitled] })!.toString(), file.resource.toString());
 		assert.ok(!EditorResourceAccessor.getOriginalUri(file, { filterByScheme: Schemas.untitled }));
 
-		const diffEditorInput = new DiffEditorInput('name', 'description', untitled, file);
+		const diffEditorInput = instantiationService.createInstance(DiffEditorInput, 'name', 'description', untitled, file, undefined);
 
 		assert.ok(!EditorResourceAccessor.getCanonicalUri(diffEditorInput));
 		assert.ok(!EditorResourceAccessor.getCanonicalUri(diffEditorInput, { filterByScheme: Schemas.file }));

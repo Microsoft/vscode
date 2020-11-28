@@ -168,7 +168,7 @@ export class LocalizationWorkbenchContribution extends Disposable implements IWo
 									isSecondary: true,
 									run: () => {
 										languagePackSuggestionIgnoreList.push(language);
-										this.storageService.store2(
+										this.storageService.store(
 											LANGUAGEPACK_SUGGESTION_IGNORE_STORAGE_KEY,
 											JSON.stringify(languagePackSuggestionIgnoreList),
 											StorageScope.GLOBAL,

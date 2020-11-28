@@ -31,6 +31,8 @@ export interface IRemoteAgentService {
 	 * Get the remote environment. Can return an error.
 	 */
 	getRawEnvironment(): Promise<IRemoteAgentEnvironment | null>;
+
+	whenExtensionsReady(): Promise<void>;
 	/**
 	 * Scan remote extensions.
 	 */

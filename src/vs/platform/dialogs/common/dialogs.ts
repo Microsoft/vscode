@@ -22,6 +22,29 @@ export interface ICheckbox {
 	checked?: boolean;
 }
 
+export interface IConfirmDialogArgs {
+	confirmation: IConfirmation;
+}
+
+export interface IShowDialogArgs {
+	severity: Severity;
+	message: string;
+	buttons: string[];
+	options?: IDialogOptions;
+}
+
+export interface IInputDialogArgs extends IShowDialogArgs {
+	inputs: IInput[],
+}
+
+export interface IDialog {
+	confirmArgs?: IConfirmDialogArgs;
+	showArgs?: IShowDialogArgs;
+	inputArgs?: IInputDialogArgs;
+}
+
+export type IDialogResult = IConfirmationResult | IInputResult | IShowResult;
+
 export interface IConfirmation {
 	title?: string;
 	type?: DialogType;
@@ -167,6 +190,40 @@ export interface IInput {
 }
 
 /**
+ * A handler to bring up modal dialogs.
+ */
+export interface IDialogHandler {
+	/**
+	 * Ask the user for confirmation with a modal dialog.
+	 */
+	confirm(confirmation: IConfirmation): Promise<IConfirmationResult>;
+
+	/**
+	 * Present a modal dialog to the user.
+	 *
+	 * @returns A promise with the selected choice index. If the user refused to choose,
+	 * then a promise with index of `cancelId` option is returned. If there is no such
+	 * option then promise with index `0` is returned.
+	 */
+	show(severity: Severity, message: string, buttons: string[], options?: IDialogOptions): Promise<IShowResult>;
+
+	/**
+	 * Present a modal dialog to the user asking for input.
+	 *
+	 *  @returns A promise with the selected choice index. If the user refused to choose,
+	 * then a promise with index of `cancelId` option is returned. If there is no such
+	 * option then promise with index `0` is returned. In addition, the values for the
+	 * inputs are returned as well.
+	 */
+	input(severity: Severity, message: string, buttons: string[], inputs: IInput[], options?: IDialogOptions): Promise<IInputResult>;
+
+	/**
+	 * Present the about dialog to the user.
+	 */
+	about(): Promise<void>;
+}
+
+/**
  * A service to bring up modal dialogs.
  *
  * Note: use the `INotificationService.prompt()` method for a non-modal way to ask
@@ -218,20 +275,23 @@ export interface IFileDialogService {
 	/**
 	 * The default path for a new file based on previously used files.
 	 * @param schemeFilter The scheme of the file path. If no filter given, the scheme of the current window is used.
+	 * Falls back to user home in the absence of enough information to find a better URI.
 	 */
-	defaultFilePath(schemeFilter?: string): URI | undefined;
+	defaultFilePath(schemeFilter?: string): Promise<URI>;
 
 	/**
 	 * The default path for a new folder based on previously used folders.
 	 * @param schemeFilter The scheme of the folder path. If no filter given, the scheme of the current window is used.
+	 * Falls back to user home in the absence of enough information to find a better URI.
 	 */
-	defaultFolderPath(schemeFilter?: string): URI | undefined;
+	defaultFolderPath(schemeFilter?: string): Promise<URI>;
 
 	/**
 	 * The default path for a new workspace based on previously used workspaces.
 	 * @param schemeFilter The scheme of the workspace path. If no filter given, the scheme of the current window is used.
+	 * Falls back to user home in the absence of enough information to find a better URI.
 	 */
-	defaultWorkspacePath(schemeFilter?: string, filename?: string): URI | undefined;
+	defaultWorkspacePath(schemeFilter?: string, filename?: string): Promise<URI>;
 
 	/**
 	 * Shows a file-folder selection dialog and opens the selected entry.

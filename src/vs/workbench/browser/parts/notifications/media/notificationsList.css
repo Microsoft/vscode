@@ -105,18 +105,27 @@
 	overflow: hidden;
 }
 
+.monaco-workbench .notifications-list-container .notification-list-item .notification-list-item-buttons-container > .monaco-button-dropdown,
+.monaco-workbench .notifications-list-container .notification-list-item .notification-list-item-buttons-container > .monaco-button {
+	margin: 4px 5px; /* allows button focus outline to be visible */
+}
+
 .monaco-workbench .notifications-list-container .notification-list-item .notification-list-item-buttons-container .monaco-button {
+	outline-offset: 2px !important;
+}
+
+.monaco-workbench .notifications-list-container .notification-list-item .notification-list-item-buttons-container .monaco-text-button {
 	width: fit-content;
 	width: -moz-fit-content;
 	padding: 5px 10px;
-	margin: 4px 5px; /* allows button focus outline to be visible */
+	display: inline-block;	/* to enable ellipsis in text overflow */
 	font-size: 12px;
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
 
-.monaco-workbench .notifications-list-container .notification-list-item .notification-list-item-buttons-container .monaco-text-button {
-	display: inline-block;	/* to enable ellipsis in text overflow */
+.monaco-workbench .notifications-list-container .notification-list-item .notification-list-item-buttons-container .monaco-dropdown-button {
+	padding: 5px
 }
 
 /** Notification: Progress */

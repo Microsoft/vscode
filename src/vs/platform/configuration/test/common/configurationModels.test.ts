@@ -7,9 +7,10 @@ import { ConfigurationModel, DefaultConfigurationModel, ConfigurationChangeEvent
 import { Extensions, IConfigurationRegistry } from 'vs/platform/configuration/common/configurationRegistry';
 import { Registry } from 'vs/platform/registry/common/platform';
 import { URI } from 'vs/base/common/uri';
-import { Workspace, WorkspaceFolder } from 'vs/platform/workspace/common/workspace';
+import { WorkspaceFolder } from 'vs/platform/workspace/common/workspace';
 import { join } from 'vs/base/common/path';
 import { ConfigurationTarget } from 'vs/platform/configuration/common/configuration';
+import { Workspace } from 'vs/platform/workspace/test/common/testWorkspace';
 
 suite('ConfigurationModel', () => {
 

@@ -343,15 +343,7 @@ class CodeMain {
 
 	private handleStartupDataDirError(environmentService: IEnvironmentMainService, error: NodeJS.ErrnoException): void {
 		if (error.code === 'EACCES' || error.code === 'EPERM') {
-			const directories = [environmentService.userDataPath];
-
-			if (environmentService.extensionsPath) {
-				directories.push(environmentService.extensionsPath);
-			}
-
-			if (XDG_RUNTIME_DIR) {
-				directories.push(XDG_RUNTIME_DIR);
-			}
+			const directories = coalesce([environmentService.userDataPath, environmentService.extensionsPath, XDG_RUNTIME_DIR]);
 
 			this.showStartupWarningDialog(
 				localize('startupDataDirError', "Unable to write program user data."),

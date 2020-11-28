@@ -12,8 +12,8 @@ jobs:
         if: contains(github.event.issue.labels.*.name, '*english-please')
         uses: actions/checkout@v2
         with:
-          repository: 'microsoft/vscode-github-triage-actions'
-          ref: v39
+          repository: "microsoft/vscode-github-triage-actions"
+          ref: v40
           path: ./actions
       - name: Install Actions
         if: contains(github.event.issue.labels.*.name, '*english-please')

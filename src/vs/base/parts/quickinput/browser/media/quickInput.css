@@ -130,6 +130,11 @@
 	padding: 5px 5px 2px 5px;
 }
 
+.quick-input-message > .codicon {
+	margin: 0 0.2em;
+	vertical-align: text-bottom;
+}
+
 .quick-input-progress.monaco-progress-container {
 	position: relative;
 }

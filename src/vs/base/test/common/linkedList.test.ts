@@ -14,7 +14,7 @@ suite('LinkedList', function () {
 		assert.equal(list.size, elements.length);
 
 		// assert toArray
-		assert.deepEqual(list.toArray(), elements);
+		assert.deepEqual(Array.from(list), elements);
 
 		// assert Symbol.iterator (1)
 		assert.deepEqual([...list], elements);

@@ -175,6 +175,7 @@ export default class FileConfigurationManager extends Disposable {
 
 		const preferences: Proto.UserPreferences = {
 			quotePreference: this.getQuoteStylePreference(preferencesConfig),
+			// @ts-expect-error until TypeScript 4.2 API
 			importModuleSpecifierPreference: getImportModuleSpecifierPreference(preferencesConfig),
 			importModuleSpecifierEnding: getImportModuleSpecifierEndingPreference(preferencesConfig),
 			allowTextChangesInNewFiles: document.uri.scheme === fileSchemes.file,
@@ -198,6 +199,7 @@ export default class FileConfigurationManager extends Disposable {
 
 function getImportModuleSpecifierPreference(config: vscode.WorkspaceConfiguration) {
 	switch (config.get<string>('importModuleSpecifier')) {
+		case 'project-relative': return 'project-relative';
 		case 'relative': return 'relative';
 		case 'non-relative': return 'non-relative';
 		default: return undefined;

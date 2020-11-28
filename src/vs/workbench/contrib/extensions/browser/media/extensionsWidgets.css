@@ -15,7 +15,7 @@
 	font-size: 80%;
 }
 
-.extension-ratings > .codicon[class*='codicon-star']:not(:first-child) {
+.extension-ratings > .codicon[class*='codicon-extensions-rating']:not(:first-child) {
 	margin-left: 3px;
 }
 
@@ -28,17 +28,17 @@
 }
 
 /* TODO @misolori make this a color token */
-.extension-ratings .codicon-star-full,
-.extension-ratings .codicon-star-half {
+.extension-ratings .codicon-extensions-star-full,
+.extension-ratings .codicon-extensions-star-half {
 	color: #FF8E00 !important;
 }
 
 .extension-install-count .codicon,
-.extension-action.codicon-gear {
+.extension-action.codicon-extensions-manage {
 	color: inherit;
 }
 
-.extension-ratings .codicon-star-empty {
+.extension-ratings .codicon-extensions-star-empty {
 	opacity: .4;
 }
 

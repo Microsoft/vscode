@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { ViewContainer, IViewsRegistry, IViewDescriptor, Extensions as ViewExtensions, IViewContainerModel, IAddedViewDescriptorRef, IViewDescriptorRef, IAddedViewDescriptorState } from 'vs/workbench/common/views';
+import { ViewContainer, IViewsRegistry, IViewDescriptor, Extensions as ViewExtensions, IViewContainerModel, IAddedViewDescriptorRef, IViewDescriptorRef, IAddedViewDescriptorState, defaultViewIcon } from 'vs/workbench/common/views';
 import { IContextKeyService, IReadableSet } from 'vs/platform/contextkey/common/contextkey';
 import { IStorageService, StorageScope, IStorageValueChangeEvent, StorageTarget } from 'vs/platform/storage/common/storage';
 import { Registry } from 'vs/platform/registry/common/platform';
@@ -14,6 +14,7 @@ import { URI } from 'vs/base/common/uri';
 import { move } from 'vs/base/common/arrays';
 import { isUndefined, isUndefinedOrNull } from 'vs/base/common/types';
 import { isEqual } from 'vs/base/common/resources';
+import { ThemeIcon } from 'vs/platform/theme/common/themeService';
 
 export function getViewsStateStorageId(viewContainerStorageId: string): string { return `${viewContainerStorageId}.hidden`; }
 
@@ -121,7 +122,7 @@ class ViewDescriptorsState extends Disposable {
 		}
 
 		if (Object.keys(storedViewsStates).length > 0) {
-			this.storageService.store2(this.workspaceViewsStateStorageId, JSON.stringify(storedViewsStates), StorageScope.WORKSPACE, StorageTarget.MACHINE);
+			this.storageService.store(this.workspaceViewsStateStorageId, JSON.stringify(storedViewsStates), StorageScope.WORKSPACE, StorageTarget.MACHINE);
 		} else {
 			this.storageService.remove(this.workspaceViewsStateStorageId, StorageScope.WORKSPACE);
 		}
@@ -267,7 +268,7 @@ class ViewDescriptorsState extends Disposable {
 	}
 
 	private setStoredGlobalViewsStatesValue(value: string): void {
-		this.storageService.store2(this.globalViewsStateStorageId, value, StorageScope.GLOBAL, StorageTarget.USER);
+		this.storageService.store(this.globalViewsStateStorageId, value, StorageScope.GLOBAL, StorageTarget.USER);
 	}
 
 }
@@ -286,8 +287,8 @@ export class ViewContainerModel extends Disposable implements IViewContainerMode
 	// Container Info
 	private _title!: string;
 	get title(): string { return this._title; }
-	private _icon: URI | string | undefined;
-	get icon(): URI | string | undefined { return this._icon; }
+	private _icon: URI | ThemeIcon | undefined;
+	get icon(): URI | ThemeIcon | undefined { return this._icon; }
 
 	private _onDidChangeContainerInfo = this._register(new Emitter<{ title?: boolean, icon?: boolean }>());
 	readonly onDidChangeContainerInfo = this._onDidChangeContainerInfo.event;
@@ -347,9 +348,9 @@ export class ViewContainerModel extends Disposable implements IViewContainerMode
 			titleChanged = true;
 		}
 
-		const icon = useDefaultContainerInfo ? this.container.icon : this.visibleViewDescriptors[0]?.containerIcon || 'codicon-window';
+		const icon = useDefaultContainerInfo ? this.container.icon : this.visibleViewDescriptors[0]?.containerIcon || defaultViewIcon;
 		let iconChanged: boolean = false;
-		if (URI.isUri(icon) && URI.isUri(this._icon) ? isEqual(icon, this._icon) : this._icon !== icon) {
+		if (!this.isEqualIcon(icon)) {
 			this._icon = icon;
 			iconChanged = true;
 		}
@@ -357,6 +358,15 @@ export class ViewContainerModel extends Disposable implements IViewContainerMode
 		if (titleChanged || iconChanged) {
 			this._onDidChangeContainerInfo.fire({ title: titleChanged, icon: iconChanged });
 		}
+	}
+
+	private isEqualIcon(icon: URI | ThemeIcon | undefined): boolean {
+		if (URI.isUri(icon)) {
+			return URI.isUri(this._icon) && isEqual(icon, this._icon);
+		} else if (ThemeIcon.isThemeIcon(icon)) {
+			return ThemeIcon.isThemeIcon(this._icon) && ThemeIcon.isEqual(icon, this._icon);
+		}
+		return icon === this._icon;
 	}
 
 	isVisible(id: string): boolean {
@@ -375,7 +385,13 @@ export class ViewContainerModel extends Disposable implements IViewContainerMode
 		const added: IAddedViewDescriptorRef[] = [];
 		const removed: IViewDescriptorRef[] = [];
 
-		for (const { visibleIndex, viewDescriptorItem, visible, size } of viewDescriptors.map(({ id, visible, size }) => ({ ...this.find(id), visible, size }))) {
+		for (const { id, visible, size } of viewDescriptors) {
+			const foundViewDescriptor = this.findAndIgnoreIfNotFound(id);
+			if (!foundViewDescriptor) {
+				continue;
+			}
+
+			const { viewDescriptorItem, visibleIndex } = foundViewDescriptor;
 			const viewDescriptor = viewDescriptorItem.viewDescriptor;
 
 			if (!viewDescriptor.canToggleVisibility) {
@@ -619,6 +635,14 @@ export class ViewContainerModel extends Disposable implements IViewContainerMode
 	}
 
 	private find(id: string): { index: number, visibleIndex: number, viewDescriptorItem: IViewDescriptorItem; } {
+		const result = this.findAndIgnoreIfNotFound(id);
+		if (result) {
+			return result;
+		}
+		throw new Error(`view descriptor ${id} not found`);
+	}
+
+	private findAndIgnoreIfNotFound(id: string): { index: number, visibleIndex: number, viewDescriptorItem: IViewDescriptorItem; } | undefined {
 		for (let i = 0, visibleIndex = 0; i < this.viewDescriptorItems.length; i++) {
 			const viewDescriptorItem = this.viewDescriptorItems[i];
 			if (viewDescriptorItem.viewDescriptor.id === id) {
@@ -628,7 +652,7 @@ export class ViewContainerModel extends Disposable implements IViewContainerMode
 				visibleIndex++;
 			}
 		}
-		throw new Error(`view descriptor ${id} not found`);
+		return undefined;
 	}
 
 	private compareViewDescriptors(a: IViewDescriptorItem, b: IViewDescriptorItem): number {

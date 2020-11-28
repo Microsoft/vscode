@@ -15,7 +15,7 @@ import { ExtHostDocuments } from 'vs/workbench/api/common/extHostDocuments';
 import { IExtensionStoragePaths } from 'vs/workbench/api/common/extHostStoragePaths';
 import { ExtHostWebviews, toExtensionData } from 'vs/workbench/api/common/extHostWebview';
 import { ExtHostWebviewPanels } from 'vs/workbench/api/common/extHostWebviewPanels';
-import { EditorViewColumn } from 'vs/workbench/api/common/shared/editor';
+import { EditorGroupColumn } from 'vs/workbench/common/editor';
 import type * as vscode from 'vscode';
 import { Cache } from './cache';
 import * as extHostProtocol from './extHost.protocol';
@@ -252,7 +252,7 @@ export class ExtHostCustomEditors implements extHostProtocol.ExtHostCustomEditor
 		handle: extHostProtocol.WebviewHandle,
 		viewType: string,
 		title: string,
-		position: EditorViewColumn,
+		position: EditorGroupColumn,
 		options: modes.IWebviewOptions & modes.IWebviewPanelOptions,
 		cancellation: CancellationToken,
 	): Promise<void> {

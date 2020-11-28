@@ -25,7 +25,7 @@ import { IBackupFileService, IResolvedBackup } from 'vs/workbench/services/backu
 import { ITextSnapshot } from 'vs/editor/common/model';
 import { IExtensionService, NullExtensionService } from 'vs/workbench/services/extensions/common/extensions';
 import { ClassifiedEvent, GDPRClassification, StrictPropertyChecker } from 'vs/platform/telemetry/common/gdprTypings';
-import { IKeymapService } from 'vs/workbench/services/keybinding/common/keymapInfo';
+import { IKeyboardLayoutService } from 'vs/platform/keyboardLayout/common/keyboardLayout';
 import { isWindows } from 'vs/base/common/platform';
 import { IWebviewService, WebviewContentOptions, WebviewElement, WebviewExtensionDescription, WebviewIcons, WebviewOptions, WebviewOverlay } from 'vs/workbench/contrib/webview/browser/webview';
 import { ITextFileService } from 'vs/workbench/services/textfile/common/textfiles';
@@ -44,7 +44,7 @@ import { CustomTask, ContributedTask, InMemoryTask, TaskRunSource, ConfiguringTa
 import { TaskSystemInfo } from 'vs/workbench/contrib/tasks/common/taskSystem';
 import { IExtensionTipsService, IConfigBasedExtensionTip, IExecutableBasedExtensionTip, IWorkspaceTips } from 'vs/platform/extensionManagement/common/extensionManagement';
 import { IWorkspaceTagsService, Tags } from 'vs/workbench/contrib/tags/common/workspaceTags';
-import { AsbtractOutputChannelModelService, IOutputChannelModelService } from 'vs/workbench/services/output/common/outputChannelModel';
+import { AbstractOutputChannelModelService, IOutputChannelModelService } from 'vs/workbench/contrib/output/common/outputChannelModel';
 import { joinPath } from 'vs/base/common/resources';
 import { VSBuffer } from 'vs/base/common/buffer';
 import { IIntegrityService, IntegrityTestResult } from 'vs/workbench/services/integrity/common/integrity';
@@ -53,7 +53,7 @@ import { NativeParsedArgs } from 'vs/platform/environment/common/argv';
 import { IExtensionHostDebugParams } from 'vs/platform/environment/common/environment';
 import type { IWorkbenchConstructionOptions } from 'vs/workbench/workbench.web.api';
 import { Schemas } from 'vs/base/common/network';
-import { BrowserKeymapService } from 'vs/workbench/services/keybinding/browser/keymapService';
+import { BrowserKeyboardLayoutService } from 'vs/workbench/services/keybinding/browser/keyboardLayoutService';
 import { TerminalInstanceService } from 'vs/workbench/contrib/terminal/browser/terminalInstanceService';
 import { ITerminalInstanceService } from 'vs/workbench/contrib/terminal/browser/terminal';
 
@@ -83,12 +83,10 @@ export class SimpleNativeWorkbenchEnvironmentService implements INativeWorkbench
 	get tmpDir(): URI { return joinPath(this.userRoamingDataHome, 'tmp'); }
 	get logsPath(): string { return joinPath(this.userRoamingDataHome, 'logs').path; }
 
-	get backupWorkspaceHome(): URI { return joinPath(this.userRoamingDataHome, 'Backups', 'workspace'); }
-	updateBackupPath(newPath: string | undefined): void { }
-
 	sessionId = this.configuration.sessionId;
 	machineId = this.configuration.machineId;
 	remoteAuthority = this.configuration.remoteAuthority;
+	os = { release: 'unknown' };
 
 	options?: IWorkbenchConstructionOptions | undefined;
 	logExtensionHostCommunication?: boolean | undefined;
@@ -123,7 +121,7 @@ export class SimpleNativeWorkbenchEnvironmentService implements INativeWorkbench
 
 	sharedIPCHandle: string = undefined!;
 
-	extensionsPath?: string | undefined;
+	extensionsPath: string = undefined!;
 	extensionsDownloadPath: string = undefined!;
 	builtinExtensionsPath: string = undefined!;
 
@@ -429,6 +427,7 @@ export class SimpleRemoteAgentService implements IRemoteAgentService {
 	async getRawEnvironment(): Promise<IRemoteAgentEnvironment | null> { return null; }
 	async scanExtensions(skipExtensions?: ExtensionIdentifier[]): Promise<IExtensionDescription[]> { return []; }
 	async scanSingleExtension(extensionLocation: URI, isBuiltin: boolean): Promise<IExtensionDescription | null> { return null; }
+	async whenExtensionsReady(): Promise<void> { }
 }
 
 //#endregion
@@ -497,9 +496,9 @@ registerSingleton(ITelemetryService, SimpleTelemetryService);
 
 //#region Keymap Service (borrowed from browser for now to enable keyboard access)
 
-class SimpleKeymapService extends BrowserKeymapService { }
+class SimpleKeyboardLayoutService extends BrowserKeyboardLayoutService { }
 
-registerSingleton(IKeymapService, SimpleKeymapService);
+registerSingleton(IKeyboardLayoutService, SimpleKeyboardLayoutService);
 
 //#endregion
 
@@ -698,6 +697,7 @@ class SimpleTaskService implements ITaskService {
 	tryResolveTask(configuringTask: ConfiguringTask): Promise<CustomTask | ContributedTask | InMemoryTask | undefined> { throw new Error('Method not implemented.'); }
 	getTasksForGroup(group: string): Promise<Task[]> { throw new Error('Method not implemented.'); }
 	getRecentlyUsedTasks(): LinkedMap<string, string> { throw new Error('Method not implemented.'); }
+	removeRecentlyUsedTask(taskRecentlyUsedKey: string): void { throw new Error('Method not implemented.'); }
 	migrateRecentTasks(tasks: Task[]): Promise<void> { throw new Error('Method not implemented.'); }
 	createSorter(): TaskSorter { throw new Error('Method not implemented.'); }
 	getTaskDescription(task: CustomTask | ContributedTask | InMemoryTask | ConfiguringTask): string | undefined { throw new Error('Method not implemented.'); }
@@ -742,7 +742,7 @@ class SimpleWorkspaceTagsService implements IWorkspaceTagsService {
 	declare readonly _serviceBrand: undefined;
 
 	async getTags(): Promise<Tags> { return Object.create(null); }
-	getTelemetryWorkspaceId(workspace: IWorkspace, state: WorkbenchState): string | undefined { return undefined; }
+	async getTelemetryWorkspaceId(workspace: IWorkspace, state: WorkbenchState): Promise<string | undefined> { return undefined; }
 	async getHashedRemotesFromUri(workspaceUri: URI, stripEndingDotGit?: boolean): Promise<string[]> { return []; }
 }
 
@@ -753,7 +753,7 @@ registerSingleton(IWorkspaceTagsService, SimpleWorkspaceTagsService);
 
 //#region Output Channel
 
-class SimpleOutputChannelModelService extends AsbtractOutputChannelModelService {
+class SimpleOutputChannelModelService extends AbstractOutputChannelModelService {
 	declare readonly _serviceBrand: undefined;
 }
 

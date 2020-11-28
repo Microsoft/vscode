@@ -25,12 +25,15 @@ import { Registry } from 'vs/platform/registry/common/platform';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 import { IWorkspaceContextService, WorkbenchState } from 'vs/platform/workspace/common/workspace';
 import { RangeHighlightDecorations } from 'vs/workbench/browser/parts/editor/rangeDecorations';
-import { DefaultSettingsHeaderWidget, EditPreferenceWidget, SettingsGroupTitleWidget, SettingsHeaderWidget, preferencesEditIcon } from 'vs/workbench/contrib/preferences/browser/preferencesWidgets';
+import { DefaultSettingsHeaderWidget, EditPreferenceWidget, SettingsGroupTitleWidget, SettingsHeaderWidget } from 'vs/workbench/contrib/preferences/browser/preferencesWidgets';
 import { IFilterResult, IPreferencesEditorModel, IPreferencesService, ISetting, ISettingsEditorModel, ISettingsGroup } from 'vs/workbench/services/preferences/common/preferences';
 import { DefaultSettingsEditorModel, SettingsEditorModel, WorkspaceConfigurationEditorModel } from 'vs/workbench/services/preferences/common/preferencesModels';
 import { IMarkerService, IMarkerData, MarkerSeverity, MarkerTag } from 'vs/platform/markers/common/markers';
 import { IWorkbenchEnvironmentService } from 'vs/workbench/services/environment/common/environmentService';
 import { EditorOption } from 'vs/editor/common/config/editorOptions';
+import { FindDecorations } from 'vs/editor/contrib/find/findDecorations';
+import { ThemeIcon } from 'vs/platform/theme/common/themeService';
+import { settingsEditIcon } from 'vs/workbench/contrib/preferences/browser/preferencesIcons';
 
 export interface IPreferencesRenderer<T> extends IDisposable {
 	readonly preferencesModel: IPreferencesEditorModel<T>;
@@ -569,14 +572,9 @@ export class FilteredMatchesRenderer extends Disposable implements HiddenAreasPr
 	private createDecoration(range: IRange): IModelDeltaDecoration {
 		return {
 			range,
-			options: FilteredMatchesRenderer._FIND_MATCH
+			options: FindDecorations._FIND_MATCH_DECORATION
 		};
 	}
-
-	private static readonly _FIND_MATCH = ModelDecorationOptions.register({
-		stickiness: TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
-		className: 'findMatch'
-	});
 
 	private computeHiddenRanges(filteredGroups: ISettingsGroup[] | undefined, allSettingsGroups: ISettingsGroup[]): IRange[] {
 		// Hide the contents of hidden groups
@@ -614,15 +612,10 @@ export class HighlightMatchesRenderer extends Disposable {
 		this.decorationIds = this.editor.deltaDecorations(this.decorationIds, matches.map(match => this.createDecoration(match)));
 	}
 
-	private static readonly _FIND_MATCH = ModelDecorationOptions.register({
-		stickiness: TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
-		className: 'findMatch'
-	});
-
 	private createDecoration(range: IRange): IModelDeltaDecoration {
 		return {
 			range,
-			options: HighlightMatchesRenderer._FIND_MATCH
+			options: FindDecorations._FIND_MATCH_DECORATION
 		};
 	}
 
@@ -746,7 +739,7 @@ class EditSettingRenderer extends Disposable {
 		const decorations = this.editor.getLineDecorations(line);
 		if (decorations) {
 			for (const { options } of decorations) {
-				if (options.glyphMarginClassName && options.glyphMarginClassName.indexOf(preferencesEditIcon.classNames) === -1) {
+				if (options.glyphMarginClassName && options.glyphMarginClassName.indexOf(ThemeIcon.asClassName(settingsEditIcon)) === -1) {
 					return false;
 				}
 			}

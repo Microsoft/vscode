@@ -37,12 +37,12 @@ export class ExtHostDecorations implements ExtHostDecorationsShape {
 		this._proxy = extHostRpc.getProxy(MainContext.MainThreadDecorations);
 	}
 
-	registerDecorationProvider(provider: vscode.FileDecorationProvider, extensionId: ExtensionIdentifier): vscode.Disposable {
+	registerFileDecorationProvider(provider: vscode.FileDecorationProvider, extensionId: ExtensionIdentifier): vscode.Disposable {
 		const handle = ExtHostDecorations._handlePool++;
 		this._provider.set(handle, { provider, extensionId });
 		this._proxy.$registerDecorationProvider(handle, extensionId.value);
 
-		const listener = provider.onDidChange(e => {
+		const listener = provider.onDidChangeFileDecorations && provider.onDidChangeFileDecorations(e => {
 			if (!e) {
 				this._proxy.$onDidChange(handle, null);
 				return;
@@ -75,7 +75,7 @@ export class ExtHostDecorations implements ExtHostDecorationsShape {
 		});
 
 		return new Disposable(() => {
-			listener.dispose();
+			listener?.dispose();
 			this._proxy.$unregisterDecorationProvider(handle);
 			this._provider.delete(handle);
 		});

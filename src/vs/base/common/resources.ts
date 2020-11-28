@@ -10,8 +10,6 @@ import { equalsIgnoreCase, compare as strCompare } from 'vs/base/common/strings'
 import { Schemas } from 'vs/base/common/network';
 import { isWindows, isLinux } from 'vs/base/common/platform';
 import { CharCode } from 'vs/base/common/charCode';
-import { ParsedExpression, IExpression, parse } from 'vs/base/common/glob';
-import { TernarySearchTree } from 'vs/base/common/map';
 
 export function originalFSPath(uri: URI): string {
 	return uriToFsPath(uri, true);
@@ -57,6 +55,11 @@ export interface IExtUri {
 	 * @param ignoreFragment Ignore the fragment (defaults to `false`)
 	 */
 	getComparisonKey(uri: URI, ignoreFragment?: boolean): string;
+
+	/**
+	 * Whether the casing of the path-component of the uri should be ignored.
+	 */
+	ignorePathCasing(uri: URI): boolean;
 
 	// --- path math
 
@@ -159,6 +162,10 @@ export class ExtUri implements IExtUri {
 			path: this._ignorePathCasing(uri) ? uri.path.toLowerCase() : undefined,
 			fragment: ignoreFragment ? null : undefined
 		}).toString();
+	}
+
+	ignorePathCasing(uri: URI): boolean {
+		return this._ignorePathCasing(uri);
 	}
 
 	isEqualOrParent(base: URI, parentCandidate: URI, ignoreFragment: boolean = false): boolean {
@@ -424,33 +431,6 @@ export namespace DataUri {
 		}
 
 		return metadata;
-	}
-}
-
-export class ResourceGlobMatcher {
-
-	private readonly globalExpression: ParsedExpression;
-	private readonly expressionsByRoot: TernarySearchTree<URI, { root: URI, expression: ParsedExpression }> = TernarySearchTree.forUris<{ root: URI, expression: ParsedExpression }>();
-
-	constructor(
-		globalExpression: IExpression,
-		rootExpressions: { root: URI, expression: IExpression }[]
-	) {
-		this.globalExpression = parse(globalExpression);
-		for (const expression of rootExpressions) {
-			this.expressionsByRoot.set(expression.root, { root: expression.root, expression: parse(expression.expression) });
-		}
-	}
-
-	matches(resource: URI): boolean {
-		const rootExpression = this.expressionsByRoot.findSubstr(resource);
-		if (rootExpression) {
-			const path = relativePath(rootExpression.root, resource);
-			if (path && !!rootExpression.expression(path)) {
-				return true;
-			}
-		}
-		return !!this.globalExpression(resource.path);
 	}
 }
 

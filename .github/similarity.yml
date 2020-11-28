@@ -1,5 +1,5 @@
 {
-    perform: true,
-    whenCreatedByTeam: false,
-    comment: "(Experimental duplicate detection)\nThanks for submitting this issue. Please also check if it is already covered by an existing one, like:\n${potentialDuplicates}"
+  perform: true,
+  whenCreatedByTeam: false,
+  comment: "(Experimental duplicate detection)\nThanks for submitting this issue. Please also check if it is already covered by an existing one, like:\n${potentialDuplicates}",
 }

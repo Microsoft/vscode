@@ -31,6 +31,8 @@ export abstract class AbstractCodeEditorService extends Disposable implements IC
 	private readonly _onDidChangeTransientModelProperty: Emitter<ITextModel> = this._register(new Emitter<ITextModel>());
 	public readonly onDidChangeTransientModelProperty: Event<ITextModel> = this._onDidChangeTransientModelProperty.event;
 
+	protected readonly _onDecorationTypeRegistered: Emitter<string> = this._register(new Emitter<string>());
+	public onDecorationTypeRegistered: Event<string> = this._onDecorationTypeRegistered.event;
 
 	private readonly _codeEditors: { [editorId: string]: ICodeEditor; };
 	private readonly _diffEditors: { [editorId: string]: IDiffEditor; };
@@ -93,6 +95,7 @@ export abstract class AbstractCodeEditorService extends Disposable implements IC
 	abstract registerDecorationType(key: string, options: IDecorationRenderOptions, parentTypeKey?: string, editor?: ICodeEditor): void;
 	abstract removeDecorationType(key: string): void;
 	abstract resolveDecorationOptions(decorationTypeKey: string | undefined, writable: boolean): IModelDecorationOptions;
+	abstract resolveDecorationCSSRules(decorationTypeKey: string): CSSRuleList | null;
 
 	private readonly _transientWatchers: { [uri: string]: ModelTransientSettingWatcher; } = {};
 	private readonly _modelProperties = new Map<string, Map<string, any>>();

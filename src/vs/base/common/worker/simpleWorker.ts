@@ -358,6 +358,10 @@ export class SimpleWorkerServer<H extends object> {
 					delete loaderConfig.paths['vs'];
 				}
 			}
+			if (typeof loaderConfig.trustedTypesPolicy !== undefined) {
+				// don't use, it has been destroyed during serialize
+				delete loaderConfig['trustedTypesPolicy'];
+			}
 
 			// Since this is in a web worker, enable catching errors
 			loaderConfig.catchError = true;

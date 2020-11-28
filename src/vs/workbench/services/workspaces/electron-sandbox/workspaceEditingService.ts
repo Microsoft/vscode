@@ -170,9 +170,9 @@ export class NativeWorkspaceEditingService extends AbstractWorkspaceEditingServi
 			await this.migrateStorage(result.workspace);
 
 			// Reinitialize backup service
-			this.environmentService.updateBackupPath(result.backupPath);
 			if (this.backupFileService instanceof BackupFileService) {
-				this.backupFileService.reinitialize();
+				const newBackupWorkspaceHome = result.backupPath ? URI.file(result.backupPath).with({ scheme: this.environmentService.userRoamingDataHome.scheme }) : undefined;
+				this.backupFileService.reinitialize(newBackupWorkspaceHome);
 			}
 		}
 

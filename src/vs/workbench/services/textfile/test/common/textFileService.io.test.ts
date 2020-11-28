@@ -310,13 +310,13 @@ export default function createSuite(params: Params) {
 		detectedEncoding = await detectEncodingByBOM(resource.fsPath);
 		assert.equal(detectedEncoding, UTF8_with_bom);
 
-		// ensure BOM preserved
-		await service.write(resource, content, { encoding: UTF8 });
+		// ensure BOM preserved if enforced
+		await service.write(resource, content, { encoding: UTF8_with_bom });
 		detectedEncoding = await detectEncodingByBOM(resource.fsPath);
 		assert.equal(detectedEncoding, UTF8_with_bom);
 
 		// allow to remove BOM
-		await service.write(resource, content, { encoding: UTF8, overwriteEncoding: true });
+		await service.write(resource, content, { encoding: UTF8 });
 		detectedEncoding = await detectEncodingByBOM(resource.fsPath);
 		assert.equal(detectedEncoding, null);
 
@@ -338,13 +338,13 @@ export default function createSuite(params: Params) {
 		detectedEncoding = await detectEncodingByBOM(resource.fsPath);
 		assert.equal(detectedEncoding, UTF8_with_bom);
 
-		// ensure BOM preserved
-		await service.write(resource, model.createSnapshot(), { encoding: UTF8 });
+		// ensure BOM preserved if enforced
+		await service.write(resource, model.createSnapshot(), { encoding: UTF8_with_bom });
 		detectedEncoding = await detectEncodingByBOM(resource.fsPath);
 		assert.equal(detectedEncoding, UTF8_with_bom);
 
 		// allow to remove BOM
-		await service.write(resource, model.createSnapshot(), { encoding: UTF8, overwriteEncoding: true });
+		await service.write(resource, model.createSnapshot(), { encoding: UTF8 });
 		detectedEncoding = await detectEncodingByBOM(resource.fsPath);
 		assert.equal(detectedEncoding, null);
 
@@ -360,7 +360,7 @@ export default function createSuite(params: Params) {
 		let detectedEncoding = await detectEncodingByBOM(resource.fsPath);
 		assert.equal(detectedEncoding, UTF8_with_bom);
 
-		await service.write(resource, 'Hello World');
+		await service.write(resource, 'Hello World', { encoding: detectedEncoding! });
 		detectedEncoding = await detectEncodingByBOM(resource.fsPath);
 		assert.equal(detectedEncoding, UTF8_with_bom);
 	});

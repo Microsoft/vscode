@@ -34,7 +34,7 @@ import { IWorkingCopyFileService } from 'vs/workbench/services/workingCopy/commo
 import { IUriIdentityService } from 'vs/workbench/services/uriIdentity/common/uriIdentity';
 import { IWorkspaceContextService } from 'vs/platform/workspace/common/workspace';
 import { WORKSPACE_EXTENSION } from 'vs/platform/workspaces/common/workspaces';
-import { UTF8, UTF8_with_bom, UTF16be, UTF16le, encodingExists, UTF8_BOM, detectEncodingByBOMFromBuffer, toEncodeReadable, toDecodeStream, IDecodeStreamResult } from 'vs/workbench/services/textfile/common/encoding';
+import { UTF8, UTF8_with_bom, UTF16be, UTF16le, encodingExists, toEncodeReadable, toDecodeStream, IDecodeStreamResult } from 'vs/workbench/services/textfile/common/encoding';
 import { consumeStream } from 'vs/base/common/stream';
 import { IModeService } from 'vs/editor/common/services/modeService';
 import { ILogService } from 'vs/platform/log/common/log';
@@ -459,7 +459,7 @@ export abstract class AbstractTextFileService extends Disposable implements ITex
 
 		// Try to place where last active file was if any
 		// Otherwise fallback to user home
-		return joinPath(this.fileDialogService.defaultFilePath() || (await this.pathService.userHome()), suggestedFilename);
+		return joinPath(await this.fileDialogService.defaultFilePath(), suggestedFilename);
 	}
 
 	suggestFilename(mode: string, untitledName: string) {
@@ -532,7 +532,6 @@ export class EncodingOracle extends Disposable implements IResourceEncodings {
 		@ITextResourceConfigurationService private textResourceConfigurationService: ITextResourceConfigurationService,
 		@IWorkbenchEnvironmentService private environmentService: IWorkbenchEnvironmentService,
 		@IWorkspaceContextService private contextService: IWorkspaceContextService,
-		@IFileService private fileService: IFileService,
 		@IUriIdentityService private readonly uriIdentityService: IUriIdentityService
 	) {
 		super();
@@ -569,26 +568,7 @@ export class EncodingOracle extends Disposable implements IResourceEncodings {
 	async getWriteEncoding(resource: URI, options?: IWriteTextFileOptions): Promise<{ encoding: string, addBOM: boolean }> {
 		const { encoding, hasBOM } = await this.getPreferredWriteEncoding(resource, options ? options.encoding : undefined);
 
-		// Some encodings come with a BOM automatically
-		if (hasBOM) {
-			return { encoding, addBOM: true };
-		}
-
-		// Ensure that we preserve an existing BOM if found for UTF8
-		// unless we are instructed to overwrite the encoding
-		const overwriteEncoding = options?.overwriteEncoding;
-		if (!overwriteEncoding && encoding === UTF8) {
-			try {
-				const buffer = (await this.fileService.readFile(resource, { length: UTF8_BOM.length })).value;
-				if (detectEncodingByBOMFromBuffer(buffer, buffer.byteLength) === UTF8_with_bom) {
-					return { encoding, addBOM: true };
-				}
-			} catch (error) {
-				// ignore - file might not exist
-			}
-		}
-
-		return { encoding, addBOM: false };
+		return { encoding, addBOM: hasBOM };
 	}
 
 	async getPreferredWriteEncoding(resource: URI, preferredEncoding?: string): Promise<IResourceEncoding> {

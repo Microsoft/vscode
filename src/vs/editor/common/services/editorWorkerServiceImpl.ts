@@ -3,12 +3,12 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { IntervalTimer } from 'vs/base/common/async';
+import { IntervalTimer, timeout } from 'vs/base/common/async';
 import { Disposable, IDisposable, dispose, toDisposable, DisposableStore } from 'vs/base/common/lifecycle';
 import { URI } from 'vs/base/common/uri';
 import { SimpleWorkerClient, logOnceWebWorkerWarning, IWorkerClient } from 'vs/base/common/worker/simpleWorker';
 import { DefaultWorkerFactory } from 'vs/base/worker/defaultWorkerFactory';
-import { IPosition, Position } from 'vs/editor/common/core/position';
+import { Position } from 'vs/editor/common/core/position';
 import { IRange, Range } from 'vs/editor/common/core/range';
 import { IChange } from 'vs/editor/common/editorCommon';
 import { ITextModel } from 'vs/editor/common/model';
@@ -105,7 +105,7 @@ export class EditorWorkerServiceImpl extends Disposable implements IEditorWorker
 			const sw = StopWatch.create(true);
 			const result = this._workerManager.withWorker().then(client => client.computeMoreMinimalEdits(resource, edits));
 			result.finally(() => this._logService.trace('FORMAT#computeMoreMinimalEdits', resource.toString(true), sw.elapsed()));
-			return result;
+			return Promise.race([result, timeout(1000).then(() => edits)]);
 
 		} else {
 			return Promise.resolve(undefined);
@@ -148,20 +148,47 @@ class WordBasedCompletionItemProvider implements modes.CompletionItemProvider {
 	}
 
 	async provideCompletionItems(model: ITextModel, position: Position): Promise<modes.CompletionList | undefined> {
-		const { wordBasedSuggestions } = this._configurationService.getValue<{ wordBasedSuggestions?: boolean }>(model.uri, position, 'editor');
-		if (!wordBasedSuggestions) {
+		type WordBasedSuggestionsConfig = {
+			wordBasedSuggestions?: boolean,
+			wordBasedSuggestionsMode?: 'currentDocument' | 'matchingDocuments' | 'allDocuments'
+		};
+		const config = this._configurationService.getValue<WordBasedSuggestionsConfig>(model.uri, position, 'editor');
+		if (!config.wordBasedSuggestions) {
 			return undefined;
 		}
-		if (!canSyncModel(this._modelService, model.uri)) {
-			return undefined; // File too large
+
+		const models: URI[] = [];
+		if (config.wordBasedSuggestionsMode === 'currentDocument') {
+			// only current file and only if not too large
+			if (canSyncModel(this._modelService, model.uri)) {
+				models.push(model.uri);
+			}
+		} else {
+			// either all files or files of same language
+			for (const candidate of this._modelService.getModels()) {
+				if (!canSyncModel(this._modelService, candidate.uri)) {
+					continue;
+				}
+				if (candidate === model) {
+					models.unshift(candidate.uri);
+
+				} else if (config.wordBasedSuggestionsMode === 'allDocuments' || candidate.getLanguageIdentifier().id === model.getLanguageIdentifier().id) {
+					models.push(candidate.uri);
+				}
+			}
 		}
 
+		if (models.length === 0) {
+			return undefined; // File too large, no other files
+		}
+
+		const wordDefRegExp = LanguageConfigurationRegistry.getWordDefinition(model.getLanguageIdentifier().id);
 		const word = model.getWordAtPosition(position);
 		const replace = !word ? Range.fromPositions(position) : new Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn);
 		const insert = replace.setEndPosition(position.lineNumber, position.column);
 
 		const client = await this._workerManager.withWorker();
-		const data = await client.textualSuggest(model.uri, position);
+		const data = await client.textualSuggest(models, word?.word, wordDefRegExp);
 		if (!data) {
 			return undefined;
 		}
@@ -463,17 +490,11 @@ export class EditorWorkerClient extends Disposable {
 		});
 	}
 
-	public textualSuggest(resource: URI, position: IPosition): Promise<{ words: string[], duration: number } | null> {
-		return this._withSyncedResources([resource]).then(proxy => {
-			let model = this._modelService.getModel(resource);
-			if (!model) {
-				return null;
-			}
-			let wordDefRegExp = LanguageConfigurationRegistry.getWordDefinition(model.getLanguageIdentifier().id);
-			let wordDef = wordDefRegExp.source;
-			let wordDefFlags = regExpFlags(wordDefRegExp);
-			return proxy.textualSuggest(resource.toString(), position, wordDef, wordDefFlags);
-		});
+	public async textualSuggest(resources: URI[], leadingWord: string | undefined, wordDefRegExp: RegExp): Promise<{ words: string[], duration: number } | null> {
+		const proxy = await this._withSyncedResources(resources);
+		const wordDef = wordDefRegExp.source;
+		const wordDefFlags = regExpFlags(wordDefRegExp);
+		return proxy.textualSuggest(resources.map(r => r.toString()), leadingWord, wordDef, wordDefFlags);
 	}
 
 	computeWordRanges(resource: URI, range: IRange): Promise<{ [word: string]: IRange[] } | null> {

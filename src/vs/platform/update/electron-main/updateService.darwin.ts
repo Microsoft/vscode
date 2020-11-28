@@ -56,7 +56,8 @@ export class DarwinUpdateService extends AbstractUpdateService {
 	}
 
 	protected buildUpdateFeedUrl(quality: string): string | undefined {
-		const url = createUpdateURL('darwin', quality);
+		const assetID = process.arch === 'x64' ? 'darwin' : 'darwin-arm64';
+		const url = createUpdateURL(assetID, quality);
 		try {
 			electron.autoUpdater.setFeedURL({ url });
 		} catch (e) {

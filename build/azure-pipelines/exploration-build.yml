@@ -1,40 +1,40 @@
 pool:
-  vmImage: 'Ubuntu-16.04'
+  vmImage: "Ubuntu-16.04"
 
 trigger:
   branches:
-    include: ['master']
+    include: ["master"]
 pr:
   branches:
-    include: ['master']
+    include: ["master"]
 
 steps:
-- task: NodeTool@0
-  inputs:
-    versionSpec: "12.14.1"
+  - task: NodeTool@0
+    inputs:
+      versionSpec: "12.18.3"
 
-- task: AzureKeyVault@1
-  displayName: 'Azure Key Vault: Get Secrets'
-  inputs:
-    azureSubscription: 'vscode-builds-subscription'
-    KeyVaultName: vscode
+  - task: AzureKeyVault@1
+    displayName: "Azure Key Vault: Get Secrets"
+    inputs:
+      azureSubscription: "vscode-builds-subscription"
+      KeyVaultName: vscode
 
-- script: |
-    set -e
+  - script: |
+      set -e
 
-    cat << EOF > ~/.netrc
-    machine github.com
-    login vscode
-    password $(github-distro-mixin-password)
-    EOF
+      cat << EOF > ~/.netrc
+      machine github.com
+      login vscode
+      password $(github-distro-mixin-password)
+      EOF
 
-    git config user.email "vscode@microsoft.com"
-    git config user.name "VSCode"
+      git config user.email "vscode@microsoft.com"
+      git config user.name "VSCode"
 
-    git checkout origin/electron-11.x.y
-    git merge origin/master
+      git checkout origin/electron-11.x.y
+      git merge origin/master
 
-    # Push master branch into exploration branch
-    git push origin HEAD:electron-11.x.y
+      # Push master branch into exploration branch
+      git push origin HEAD:electron-11.x.y
 
-  displayName: Sync & Merge Exploration
+    displayName: Sync & Merge Exploration

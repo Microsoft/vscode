@@ -125,7 +125,10 @@ export class WebviewProtocolProvider extends Disposable {
 		}
 	}
 
-	private async handleWebviewRequest(request: Electron.Request, callback: any) {
+	private async handleWebviewRequest(
+		request: Electron.ProtocolRequest,
+		callback: (response: string | Electron.ProtocolResponse) => void
+	) {
 		try {
 			const uri = URI.parse(request.url);
 			const entry = WebviewProtocolProvider.validWebviewFilePaths.get(uri.path);
@@ -144,8 +147,8 @@ export class WebviewProtocolProvider extends Disposable {
 	}
 
 	private async handleWebviewResourceRequest(
-		request: Electron.Request,
-		callback: (stream?: NodeJS.ReadableStream | Electron.StreamProtocolResponse | undefined) => void
+		request: Electron.ProtocolRequest,
+		callback: (stream: NodeJS.ReadableStream | Electron.ProtocolResponse) => void
 	) {
 		try {
 			const uri = URI.parse(request.url);
@@ -220,14 +223,14 @@ export class WebviewProtocolProvider extends Disposable {
 
 				if (result.type === WebviewResourceResponse.Type.AccessDenied) {
 					console.error('Webview: Cannot load resource outside of protocol root');
-					return callback({ data: null, statusCode: 401 });
+					return callback({ data: undefined, statusCode: 401 });
 				}
 			}
 		} catch {
 			// noop
 		}
 
-		return callback({ data: null, statusCode: 404 });
+		return callback({ data: undefined, statusCode: 404 });
 	}
 
 	public didLoadResource(requestId: number, content: VSBuffer | undefined) {

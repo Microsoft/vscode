@@ -126,7 +126,7 @@ export interface Location {
 	/**
 	 * Matches the locations path against a pattern consisting of strings (for properties) and numbers (for array indices).
 	 * '*' will match a single segment, of any property name or index.
-	 * '**' will match a sequece of segments or no segment, of any property name or index.
+	 * '**' will match a sequence of segments or no segment, of any property name or index.
 	 */
 	matches: (patterns: JSONPath) => boolean;
 	/**

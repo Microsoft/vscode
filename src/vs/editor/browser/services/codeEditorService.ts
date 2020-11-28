@@ -23,6 +23,7 @@ export interface ICodeEditorService {
 	readonly onDiffEditorRemove: Event<IDiffEditor>;
 
 	readonly onDidChangeTransientModelProperty: Event<ITextModel>;
+	readonly onDecorationTypeRegistered: Event<string>;
 
 
 	addCodeEditor(editor: ICodeEditor): void;
@@ -41,6 +42,7 @@ export interface ICodeEditorService {
 	registerDecorationType(key: string, options: IDecorationRenderOptions, parentTypeKey?: string, editor?: ICodeEditor): void;
 	removeDecorationType(key: string): void;
 	resolveDecorationOptions(typeKey: string, writable: boolean): IModelDecorationOptions;
+	resolveDecorationCSSRules(decorationTypeKey: string): CSSRuleList | null;
 
 	setModelProperty(resource: URI, key: string, value: any): void;
 	getModelProperty(resource: URI, key: string): any;

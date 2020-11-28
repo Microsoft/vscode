@@ -182,6 +182,12 @@
         "icon": "$(discard)"
       },
       {
+        "command": "git.rename",
+        "title": "%command.rename%",
+        "category": "Git",
+        "icon": "$(discard)"
+      },
+      {
         "command": "git.commit",
         "title": "%command.commit%",
         "category": "Git",
@@ -279,6 +285,11 @@
         "category": "Git"
       },
       {
+        "command": "git.checkoutDetached",
+        "title": "%command.checkoutDetached%",
+        "category": "Git"
+      },
+      {
         "command": "git.branch",
         "title": "%command.branch%",
         "category": "Git"
@@ -369,6 +380,11 @@
         "category": "Git"
       },
       {
+        "command": "git.pushTags",
+        "title": "%command.pushTags%",
+        "category": "Git"
+      },
+      {
         "command": "git.pushWithTags",
         "title": "%command.pushFollowTags%",
         "category": "Git"
@@ -376,6 +392,11 @@
       {
         "command": "git.pushWithTagsForce",
         "title": "%command.pushFollowTagsForce%",
+        "category": "Git"
+      },
+      {
+        "command": "git.cherryPick",
+        "title": "%command.cherryPick%",
         "category": "Git"
       },
       {
@@ -606,6 +627,10 @@
           "when": "config.git.enabled && !git.missing && gitOpenRepositoryCount != 0"
         },
         {
+          "command": "git.rename",
+          "when": "config.git.enabled && !git.missing && gitOpenRepositoryCount != 0 && resourceScheme == file"
+        },
+        {
           "command": "git.commit",
           "when": "config.git.enabled && !git.missing && gitOpenRepositoryCount != 0"
         },
@@ -706,6 +731,10 @@
           "when": "config.git.enabled && !git.missing && gitOpenRepositoryCount != 0"
         },
         {
+          "command": "git.cherryPick",
+          "when": "config.git.enabled && !git.missing && gitOpenRepositoryCount != 0"
+        },
+        {
           "command": "git.pull",
           "when": "config.git.enabled && !git.missing && gitOpenRepositoryCount != 0"
         },
@@ -768,6 +797,10 @@
         {
           "command": "git.pushWithTagsForce",
           "when": "config.git.enabled && !git.missing && config.git.allowForcePush && gitOpenRepositoryCount != 0"
+        },
+        {
+          "command": "git.pushTags",
+          "when": "config.git.enabled && !git.missing && gitOpenRepositoryCount != 0"
         },
         {
           "command": "git.addRemote",
@@ -1279,17 +1312,17 @@
         {
           "command": "git.stageSelectedRanges",
           "group": "2_git@1",
-          "when": "isInDiffRightEditor && config.git.enabled && !git.missing && gitOpenRepositoryCount != 0 && isInDiffEditor && resourceScheme =~ /^git$|^file$/"
+          "when": "isInDiffRightEditor && !isInEmbeddedDiffEditor && config.git.enabled && !git.missing && gitOpenRepositoryCount != 0 && isInDiffEditor && resourceScheme =~ /^git$|^file$/"
         },
         {
           "command": "git.unstageSelectedRanges",
           "group": "2_git@2",
-          "when": "isInDiffRightEditor && config.git.enabled && !git.missing && gitOpenRepositoryCount != 0 && isInDiffEditor && resourceScheme =~ /^git$|^file$/"
+          "when": "isInDiffRightEditor && !isInEmbeddedDiffEditor && config.git.enabled && !git.missing && gitOpenRepositoryCount != 0 && isInDiffEditor && resourceScheme =~ /^git$|^file$/"
         },
         {
           "command": "git.revertSelectedRanges",
           "group": "2_git@3",
-          "when": "isInDiffRightEditor && config.git.enabled && !git.missing && gitOpenRepositoryCount != 0 && isInDiffEditor && resourceScheme =~ /^git$|^file$/"
+          "when": "isInDiffRightEditor && !isInEmbeddedDiffEditor && config.git.enabled && !git.missing && gitOpenRepositoryCount != 0 && isInDiffEditor && resourceScheme =~ /^git$|^file$/"
         }
       ],
       "scm/change/title": [
@@ -1657,21 +1690,27 @@
           "scope": "resource"
         },
         "git.checkoutType": {
-          "type": "string",
-          "enum": [
-            "all",
-            "local",
-            "tags",
-            "remote"
-          ],
-          "enumDescriptions": [
-            "%config.checkoutType.all%",
-            "%config.checkoutType.local%",
-            "%config.checkoutType.tags%",
-            "%config.checkoutType.remote%"
-          ],
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "local",
+              "tags",
+              "remote"
+            ],
+            "enumDescriptions": [
+              "%config.checkoutType.local%",
+              "%config.checkoutType.tags%",
+              "%config.checkoutType.remote%"
+            ]
+          },
+          "uniqueItems": true,
           "markdownDescription": "%config.checkoutType%",
-          "default": "all"
+          "default": [
+            "local",
+            "remote",
+            "tags"
+          ]
         },
         "git.ignoreLegacyWarning": {
           "type": "boolean",
@@ -1751,6 +1790,28 @@
           "description": "%config.enableStatusBarSync%",
           "scope": "resource"
         },
+        "git.followTagsWhenSync": {
+          "type": "boolean",
+          "scope": "resource",
+          "default": false,
+          "description": "%config.followTagsWhenSync%"
+        },
+        "git.promptToSaveFilesBeforeStash": {
+          "type": "string",
+          "enum": [
+            "always",
+            "staged",
+            "never"
+          ],
+          "enumDescriptions": [
+            "%config.promptToSaveFilesBeforeStash.always%",
+            "%config.promptToSaveFilesBeforeStash.staged%",
+            "%config.promptToSaveFilesBeforeStash.never%"
+          ],
+          "scope": "resource",
+          "default": "always",
+          "description": "%config.promptToSaveFilesBeforeStash%"
+        },
         "git.promptToSaveFilesBeforeCommit": {
           "type": "string",
           "enum": [
@@ -1782,6 +1843,23 @@
           "markdownDescription": "%config.postCommitCommand%",
           "scope": "resource",
           "default": "none"
+        },
+        "git.openAfterClone": {
+          "type": "string",
+          "enum": [
+            "always",
+            "alwaysNewWindow",
+            "whenNoFolderOpen",
+            "prompt"
+          ],
+          "enumDescriptions": [
+            "%config.openAfterClone.always%",
+            "%config.openAfterClone.alwaysNewWindow%",
+            "%config.openAfterClone.whenNoFolderOpen%",
+            "%config.openAfterClone.prompt%"
+          ],
+          "default": "prompt",
+          "description": "%config.openAfterClone%"
         },
         "git.showInlineOpenFileAction": {
           "type": "boolean",
@@ -1973,6 +2051,12 @@
           "scope": "resource",
           "default": true,
           "description": "%config.terminalAuthentication%"
+        },
+        "git.useCommitInputAsStashMessage": {
+          "type": "boolean",
+          "scope": "resource",
+          "default": false,
+          "description": "%config.useCommitInputAsStashMessage%"
         },
         "git.githubAuthentication": {
           "deprecationMessage": "This setting is now deprecated, please use `github.gitAuthentication` instead."
@@ -2178,31 +2262,36 @@
       {
         "view": "scm",
         "contents": "%view.workbench.scm.empty%",
-        "when": "config.git.enabled && git.state == initialized && workbenchState == empty",
+        "when": "config.git.enabled && workbenchState == empty",
+        "enablement": "git.state == initialized",
         "group": "2_open@1"
       },
       {
         "view": "scm",
         "contents": "%view.workbench.scm.folder%",
-        "when": "config.git.enabled && git.state == initialized && workbenchState == folder",
+        "when": "config.git.enabled && workbenchState == folder",
+        "enablement": "git.state == initialized",
         "group": "5_scm@1"
       },
       {
         "view": "scm",
         "contents": "%view.workbench.scm.workspace%",
-        "when": "config.git.enabled && git.state == initialized && workbenchState == workspace && workspaceFolderCount != 0",
+        "when": "config.git.enabled && workbenchState == workspace && workspaceFolderCount != 0",
+        "enablement": "git.state == initialized",
         "group": "5_scm@1"
       },
       {
         "view": "scm",
         "contents": "%view.workbench.scm.emptyWorkspace%",
-        "when": "config.git.enabled && git.state == initialized && workbenchState == workspace && workspaceFolderCount == 0",
+        "when": "config.git.enabled && workbenchState == workspace && workspaceFolderCount == 0",
+        "enablement": "git.state == initialized",
         "group": "2_open@1"
       },
       {
         "view": "explorer",
         "contents": "%view.workbench.cloneRepository%",
-        "when": "config.git.enabled && git.state == initialized",
+        "when": "config.git.enabled",
+        "enablement": "git.state == initialized",
         "group": "5_scm@1"
       }
     ]

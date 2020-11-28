@@ -15,7 +15,7 @@ export class FileDialogService extends AbstractFileDialogService implements IFil
 		const schema = this.getFileSystemSchema(options);
 
 		if (!options.defaultUri) {
-			options.defaultUri = this.defaultFilePath(schema);
+			options.defaultUri = await this.defaultFilePath(schema);
 		}
 
 		return this.pickFileFolderAndOpenSimplified(schema, options, false);
@@ -25,7 +25,7 @@ export class FileDialogService extends AbstractFileDialogService implements IFil
 		const schema = this.getFileSystemSchema(options);
 
 		if (!options.defaultUri) {
-			options.defaultUri = this.defaultFilePath(schema);
+			options.defaultUri = await this.defaultFilePath(schema);
 		}
 
 		return this.pickFileAndOpenSimplified(schema, options, false);
@@ -35,7 +35,7 @@ export class FileDialogService extends AbstractFileDialogService implements IFil
 		const schema = this.getFileSystemSchema(options);
 
 		if (!options.defaultUri) {
-			options.defaultUri = this.defaultFolderPath(schema);
+			options.defaultUri = await this.defaultFolderPath(schema);
 		}
 
 		return this.pickFolderAndOpenSimplified(schema, options);
@@ -45,7 +45,7 @@ export class FileDialogService extends AbstractFileDialogService implements IFil
 		const schema = this.getFileSystemSchema(options);
 
 		if (!options.defaultUri) {
-			options.defaultUri = this.defaultWorkspacePath(schema);
+			options.defaultUri = await this.defaultWorkspacePath(schema);
 		}
 
 		return this.pickWorkspaceAndOpenSimplified(schema, options);

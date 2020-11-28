@@ -12,7 +12,7 @@ import { IExtensionDescription } from 'vs/platform/extensions/common/extensions'
 import * as typeConverters from 'vs/workbench/api/common/extHostTypeConverters';
 import { convertWebviewOptions, ExtHostWebview, ExtHostWebviews, toExtensionData } from 'vs/workbench/api/common/extHostWebview';
 import { IExtHostWorkspace } from 'vs/workbench/api/common/extHostWorkspace';
-import { EditorViewColumn } from 'vs/workbench/api/common/shared/editor';
+import { EditorGroupColumn } from 'vs/workbench/common/editor';
 import type * as vscode from 'vscode';
 import * as extHostProtocol from './extHost.protocol';
 import * as extHostTypes from './extHostTypes';
@@ -273,7 +273,7 @@ export class ExtHostWebviewPanels implements extHostProtocol.ExtHostWebviewPanel
 		viewType: string,
 		title: string,
 		state: any,
-		position: EditorViewColumn,
+		position: EditorGroupColumn,
 		options: modes.IWebviewOptions & modes.IWebviewPanelOptions
 	): Promise<void> {
 		const entry = this._serializers.get(viewType);

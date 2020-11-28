@@ -38,6 +38,15 @@
 	margin-right: 4px;
 }
 
+.monaco-workbench .repl .repl-tree .output.expression.value-and-source .count-badge-wrapper {
+	margin-right: 4px;
+}
+
+/* Allow the badge to be a bit shorter so it does not look cut off */
+.monaco-workbench .repl .repl-tree .output.expression.value-and-source .count-badge-wrapper .monaco-count-badge {
+	min-height: 16px;
+}
+
 .monaco-workbench .repl .repl-tree .monaco-tl-contents .arrow {
 	position:absolute;
 	left: 2px;

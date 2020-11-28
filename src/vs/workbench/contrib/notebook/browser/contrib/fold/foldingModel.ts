@@ -48,7 +48,11 @@ export class FoldingModel extends Disposable {
 		}));
 
 		this._viewModelStore.add(this._viewModel.onDidChangeSelection(() => {
-			const selectionHandles = this._viewModel!.selectionHandles;
+			if (!this._viewModel) {
+				return;
+			}
+
+			const selectionHandles = this._viewModel.selectionHandles;
 			const indexes = selectionHandles.map(handle =>
 				this._viewModel!.getCellIndex(this._viewModel!.getCellByHandle(handle)!)
 			);

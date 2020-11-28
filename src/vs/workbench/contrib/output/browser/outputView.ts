@@ -11,7 +11,6 @@ import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 import { IStorageService } from 'vs/platform/storage/common/storage';
 import { ITextResourceConfigurationService } from 'vs/editor/common/services/textResourceConfigurationService';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
-import { ServiceCollection } from 'vs/platform/instantiation/common/serviceCollection';
 import { IContextKeyService, IContextKey } from 'vs/platform/contextkey/common/contextkey';
 import { EditorInput, EditorOptions, IEditorOpenContext } from 'vs/workbench/common/editor';
 import { AbstractTextResourceEditor } from 'vs/workbench/browser/parts/editor/textResourceEditor';
@@ -164,11 +163,6 @@ export class OutputViewPane extends ViewPane {
 
 export class OutputEditor extends AbstractTextResourceEditor {
 
-	// Override the instantiation service to use to be the scoped one
-	private scopedInstantiationService: IInstantiationService;
-	protected get instantiationService(): IInstantiationService { return this.scopedInstantiationService; }
-	protected set instantiationService(instantiationService: IInstantiationService) { }
-
 	constructor(
 		@ITelemetryService telemetryService: ITelemetryService,
 		@IInstantiationService instantiationService: IInstantiationService,
@@ -177,15 +171,10 @@ export class OutputEditor extends AbstractTextResourceEditor {
 		@ITextResourceConfigurationService textResourceConfigurationService: ITextResourceConfigurationService,
 		@IThemeService themeService: IThemeService,
 		@IOutputService private readonly outputService: IOutputService,
-		@IContextKeyService private readonly contextKeyService: IContextKeyService,
 		@IEditorGroupsService editorGroupService: IEditorGroupsService,
 		@IEditorService editorService: IEditorService
 	) {
 		super(OUTPUT_VIEW_ID, telemetryService, instantiationService, storageService, textResourceConfigurationService, themeService, editorGroupService, editorService);
-
-		// Initially, the scoped instantiation service is the global
-		// one until the editor is created later on
-		this.scopedInstantiationService = instantiationService;
 	}
 
 	getId(): string {
@@ -258,13 +247,12 @@ export class OutputEditor extends AbstractTextResourceEditor {
 
 		parent.setAttribute('role', 'document');
 
-		// First create the scoped instantiation service and only then construct the editor using the scoped service
-		const scopedContextKeyService = this._register(this.contextKeyService.createScoped(parent));
-		this.scopedInstantiationService = this.instantiationService.createChild(new ServiceCollection([IContextKeyService, scopedContextKeyService]));
-
 		super.createEditor(parent);
 
-		CONTEXT_IN_OUTPUT.bindTo(scopedContextKeyService).set(true);
+		const scopedContextKeyService = this.scopedContextKeyService;
+		if (scopedContextKeyService) {
+			CONTEXT_IN_OUTPUT.bindTo(scopedContextKeyService).set(true);
+		}
 	}
 }
 

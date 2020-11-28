@@ -67,6 +67,10 @@ export class RemoteExtensionEnvironmentChannelClient {
 		};
 	}
 
+	static async whenExtensionsReady(channel: IChannel): Promise<void> {
+		await channel.call<void>('whenExtensionsReady');
+	}
+
 	static async scanExtensions(channel: IChannel, remoteAuthority: string, extensionDevelopmentPath: URI[] | undefined, skipExtensions: ExtensionIdentifier[]): Promise<IExtensionDescription[]> {
 		const args: IScanExtensionsArguments = {
 			language: platform.language,

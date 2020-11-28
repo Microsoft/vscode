@@ -16,16 +16,12 @@ import { ISingleEditOperation } from 'vs/editor/common/model';
 import { CommandsRegistry } from 'vs/platform/commands/common/commands';
 import { ITextEditorOptions, IResourceEditorInput, EditorActivation } from 'vs/platform/editor/common/editor';
 import { ServicesAccessor } from 'vs/platform/instantiation/common/instantiation';
-import { IOpenerService } from 'vs/platform/opener/common/opener';
 import { MainThreadDocumentsAndEditors } from 'vs/workbench/api/browser/mainThreadDocumentsAndEditors';
 import { MainThreadTextEditor } from 'vs/workbench/api/browser/mainThreadEditor';
 import { ExtHostContext, ExtHostEditorsShape, IApplyEditsOptions, IExtHostContext, ITextDocumentShowOptions, ITextEditorConfigurationUpdate, ITextEditorPositionData, IUndoStopOptions, MainThreadTextEditorsShape, TextEditorRevealType, IWorkspaceEditDto, WorkspaceEditType } from 'vs/workbench/api/common/extHost.protocol';
-import { EditorViewColumn, editorGroupToViewColumn, viewColumnToEditorGroup } from 'vs/workbench/api/common/shared/editor';
+import { editorGroupToViewColumn, EditorGroupColumn, viewColumnToEditorGroup } from 'vs/workbench/common/editor';
 import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
 import { IEditorGroupsService } from 'vs/workbench/services/editor/common/editorGroupsService';
-import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
-import { IQuickInputService } from 'vs/platform/quickinput/common/quickInput';
-import { openEditorWith } from 'vs/workbench/services/editor/common/editorOpenWith';
 import { IEnvironmentService } from 'vs/platform/environment/common/environment';
 import { IWorkingCopyService } from 'vs/workbench/services/workingCopy/common/workingCopyService';
 import { revive } from 'vs/base/common/marshalling';
@@ -161,7 +157,7 @@ export class MainThreadTextEditors implements MainThreadTextEditorsShape {
 		return this._documentsAndEditors.findTextEditorIdFor(editor);
 	}
 
-	async $tryShowEditor(id: string, position?: EditorViewColumn): Promise<void> {
+	async $tryShowEditor(id: string, position?: EditorGroupColumn): Promise<void> {
 		const mainThreadEditor = this._documentsAndEditors.getEditor(id);
 		if (mainThreadEditor) {
 			const model = mainThreadEditor.getModel();
@@ -296,59 +292,6 @@ export class MainThreadTextEditors implements MainThreadTextEditorsShape {
 }
 
 // --- commands
-
-CommandsRegistry.registerCommand('_workbench.open', async function (accessor: ServicesAccessor, args: [URI, ITextEditorOptions | undefined, EditorViewColumn | undefined, string | undefined]) {
-	const editorService = accessor.get(IEditorService);
-	const editorGroupService = accessor.get(IEditorGroupsService);
-	const openerService = accessor.get(IOpenerService);
-
-	const [resource, options, position, label] = args;
-
-	if (options || typeof position === 'number') {
-		// use editor options or editor view column as a hint to use the editor service for opening
-		await editorService.openEditor({ resource, options, label }, viewColumnToEditorGroup(editorGroupService, position));
-		return;
-	}
-
-	if (resource && resource.scheme === 'command') {
-		// do not allow to execute commands from here
-		return;
-
-	}
-	// finally, delegate to opener service
-	await openerService.open(resource);
-});
-
-CommandsRegistry.registerCommand('_workbench.openWith', (accessor: ServicesAccessor, args: [URI, string, ITextEditorOptions | undefined, EditorViewColumn | undefined]) => {
-	const editorService = accessor.get(IEditorService);
-	const editorGroupsService = accessor.get(IEditorGroupsService);
-	const configurationService = accessor.get(IConfigurationService);
-	const quickInputService = accessor.get(IQuickInputService);
-
-	const [resource, id, options, position] = args;
-
-	const group = editorGroupsService.getGroup(viewColumnToEditorGroup(editorGroupsService, position)) ?? editorGroupsService.activeGroup;
-	const textOptions: ITextEditorOptions = options ? { ...options, override: false } : { override: false };
-
-	const input = editorService.createEditorInput({ resource });
-	return openEditorWith(input, id, textOptions, group, editorService, configurationService, quickInputService);
-});
-
-
-CommandsRegistry.registerCommand('_workbench.diff', async function (accessor: ServicesAccessor, args: [URI, URI, string, string, ITextEditorOptions | undefined, EditorViewColumn | undefined]) {
-	const editorService = accessor.get(IEditorService);
-	const editorGroupService = accessor.get(IEditorGroupsService);
-
-	let [leftResource, rightResource, label, description, options, position] = args;
-
-	if (!options || typeof options !== 'object') {
-		options = {
-			preserveFocus: false
-		};
-	}
-
-	await editorService.openEditor({ leftResource, rightResource, label, description, options }, viewColumnToEditorGroup(editorGroupService, position));
-});
 
 CommandsRegistry.registerCommand('_workbench.revertAllDirty', async function (accessor: ServicesAccessor) {
 	const environmentService = accessor.get(IEnvironmentService);

@@ -23,7 +23,7 @@ export class ReferencesCodeLens extends vscode.CodeLens {
 	}
 }
 
-export abstract class TypeScriptBaseCodeLensProvider implements vscode.CodeLensProvider {
+export abstract class TypeScriptBaseCodeLensProvider implements vscode.CodeLensProvider<ReferencesCodeLens> {
 
 	public static readonly cancelledCommand: vscode.Command = {
 		// Cancellation is not an error. Just show nothing until we can properly re-compute the code lens
@@ -47,7 +47,7 @@ export abstract class TypeScriptBaseCodeLensProvider implements vscode.CodeLensP
 		return this.onDidChangeCodeLensesEmitter.event;
 	}
 
-	async provideCodeLenses(document: vscode.TextDocument, token: vscode.CancellationToken): Promise<vscode.CodeLens[]> {
+	async provideCodeLenses(document: vscode.TextDocument, token: vscode.CancellationToken): Promise<ReferencesCodeLens[]> {
 		const filepath = this.client.toOpenedFilePath(document);
 		if (!filepath) {
 			return [];

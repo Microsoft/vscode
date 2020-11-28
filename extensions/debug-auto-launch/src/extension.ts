@@ -9,9 +9,13 @@ import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 
 const localize = nls.loadMessageBundle();
-const TEXT_ALWAYS = localize('status.text.auto.attach.always', 'Auto Attach: Always');
-const TEXT_SMART = localize('status.text.auto.attach.smart', 'Auto Attach: Smart');
-const TEXT_WITH_FLAG = localize('status.text.auto.attach.withFlag', 'Auto Attach: With Flag');
+const TEXT_STATUSBAR_LABEL = {
+	[State.Disabled]: localize('status.text.auto.attach.disabled', 'Auto Attach: Disabled'),
+	[State.Always]: localize('status.text.auto.attach.always', 'Auto Attach: Always'),
+	[State.Smart]: localize('status.text.auto.attach.smart', 'Auto Attach: Smart'),
+	[State.OnlyWithFlag]: localize('status.text.auto.attach.withFlag', 'Auto Attach: With Flag'),
+};
+
 const TEXT_STATE_LABEL = {
 	[State.Disabled]: localize('debug.javascript.autoAttach.disabled.label', 'Disabled'),
 	[State.Always]: localize('debug.javascript.autoAttach.always.label', 'Always'),
@@ -41,6 +45,9 @@ const TEXT_STATE_DESCRIPTION = {
 };
 const TEXT_TOGGLE_WORKSPACE = localize('scope.workspace', 'Toggle auto attach in this workspace');
 const TEXT_TOGGLE_GLOBAL = localize('scope.global', 'Toggle auto attach on this machine');
+const TEXT_TEMP_DISABLE = localize('tempDisable.disable', 'Temporarily disable auto attach in this session');
+const TEXT_TEMP_ENABLE = localize('tempDisable.enable', 'Re-enable auto attach');
+const TEXT_TEMP_DISABLE_LABEL = localize('tempDisable.suffix', 'Auto Attach: Disabled');
 
 const TOGGLE_COMMAND = 'extension.node-debug.toggleAutoAttach';
 const STORAGE_IPC = 'jsDebugIpcState';
@@ -65,12 +72,13 @@ const enum State {
 let currentState: Promise<{ context: vscode.ExtensionContext; state: State | null }>;
 let statusItem: vscode.StatusBarItem | undefined; // and there is no status bar item
 let server: Promise<Server | undefined> | undefined; // auto attach server
+let isTemporarilyDisabled = false; // whether the auto attach server is disabled temporarily, reset whenever the state changes
 
 export function activate(context: vscode.ExtensionContext): void {
 	currentState = Promise.resolve({ context, state: null });
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand(TOGGLE_COMMAND, toggleAutoAttachSetting),
+		vscode.commands.registerCommand(TOGGLE_COMMAND, toggleAutoAttachSetting.bind(null, context)),
 	);
 
 	context.subscriptions.push(
@@ -108,24 +116,36 @@ function getDefaultScope(info: ReturnType<vscode.WorkspaceConfiguration['inspect
 	return vscode.ConfigurationTarget.Global;
 }
 
-type PickResult = { state: State } | { scope: vscode.ConfigurationTarget } | undefined;
+type PickResult = { state: State } | { setTempDisabled: boolean } | { scope: vscode.ConfigurationTarget } | undefined;
+type PickItem = vscode.QuickPickItem & ({ state: State } | { setTempDisabled: boolean });
 
-async function toggleAutoAttachSetting(scope?: vscode.ConfigurationTarget): Promise<void> {
+async function toggleAutoAttachSetting(context: vscode.ExtensionContext, scope?: vscode.ConfigurationTarget): Promise<void> {
 	const section = vscode.workspace.getConfiguration(SETTING_SECTION);
 	scope = scope || getDefaultScope(section.inspect(SETTING_STATE));
 
 	const isGlobalScope = scope === vscode.ConfigurationTarget.Global;
-	const quickPick = vscode.window.createQuickPick<vscode.QuickPickItem & { state: State }>();
+	const quickPick = vscode.window.createQuickPick<PickItem>();
 	const current = readCurrentState();
 
-	quickPick.items = [State.Always, State.Smart, State.OnlyWithFlag, State.Disabled].map(state => ({
+	const items: PickItem[] = [State.Always, State.Smart, State.OnlyWithFlag, State.Disabled].map(state => ({
 		state,
 		label: TEXT_STATE_LABEL[state],
 		description: TEXT_STATE_DESCRIPTION[state],
 		alwaysShow: true,
 	}));
 
-	quickPick.activeItems = quickPick.items.filter(i => i.state === current);
+	if (current !== State.Disabled) {
+		items.unshift({
+			setTempDisabled: !isTemporarilyDisabled,
+			label: isTemporarilyDisabled ? TEXT_TEMP_ENABLE : TEXT_TEMP_DISABLE,
+			alwaysShow: true,
+		});
+	}
+
+	quickPick.items = items;
+	quickPick.activeItems = isTemporarilyDisabled
+		? [items[0]]
+		: quickPick.items.filter(i => 'state' in i && i.state === current);
 	quickPick.title = isGlobalScope ? TEXT_TOGGLE_GLOBAL : TEXT_TOGGLE_WORKSPACE;
 	quickPick.buttons = [
 		{
@@ -155,37 +175,28 @@ async function toggleAutoAttachSetting(scope?: vscode.ConfigurationTarget): Prom
 	}
 
 	if ('scope' in result) {
-		return await toggleAutoAttachSetting(result.scope);
+		return await toggleAutoAttachSetting(context, result.scope);
 	}
 
 	if ('state' in result) {
 		section.update(SETTING_STATE, result.state, scope);
+	}
+
+	if ('setTempDisabled' in result) {
+		updateStatusBar(context, current, true);
+		isTemporarilyDisabled = result.setTempDisabled;
+		if (result.setTempDisabled) {
+			await destroyAttachServer();
+		} else {
+			await createAttachServer(context); // unsets temp disabled var internally
+		}
+		updateStatusBar(context, current, false);
 	}
 }
 
 function readCurrentState(): State {
 	const section = vscode.workspace.getConfiguration(SETTING_SECTION);
 	return section.get<State>(SETTING_STATE) ?? State.Disabled;
-}
-
-/**
- * Makes sure the status bar exists and is visible.
- */
-function ensureStatusBarExists(context: vscode.ExtensionContext) {
-	if (!statusItem) {
-		statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
-		statusItem.command = TOGGLE_COMMAND;
-		statusItem.tooltip = localize(
-			'status.tooltip.auto.attach',
-			'Automatically attach to node.js processes in debug mode',
-		);
-		statusItem.show();
-		context.subscriptions.push(statusItem);
-	} else {
-		statusItem.show();
-	}
-
-	return statusItem;
 }
 
 async function clearJsDebugAttachState(context: vscode.ExtensionContext) {
@@ -275,27 +286,45 @@ interface CachedIpcState {
 const transitions: { [S in State]: (context: vscode.ExtensionContext) => Promise<void> } = {
 	async [State.Disabled](context) {
 		await clearJsDebugAttachState(context);
-		statusItem?.hide();
 	},
 
 	async [State.OnlyWithFlag](context) {
 		await createAttachServer(context);
-		const statusItem = ensureStatusBarExists(context);
-		statusItem.text = TEXT_WITH_FLAG;
 	},
 
 	async [State.Smart](context) {
 		await createAttachServer(context);
-		const statusItem = ensureStatusBarExists(context);
-		statusItem.text = TEXT_SMART;
 	},
 
 	async [State.Always](context) {
 		await createAttachServer(context);
-		const statusItem = ensureStatusBarExists(context);
-		statusItem.text = TEXT_ALWAYS;
 	},
 };
+
+/**
+ * Ensures the status bar text reflects the current state.
+ */
+function updateStatusBar(context: vscode.ExtensionContext, state: State, busy = false) {
+	if (state === State.Disabled && !busy) {
+		statusItem?.hide();
+		return;
+	}
+
+	if (!statusItem) {
+		statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
+		statusItem.command = TOGGLE_COMMAND;
+		statusItem.tooltip = localize(
+			'status.tooltip.auto.attach',
+			'Automatically attach to node.js processes in debug mode',
+		);
+		context.subscriptions.push(statusItem);
+	}
+
+	let text = busy ? '$(loading) ' : '';
+	text += isTemporarilyDisabled ? TEXT_TEMP_DISABLE_LABEL : TEXT_STATUSBAR_LABEL[state];
+	statusItem.text = text;
+	statusItem.show();
+}
 
 /**
  * Updates the auto attach feature based on the user or workspace setting
@@ -306,7 +335,13 @@ function updateAutoAttach(newState: State) {
 			return { context, state: oldState };
 		}
 
+		if (oldState !== null) {
+			updateStatusBar(context, oldState, true);
+		}
+
 		await transitions[newState](context);
+		isTemporarilyDisabled = false;
+		updateStatusBar(context, newState, false);
 		return { context, state: newState };
 	});
 }

@@ -220,6 +220,10 @@ body.web {
 	opacity: 1 !important;
 }
 
+.monaco-workbench input[type="checkbox"]:focus {
+	outline-offset: 2px;
+}
+
 .monaco-workbench [tabindex="0"]:active,
 .monaco-workbench [tabindex="-1"]:active,
 .monaco-workbench select:active,

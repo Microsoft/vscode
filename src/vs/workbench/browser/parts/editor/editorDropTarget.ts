@@ -12,7 +12,7 @@ import { IThemeService, Themable } from 'vs/platform/theme/common/themeService';
 import { activeContrastBorder } from 'vs/platform/theme/common/colorRegistry';
 import { IEditorIdentifier, EditorInput, EditorOptions } from 'vs/workbench/common/editor';
 import { isMacintosh, isWeb } from 'vs/base/common/platform';
-import { GroupDirection, MergeGroupMode, OpenEditorContext } from 'vs/workbench/services/editor/common/editorGroupsService';
+import { GroupDirection, IEditorGroupsService, MergeGroupMode, OpenEditorContext } from 'vs/workbench/services/editor/common/editorGroupsService';
 import { toDisposable } from 'vs/base/common/lifecycle';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { RunOnceScheduler } from 'vs/base/common/async';
@@ -55,7 +55,8 @@ class DropOverlay extends Themable {
 		@IInstantiationService private instantiationService: IInstantiationService,
 		@IFileDialogService private readonly fileDialogService: IFileDialogService,
 		@IEditorService private readonly editorService: IEditorService,
-		@INotificationService private readonly notificationService: INotificationService
+		@INotificationService private readonly notificationService: INotificationService,
+		@IEditorGroupsService private readonly editorGroupService: IEditorGroupsService
 	) {
 		super(themeService);
 
@@ -144,8 +145,14 @@ class DropOverlay extends Themable {
 					}
 				}
 
-				// Position overlay
-				this.positionOverlay(e.offsetX, e.offsetY, isDraggingGroup);
+				// Position overlay and conditionally enable or disable
+				// editor group splitting support based on setting and
+				// keymodifiers used.
+				let splitOnDragAndDrop = !!this.editorGroupService.partOptions.splitOnDragAndDrop;
+				if (this.isToggleSplitOperation(e)) {
+					splitOnDragAndDrop = !splitOnDragAndDrop;
+				}
+				this.positionOverlay(e.offsetX, e.offsetY, isDraggingGroup, splitOnDragAndDrop);
 
 				// Make sure to stop any running cleanup scheduler to remove the overlay
 				if (this.cleanupOverlayScheduler.isScheduled()) {
@@ -320,7 +327,7 @@ class DropOverlay extends Themable {
 								// Try to come up with a good file path for the untitled
 								// editor by asking the file dialog service for the default
 								let proposedFilePath: URI | undefined = undefined;
-								const defaultFilePath = this.fileDialogService.defaultFilePath();
+								const defaultFilePath = await this.fileDialogService.defaultFilePath();
 								if (defaultFilePath) {
 									proposedFilePath = joinPath(defaultFilePath, name);
 								}
@@ -363,24 +370,33 @@ class DropOverlay extends Themable {
 		return (e.ctrlKey && !isMacintosh) || (e.altKey && isMacintosh);
 	}
 
-	private positionOverlay(mousePosX: number, mousePosY: number, isDraggingGroup: boolean): void {
+	private isToggleSplitOperation(e: DragEvent): boolean {
+		return (e.altKey && !isMacintosh) || (e.shiftKey && isMacintosh);
+	}
+
+	private positionOverlay(mousePosX: number, mousePosY: number, isDraggingGroup: boolean, enableSplitting: boolean): void {
 		const preferSplitVertically = this.accessor.partOptions.openSideBySideDirection === 'right';
 
 		const editorControlWidth = this.groupView.element.clientWidth;
 		const editorControlHeight = this.groupView.element.clientHeight - this.getOverlayOffsetHeight();
 
 		let edgeWidthThresholdFactor: number;
-		if (isDraggingGroup) {
-			edgeWidthThresholdFactor = preferSplitVertically ? 0.3 : 0.1; // give larger threshold when dragging group depending on preferred split direction
-		} else {
-			edgeWidthThresholdFactor = 0.1; // 10% threshold to split if dragging editors
-		}
-
 		let edgeHeightThresholdFactor: number;
-		if (isDraggingGroup) {
-			edgeHeightThresholdFactor = preferSplitVertically ? 0.1 : 0.3; // give larger threshold when dragging group depending on preferred split direction
+		if (enableSplitting) {
+			if (isDraggingGroup) {
+				edgeWidthThresholdFactor = preferSplitVertically ? 0.3 : 0.1; // give larger threshold when dragging group depending on preferred split direction
+			} else {
+				edgeWidthThresholdFactor = 0.1; // 10% threshold to split if dragging editors
+			}
+
+			if (isDraggingGroup) {
+				edgeHeightThresholdFactor = preferSplitVertically ? 0.1 : 0.3; // give larger threshold when dragging group depending on preferred split direction
+			} else {
+				edgeHeightThresholdFactor = 0.1; // 10% threshold to split if dragging editors
+			}
 		} else {
-			edgeHeightThresholdFactor = 0.1; // 10% threshold to split if dragging editors
+			edgeWidthThresholdFactor = 0;
+			edgeHeightThresholdFactor = 0;
 		}
 
 		const edgeWidthThreshold = editorControlWidth * edgeWidthThresholdFactor;

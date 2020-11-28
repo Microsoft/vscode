@@ -98,6 +98,8 @@ export class IconLabel extends Disposable {
 	private descriptionNode: FastLabelNode | HighlightedLabel | undefined;
 	private descriptionNodeFactory: () => FastLabelNode | HighlightedLabel;
 
+	private labelContainer: HTMLElement;
+
 	private hoverDelegate: IHoverDelegate | undefined = undefined;
 	private readonly customHovers: Map<HTMLElement, IDisposable> = new Map();
 
@@ -106,10 +108,10 @@ export class IconLabel extends Disposable {
 
 		this.domNode = this._register(new FastLabelNode(dom.append(container, dom.$('.monaco-icon-label'))));
 
-		const labelContainer = dom.append(this.domNode.element, dom.$('.monaco-icon-label-container'));
+		this.labelContainer = dom.append(this.domNode.element, dom.$('.monaco-icon-label-container'));
 
-		const nameContainer = dom.append(labelContainer, dom.$('span.monaco-icon-name-container'));
-		this.descriptionContainer = this._register(new FastLabelNode(dom.append(labelContainer, dom.$('span.monaco-icon-description-container'))));
+		const nameContainer = dom.append(this.labelContainer, dom.$('span.monaco-icon-name-container'));
+		this.descriptionContainer = this._register(new FastLabelNode(dom.append(this.labelContainer, dom.$('span.monaco-icon-description-container'))));
 
 		if (options?.supportHighlights) {
 			this.nameNode = new LabelWithHighlights(nameContainer, !!options.supportCodicons);
@@ -149,7 +151,7 @@ export class IconLabel extends Disposable {
 		}
 
 		this.domNode.className = classes.join(' ');
-		this.setupHover(this.domNode.element, options?.title);
+		this.setupHover(this.labelContainer, options?.title);
 
 		this.nameNode.setLabel(label, options);
 
@@ -201,10 +203,11 @@ export class IconLabel extends Disposable {
 			function mouseMove(this: HTMLElement, e: MouseEvent): any {
 				mouseX = e.x;
 			}
-			function mouseLeave(this: HTMLElement, e: MouseEvent): any {
+			function mouseLeaveOrDown(this: HTMLElement, e: MouseEvent): any {
 				isHovering = false;
 			}
-			const mouseLeaveDisposable = domEvent(htmlElement, dom.EventType.MOUSE_LEAVE, true)(mouseLeave.bind(htmlElement));
+			const mouseLeaveDisposable = domEvent(htmlElement, dom.EventType.MOUSE_LEAVE, true)(mouseLeaveOrDown.bind(htmlElement));
+			const mouseDownDisposable = domEvent(htmlElement, dom.EventType.MOUSE_DOWN, true)(mouseLeaveOrDown.bind(htmlElement));
 			const mouseMoveDisposable = domEvent(htmlElement, dom.EventType.MOUSE_MOVE, true)(mouseMove.bind(htmlElement));
 			setTimeout(async () => {
 				if (isHovering && tooltip) {
@@ -232,6 +235,7 @@ export class IconLabel extends Disposable {
 				}
 				mouseMoveDisposable.dispose();
 				mouseLeaveDisposable.dispose();
+				mouseDownDisposable.dispose();
 			}, hoverDelay);
 		}
 		const mouseOverDisposable = this._register(domEvent(htmlElement, dom.EventType.MOUSE_OVER, true)(mouseOver.bind(htmlElement)));

@@ -40,8 +40,14 @@ async function handlePushError(repository: Repository, remote: Remote, refspec: 
 
 		// Issue: what if there's already another `origin` repo?
 		await repository.addRemote('origin', ghRepository.clone_url);
-		await repository.fetch('origin', remoteName);
-		await repository.setBranchUpstream(localName, `origin/${remoteName}`);
+
+		try {
+			await repository.fetch('origin', remoteName);
+			await repository.setBranchUpstream(localName, `origin/${remoteName}`);
+		} catch {
+			// noop
+		}
+
 		await repository.push('origin', localName, true);
 
 		return [octokit, ghRepository];

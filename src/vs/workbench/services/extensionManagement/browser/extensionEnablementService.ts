@@ -61,9 +61,9 @@ export class ExtensionEnablementService extends Disposable implements IWorkbench
 		// delay notification for extensions disabled until workbench restored
 		if (this.allUserExtensionsDisabled) {
 			this.lifecycleService.when(LifecyclePhase.Restored).then(() => {
-				this.notificationService.prompt(Severity.Info, localize('extensionsDisabled', "All installed extensions are temporarily disabled. Reload the window to return to the previous state."), [{
-					label: localize('Reload', "Reload"),
-					run: () => hostService.reload()
+				this.notificationService.prompt(Severity.Info, localize('extensionsDisabled', "All installed extensions are temporarily disabled."), [{
+					label: localize('Reload', "Reload and Enable Extensions"),
+					run: () => hostService.reload({ disableExtensions: false })
 				}]);
 			});
 		}

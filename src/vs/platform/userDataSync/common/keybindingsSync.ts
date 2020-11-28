@@ -23,6 +23,7 @@ import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 import { URI } from 'vs/base/common/uri';
 import { IStorageService } from 'vs/platform/storage/common/storage';
 import { VSBuffer } from 'vs/base/common/buffer';
+import { Event } from 'vs/base/common/event';
 
 interface ISyncContent {
 	mac?: string;
@@ -33,6 +34,10 @@ interface ISyncContent {
 
 interface IKeybindingsResourcePreview extends IFileResourcePreview {
 	previewResult: IMergeResult;
+}
+
+interface ILastSyncUserData extends IRemoteUserData {
+	platformSpecific?: boolean;
 }
 
 export function getKeybindingsContentFromSyncContent(syncContent: string, platformSpecific: boolean): string | null {
@@ -72,11 +77,12 @@ export class KeybindingsSynchroniser extends AbstractJsonFileSynchroniser implem
 		@ITelemetryService telemetryService: ITelemetryService,
 	) {
 		super(environmentService.keybindingsResource, SyncResource.Keybindings, fileService, environmentService, storageService, userDataSyncStoreService, userDataSyncBackupStoreService, userDataSyncResourceEnablementService, telemetryService, logService, userDataSyncUtilService, configurationService);
+		this._register(Event.filter(configurationService.onDidChangeConfiguration, e => e.affectsConfiguration('settingsSync.keybindingsPerPlatform'))(() => this.triggerLocalChange()));
 	}
 
-	protected async generateSyncPreview(remoteUserData: IRemoteUserData, lastSyncUserData: IRemoteUserData | null, token: CancellationToken): Promise<IKeybindingsResourcePreview[]> {
+	protected async generateSyncPreview(remoteUserData: IRemoteUserData, lastSyncUserData: ILastSyncUserData | null, token: CancellationToken): Promise<IKeybindingsResourcePreview[]> {
 		const remoteContent = remoteUserData.syncData ? this.getKeybindingsContentFromSyncContent(remoteUserData.syncData.content) : null;
-		const lastSyncContent: string | null = lastSyncUserData && lastSyncUserData.syncData ? this.getKeybindingsContentFromSyncContent(lastSyncUserData.syncData.content) : null;
+		const lastSyncContent: string | null = lastSyncUserData ? this.getKeybindingsContentFromLastSyncUserData(lastSyncUserData) : null;
 
 		// Get file content last to get the latest
 		const fileContent = await this.getLocalFileContent();
@@ -204,7 +210,7 @@ export class KeybindingsSynchroniser extends AbstractJsonFileSynchroniser implem
 		if (localChange !== Change.None) {
 			this.logService.trace(`${this.syncResourceLogLabel}: Updating local keybindings...`);
 			if (fileContent) {
-				await this.backupLocal(this.toSyncContent(fileContent.value.toString(), null));
+				await this.backupLocal(this.toSyncContent(fileContent.value.toString()));
 			}
 			await this.updateLocalFileContent(content || '[]', fileContent, force);
 			this.logService.info(`${this.syncResourceLogLabel}: Updated local keybindings`);
@@ -212,7 +218,7 @@ export class KeybindingsSynchroniser extends AbstractJsonFileSynchroniser implem
 
 		if (remoteChange !== Change.None) {
 			this.logService.trace(`${this.syncResourceLogLabel}: Updating remote keybindings...`);
-			const remoteContents = this.toSyncContent(content || '[]', remoteUserData.syncData ? remoteUserData.syncData.content : null);
+			const remoteContents = this.toSyncContent(content || '[]', remoteUserData.syncData?.content);
 			remoteUserData = await this.updateRemoteUserData(remoteContents, force ? null : remoteUserData.ref);
 			this.logService.info(`${this.syncResourceLogLabel}: Updated remote keybindings`);
 		}
@@ -224,15 +230,7 @@ export class KeybindingsSynchroniser extends AbstractJsonFileSynchroniser implem
 
 		if (lastSyncUserData?.ref !== remoteUserData.ref) {
 			this.logService.trace(`${this.syncResourceLogLabel}: Updating last synchronized keybindings...`);
-			const lastSyncContent = content !== null ? this.toSyncContent(content, null) : remoteUserData.syncData?.content;
-			await this.updateLastSyncUserData({
-				ref: remoteUserData.ref,
-				syncData: lastSyncContent ? {
-					version: remoteUserData.syncData ? remoteUserData.syncData.version : this.version,
-					machineId: remoteUserData.syncData!.machineId,
-					content: lastSyncContent
-				} : null
-			});
+			await this.updateLastSyncUserData(remoteUserData, { platformSpecific: this.syncKeybindingsPerPlatform() });
 			this.logService.info(`${this.syncResourceLogLabel}: Updated last synchronized keybindings`);
 		}
 
@@ -281,6 +279,19 @@ export class KeybindingsSynchroniser extends AbstractJsonFileSynchroniser implem
 		return null;
 	}
 
+	private getKeybindingsContentFromLastSyncUserData(lastSyncUserData: ILastSyncUserData): string | null {
+		if (!lastSyncUserData.syncData) {
+			return null;
+		}
+
+		// Return null if there is a change in platform specific property from last time sync.
+		if (lastSyncUserData.platformSpecific !== undefined && lastSyncUserData.platformSpecific !== this.syncKeybindingsPerPlatform()) {
+			return null;
+		}
+
+		return this.getKeybindingsContentFromSyncContent(lastSyncUserData.syncData.content);
+	}
+
 	private getKeybindingsContentFromSyncContent(syncContent: string): string | null {
 		try {
 			return getKeybindingsContentFromSyncContent(syncContent, this.syncKeybindingsPerPlatform());
@@ -290,7 +301,7 @@ export class KeybindingsSynchroniser extends AbstractJsonFileSynchroniser implem
 		}
 	}
 
-	private toSyncContent(keybindingsContent: string, syncContent: string | null): string {
+	private toSyncContent(keybindingsContent: string, syncContent?: string): string {
 		let parsed: ISyncContent = {};
 		try {
 			parsed = JSON.parse(syncContent || '{}');

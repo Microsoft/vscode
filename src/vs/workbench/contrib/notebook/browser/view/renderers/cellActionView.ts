@@ -3,10 +3,15 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Action, IAction, Separator } from 'vs/base/common/actions';
-import { IMenu, IMenuActionOptions, MenuItemAction, SubmenuItemAction } from 'vs/platform/actions/common/actions';
-import { DisposableStore, IDisposable } from 'vs/base/common/lifecycle';
+import { renderCodicons } from 'vs/base/browser/codicons';
+import * as DOM from 'vs/base/browser/dom';
 import { BaseActionViewItem } from 'vs/base/browser/ui/actionbar/actionViewItems';
+import { Action, IAction, Separator } from 'vs/base/common/actions';
+import { DisposableStore, IDisposable } from 'vs/base/common/lifecycle';
+import { MenuEntryActionViewItem } from 'vs/platform/actions/browser/menuEntryActionViewItem';
+import { IMenu, IMenuActionOptions, MenuItemAction, SubmenuItemAction } from 'vs/platform/actions/common/actions';
+import { IKeybindingService } from 'vs/platform/keybinding/common/keybinding';
+import { INotificationService } from 'vs/platform/notification/common/notification';
 
 export class VerticalSeparator extends Action {
 	static readonly ID = 'vs.actions.verticalSeparator';
@@ -73,4 +78,20 @@ function asDisposable(groups: ReadonlyArray<[string, ReadonlyArray<MenuItemActio
 		}
 	}
 	return disposables;
+}
+
+
+export class CodiconActionViewItem extends MenuEntryActionViewItem {
+	constructor(
+		readonly _action: MenuItemAction,
+		keybindingService: IKeybindingService,
+		notificationService: INotificationService,
+	) {
+		super(_action, keybindingService, notificationService);
+	}
+	updateLabel(): void {
+		if (this.options.label && this.label) {
+			DOM.reset(this.label, ...renderCodicons(this._commandAction.label ?? ''));
+		}
+	}
 }

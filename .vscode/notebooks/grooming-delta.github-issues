@@ -158,7 +158,40 @@
   {
     "kind": 1,
     "language": "markdown",
-    "value": "# vscode-chrome-debug",
+    "value": "# vscode-test",
+    "editable": true
+  },
+  {
+    "kind": 2,
+    "language": "github-issues",
+    "value": "repo:microsoft/vscode-test is:issue closed:>$since",
+    "editable": true
+  },
+  {
+    "kind": 2,
+    "language": "github-issues",
+    "value": "repo:microsoft/vscode-test is:issue created:>$since",
+    "editable": true
+  },
+  {
+    "kind": 1,
+    "language": "markdown",
+    "value": "# vscode-pull-request-github"
+  },
+  {
+    "kind": 2,
+    "language": "github-issues",
+    "value": "repo:microsoft/vscode-pull-request-github is:issue closed:>$since"
+  },
+  {
+    "kind": 2,
+    "language": "github-issues",
+    "value": "repo:microsoft/vscode-test is:issue created:>$since"
+  },
+  {
+    "kind": 1,
+    "language": "markdown",
+    "value": "# vscode-chrome-debug (deprecated)",
     "editable": true
   },
   {

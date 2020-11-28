@@ -4,12 +4,12 @@ on:
   push:
     # Currently doing this for master, but could be done for PRs as well
     branches:
-      - 'master'
+      - "master"
 
     # Only updates to these files result in changes to installed packages, so skip otherwise
     paths:
-      - '**/package-lock.json'
-      - '**/yarn.lock'
+      - "**/package-lock.json"
+      - "**/yarn.lock"
 
 jobs:
   devcontainer:
@@ -38,4 +38,3 @@ jobs:
           if [ "$GIT_BRANCH" == "" ]; then GIT_BRANCH=master; fi
 
           .devcontainer/cache/build-cache-image.sh "${{ secrets.CONTAINER_IMAGE_REGISTRY }}/public/vscode/devcontainers/repos/microsoft/vscode" "${GIT_BRANCH}"
-

@@ -62,6 +62,13 @@ class MyCompletionItem extends vscode.CompletionItem {
 			// De-prioritze auto-imports
 			// https://github.com/microsoft/vscode/issues/40311
 			this.sortText = '\uffff' + tsEntry.sortText;
+
+			// Render "fancy" when source is a workspace path
+			const qualifierCandidate = vscode.workspace.asRelativePath(tsEntry.source);
+			if (qualifierCandidate !== tsEntry.source) {
+				this.label2 = { name: tsEntry.name, qualifier: qualifierCandidate };
+			}
+
 		} else {
 			this.sortText = tsEntry.sortText;
 		}
@@ -561,7 +568,7 @@ class TypeScriptCompletionItemProvider implements vscode.CompletionItemProvider<
 			type: response?.type ?? 'unknown',
 			count: response?.type === 'response' && response.body ? response.body.entries.length : 0,
 			updateGraphDurationMs: response?.type === 'response' ? response.performanceData?.updateGraphDurationMs : undefined,
-			createAutoImportProviderProgramDurationMs: response?.type === 'response' ? (response.performanceData as Proto.PerformanceData & { createAutoImportProviderProgramDurationMs?: number })?.createAutoImportProviderProgramDurationMs : undefined,
+			createAutoImportProviderProgramDurationMs: response?.type === 'response' ? response.performanceData?.createAutoImportProviderProgramDurationMs : undefined,
 			includesPackageJsonImport: includesPackageJsonImport ? 'true' : undefined,
 		});
 	}

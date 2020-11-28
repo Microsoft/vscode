@@ -364,6 +364,13 @@ export class ViewLayout extends Disposable implements IViewLayout {
 	public isAfterLines(verticalOffset: number): boolean {
 		return this._linesLayout.isAfterLines(verticalOffset);
 	}
+	public isInTopPadding(verticalOffset: number): boolean {
+		return this._linesLayout.isInTopPadding(verticalOffset);
+	}
+	isInBottomPadding(verticalOffset: number): boolean {
+		return this._linesLayout.isInBottomPadding(verticalOffset);
+	}
+
 	public getLineNumberAtVerticalOffset(verticalOffset: number): number {
 		return this._linesLayout.getLineNumberAtOrAfterVerticalOffset(verticalOffset);
 	}

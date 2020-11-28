@@ -21,9 +21,9 @@ import { IThemeService } from 'vs/platform/theme/common/themeService';
 import { IEditorGroupsService } from 'vs/workbench/services/editor/common/editorGroupsService';
 import { ITextFileService } from 'vs/workbench/services/textfile/common/textfiles';
 import { IPreferencesService } from 'vs/workbench/services/preferences/common/preferences';
-import { IExplorerService } from 'vs/workbench/contrib/files/common/files';
 import { INativeHostService } from 'vs/platform/native/electron-sandbox/native';
 import { IUriIdentityService } from 'vs/workbench/services/uriIdentity/common/uriIdentity';
+import { IExplorerService } from 'vs/workbench/contrib/files/browser/files';
 
 /**
  * An implementation of editor for file system resources.

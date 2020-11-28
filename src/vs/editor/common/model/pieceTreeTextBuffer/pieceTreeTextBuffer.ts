@@ -12,7 +12,7 @@ import { PieceTreeBase, StringBuffer } from 'vs/editor/common/model/pieceTreeTex
 import { SearchData } from 'vs/editor/common/model/textModelSearch';
 import { countEOL, StringEOL } from 'vs/editor/common/model/tokensStore';
 import { TextChange } from 'vs/editor/common/model/textChange';
-import { IDisposable } from 'vs/base/common/lifecycle';
+import { Disposable } from 'vs/base/common/lifecycle';
 
 export interface IValidatedEditOperation {
 	sortIndex: number;
@@ -32,25 +32,23 @@ export interface IReverseSingleEditOperation extends IValidEditOperation {
 	sortIndex: number;
 }
 
-export class PieceTreeTextBuffer implements ITextBuffer, IDisposable {
-	private readonly _pieceTree: PieceTreeBase;
+export class PieceTreeTextBuffer extends Disposable implements ITextBuffer {
+	private _pieceTree: PieceTreeBase;
 	private readonly _BOM: string;
 	private _mightContainRTL: boolean;
 	private _mightContainUnusualLineTerminators: boolean;
 	private _mightContainNonBasicASCII: boolean;
 
-	private readonly _onDidChangeContent: Emitter<void> = new Emitter<void>();
+	private readonly _onDidChangeContent: Emitter<void> = this._register(new Emitter<void>());
 	public readonly onDidChangeContent: Event<void> = this._onDidChangeContent.event;
 
 	constructor(chunks: StringBuffer[], BOM: string, eol: '\r\n' | '\n', containsRTL: boolean, containsUnusualLineTerminators: boolean, isBasicASCII: boolean, eolNormalized: boolean) {
+		super();
 		this._BOM = BOM;
 		this._mightContainNonBasicASCII = !isBasicASCII;
 		this._mightContainRTL = containsRTL;
 		this._mightContainUnusualLineTerminators = containsUnusualLineTerminators;
 		this._pieceTree = new PieceTreeBase(chunks, eol, eolNormalized);
-	}
-	dispose(): void {
-		this._onDidChangeContent.dispose();
 	}
 
 	// #region TextBuffer

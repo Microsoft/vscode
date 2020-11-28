@@ -34,7 +34,6 @@ export interface IWorkbenchEnvironmentService extends IEnvironmentService {
 	readonly sessionId: string;
 
 	readonly logFile: URI;
-	readonly backupWorkspaceHome?: URI;
 
 	readonly extHostLogsPath: URI;
 	readonly logExtensionHostCommunication?: boolean;

@@ -23,6 +23,7 @@
 	"command.decrementNumberByOneTenth": "Decrement by 0.1",
 	"command.incrementNumberByTen": "Increment by 10",
 	"command.decrementNumberByTen": "Decrement by 10",
+	"command.showEmmetCommands": "Show Emmet Commands",
 	"emmetSyntaxProfiles": "Define profile for specified syntax or use your own profile with specific rules.",
 	"emmetExclude": "An array of languages where Emmet abbreviations should not be expanded.",
 	"emmetExtensionsPath": "Path to a folder containing Emmet profiles and snippets.",

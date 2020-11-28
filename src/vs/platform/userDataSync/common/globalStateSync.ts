@@ -27,6 +27,8 @@ import { CancellationToken } from 'vs/base/common/cancellation';
 const argvStoragePrefx = 'globalState.argv.';
 const argvProperties: string[] = ['locale'];
 
+type StorageKeys = { machine: string[], user: string[], unregistered: string[] };
+
 interface IGlobalStateResourceMergeResult extends IAcceptResult {
 	readonly local: { added: IStringDictionary<IStorageValue>, removed: string[], updated: IStringDictionary<IStorageValue> };
 	readonly remote: IStringDictionary<IStorageValue> | null;
@@ -35,6 +37,7 @@ interface IGlobalStateResourceMergeResult extends IAcceptResult {
 export interface IGlobalStateResourcePreview extends IResourcePreview {
 	readonly localUserData: IGlobalState;
 	readonly previewResult: IGlobalStateResourceMergeResult;
+	readonly storageKeys: StorageKeys;
 }
 
 /**
@@ -92,7 +95,8 @@ export class GlobalStateSynchroniser extends AbstractSynchroniser implements IUs
 			this.logService.trace(`${this.syncResourceLogLabel}: Remote ui state does not exist. Synchronizing ui state for the first time.`);
 		}
 
-		const { local, remote } = merge(localGloablState.storage, remoteGlobalState ? remoteGlobalState.storage : null, lastSyncGlobalState ? lastSyncGlobalState.storage : null, this.getIgnoredSyncStorageKeys(), this.logService);
+		const storageKeys = this.getStorageKeys(lastSyncGlobalState);
+		const { local, remote } = merge(localGloablState.storage, remoteGlobalState ? remoteGlobalState.storage : null, lastSyncGlobalState ? lastSyncGlobalState.storage : null, storageKeys, this.logService);
 		const previewResult: IGlobalStateResourceMergeResult = {
 			content: null,
 			local,
@@ -112,6 +116,7 @@ export class GlobalStateSynchroniser extends AbstractSynchroniser implements IUs
 			localChange: previewResult.localChange,
 			remoteChange: previewResult.remoteChange,
 			acceptedResource: this.acceptedResource,
+			storageKeys
 		}];
 	}
 
@@ -152,7 +157,7 @@ export class GlobalStateSynchroniser extends AbstractSynchroniser implements IUs
 	private async acceptRemote(resourcePreview: IGlobalStateResourcePreview): Promise<IGlobalStateResourceMergeResult> {
 		if (resourcePreview.remoteContent !== null) {
 			const remoteGlobalState: IGlobalState = JSON.parse(resourcePreview.remoteContent);
-			const { local, remote } = merge(resourcePreview.localUserData.storage, remoteGlobalState.storage, null, this.getIgnoredSyncStorageKeys(), this.logService);
+			const { local, remote } = merge(resourcePreview.localUserData.storage, remoteGlobalState.storage, null, resourcePreview.storageKeys, this.logService);
 			return {
 				content: resourcePreview.remoteContent,
 				local,
@@ -317,7 +322,7 @@ export class GlobalStateSynchroniser extends AbstractSynchroniser implements IUs
 		if (updatedStorageKeys.length) {
 			this.logService.trace(`${this.syncResourceLogLabel}: Updating global state...`);
 			for (const key of Object.keys(updatedStorage)) {
-				this.storageService.store2(key, updatedStorage[key], StorageScope.GLOBAL, StorageTarget.USER);
+				this.storageService.store(key, updatedStorage[key], StorageScope.GLOBAL, StorageTarget.USER);
 			}
 			this.logService.info(`${this.syncResourceLogLabel}: Updated global state`, Object.keys(updatedStorage));
 		}
@@ -336,8 +341,12 @@ export class GlobalStateSynchroniser extends AbstractSynchroniser implements IUs
 		}
 	}
 
-	private getIgnoredSyncStorageKeys(): string[] {
-		return this.storageService.keys(StorageScope.GLOBAL, StorageTarget.MACHINE);
+	private getStorageKeys(lastSyncGlobalState: IGlobalState | null): StorageKeys {
+		const user = this.storageService.keys(StorageScope.GLOBAL, StorageTarget.USER);
+		const machine = this.storageService.keys(StorageScope.GLOBAL, StorageTarget.MACHINE);
+		const registered = [...user, ...machine];
+		const unregistered = lastSyncGlobalState?.storage ? Object.keys(lastSyncGlobalState.storage).filter(key => !key.startsWith(argvStoragePrefx) && !registered.includes(key) && this.storageService.get(key, StorageScope.GLOBAL) !== undefined) : [];
+		return { user, machine, unregistered };
 	}
 }
 
@@ -385,7 +394,7 @@ export class GlobalStateInitializer extends AbstractInitializer {
 
 		if (Object.keys(storage).length) {
 			for (const key of Object.keys(storage)) {
-				this.storageService.store2(key, storage[key], StorageScope.GLOBAL, StorageTarget.USER);
+				this.storageService.store(key, storage[key], StorageScope.GLOBAL, StorageTarget.USER);
 			}
 		}
 	}

@@ -84,10 +84,6 @@
 	justify-content: center;
 }
 
-.monaco-workbench .part.panel > .composite.title > .composite-bar-excess {
-	width: 100px;
-}
-
 .monaco-workbench .part.panel > .composite.title> .panel-switcher-container > .monaco-action-bar {
 	line-height: 27px; /* matches panel titles in settings */
 	height: 35px;

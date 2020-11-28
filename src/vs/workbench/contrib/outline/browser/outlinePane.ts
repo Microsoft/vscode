@@ -48,6 +48,7 @@ import { IViewDescriptorService } from 'vs/workbench/common/views';
 import { IOpenerService } from 'vs/platform/opener/common/opener';
 import { ICodeEditorService } from 'vs/editor/browser/services/codeEditorService';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
+import { Codicon } from 'vs/base/common/codicons';
 
 class RequestState {
 
@@ -207,7 +208,7 @@ class OutlineViewState {
 	}
 
 	persist(storageService: IStorageService): void {
-		storageService.store2('outline/state', JSON.stringify({
+		storageService.store('outline/state', JSON.stringify({
 			followCursor: this.followCursor,
 			sortBy: this.sortBy,
 			filterOnType: this.filterOnType,
@@ -399,7 +400,7 @@ export class OutlinePane extends ViewPane {
 
 	getActions(): IAction[] {
 		return [
-			new CollapseAction(() => this._tree, true, 'explorer-action codicon-collapse-all')
+			new CollapseAction(() => this._tree, true, 'explorer-action ' + Codicon.collapseAll.classNames)
 		];
 	}
 

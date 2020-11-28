@@ -189,6 +189,11 @@ export class WalkThroughPart extends EditorPane {
 			this.notificationService.info(localize('walkThrough.gitNotFound', "It looks like Git is not installed on your system."));
 			return;
 		}
+		if (uri.scheme === 'command' && uri.path === 'workbench.action.files.newUntitledFile') {
+			this.openerService.open(this.addFrom(uri))
+				.then(() => this.openerService.open(this.addFrom(URI.parse('command:workbench.action.files.save'))));
+			return;
+		}
 		this.openerService.open(this.addFrom(uri));
 	}
 

@@ -27,8 +27,8 @@ namespace CustomDataChangedNotification {
 namespace TagCloseRequest {
 	export const type: RequestType<TextDocumentPositionParams, string, any, any> = new RequestType('html/tag');
 }
-namespace OnTypeRenameRequest {
-	export const type: RequestType<TextDocumentPositionParams, LspRange[] | null, any, any> = new RequestType('html/onTypeRename');
+namespace LinkedEditingRequest {
+	export const type: RequestType<TextDocumentPositionParams, LspRange[] | null, any, any> = new RequestType('html/linkedEditing');
 }
 
 // experimental: semantic tokens
@@ -44,7 +44,7 @@ namespace SemanticTokenLegendRequest {
 }
 
 namespace SettingIds {
-	export const renameOnType = 'editor.renameOnType';
+	export const linkedRename = 'editor.linkedRename';
 	export const formatEnable = 'html.format.enable';
 
 }
@@ -169,10 +169,10 @@ export function startClient(context: ExtensionContext, newLanguageClient: Langua
 			}
 		});
 
-		disposable = languages.registerOnTypeRenameProvider(documentSelector, {
-			async provideOnTypeRenameRanges(document, position) {
+		disposable = languages.registerLinkedEditingRangeProvider(documentSelector, {
+			async provideLinkedEditingRanges(document, position) {
 				const param = client.code2ProtocolConverter.asTextDocumentPositionParams(document, position);
-				return client.sendRequest(OnTypeRenameRequest.type, param).then(response => {
+				return client.sendRequest(LinkedEditingRequest.type, param).then(response => {
 					if (response) {
 						return {
 							ranges: response.map(r => client.protocol2CodeConverter.asRange(r))
@@ -301,7 +301,7 @@ export function startClient(context: ExtensionContext, newLanguageClient: Langua
 	const promptForTypeOnRenameKey = 'html.promptForTypeOnRename';
 	const promptForTypeOnRename = extensions.getExtension('formulahendry.auto-rename-tag') !== undefined &&
 		(context.globalState.get(promptForTypeOnRenameKey) !== false) &&
-		!workspace.getConfiguration('editor', { languageId: 'html' }).get('renameOnType');
+		!workspace.getConfiguration('editor', { languageId: 'html' }).get('linkedRename');
 
 	if (promptForTypeOnRename) {
 		const activeEditorListener = window.onDidChangeActiveTextEditor(async e => {
@@ -309,9 +309,9 @@ export function startClient(context: ExtensionContext, newLanguageClient: Langua
 				context.globalState.update(promptForTypeOnRenameKey, false);
 				activeEditorListener.dispose();
 				const configure = localize('configureButton', 'Configure');
-				const res = await window.showInformationMessage(localize('renameOnTypeQuestion', 'VS Code now has built-in support for auto-renaming tags. Do you want to enable it?'), configure);
+				const res = await window.showInformationMessage(localize('linkedRenameQuestion', 'VS Code now has built-in support for auto-renaming tags. Do you want to enable it?'), configure);
 				if (res === configure) {
-					commands.executeCommand('workbench.action.openSettings', SettingIds.renameOnType);
+					commands.executeCommand('workbench.action.openSettings', SettingIds.linkedRename);
 				}
 			}
 		});

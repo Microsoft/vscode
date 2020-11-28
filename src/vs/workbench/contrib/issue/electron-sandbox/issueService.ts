@@ -16,6 +16,7 @@ import { INativeWorkbenchEnvironmentService } from 'vs/workbench/services/enviro
 import { ExtensionType } from 'vs/platform/extensions/common/extensions';
 import { process } from 'vs/base/parts/sandbox/electron-sandbox/globals';
 import { IProductService } from 'vs/platform/product/common/productService';
+import { ITASExperimentService } from 'vs/workbench/services/experiment/common/experimentService';
 
 export class WorkbenchIssueService implements IWorkbenchIssueService {
 	declare readonly _serviceBrand: undefined;
@@ -26,7 +27,8 @@ export class WorkbenchIssueService implements IWorkbenchIssueService {
 		@IExtensionManagementService private readonly extensionManagementService: IExtensionManagementService,
 		@IWorkbenchExtensionEnablementService private readonly extensionEnablementService: IWorkbenchExtensionEnablementService,
 		@INativeWorkbenchEnvironmentService private readonly environmentService: INativeWorkbenchEnvironmentService,
-		@IProductService private readonly productService: IProductService
+		@IProductService private readonly productService: IProductService,
+		@ITASExperimentService private readonly experimentService: ITASExperimentService
 	) { }
 
 	async openReporter(dataOverrides: Partial<IssueReporterData> = {}): Promise<void> {
@@ -49,11 +51,13 @@ export class WorkbenchIssueService implements IWorkbenchIssueService {
 				isBuiltin,
 			};
 		});
+		const experiments = await this.experimentService.getCurrentExperiments();
 		const theme = this.themeService.getColorTheme();
 		const issueReporterData: IssueReporterData = Object.assign({
 			styles: getIssueReporterStyles(theme),
 			zoomLevel: getZoomLevel(),
 			enabledExtensions: extensionData,
+			experiments: experiments?.join('\n')
 		}, dataOverrides);
 		return this.issueService.openReporter(issueReporterData);
 	}

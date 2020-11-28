@@ -41,10 +41,7 @@
 			"port": 5876,
 			"outFiles": [
 				"${workspaceFolder}/out/**/*.js"
-			],
-			"presentation": {
-				"hidden": true,
-			}
+			]
 		},
 		{
 			"type": "node",

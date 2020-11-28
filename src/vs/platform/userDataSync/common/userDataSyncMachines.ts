@@ -103,7 +103,7 @@ export class UserDataSyncMachinesService extends Disposable implements IUserData
 			machine.name = name;
 			await this.writeMachinesData(machineData);
 			if (machineData.machines.some(({ id }) => id === currentMachineId)) {
-				this.storageService.store2(currentMachineNameKey, name, StorageScope.GLOBAL, StorageTarget.MACHINE);
+				this.storageService.store(currentMachineNameKey, name, StorageScope.GLOBAL, StorageTarget.MACHINE);
 			}
 		}
 	}

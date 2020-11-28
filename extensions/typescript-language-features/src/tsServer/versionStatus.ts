@@ -58,7 +58,6 @@ class ProjectStatusCommand implements Command {
 	public async execute(): Promise<void> {
 		const info = this._delegate();
 
-
 		const result = await vscode.window.showQuickPick<QuickPickItem>(coalesce([
 			this.getProjectItem(info),
 			this.getVersionItem(),
@@ -73,7 +72,7 @@ class ProjectStatusCommand implements Command {
 	private getVersionItem(): QuickPickItem {
 		return {
 			label: localize('projectQuickPick.version.label', "Select TypeScript Version..."),
-			description: this._client.apiVersion.displayName,
+			description: localize('projectQuickPick.version.description', "[current = {0}]", this._client.apiVersion.displayName),
 			run: () => {
 				this._client.showVersionPicker();
 			}
@@ -169,7 +168,7 @@ export default class VersionStatus extends Disposable {
 
 		const doc = vscode.window.activeTextEditor.document;
 		if (isTypeScriptDocument(doc)) {
-			const file = this._client.normalizedPath(doc.uri);
+			const file = this._client.toOpenedFilePath(doc, { suppressAlertOnFailure: true });
 			if (file) {
 				this._statusBarEntry.show();
 				if (!this._ready) {

@@ -27,18 +27,20 @@ import { truncate } from 'vs/base/common/strings';
 
 export class RemoteStatusIndicator extends Disposable implements IWorkbenchContribution {
 
-	private static REMOTE_ACTIONS_COMMAND_ID = 'workbench.action.remote.showMenu';
-	private static CLOSE_REMOTE_COMMAND_ID = 'workbench.action.remote.close';
-	private static SHOW_CLOSE_REMOTE_COMMAND_ID = !isWeb; // web does not have a "Close Remote" command
+	private static readonly REMOTE_ACTIONS_COMMAND_ID = 'workbench.action.remote.showMenu';
+	private static readonly CLOSE_REMOTE_COMMAND_ID = 'workbench.action.remote.close';
+	private static readonly SHOW_CLOSE_REMOTE_COMMAND_ID = !isWeb; // web does not have a "Close Remote" command
+
+	private static readonly REMOTE_STATUS_LABEL_MAX_LENGTH = 40;
 
 	private remoteStatusEntry: IStatusbarEntryAccessor | undefined;
 
-	private remoteMenu = this._register(this.menuService.createMenu(MenuId.StatusBarWindowIndicatorMenu, this.contextKeyService));
+	private readonly remoteMenu = this._register(this.menuService.createMenu(MenuId.StatusBarWindowIndicatorMenu, this.contextKeyService));
 	private hasRemoteActions = false;
 
-	private remoteAuthority = this.environmentService.remoteAuthority;
+	private readonly remoteAuthority = this.environmentService.remoteAuthority;
 	private connectionState: 'initializing' | 'connected' | 'disconnected' | undefined = undefined;
-	private connectionStateContextKey = new RawContextKey<'' | 'initializing' | 'disconnected' | 'connected'>('remoteConnectionState', '').bindTo(this.contextKeyService);
+	private readonly connectionStateContextKey = new RawContextKey<'' | 'initializing' | 'disconnected' | 'connected'>('remoteConnectionState', '').bindTo(this.contextKeyService);
 
 	constructor(
 		@IStatusbarService private readonly statusbarService: IStatusbarService,
@@ -190,7 +192,7 @@ export class RemoteStatusIndicator extends Disposable implements IWorkbenchContr
 		// Remote indicator: show if provided via options
 		const remoteIndicator = this.environmentService.options?.windowIndicator;
 		if (remoteIndicator) {
-			this.renderRemoteStatusIndicator(remoteIndicator.label, remoteIndicator.tooltip, remoteIndicator.command);
+			this.renderRemoteStatusIndicator(truncate(remoteIndicator.label, RemoteStatusIndicator.REMOTE_STATUS_LABEL_MAX_LENGTH), remoteIndicator.tooltip, remoteIndicator.command);
 		}
 
 		// Remote Authority: show connection state
@@ -201,10 +203,10 @@ export class RemoteStatusIndicator extends Disposable implements IWorkbenchContr
 					this.renderRemoteStatusIndicator(nls.localize('host.open', "Opening Remote..."), nls.localize('host.open', "Opening Remote..."), undefined, true /* progress */);
 					break;
 				case 'disconnected':
-					this.renderRemoteStatusIndicator(`$(alert) ${nls.localize('disconnectedFrom', "Disconnected from {0}", truncate(hostLabel, 40))}`, nls.localize('host.tooltipDisconnected', "Disconnected from {0}", hostLabel));
+					this.renderRemoteStatusIndicator(`$(alert) ${nls.localize('disconnectedFrom', "Disconnected from {0}", truncate(hostLabel, RemoteStatusIndicator.REMOTE_STATUS_LABEL_MAX_LENGTH))}`, nls.localize('host.tooltipDisconnected', "Disconnected from {0}", hostLabel));
 					break;
 				default:
-					this.renderRemoteStatusIndicator(`$(remote) ${truncate(hostLabel, 40)}`, nls.localize('host.tooltip', "Editing on {0}", hostLabel));
+					this.renderRemoteStatusIndicator(`$(remote) ${truncate(hostLabel, RemoteStatusIndicator.REMOTE_STATUS_LABEL_MAX_LENGTH)}`, nls.localize('host.tooltip', "Editing on {0}", hostLabel));
 			}
 		}
 

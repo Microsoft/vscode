@@ -6,7 +6,7 @@
 import { IDisposable } from 'vs/base/common/lifecycle';
 import { createDecorator } from 'vs/platform/instantiation/common/instantiation';
 import { IContextMenuDelegate } from 'vs/base/browser/contextmenu';
-import { AnchorAlignment, IContextViewProvider } from 'vs/base/browser/ui/contextview/contextview';
+import { AnchorAlignment, AnchorAxisAlignment, IContextViewProvider } from 'vs/base/browser/ui/contextview/contextview';
 
 export const IContextViewService = createDecorator<IContextViewService>('contextViewService');
 
@@ -31,6 +31,7 @@ export interface IContextViewDelegate {
 	onHide?(data?: any): void;
 	focus?(): void;
 	anchorAlignment?: AnchorAlignment;
+	anchorAxisAlignment?: AnchorAxisAlignment;
 }
 
 export const IContextMenuService = createDecorator<IContextMenuService>('contextMenuService');

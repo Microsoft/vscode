@@ -63,10 +63,7 @@ abstract class AbstractCopyLinesAction extends EditorAction {
 
 		const commands: ICommand[] = [];
 		for (const selection of selections) {
-			if (selection.ignore) {
-				continue;
-			}
-			commands.push(new CopyLinesCommand(selection.selection, this.down));
+			commands.push(new CopyLinesCommand(selection.selection, this.down, selection.ignore));
 		}
 
 		editor.pushUndoStop();

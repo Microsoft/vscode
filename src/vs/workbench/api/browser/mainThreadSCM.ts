@@ -68,7 +68,8 @@ class MainThreadSCMResource implements ISCMResource {
 		readonly sourceUri: URI,
 		readonly resourceGroup: ISCMResourceGroup,
 		readonly decorations: ISCMResourceDecorations,
-		readonly contextValue: string | undefined
+		readonly contextValue: string | undefined,
+		readonly command: Command | undefined
 	) { }
 
 	open(preserveFocus: boolean): Promise<void> {
@@ -201,7 +202,7 @@ class MainThreadSCMProvider implements ISCMProvider {
 
 			for (const [start, deleteCount, rawResources] of groupSlices) {
 				const resources = rawResources.map(rawResource => {
-					const [handle, sourceUri, icons, tooltip, strikeThrough, faded, contextValue] = rawResource;
+					const [handle, sourceUri, icons, tooltip, strikeThrough, faded, contextValue, command] = rawResource;
 					const icon = icons[0];
 					const iconDark = icons[1] || icon;
 					const decorations = {
@@ -220,7 +221,8 @@ class MainThreadSCMProvider implements ISCMProvider {
 						URI.revive(sourceUri),
 						group,
 						decorations,
-						contextValue || undefined
+						contextValue || undefined,
+						command
 					);
 				});
 

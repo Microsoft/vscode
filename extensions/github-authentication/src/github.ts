@@ -180,9 +180,12 @@ export class GitHubAuthenticationProvider {
 	}
 
 	public async logout(id: string) {
+		Logger.info(`Logging out of ${id}`);
 		const sessionIndex = this._sessions.findIndex(session => session.id === id);
 		if (sessionIndex > -1) {
 			this._sessions.splice(sessionIndex, 1);
+		} else {
+			Logger.error('Session not found');
 		}
 
 		await this.storeSessions();

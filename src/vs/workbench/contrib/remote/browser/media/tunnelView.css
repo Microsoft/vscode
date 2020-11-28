@@ -3,6 +3,30 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-.customview-tree .tunnel-view-label {
+.pane-body:not(.wide) .ports-view .monaco-icon-label,
+.pane-body:not(.wide) .ports-view .monaco-icon-label {
 	flex: 1;
+}
+
+.pane-body:not(.wide) .ports-view .monaco-list .monaco-list-row:hover:not(.highlighted) .monaco-icon-label,
+.pane-body:not(.wide) .ports-view .monaco-list .monaco-list-row.focused .monaco-icon-label {
+	flex: 1;
+}
+
+.pane-body.wide .ports-view .monaco-list .monaco-list-row .actionBarContainer,
+.ports-view .monaco-list .monaco-list-row .actionBarContainer {
+	flex: 1 0 auto;
+}
+
+.pane-body:not(.wide) .ports-view .monaco-list .monaco-list-row .actionBarContainer {
+	flex: 0 0 auto;
+}
+
+.ports-view.actions-right .monaco-list .monaco-list-row .actionBarContainer,
+.pane-body:not(.wide) .ports-view .monaco-list .monaco-list-row .actionBarContainer {
+	text-align: right;
+}
+
+.pane-body.wide .ports-view .monaco-action-bar {
+	margin-left: 10px;
 }

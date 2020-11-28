@@ -297,7 +297,7 @@ export class Workbench extends Layout {
 			// local storage and not global storage because it would not make
 			// much sense to synchronize to other machines.
 			if (isNative) {
-				storageService.store2('editorFontInfo', serializedFontInfoRaw, StorageScope.GLOBAL, StorageTarget.MACHINE);
+				storageService.store('editorFontInfo', serializedFontInfoRaw, StorageScope.GLOBAL, StorageTarget.MACHINE);
 			} else {
 				window.localStorage.setItem('vscode.editorFontInfo', serializedFontInfoRaw);
 			}
@@ -415,8 +415,7 @@ export class Workbench extends Layout {
 			mark('didStartWorkbench');
 
 			// Perf reporting (devtools)
-			performance.mark('workbench-end');
-			performance.measure('perf: workbench create & restore', 'workbench-start', 'workbench-end');
+			performance.measure('perf: workbench create & restore', 'didLoadWorkbenchMain', 'didStartWorkbench');
 		}
 	}
 }

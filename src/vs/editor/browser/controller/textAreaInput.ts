@@ -295,9 +295,12 @@ export class TextAreaInput extends Disposable {
 				this._onType.fire(typeInput);
 			}
 
-			// Due to isEdgeOrIE (where the textarea was not cleared initially) and isChrome (the textarea is not updated correctly when composition ends)
+			// Due to
+			// isEdgeOrIE (where the textarea was not cleared initially)
+			// and isChrome (the textarea is not updated correctly when composition ends)
+			// and isFirefox (the textare ais not updated correctly after inserting emojis)
 			// we cannot assume the text at the end consists only of the composited text
-			if (browser.isEdge || browser.isChrome) {
+			if (browser.isEdge || browser.isChrome || browser.isFirefox) {
 				this._textAreaState = TextAreaState.readFromTextArea(this._textArea);
 			}
 

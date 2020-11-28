@@ -1,0 +1,169 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+/* File icons in trees */
+
+.file-icon-themable-tree.align-icons-and-twisties .monaco-tl-twistie:not(.force-twistie):not(.collapsible),
+.file-icon-themable-tree .align-icon-with-twisty .monaco-tl-twistie:not(.force-twistie):not(.collapsible),
+.file-icon-themable-tree.hide-arrows .monaco-tl-twistie:not(.force-twistie),
+.file-icon-themable-tree .monaco-tl-twistie.force-no-twistie {
+	background-image: none !important;
+	width: 0 !important;
+	padding-right: 0 !important;
+	visibility: hidden;
+}
+
+/* Misc */
+
+.monaco-workbench .tree-explorer-viewlet-tree-view {
+	height: 100%;
+}
+
+.monaco-workbench .tree-explorer-viewlet-tree-view .message {
+	display: flex;
+	padding: 4px 12px 4px 18px;
+	user-select: text;
+	-webkit-user-select: text;
+}
+
+.monaco-workbench .tree-explorer-viewlet-tree-view .message p {
+	margin-top: 0px;
+	margin-bottom: 0px;
+	padding-bottom: 4px;
+}
+
+.monaco-workbench .tree-explorer-viewlet-tree-view .message ul {
+	padding-left: 24px;
+}
+
+.monaco-workbench .tree-explorer-viewlet-tree-view .message.hide {
+	display: none;
+}
+
+.monaco-workbench .tree-explorer-viewlet-tree-view .customview-tree {
+	height: 100%;
+}
+
+.monaco-workbench .tree-explorer-viewlet-tree-view .customview-tree.hide {
+	display: none;
+}
+
+.monaco-workbench .pane > .pane-body > .welcome-view {
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+}
+
+.monaco-workbench .pane > .pane-body:not(.welcome) > .welcome-view,
+.monaco-workbench .pane > .pane-body.welcome > :not(.welcome-view) {
+	display: none;
+}
+
+.monaco-workbench .pane > .pane-body > .welcome-view .monaco-button {
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.monaco-workbench .pane > .pane-body .welcome-view-content {
+	padding: 0 20px 0 20px;
+	box-sizing: border-box;
+}
+
+.monaco-workbench .pane > .pane-body .welcome-view-content > * {
+	margin-block-start: 1em;
+	margin-block-end: 1em;
+	margin-inline-start: 0px;
+	margin-inline-end: 0px;
+}
+
+.customview-tree .monaco-list-row .monaco-tl-contents.align-icon-with-twisty::before {
+	display: none;
+}
+
+.customview-tree .monaco-list-row .monaco-tl-contents:not(.align-icon-with-twisty)::before {
+	display: inline-block;
+}
+
+.customview-tree .monaco-list .monaco-list-row {
+	padding-right: 12px;
+	padding-left: 0px;
+}
+
+.customview-tree .monaco-list .monaco-list-row .custom-view-tree-node-item {
+	display: flex;
+	height: 22px;
+	line-height: 22px;
+	flex: 1;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	flex-wrap: nowrap;
+	padding-left: 3px;
+}
+
+.customview-tree .monaco-list .monaco-list-row .custom-view-tree-node-item .monaco-inputbox {
+	line-height: normal;
+	flex: 1;
+}
+
+.customview-tree .monaco-list .monaco-list-row .custom-view-tree-node-item .custom-view-tree-node-item-resourceLabel {
+	flex: 1;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+.customview-tree .monaco-list .monaco-list-row .custom-view-tree-node-item > .custom-view-tree-node-item-icon {
+	background-size: 16px;
+	background-position: left center;
+	background-repeat: no-repeat;
+	padding-right: 6px;
+	width: 16px;
+	height: 22px;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+.customview-tree .monaco-list .monaco-list-row .custom-view-tree-node-item > .custom-view-tree-node-item-icon.codicon {
+	margin-top: 3px;
+}
+
+.customview-tree .monaco-list .monaco-list-row.selected .custom-view-tree-node-item > .custom-view-tree-node-item-icon.codicon {
+	color: currentColor !important;
+}
+
+.customview-tree .monaco-list .monaco-list-row .custom-view-tree-node-item .custom-view-tree-node-item-resourceLabel .monaco-icon-label-container > .monaco-icon-name-container {
+	flex: 1;
+}
+
+.customview-tree .monaco-list .monaco-list-row .custom-view-tree-node-item .custom-view-tree-node-item-resourceLabel::after {
+	padding-right: 0px;
+}
+
+.customview-tree .monaco-list .monaco-list-row .custom-view-tree-node-item .actions {
+	display: none;
+}
+
+.customview-tree .monaco-list .monaco-list-row:hover .custom-view-tree-node-item .actions,
+.customview-tree .monaco-list .monaco-list-row.selected .custom-view-tree-node-item .actions,
+.customview-tree .monaco-list .monaco-list-row.focused .custom-view-tree-node-item .actions {
+	display: block;
+}
+
+.customview-tree .monaco-list .custom-view-tree-node-item .actions .action-label {
+	width: 16px;
+	height: 100%;
+	background-size: 16px;
+	background-position: 50% 50%;
+	background-repeat: no-repeat;
+}
+
+.customview-tree .monaco-list .custom-view-tree-node-item .actions .action-label.codicon {
+	line-height: 22px;
+}
+
+.customview-tree .monaco-list .custom-view-tree-node-item .actions .action-label.codicon::before {
+	vertical-align: middle;
+}

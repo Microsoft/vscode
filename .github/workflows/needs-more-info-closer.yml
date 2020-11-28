@@ -12,9 +12,9 @@ jobs:
       - name: Checkout Actions
         uses: actions/checkout@v2
         with:
-          repository: 'microsoft/vscode-github-triage-actions'
+          repository: "microsoft/vscode-github-triage-actions"
           path: ./actions
-          ref: v39
+          ref: v40
       - name: Install Actions
         run: npm install --production --prefix ./actions
       - name: Run Needs More Info Closer
@@ -24,7 +24,7 @@ jobs:
           token: ${{secrets.VSCODE_ISSUE_TRIAGE_BOT_PAT}}
           label: needs more info
           closeDays: 7
-          additionalTeam:	"cleidigh|usernamehw|gjsjohnmurray|IllusionMH"
+          additionalTeam: "cleidigh|usernamehw|gjsjohnmurray|IllusionMH"
           closeComment: "This issue has been closed automatically because it needs more information and has not had recent activity. See also our [issue reporting](https://aka.ms/vscodeissuereporting) guidelines.\n\nHappy Coding!"
           pingDays: 80
           pingComment: "Hey @${assignee}, this issue might need further attention.\n\n@${author}, you can help us out by closing this issue if the problem no longer exists, or adding more information."

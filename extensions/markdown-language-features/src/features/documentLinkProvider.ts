@@ -65,19 +65,6 @@ function getWorkspaceFolder(document: vscode.TextDocument) {
 		|| vscode.workspace.workspaceFolders?.[0]?.uri;
 }
 
-function matchAll(
-	pattern: RegExp,
-	text: string
-): Array<RegExpMatchArray> {
-	const out: RegExpMatchArray[] = [];
-	pattern.lastIndex = 0;
-	let match: RegExpMatchArray | null;
-	while ((match = pattern.exec(text))) {
-		out.push(match);
-	}
-	return out;
-}
-
 function extractDocumentLink(
 	document: vscode.TextDocument,
 	pre: number,
@@ -103,7 +90,7 @@ function extractDocumentLink(
 }
 
 export default class LinkProvider implements vscode.DocumentLinkProvider {
-	private readonly linkPattern = /(\[((!\[[^\]]*?\]\(\s*)([^\s\(\)]+?)\s*\)\]|(?:\\\]|[^\]])*\])\(\s*)(([^\s\(\)]|\(\S*?\))+)\s*(".*?")?\)/g;
+	private readonly linkPattern = /(\[((!\[[^\]]*?\]\(\s*)([^\s\(\)]+?)\s*\)\]|(?:\\\]|[^\]])*\])\(\s*)(([^\s\(\)]|\([^\s\(\)]*?\))+)\s*(".*?")?\)/g;
 	private readonly referenceLinkPattern = /(\[((?:\\\]|[^\]])+)\]\[\s*?)([^\s\]]*?)\]/g;
 	private readonly definitionPattern = /^([\t ]*\[(?!\^)((?:\\\]|[^\]])+)\]:\s*)(\S+)/gm;
 
@@ -124,7 +111,7 @@ export default class LinkProvider implements vscode.DocumentLinkProvider {
 		document: vscode.TextDocument,
 	): vscode.DocumentLink[] {
 		const results: vscode.DocumentLink[] = [];
-		for (const match of matchAll(this.linkPattern, text)) {
+		for (const match of text.matchAll(this.linkPattern)) {
 			const matchImage = match[4] && extractDocumentLink(document, match[3].length + 1, match[4], match.index);
 			if (matchImage) {
 				results.push(matchImage);
@@ -144,7 +131,7 @@ export default class LinkProvider implements vscode.DocumentLinkProvider {
 		const results: vscode.DocumentLink[] = [];
 
 		const definitions = this.getDefinitions(text, document);
-		for (const match of matchAll(this.referenceLinkPattern, text)) {
+		for (const match of text.matchAll(this.referenceLinkPattern)) {
 			let linkStart: vscode.Position;
 			let linkEnd: vscode.Position;
 			let reference = match[3];
@@ -190,7 +177,7 @@ export default class LinkProvider implements vscode.DocumentLinkProvider {
 
 	private getDefinitions(text: string, document: vscode.TextDocument) {
 		const out = new Map<string, { link: string, linkRange: vscode.Range }>();
-		for (const match of matchAll(this.definitionPattern, text)) {
+		for (const match of text.matchAll(this.definitionPattern)) {
 			const pre = match[1];
 			const reference = match[2];
 			const link = match[3].trim();

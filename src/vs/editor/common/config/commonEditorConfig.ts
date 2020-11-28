@@ -502,6 +502,16 @@ const editorConfiguration: IConfigurationNode = {
 			default: true,
 			description: nls.localize('wordBasedSuggestions', "Controls whether completions should be computed based on words in the document.")
 		},
+		'editor.wordBasedSuggestionsMode': {
+			enum: ['currentDocument', 'matchingDocuments', 'allDocuments'],
+			default: 'matchingDocuments',
+			enumDescriptions: [
+				nls.localize('wordBasedSuggestionsMode.currentDocument', 'Only suggest words from the active document.'),
+				nls.localize('wordBasedSuggestionsMode.matchingDocuments', 'Suggest words from all open documents of the same language.'),
+				nls.localize('wordBasedSuggestionsMode.allDocuments', 'Suggest words from all open documents.')
+			],
+			description: nls.localize('wordBasedSuggestionsMode', "Controls form what documents word based completions are computed.")
+		},
 		'editor.semanticHighlighting.enabled': {
 			enum: [true, false, 'configuredByTheme'],
 			enumDescriptions: [
@@ -546,6 +556,16 @@ const editorConfiguration: IConfigurationNode = {
 			type: 'boolean',
 			default: false,
 			description: nls.localize('codeLens', "Controls whether the editor shows CodeLens.")
+		},
+		'diffEditor.wordWrap': {
+			type: 'string',
+			enum: ['off', 'on', 'inherit'],
+			default: 'inherit',
+			markdownEnumDescriptions: [
+				nls.localize('wordWrap.off', "Lines will never wrap."),
+				nls.localize('wordWrap.on', "Lines will wrap at the viewport width."),
+				nls.localize('wordWrap.inherit', "Lines will wrap according to the `#editor.wordWrap#` setting."),
+			]
 		}
 	}
 };

@@ -74,17 +74,17 @@ const apiMenus: IAPIMenu[] = [
 		description: localize('menus.debugToolBar', "The debug toolbar menu")
 	},
 	{
-		key: 'menuBar/webNavigation',
-		id: MenuId.MenubarWebNavigationMenu,
-		description: localize('menus.webNavigation', "The top level navigational menu (web only)"),
-		proposed: true,
-		supportsSubmenus: false
-	},
-	{
 		key: 'menuBar/file',
 		id: MenuId.MenubarFileMenu,
 		description: localize('menus.file', "The top level file menu"),
 		proposed: true
+	},
+	{
+		key: 'menuBar/home',
+		id: MenuId.MenubarHomeMenu,
+		description: localize('menus.home', "The home indicator context menu (web only)"),
+		proposed: true,
+		supportsSubmenus: false
 	},
 	{
 		key: 'scm/title',
@@ -461,7 +461,7 @@ namespace schema {
 				type: 'string'
 			},
 			enablement: {
-				description: localize('vscode.extension.contributes.commandType.precondition', '(Optional) Condition which must be true to enable the command'),
+				description: localize('vscode.extension.contributes.commandType.precondition', '(Optional) Condition which must be true to enable the command in the UI (menu and keybindings). Does not prevent executing the command by other means, like the `executeCommand`-api.'),
 				type: 'string'
 			},
 			icon: {

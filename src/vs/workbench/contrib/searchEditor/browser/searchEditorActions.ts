@@ -28,6 +28,7 @@ import { OpenNewEditorCommandId } from 'vs/workbench/contrib/searchEditor/browse
 import { OpenSearchEditorArgs } from 'vs/workbench/contrib/searchEditor/browser/searchEditor.contribution';
 import { EditorsOrder } from 'vs/workbench/common/editor';
 import { IEditorGroupsService } from 'vs/workbench/services/editor/common/editorGroupsService';
+import { ThemeIcon } from 'vs/platform/theme/common/themeService';
 
 export const toggleSearchEditorCaseSensitiveCommand = (accessor: ServicesAccessor) => {
 	const editorService = accessor.get(IEditorService);
@@ -85,7 +86,7 @@ export class OpenSearchEditorAction extends Action {
 	constructor(id: string, label: string,
 		@IInstantiationService private readonly instantiationService: IInstantiationService,
 	) {
-		super(id, label, searchNewEditorIcon.classNames);
+		super(id, label, ThemeIcon.asClassName(searchNewEditorIcon));
 	}
 
 	update() {

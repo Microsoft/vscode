@@ -67,7 +67,7 @@ export class MainThreadStorage implements MainThreadStorageShape {
 		try {
 			jsonValue = JSON.stringify(value);
 			// Extension state is synced separately through extensions
-			this._storageService.store2(key, jsonValue, shared ? StorageScope.GLOBAL : StorageScope.WORKSPACE, StorageTarget.MACHINE);
+			this._storageService.store(key, jsonValue, shared ? StorageScope.GLOBAL : StorageScope.WORKSPACE, StorageTarget.MACHINE);
 		} catch (err) {
 			return Promise.reject(err);
 		}

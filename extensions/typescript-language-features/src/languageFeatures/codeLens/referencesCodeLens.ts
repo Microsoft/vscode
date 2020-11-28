@@ -26,8 +26,7 @@ export class TypeScriptReferencesCodeLensProvider extends TypeScriptBaseCodeLens
 		super(client, _cachedResponse);
 	}
 
-	public async resolveCodeLens(inputCodeLens: vscode.CodeLens, token: vscode.CancellationToken): Promise<vscode.CodeLens> {
-		const codeLens = inputCodeLens as ReferencesCodeLens;
+	public async resolveCodeLens(codeLens: ReferencesCodeLens, token: vscode.CancellationToken): Promise<vscode.CodeLens> {
 		const args = typeConverters.Position.toFileLocationRequestArgs(codeLens.file, codeLens.range.start);
 		const response = await this.client.execute('references', args, token, {
 			lowPriority: true,
@@ -42,12 +41,9 @@ export class TypeScriptReferencesCodeLensProvider extends TypeScriptBaseCodeLens
 		}
 
 		const locations = response.body.refs
+			.filter(reference => !reference.isDefinition)
 			.map(reference =>
-				typeConverters.Location.fromTextSpan(this.client.toResource(reference.file), reference))
-			.filter(location =>
-				// Exclude original definition from references
-				!(location.uri.toString() === codeLens.document.toString() &&
-					location.range.start.isEqual(codeLens.range.start)));
+				typeConverters.Location.fromTextSpan(this.client.toResource(reference.file), reference));
 
 		codeLens.command = {
 			title: this.getCodeLensLabel(locations),

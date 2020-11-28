@@ -5,7 +5,6 @@
 
 .monaco-editor .dirty-diff-glyph {
 	margin-left: 5px;
-	cursor: pointer;
 	z-index: 5;
 }
 
@@ -37,20 +36,6 @@
 	height: 0;
 	bottom: 0;
 	transition: height 80ms linear;
-}
-
-.monaco-editor .margin-view-overlays .dirty-diff-glyph:hover::before {
-	position: absolute;
-	content: '';
-	height: 100%;
-	width: 9px;
-	left: -6px;
-}
-
-.monaco-editor .margin-view-overlays .dirty-diff-deleted:hover::after {
-	bottom: 0;
-	border-top-width: 0;
-	border-bottom-width: 0;
 }
 
 /* Hide glyph decorations when inside the inline diff editor */

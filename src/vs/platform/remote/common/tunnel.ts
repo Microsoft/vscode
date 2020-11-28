@@ -26,8 +26,12 @@ export interface TunnelOptions {
 	label?: string;
 }
 
+export interface TunnelCreationOptions {
+	elevationRequired?: boolean;
+}
+
 export interface ITunnelProvider {
-	forwardPort(tunnelOptions: TunnelOptions): Promise<RemoteTunnel> | undefined;
+	forwardPort(tunnelOptions: TunnelOptions, tunnelCreationOptions: TunnelCreationOptions): Promise<RemoteTunnel> | undefined;
 }
 
 export interface ITunnelService {
@@ -56,8 +60,14 @@ export function extractLocalHostUriMetaDataForPortMapping(uri: URI): { address: 
 	};
 }
 
+export const LOCALHOST_ADDRESSES = ['localhost', '127.0.0.1', '0:0:0:0:0:0:0:1', '::1'];
 export function isLocalhost(host: string): boolean {
-	return host === 'localhost' || host === '127.0.0.1';
+	return LOCALHOST_ADDRESSES.indexOf(host) >= 0;
+}
+
+export const ALL_INTERFACES_ADDRESSES = ['0.0.0.0', '0:0:0:0:0:0:0:0', '::'];
+export function isAllInterfaces(host: string): boolean {
+	return ALL_INTERFACES_ADDRESSES.indexOf(host) >= 0;
 }
 
 function getOtherLocalhost(host: string): string | undefined {
@@ -198,6 +208,10 @@ export abstract class AbstractTunnelService implements ITunnelService {
 	}
 
 	protected abstract retainOrCreateTunnel(addressProvider: IAddressProvider, remoteHost: string, remotePort: number, localPort?: number): Promise<RemoteTunnel> | undefined;
+
+	protected isPortPrivileged(port: number): boolean {
+		return port < 1024;
+	}
 }
 
 export class TunnelService extends AbstractTunnelService {
@@ -209,7 +223,10 @@ export class TunnelService extends AbstractTunnelService {
 		}
 
 		if (this._tunnelProvider) {
-			const tunnel = this._tunnelProvider.forwardPort({ remoteAddress: { host: remoteHost, port: remotePort } });
+			const preferredLocalPort = localPort === undefined ? remotePort : localPort;
+			const tunnelOptions = { remoteAddress: { host: remoteHost, port: remotePort }, localAddressPort: localPort };
+			const creationInfo = { elevationRequired: this.isPortPrivileged(preferredLocalPort) };
+			const tunnel = this._tunnelProvider.forwardPort(tunnelOptions, creationInfo);
 			if (tunnel) {
 				this.addTunnelToMap(remoteHost, remotePort, tunnel);
 			}

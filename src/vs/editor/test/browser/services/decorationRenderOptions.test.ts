@@ -149,25 +149,33 @@ suite('Decoration Render Options', () => {
 		assert(readStyleSheet(styleSheet).indexOf(`{background:url('data:image/svg+xml;base64,PHN2ZyB4b+') center center no-repeat;}`) > 0);
 		s.removeDecorationType('example');
 
+		function assertBackground(url1: string, url2: string) {
+			const actual = readStyleSheet(styleSheet);
+			assert(
+				actual.indexOf(`{background:url('${url1}') center center no-repeat;}`) > 0
+				|| actual.indexOf(`{background:url('${url2}') center center no-repeat;}`) > 0
+			);
+		}
+
 		if (platform.isWindows) {
 			// windows file path (used as string)
 			s.registerDecorationType('example', { gutterIconPath: URI.file('c:\\files\\miles\\more.png') });
-			assert(readStyleSheet(styleSheet).indexOf(`{background:url('file:///c:/files/miles/more.png') center center no-repeat;}`) > 0);
+			assertBackground('file:///c:/files/miles/more.png', 'vscode-file://vscode-app/c:/files/miles/more.png');
 			s.removeDecorationType('example');
 
 			// single quote must always be escaped/encoded
 			s.registerDecorationType('example', { gutterIconPath: URI.file('c:\\files\\foo\\b\'ar.png') });
-			assert(readStyleSheet(styleSheet).indexOf(`{background:url('file:///c:/files/foo/b%27ar.png') center center no-repeat;}`) > 0);
+			assertBackground('file:///c:/files/foo/b%27ar.png', 'vscode-file://vscode-app/c:/files/foo/b%27ar.png');
 			s.removeDecorationType('example');
 		} else {
 			// unix file path (used as string)
 			s.registerDecorationType('example', { gutterIconPath: URI.file('/Users/foo/bar.png') });
-			assert(readStyleSheet(styleSheet).indexOf(`{background:url('file:///Users/foo/bar.png') center center no-repeat;}`) > 0);
+			assertBackground('file:///Users/foo/bar.png', 'vscode-file://vscode-app/Users/foo/bar.png');
 			s.removeDecorationType('example');
 
 			// single quote must always be escaped/encoded
 			s.registerDecorationType('example', { gutterIconPath: URI.file('/Users/foo/b\'ar.png') });
-			assert(readStyleSheet(styleSheet).indexOf(`{background:url('file:///Users/foo/b%27ar.png') center center no-repeat;}`) > 0);
+			assertBackground('file:///Users/foo/b%27ar.png', 'vscode-file://vscode-app/Users/foo/b%27ar.png');
 			s.removeDecorationType('example');
 		}
 

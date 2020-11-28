@@ -211,16 +211,17 @@ import { IJSONSchema } from 'vs/base/common/jsonSchema';
 			},
 			'window.restoreWindows': {
 				'type': 'string',
-				'enum': ['all', 'folders', 'one', 'none'],
+				'enum': ['preserve', 'all', 'folders', 'one', 'none'],
 				'enumDescriptions': [
-					nls.localize('window.reopenFolders.all', "Reopen all windows."),
-					nls.localize('window.reopenFolders.folders', "Reopen all folders. Empty workspaces will not be restored."),
-					nls.localize('window.reopenFolders.one', "Reopen the last active window."),
-					nls.localize('window.reopenFolders.none', "Never reopen a window. Always start with an empty one.")
+					nls.localize('window.reopenFolders.preserve', "Reopen all windows. If a folder or workspace is opened (e.g. from the command line) it opens as new window. Files will open in one of the restored windows."),
+					nls.localize('window.reopenFolders.all', "Reopen all windows unless a folder, workspace or file is opened (e.g. from the command line)."),
+					nls.localize('window.reopenFolders.folders', "Reopen all windows that had folders or workspaces opened unless a folder, workspace or file is opened (e.g. from the command line)."),
+					nls.localize('window.reopenFolders.one', "Reopen the last active window unless a folder, workspace or file is opened (e.g. from the command line)."),
+					nls.localize('window.reopenFolders.none', "Never reopen a window. Unless a folder or workspace is opened (e.g. from the command line), an empty window will appear.")
 				],
 				'default': 'all',
 				'scope': ConfigurationScope.APPLICATION,
-				'description': nls.localize('restoreWindows', "Controls how windows are being reopened after a restart.")
+				'description': nls.localize('restoreWindows', "Controls how windows are being reopened after starting for the first time. This setting has no effect when the application is already running.")
 			},
 			'window.restoreFullscreen': {
 				'type': 'boolean',

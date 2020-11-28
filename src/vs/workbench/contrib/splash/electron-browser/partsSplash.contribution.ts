@@ -102,7 +102,7 @@ class PartsSplash {
 				layoutInfo,
 				baseTheme
 			}),
-			{ encoding: 'utf8', overwriteEncoding: true }
+			{ encoding: 'utf8' }
 		);
 
 		if (baseTheme !== this._lastBaseTheme || colorInfo.editorBackground !== this._lastBackground) {

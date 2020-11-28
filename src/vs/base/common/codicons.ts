@@ -5,6 +5,7 @@
 
 import { codiconStartMarker } from 'vs/base/common/codicon';
 import { Emitter, Event } from 'vs/base/common/event';
+import { localize } from 'vs/nls';
 
 export interface IIconRegistry {
 	readonly all: IterableIterator<Codicon>;
@@ -18,9 +19,12 @@ class Registry implements IIconRegistry {
 	private readonly _onDidRegister = new Emitter<Codicon>();
 
 	public add(icon: Codicon) {
-		if (!this._icons.has(icon.id)) {
+		const existing = this._icons.get(icon.id);
+		if (!existing) {
 			this._icons.set(icon.id, icon);
 			this._onDidRegister.fire(icon);
+		} else if (icon.description) {
+			existing.description = icon.description;
 		} else {
 			console.error(`Duplicate registration of codicon ${icon.id}`);
 		}
@@ -43,11 +47,11 @@ const _registry = new Registry();
 
 export const iconRegistry: IIconRegistry = _registry;
 
-export function registerIcon(id: string, def: Codicon, description?: string) {
-	return new Codicon(id, def);
+export function registerCodicon(id: string, def: Codicon, description?: string): Codicon {
+	return new Codicon(id, def, description);
 }
 
-export class Codicon {
+export class Codicon implements CSSIcon {
 	constructor(public readonly id: string, public readonly definition: Codicon | IconDefinition, public description?: string) {
 		_registry.add(this);
 	}
@@ -56,6 +60,12 @@ export class Codicon {
 	public get classNamesArray() { return ['codicon', 'codicon-' + this.id]; }
 	public get cssSelector() { return '.codicon.codicon-' + this.id; }
 }
+
+export interface CSSIcon {
+	readonly classNames: string;
+}
+
+
 
 interface IconDefinition {
 	character: string;
@@ -484,7 +494,14 @@ export namespace Codicon {
 	export const redo = new Codicon('redo', { character: '\\ebb0' });
 	export const checkAll = new Codicon('check-all', { character: '\\ebb1' });
 	export const pinnedDirty = new Codicon('pinned-dirty', { character: '\\ebb2' });
+	export const passFilled = new Codicon('pass-filled', { character: '\\ebb3' });
+	export const circleLargeFilled = new Codicon('circle-large-filled', { character: '\\ebb4' });
+	export const circleLargeOutline = new Codicon('circle-large-outline', { character: '\\ebb5' });
+
+	export const dropDownButton = new Codicon('drop-down-button', Codicon.chevronDown.definition, localize('dropDownButton', 'Icon for drop down buttons.'));
 }
+
+// common icons
 
 
 

@@ -131,12 +131,4 @@ export class LinkedList<E> {
 			node = node.next;
 		}
 	}
-
-	toArray(): E[] {
-		const result: E[] = [];
-		for (let node = this._first; node !== Node.Undefined; node = node.next) {
-			result.push(node.element);
-		}
-		return result;
-	}
 }

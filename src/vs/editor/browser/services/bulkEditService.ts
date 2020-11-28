@@ -10,6 +10,8 @@ import { IProgress, IProgressStep } from 'vs/platform/progress/common/progress';
 import { IDisposable } from 'vs/base/common/lifecycle';
 import { URI } from 'vs/base/common/uri';
 import { isObject } from 'vs/base/common/types';
+import { UndoRedoSource } from 'vs/platform/undoRedo/common/undoRedo';
+import { CancellationToken } from 'vs/base/common/cancellation';
 
 export const IBulkEditService = createDecorator<IBulkEditService>('IWorkspaceEditService');
 
@@ -65,9 +67,12 @@ export class ResourceFileEdit extends ResourceEdit {
 export interface IBulkEditOptions {
 	editor?: ICodeEditor;
 	progress?: IProgress<IProgressStep>;
+	token?: CancellationToken;
 	showPreview?: boolean;
 	label?: string;
 	quotableLabel?: string;
+	undoRedoSource?: UndoRedoSource;
+	undoRedoGroupId?: number;
 }
 
 export interface IBulkEditResult {

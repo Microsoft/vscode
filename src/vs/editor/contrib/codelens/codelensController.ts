@@ -53,7 +53,7 @@ export class CodeLensContribution implements IEditorContribution {
 		this._disposables.add(this._editor.onDidChangeModel(() => this._onModelChange()));
 		this._disposables.add(this._editor.onDidChangeModelLanguage(() => this._onModelChange()));
 		this._disposables.add(this._editor.onDidChangeConfiguration((e) => {
-			if (e.hasChanged(EditorOption.fontInfo)) {
+			if (e.hasChanged(EditorOption.fontInfo) || e.hasChanged(EditorOption.codeLensFontSize) || e.hasChanged(EditorOption.codeLensFontFamily)) {
 				this._updateLensStyle();
 			}
 			if (e.hasChanged(EditorOption.codeLens)) {
@@ -77,21 +77,41 @@ export class CodeLensContribution implements IEditorContribution {
 		this._disposables.dispose();
 		this._oldCodeLensModels.dispose();
 		this._currentCodeLensModel?.dispose();
+		this._styleElement.remove();
+	}
+
+	private _getLayoutInfo() {
+		let fontSize = this._editor.getOption(EditorOption.codeLensFontSize);
+		let codeLensHeight: number;
+		if (!fontSize || fontSize < 5) {
+			fontSize = (this._editor.getOption(EditorOption.fontSize) * .9) | 0;
+			codeLensHeight = this._editor.getOption(EditorOption.lineHeight);
+		} else {
+			codeLensHeight = (fontSize * Math.max(1.3, this._editor.getOption(EditorOption.lineHeight) / this._editor.getOption(EditorOption.fontSize))) | 0;
+		}
+		return { codeLensHeight, fontSize };
 	}
 
 	private _updateLensStyle(): void {
-		const options = this._editor.getOptions();
-		const fontInfo = options.get(EditorOption.fontInfo);
-		const lineHeight = options.get(EditorOption.lineHeight);
 
+		const { codeLensHeight, fontSize } = this._getLayoutInfo();
+		const fontFamily = this._editor.getOption(EditorOption.codeLensFontFamily);
 
-		const height = Math.round(lineHeight * 1.1);
-		const fontSize = Math.round(fontInfo.fontSize * 0.9);
-		const newStyle = `
-		.monaco-editor .codelens-decoration.${this._styleClassName} { height: ${height}px; line-height: ${lineHeight}px; font-size: ${fontSize}px; padding-right: ${Math.round(fontInfo.fontSize * 0.45)}px;}
-		.monaco-editor .codelens-decoration.${this._styleClassName} > a > .codicon { line-height: ${lineHeight}px; font-size: ${fontSize}px; }
+		let newStyle = `
+		.monaco-editor .codelens-decoration.${this._styleClassName} { line-height: ${codeLensHeight}px; font-size: ${fontSize}px; padding-right: ${Math.round(fontSize * 0.5)}px;}
+		.monaco-editor .codelens-decoration.${this._styleClassName} span.codicon { line-height: ${codeLensHeight}px; font-size: ${fontSize}px; }
 		`;
+		if (fontFamily) {
+			newStyle += `.monaco-editor .codelens-decoration.${this._styleClassName} { font-family: ${fontFamily}}`;
+		}
 		this._styleElement.textContent = newStyle;
+
+		//
+		this._editor.changeViewZones(accessor => {
+			for (let lens of this._lenses) {
+				lens.updateHeight(codeLensHeight, accessor);
+			}
+		});
 	}
 
 	private _localDispose(): void {
@@ -165,7 +185,7 @@ export class CodeLensContribution implements IEditorContribution {
 
 				// render lenses
 				this._renderCodeLensSymbols(result);
-				this._resolveCodeLensesInViewportSoon();
+				this._resolveCodeLensesInViewport();
 			}, onUnexpectedError);
 
 		}, this._getCodeLensModelDelays.get(model));
@@ -199,9 +219,10 @@ export class CodeLensContribution implements IEditorContribution {
 				});
 			});
 
-			// Compute new `visible` code lenses
-			this._resolveCodeLensesInViewportSoon();
 			// Ask for all references again
+			scheduler.schedule();
+		}));
+		this._localToDispose.add(this._editor.onDidFocusEditorWidget(() => {
 			scheduler.schedule();
 		}));
 		this._localToDispose.add(this._editor.onDidScrollChange(e => {
@@ -283,6 +304,7 @@ export class CodeLensContribution implements IEditorContribution {
 		}
 
 		const scrollState = StableEditorScrollState.capture(this._editor);
+		const layoutInfo = this._getLayoutInfo();
 
 		this._editor.changeDecorations(decorationsAccessor => {
 			this._editor.changeViewZones(viewZoneAccessor => {
@@ -304,7 +326,7 @@ export class CodeLensContribution implements IEditorContribution {
 						groupsIndex++;
 						codeLensIndex++;
 					} else {
-						this._lenses.splice(codeLensIndex, 0, new CodeLensWidget(groups[groupsIndex], <IActiveCodeEditor>this._editor, this._styleClassName, helper, viewZoneAccessor, () => this._resolveCodeLensesInViewportSoon()));
+						this._lenses.splice(codeLensIndex, 0, new CodeLensWidget(groups[groupsIndex], <IActiveCodeEditor>this._editor, this._styleClassName, helper, viewZoneAccessor, layoutInfo.codeLensHeight, () => this._resolveCodeLensesInViewportSoon()));
 						codeLensIndex++;
 						groupsIndex++;
 					}
@@ -318,7 +340,7 @@ export class CodeLensContribution implements IEditorContribution {
 
 				// Create extra symbols
 				while (groupsIndex < groups.length) {
-					this._lenses.push(new CodeLensWidget(groups[groupsIndex], <IActiveCodeEditor>this._editor, this._styleClassName, helper, viewZoneAccessor, () => this._resolveCodeLensesInViewportSoon()));
+					this._lenses.push(new CodeLensWidget(groups[groupsIndex], <IActiveCodeEditor>this._editor, this._styleClassName, helper, viewZoneAccessor, layoutInfo.codeLensHeight, () => this._resolveCodeLensesInViewportSoon()));
 					groupsIndex++;
 				}
 

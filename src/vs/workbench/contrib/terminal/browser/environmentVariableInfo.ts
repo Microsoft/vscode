@@ -7,6 +7,8 @@ import { IEnvironmentVariableInfo, IMergedEnvironmentVariableCollection, IMerged
 import { TERMINAL_COMMAND_ID } from 'vs/workbench/contrib/terminal/common/terminal';
 import { ITerminalService } from 'vs/workbench/contrib/terminal/browser/terminal';
 import { localize } from 'vs/nls';
+import { ThemeIcon } from 'vs/platform/theme/common/themeService';
+import { Codicon } from 'vs/base/common/codicons';
 
 export class EnvironmentVariableInfoStale implements IEnvironmentVariableInfo {
 	readonly requiresAction = true;
@@ -53,8 +55,8 @@ export class EnvironmentVariableInfoStale implements IEnvironmentVariableInfo {
 		return info;
 	}
 
-	getIcon(): string {
-		return 'warning';
+	getIcon(): ThemeIcon {
+		return Codicon.warning;
 	}
 
 	getActions(): { label: string, iconClass?: string, run: () => void, commandId: string }[] {
@@ -83,8 +85,8 @@ export class EnvironmentVariableInfoChangesActive implements IEnvironmentVariabl
 		return message + '\n\n```\n' + changes.join('\n') + '\n```';
 	}
 
-	getIcon(): string {
-		return 'info';
+	getIcon(): ThemeIcon {
+		return Codicon.info;
 	}
 }
 

@@ -16,6 +16,7 @@ import { IConfigurationService } from 'vs/platform/configuration/common/configur
 import { IQuickInputService, IQuickPickItem } from 'vs/platform/quickinput/common/quickInput';
 import { URI } from 'vs/base/common/uri';
 import { extname, basename, isEqual } from 'vs/base/common/resources';
+import { Codicon } from 'vs/base/common/codicons';
 
 /**
  * Id of the default editor for open with.
@@ -71,7 +72,7 @@ export async function openEditorWith(
 			description: entry.active ? nls.localize('promptOpenWith.currentlyActive', 'Currently Active') : undefined,
 			detail: entry.detail,
 			buttons: resourceExt ? [{
-				iconClass: 'codicon-settings-gear',
+				iconClass: Codicon.gear.classNames,
 				tooltip: nls.localize('promptOpenWith.setDefaultTooltip', "Set as default editor for '{0}' files", resourceExt)
 			}] : undefined
 		};

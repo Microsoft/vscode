@@ -397,7 +397,7 @@ div.preview.inline .monaco-editor .comment-range-glyph {
 }
 
 .monaco-editor .margin-view-overlays > div:hover > .comment-range-glyph.comment-diff-added:before {
-	content: "+";
+	content: "💬";
 }
 
 .monaco-editor .comment-range-glyph.comment-thread {

@@ -128,13 +128,21 @@ export class TypeScriptServerSpawner {
 		const apiVersion = version.apiVersion || API.defaultVersion;
 
 		const canceller = cancellerFactory.create(kind, this._tracer);
-		const { args, tsServerLogFile } = this.getTsServerArgs(kind, configuration, version, apiVersion, pluginManager, canceller.cancellationPipeName);
+		const { args, tsServerLogFile, tsServerTraceDirectory } = this.getTsServerArgs(kind, configuration, version, apiVersion, pluginManager, canceller.cancellationPipeName);
 
 		if (TypeScriptServerSpawner.isLoggingEnabled(configuration)) {
 			if (tsServerLogFile) {
 				this._logger.info(`<${kind}> Log file: ${tsServerLogFile}`);
 			} else {
 				this._logger.error(`<${kind}> Could not create log directory`);
+			}
+		}
+
+		if (configuration.enableTsServerTracing) {
+			if (tsServerTraceDirectory) {
+				this._logger.info(`<${kind}> Trace directory: ${tsServerTraceDirectory}`);
+			} else {
+				this._logger.error(`<${kind}> Could not create trace directory`);
 			}
 		}
 
@@ -173,9 +181,10 @@ export class TypeScriptServerSpawner {
 		apiVersion: API,
 		pluginManager: PluginManager,
 		cancellationPipeName: string | undefined,
-	): { args: string[], tsServerLogFile: string | undefined } {
+	): { args: string[], tsServerLogFile: string | undefined, tsServerTraceDirectory: string | undefined } {
 		const args: string[] = [];
 		let tsServerLogFile: string | undefined;
+		let tsServerTraceDirectory: string | undefined;
 
 		if (kind === TsServerProcessKind.Syntax) {
 			if (apiVersion.gte(API.v401)) {
@@ -216,6 +225,13 @@ export class TypeScriptServerSpawner {
 			}
 		}
 
+		if (configuration.enableTsServerTracing && !isWeb()) {
+			tsServerTraceDirectory = this._logDirectoryProvider.getNewLogDirectory();
+			if (tsServerTraceDirectory) {
+				args.push('--traceDirectory', tsServerTraceDirectory);
+			}
+		}
+
 		if (!isWeb()) {
 			const pluginPaths = this._pluginPathsProvider.getPluginPaths();
 
@@ -251,7 +267,7 @@ export class TypeScriptServerSpawner {
 			args.push('--validateDefaultNpmLocation');
 		}
 
-		return { args, tsServerLogFile };
+		return { args, tsServerLogFile, tsServerTraceDirectory };
 	}
 
 	private static isLoggingEnabled(configuration: TypeScriptServiceConfiguration) {

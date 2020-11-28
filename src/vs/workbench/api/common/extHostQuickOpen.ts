@@ -448,7 +448,11 @@ function getIconUris(iconPath: QuickInputButton['iconPath']): { dark: URI, light
 	}
 	const dark = getDarkIconUri(iconPath as URI | { light: URI; dark: URI; });
 	const light = getLightIconUri(iconPath as URI | { light: URI; dark: URI; });
-	return { dark, light };
+	// Tolerate strings: https://github.com/microsoft/vscode/issues/110432#issuecomment-726144556
+	return {
+		dark: typeof dark === 'string' ? URI.file(dark) : dark,
+		light: typeof light === 'string' ? URI.file(light) : light
+	};
 }
 
 function getLightIconUri(iconPath: URI | { light: URI; dark: URI; }) {

@@ -3,13 +3,16 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { ILineBreaksComputerFactory, LineBreakData, ILineBreaksComputer } from 'vs/editor/common/viewModel/splitLinesCollection';
+import { ILineBreaksComputerFactory } from 'vs/editor/common/viewModel/splitLinesCollection';
 import { WrappingIndent } from 'vs/editor/common/config/editorOptions';
 import { FontInfo } from 'vs/editor/common/config/fontInfo';
 import { createStringBuilder, IStringBuilder } from 'vs/editor/common/core/stringBuilder';
 import { CharCode } from 'vs/base/common/charCode';
 import * as strings from 'vs/base/common/strings';
 import { Configuration } from 'vs/editor/browser/config/configuration';
+import { ILineBreaksComputer, LineBreakData } from 'vs/editor/common/viewModel/viewModel';
+
+const ttPolicy = window.trustedTypes?.createPolicy('domLineBreaksComputer', { createHTML: value => value });
 
 export class DOMLineBreaksComputerFactory implements ILineBreaksComputerFactory {
 
@@ -107,7 +110,9 @@ function createLineBreaks(requests: string[], fontInfo: FontInfo, tabSize: numbe
 		allCharOffsets[i] = tmp[0];
 		allVisibleColumns[i] = tmp[1];
 	}
-	containerDomNode.innerHTML = sb.build();
+	const html = sb.build();
+	const trustedhtml = ttPolicy ? ttPolicy.createHTML(html) : html;
+	containerDomNode.innerHTML = trustedhtml as unknown as string;
 
 	containerDomNode.style.position = 'absolute';
 	containerDomNode.style.top = '10000';

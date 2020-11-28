@@ -393,6 +393,7 @@ export class Thread implements IThread {
 	private callStackCancellationTokens: CancellationTokenSource[] = [];
 	public stoppedDetails: IRawStoppedDetails | undefined;
 	public stopped: boolean;
+	public reachedEndOfCallStack = false;
 
 	constructor(public session: IDebugSession, public name: string, public threadId: number) {
 		this.callStack = [];
@@ -445,6 +446,7 @@ export class Thread implements IThread {
 		if (this.stopped) {
 			const start = this.callStack.length;
 			const callStack = await this.getCallStackImpl(start, levels);
+			this.reachedEndOfCallStack = callStack.length < levels;
 			if (start < this.callStack.length) {
 				// Set the stack frames for exact position we requested. To make sure no concurrent requests create duplicate stack frames #30660
 				this.callStack.splice(start, this.callStack.length - start);
@@ -858,7 +860,7 @@ export class DataBreakpoint extends BaseBreakpoint implements IDataBreakpoint {
 
 export class ExceptionBreakpoint extends Enablement implements IExceptionBreakpoint {
 
-	constructor(public filter: string, public label: string, enabled: boolean) {
+	constructor(public filter: string, public label: string, enabled: boolean, public supportsCondition: boolean, public condition: string | undefined) {
 		super(enabled, generateUuid());
 	}
 
@@ -867,6 +869,8 @@ export class ExceptionBreakpoint extends Enablement implements IExceptionBreakpo
 		result.filter = this.filter;
 		result.label = this.label;
 		result.enabled = this.enabled;
+		result.supportsCondition = this.supportsCondition;
+		result.condition = this.condition;
 
 		return result;
 	}
@@ -1060,17 +1064,22 @@ export class DebugModel implements IDebugModel {
 
 	setExceptionBreakpoints(data: DebugProtocol.ExceptionBreakpointsFilter[]): void {
 		if (data) {
-			if (this.exceptionBreakpoints.length === data.length && this.exceptionBreakpoints.every((exbp, i) => exbp.filter === data[i].filter && exbp.label === data[i].label)) {
+			if (this.exceptionBreakpoints.length === data.length && this.exceptionBreakpoints.every((exbp, i) => exbp.filter === data[i].filter && exbp.label === data[i].label && exbp.supportsCondition === data[i].supportsCondition)) {
 				// No change
 				return;
 			}
 
 			this.exceptionBreakpoints = data.map(d => {
 				const ebp = this.exceptionBreakpoints.filter(ebp => ebp.filter === d.filter).pop();
-				return new ExceptionBreakpoint(d.filter, d.label, ebp ? ebp.enabled : !!d.default);
+				return new ExceptionBreakpoint(d.filter, d.label, ebp ? ebp.enabled : !!d.default, !!d.supportsCondition, ebp?.condition);
 			});
 			this._onDidChangeBreakpoints.fire(undefined);
 		}
+	}
+
+	setExceptionBreakpointCondition(exceptionBreakpoint: IExceptionBreakpoint, condition: string | undefined): void {
+		(exceptionBreakpoint as ExceptionBreakpoint).condition = condition;
+		this._onDidChangeBreakpoints.fire(undefined);
 	}
 
 	areBreakpointsActivated(): boolean {

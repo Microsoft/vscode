@@ -152,7 +152,7 @@ async function validateShellPaths(label: string, potentialPaths: string[]): Prom
 	}
 	try {
 		const result = await stat(normalize(current));
-		if (result.isFile || result.isSymbolicLink) {
+		if (result.isFile() || result.isSymbolicLink()) {
 			return {
 				label,
 				path: current

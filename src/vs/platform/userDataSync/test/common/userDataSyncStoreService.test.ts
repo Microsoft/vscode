@@ -464,10 +464,10 @@ suite('UserDataSyncRequestsSession', () => {
 
 	test('too many requests are thrown when limit exceeded', async () => {
 		const testObject = new RequestsSession(1, 500, requestService, new NullLogService());
-		await testObject.request({}, CancellationToken.None);
+		await testObject.request('url', {}, CancellationToken.None);
 
 		try {
-			await testObject.request({}, CancellationToken.None);
+			await testObject.request('url', {}, CancellationToken.None);
 		} catch (error) {
 			assert.ok(error instanceof UserDataSyncStoreError);
 			assert.equal((<UserDataSyncStoreError>error).code, UserDataSyncErrorCode.LocalTooManyRequests);
@@ -478,19 +478,19 @@ suite('UserDataSyncRequestsSession', () => {
 
 	test('requests are handled after session is expired', async () => {
 		const testObject = new RequestsSession(1, 500, requestService, new NullLogService());
-		await testObject.request({}, CancellationToken.None);
+		await testObject.request('url', {}, CancellationToken.None);
 		await timeout(600);
-		await testObject.request({}, CancellationToken.None);
+		await testObject.request('url', {}, CancellationToken.None);
 	});
 
 	test('too many requests are thrown after session is expired', async () => {
 		const testObject = new RequestsSession(1, 500, requestService, new NullLogService());
-		await testObject.request({}, CancellationToken.None);
+		await testObject.request('url', {}, CancellationToken.None);
 		await timeout(600);
-		await testObject.request({}, CancellationToken.None);
+		await testObject.request('url', {}, CancellationToken.None);
 
 		try {
-			await testObject.request({}, CancellationToken.None);
+			await testObject.request('url', {}, CancellationToken.None);
 		} catch (error) {
 			assert.ok(error instanceof UserDataSyncStoreError);
 			assert.equal((<UserDataSyncStoreError>error).code, UserDataSyncErrorCode.LocalTooManyRequests);

@@ -124,6 +124,7 @@
 
 .settings-editor > .settings-body {
 	position: relative;
+	margin-top: 14px;
 }
 
 .settings-editor > .settings-body > .no-results-message {
@@ -247,7 +248,6 @@
 }
 
 .settings-editor > .settings-body .settings-tree-container {
-	margin-top: 14px;
 	border-spacing: 0;
 	border-collapse: separate;
 	position: relative;
@@ -344,13 +344,11 @@
 }
 
 .settings-editor > .settings-body > .settings-tree-container .setting-item-contents .setting-item-title .setting-item-overrides {
-	opacity: 0.9;
 	font-style: italic;
 	margin-right: 4px;
 }
 
 .settings-editor > .settings-body > .settings-tree-container .setting-item-contents .setting-item-title .setting-item-ignored {
-	opacity: 0.9;
 	font-style: italic;
 }
 

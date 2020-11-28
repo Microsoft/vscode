@@ -588,3 +588,17 @@ export function asArray<T>(x: T | T[]): T[] {
 export function getRandomElement<T>(arr: T[]): T | undefined {
 	return arr[Math.floor(Math.random() * arr.length)];
 }
+
+/**
+ * Returns the first mapped value of the array which is not undefined.
+ */
+export function mapFind<T, R>(array: Iterable<T>, mapFn: (value: T) => R | undefined): R | undefined {
+	for (const value of array) {
+		const mapped = mapFn(value);
+		if (mapped !== undefined) {
+			return mapped;
+		}
+	}
+
+	return undefined;
+}

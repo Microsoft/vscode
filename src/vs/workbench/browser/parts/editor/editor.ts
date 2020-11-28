@@ -38,7 +38,8 @@ export const DEFAULT_EDITOR_PART_OPTIONS: IEditorPartOptions = {
 	openSideBySideDirection: 'right',
 	closeEmptyGroups: true,
 	labelFormat: 'default',
-	splitSizing: 'distribute'
+	splitSizing: 'distribute',
+	splitOnDragAndDrop: true
 };
 
 export function impactsEditorPartOptions(event: IConfigurationChangeEvent): boolean {

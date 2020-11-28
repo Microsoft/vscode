@@ -6,8 +6,8 @@
 import { MainThreadTunnelServiceShape, IExtHostContext, MainContext, ExtHostContext, ExtHostTunnelServiceShape } from 'vs/workbench/api/common/extHost.protocol';
 import { TunnelDto } from 'vs/workbench/api/common/extHostTunnelService';
 import { extHostNamedCustomer } from 'vs/workbench/api/common/extHostCustomers';
-import { IRemoteExplorerService, MakeAddress } from 'vs/workbench/services/remote/common/remoteExplorerService';
-import { ITunnelProvider, ITunnelService, TunnelOptions } from 'vs/platform/remote/common/tunnel';
+import { IRemoteExplorerService, makeAddress } from 'vs/workbench/services/remote/common/remoteExplorerService';
+import { ITunnelProvider, ITunnelService, TunnelCreationOptions, TunnelOptions } from 'vs/platform/remote/common/tunnel';
 import { Disposable } from 'vs/base/common/lifecycle';
 import type { TunnelDescription } from 'vs/platform/remote/common/remoteAuthorityResolver';
 
@@ -26,8 +26,8 @@ export class MainThreadTunnelService extends Disposable implements MainThreadTun
 		this._register(tunnelService.onTunnelClosed(() => this._proxy.$onDidTunnelsChange()));
 	}
 
-	async $openTunnel(tunnelOptions: TunnelOptions): Promise<TunnelDto | undefined> {
-		const tunnel = await this.remoteExplorerService.forward(tunnelOptions.remoteAddress, tunnelOptions.localAddressPort, tunnelOptions.label);
+	async $openTunnel(tunnelOptions: TunnelOptions, source: string): Promise<TunnelDto | undefined> {
+		const tunnel = await this.remoteExplorerService.forward(tunnelOptions.remoteAddress, tunnelOptions.localAddressPort, tunnelOptions.label, source);
 		if (tunnel) {
 			return TunnelDto.fromServiceTunnel(tunnel);
 		}
@@ -47,8 +47,8 @@ export class MainThreadTunnelService extends Disposable implements MainThreadTun
 		});
 	}
 
-	async $registerCandidateFinder(): Promise<void> {
-		this.remoteExplorerService.registerCandidateFinder(() => this._proxy.$findCandidatePorts());
+	async $onFoundNewCandidates(candidates: { host: string, port: number, detail: string }[]): Promise<void> {
+		this.remoteExplorerService.onFoundNewCandidates(candidates);
 	}
 
 	async $tunnelServiceReady(): Promise<void> {
@@ -57,19 +57,17 @@ export class MainThreadTunnelService extends Disposable implements MainThreadTun
 
 	async $setTunnelProvider(): Promise<void> {
 		const tunnelProvider: ITunnelProvider = {
-			forwardPort: (tunnelOptions: TunnelOptions) => {
-				const forward = this._proxy.$forwardPort(tunnelOptions);
+			forwardPort: (tunnelOptions: TunnelOptions, tunnelCreationOptions: TunnelCreationOptions) => {
+				const forward = this._proxy.$forwardPort(tunnelOptions, tunnelCreationOptions);
 				if (forward) {
 					return forward.then(tunnel => {
 						return {
 							tunnelRemotePort: tunnel.remoteAddress.port,
 							tunnelRemoteHost: tunnel.remoteAddress.host,
-							localAddress: typeof tunnel.localAddress === 'string' ? tunnel.localAddress : MakeAddress(tunnel.localAddress.host, tunnel.localAddress.port),
+							localAddress: typeof tunnel.localAddress === 'string' ? tunnel.localAddress : makeAddress(tunnel.localAddress.host, tunnel.localAddress.port),
 							tunnelLocalPort: typeof tunnel.localAddress !== 'string' ? tunnel.localAddress.port : undefined,
-							dispose: (silent: boolean) => {
-								if (!silent) {
-									this._proxy.$closeTunnel({ host: tunnel.remoteAddress.host, port: tunnel.remoteAddress.port });
-								}
+							dispose: (silent?: boolean) => {
+								this._proxy.$closeTunnel({ host: tunnel.remoteAddress.host, port: tunnel.remoteAddress.port }, silent);
 							}
 						};
 					});
@@ -78,22 +76,6 @@ export class MainThreadTunnelService extends Disposable implements MainThreadTun
 			}
 		};
 		this.tunnelService.setTunnelProvider(tunnelProvider);
-	}
-
-	async $setCandidateFilter(): Promise<void> {
-		this._register(this.remoteExplorerService.setCandidateFilter(async (candidates: { host: string, port: number, detail: string }[]): Promise<{ host: string, port: number, detail: string }[]> => {
-			const filters: boolean[] = await this._proxy.$filterCandidates(candidates);
-			const filteredCandidates: { host: string, port: number, detail: string }[] = [];
-			if (filters.length !== candidates.length) {
-				return candidates;
-			}
-			for (let i = 0; i < candidates.length; i++) {
-				if (filters[i]) {
-					filteredCandidates.push(candidates[i]);
-				}
-			}
-			return filteredCandidates;
-		}));
 	}
 
 	dispose(): void {

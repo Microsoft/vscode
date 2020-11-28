@@ -891,9 +891,15 @@ export function getNLines(str: string, n = 1): string {
 		n--;
 	} while (n > 0 && idx >= 0);
 
-	return idx >= 0 ?
-		str.substr(0, idx) :
-		str;
+	if (idx === -1) {
+		return str;
+	}
+
+	if (str[idx - 1] === '\r') {
+		idx--;
+	}
+
+	return str.substr(0, idx);
 }
 
 /**

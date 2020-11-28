@@ -138,6 +138,7 @@ function doWrapping(individualLines: boolean, args: any) {
 				newText = newText.replace(/\$\{[\d]*(:[^}]*)?\}/g, (match) => {		// Replacing Placeholders
 					return match.replace(/^\$\{[\d]*:/, '').replace('}', '');
 				});
+				newText = newText.replace(/\\\$/g, '$'); // Remove backslashes before $
 				builder.replace(oldPreviewRange, newText);
 
 				const expandedTextLines = newText.split('\n');

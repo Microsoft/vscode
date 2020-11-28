@@ -95,6 +95,31 @@ suite('TextSearchResult', () => {
 		assert.equal((<SearchRange>result.preview.matches).endColumn, 3);
 	});
 
+	test('compacts multiple ranges on long lines', () => {
+		const previewOptions: ITextSearchPreviewOptions = {
+			matchLines: 1,
+			charsPerLine: 10
+		};
+
+		const range1 = new SearchRange(5, 4, 5, 7);
+		const range2 = new SearchRange(5, 133, 5, 136);
+		const range3 = new SearchRange(5, 141, 5, 144);
+		const result = new TextSearchMatch('foo bar 123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890 foo bar baz bar', [range1, range2, range3], previewOptions);
+		assert.deepEqual(result.preview.matches, [new SearchRange(0, 4, 0, 7), new SearchRange(0, 42, 0, 45), new SearchRange(0, 50, 0, 53)]);
+		assert.equal(result.preview.text, 'foo bar 123456⟪ 117 characters skipped ⟫o bar baz bar');
+	});
+
+	test('trims lines endings', () => {
+		const range = new SearchRange(5, 3, 5, 5);
+		const previewOptions: ITextSearchPreviewOptions = {
+			matchLines: 1,
+			charsPerLine: 10000
+		};
+
+		assert.equal(new TextSearchMatch('foo bar\n', range, previewOptions).preview.text, 'foo bar');
+		assert.equal(new TextSearchMatch('foo bar\r\n', range, previewOptions).preview.text, 'foo bar');
+	});
+
 	// test('all lines of multiline match', () => {
 	// 	const previewOptions: ITextSearchPreviewOptions = {
 	// 		matchLines: 5,

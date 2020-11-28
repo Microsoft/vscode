@@ -192,7 +192,8 @@ suite('AbstractKeybindingService', () => {
 			null,
 			when,
 			true,
-			null
+			null,
+			false
 		);
 	}
 

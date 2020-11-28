@@ -6,11 +6,11 @@
 import { CancellationToken } from 'vs/base/common/cancellation';
 import { illegalArgument } from 'vs/base/common/errors';
 import { URI } from 'vs/base/common/uri';
-import { registerLanguageCommand } from 'vs/editor/browser/editorExtensions';
 import { IRange, Range } from 'vs/editor/common/core/range';
 import { ITextModel } from 'vs/editor/common/model';
 import { ColorProviderRegistry, DocumentColorProvider, IColorInformation, IColorPresentation } from 'vs/editor/common/modes';
 import { IModelService } from 'vs/editor/common/services/modelService';
+import { CommandsRegistry } from 'vs/platform/commands/common/commands';
 
 
 export interface IColorData {
@@ -36,9 +36,9 @@ export function getColorPresentations(model: ITextModel, colorInfo: IColorInform
 	return Promise.resolve(provider.provideColorPresentations(model, colorInfo, token));
 }
 
-registerLanguageCommand('_executeDocumentColorProvider', function (accessor, args) {
+CommandsRegistry.registerCommand('_executeDocumentColorProvider', function (accessor, ...args) {
 
-	const { resource } = args;
+	const [resource] = args;
 	if (!(resource instanceof URI)) {
 		throw illegalArgument();
 	}
@@ -62,15 +62,16 @@ registerLanguageCommand('_executeDocumentColorProvider', function (accessor, arg
 });
 
 
-registerLanguageCommand('_executeColorPresentationProvider', function (accessor, args) {
+CommandsRegistry.registerCommand('_executeColorPresentationProvider', function (accessor, ...args) {
 
-	const { resource, color, range } = args;
-	if (!(resource instanceof URI) || !Array.isArray(color) || color.length !== 4 || !Range.isIRange(range)) {
+	const [color, context] = args;
+	const { uri, range } = context;
+	if (!(uri instanceof URI) || !Array.isArray(color) || color.length !== 4 || !Range.isIRange(range)) {
 		throw illegalArgument();
 	}
 	const [red, green, blue, alpha] = color;
 
-	const model = accessor.get(IModelService).getModel(resource);
+	const model = accessor.get(IModelService).getModel(uri);
 	if (!model) {
 		throw illegalArgument();
 	}

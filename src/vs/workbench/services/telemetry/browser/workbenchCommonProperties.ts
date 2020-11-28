@@ -24,7 +24,7 @@ export async function resolveWorkbenchCommonProperties(
 	let machineId = storageService.get(machineIdKey, StorageScope.GLOBAL);
 	if (!machineId) {
 		machineId = uuid.generateUuid();
-		storageService.store2(machineIdKey, machineId, StorageScope.GLOBAL, StorageTarget.MACHINE);
+		storageService.store(machineIdKey, machineId, StorageScope.GLOBAL, StorageTarget.MACHINE);
 	}
 
 	/**

@@ -6,18 +6,19 @@
 import { createDecorator } from 'vs/platform/instantiation/common/instantiation'; import * as platform from 'vs/base/common/platform';
 import type { IKeyValueStorage, IExperimentationTelemetry, IExperimentationFilterProvider, ExperimentationService as TASClient } from 'tas-client-umd';
 import { MementoObject, Memento } from 'vs/workbench/common/memento';
-import { IProductService } from 'vs/platform/product/common/productService';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
-import { IStorageService, StorageScope } from 'vs/platform/storage/common/storage';
+import { IStorageService, StorageScope, StorageTarget } from 'vs/platform/storage/common/storage';
 import { ITelemetryData } from 'vs/base/common/actions';
 import { registerSingleton } from 'vs/platform/instantiation/common/extensions';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
+import product from 'vs/platform/product/common/product';
 
 export const ITASExperimentService = createDecorator<ITASExperimentService>('TASExperimentService');
 
 export interface ITASExperimentService {
 	readonly _serviceBrand: undefined;
 	getTreatment<T extends string | number | boolean>(name: string): Promise<T | undefined>;
+	getCurrentExperiments(): Promise<string[] | undefined>;
 }
 
 const storageKey = 'VSCode.ABExp.FeatureData';
@@ -37,11 +38,20 @@ class MementoKeyValueStorage implements IKeyValueStorage {
 }
 
 class ExperimentServiceTelemetry implements IExperimentationTelemetry {
+	private _lastAssignmentContext: string | undefined;
 	constructor(private telemetryService: ITelemetryService) { }
+
+	get assignmentContext(): string[] | undefined {
+		return this._lastAssignmentContext?.split(';');
+	}
 
 	// __GDPR__COMMON__ "VSCode.ABExp.Features" : { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
 	// __GDPR__COMMON__ "abexp.assignmentcontext" : { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
 	setSharedProperty(name: string, value: string): void {
+		if (name === product.tasConfig?.assignmentContextTelemetryPropertyName) {
+			this._lastAssignmentContext = value;
+		}
+
 		this.telemetryService.setExperimentProperty(name, value);
 	}
 
@@ -165,6 +175,7 @@ enum TargetPopulation {
 export class ExperimentService implements ITASExperimentService {
 	_serviceBrand: undefined;
 	private tasClient: Promise<TASClient> | undefined;
+	private telemetry: ExperimentServiceTelemetry | undefined;
 	private static MEMENTO_ID = 'experiment.service.memento';
 
 	private get experimentsEnabled(): boolean {
@@ -172,13 +183,12 @@ export class ExperimentService implements ITASExperimentService {
 	}
 
 	constructor(
-		@IProductService private productService: IProductService,
 		@ITelemetryService private telemetryService: ITelemetryService,
 		@IStorageService private storageService: IStorageService,
 		@IConfigurationService private configurationService: IConfigurationService,
 	) {
 
-		if (this.productService.tasConfig && this.experimentsEnabled && this.telemetryService.isOptedIn) {
+		if (product.tasConfig && this.experimentsEnabled && this.telemetryService.isOptedIn) {
 			this.tasClient = this.setupTASClient();
 		}
 	}
@@ -195,26 +205,40 @@ export class ExperimentService implements ITASExperimentService {
 		return (await this.tasClient).getTreatmentVariable<T>('vscode', name);
 	}
 
+	async getCurrentExperiments(): Promise<string[] | undefined> {
+		if (!this.tasClient) {
+			return undefined;
+		}
+
+		if (!this.experimentsEnabled) {
+			return undefined;
+		}
+
+		await this.tasClient;
+
+		return this.telemetry?.assignmentContext;
+	}
+
 	private async setupTASClient(): Promise<TASClient> {
 		const telemetryInfo = await this.telemetryService.getTelemetryInfo();
-		const targetPopulation = telemetryInfo.msftInternal ? TargetPopulation.Internal : (this.productService.quality === 'stable' ? TargetPopulation.Public : TargetPopulation.Insiders);
+		const targetPopulation = telemetryInfo.msftInternal ? TargetPopulation.Internal : (product.quality === 'stable' ? TargetPopulation.Public : TargetPopulation.Insiders);
 		const machineId = telemetryInfo.machineId;
 		const filterProvider = new ExperimentServiceFilterProvider(
-			this.productService.version,
-			this.productService.nameLong,
+			product.version,
+			product.nameLong,
 			machineId,
 			targetPopulation
 		);
 
 		const memento = new Memento(ExperimentService.MEMENTO_ID, this.storageService);
-		const keyValueStorage = new MementoKeyValueStorage(memento.legacygetMemento(StorageScope.GLOBAL));
+		const keyValueStorage = new MementoKeyValueStorage(memento.getMemento(StorageScope.GLOBAL, StorageTarget.MACHINE));
 
-		const telemetry = new ExperimentServiceTelemetry(this.telemetryService);
+		this.telemetry = new ExperimentServiceTelemetry(this.telemetryService);
 
-		const tasConfig = this.productService.tasConfig!;
+		const tasConfig = product.tasConfig!;
 		const tasClient = new (await import('tas-client-umd')).ExperimentationService({
 			filterProviders: [filterProvider],
-			telemetry: telemetry,
+			telemetry: this.telemetry,
 			storageKey: storageKey,
 			keyValueStorage: keyValueStorage,
 			featuresTelemetryPropertyName: tasConfig.featuresTelemetryPropertyName,

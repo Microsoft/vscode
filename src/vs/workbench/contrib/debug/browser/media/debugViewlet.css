@@ -84,6 +84,7 @@
 
 /* Make icons and text the same color as the list foreground on focus selection */
 .debug-pane .monaco-list:focus .monaco-list-row.selected .state.label,
+.debug-pane .monaco-list:focus .monaco-list-row.selected .load-all,
 .debug-pane .monaco-list:focus .monaco-list-row.selected.focused .state.label,
 .debug-pane .monaco-list:focus .monaco-list-row.selected .codicon,
 .debug-pane .monaco-list:focus .monaco-list-row.selected.focused .codicon {
@@ -317,10 +318,10 @@
 	justify-content: center;
 }
 
-.debug-pane .debug-breakpoints .breakpoint > .file-path {
+.debug-pane .debug-breakpoints .breakpoint > .file-path,
+.debug-pane .debug-breakpoints .breakpoint.exception > .condition {
 	opacity: 0.7;
-	font-size: 0.9em;
-	margin-left: 0.8em;
+	margin-left: 0.9em;
 	flex: 1;
 	text-overflow: ellipsis;
 	overflow: hidden;

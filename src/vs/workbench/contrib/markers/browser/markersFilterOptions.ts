@@ -4,10 +4,41 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { IFilter, matchesFuzzy, matchesFuzzy2 } from 'vs/base/common/filters';
-import { IExpression, splitGlobAware, getEmptyExpression } from 'vs/base/common/glob';
+import { IExpression, splitGlobAware, getEmptyExpression, ParsedExpression, parse } from 'vs/base/common/glob';
 import * as strings from 'vs/base/common/strings';
 import { URI } from 'vs/base/common/uri';
-import { ResourceGlobMatcher } from 'vs/base/common/resources';
+import { relativePath } from 'vs/base/common/resources';
+import { TernarySearchTree } from 'vs/base/common/map';
+import { IUriIdentityService } from 'vs/workbench/services/uriIdentity/common/uriIdentity';
+
+export class ResourceGlobMatcher {
+
+	private readonly globalExpression: ParsedExpression;
+	private readonly expressionsByRoot: TernarySearchTree<URI, { root: URI, expression: ParsedExpression }>;
+
+	constructor(
+		globalExpression: IExpression,
+		rootExpressions: { root: URI, expression: IExpression }[],
+		uriIdentityService: IUriIdentityService
+	) {
+		this.globalExpression = parse(globalExpression);
+		this.expressionsByRoot = TernarySearchTree.forUris<{ root: URI, expression: ParsedExpression }>(uri => uriIdentityService.extUri.ignorePathCasing(uri));
+		for (const expression of rootExpressions) {
+			this.expressionsByRoot.set(expression.root, { root: expression.root, expression: parse(expression.expression) });
+		}
+	}
+
+	matches(resource: URI): boolean {
+		const rootExpression = this.expressionsByRoot.findSubstr(resource);
+		if (rootExpression) {
+			const path = relativePath(rootExpression.root, resource);
+			if (path && !!rootExpression.expression(path)) {
+				return true;
+			}
+		}
+		return !!this.globalExpression(resource.path);
+	}
+}
 
 export class FilterOptions {
 
@@ -21,7 +52,16 @@ export class FilterOptions {
 	readonly excludesMatcher: ResourceGlobMatcher;
 	readonly includesMatcher: ResourceGlobMatcher;
 
-	constructor(readonly filter: string = '', filesExclude: { root: URI, expression: IExpression }[] | IExpression = [], showWarnings: boolean = false, showErrors: boolean = false, showInfos: boolean = false) {
+	static EMPTY(uriIdentityService: IUriIdentityService) { return new FilterOptions('', [], false, false, false, uriIdentityService); }
+
+	constructor(
+		readonly filter: string,
+		filesExclude: { root: URI, expression: IExpression }[] | IExpression,
+		showWarnings: boolean,
+		showErrors: boolean,
+		showInfos: boolean,
+		uriIdentityService: IUriIdentityService
+	) {
 		filter = filter.trim();
 		this.showWarnings = showWarnings;
 		this.showErrors = showErrors;
@@ -43,8 +83,8 @@ export class FilterOptions {
 			}
 		}
 
-		this.excludesMatcher = new ResourceGlobMatcher(excludesExpression, filesExcludeByRoot);
-		this.includesMatcher = new ResourceGlobMatcher(includeExpression, []);
+		this.excludesMatcher = new ResourceGlobMatcher(excludesExpression, filesExcludeByRoot, uriIdentityService);
+		this.includesMatcher = new ResourceGlobMatcher(includeExpression, [], uriIdentityService);
 		this.textFilter = this.textFilter.trim();
 	}
 

@@ -330,53 +330,57 @@ export class WorkspacesHistoryMainService extends Disposable implements IWorkspa
 		});
 
 		// Recent Workspaces
-		if (this.getRecentlyOpened().workspaces.length > 0) {
+		try {
+			if (this.getRecentlyOpened().workspaces.length > 0) {
 
-			// The user might have meanwhile removed items from the jump list and we have to respect that
-			// so we need to update our list of recent paths with the choice of the user to not add them again
-			// Also: Windows will not show our custom category at all if there is any entry which was removed
-			// by the user! See https://github.com/microsoft/vscode/issues/15052
-			let toRemove: URI[] = [];
-			for (let item of app.getJumpListSettings().removedItems) {
-				const args = item.args;
-				if (args) {
-					const match = /^--(folder|file)-uri\s+"([^"]+)"$/.exec(args);
-					if (match) {
-						toRemove.push(URI.parse(match[2]));
+				// The user might have meanwhile removed items from the jump list and we have to respect that
+				// so we need to update our list of recent paths with the choice of the user to not add them again
+				// Also: Windows will not show our custom category at all if there is any entry which was removed
+				// by the user! See https://github.com/microsoft/vscode/issues/15052
+				let toRemove: URI[] = [];
+				for (let item of app.getJumpListSettings().removedItems) {
+					const args = item.args;
+					if (args) {
+						const match = /^--(folder|file)-uri\s+"([^"]+)"$/.exec(args);
+						if (match) {
+							toRemove.push(URI.parse(match[2]));
+						}
 					}
 				}
+				this.removeRecentlyOpened(toRemove);
+
+				// Add entries
+				jumpList.push({
+					type: 'custom',
+					name: nls.localize('recentFolders', "Recent Workspaces"),
+					items: arrays.coalesce(this.getRecentlyOpened().workspaces.slice(0, 7 /* limit number of entries here */).map(recent => {
+						const workspace = isRecentWorkspace(recent) ? recent.workspace : recent.folderUri;
+						const title = recent.label ? splitName(recent.label).name : this.getSimpleWorkspaceLabel(workspace, this.environmentService.untitledWorkspacesHome);
+
+						let description;
+						let args;
+						if (isSingleFolderWorkspaceIdentifier(workspace)) {
+							description = nls.localize('folderDesc', "{0} {1}", getBaseLabel(workspace), getPathLabel(dirname(workspace), this.environmentService));
+							args = `--folder-uri "${workspace.toString()}"`;
+						} else {
+							description = nls.localize('workspaceDesc', "{0} {1}", getBaseLabel(workspace.configPath), getPathLabel(dirname(workspace.configPath), this.environmentService));
+							args = `--file-uri "${workspace.configPath.toString()}"`;
+						}
+
+						return {
+							type: 'task',
+							title,
+							description,
+							program: process.execPath,
+							args,
+							iconPath: 'explorer.exe', // simulate folder icon
+							iconIndex: 0
+						};
+					}))
+				});
 			}
-			this.removeRecentlyOpened(toRemove);
-
-			// Add entries
-			jumpList.push({
-				type: 'custom',
-				name: nls.localize('recentFolders', "Recent Workspaces"),
-				items: arrays.coalesce(this.getRecentlyOpened().workspaces.slice(0, 7 /* limit number of entries here */).map(recent => {
-					const workspace = isRecentWorkspace(recent) ? recent.workspace : recent.folderUri;
-					const title = recent.label ? splitName(recent.label).name : this.getSimpleWorkspaceLabel(workspace, this.environmentService.untitledWorkspacesHome);
-
-					let description;
-					let args;
-					if (isSingleFolderWorkspaceIdentifier(workspace)) {
-						description = nls.localize('folderDesc', "{0} {1}", getBaseLabel(workspace), getPathLabel(dirname(workspace), this.environmentService));
-						args = `--folder-uri "${workspace.toString()}"`;
-					} else {
-						description = nls.localize('workspaceDesc', "{0} {1}", getBaseLabel(workspace.configPath), getPathLabel(dirname(workspace.configPath), this.environmentService));
-						args = `--file-uri "${workspace.configPath.toString()}"`;
-					}
-
-					return {
-						type: 'task',
-						title,
-						description,
-						program: process.execPath,
-						args,
-						iconPath: 'explorer.exe', // simulate folder icon
-						iconIndex: 0
-					};
-				}))
-			});
+		} catch (error) {
+			this.logService.warn('updateWindowsJumpList#recentWorkspaces', error); // https://github.com/microsoft/vscode/issues/111177
 		}
 
 		// Recent
@@ -387,7 +391,7 @@ export class WorkspacesHistoryMainService extends Disposable implements IWorkspa
 		try {
 			app.setJumpList(jumpList);
 		} catch (error) {
-			this.logService.warn('#setJumpList', error); // since setJumpList is relatively new API, make sure to guard for errors
+			this.logService.warn('updateWindowsJumpList#setJumpList', error); // since setJumpList is relatively new API, make sure to guard for errors
 		}
 	}
 

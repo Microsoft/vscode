@@ -66,6 +66,9 @@ export class TestNotebookEditor implements INotebookEditor {
 
 	constructor(
 	) { }
+	async beginComputeContributedKernels(): Promise<INotebookKernelInfo2[]> {
+		return [];
+	}
 	setEditorDecorations(key: string, range: ICellRange): void {
 		// throw new Error('Method not implemented.');
 	}

@@ -83,6 +83,7 @@ const scopes = {
 			meta: 'meta.resultLine.search',
 			metaSingleLine: 'meta.resultLine.singleLine.search',
 			metaMultiLine: 'meta.resultLine.multiLine.search',
+			elision: 'comment meta.resultLine.elision',
 			prefix: {
 				meta: 'constant.numeric.integer meta.resultLinePrefix.search',
 				metaContext: 'meta.resultLinePrefix.contextLinePrefix.search',
@@ -220,6 +221,10 @@ const plainText = [
 			'4': { name: [scopes.resultBlock.result.prefix.meta, scopes.resultBlock.result.prefix.metaContext].join(' ') },
 			'5': { name: scopes.resultBlock.result.prefix.lineNumber },
 		}
+	},
+	{
+		match: '⟪ [0-9]+ characters skipped ⟫',
+		name: [scopes.resultBlock.meta, scopes.resultBlock.result.elision].join(' '),
 	}
 ];
 

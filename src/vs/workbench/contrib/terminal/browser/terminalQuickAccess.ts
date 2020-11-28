@@ -10,6 +10,8 @@ import { matchesFuzzy } from 'vs/base/common/filters';
 import { ITerminalService } from 'vs/workbench/contrib/terminal/browser/terminal';
 import { ICommandService } from 'vs/platform/commands/common/commands';
 import { TERMINAL_COMMAND_ID } from 'vs/workbench/contrib/terminal/common/terminal';
+import { ThemeIcon } from 'vs/platform/theme/common/themeService';
+import { killTerminalIcon, renameTerminalIcon } from 'vs/workbench/contrib/terminal/browser/terminalIcons';
 
 export class TerminalQuickAccessProvider extends PickerQuickAccessProvider<IPickerQuickAccessItem> {
 
@@ -39,11 +41,11 @@ export class TerminalQuickAccessProvider extends PickerQuickAccessProvider<IPick
 						highlights: { label: highlights },
 						buttons: [
 							{
-								iconClass: 'codicon-gear',
+								iconClass: ThemeIcon.asClassName(renameTerminalIcon),
 								tooltip: localize('renameTerminal', "Rename Terminal")
 							},
 							{
-								iconClass: 'codicon-trash',
+								iconClass: ThemeIcon.asClassName(killTerminalIcon),
 								tooltip: localize('killTerminal', "Kill Terminal Instance")
 							}
 						],

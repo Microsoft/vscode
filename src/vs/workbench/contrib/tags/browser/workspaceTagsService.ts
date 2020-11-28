@@ -16,7 +16,7 @@ export class NoOpWorkspaceTagsService implements IWorkspaceTagsService {
 		return Promise.resolve({});
 	}
 
-	getTelemetryWorkspaceId(workspace: IWorkspace, state: WorkbenchState): string | undefined {
+	async getTelemetryWorkspaceId(workspace: IWorkspace, state: WorkbenchState): Promise<string | undefined> {
 		return undefined;
 	}
 

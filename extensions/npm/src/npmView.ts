@@ -7,14 +7,18 @@ import { JSONVisitor, visit } from 'jsonc-parser';
 import * as path from 'path';
 import {
 	commands, Event, EventEmitter, ExtensionContext,
+	Range,
 	Selection, Task,
-	TaskGroup, tasks, TextDocument, ThemeIcon, TreeDataProvider, TreeItem, TreeItemCollapsibleState, Uri,
+	TaskGroup, tasks, TextDocument, TextDocumentShowOptions, ThemeIcon, TreeDataProvider, TreeItem, TreeItemCollapsibleState, Uri,
 	window, workspace, WorkspaceFolder
 } from 'vscode';
 import * as nls from 'vscode-nls';
 import {
 	createTask, getTaskName, isAutoDetectionEnabled, isWorkspaceFolder, NpmTaskDefinition,
-	startDebugging
+	NpmTaskProvider,
+	startDebugging,
+	TaskLocation,
+	TaskWithLocation
 } from './tasks';
 
 const localize = nls.loadMessageBundle();
@@ -43,7 +47,7 @@ class PackageJSON extends TreeItem {
 	folder: Folder;
 	scripts: NpmScript[] = [];
 
-	static getLabel(_folderName: string, relativePath: string): string {
+	static getLabel(relativePath: string): string {
 		if (relativePath.length > 0) {
 			return path.join(relativePath, packageName);
 		}
@@ -51,7 +55,7 @@ class PackageJSON extends TreeItem {
 	}
 
 	constructor(folder: Folder, relativePath: string) {
-		super(PackageJSON.getLabel(folder.label!, relativePath), TreeItemCollapsibleState.Expanded);
+		super(PackageJSON.getLabel(relativePath), TreeItemCollapsibleState.Expanded);
 		this.folder = folder;
 		this.path = relativePath;
 		this.contextValue = 'packageJSON';
@@ -74,15 +78,20 @@ class NpmScript extends TreeItem {
 	task: Task;
 	package: PackageJSON;
 
-	constructor(_context: ExtensionContext, packageJson: PackageJSON, task: Task) {
+	constructor(_context: ExtensionContext, packageJson: PackageJSON, task: Task, public taskLocation?: TaskLocation) {
 		super(task.name, TreeItemCollapsibleState.None);
 		const command: ExplorerCommands = workspace.getConfiguration('npm').get<ExplorerCommands>('scriptExplorerAction') || 'open';
 
 		const commandList = {
 			'open': {
 				title: 'Edit Script',
-				command: 'npm.openScript',
-				arguments: [this]
+				command: 'vscode.open',
+				arguments: [
+					taskLocation?.document,
+					taskLocation ? <TextDocumentShowOptions>{
+						selection: new Range(taskLocation.line, taskLocation.line)
+					} : undefined
+				]
 			},
 			'run': {
 				title: 'Run Script',
@@ -123,7 +132,7 @@ export class NpmScriptsTreeDataProvider implements TreeDataProvider<TreeItem> {
 	private _onDidChangeTreeData: EventEmitter<TreeItem | null> = new EventEmitter<TreeItem | null>();
 	readonly onDidChangeTreeData: Event<TreeItem | null> = this._onDidChangeTreeData.event;
 
-	constructor(context: ExtensionContext) {
+	constructor(context: ExtensionContext, public taskProvider: NpmTaskProvider) {
 		const subscriptions = context.subscriptions;
 		this.extensionContext = context;
 		subscriptions.push(commands.registerCommand('npm.runScript', this.runScript, this));
@@ -228,7 +237,7 @@ export class NpmScriptsTreeDataProvider implements TreeDataProvider<TreeItem> {
 
 	async getChildren(element?: TreeItem): Promise<TreeItem[]> {
 		if (!this.taskTree) {
-			let taskItems = await tasks.fetchTasks({ type: 'npm' });
+			const taskItems = await this.taskProvider.tasksWithLocation;
 			if (taskItems) {
 				this.taskTree = this.buildTaskTree(taskItems);
 				if (this.taskTree.length === 0) {
@@ -265,7 +274,7 @@ export class NpmScriptsTreeDataProvider implements TreeDataProvider<TreeItem> {
 		return fullName === task.name;
 	}
 
-	private buildTaskTree(tasks: Task[]): Folder[] | PackageJSON[] | NoScripts[] {
+	private buildTaskTree(tasks: TaskWithLocation[]): Folder[] | PackageJSON[] | NoScripts[] {
 		let folders: Map<String, Folder> = new Map();
 		let packages: Map<String, PackageJSON> = new Map();
 
@@ -273,22 +282,22 @@ export class NpmScriptsTreeDataProvider implements TreeDataProvider<TreeItem> {
 		let packageJson = null;
 
 		tasks.forEach(each => {
-			if (isWorkspaceFolder(each.scope) && !this.isInstallTask(each)) {
-				folder = folders.get(each.scope.name);
+			if (isWorkspaceFolder(each.task.scope) && !this.isInstallTask(each.task)) {
+				folder = folders.get(each.task.scope.name);
 				if (!folder) {
-					folder = new Folder(each.scope);
-					folders.set(each.scope.name, folder);
+					folder = new Folder(each.task.scope);
+					folders.set(each.task.scope.name, folder);
 				}
-				let definition: NpmTaskDefinition = <NpmTaskDefinition>each.definition;
+				let definition: NpmTaskDefinition = <NpmTaskDefinition>each.task.definition;
 				let relativePath = definition.path ? definition.path : '';
-				let fullPath = path.join(each.scope.name, relativePath);
+				let fullPath = path.join(each.task.scope.name, relativePath);
 				packageJson = packages.get(fullPath);
 				if (!packageJson) {
 					packageJson = new PackageJSON(folder, relativePath);
 					folder.addPackage(packageJson);
 					packages.set(fullPath, packageJson);
 				}
-				let script = new NpmScript(this.extensionContext, packageJson, each);
+				let script = new NpmScript(this.extensionContext, packageJson, each.task, each.location);
 				packageJson.addScript(script);
 			}
 		});

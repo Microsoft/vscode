@@ -12,9 +12,9 @@ jobs:
       - name: Checkout Actions
         uses: actions/checkout@v2
         with:
-          repository: 'microsoft/vscode-github-triage-actions'
+          repository: "microsoft/vscode-github-triage-actions"
           path: ./actions
-          ref: v39
+          ref: v40
       - name: Install Actions
         run: npm install --production --prefix ./actions
       - name: Run Locker
@@ -24,3 +24,5 @@ jobs:
           appInsightsKey: ${{secrets.TRIAGE_ACTIONS_APP_INSIGHTS}}
           daysSinceUpdate: 3
           ignoredLabel: "*out-of-scope"
+          ignoreLabelUntil: "author-verification-requested"
+          labelUntil: "verified"

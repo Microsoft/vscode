@@ -4,11 +4,12 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as appInsights from 'applicationinsights';
+import { onUnexpectedError } from 'vs/base/common/errors';
 import { mixin } from 'vs/base/common/objects';
 import { ITelemetryAppender, validateTelemetryData } from 'vs/platform/telemetry/common/telemetryUtils';
 
-function getClient(aiKey: string): appInsights.TelemetryClient {
-
+async function getClient(aiKey: string): Promise<appInsights.TelemetryClient> {
+	const appInsights = await import('applicationinsights');
 	let client: appInsights.TelemetryClient;
 	if (appInsights.defaultClient) {
 		client = new appInsights.TelemetryClient(aiKey);
@@ -36,7 +37,8 @@ function getClient(aiKey: string): appInsights.TelemetryClient {
 
 export class AppInsightsAppender implements ITelemetryAppender {
 
-	private _aiClient?: appInsights.TelemetryClient;
+	private _aiClient: string | appInsights.TelemetryClient | undefined;
+	private _asyncAIClient: Promise<appInsights.TelemetryClient> | null;
 
 	constructor(
 		private _eventPrefix: string,
@@ -47,11 +49,37 @@ export class AppInsightsAppender implements ITelemetryAppender {
 			this._defaultData = Object.create(null);
 		}
 
-		if (typeof aiKeyOrClientFactory === 'string') {
-			this._aiClient = getClient(aiKeyOrClientFactory);
-		} else if (typeof aiKeyOrClientFactory === 'function') {
+		if (typeof aiKeyOrClientFactory === 'function') {
 			this._aiClient = aiKeyOrClientFactory();
+		} else {
+			this._aiClient = aiKeyOrClientFactory;
 		}
+		this._asyncAIClient = null;
+	}
+
+	private _withAIClient(callback: (aiClient: appInsights.TelemetryClient) => void): void {
+		if (!this._aiClient) {
+			return;
+		}
+
+		if (typeof this._aiClient !== 'string') {
+			callback(this._aiClient);
+			return;
+		}
+
+		if (!this._asyncAIClient) {
+			this._asyncAIClient = getClient(this._aiClient);
+		}
+
+		this._asyncAIClient.then(
+			(aiClient) => {
+				callback(aiClient);
+			},
+			(err) => {
+				onUnexpectedError(err);
+				console.error(err);
+			}
+		);
 	}
 
 	log(eventName: string, data?: any): void {
@@ -61,22 +89,24 @@ export class AppInsightsAppender implements ITelemetryAppender {
 		data = mixin(data, this._defaultData);
 		data = validateTelemetryData(data);
 
-		this._aiClient.trackEvent({
+		this._withAIClient((aiClient) => aiClient.trackEvent({
 			name: this._eventPrefix + '/' + eventName,
 			properties: data.properties,
 			measurements: data.measurements
-		});
+		}));
 	}
 
 	flush(): Promise<any> {
 		if (this._aiClient) {
 			return new Promise(resolve => {
-				this._aiClient!.flush({
-					callback: () => {
-						// all data flushed
-						this._aiClient = undefined;
-						resolve(undefined);
-					}
+				this._withAIClient((aiClient) => {
+					aiClient.flush({
+						callback: () => {
+							// all data flushed
+							this._aiClient = undefined;
+							resolve(undefined);
+						}
+					});
 				});
 			});
 		}

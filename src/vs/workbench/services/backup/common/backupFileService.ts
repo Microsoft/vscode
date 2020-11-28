@@ -6,7 +6,6 @@
 import { join } from 'vs/base/common/path';
 import { joinPath } from 'vs/base/common/resources';
 import { URI } from 'vs/base/common/uri';
-import { hash } from 'vs/base/common/hash';
 import { coalesce } from 'vs/base/common/arrays';
 import { equals, deepClone } from 'vs/base/common/objects';
 import { ResourceQueue } from 'vs/base/common/async';
@@ -15,8 +14,6 @@ import { IFileService, FileOperationError, FileOperationResult } from 'vs/platfo
 import { ITextSnapshot } from 'vs/editor/common/model';
 import { createTextBufferFactoryFromStream, createTextBufferFactoryFromSnapshot } from 'vs/editor/common/model/textModel';
 import { ResourceMap } from 'vs/base/common/map';
-import { Schemas } from 'vs/base/common/network';
-import { IWorkbenchEnvironmentService } from 'vs/workbench/services/environment/common/environmentService';
 import { VSBuffer } from 'vs/base/common/buffer';
 import { TextSnapshotReadable, stringToSnapshot } from 'vs/workbench/services/textfile/common/textfiles';
 import { Disposable } from 'vs/base/common/lifecycle';
@@ -108,42 +105,36 @@ export class BackupFilesModel implements IBackupFilesModel {
 	}
 }
 
-export class BackupFileService implements IBackupFileService {
+export abstract class BackupFileService implements IBackupFileService {
 
 	declare readonly _serviceBrand: undefined;
 
 	private impl: BackupFileServiceImpl | InMemoryBackupFileService;
 
 	constructor(
-		@IWorkbenchEnvironmentService private environmentService: IWorkbenchEnvironmentService,
+		backupWorkspaceHome: URI | undefined,
 		@IFileService protected fileService: IFileService,
 		@ILogService private readonly logService: ILogService
 	) {
-		this.impl = this.initialize();
+		this.impl = this.initialize(backupWorkspaceHome);
 	}
 
-	protected hashPath(resource: URI): string {
-		const str = resource.scheme === Schemas.file || resource.scheme === Schemas.untitled ? resource.fsPath : resource.toString();
+	protected abstract hashPath(resource: URI): string;
 
-		return hash(str).toString(16);
-	}
-
-	private initialize(): BackupFileServiceImpl | InMemoryBackupFileService {
-		const backupWorkspaceResource = this.environmentService.backupWorkspaceHome;
-		if (backupWorkspaceResource) {
-			return new BackupFileServiceImpl(backupWorkspaceResource, this.hashPath, this.fileService, this.logService);
+	private initialize(backupWorkspaceHome: URI | undefined): BackupFileServiceImpl | InMemoryBackupFileService {
+		if (backupWorkspaceHome) {
+			return new BackupFileServiceImpl(backupWorkspaceHome, this.hashPath, this.fileService, this.logService);
 		}
 
 		return new InMemoryBackupFileService(this.hashPath);
 	}
 
-	reinitialize(): void {
+	reinitialize(backupWorkspaceHome: URI | undefined): void {
 
 		// Re-init implementation (unless we are running in-memory)
 		if (this.impl instanceof BackupFileServiceImpl) {
-			const backupWorkspaceResource = this.environmentService.backupWorkspaceHome;
-			if (backupWorkspaceResource) {
-				this.impl.initialize(backupWorkspaceResource);
+			if (backupWorkspaceHome) {
+				this.impl.initialize(backupWorkspaceHome);
 			} else {
 				this.impl = new InMemoryBackupFileService(this.hashPath);
 			}

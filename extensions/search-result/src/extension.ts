@@ -8,7 +8,8 @@ import * as pathUtils from 'path';
 
 const FILE_LINE_REGEX = /^(\S.*):$/;
 const RESULT_LINE_REGEX = /^(\s+)(\d+)(:| )(\s+)(.*)$/;
-const SEARCH_RESULT_SELECTOR = { language: 'search-result' };
+const ELISION_REGEX = /⟪ ([0-9]+) characters skipped ⟫/g;
+const SEARCH_RESULT_SELECTOR = { language: 'search-result', exclusive: true };
 const DIRECTIVES = ['# Query:', '# Flags:', '# Including:', '# Excluding:', '# ContextLines:'];
 const FLAGS = ['RegExp', 'CaseSensitive', 'IgnoreExcludeSettings', 'WordMatch'];
 
@@ -80,12 +81,18 @@ export function activate(context: vscode.ExtensionContext) {
 					return lineResult.allLocations;
 				}
 
-				const translateRangeSidewaysBy = (r: vscode.Range, n: number) =>
-					r.with({ start: new vscode.Position(r.start.line, Math.max(0, n - r.start.character)), end: new vscode.Position(r.end.line, Math.max(0, n - r.end.character)) });
+				const location = lineResult.locations.find(l => l.originSelectionRange.contains(position));
+				if (!location) {
+					return [];
+				}
 
+				const targetPos = new vscode.Position(
+					location.targetSelectionRange.start.line,
+					location.targetSelectionRange.start.character + (position.character - location.originSelectionRange.start.character)
+				);
 				return [{
-					...lineResult.location,
-					targetSelectionRange: translateRangeSidewaysBy(lineResult.location.targetSelectionRange!, position.character - 1)
+					...location,
+					targetSelectionRange: new vscode.Range(targetPos, targetPos),
 				}];
 			}
 		}),
@@ -93,7 +100,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.languages.registerDocumentLinkProvider(SEARCH_RESULT_SELECTOR, {
 			async provideDocumentLinks(document: vscode.TextDocument, token: vscode.CancellationToken): Promise<vscode.DocumentLink[]> {
 				return parseSearchResults(document, token)
-					.filter(({ type }) => type === 'file')
+					.filter(isFileLine)
 					.map(({ location }) => ({ range: location.originSelectionRange!, target: location.targetUri }));
 			}
 		}),
@@ -162,7 +169,7 @@ function relativePathToUri(path: string, resultsUri: vscode.Uri): vscode.Uri | u
 }
 
 type ParsedSearchFileLine = { type: 'file', location: vscode.LocationLink, allLocations: vscode.LocationLink[], path: string };
-type ParsedSearchResultLine = { type: 'result', location: vscode.LocationLink, isContext: boolean, prefixRange: vscode.Range };
+type ParsedSearchResultLine = { type: 'result', locations: Required<vscode.LocationLink>[], isContext: boolean, prefixRange: vscode.Range };
 type ParsedSearchResults = Array<ParsedSearchFileLine | ParsedSearchResultLine>;
 const isFileLine = (line: ParsedSearchResultLine | ParsedSearchFileLine): line is ParsedSearchFileLine => line.type === 'file';
 const isResultLine = (line: ParsedSearchResultLine | ParsedSearchFileLine): line is ParsedSearchResultLine => line.type === 'result';
@@ -211,17 +218,35 @@ function parseSearchResults(document: vscode.TextDocument, token?: vscode.Cancel
 			const lineNumber = +_lineNumber - 1;
 			const resultStart = (indentation + _lineNumber + seperator + resultIndentation).length;
 			const metadataOffset = (indentation + _lineNumber + seperator).length;
+			const targetRange = new vscode.Range(Math.max(lineNumber - 3, 0), 0, lineNumber + 3, line.length);
 
-			const location: vscode.LocationLink = {
-				targetRange: new vscode.Range(Math.max(lineNumber - 3, 0), 0, lineNumber + 3, line.length),
-				targetSelectionRange: new vscode.Range(lineNumber, metadataOffset, lineNumber, metadataOffset),
-				targetUri: currentTarget,
-				originSelectionRange: new vscode.Range(i, resultStart, i, line.length),
-			};
+			let lastEnd = resultStart;
+			let offset = 0;
+			let locations: Required<vscode.LocationLink>[] = [];
+			ELISION_REGEX.lastIndex = resultStart;
+			for (let match: RegExpExecArray | null; (match = ELISION_REGEX.exec(line));) {
+				locations.push({
+					targetRange,
+					targetSelectionRange: new vscode.Range(lineNumber, offset, lineNumber, offset),
+					targetUri: currentTarget,
+					originSelectionRange: new vscode.Range(i, lastEnd, i, ELISION_REGEX.lastIndex - match[0].length),
+				});
 
-			currentTargetLocations?.push(location);
+				offset += (ELISION_REGEX.lastIndex - lastEnd - match[0].length) + Number(match[1]);
+				lastEnd = ELISION_REGEX.lastIndex;
+			}
 
-			links[i] = { type: 'result', location, isContext: seperator === ' ', prefixRange: new vscode.Range(i, 0, i, metadataOffset) };
+			if (lastEnd < line.length) {
+				locations.push({
+					targetRange,
+					targetSelectionRange: new vscode.Range(lineNumber, offset, lineNumber, offset),
+					targetUri: currentTarget,
+					originSelectionRange: new vscode.Range(i, lastEnd, i, line.length),
+				});
+			}
+
+			currentTargetLocations?.push(...locations);
+			links[i] = { type: 'result', locations, isContext: seperator === ' ', prefixRange: new vscode.Range(i, 0, i, metadataOffset) };
 		}
 	}
 

@@ -206,7 +206,7 @@ export class TerminalConfigHelper implements IBrowserTerminalConfigHelper {
 
 	public setWorkspaceShellAllowed(isAllowed: boolean): void {
 		this._onWorkspacePermissionsChanged.fire(isAllowed);
-		this._storageService.store2(IS_WORKSPACE_SHELL_ALLOWED_STORAGE_KEY, isAllowed, StorageScope.WORKSPACE, StorageTarget.MACHINE);
+		this._storageService.store(IS_WORKSPACE_SHELL_ALLOWED_STORAGE_KEY, isAllowed, StorageScope.WORKSPACE, StorageTarget.MACHINE);
 	}
 
 	public isWorkspaceShellAllowed(defaultValue: boolean | undefined = undefined): boolean | undefined {

@@ -16,8 +16,10 @@ import { CodeEditorWidget } from 'vs/editor/browser/widget/codeEditorWidget';
 import { URI } from 'vs/base/common/uri';
 import { MarkdownRenderer } from 'vs/editor/browser/core/markdownRenderer';
 import { IThemeService } from 'vs/platform/theme/common/themeService';
-import { handleANSIOutput } from 'vs/workbench/contrib/notebook/browser/view/output/transforms/errorTransform';
 import { dirname } from 'vs/base/common/resources';
+import { truncatedArrayOfString } from 'vs/workbench/contrib/notebook/browser/view/output/transforms/textHelper';
+import { IOpenerService } from 'vs/platform/opener/common/opener';
+import { ITextFileService } from 'vs/workbench/services/textfile/common/textfiles';
 
 class RichRenderer implements IOutputTransformContribution {
 	private _richMimeTypeRenderers = new Map<string, (output: ITransformedDisplayOutputDto, notebookUri: URI, container: HTMLElement) => IRenderOutput>();
@@ -27,7 +29,9 @@ class RichRenderer implements IOutputTransformContribution {
 		@IInstantiationService private readonly instantiationService: IInstantiationService,
 		@IModelService private readonly modelService: IModelService,
 		@IModeService private readonly modeService: IModeService,
-		@IThemeService private readonly themeService: IThemeService
+		@IThemeService private readonly themeService: IThemeService,
+		@IOpenerService readonly openerService: IOpenerService,
+		@ITextFileService readonly textFileService: ITextFileService,
 	) {
 		this._richMimeTypeRenderers.set('application/json', this.renderJSON.bind(this));
 		this._richMimeTypeRenderers.set('application/javascript', this.renderJavaScript.bind(this));
@@ -204,9 +208,8 @@ class RichRenderer implements IOutputTransformContribution {
 
 	renderPlainText(output: ITransformedDisplayOutputDto, notebookUri: URI, container: HTMLElement): IRenderOutput {
 		const data = output.data['text/plain'];
-		const str = (isArray(data) ? data.join('') : data) as string;
 		const contentNode = DOM.$('.output-plaintext');
-		contentNode.appendChild(handleANSIOutput(str, this.themeService));
+		truncatedArrayOfString(contentNode, isArray(data) ? data : [data], this.openerService, this.textFileService, this.themeService, true);
 		container.appendChild(contentNode);
 
 		return { type: RenderOutputType.None, hasDynamicHeight: false };

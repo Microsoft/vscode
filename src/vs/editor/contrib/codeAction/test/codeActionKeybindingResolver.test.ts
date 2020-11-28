@@ -90,6 +90,7 @@ function createCodeActionKeybinding(keycode: KeyCode, command: string, commandAr
 		commandArgs,
 		undefined,
 		false,
-		null);
+		null,
+		false);
 }
 

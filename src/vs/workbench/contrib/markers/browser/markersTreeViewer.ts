@@ -14,7 +14,7 @@ import { ResourceMarkers, Marker, RelatedInformation } from 'vs/workbench/contri
 import Messages from 'vs/workbench/contrib/markers/browser/messages';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { attachBadgeStyler } from 'vs/platform/theme/common/styler';
-import { IThemeService, registerThemingParticipant } from 'vs/platform/theme/common/themeService';
+import { IThemeService, registerThemingParticipant, ThemeIcon } from 'vs/platform/theme/common/themeService';
 import { IDisposable, dispose, Disposable, toDisposable, DisposableStore } from 'vs/base/common/lifecycle';
 import { ActionBar } from 'vs/base/browser/ui/actionbar/actionbar';
 import { QuickFixAction, QuickFixActionViewItem } from 'vs/workbench/contrib/markers/browser/markersViewActions';
@@ -53,6 +53,8 @@ import { StandardKeyboardEvent } from 'vs/base/browser/keyboardEvent';
 import { KeyCode } from 'vs/base/common/keyCodes';
 import { Progress } from 'vs/platform/progress/common/progress';
 import { ActionViewItem } from 'vs/base/browser/ui/actionbar/actionViewItems';
+import { Codicon } from 'vs/base/common/codicons';
+import { registerIcon } from 'vs/platform/theme/common/iconRegistry';
 
 export type TreeElement = ResourceMarkers | Marker | RelatedInformation;
 
@@ -255,9 +257,10 @@ export class MarkerRenderer implements ITreeRenderer<Marker, MarkerFilterData, I
 
 }
 
+const expandedIcon = registerIcon('markers-view-multi-line-expanded', Codicon.chevronUp, localize('expandedIcon', 'Icon indicating that multiple lines are shown in the markers view.'));
+const collapsedIcon = registerIcon('markers-view-multi-line-collapsed', Codicon.chevronDown, localize('collapsedIcon', 'Icon indicating that multiple lines are collapsed in the markers view.'));
+
 const toggleMultilineAction = 'problems.action.toggleMultiline';
-const expandedClass = 'codicon codicon-chevron-up';
-const collapsedClass = 'codicon codicon-chevron-down';
 
 class ToggleMultilineActionViewItem extends ActionViewItem {
 
@@ -273,7 +276,7 @@ class ToggleMultilineActionViewItem extends ActionViewItem {
 
 	private updateExpandedAttribute(): void {
 		if (this.element) {
-			this.element.setAttribute('aria-expanded', `${this._action.class === expandedClass}`);
+			this.element.setAttribute('aria-expanded', `${this._action.class === ThemeIcon.asClassName(expandedIcon)}`);
 		}
 	}
 
@@ -367,7 +370,7 @@ class MarkerWidget extends Disposable {
 		const action = new Action(toggleMultilineAction);
 		action.enabled = !!viewModel && marker.lines.length > 1;
 		action.tooltip = multiline ? localize('single line', "Show message in single line") : localize('multi line', "Show message in multiple lines");
-		action.class = multiline ? expandedClass : collapsedClass;
+		action.class = ThemeIcon.asClassName(multiline ? expandedIcon : collapsedIcon);
 		action.run = () => { if (viewModel) { viewModel.multiline = !viewModel.multiline; } return Promise.resolve(); };
 		this.multilineActionbar.push([action], { icon: true, label: false });
 	}

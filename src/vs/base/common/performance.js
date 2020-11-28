@@ -12,7 +12,7 @@ function _factory(sharedObj) {
 	sharedObj.MonacoPerformanceMarks = sharedObj.MonacoPerformanceMarks || [];
 
 	const _dataLen = 2;
-	const _timeStamp = typeof console.timeStamp === 'function' ? console.timeStamp.bind(console) : () => { };
+	const _nativeMark = typeof performance === 'object' && typeof performance.mark === 'function' ? performance.mark.bind(performance) : () => { };
 
 	function importEntries(entries) {
 		sharedObj.MonacoPerformanceMarks.splice(0, 0, ...entries);
@@ -55,7 +55,7 @@ function _factory(sharedObj) {
 
 	function mark(name) {
 		sharedObj.MonacoPerformanceMarks.push(name, Date.now());
-		_timeStamp(name);
+		_nativeMark(name);
 	}
 
 	const exports = {

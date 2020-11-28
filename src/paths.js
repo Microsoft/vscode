@@ -11,25 +11,38 @@ const path = require('path');
 const os = require('os');
 
 /**
- * @param {string} platform
  * @returns {string}
  */
-function getAppDataPath(platform) {
-	switch (platform) {
-		case 'win32': return process.env['VSCODE_APPDATA'] || process.env['APPDATA'] || path.join(process.env['USERPROFILE'], 'AppData', 'Roaming');
-		case 'darwin': return process.env['VSCODE_APPDATA'] || path.join(os.homedir(), 'Library', 'Application Support');
-		case 'linux': return process.env['VSCODE_APPDATA'] || process.env['XDG_CONFIG_HOME'] || path.join(os.homedir(), '.config');
-		default: throw new Error('Platform not supported');
+function getDefaultUserDataPath() {
+
+	// Support global VSCODE_APPDATA environment variable
+	let appDataPath = process.env['VSCODE_APPDATA'];
+
+	// Otherwise check per platform
+	if (!appDataPath) {
+		switch (process.platform) {
+			case 'win32':
+				appDataPath = process.env['APPDATA'];
+				if (!appDataPath) {
+					const userProfile = process.env['USERPROFILE'];
+					if (typeof userProfile !== 'string') {
+						throw new Error('Windows: Unexpected undefined %USERPROFILE% environment variable');
+					}
+					appDataPath = path.join(userProfile, 'AppData', 'Roaming');
+				}
+				break;
+			case 'darwin':
+				appDataPath = path.join(os.homedir(), 'Library', 'Application Support');
+				break;
+			case 'linux':
+				appDataPath = process.env['XDG_CONFIG_HOME'] || path.join(os.homedir(), '.config');
+				break;
+			default:
+				throw new Error('Platform not supported');
+		}
 	}
+
+	return path.join(appDataPath, pkg.name);
 }
 
-/**
- * @param {string} platform
- * @returns {string}
- */
-function getDefaultUserDataPath(platform) {
-	return path.join(getAppDataPath(platform), pkg.name);
-}
-
-exports.getAppDataPath = getAppDataPath;
 exports.getDefaultUserDataPath = getDefaultUserDataPath;

@@ -54,7 +54,7 @@ export class ExtensionService extends AbstractExtensionService implements IExten
 			new ExtensionRunningLocationClassifier(
 				productService,
 				configurationService,
-				(extensionKinds, isInstalledLocally, isInstalledRemotely) => this._pickRunningLocation(extensionKinds, isInstalledLocally, isInstalledRemotely)
+				(extensionKinds, isInstalledLocally, isInstalledRemotely) => ExtensionService.pickRunningLocation(extensionKinds, isInstalledLocally, isInstalledRemotely)
 			),
 			instantiationService,
 			notificationService,
@@ -137,11 +137,12 @@ export class ExtensionService extends AbstractExtensionService implements IExten
 		};
 	}
 
-	private _pickRunningLocation(extensionKinds: ExtensionKind[], isInstalledLocally: boolean, isInstalledRemotely: boolean): ExtensionRunningLocation {
+	public static pickRunningLocation(extensionKinds: ExtensionKind[], isInstalledLocally: boolean, isInstalledRemotely: boolean): ExtensionRunningLocation {
+		let canRunRemotely = false;
 		for (const extensionKind of extensionKinds) {
 			if (extensionKind === 'ui' && isInstalledRemotely) {
-				// ui extensions run remotely if possible
-				return ExtensionRunningLocation.Remote;
+				// ui extensions run remotely if possible (but only as a last resort)
+				canRunRemotely = true;
 			}
 			if (extensionKind === 'workspace' && isInstalledRemotely) {
 				// workspace extensions run remotely if possible
@@ -152,7 +153,7 @@ export class ExtensionService extends AbstractExtensionService implements IExten
 				return ExtensionRunningLocation.LocalWebWorker;
 			}
 		}
-		return ExtensionRunningLocation.None;
+		return (canRunRemotely ? ExtensionRunningLocation.Remote : ExtensionRunningLocation.None);
 	}
 
 	protected _createExtensionHosts(_isInitialStart: boolean): IExtensionHost[] {

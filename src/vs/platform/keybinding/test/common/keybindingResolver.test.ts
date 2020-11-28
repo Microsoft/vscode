@@ -28,7 +28,8 @@ suite('KeybindingResolver', () => {
 			commandArgs,
 			when,
 			isDefault,
-			null
+			null,
+			false
 		);
 	}
 

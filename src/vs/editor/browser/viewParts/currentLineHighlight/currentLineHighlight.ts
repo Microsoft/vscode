@@ -23,7 +23,7 @@ export abstract class AbstractLineHighlightOverlay extends DynamicViewOverlay {
 	protected _contentLeft: number;
 	protected _contentWidth: number;
 	protected _selectionIsEmpty: boolean;
-	protected _renderLineHightlightOnlyWhenFocus: boolean;
+	protected _renderLineHighlightOnlyWhenFocus: boolean;
 	protected _focused: boolean;
 	private _cursorLineNumbers: number[];
 	private _selections: Selection[];
@@ -37,7 +37,7 @@ export abstract class AbstractLineHighlightOverlay extends DynamicViewOverlay {
 		const layoutInfo = options.get(EditorOption.layoutInfo);
 		this._lineHeight = options.get(EditorOption.lineHeight);
 		this._renderLineHighlight = options.get(EditorOption.renderLineHighlight);
-		this._renderLineHightlightOnlyWhenFocus = options.get(EditorOption.renderLineHighlightOnlyWhenFocus);
+		this._renderLineHighlightOnlyWhenFocus = options.get(EditorOption.renderLineHighlightOnlyWhenFocus);
 		this._contentLeft = layoutInfo.contentLeft;
 		this._contentWidth = layoutInfo.contentWidth;
 		this._selectionIsEmpty = true;
@@ -85,7 +85,7 @@ export abstract class AbstractLineHighlightOverlay extends DynamicViewOverlay {
 		const layoutInfo = options.get(EditorOption.layoutInfo);
 		this._lineHeight = options.get(EditorOption.lineHeight);
 		this._renderLineHighlight = options.get(EditorOption.renderLineHighlight);
-		this._renderLineHightlightOnlyWhenFocus = options.get(EditorOption.renderLineHighlightOnlyWhenFocus);
+		this._renderLineHighlightOnlyWhenFocus = options.get(EditorOption.renderLineHighlightOnlyWhenFocus);
 		this._contentLeft = layoutInfo.contentLeft;
 		this._contentWidth = layoutInfo.contentWidth;
 		return true;
@@ -110,7 +110,7 @@ export abstract class AbstractLineHighlightOverlay extends DynamicViewOverlay {
 		return true;
 	}
 	public onFocusChanged(e: viewEvents.ViewFocusChangedEvent): boolean {
-		if (!this._renderLineHightlightOnlyWhenFocus) {
+		if (!this._renderLineHighlightOnlyWhenFocus) {
 			return false;
 		}
 
@@ -170,33 +170,36 @@ export class CurrentLineHighlightOverlay extends AbstractLineHighlightOverlay {
 		return (
 			(this._renderLineHighlight === 'line' || this._renderLineHighlight === 'all')
 			&& this._selectionIsEmpty
-			&& (!this._renderLineHightlightOnlyWhenFocus || this._focused)
+			&& (!this._renderLineHighlightOnlyWhenFocus || this._focused)
 		);
 	}
 	protected _shouldRenderOther(): boolean {
 		return (
 			(this._renderLineHighlight === 'gutter' || this._renderLineHighlight === 'all')
-			&& (!this._renderLineHightlightOnlyWhenFocus || this._focused)
+			&& (!this._renderLineHighlightOnlyWhenFocus || this._focused)
 		);
 	}
 }
 
 export class CurrentLineMarginHighlightOverlay extends AbstractLineHighlightOverlay {
 	protected _renderOne(ctx: RenderingContext): string {
-		const className = 'current-line current-line-margin' + (this._shouldRenderOther() ? ' current-line-margin-both' : '');
+		const className = 'current-line' + (this._shouldRenderMargin() ? ' current-line-margin' : '') + (this._shouldRenderOther() ? ' current-line-margin-both' : '');
 		return `<div class="${className}" style="width:${this._contentLeft}px; height:${this._lineHeight}px;"></div>`;
 	}
-	protected _shouldRenderThis(): boolean {
+	protected _shouldRenderMargin(): boolean {
 		return (
 			(this._renderLineHighlight === 'gutter' || this._renderLineHighlight === 'all')
-			&& (!this._renderLineHightlightOnlyWhenFocus || this._focused)
+			&& (!this._renderLineHighlightOnlyWhenFocus || this._focused)
 		);
+	}
+	protected _shouldRenderThis(): boolean {
+		return true;
 	}
 	protected _shouldRenderOther(): boolean {
 		return (
 			(this._renderLineHighlight === 'line' || this._renderLineHighlight === 'all')
 			&& this._selectionIsEmpty
-			&& (!this._renderLineHightlightOnlyWhenFocus || this._focused)
+			&& (!this._renderLineHighlightOnlyWhenFocus || this._focused)
 		);
 	}
 }

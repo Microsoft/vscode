@@ -1,12 +1,13 @@
 {
-    perform: true,
-    commands: [
-        {
-            type: 'comment',
-            name: 'findDuplicates',
-            allowUsers: ['cleidigh', 'usernamehw', 'gjsjohnmurray', 'IllusionMH'],
-            action: 'comment',
-            comment: "Potential duplicates:\n${potentialDuplicates}"
-        }
-    ]
+  perform: true,
+  commands:
+    [
+      {
+        type: "comment",
+        name: "findDuplicates",
+        allowUsers: ["cleidigh", "usernamehw", "gjsjohnmurray", "IllusionMH"],
+        action: "comment",
+        comment: "Potential duplicates:\n${potentialDuplicates}",
+      },
+    ],
 }

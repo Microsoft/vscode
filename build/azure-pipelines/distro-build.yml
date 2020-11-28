@@ -1,42 +1,42 @@
 trigger:
   branches:
-    include: ['master', 'release/*']
+    include: ["master", "release/*"]
 pr:
   branches:
-    include: ['master', 'release/*']
+    include: ["master", "release/*"]
 
 steps:
-- task: NodeTool@0
-  inputs:
-    versionSpec: "12.14.1"
+  - task: NodeTool@0
+    inputs:
+      versionSpec: "12.18.3"
 
-- task: AzureKeyVault@1
-  displayName: 'Azure Key Vault: Get Secrets'
-  inputs:
-    azureSubscription: 'vscode-builds-subscription'
-    KeyVaultName: vscode
+  - task: AzureKeyVault@1
+    displayName: "Azure Key Vault: Get Secrets"
+    inputs:
+      azureSubscription: "vscode-builds-subscription"
+      KeyVaultName: vscode
 
-- script: |
-    set -e
+  - script: |
+      set -e
 
-    cat << EOF > ~/.netrc
-    machine github.com
-    login vscode
-    password $(github-distro-mixin-password)
-    EOF
+      cat << EOF > ~/.netrc
+      machine github.com
+      login vscode
+      password $(github-distro-mixin-password)
+      EOF
 
-    git config user.email "vscode@microsoft.com"
-    git config user.name "VSCode"
+      git config user.email "vscode@microsoft.com"
+      git config user.name "VSCode"
 
-    git remote add distro "https://github.com/$VSCODE_MIXIN_REPO.git"
-    git fetch distro
+      git remote add distro "https://github.com/$VSCODE_MIXIN_REPO.git"
+      git fetch distro
 
-    # Push master branch into oss/master
-    git push distro origin/master:refs/heads/oss/master
+      # Push master branch into oss/master
+      git push distro origin/master:refs/heads/oss/master
 
-    # Push every release branch into oss/release
-    git for-each-ref --format="%(refname:short)" refs/remotes/origin/release/* | sed 's/^origin\/\(.*\)$/\0:refs\/heads\/oss\/\1/' | xargs git push distro
+      # Push every release branch into oss/release
+      git for-each-ref --format="%(refname:short)" refs/remotes/origin/release/* | sed 's/^origin\/\(.*\)$/\0:refs\/heads\/oss\/\1/' | xargs git push distro
 
-    git merge $(node -p "require('./package.json').distro")
+      git merge $(node -p "require('./package.json').distro")
 
-  displayName: Sync & Merge Distro
+    displayName: Sync & Merge Distro

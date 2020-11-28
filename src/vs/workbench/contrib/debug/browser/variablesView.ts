@@ -30,12 +30,13 @@ import { IContextKeyService, IContextKey } from 'vs/platform/contextkey/common/c
 import { dispose } from 'vs/base/common/lifecycle';
 import { IViewDescriptorService } from 'vs/workbench/common/views';
 import { IOpenerService } from 'vs/platform/opener/common/opener';
-import { IThemeService } from 'vs/platform/theme/common/themeService';
+import { IThemeService, ThemeIcon } from 'vs/platform/theme/common/themeService';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 import { withUndefinedAsNull } from 'vs/base/common/types';
 import { IMenuService, IMenu, MenuId } from 'vs/platform/actions/common/actions';
 import { createAndFillInContextMenuActions } from 'vs/platform/actions/browser/menuEntryActionViewItem';
 import { CommandsRegistry } from 'vs/platform/commands/common/commands';
+import { debugCollapseAll } from 'vs/workbench/contrib/debug/browser/debugIcons';
 
 const $ = dom.$;
 let forgetScopes = true;
@@ -179,7 +180,7 @@ export class VariablesView extends ViewPane {
 	}
 
 	getActions(): IAction[] {
-		return [new CollapseAction(() => this.tree, true, 'explorer-action codicon-collapse-all')];
+		return [new CollapseAction(() => this.tree, true, 'explorer-action ' + ThemeIcon.asClassName(debugCollapseAll))];
 	}
 
 	layoutBody(width: number, height: number): void {
@@ -207,8 +208,8 @@ export class VariablesView extends ViewPane {
 			this.variableEvaluateName.set(!!variable.evaluateName);
 			this.breakWhenValueChangesSupported.reset();
 			if (session && session.capabilities.supportsDataBreakpoints) {
-				const response = await session.dataBreakpointInfo(variable.name, variable.parent.reference);
-				const dataBreakpointId = response?.dataId;
+				dataBreakpointInfoResponse = await session.dataBreakpointInfo(variable.name, variable.parent.reference);
+				const dataBreakpointId = dataBreakpointInfoResponse?.dataId;
 				this.breakWhenValueChangesSupported.set(!!dataBreakpointId);
 			}
 

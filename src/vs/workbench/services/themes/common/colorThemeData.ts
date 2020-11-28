@@ -524,7 +524,7 @@ export class ColorThemeData implements IWorkbenchColorTheme {
 		});
 
 		// roam persisted color theme colors. Don't enable for icons as they contain references to fonts and images.
-		storageService.store2(ColorThemeData.STORAGE_KEY, value, StorageScope.GLOBAL, StorageTarget.USER);
+		storageService.store(ColorThemeData.STORAGE_KEY, value, StorageScope.GLOBAL, StorageTarget.USER);
 	}
 
 	get baseTheme(): string {

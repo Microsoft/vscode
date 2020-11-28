@@ -8,8 +8,9 @@ import { StandaloneConfigurationModelParser, Configuration } from 'vs/workbench/
 import { ConfigurationModelParser, ConfigurationModel } from 'vs/platform/configuration/common/configurationModels';
 import { IConfigurationRegistry, Extensions as ConfigurationExtensions, ConfigurationScope } from 'vs/platform/configuration/common/configurationRegistry';
 import { ResourceMap } from 'vs/base/common/map';
-import { Workspace, WorkspaceFolder } from 'vs/platform/workspace/common/workspace';
+import { WorkspaceFolder } from 'vs/platform/workspace/common/workspace';
 import { URI } from 'vs/base/common/uri';
+import { Workspace } from 'vs/platform/workspace/test/common/testWorkspace';
 
 suite('FolderSettingsModelParser', () => {
 

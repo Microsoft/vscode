@@ -64,7 +64,7 @@ const tasks = compilations.map(function (tsconfigFile) {
 	}
 
 	function createPipeline(build, emitError) {
-		const reporter = createReporter();
+		const reporter = createReporter('extensions');
 
 		overrideOptions.inlineSources = Boolean(build);
 		overrideOptions.base = path.dirname(absolutePath);

@@ -439,7 +439,7 @@ export class TypeOperations {
 			return false;
 		}
 
-		if (!config.autoClosingPairsClose2.has(ch)) {
+		if (!config.autoClosingPairs.autoClosingPairsCloseSingleChar.has(ch)) {
 			return false;
 		}
 
@@ -498,31 +498,20 @@ export class TypeOperations {
 		});
 	}
 
-	private static _autoClosingPairIsSymmetric(autoClosingPair: StandardAutoClosingPairConditional): boolean {
-		const { open, close } = autoClosingPair;
-		return (open.indexOf(close) >= 0 || close.indexOf(open) >= 0);
-	}
+	private static _isBeforeClosingBrace(config: CursorConfiguration, lineAfter: string) {
+		// If the start of lineAfter can be interpretted as both a starting or ending brace, default to returning false
+		const nextChar = lineAfter.charAt(0);
+		const potentialStartingBraces = config.autoClosingPairs.autoClosingPairsOpenByStart.get(nextChar) || [];
+		const potentialClosingBraces = config.autoClosingPairs.autoClosingPairsCloseByStart.get(nextChar) || [];
 
-	private static _isBeforeClosingBrace(config: CursorConfiguration, autoClosingPair: StandardAutoClosingPairConditional, characterAfter: string) {
-		const otherAutoClosingPairs = config.autoClosingPairsClose2.get(characterAfter);
-		if (!otherAutoClosingPairs) {
-			return false;
-		}
+		const isBeforeStartingBrace = potentialStartingBraces.some(x => lineAfter.startsWith(x.open));
+		const isBeforeClosingBrace = potentialClosingBraces.some(x => lineAfter.startsWith(x.close));
 
-		const thisBraceIsSymmetric = TypeOperations._autoClosingPairIsSymmetric(autoClosingPair);
-		for (const otherAutoClosingPair of otherAutoClosingPairs) {
-			const otherBraceIsSymmetric = TypeOperations._autoClosingPairIsSymmetric(otherAutoClosingPair);
-			if (!thisBraceIsSymmetric && otherBraceIsSymmetric) {
-				continue;
-			}
-			return true;
-		}
-
-		return false;
+		return !isBeforeStartingBrace && isBeforeClosingBrace;
 	}
 
 	private static _findAutoClosingPairOpen(config: CursorConfiguration, model: ITextModel, positions: Position[], ch: string): StandardAutoClosingPairConditional | null {
-		const autoClosingPairCandidates = config.autoClosingPairsOpen2.get(ch);
+		const autoClosingPairCandidates = config.autoClosingPairs.autoClosingPairsOpenByEnd.get(ch);
 		if (!autoClosingPairCandidates) {
 			return null;
 		}
@@ -548,7 +537,29 @@ export class TypeOperations {
 		return autoClosingPair;
 	}
 
-	private static _isAutoClosingOpenCharType(config: CursorConfiguration, model: ITextModel, selections: Selection[], ch: string, insertOpenCharacter: boolean): StandardAutoClosingPairConditional | null {
+	private static _findSubAutoClosingPairClose(config: CursorConfiguration, autoClosingPair: StandardAutoClosingPairConditional): string {
+		if (autoClosingPair.open.length <= 1) {
+			return '';
+		}
+		const lastChar = autoClosingPair.close.charAt(autoClosingPair.close.length - 1);
+		// get candidates with the same last character as close
+		const subPairCandidates = config.autoClosingPairs.autoClosingPairsCloseByEnd.get(lastChar) || [];
+		let subPairMatch: StandardAutoClosingPairConditional | null = null;
+		for (const x of subPairCandidates) {
+			if (x.open !== autoClosingPair.open && autoClosingPair.open.includes(x.open) && autoClosingPair.close.endsWith(x.close)) {
+				if (!subPairMatch || x.open.length > subPairMatch.open.length) {
+					subPairMatch = x;
+				}
+			}
+		}
+		if (subPairMatch) {
+			return subPairMatch.close;
+		} else {
+			return '';
+		}
+	}
+
+	private static _getAutoClosingPairClose(config: CursorConfiguration, model: ITextModel, selections: Selection[], ch: string, insertOpenCharacter: boolean): string | null {
 		const chIsQuote = isQuote(ch);
 		const autoCloseConfig = chIsQuote ? config.autoClosingQuotes : config.autoClosingBrackets;
 		if (autoCloseConfig === 'never') {
@@ -560,6 +571,9 @@ export class TypeOperations {
 			return null;
 		}
 
+		const subAutoClosingPairClose = this._findSubAutoClosingPairClose(config, autoClosingPair);
+		let isSubAutoClosingPairPresent = true;
+
 		const shouldAutoCloseBefore = chIsQuote ? config.shouldAutoCloseBefore.quote : config.shouldAutoCloseBefore.bracket;
 
 		for (let i = 0, len = selections.length; i < len; i++) {
@@ -570,11 +584,16 @@ export class TypeOperations {
 
 			const position = selection.getPosition();
 			const lineText = model.getLineContent(position.lineNumber);
+			const lineAfter = lineText.substring(position.column - 1);
 
-			// Only consider auto closing the pair if a space follows or if another autoclosed pair follows
+			if (!lineAfter.startsWith(subAutoClosingPairClose)) {
+				isSubAutoClosingPairPresent = false;
+			}
+
+			// Only consider auto closing the pair if an allowed character follows or if another autoclosed pair closing brace follows
 			if (lineText.length > position.column - 1) {
 				const characterAfter = lineText.charAt(position.column - 1);
-				const isBeforeCloseBrace = TypeOperations._isBeforeClosingBrace(config, autoClosingPair, characterAfter);
+				const isBeforeCloseBrace = TypeOperations._isBeforeClosingBrace(config, lineAfter);
 
 				if (!isBeforeCloseBrace && !shouldAutoCloseBefore(characterAfter)) {
 					return null;
@@ -612,14 +631,18 @@ export class TypeOperations {
 			}
 		}
 
-		return autoClosingPair;
+		if (isSubAutoClosingPairPresent) {
+			return autoClosingPair.close.substring(0, autoClosingPair.close.length - subAutoClosingPairClose.length);
+		} else {
+			return autoClosingPair.close;
+		}
 	}
 
-	private static _runAutoClosingOpenCharType(prevEditOperationType: EditOperationType, config: CursorConfiguration, model: ITextModel, selections: Selection[], ch: string, insertOpenCharacter: boolean, autoClosingPair: StandardAutoClosingPairConditional): EditOperationResult {
+	private static _runAutoClosingOpenCharType(prevEditOperationType: EditOperationType, config: CursorConfiguration, model: ITextModel, selections: Selection[], ch: string, insertOpenCharacter: boolean, autoClosingPairClose: string): EditOperationResult {
 		let commands: ICommand[] = [];
 		for (let i = 0, len = selections.length; i < len; i++) {
 			const selection = selections[i];
-			commands[i] = new TypeWithAutoClosingCommand(selection, ch, insertOpenCharacter, autoClosingPair.close);
+			commands[i] = new TypeWithAutoClosingCommand(selection, ch, insertOpenCharacter, autoClosingPairClose);
 		}
 		return new EditOperationResult(EditOperationType.Typing, commands, {
 			shouldPushStackElementBefore: true,
@@ -794,9 +817,9 @@ export class TypeOperations {
 			});
 		}
 
-		const autoClosingPairOpenCharType = this._isAutoClosingOpenCharType(config, model, selections, ch, false);
-		if (autoClosingPairOpenCharType) {
-			return this._runAutoClosingOpenCharType(prevEditOperationType, config, model, selections, ch, false, autoClosingPairOpenCharType);
+		const autoClosingPairClose = this._getAutoClosingPairClose(config, model, selections, ch, false);
+		if (autoClosingPairClose !== null) {
+			return this._runAutoClosingOpenCharType(prevEditOperationType, config, model, selections, ch, false, autoClosingPairClose);
 		}
 
 		return null;
@@ -838,9 +861,9 @@ export class TypeOperations {
 		}
 
 		if (!isDoingComposition) {
-			const autoClosingPairOpenCharType = this._isAutoClosingOpenCharType(config, model, selections, ch, true);
-			if (autoClosingPairOpenCharType) {
-				return this._runAutoClosingOpenCharType(prevEditOperationType, config, model, selections, ch, true, autoClosingPairOpenCharType);
+			const autoClosingPairClose = this._getAutoClosingPairClose(config, model, selections, ch, true);
+			if (autoClosingPairClose) {
+				return this._runAutoClosingOpenCharType(prevEditOperationType, config, model, selections, ch, true, autoClosingPairClose);
 			}
 		}
 

@@ -22,6 +22,7 @@ import { ResourceMap } from 'vs/base/common/map';
 import { localize } from 'vs/nls';
 import { extUri } from 'vs/base/common/resources';
 import { ResourceEdit, ResourceFileEdit, ResourceTextEdit } from 'vs/editor/browser/services/bulkEditService';
+import { Codicon } from 'vs/base/common/codicons';
 
 export class CheckedStates<T extends object> {
 
@@ -116,7 +117,7 @@ export class BulkCategory {
 
 	private static readonly _defaultMetadata = Object.freeze({
 		label: localize('default', "Other"),
-		icon: { id: 'codicon/symbol-file' },
+		icon: Codicon.symbolFile,
 		needsConfirmation: false
 	});
 

@@ -18,6 +18,8 @@ export interface IOpenURLOptions {
 	 * might be shown to the user.
 	 */
 	trusted?: boolean;
+
+	originalUrl?: string;
 }
 
 export interface IURLHandler {

@@ -283,13 +283,15 @@ const doURLMatch = (
 		options.push(doURLMatch(memo, url, trustedURL, urlOffset, trustedURLOffset + 2));
 	}
 
-	if (trustedURL[trustedURLOffset] + trustedURL[trustedURLOffset + 1] === '.*' && url[urlOffset] === '.') {
-		// IP mode. Consume one segment of numbers or nothing.
-		let endBlockIndex = urlOffset + 1;
-		do { endBlockIndex++; } while (/[0-9]/.test(url[endBlockIndex]));
-		if (['.', ':', '/', undefined].includes(url[endBlockIndex])) {
-			options.push(doURLMatch(memo, url, trustedURL, endBlockIndex, trustedURLOffset + 2));
+	if (trustedURL[trustedURLOffset] === '*') {
+		// Any match. Either consume one thing and don't advance base or consume nothing and do.
+		if (urlOffset + 1 === url.length) {
+			// If we're at the end of the input url consume one from both.
+			options.push(doURLMatch(memo, url, trustedURL, urlOffset + 1, trustedURLOffset + 1));
+		} else {
+			options.push(doURLMatch(memo, url, trustedURL, urlOffset + 1, trustedURLOffset));
 		}
+		options.push(doURLMatch(memo, url, trustedURL, urlOffset, trustedURLOffset + 1));
 	}
 
 	if (trustedURL[trustedURLOffset] + trustedURL[trustedURLOffset + 1] === ':*') {

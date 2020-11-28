@@ -187,7 +187,7 @@ async function main(server: Server, initData: ISharedProcessInitData, configurat
 				appender: telemetryAppender,
 				commonProperties: resolveCommonProperties(product.commit, product.version, configuration.machineId, product.msftInternalDomains, installSourcePath),
 				sendErrorTelemetry: true,
-				piiPaths: extensionsPath ? [appRoot, extensionsPath] : [appRoot]
+				piiPaths: [appRoot, extensionsPath]
 			};
 
 			telemetryService = new TelemetryService(config, configurationService);

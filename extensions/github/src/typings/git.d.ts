@@ -130,6 +130,7 @@ export interface CommitOptions {
 	signoff?: boolean;
 	signCommit?: boolean;
 	empty?: boolean;
+	noVerify?: boolean;
 }
 
 export interface BranchQuery {
@@ -211,6 +212,7 @@ export interface RemoteSourceProvider {
 	readonly icon?: string; // codicon name
 	readonly supportsQuery?: boolean;
 	getRemoteSources(query?: string): ProviderResult<RemoteSource[]>;
+	getBranches?(url: string): ProviderResult<string[]>;
 	publishRepository?(repository: Repository): Promise<void>;
 }
 

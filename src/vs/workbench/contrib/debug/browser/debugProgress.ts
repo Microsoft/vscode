@@ -39,7 +39,7 @@ export class DebugProgressContribution implements IWorkbenchContribution {
 					if (viewsService.isViewContainerVisible(VIEWLET_ID)) {
 						progressService.withProgress({ location: VIEWLET_ID }, () => promise);
 					}
-					const source = debugService.getConfigurationManager().getDebuggerLabel(session.configuration.type);
+					const source = debugService.getAdapterManager().getDebuggerLabel(session.configuration.type);
 					progressService.withProgress({
 						location: ProgressLocation.Notification,
 						title: progressStartEvent.body.title,

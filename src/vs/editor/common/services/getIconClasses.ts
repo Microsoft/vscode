@@ -93,6 +93,6 @@ export function detectModeId(modelService: IModelService, modeService: IModeServ
 	return modeService.getModeIdByFilepathOrFirstLine(resource);
 }
 
-export function cssEscape(val: string): string {
-	return val.replace(/\s/g, '\\$&'); // make sure to not introduce CSS classes from files that contain whitespace
+export function cssEscape(str: string): string {
+	return str.replace(/[\11\12\14\15\40]/g, '/'); // HTML class names can not contain certain whitespace characters, use / instead, which doesn't exist in file names.
 }

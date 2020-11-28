@@ -11,6 +11,10 @@
 	transition: background-color 800ms linear;
 }
 
+.monaco-workbench .pane-body.integrated-terminal .xterm-viewport {
+	scrollbar-width: thin;
+}
+
 .monaco-workbench .pane-body.integrated-terminal .xterm-viewport::-webkit-scrollbar {
 	width: 10px;
 }

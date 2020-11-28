@@ -833,7 +833,7 @@ function workbenchTreeDataPreamble<T, TFilterData, TOptions extends IAbstractTre
 			additionalScrollHeight,
 			hideTwistiesOfChildlessElements: options.hideTwistiesOfChildlessElements,
 			expandOnlyOnDoubleClick: configurationService.getValue(openModeSettingKey) === 'doubleClick',
-			expandOnlyOnTwistieClick: !configurationService.getValue<boolean>(treeExpandOnFolderClick)
+			expandOnlyOnTwistieClick: options.expandOnlyOnTwistieClick ?? !configurationService.getValue<boolean>(treeExpandOnFolderClick)
 		} as TOptions
 	};
 }
@@ -935,7 +935,7 @@ class WorkbenchTreeInternals<TInput, T, TFilterData> {
 				if (e.affectsConfiguration(openModeSettingKey)) {
 					newOptions = { ...newOptions, expandOnlyOnDoubleClick: configurationService.getValue(openModeSettingKey) === 'doubleClick' };
 				}
-				if (e.affectsConfiguration(treeExpandOnFolderClick)) {
+				if (e.affectsConfiguration(treeExpandOnFolderClick) && options.expandOnlyOnTwistieClick === undefined) {
 					newOptions = { ...newOptions, expandOnlyOnTwistieClick: !configurationService.getValue<boolean>(treeExpandOnFolderClick) };
 				}
 				if (Object.keys(newOptions).length > 0) {

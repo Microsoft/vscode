@@ -18,11 +18,17 @@ import { MenuId, MenuRegistry } from 'vs/platform/actions/common/actions';
 import { ICommandHandler, CommandsRegistry } from 'vs/platform/commands/common/commands';
 import { ExplorerFolderContext } from 'vs/workbench/contrib/files/common/files';
 import { ResourceContextKey } from 'vs/workbench/common/resources';
+import { Codicon } from 'vs/base/common/codicons';
+import { registerIcon } from 'vs/platform/theme/common/iconRegistry';
+
+
+const timelineViewIcon = registerIcon('timeline-view-icon', Codicon.history, localize('timelineViewIcon', 'View icon of the timeline view.'));
+const timelineOpenIcon = registerIcon('timeline-open', Codicon.history, localize('timelineOpenIcon', 'Icon for the open timeline action.'));
 
 export class TimelinePaneDescriptor implements IViewDescriptor {
 	readonly id = TimelinePaneId;
 	readonly name = TimelinePane.TITLE;
-	readonly containerIcon = 'codicon-history';
+	readonly containerIcon = timelineViewIcon;
 	readonly ctorDescriptor = new SyncDescriptor(TimelinePane);
 	readonly order = 2;
 	readonly weight = 30;
@@ -87,7 +93,7 @@ MenuRegistry.appendMenuItem(MenuId.ExplorerContext, ({
 	command: {
 		id: OpenTimelineAction.ID,
 		title: OpenTimelineAction.LABEL,
-		icon: { id: 'codicon/history' }
+		icon: timelineOpenIcon
 	},
 	when: ContextKeyExpr.and(ExplorerFolderContext.toNegated(), ResourceContextKey.HasResource)
 }));

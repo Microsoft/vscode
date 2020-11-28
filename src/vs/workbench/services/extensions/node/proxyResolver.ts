@@ -468,9 +468,12 @@ let _caCertificates: ReturnType<typeof readCaCertificates> | Promise<undefined>;
 async function getCaCertificates(extHostLogService: ILogService) {
 	if (!_caCertificates) {
 		_caCertificates = readCaCertificates()
-			.then(res => res && res.certs.length ? res : undefined)
+			.then(res => {
+				extHostLogService.debug('ProxyResolver#getCaCertificates count', res && res.certs.length);
+				return res && res.certs.length ? res : undefined;
+			})
 			.catch(err => {
-				extHostLogService.error('ProxyResolver#getCertificates', toErrorMessage(err));
+				extHostLogService.error('ProxyResolver#getCaCertificates error', toErrorMessage(err));
 				return undefined;
 			});
 	}
@@ -495,7 +498,7 @@ async function readWindowsCaCertificates() {
 	const winCA = await import('vscode-windows-ca-certs');
 
 	let ders: any[] = [];
-	const store = winCA();
+	const store = new winCA.Crypt32();
 	try {
 		let der: any;
 		while (der = store.next()) {

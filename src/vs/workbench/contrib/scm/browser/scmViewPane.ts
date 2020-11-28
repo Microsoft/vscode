@@ -22,7 +22,7 @@ import { IKeybindingService } from 'vs/platform/keybinding/common/keybinding';
 import { MenuItemAction, IMenuService } from 'vs/platform/actions/common/actions';
 import { IAction, IActionViewItem, ActionRunner, Action, RadioGroup, Separator, SubmenuAction, IActionViewItemProvider } from 'vs/base/common/actions';
 import { ActionBar } from 'vs/base/browser/ui/actionbar/actionbar';
-import { IThemeService, registerThemingParticipant, IFileIconTheme } from 'vs/platform/theme/common/themeService';
+import { IThemeService, registerThemingParticipant, IFileIconTheme, ThemeIcon } from 'vs/platform/theme/common/themeService';
 import { isSCMResource, isSCMResourceGroup, connectPrimaryMenuToInlineActionBar, isSCMRepository, isSCMInput, collectContextMenuActions, StatusBarAction, StatusBarActionViewItem, getRepositoryVisibilityActions } from './util';
 import { attachBadgeStyler } from 'vs/platform/theme/common/styler';
 import { WorkbenchCompressibleObjectTree, IOpenEvent } from 'vs/platform/list/browser/listService';
@@ -78,6 +78,7 @@ import { ColorScheme } from 'vs/platform/theme/common/theme';
 import { IUriIdentityService } from 'vs/workbench/services/uriIdentity/common/uriIdentity';
 import { LabelFuzzyScore } from 'vs/base/browser/ui/tree/abstractTree';
 import { Selection } from 'vs/editor/common/core/selection';
+import { API_OPEN_DIFF_EDITOR_COMMAND_ID, API_OPEN_EDITOR_COMMAND_ID } from 'vs/workbench/browser/parts/editor/editorCommands';
 
 type TreeElement = ISCMRepository | ISCMInput | ISCMResourceGroup | IResourceNode<ISCMResource, ISCMResourceGroup> | ISCMResource;
 
@@ -1038,7 +1039,11 @@ class ViewModel {
 		}
 
 		for (const repository of this.scmViewService.visibleRepositories) {
-			const item = this.items.get(repository)!;
+			const item = this.items.get(repository);
+
+			if (!item) {
+				continue;
+			}
 
 			// go backwards from last group
 			for (let j = item.groupItems.length - 1; j >= 0; j--) {
@@ -1058,12 +1063,14 @@ class ViewModel {
 	}
 
 	focus() {
-		for (const repository of this.scmViewService.visibleRepositories) {
-			const widget = this.inputRenderer.getRenderedInputWidget(repository.input);
+		if (this.tree.getFocus().length === 0) {
+			for (const repository of this.scmViewService.visibleRepositories) {
+				const widget = this.inputRenderer.getRenderedInputWidget(repository.input);
 
-			if (widget) {
-				widget.focus();
-				return;
+				if (widget) {
+					widget.focus();
+					return;
+				}
 			}
 		}
 
@@ -1222,7 +1229,7 @@ export class ToggleViewModeAction extends Action {
 	}
 
 	private onDidChangeMode(mode: ViewModelMode): void {
-		const iconClass = mode === ViewModelMode.List ? 'codicon-list-tree' : 'codicon-list-flat';
+		const iconClass = ThemeIcon.asClassName(mode === ViewModelMode.List ? Codicon.listTree : Codicon.listFlat);
 		this.class = `scm-action toggle-view-mode ${iconClass}`;
 		this.checked = this.viewModel.mode === this.mode;
 	}
@@ -1482,7 +1489,8 @@ class SCMInputWidget extends Disposable {
 			padding: { top: 3, bottom: 3 },
 			quickSuggestions: false,
 			scrollbar: { alwaysConsumeMouseWheel: false },
-			overflowWidgetsDomNode
+			overflowWidgetsDomNode,
+			renderWhitespace: 'none'
 		};
 
 		const codeEditorWidgetOptions: ICodeEditorWidgetOptions = {
@@ -1650,7 +1658,7 @@ class SCMCollapseAction extends Action {
 		this.enabled = isAnyProviderCollapsible;
 		this.allCollapsed = isAnyProviderCollapsible && this.viewModel.areAllProvidersCollapsed();
 		this.label = this.allCollapsed ? localize('expand all', "Expand All Repositories") : localize('collapse all', "Collapse All Repositories");
-		this.class = this.allCollapsed ? Codicon.expandAll.classNames : Codicon.collapseAll.classNames;
+		this.class = ThemeIcon.asClassName(this.allCollapsed ? Codicon.expandAll : Codicon.collapseAll);
 	}
 }
 
@@ -1727,7 +1735,7 @@ export class SCMViewPane extends ViewPane {
 
 		const actionRunner = new RepositoryPaneActionRunner(() => this.getSelectedResources());
 		this._register(actionRunner);
-		this._register(actionRunner.onDidBeforeRun(() => this.tree.domFocus()));
+		this._register(actionRunner.onBeforeRun(() => this.tree.domFocus()));
 
 		const renderers: ICompressibleTreeRenderer<any, any, any>[] = [
 			this.instantiationService.createInstance(RepositoryRenderer, actionViewItemProvider),
@@ -1804,7 +1812,7 @@ export class SCMViewPane extends ViewPane {
 
 		this._register(this.storageService.onWillSaveState(e => {
 			if (e.reason === WillSaveStateReason.SHUTDOWN) {
-				this.storageService.store2(`scm.viewState`, JSON.stringify(this.viewModel.treeViewState), StorageScope.WORKSPACE, StorageTarget.MACHINE);
+				this.storageService.store(`scm.viewState`, JSON.stringify(this.viewModel.treeViewState), StorageScope.WORKSPACE, StorageTarget.MACHINE);
 			}
 		}));
 	}
@@ -1818,7 +1826,7 @@ export class SCMViewPane extends ViewPane {
 
 	private onDidChangeMode(): void {
 		this.updateIndentStyles(this.themeService.getFileIconTheme());
-		this.storageService.store2(`scm.viewMode`, this.viewModel.mode, StorageScope.WORKSPACE, StorageTarget.USER);
+		this.storageService.store(`scm.viewMode`, this.viewModel.mode, StorageScope.WORKSPACE, StorageTarget.USER);
 	}
 
 	layoutBody(height: number | undefined = this.layoutCache.height, width: number | undefined = this.layoutCache.width): void {
@@ -1931,13 +1939,17 @@ export class SCMViewPane extends ViewPane {
 		}
 
 		// ISCMResource
-		await e.element.open(!!e.editorOptions.preserveFocus);
+		if (e.element.command?.id === API_OPEN_EDITOR_COMMAND_ID || e.element.command?.id === API_OPEN_DIFF_EDITOR_COMMAND_ID) {
+			await this.commandService.executeCommand(e.element.command.id, ...(e.element.command.arguments || []), e);
+		} else {
+			await e.element.open(!!e.editorOptions.preserveFocus);
 
-		if (e.editorOptions.pinned) {
-			const activeEditorPane = this.editorService.activeEditorPane;
+			if (e.editorOptions.pinned) {
+				const activeEditorPane = this.editorService.activeEditorPane;
 
-			if (activeEditorPane) {
-				activeEditorPane.group.pinEditor(activeEditorPane.input);
+				if (activeEditorPane) {
+					activeEditorPane.group.pinEditor(activeEditorPane.input);
+				}
 			}
 		}
 
@@ -1990,7 +2002,7 @@ export class SCMViewPane extends ViewPane {
 		}
 
 		const actionRunner = new RepositoryPaneActionRunner(() => this.getSelectedResources());
-		actionRunner.onDidBeforeRun(() => this.tree.domFocus());
+		actionRunner.onBeforeRun(() => this.tree.domFocus());
 
 		this.contextMenuService.showContextMenu({
 			getAnchor: () => e.anchor,

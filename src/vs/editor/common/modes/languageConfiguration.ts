@@ -294,17 +294,32 @@ export class StandardAutoClosingPairConditional {
  * @internal
  */
 export class AutoClosingPairs {
+	// it is useful to be able to get pairs using either end of open and close
 
-	public readonly autoClosingPairsOpen: Map<string, StandardAutoClosingPairConditional[]>;
-	public readonly autoClosingPairsClose: Map<string, StandardAutoClosingPairConditional[]>;
+	/** Key is first character of open */
+	public readonly autoClosingPairsOpenByStart: Map<string, StandardAutoClosingPairConditional[]>;
+	/** Key is last character of open */
+	public readonly autoClosingPairsOpenByEnd: Map<string, StandardAutoClosingPairConditional[]>;
+	/** Key is first character of close */
+	public readonly autoClosingPairsCloseByStart: Map<string, StandardAutoClosingPairConditional[]>;
+	/** Key is last character of close */
+	public readonly autoClosingPairsCloseByEnd: Map<string, StandardAutoClosingPairConditional[]>;
+	/** Key is close. Only has pairs that are a single character */
+	public readonly autoClosingPairsCloseSingleChar: Map<string, StandardAutoClosingPairConditional[]>;
 
 	constructor(autoClosingPairs: StandardAutoClosingPairConditional[]) {
-		this.autoClosingPairsOpen = new Map<string, StandardAutoClosingPairConditional[]>();
-		this.autoClosingPairsClose = new Map<string, StandardAutoClosingPairConditional[]>();
+		this.autoClosingPairsOpenByStart = new Map<string, StandardAutoClosingPairConditional[]>();
+		this.autoClosingPairsOpenByEnd = new Map<string, StandardAutoClosingPairConditional[]>();
+		this.autoClosingPairsCloseByStart = new Map<string, StandardAutoClosingPairConditional[]>();
+		this.autoClosingPairsCloseByEnd = new Map<string, StandardAutoClosingPairConditional[]>();
+		this.autoClosingPairsCloseSingleChar = new Map<string, StandardAutoClosingPairConditional[]>();
 		for (const pair of autoClosingPairs) {
-			appendEntry(this.autoClosingPairsOpen, pair.open.charAt(pair.open.length - 1), pair);
-			if (pair.close.length === 1) {
-				appendEntry(this.autoClosingPairsClose, pair.close, pair);
+			appendEntry(this.autoClosingPairsOpenByStart, pair.open.charAt(0), pair);
+			appendEntry(this.autoClosingPairsOpenByEnd, pair.open.charAt(pair.open.length - 1), pair);
+			appendEntry(this.autoClosingPairsCloseByStart, pair.close.charAt(0), pair);
+			appendEntry(this.autoClosingPairsCloseByEnd, pair.close.charAt(pair.close.length - 1), pair);
+			if (pair.close.length === 1 && pair.open.length === 1) {
+				appendEntry(this.autoClosingPairsCloseSingleChar, pair.close, pair);
 			}
 		}
 	}

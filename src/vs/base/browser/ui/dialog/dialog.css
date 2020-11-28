@@ -148,7 +148,8 @@
 	width: fit-content;
 	width: -moz-fit-content;
 	padding: 5px 10px;
-	margin: 4px 5px; /* allows button focus outline to be visible */
 	overflow: hidden;
 	text-overflow: ellipsis;
+	margin: 4px 5px; /* allows button focus outline to be visible */
+	outline-offset: 2px !important;
 }

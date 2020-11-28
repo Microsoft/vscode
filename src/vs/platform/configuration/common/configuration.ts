@@ -114,7 +114,7 @@ export interface IConfigurationService {
 
 	inspect<T>(key: string, overrides?: IConfigurationOverrides): IConfigurationValue<T>;
 
-	reloadConfiguration(folder?: IWorkspaceFolder): Promise<void>;
+	reloadConfiguration(target?: ConfigurationTarget | IWorkspaceFolder): Promise<void>;
 
 	keys(): {
 		default: string[];

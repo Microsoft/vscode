@@ -24,7 +24,7 @@ export class KeybindingsEditor {
 		await this.code.waitAndClick('.keybindings-list-container .monaco-list-row.keybinding-item');
 		await this.code.waitForElement('.keybindings-list-container .monaco-list-row.keybinding-item.focused.selected');
 
-		await this.code.waitAndClick('.keybindings-list-container .monaco-list-row.keybinding-item .action-item .codicon.codicon-add');
+		await this.code.waitAndClick('.keybindings-list-container .monaco-list-row.keybinding-item .action-item .codicon-keybindings-add');
 		await this.code.waitForActiveElement('.defineKeybindingWidget .monaco-inputbox input');
 
 		await this.code.dispatchKeybinding(keybinding);

@@ -58,7 +58,7 @@ class TypeScriptFoldingProvider implements vscode.FoldingRangeProvider {
 		return new vscode.FoldingRange(start, end, kind);
 	}
 
-	private static readonly foldEndPairCharacters = ['}', ']', ')'];
+	private static readonly foldEndPairCharacters = ['}', ']', ')', '`'];
 
 	private adjustFoldingEnd(range: vscode.Range, document: vscode.TextDocument) {
 		// workaround for #47240

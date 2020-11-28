@@ -12,61 +12,76 @@ import * as ansiColors from 'ansi-colors';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const allErrors: string[][] = [];
-let startTime: number | null = null;
-let count = 0;
+class ErrorLog {
+	constructor(public id: string) {
+	}
+	allErrors: string[][] = [];
+	startTime: number | null = null;
+	count = 0;
 
-function onStart(): void {
-	if (count++ > 0) {
-		return;
+	onStart(): void {
+		if (this.count++ > 0) {
+			return;
+		}
+
+		this.startTime = new Date().getTime();
+		fancyLog(`Starting ${ansiColors.green('compilation')}${this.id ? ansiColors.blue(` ${this.id}`) : ''}...`);
 	}
 
-	startTime = new Date().getTime();
-	fancyLog(`Starting ${ansiColors.green('compilation')}...`);
-}
+	onEnd(): void {
+		if (--this.count > 0) {
+			return;
+		}
 
-function onEnd(): void {
-	if (--count > 0) {
-		return;
+		this.log();
 	}
 
-	log();
+	log(): void {
+		const errors = _.flatten(this.allErrors);
+		const seen = new Set<string>();
+
+		errors.map(err => {
+			if (!seen.has(err)) {
+				seen.add(err);
+				fancyLog(`${ansiColors.red('Error')}: ${err}`);
+			}
+		});
+
+		fancyLog(`Finished ${ansiColors.green('compilation')}${this.id ? ansiColors.blue(` ${this.id}`) : ''} with ${errors.length} errors after ${ansiColors.magenta((new Date().getTime() - this.startTime!) + ' ms')}`);
+
+		const regex = /^([^(]+)\((\d+),(\d+)\): (.*)$/s;
+		const messages = errors
+			.map(err => regex.exec(err))
+			.filter(match => !!match)
+			.map(x => x as string[])
+			.map(([, path, line, column, message]) => ({ path, line: parseInt(line), column: parseInt(column), message }));
+
+		try {
+			const logFileName = 'log' + (this.id ? `_${this.id}` : '');
+			fs.writeFileSync(path.join(buildLogFolder, logFileName), JSON.stringify(messages));
+		} catch (err) {
+			//noop
+		}
+	}
+
 }
 
-const buildLogPath = path.join(path.dirname(path.dirname(__dirname)), '.build', 'log');
+const errorLogsById = new Map<string, ErrorLog>();
+function getErrorLog(id: string = '') {
+	let errorLog = errorLogsById.get(id);
+	if (!errorLog) {
+		errorLog = new ErrorLog(id);
+		errorLogsById.set(id, errorLog);
+	}
+	return errorLog;
+}
+
+const buildLogFolder = path.join(path.dirname(path.dirname(__dirname)), '.build');
 
 try {
-	fs.mkdirSync(path.dirname(buildLogPath));
+	fs.mkdirSync(buildLogFolder);
 } catch (err) {
 	// ignore
-}
-
-function log(): void {
-	const errors = _.flatten(allErrors);
-	const seen = new Set<string>();
-
-	errors.map(err => {
-		if (!seen.has(err)) {
-			seen.add(err);
-			fancyLog(`${ansiColors.red('Error')}: ${err}`);
-		}
-	});
-
-	const regex = /^([^(]+)\((\d+),(\d+)\): (.*)$/;
-	const messages = errors
-		.map(err => regex.exec(err))
-		.filter(match => !!match)
-		.map(x => x as string[])
-		.map(([, path, line, column, message]) => ({ path, line: parseInt(line), column: parseInt(column), message }));
-
-	try {
-
-		fs.writeFileSync(buildLogPath, JSON.stringify(messages));
-	} catch (err) {
-		//noop
-	}
-
-	fancyLog(`Finished ${ansiColors.green('compilation')} with ${errors.length} errors after ${ansiColors.magenta((new Date().getTime() - startTime!) + ' ms')}`);
 }
 
 export interface IReporter {
@@ -75,9 +90,11 @@ export interface IReporter {
 	end(emitError: boolean): NodeJS.ReadWriteStream;
 }
 
-export function createReporter(): IReporter {
+export function createReporter(id?: string): IReporter {
+	const errorLog = getErrorLog(id);
+
 	const errors: string[] = [];
-	allErrors.push(errors);
+	errorLog.allErrors.push(errors);
 
 	const result = (err: string) => errors.push(err);
 
@@ -85,14 +102,14 @@ export function createReporter(): IReporter {
 
 	result.end = (emitError: boolean): NodeJS.ReadWriteStream => {
 		errors.length = 0;
-		onStart();
+		errorLog.onStart();
 
 		return es.through(undefined, function () {
-			onEnd();
+			errorLog.onEnd();
 
 			if (emitError && errors.length > 0) {
 				if (!(errors as any).__logged__) {
-					log();
+					errorLog.log();
 				}
 
 				(errors as any).__logged__ = true;

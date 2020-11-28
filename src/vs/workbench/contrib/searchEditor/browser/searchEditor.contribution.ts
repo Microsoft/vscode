@@ -15,7 +15,7 @@ import { CommandsRegistry } from 'vs/platform/commands/common/commands';
 import { ContextKeyExpr, IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
 import { SyncDescriptor } from 'vs/platform/instantiation/common/descriptors';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
-import { KeybindingsRegistry, KeybindingWeight } from 'vs/platform/keybinding/common/keybindingsRegistry';
+import { KeybindingWeight } from 'vs/platform/keybinding/common/keybindingsRegistry';
 import { LifecyclePhase } from 'vs/workbench/services/lifecycle/common/lifecycle';
 import { Registry } from 'vs/platform/registry/common/platform';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
@@ -41,7 +41,6 @@ const FocusQueryEditorWidgetCommandId = 'search.action.focusQueryEditorWidget';
 const ToggleSearchEditorCaseSensitiveCommandId = 'toggleSearchEditorCaseSensitive';
 const ToggleSearchEditorWholeWordCommandId = 'toggleSearchEditorWholeWord';
 const ToggleSearchEditorRegexCommandId = 'toggleSearchEditorRegex';
-const ToggleSearchEditorContextLinesCommandId = 'toggleSearchEditorContextLines';
 const IncreaseSearchEditorContextLinesCommandId = 'increaseSearchEditorContextLines';
 const DecreaseSearchEditorContextLinesCommandId = 'decreaseSearchEditorContextLines';
 
@@ -161,60 +160,6 @@ Registry.as<IEditorInputFactoryRegistry>(EditorInputExtensions.EditorInputFactor
 //#endregion
 
 //#region Commands
-KeybindingsRegistry.registerCommandAndKeybindingRule(Object.assign({
-	id: ToggleSearchEditorCaseSensitiveCommandId,
-	weight: KeybindingWeight.WorkbenchContrib,
-	when: ContextKeyExpr.and(SearchEditorConstants.InSearchEditor, SearchConstants.SearchInputBoxFocusedKey),
-	handler: toggleSearchEditorCaseSensitiveCommand
-}, ToggleCaseSensitiveKeybinding));
-
-KeybindingsRegistry.registerCommandAndKeybindingRule(Object.assign({
-	id: ToggleSearchEditorWholeWordCommandId,
-	weight: KeybindingWeight.WorkbenchContrib,
-	when: ContextKeyExpr.and(SearchEditorConstants.InSearchEditor, SearchConstants.SearchInputBoxFocusedKey),
-	handler: toggleSearchEditorWholeWordCommand
-}, ToggleWholeWordKeybinding));
-
-KeybindingsRegistry.registerCommandAndKeybindingRule(Object.assign({
-	id: ToggleSearchEditorRegexCommandId,
-	weight: KeybindingWeight.WorkbenchContrib,
-	when: ContextKeyExpr.and(SearchEditorConstants.InSearchEditor, SearchConstants.SearchInputBoxFocusedKey),
-	handler: toggleSearchEditorRegexCommand
-}, ToggleRegexKeybinding));
-
-KeybindingsRegistry.registerCommandAndKeybindingRule({
-	id: ToggleSearchEditorContextLinesCommandId,
-	weight: KeybindingWeight.WorkbenchContrib,
-	when: ContextKeyExpr.and(SearchEditorConstants.InSearchEditor),
-	handler: toggleSearchEditorContextLinesCommand,
-	primary: KeyMod.Alt | KeyCode.KEY_L,
-	mac: { primary: KeyMod.CtrlCmd | KeyMod.Alt | KeyCode.KEY_L }
-});
-
-KeybindingsRegistry.registerCommandAndKeybindingRule({
-	id: IncreaseSearchEditorContextLinesCommandId,
-	weight: KeybindingWeight.WorkbenchContrib,
-	when: ContextKeyExpr.and(SearchEditorConstants.InSearchEditor),
-	handler: (accessor: ServicesAccessor) => modifySearchEditorContextLinesCommand(accessor, true),
-	primary: KeyMod.Alt | KeyCode.US_EQUAL
-});
-
-KeybindingsRegistry.registerCommandAndKeybindingRule({
-	id: DecreaseSearchEditorContextLinesCommandId,
-	weight: KeybindingWeight.WorkbenchContrib,
-	when: ContextKeyExpr.and(SearchEditorConstants.InSearchEditor),
-	handler: (accessor: ServicesAccessor) => modifySearchEditorContextLinesCommand(accessor, false),
-	primary: KeyMod.Alt | KeyCode.US_MINUS
-});
-
-KeybindingsRegistry.registerCommandAndKeybindingRule({
-	id: SelectAllSearchEditorMatchesCommandId,
-	weight: KeybindingWeight.WorkbenchContrib,
-	when: ContextKeyExpr.and(SearchEditorConstants.InSearchEditor),
-	primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KEY_L,
-	handler: selectAllSearchEditorMatchesCommand
-});
-
 CommandsRegistry.registerCommand(
 	CleanSearchEditorStateCommandId,
 	(accessor: ServicesAccessor) => {
@@ -433,6 +378,140 @@ registerAction2(class extends Action2 {
 		if (input instanceof SearchEditorInput) {
 			(editorService.activeEditorPane as SearchEditor).focusSearchInput();
 		}
+	}
+});
+
+registerAction2(class extends Action2 {
+	constructor() {
+		super({
+			id: ToggleSearchEditorCaseSensitiveCommandId,
+			title: { value: localize('searchEditor.action.toggleSearchEditorCaseSensitive', "Toggle Match Case"), original: 'Toggle Match Case' },
+			category,
+			f1: true,
+			precondition: ContextKeyExpr.and(SearchEditorConstants.InSearchEditor),
+			keybinding: Object.assign({
+				weight: KeybindingWeight.WorkbenchContrib,
+				when: ContextKeyExpr.and(SearchEditorConstants.InSearchEditor, SearchConstants.SearchInputBoxFocusedKey),
+			}, ToggleCaseSensitiveKeybinding)
+		});
+	}
+	run(accessor: ServicesAccessor) {
+		toggleSearchEditorCaseSensitiveCommand(accessor);
+	}
+});
+
+registerAction2(class extends Action2 {
+	constructor() {
+		super({
+			id: ToggleSearchEditorWholeWordCommandId,
+			title: { value: localize('searchEditor.action.toggleSearchEditorWholeWord', "Toggle Match Whole Word"), original: 'Toggle Match Whole Word' },
+			category,
+			f1: true,
+			precondition: ContextKeyExpr.and(SearchEditorConstants.InSearchEditor),
+			keybinding: Object.assign({
+				weight: KeybindingWeight.WorkbenchContrib,
+				when: ContextKeyExpr.and(SearchEditorConstants.InSearchEditor, SearchConstants.SearchInputBoxFocusedKey),
+			}, ToggleWholeWordKeybinding)
+		});
+	}
+	run(accessor: ServicesAccessor) {
+		toggleSearchEditorWholeWordCommand(accessor);
+	}
+});
+
+registerAction2(class extends Action2 {
+	constructor() {
+		super({
+			id: ToggleSearchEditorRegexCommandId,
+			title: { value: localize('searchEditor.action.toggleSearchEditorRegex', "Toggle Use Regular Expression"), original: 'Toggle Use Regular Expression"' },
+			category,
+			f1: true,
+			precondition: ContextKeyExpr.and(SearchEditorConstants.InSearchEditor),
+			keybinding: Object.assign({
+				weight: KeybindingWeight.WorkbenchContrib,
+				when: ContextKeyExpr.and(SearchEditorConstants.InSearchEditor, SearchConstants.SearchInputBoxFocusedKey),
+			}, ToggleRegexKeybinding)
+		});
+	}
+	run(accessor: ServicesAccessor) {
+		toggleSearchEditorRegexCommand(accessor);
+	}
+});
+
+registerAction2(class extends Action2 {
+	constructor() {
+		super({
+			id: SearchEditorConstants.ToggleSearchEditorContextLinesCommandId,
+			title: { value: localize('searchEditor.action.toggleSearchEditorContextLines', "Toggle Context Lines"), original: 'Toggle Context Lines"' },
+			category,
+			f1: true,
+			precondition: ContextKeyExpr.and(SearchEditorConstants.InSearchEditor),
+			keybinding: {
+				weight: KeybindingWeight.WorkbenchContrib,
+				when: ContextKeyExpr.and(SearchEditorConstants.InSearchEditor),
+				primary: KeyMod.Alt | KeyCode.KEY_L,
+				mac: { primary: KeyMod.CtrlCmd | KeyMod.Alt | KeyCode.KEY_L }
+			}
+		});
+	}
+	run(accessor: ServicesAccessor) {
+		toggleSearchEditorContextLinesCommand(accessor);
+	}
+});
+
+registerAction2(class extends Action2 {
+	constructor() {
+		super({
+			id: IncreaseSearchEditorContextLinesCommandId,
+			title: { original: 'Increase Context Lines', value: localize('searchEditor.action.increaseSearchEditorContextLines', "Increase Context Lines") },
+			category,
+			f1: true,
+			precondition: ContextKeyExpr.and(SearchEditorConstants.InSearchEditor),
+			keybinding: {
+				weight: KeybindingWeight.WorkbenchContrib,
+				when: ContextKeyExpr.and(SearchEditorConstants.InSearchEditor),
+				primary: KeyMod.Alt | KeyCode.US_EQUAL
+			}
+		});
+	}
+	run(accessor: ServicesAccessor) { modifySearchEditorContextLinesCommand(accessor, true); }
+});
+
+registerAction2(class extends Action2 {
+	constructor() {
+		super({
+			id: DecreaseSearchEditorContextLinesCommandId,
+			title: { original: 'Decrease Context Lines', value: localize('searchEditor.action.decreaseSearchEditorContextLines', "Decrease Context Lines") },
+			category,
+			f1: true,
+			precondition: ContextKeyExpr.and(SearchEditorConstants.InSearchEditor),
+			keybinding: {
+				weight: KeybindingWeight.WorkbenchContrib,
+				when: ContextKeyExpr.and(SearchEditorConstants.InSearchEditor),
+				primary: KeyMod.Alt | KeyCode.US_MINUS
+			}
+		});
+	}
+	run(accessor: ServicesAccessor) { modifySearchEditorContextLinesCommand(accessor, false); }
+});
+
+registerAction2(class extends Action2 {
+	constructor() {
+		super({
+			id: SelectAllSearchEditorMatchesCommandId,
+			title: { original: 'Select All Matches', value: localize('searchEditor.action.selectAllSearchEditorMatches', "Select All Matches") },
+			category,
+			f1: true,
+			precondition: ContextKeyExpr.and(SearchEditorConstants.InSearchEditor),
+			keybinding: {
+				weight: KeybindingWeight.WorkbenchContrib,
+				when: ContextKeyExpr.and(SearchEditorConstants.InSearchEditor),
+				primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KEY_L,
+			}
+		});
+	}
+	run(accessor: ServicesAccessor) {
+		selectAllSearchEditorMatchesCommand(accessor);
 	}
 });
 //#endregion

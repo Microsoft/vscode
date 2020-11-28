@@ -1,37 +1,37 @@
 {
-  '2018-01-29 18:00, US/Pacific':    'endgame',
-  '2018-02-07 12:00, US/Pacific':    'release', # 1.20.0
-  '2018-02-12 12:00, US/Pacific':    'development',
-  '2018-02-14 16:00, Europe/Zurich': 'release', # 1.20.1
-  '2018-02-19 16:00, Europe/Zurich': 'development',
-  '2018-02-26 18:00, US/Pacific':    'endgame',
-  '2018-03-07 12:00, US/Pacific':    'release', # 1.21.0
-  '2018-03-12 12:00, US/Pacific':    'development',
-  '2018-03-15 12:00, US/Pacific':    'release', # 1.21.1
-  '2018-03-20 12:00, US/Pacific':    'development',
-  '2018-03-26 18:00, US/Pacific':    'endgame',
-  '2018-04-06 18:00, US/Pacific':    'release', # 1.22.1
-  '2018-04-11 18:00, US/Pacific':    'development',
-  '2018-04-12 12:00, US/Pacific':    'release', # 1.22.2
-  '2018-04-17 12:00, US/Pacific':    'development',
-  '2018-04-23 18:00, US/Pacific':    'endgame',
-  '2018-05-03 12:00, US/Pacific':    'release', # 1.23.0
-  '2018-05-08 12:00, US/Pacific':    'development',
-  '2018-05-10 12:00, US/Pacific':    'release', # 1.23.1
-  '2018-05-15 12:00, US/Pacific':    'development',
-  '2018-05-28 18:00, US/Pacific':    'endgame',
+  "2018-01-29 18:00, US/Pacific": "endgame",
+  "2018-02-07 12:00, US/Pacific": "release", # 1.20.0
+  "2018-02-12 12:00, US/Pacific": "development",
+  "2018-02-14 16:00, Europe/Zurich": "release", # 1.20.1
+  "2018-02-19 16:00, Europe/Zurich": "development",
+  "2018-02-26 18:00, US/Pacific": "endgame",
+  "2018-03-07 12:00, US/Pacific": "release", # 1.21.0
+  "2018-03-12 12:00, US/Pacific": "development",
+  "2018-03-15 12:00, US/Pacific": "release", # 1.21.1
+  "2018-03-20 12:00, US/Pacific": "development",
+  "2018-03-26 18:00, US/Pacific": "endgame",
+  "2018-04-06 18:00, US/Pacific": "release", # 1.22.1
+  "2018-04-11 18:00, US/Pacific": "development",
+  "2018-04-12 12:00, US/Pacific": "release", # 1.22.2
+  "2018-04-17 12:00, US/Pacific": "development",
+  "2018-04-23 18:00, US/Pacific": "endgame",
+  "2018-05-03 12:00, US/Pacific": "release", # 1.23.0
+  "2018-05-08 12:00, US/Pacific": "development",
+  "2018-05-10 12:00, US/Pacific": "release", # 1.23.1
+  "2018-05-15 12:00, US/Pacific": "development",
+  "2018-05-28 18:00, US/Pacific": "endgame",
   # 'release' not needed anymore, return to 'development' after releasing.
-  '2018-06-06 12:00, US/Pacific':    'development', # 1.24.0 released
-  '2018-06-25 18:00, US/Pacific':    'endgame',
-  '2018-07-05 12:00, US/Pacific':    'development', # 1.25.0 released
-  '2018-07-30 18:00, US/Pacific':    'endgame',
-  '2018-08-13 12:00, US/Pacific':    'development', # 1.26.0 released
-  '2018-08-27 18:00, US/Pacific':    'endgame',
-  '2018-09-05 12:00, US/Pacific':    'development', # 1.27.0 released
-  '2018-09-24 18:00, US/Pacific':    'endgame',
-  '2018-10-08 09:00, US/Pacific':    'development', # 1.28.0 released
-  '2018-10-29 18:00, US/Pacific':    'endgame',
-  '2018-11-12 11:00, US/Pacific':    'development', # 1.29.0 released
-  '2018-12-03 18:00, US/Pacific':    'endgame',
-  '2018-12-12 13:00, US/Pacific':    'development', # 1.30.0 released
+  "2018-06-06 12:00, US/Pacific": "development", # 1.24.0 released
+  "2018-06-25 18:00, US/Pacific": "endgame",
+  "2018-07-05 12:00, US/Pacific": "development", # 1.25.0 released
+  "2018-07-30 18:00, US/Pacific": "endgame",
+  "2018-08-13 12:00, US/Pacific": "development", # 1.26.0 released
+  "2018-08-27 18:00, US/Pacific": "endgame",
+  "2018-09-05 12:00, US/Pacific": "development", # 1.27.0 released
+  "2018-09-24 18:00, US/Pacific": "endgame",
+  "2018-10-08 09:00, US/Pacific": "development", # 1.28.0 released
+  "2018-10-29 18:00, US/Pacific": "endgame",
+  "2018-11-12 11:00, US/Pacific": "development", # 1.29.0 released
+  "2018-12-03 18:00, US/Pacific": "endgame",
+  "2018-12-12 13:00, US/Pacific": "development", # 1.30.0 released
 }

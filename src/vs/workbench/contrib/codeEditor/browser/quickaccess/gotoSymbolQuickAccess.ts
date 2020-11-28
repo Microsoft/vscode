@@ -26,6 +26,7 @@ import { onUnexpectedError } from 'vs/base/common/errors';
 import { ThemeIcon } from 'vs/platform/theme/common/themeService';
 import { ServicesAccessor } from 'vs/platform/instantiation/common/instantiation';
 import { KeybindingWeight } from 'vs/platform/keybinding/common/keybindingsRegistry';
+import { IQuickAccessTextEditorContext } from 'vs/editor/contrib/quickAccess/editorNavigationQuickAccess';
 
 export class GotoSymbolQuickAccessProvider extends AbstractGotoSymbolQuickAccessProvider {
 
@@ -42,11 +43,12 @@ export class GotoSymbolQuickAccessProvider extends AbstractGotoSymbolQuickAccess
 
 	//#region DocumentSymbols (text editor required)
 
-	protected provideWithTextEditor(editor: IEditor, picker: IQuickPick<IGotoSymbolQuickPickItem>, token: CancellationToken): IDisposable {
+	protected provideWithTextEditor(context: IQuickAccessTextEditorContext, picker: IQuickPick<IGotoSymbolQuickPickItem>, token: CancellationToken): IDisposable {
 		if (this.canPickFromTableOfContents()) {
 			return this.doGetTableOfContentsPicks(picker);
 		}
-		return super.provideWithTextEditor(editor, picker, token);
+
+		return super.provideWithTextEditor(context, picker, token);
 	}
 
 	private get configuration() {
@@ -62,10 +64,12 @@ export class GotoSymbolQuickAccessProvider extends AbstractGotoSymbolQuickAccess
 		return this.editorService.activeTextEditorControl;
 	}
 
-	protected gotoLocation(editor: IEditor, options: { range: IRange, keyMods: IKeyMods, forceSideBySide?: boolean, preserveFocus?: boolean }): void {
+	protected gotoLocation(context: IQuickAccessTextEditorContext, options: { range: IRange, keyMods: IKeyMods, forceSideBySide?: boolean, preserveFocus?: boolean }): void {
 
 		// Check for sideBySide use
 		if ((options.keyMods.ctrlCmd || options.forceSideBySide) && this.editorService.activeEditor) {
+			context.restoreViewState?.(); // since we open to the side, restore view state in this editor
+
 			this.editorService.openEditor(this.editorService.activeEditor, {
 				selection: options.range,
 				pinned: options.keyMods.alt || this.configuration.openEditorPinned,
@@ -75,7 +79,7 @@ export class GotoSymbolQuickAccessProvider extends AbstractGotoSymbolQuickAccess
 
 		// Otherwise let parent handle it
 		else {
-			super.gotoLocation(editor, options);
+			super.gotoLocation(context, options);
 		}
 	}
 

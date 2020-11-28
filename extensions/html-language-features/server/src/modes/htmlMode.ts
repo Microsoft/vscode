@@ -80,7 +80,7 @@ export function getHTMLMode(htmlLanguageService: HTMLLanguageService, workspace:
 			const htmlDocument = htmlDocuments.get(document);
 			return htmlLanguageService.findMatchingTagPosition(document, position, htmlDocument);
 		},
-		async doOnTypeRename(document: TextDocument, position: Position) {
+		async doLinkedEditing(document: TextDocument, position: Position) {
 			const htmlDocument = htmlDocuments.get(document);
 			return htmlLanguageService.findOnTypeRenameRanges(document, position, htmlDocument);
 		},

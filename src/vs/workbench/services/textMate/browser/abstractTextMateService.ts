@@ -464,7 +464,7 @@ class TMTokenizationSupport implements ITokenizationSupport {
 					[{
 						label: nls.localize('neverAgain', "Don't Show Again"),
 						isSecondary: true,
-						run: () => this._storageService.store2(donotAskUpdateKey, true, StorageScope.GLOBAL, StorageTarget.USER)
+						run: () => this._storageService.store(donotAskUpdateKey, true, StorageScope.GLOBAL, StorageTarget.USER)
 					}]
 				);
 			}

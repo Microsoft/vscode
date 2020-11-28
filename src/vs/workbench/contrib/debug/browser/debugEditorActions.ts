@@ -9,7 +9,7 @@ import { Range } from 'vs/editor/common/core/range';
 import { EditorContextKeys } from 'vs/editor/common/editorContextKeys';
 import { ServicesAccessor, registerEditorAction, EditorAction, IActionOptions } from 'vs/editor/browser/editorExtensions';
 import { ContextKeyExpr } from 'vs/platform/contextkey/common/contextkey';
-import { IDebugService, CONTEXT_IN_DEBUG_MODE, CONTEXT_DEBUG_STATE, State, IDebugEditorContribution, EDITOR_CONTRIBUTION_ID, BreakpointWidgetContext, IBreakpoint, BREAKPOINT_EDITOR_CONTRIBUTION_ID, IBreakpointEditorContribution, REPL_VIEW_ID, CONTEXT_STEP_INTO_TARGETS_SUPPORTED, WATCH_VIEW_ID, CONTEXT_DEBUGGERS_AVAILABLE } from 'vs/workbench/contrib/debug/common/debug';
+import { IDebugService, CONTEXT_IN_DEBUG_MODE, CONTEXT_DEBUG_STATE, State, IDebugEditorContribution, EDITOR_CONTRIBUTION_ID, BreakpointWidgetContext, IBreakpoint, BREAKPOINT_EDITOR_CONTRIBUTION_ID, IBreakpointEditorContribution, REPL_VIEW_ID, CONTEXT_STEP_INTO_TARGETS_SUPPORTED, WATCH_VIEW_ID, CONTEXT_DEBUGGERS_AVAILABLE, CONTEXT_EXCEPTION_WIDGET_VISIBLE } from 'vs/workbench/contrib/debug/common/debug';
 import { ICodeEditor } from 'vs/editor/browser/editorBrowser';
 import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
 import { openBreakpointSource } from 'vs/workbench/contrib/debug/browser/breakpointsView';
@@ -45,7 +45,7 @@ class ToggleBreakpointAction extends EditorAction {
 		if (editor.hasModel()) {
 			const debugService = accessor.get(IDebugService);
 			const modelUri = editor.getModel().uri;
-			const canSet = debugService.getConfigurationManager().canSetBreakpointsIn(editor.getModel());
+			const canSet = debugService.canSetBreakpointsIn(editor.getModel());
 			// Does not account for multi line selections, Set to remove multiple cursor on the same line
 			const lineNumbers = [...new Set(editor.getSelections().map(s => s.getPosition().lineNumber))];
 
@@ -79,7 +79,7 @@ class ConditionalBreakpointAction extends EditorAction {
 		const debugService = accessor.get(IDebugService);
 
 		const position = editor.getPosition();
-		if (position && editor.hasModel() && debugService.getConfigurationManager().canSetBreakpointsIn(editor.getModel())) {
+		if (position && editor.hasModel() && debugService.canSetBreakpointsIn(editor.getModel())) {
 			editor.getContribution<IBreakpointEditorContribution>(BREAKPOINT_EDITOR_CONTRIBUTION_ID).showBreakpointWidget(position.lineNumber, undefined, BreakpointWidgetContext.CONDITION);
 		}
 	}
@@ -101,7 +101,7 @@ class LogPointAction extends EditorAction {
 		const debugService = accessor.get(IDebugService);
 
 		const position = editor.getPosition();
-		if (position && editor.hasModel() && debugService.getConfigurationManager().canSetBreakpointsIn(editor.getModel())) {
+		if (position && editor.hasModel() && debugService.canSetBreakpointsIn(editor.getModel())) {
 			editor.getContribution<IBreakpointEditorContribution>(BREAKPOINT_EDITOR_CONTRIBUTION_ID).showBreakpointWidget(position.lineNumber, position.column, BreakpointWidgetContext.LOG_MESSAGE);
 		}
 	}
@@ -454,6 +454,27 @@ class GoToPreviousBreakpointAction extends GoToBreakpointAction {
 	}
 }
 
+class CloseExceptionWidgetAction extends EditorAction {
+
+	constructor() {
+		super({
+			id: 'editor.debug.action.closeExceptionWidget',
+			label: nls.localize('closeExceptionWidget', "Close Exception Widget"),
+			alias: 'Close Exception Widget',
+			precondition: CONTEXT_EXCEPTION_WIDGET_VISIBLE,
+			kbOpts: {
+				primary: KeyCode.Escape,
+				weight: KeybindingWeight.EditorContrib
+			}
+		});
+	}
+
+	async run(_accessor: ServicesAccessor, editor: ICodeEditor): Promise<void> {
+		const contribution = editor.getContribution<IDebugEditorContribution>(EDITOR_CONTRIBUTION_ID);
+		contribution.closeExceptionWidget();
+	}
+}
+
 export function registerEditorActions(): void {
 	registerEditorAction(ToggleBreakpointAction);
 	registerEditorAction(ConditionalBreakpointAction);
@@ -465,4 +486,5 @@ export function registerEditorActions(): void {
 	registerEditorAction(ShowDebugHoverAction);
 	registerEditorAction(GoToNextBreakpointAction);
 	registerEditorAction(GoToPreviousBreakpointAction);
+	registerEditorAction(CloseExceptionWidgetAction);
 }

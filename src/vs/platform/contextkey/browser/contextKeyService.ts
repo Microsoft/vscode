@@ -4,7 +4,9 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Emitter, Event, PauseableEmitter } from 'vs/base/common/event';
+import { Iterable } from 'vs/base/common/iterator';
 import { IDisposable, DisposableStore } from 'vs/base/common/lifecycle';
+import { TernarySearchTree } from 'vs/base/common/map';
 import { distinct } from 'vs/base/common/objects';
 import { CommandsRegistry } from 'vs/platform/commands/common/commands';
 import { ConfigurationTarget, IConfigurationService } from 'vs/platform/configuration/common/configuration';
@@ -90,10 +92,9 @@ class NullContext extends Context {
 }
 
 class ConfigAwareContextValuesContainer extends Context {
-
 	private static readonly _keyPrefix = 'config.';
 
-	private readonly _values = new Map<string, any>();
+	private readonly _values = TernarySearchTree.forConfigKeys<any>();
 	private readonly _listener: IDisposable;
 
 	constructor(
@@ -106,18 +107,26 @@ class ConfigAwareContextValuesContainer extends Context {
 		this._listener = this._configurationService.onDidChangeConfiguration(event => {
 			if (event.source === ConfigurationTarget.DEFAULT) {
 				// new setting, reset everything
-				const allKeys = Array.from(this._values.keys());
+				const allKeys = Array.from(Iterable.map(this._values, ([k]) => k));
 				this._values.clear();
 				emitter.fire(new ArrayContextKeyChangeEvent(allKeys));
 			} else {
 				const changedKeys: string[] = [];
 				for (const configKey of event.affectedKeys) {
 					const contextKey = `config.${configKey}`;
+
+					const cachedItems = this._values.findSuperstr(contextKey);
+					if (cachedItems !== undefined) {
+						changedKeys.push(...Iterable.map(cachedItems, ([key]) => key));
+						this._values.deleteSuperstr(contextKey);
+					}
+
 					if (this._values.has(contextKey)) {
-						this._values.delete(contextKey);
 						changedKeys.push(contextKey);
+						this._values.delete(contextKey);
 					}
 				}
+
 				emitter.fire(new ArrayContextKeyChangeEvent(changedKeys));
 			}
 		});
@@ -149,6 +158,8 @@ class ConfigAwareContextValuesContainer extends Context {
 			default:
 				if (Array.isArray(configValue)) {
 					value = JSON.stringify(configValue);
+				} else {
+					value = configValue;
 				}
 		}
 
@@ -405,6 +416,9 @@ class ScopedContextKeyService extends AbstractContextKeyService {
 
 		if (domNode) {
 			this._domNode = domNode;
+			if (this._domNode.hasAttribute(KEYBINDING_CONTEXT_ATTR)) {
+				console.error('Element already has context attribute');
+			}
 			this._domNode.setAttribute(KEYBINDING_CONTEXT_ATTR, String(this._myContextId));
 		}
 	}

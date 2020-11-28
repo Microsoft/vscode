@@ -6,6 +6,10 @@ description: |
   simplicity of a code editor with what developers need for the core
   edit-build-debug cycle.
 
+architectures:
+  - build-on: amd64
+    run-on: @@ARCHITECTURE@@
+
 grade: stable
 confinement: classic
 

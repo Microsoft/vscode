@@ -1,113 +1,129 @@
 steps:
-- script: |
-    mkdir -p .build
-    echo -n $BUILD_SOURCEVERSION > .build/commit
-    echo -n $VSCODE_QUALITY > .build/quality
-  displayName: Prepare cache flag
+  - script: |
+      mkdir -p .build
+      echo -n $BUILD_SOURCEVERSION > .build/commit
+      echo -n $VSCODE_QUALITY > .build/quality
+      echo -n $ENABLE_TERRAPIN > .build/terrapin
+      echo -n "web" > .build/arch
+    displayName: Prepare cache flag
 
-- task: 1ESLighthouseEng.PipelineArtifactCaching.RestoreCacheV1.RestoreCache@1
-  inputs:
-    keyfile: 'build/.cachesalt, .build/commit, .build/quality'
-    targetfolder: '.build, out-build, out-vscode-min, out-vscode-reh-min, out-vscode-reh-web-min'
-    vstsFeed: 'npm-vscode'
-    platformIndependent: true
-    alias: 'Compilation'
+  - task: 1ESLighthouseEng.PipelineArtifactCaching.RestoreCacheV1.RestoreCache@1
+    inputs:
+      keyfile: "build/.cachesalt, .build/commit, .build/quality, .build/terrapin"
+      targetfolder: ".build, out-build, out-vscode-min, out-vscode-reh-min, out-vscode-reh-web-min"
+      vstsFeed: "npm-vscode"
+      platformIndependent: true
+      alias: "Compilation"
 
-- script: |
-    set -e
-    exit 1
-  displayName: Check RestoreCache
-  condition: and(succeeded(), ne(variables['CacheRestored-Compilation'], 'true'))
+  - script: |
+      set -e
+      exit 1
+    displayName: Check RestoreCache
+    condition: and(succeeded(), ne(variables['CacheRestored-Compilation'], 'true'))
 
-- task: NodeTool@0
-  inputs:
-    versionSpec: "12.14.1"
+  - task: NodeTool@0
+    inputs:
+      versionSpec: "12.18.3"
 
-- task: geeklearningio.gl-vsts-tasks-yarn.yarn-installer-task.YarnInstaller@2
-  inputs:
-    versionSpec: "1.x"
+  - task: geeklearningio.gl-vsts-tasks-yarn.yarn-installer-task.YarnInstaller@2
+    inputs:
+      versionSpec: "1.x"
 
-- task: AzureKeyVault@1
-  displayName: 'Azure Key Vault: Get Secrets'
-  inputs:
-    azureSubscription: 'vscode-builds-subscription'
-    KeyVaultName: vscode
+  - task: AzureKeyVault@1
+    displayName: "Azure Key Vault: Get Secrets"
+    inputs:
+      azureSubscription: "vscode-builds-subscription"
+      KeyVaultName: vscode
 
-- script: |
-    set -e
-    cat << EOF > ~/.netrc
-    machine github.com
-    login vscode
-    password $(github-distro-mixin-password)
-    EOF
+  - script: |
+      set -e
+      cat << EOF > ~/.netrc
+      machine github.com
+      login vscode
+      password $(github-distro-mixin-password)
+      EOF
 
-    git config user.email "vscode@microsoft.com"
-    git config user.name "VSCode"
-  displayName: Prepare tooling
+      git config user.email "vscode@microsoft.com"
+      git config user.name "VSCode"
+    displayName: Prepare tooling
 
-- script: |
-    set -e
-    git remote add distro "https://github.com/$(VSCODE_MIXIN_REPO).git"
-    git fetch distro
-    git merge $(node -p "require('./package.json').distro")
-  displayName: Merge distro
+  - script: |
+      set -e
+      git remote add distro "https://github.com/$(VSCODE_MIXIN_REPO).git"
+      git fetch distro
+      git merge $(node -p "require('./package.json').distro")
+    displayName: Merge distro
 
-# - task: 1ESLighthouseEng.PipelineArtifactCaching.RestoreCacheV1.RestoreCache@1
-#   inputs:
-#     keyfile: 'build/.cachesalt, .yarnrc, remote/.yarnrc, **/yarn.lock, !**/node_modules/**/yarn.lock, !**/.*/**/yarn.lock'
-#     targetfolder: '**/node_modules, !**/node_modules/**/node_modules'
-#     vstsFeed: 'npm-vscode'
+  - script: |
+      npx https://aka.ms/enablesecurefeed standAlone
+    displayName: Switch to Terrapin packages
+    timeoutInMinutes: 5
+    condition: and(succeeded(), eq(variables['ENABLE_TERRAPIN'], 'true'))
 
-- script: |
-    set -e
-    CHILD_CONCURRENCY=1 yarn --frozen-lockfile
-  displayName: Install dependencies
-  # condition: and(succeeded(), ne(variables['CacheRestored'], 'true'))
+  - task: 1ESLighthouseEng.PipelineArtifactCaching.RestoreCacheV1.RestoreCache@1
+    inputs:
+      keyfile: ".build/arch, .build/terrapin, build/.cachesalt, .yarnrc, remote/.yarnrc, **/yarn.lock, !**/node_modules/**/yarn.lock, !**/.*/**/yarn.lock"
+      targetfolder: "**/node_modules, !**/node_modules/**/node_modules"
+      vstsFeed: "npm-vscode"
 
-# - task: 1ESLighthouseEng.PipelineArtifactCaching.SaveCacheV1.SaveCache@1
-#   inputs:
-#     keyfile: 'build/.cachesalt, .yarnrc, remote/.yarnrc, **/yarn.lock, !**/node_modules/**/yarn.lock, !**/.*/**/yarn.lock'
-#     targetfolder: '**/node_modules, !**/node_modules/**/node_modules'
-#     vstsFeed: 'npm-vscode'
-#   condition: and(succeeded(), ne(variables['CacheRestored'], 'true'))
+  - script: |
+      set -e
+      export CHILD_CONCURRENCY="1"
+      for i in {1..3}; do # try 3 times, for Terrapin
+        yarn --frozen-lockfile && break
+        if [ $i -eq 3 ]; then
+          echo "Yarn failed too many times" >&2
+          exit 1
+        fi
+        echo "Yarn failed $i, trying again..."
+      done
+    displayName: Install dependencies
+    condition: and(succeeded(), ne(variables['CacheRestored'], 'true'))
 
-# - script: |
-#     set -e
-#     yarn postinstall
-#   displayName: Run postinstall scripts
-#   condition: and(succeeded(), eq(variables['CacheRestored'], 'true'))
+  - task: 1ESLighthouseEng.PipelineArtifactCaching.SaveCacheV1.SaveCache@1
+    inputs:
+      keyfile: ".build/arch, .build/terrapin, build/.cachesalt, .yarnrc, remote/.yarnrc, **/yarn.lock, !**/node_modules/**/yarn.lock, !**/.*/**/yarn.lock"
+      targetfolder: "**/node_modules, !**/node_modules/**/node_modules"
+      vstsFeed: "npm-vscode"
+    condition: and(succeeded(), ne(variables['CacheRestored'], 'true'))
 
-- script: |
-    set -e
-    node build/azure-pipelines/mixin
-  displayName: Mix in quality
+  - script: |
+      set -e
+      yarn postinstall
+    displayName: Run postinstall scripts
+    condition: and(succeeded(), eq(variables['CacheRestored'], 'true'))
 
-- script: |
-    set -e
-    VSCODE_MIXIN_PASSWORD="$(github-distro-mixin-password)" \
-      yarn gulp vscode-web-min-ci
-  displayName: Build
+  - script: |
+      set -e
+      node build/azure-pipelines/mixin
+    displayName: Mix in quality
 
-- script: |
-    set -e
-    AZURE_STORAGE_ACCOUNT="$(web-storage-account)" \
-    AZURE_STORAGE_ACCESS_KEY="$(web-storage-key)" \
-      node build/azure-pipelines/upload-cdn.js
-  displayName: Upload to CDN
+  - script: |
+      set -e
+      VSCODE_MIXIN_PASSWORD="$(github-distro-mixin-password)" \
+        yarn gulp vscode-web-min-ci
+    displayName: Build
 
-  # upload only the workbench.web.api.js source maps because
-  # we just compiled these bits in the previous step and the
-  # general task to upload source maps has already been run
-- script: |
-    set -e
-    AZURE_STORAGE_ACCESS_KEY="$(ticino-storage-key)" \
-      node build/azure-pipelines/upload-sourcemaps out-vscode-web-min out-vscode-web-min/vs/workbench/workbench.web.api.js.map
-  displayName: Upload sourcemaps (Web)
+  - script: |
+      set -e
+      AZURE_STORAGE_ACCOUNT="$(web-storage-account)" \
+      AZURE_STORAGE_ACCESS_KEY="$(web-storage-key)" \
+        node build/azure-pipelines/upload-cdn.js
+    displayName: Upload to CDN
 
-- script: |
-    set -e
-    AZURE_DOCUMENTDB_MASTERKEY="$(builds-docdb-key-readwrite)" \
-    AZURE_STORAGE_ACCESS_KEY_2="$(vscode-storage-key)" \
-    VSCODE_MIXIN_PASSWORD="$(github-distro-mixin-password)" \
-    ./build/azure-pipelines/web/publish.sh
-  displayName: Publish
+    # upload only the workbench.web.api.js source maps because
+    # we just compiled these bits in the previous step and the
+    # general task to upload source maps has already been run
+  - script: |
+      set -e
+      AZURE_STORAGE_ACCESS_KEY="$(ticino-storage-key)" \
+        node build/azure-pipelines/upload-sourcemaps out-vscode-web-min out-vscode-web-min/vs/workbench/workbench.web.api.js.map
+    displayName: Upload sourcemaps (Web)
+
+  - script: |
+      set -e
+      AZURE_DOCUMENTDB_MASTERKEY="$(builds-docdb-key-readwrite)" \
+      AZURE_STORAGE_ACCESS_KEY_2="$(vscode-storage-key)" \
+      VSCODE_MIXIN_PASSWORD="$(github-distro-mixin-password)" \
+      ./build/azure-pipelines/web/publish.sh
+    displayName: Publish

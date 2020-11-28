@@ -59,7 +59,7 @@
         {
           "id": "npm",
           "name": "%view.name%",
-          "icon": "images/code.svg",
+          "icon": "$(code)",
           "visibility": "hidden"
         }
       ]

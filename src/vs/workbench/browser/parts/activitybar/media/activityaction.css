@@ -9,10 +9,6 @@
 	margin-bottom: 4px;
 }
 
-.monaco-workbench .activitybar > .content > .home-bar > .monaco-action-bar .action-item {
-	margin-bottom: 0;
-}
-
 .monaco-workbench .activitybar > .content .composite-bar > .monaco-action-bar .action-item::before,
 .monaco-workbench .activitybar > .content .composite-bar > .monaco-action-bar .action-item::after {
 	position: absolute;

@@ -7,12 +7,12 @@ import { EXTENSION_IDENTIFIER_PATTERN, IExtensionGalleryService } from 'vs/platf
 import { distinct, flatten } from 'vs/base/common/arrays';
 import { ExtensionRecommendations, ExtensionRecommendation } from 'vs/workbench/contrib/extensions/browser/extensionRecommendations';
 import { INotificationService } from 'vs/platform/notification/common/notification';
-import { IExtensionsConfigContent, ExtensionRecommendationReason } from 'vs/workbench/services/extensionRecommendations/common/extensionRecommendations';
+import { ExtensionRecommendationReason } from 'vs/workbench/services/extensionRecommendations/common/extensionRecommendations';
 import { ILogService } from 'vs/platform/log/common/log';
 import { CancellationToken } from 'vs/base/common/cancellation';
 import { localize } from 'vs/nls';
 import { Emitter } from 'vs/base/common/event';
-import { IWorkpsaceExtensionsConfigService } from 'vs/workbench/services/extensionRecommendations/common/workspaceExtensionsConfig';
+import { IExtensionsConfigContent, IWorkpsaceExtensionsConfigService } from 'vs/workbench/services/extensionRecommendations/common/workspaceExtensionsConfig';
 
 export class WorkspaceRecommendations extends ExtensionRecommendations {
 
@@ -51,23 +51,28 @@ export class WorkspaceRecommendations extends ExtensionRecommendations {
 			this.notificationService.warn(`The ${invalidRecommendations.length} extension(s) below, in workspace recommendations have issues:\n${message}`);
 		}
 
+		this._recommendations = [];
 		this._ignoredRecommendations = [];
 
 		for (const extensionsConfig of extensionsConfigs) {
-			for (const unwantedRecommendation of extensionsConfig.unwantedRecommendations) {
-				if (invalidRecommendations.indexOf(unwantedRecommendation) === -1) {
-					this._ignoredRecommendations.push(unwantedRecommendation);
+			if (extensionsConfig.unwantedRecommendations) {
+				for (const unwantedRecommendation of extensionsConfig.unwantedRecommendations) {
+					if (invalidRecommendations.indexOf(unwantedRecommendation) === -1) {
+						this._ignoredRecommendations.push(unwantedRecommendation);
+					}
 				}
 			}
-			for (const extensionId of extensionsConfig.recommendations) {
-				if (invalidRecommendations.indexOf(extensionId) === -1) {
-					this._recommendations.push({
-						extensionId,
-						reason: {
-							reasonId: ExtensionRecommendationReason.Workspace,
-							reasonText: localize('workspaceRecommendation', "This extension is recommended by users of the current workspace.")
-						}
-					});
+			if (extensionsConfig.recommendations) {
+				for (const extensionId of extensionsConfig.recommendations) {
+					if (invalidRecommendations.indexOf(extensionId) === -1) {
+						this._recommendations.push({
+							extensionId,
+							reason: {
+								reasonId: ExtensionRecommendationReason.Workspace,
+								reasonText: localize('workspaceRecommendation', "This extension is recommended by users of the current workspace.")
+							}
+						});
+					}
 				}
 			}
 		}
@@ -114,12 +119,8 @@ export class WorkspaceRecommendations extends ExtensionRecommendations {
 	}
 
 	private async onDidChangeExtensionsConfigs(): Promise<void> {
-		const oldWorkspaceRecommended = this._recommendations;
 		await this.fetch();
-		// Suggest only if at least one of the newly added recommendations was not suggested before
-		if (this._recommendations.some(current => oldWorkspaceRecommended.every(old => current.extensionId !== old.extensionId))) {
-			this._onDidChangeRecommendations.fire();
-		}
+		this._onDidChangeRecommendations.fire();
 	}
 
 }

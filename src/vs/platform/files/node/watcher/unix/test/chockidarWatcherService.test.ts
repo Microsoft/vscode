@@ -5,32 +5,36 @@
 
 import * as assert from 'assert';
 import * as platform from 'vs/base/common/platform';
-import { normalizeRoots } from 'vs/platform/files/node/watcher/unix/chokidarWatcherService';
 import { IWatcherRequest } from 'vs/platform/files/node/watcher/unix/watcher';
 
-function newRequest(basePath: string, ignored: string[] = []): IWatcherRequest {
-	return { path: basePath, excludes: ignored };
-}
+suite('Chokidar normalizeRoots', async () => {
 
-function assertNormalizedRootPath(inputPaths: string[], expectedPaths: string[]) {
-	const requests = inputPaths.map(path => newRequest(path));
-	const actual = normalizeRoots(requests);
-	assert.deepEqual(Object.keys(actual).sort(), expectedPaths);
-}
+	// Load `chokidarWatcherService` within the suite to prevent all tests
+	// from failing to start if `chokidar` was not properly installed
+	const { normalizeRoots } = await import('vs/platform/files/node/watcher/unix/chokidarWatcherService');
 
-function assertNormalizedRequests(inputRequests: IWatcherRequest[], expectedRequests: { [path: string]: IWatcherRequest[] }) {
-	const actual = normalizeRoots(inputRequests);
-	const actualPath = Object.keys(actual).sort();
-	const expectedPaths = Object.keys(expectedRequests).sort();
-	assert.deepEqual(actualPath, expectedPaths);
-	for (let path of actualPath) {
-		let a = expectedRequests[path].sort((r1, r2) => r1.path.localeCompare(r2.path));
-		let e = expectedRequests[path].sort((r1, r2) => r1.path.localeCompare(r2.path));
-		assert.deepEqual(a, e);
+	function newRequest(basePath: string, ignored: string[] = []): IWatcherRequest {
+		return { path: basePath, excludes: ignored };
 	}
-}
 
-suite('Chokidar normalizeRoots', () => {
+	function assertNormalizedRootPath(inputPaths: string[], expectedPaths: string[]) {
+		const requests = inputPaths.map(path => newRequest(path));
+		const actual = normalizeRoots(requests);
+		assert.deepEqual(Object.keys(actual).sort(), expectedPaths);
+	}
+
+	function assertNormalizedRequests(inputRequests: IWatcherRequest[], expectedRequests: { [path: string]: IWatcherRequest[] }) {
+		const actual = normalizeRoots(inputRequests);
+		const actualPath = Object.keys(actual).sort();
+		const expectedPaths = Object.keys(expectedRequests).sort();
+		assert.deepEqual(actualPath, expectedPaths);
+		for (let path of actualPath) {
+			let a = expectedRequests[path].sort((r1, r2) => r1.path.localeCompare(r2.path));
+			let e = expectedRequests[path].sort((r1, r2) => r1.path.localeCompare(r2.path));
+			assert.deepEqual(a, e);
+		}
+	}
+
 	test('should not impacts roots that don\'t overlap', () => {
 		if (platform.isWindows) {
 			assertNormalizedRootPath(['C:\\a'], ['C:\\a']);

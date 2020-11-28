@@ -35,7 +35,7 @@
 		"prefix": "forin",
 		"body": [
 			"for (const ${1:key} in ${2:object}) {",
-			"\tif (${2:object}.hasOwnProperty(${1:key})) {",
+			"\tif (Object.hasOwnProperty.call(${2:object}, ${1:key})) {",
 			"\t\tconst ${3:element} = ${2:object}[${1:key}];",
 			"\t\t$0",
 			"\t}",

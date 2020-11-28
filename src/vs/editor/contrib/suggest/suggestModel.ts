@@ -20,7 +20,7 @@ import { CancellationTokenSource } from 'vs/base/common/cancellation';
 import { IEditorWorkerService } from 'vs/editor/common/services/editorWorkerService';
 import { WordDistance } from 'vs/editor/contrib/suggest/wordDistance';
 import { EditorOption } from 'vs/editor/common/config/editorOptions';
-import { isLowSurrogate, isHighSurrogate } from 'vs/base/common/strings';
+import { isLowSurrogate, isHighSurrogate, getLeadingWhitespace } from 'vs/base/common/strings';
 import { IClipboardService } from 'vs/platform/clipboard/common/clipboardService';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 import { ILogService } from 'vs/platform/log/common/log';
@@ -486,7 +486,13 @@ export class SuggestModel implements IDisposable {
 		}).catch(onUnexpectedError);
 	}
 
+	private _telemetryGate: number = 0;
+
 	private _reportDurationsTelemetry(durations: CompletionDurations): void {
+
+		if (this._telemetryGate++ % 230 !== 0) {
+			return;
+		}
 
 		setTimeout(() => {
 			type Durations = { data: string; };
@@ -553,7 +559,8 @@ export class SuggestModel implements IDisposable {
 			return;
 		}
 
-		if (ctx.leadingWord.startColumn < this._context.leadingWord.startColumn) {
+		if (getLeadingWhitespace(ctx.leadingLineContent) !== getLeadingWhitespace(this._context.leadingLineContent)) {
+			// cancel IntelliSense when line start changes
 			// happens when the current word gets outdented
 			this.cancel();
 			return;

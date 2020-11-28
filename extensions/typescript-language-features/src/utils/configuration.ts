@@ -102,6 +102,7 @@ export class TypeScriptServiceConfiguration {
 	public readonly enablePromptUseWorkspaceTsdk: boolean;
 	public readonly watchOptions: protocol.WatchOptions | undefined;
 	public readonly includePackageJsonAutoImports: 'auto' | 'on' | 'off' | undefined;
+	public readonly enableTsServerTracing: boolean;
 
 	public static loadFromWorkspace(): TypeScriptServiceConfiguration {
 		return new TypeScriptServiceConfiguration();
@@ -124,6 +125,7 @@ export class TypeScriptServiceConfiguration {
 		this.enablePromptUseWorkspaceTsdk = TypeScriptServiceConfiguration.readEnablePromptUseWorkspaceTsdk(configuration);
 		this.watchOptions = TypeScriptServiceConfiguration.readWatchOptions(configuration);
 		this.includePackageJsonAutoImports = TypeScriptServiceConfiguration.readIncludePackageJsonAutoImports(configuration);
+		this.enableTsServerTracing = TypeScriptServiceConfiguration.readEnableTsServerTracing(configuration);
 	}
 
 	public isEqualTo(other: TypeScriptServiceConfiguration): boolean {
@@ -209,5 +211,9 @@ export class TypeScriptServiceConfiguration {
 
 	private static readEnablePromptUseWorkspaceTsdk(configuration: vscode.WorkspaceConfiguration): boolean {
 		return configuration.get<boolean>('typescript.enablePromptUseWorkspaceTsdk', false);
+	}
+
+	private static readEnableTsServerTracing(configuration: vscode.WorkspaceConfiguration): boolean {
+		return configuration.get<boolean>('typescript.tsserver.enableTracing', false);
 	}
 }

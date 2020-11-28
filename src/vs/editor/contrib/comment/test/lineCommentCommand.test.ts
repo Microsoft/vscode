@@ -91,7 +91,7 @@ suite('Editor Contrib - Line Comment Command', () => {
 			'    ',
 			'    c',
 			'\t\td'
-		]), createBasicLinePreflightData(['//', 'rem', '!@#', '!@#']), 1, true);
+		]), createBasicLinePreflightData(['//', 'rem', '!@#', '!@#']), 1, true, false);
 		if (!r.supported) {
 			throw new Error(`unexpected`);
 		}
@@ -122,7 +122,7 @@ suite('Editor Contrib - Line Comment Command', () => {
 			'    rem ',
 			'    !@# c',
 			'\t\t!@#d'
-		]), createBasicLinePreflightData(['//', 'rem', '!@#', '!@#']), 1, true);
+		]), createBasicLinePreflightData(['//', 'rem', '!@#', '!@#']), 1, true, false);
 		if (!r.supported) {
 			throw new Error(`unexpected`);
 		}

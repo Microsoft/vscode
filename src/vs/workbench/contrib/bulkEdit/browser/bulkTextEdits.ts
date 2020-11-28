@@ -14,11 +14,12 @@ import { EndOfLineSequence, IIdentifiedSingleEditOperation, ITextModel } from 'v
 import { ITextModelService, IResolvedTextEditorModel } from 'vs/editor/common/services/resolverService';
 import { IProgress } from 'vs/platform/progress/common/progress';
 import { IEditorWorkerService } from 'vs/editor/common/services/editorWorkerService';
-import { IUndoRedoService, UndoRedoGroup } from 'vs/platform/undoRedo/common/undoRedo';
+import { IUndoRedoService, UndoRedoGroup, UndoRedoSource } from 'vs/platform/undoRedo/common/undoRedo';
 import { SingleModelEditStackElement, MultiModelEditStackElement } from 'vs/editor/common/model/editStack';
 import { ResourceMap } from 'vs/base/common/map';
 import { IModelService } from 'vs/editor/common/services/modelService';
 import { ResourceTextEdit } from 'vs/editor/browser/services/bulkEditService';
+import { CancellationToken } from 'vs/base/common/cancellation';
 
 type ValidationResult = { canApply: true } | { canApply: false, reason: URI };
 
@@ -37,6 +38,18 @@ class ModelEditTask implements IDisposable {
 
 	dispose() {
 		this._modelReference.dispose();
+	}
+
+	isNoOp() {
+		if (this._edits.length > 0) {
+			// contains textual edits
+			return false;
+		}
+		if (this._newEol !== undefined && this._newEol !== this.model.getEndOfLineSequence()) {
+			// contains an eol change that is a real change
+			return false;
+		}
+		return true;
 	}
 
 	addEdit(resourceEdit: ResourceTextEdit): void {
@@ -122,7 +135,9 @@ export class BulkTextEdits {
 		private readonly _label: string,
 		private readonly _editor: ICodeEditor | undefined,
 		private readonly _undoRedoGroup: UndoRedoGroup,
+		private readonly _undoRedoSource: UndoRedoSource | undefined,
 		private readonly _progress: IProgress<void>,
+		private readonly _token: CancellationToken,
 		edits: ResourceTextEdit[],
 		@IEditorWorkerService private readonly _editorWorker: IEditorWorkerService,
 		@IModelService private readonly _modelService: IModelService,
@@ -210,6 +225,9 @@ export class BulkTextEdits {
 		this._validateBeforePrepare();
 		const tasks = await this._createEditsTasks();
 
+		if (this._token.isCancellationRequested) {
+			return;
+		}
 		try {
 
 			const validation = this._validateTasks(tasks);
@@ -219,10 +237,12 @@ export class BulkTextEdits {
 			if (tasks.length === 1) {
 				// This edit touches a single model => keep things simple
 				const task = tasks[0];
-				const singleModelEditStackElement = new SingleModelEditStackElement(task.model, task.getBeforeCursorState());
-				this._undoRedoService.pushElement(singleModelEditStackElement, this._undoRedoGroup);
-				task.apply();
-				singleModelEditStackElement.close();
+				if (!task.isNoOp()) {
+					const singleModelEditStackElement = new SingleModelEditStackElement(task.model, task.getBeforeCursorState());
+					this._undoRedoService.pushElement(singleModelEditStackElement, this._undoRedoGroup, this._undoRedoSource);
+					task.apply();
+					singleModelEditStackElement.close();
+				}
 				this._progress.report(undefined);
 			} else {
 				// prepare multi model undo element
@@ -230,7 +250,7 @@ export class BulkTextEdits {
 					this._label,
 					tasks.map(t => new SingleModelEditStackElement(t.model, t.getBeforeCursorState()))
 				);
-				this._undoRedoService.pushElement(multiModelEditStackElement, this._undoRedoGroup);
+				this._undoRedoService.pushElement(multiModelEditStackElement, this._undoRedoGroup, this._undoRedoSource);
 				for (const task of tasks) {
 					task.apply();
 					this._progress.report(undefined);

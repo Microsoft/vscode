@@ -67,6 +67,7 @@ export abstract class BaseTextEditor extends EditorPane implements ITextEditorPa
 		@IEditorGroupsService protected editorGroupService: IEditorGroupsService
 	) {
 		super(id, telemetryService, themeService, storageService);
+
 		this._instantiationService = instantiationService;
 
 		this.editorMemento = this.getEditorMemento<IEditorViewState>(editorGroupService, BaseTextEditor.TEXT_EDITOR_VIEW_STATE_PREFERENCE_KEY, 100);
@@ -223,13 +224,27 @@ export abstract class BaseTextEditor extends EditorPane implements ITextEditorPa
 		return this.editorControl;
 	}
 
-	protected saveTextEditorViewState(resource: URI): void {
+	getViewState(): IEditorViewState | undefined {
+		const resource = this.input?.resource;
+		if (resource) {
+			return withNullAsUndefined(this.retrieveTextEditorViewState(resource));
+		}
+
+		return undefined;
+	}
+
+
+	protected saveTextEditorViewState(resource: URI, cleanUpOnDispose?: IEditorInput): void {
 		const editorViewState = this.retrieveTextEditorViewState(resource);
 		if (!editorViewState || !this.group) {
 			return;
 		}
 
 		this.editorMemento.saveEditorState(this.group, resource, editorViewState);
+
+		if (cleanUpOnDispose) {
+			this.editorMemento.clearEditorStateOnDispose(resource, cleanUpOnDispose);
+		}
 	}
 
 	protected shouldRestoreTextEditorViewState(editor: IEditorInput, context?: IEditorOpenContext): boolean {
@@ -241,15 +256,6 @@ export abstract class BaseTextEditor extends EditorPane implements ITextEditorPa
 
 		// existing editor: always restore viewstate
 		return true;
-	}
-
-	getViewState(): IEditorViewState | undefined {
-		const resource = this.input?.resource;
-		if (resource) {
-			return withNullAsUndefined(this.retrieveTextEditorViewState(resource));
-		}
-
-		return undefined;
 	}
 
 	protected retrieveTextEditorViewState(resource: URI): IEditorViewState | null {
@@ -284,9 +290,9 @@ export abstract class BaseTextEditor extends EditorPane implements ITextEditorPa
 	}
 
 	protected clearTextEditorViewState(resources: URI[], group?: IEditorGroup): void {
-		resources.forEach(resource => {
+		for (const resource of resources) {
 			this.editorMemento.clearEditorState(resource, group);
-		});
+		}
 	}
 
 	private updateEditorConfiguration(configuration?: IEditorConfiguration): void {

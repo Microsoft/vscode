@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as crypto from 'crypto';
+import { sha1Hex } from 'vs/base/browser/hash';
 import { onUnexpectedError } from 'vs/base/common/errors';
 import { URI } from 'vs/base/common/uri';
 import { IFileService, IFileStat } from 'vs/platform/files/common/files';
@@ -20,10 +20,8 @@ import { IDiagnosticsService } from 'vs/platform/diagnostics/node/diagnosticsSer
 import { INativeHostService } from 'vs/platform/native/electron-sandbox/native';
 import { IProductService } from 'vs/platform/product/common/productService';
 
-export function getHashedRemotesFromConfig(text: string, stripEndingDotGit: boolean = false): string[] {
-	return getRemotes(text, stripEndingDotGit).map(r => {
-		return crypto.createHash('sha1').update(r).digest('hex');
-	});
+export async function getHashedRemotesFromConfig(text: string, stripEndingDotGit: boolean = false): Promise<string[]> {
+	return Promise.all(getRemotes(text, stripEndingDotGit).map(remote => sha1Hex(remote)));
 }
 
 export class WorkspaceTags implements IWorkbenchContribution {
@@ -76,7 +74,7 @@ export class WorkspaceTags implements IWorkbenchContribution {
 	private async getWorkspaceInformation(): Promise<IWorkspaceInformation> {
 		const workspace = this.contextService.getWorkspace();
 		const state = this.contextService.getWorkbenchState();
-		const telemetryId = this.workspaceTagsService.getTelemetryWorkspaceId(workspace, state);
+		const telemetryId = await this.workspaceTagsService.getTelemetryWorkspaceId(workspace, state);
 		return this.telemetryService.getTelemetryInfo().then(info => {
 			return {
 				id: workspace.id,

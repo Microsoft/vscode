@@ -996,7 +996,9 @@ class SettingsContentBuilder {
 					`${displayEnum}: ${fixSettingLink(desc)}` :
 					displayEnum;
 
-				this._contentByLines.push(`${indent}//  - ${line}`);
+				const lines = line.split(/\n/g);
+				lines[0] = ' - ' + lines[0];
+				this._contentByLines.push(...lines.map(l => `${indent}// ${l}`));
 
 				setting.descriptionRanges.push({ startLineNumber: this.lineCountWithOffset, startColumn: this.lastLine.indexOf(line) + 1, endLineNumber: this.lineCountWithOffset, endColumn: this.lastLine.length });
 			});

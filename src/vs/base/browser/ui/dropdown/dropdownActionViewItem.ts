@@ -13,6 +13,7 @@ import { Emitter } from 'vs/base/common/event';
 import { ActionViewItem, BaseActionViewItem, IActionViewItemOptions, IBaseActionViewItemOptions } from 'vs/base/browser/ui/actionbar/actionViewItems';
 import { IActionProvider, DropdownMenu, IDropdownMenuOptions, ILabelRenderer } from 'vs/base/browser/ui/dropdown/dropdown';
 import { IContextMenuProvider } from 'vs/base/browser/contextmenu';
+import { Codicon } from 'vs/base/common/codicons';
 
 export interface IKeybindingProvider {
 	(action: IAction): ResolvedKeybinding | undefined;
@@ -35,6 +36,7 @@ export class DropdownMenuActionViewItem extends BaseActionViewItem {
 	private menuActionsOrProvider: readonly IAction[] | IActionProvider;
 	private dropdownMenu: DropdownMenu | undefined;
 	private contextMenuProvider: IContextMenuProvider;
+	private actionItem: HTMLElement | null = null;
 
 	private _onDidChangeVisibility = this._register(new Emitter<boolean>());
 	readonly onDidChangeVisibility = this._onDidChangeVisibility.event;
@@ -56,6 +58,8 @@ export class DropdownMenuActionViewItem extends BaseActionViewItem {
 	}
 
 	render(container: HTMLElement): void {
+		this.actionItem = container;
+
 		const labelRenderer: ILabelRenderer = (el: HTMLElement): IDisposable | null => {
 			this.element = append(el, $('a.action-label'));
 
@@ -115,6 +119,8 @@ export class DropdownMenuActionViewItem extends BaseActionViewItem {
 				}
 			};
 		}
+
+		this.updateEnabled();
 	}
 
 	setActionContext(newContext: unknown): void {
@@ -133,6 +139,12 @@ export class DropdownMenuActionViewItem extends BaseActionViewItem {
 		if (this.dropdownMenu) {
 			this.dropdownMenu.show();
 		}
+	}
+
+	protected updateEnabled(): void {
+		const disabled = !this.getAction().enabled;
+		this.actionItem?.classList.toggle('disabled', disabled);
+		this.element?.classList.toggle('disabled', disabled);
 	}
 }
 
@@ -158,7 +170,7 @@ export class ActionWithDropdownActionViewItem extends ActionViewItem {
 		super.render(container);
 		if (this.element) {
 			this.element.classList.add('action-dropdown-item');
-			this.dropdownMenuActionViewItem = new DropdownMenuActionViewItem(new Action('dropdownAction', undefined), (<IActionWithDropdownActionViewItemOptions>this.options).menuActionsOrProvider, this.contextMenuProvider, { classNames: ['dropdown', 'codicon-chevron-down', ...(<IActionWithDropdownActionViewItemOptions>this.options).menuActionClassNames || []] });
+			this.dropdownMenuActionViewItem = new DropdownMenuActionViewItem(new Action('dropdownAction', undefined), (<IActionWithDropdownActionViewItemOptions>this.options).menuActionsOrProvider, this.contextMenuProvider, { classNames: ['dropdown', ...Codicon.dropDownButton.classNamesArray, ...(<IActionWithDropdownActionViewItemOptions>this.options).menuActionClassNames || []] });
 			this.dropdownMenuActionViewItem.render(this.element);
 		}
 	}

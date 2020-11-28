@@ -6,10 +6,11 @@
 import { ExtHostTunnelServiceShape, MainContext, MainThreadTunnelServiceShape } from 'vs/workbench/api/common/extHost.protocol';
 import { createDecorator } from 'vs/platform/instantiation/common/instantiation';
 import * as vscode from 'vscode';
-import { RemoteTunnel, TunnelOptions } from 'vs/platform/remote/common/tunnel';
+import { RemoteTunnel, TunnelCreationOptions, TunnelOptions } from 'vs/platform/remote/common/tunnel';
 import { IDisposable } from 'vs/base/common/lifecycle';
 import { Emitter } from 'vs/base/common/event';
 import { IExtHostRpcService } from 'vs/workbench/api/common/extHostRpcService';
+import { IExtensionDescription } from 'vs/platform/extensions/common/extensions';
 
 export interface TunnelDto {
 	remoteAddress: { port: number, host: string };
@@ -32,7 +33,7 @@ export interface Tunnel extends vscode.Disposable {
 
 export interface IExtHostTunnelService extends ExtHostTunnelServiceShape {
 	readonly _serviceBrand: undefined;
-	openTunnel(forward: TunnelOptions): Promise<vscode.Tunnel | undefined>;
+	openTunnel(extension: IExtensionDescription, forward: TunnelOptions): Promise<vscode.Tunnel | undefined>;
 	getTunnels(): Promise<vscode.TunnelDescription[]>;
 	onDidChangeTunnels: vscode.Event<void>;
 	setTunnelExtensionFunctions(provider: vscode.RemoteAuthorityResolver | undefined): Promise<IDisposable>;
@@ -51,23 +52,17 @@ export class ExtHostTunnelService implements IExtHostTunnelService {
 		this._proxy = extHostRpc.getProxy(MainContext.MainThreadTunnelService);
 	}
 
-	async openTunnel(forward: TunnelOptions): Promise<vscode.Tunnel | undefined> {
+	async openTunnel(extension: IExtensionDescription, forward: TunnelOptions): Promise<vscode.Tunnel | undefined> {
 		return undefined;
 	}
 	async getTunnels(): Promise<vscode.TunnelDescription[]> {
 		return [];
 	}
-	async $findCandidatePorts(): Promise<{ host: string, port: number; detail: string; }[]> {
-		return [];
-	}
-	async $filterCandidates(candidates: { host: string, port: number, detail: string }[]): Promise<boolean[]> {
-		return candidates.map(() => true);
-	}
 	async setTunnelExtensionFunctions(provider: vscode.RemoteAuthorityResolver | undefined): Promise<IDisposable> {
 		await this._proxy.$tunnelServiceReady();
 		return { dispose: () => { } };
 	}
-	$forwardPort(tunnelOptions: TunnelOptions): Promise<TunnelDto> | undefined { return undefined; }
+	$forwardPort(tunnelOptions: TunnelOptions, tunnelCreationOptions: TunnelCreationOptions): Promise<TunnelDto> | undefined { return undefined; }
 	async $closeTunnel(remote: { host: string, port: number }): Promise<void> { }
 	async $onDidTunnelsChange(): Promise<void> { }
 }

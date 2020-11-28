@@ -20,11 +20,14 @@
 	"html.format.wrapAttributes.alignedmultiple": "Wrap when line length is exceeded, align attributes vertically.",
 	"html.format.wrapAttributes.preserve": "Preserve wrapping of attributes",
 	"html.format.wrapAttributes.preservealigned": "Preserve wrapping of attributes but align.",
+	"html.format.templating.desc": "Honor django, erb, handlebars and php templating language tags.",
+	"html.format.unformattedContentDelimiter.desc": "Keep text content together between this string.",
+	"html.format.wrapAttributesIndentSize.desc": "Alignment size when using 'force aligned' and 'aligned multiple' in `#html.format.wrapAttributes#` or `null` to use the default indent size.",
 	"html.suggest.html5.desc": "Controls whether the built-in HTML language support suggests HTML5 tags, properties and values.",
 	"html.trace.server.desc": "Traces the communication between VS Code and the HTML language server.",
 	"html.validate.scripts": "Controls whether the built-in HTML language support validates embedded scripts.",
 	"html.validate.styles": "Controls whether the built-in HTML language support validates embedded styles.",
 	"html.autoClosingTags": "Enable/disable autoclosing of HTML tags.",
 	"html.mirrorCursorOnMatchingTag": "Enable/disable mirroring cursor on matching HTML tag.",
-	"html.mirrorCursorOnMatchingTagDeprecationMessage": "Deprecated in favor of `editor.renameOnType`"
+	"html.mirrorCursorOnMatchingTagDeprecationMessage": "Deprecated in favor of `editor.linkedEditing`"
 }

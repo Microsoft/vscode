@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as nls from 'vs/nls';
-import { IUndoRedoService, IWorkspaceUndoRedoElement, UndoRedoElementType, IUndoRedoElement, IPastFutureElements, ResourceEditStackSnapshot, UriComparisonKeyComputer, IResourceUndoRedoElement, UndoRedoGroup } from 'vs/platform/undoRedo/common/undoRedo';
+import { IUndoRedoService, IWorkspaceUndoRedoElement, UndoRedoElementType, IUndoRedoElement, IPastFutureElements, ResourceEditStackSnapshot, UriComparisonKeyComputer, IResourceUndoRedoElement, UndoRedoGroup, UndoRedoSource } from 'vs/platform/undoRedo/common/undoRedo';
 import { URI } from 'vs/base/common/uri';
 import { onUnexpectedError } from 'vs/base/common/errors';
 import { registerSingleton } from 'vs/platform/instantiation/common/extensions';
@@ -34,9 +34,11 @@ class ResourceStackElement {
 	public readonly strResources: string[];
 	public readonly groupId: number;
 	public readonly groupOrder: number;
+	public readonly sourceId: number;
+	public readonly sourceOrder: number;
 	public isValid: boolean;
 
-	constructor(actual: IUndoRedoElement, resourceLabel: string, strResource: string, groupId: number, groupOrder: number) {
+	constructor(actual: IUndoRedoElement, resourceLabel: string, strResource: string, groupId: number, groupOrder: number, sourceId: number, sourceOrder: number) {
 		this.actual = actual;
 		this.label = actual.label;
 		this.resourceLabel = resourceLabel;
@@ -45,6 +47,8 @@ class ResourceStackElement {
 		this.strResources = [this.strResource];
 		this.groupId = groupId;
 		this.groupOrder = groupOrder;
+		this.sourceId = sourceId;
+		this.sourceOrder = sourceOrder;
 		this.isValid = true;
 	}
 
@@ -130,16 +134,20 @@ class WorkspaceStackElement {
 	public readonly strResources: string[];
 	public readonly groupId: number;
 	public readonly groupOrder: number;
+	public readonly sourceId: number;
+	public readonly sourceOrder: number;
 	public removedResources: RemovedResources | null;
 	public invalidatedResources: RemovedResources | null;
 
-	constructor(actual: IWorkspaceUndoRedoElement, resourceLabels: string[], strResources: string[], groupId: number, groupOrder: number) {
+	constructor(actual: IWorkspaceUndoRedoElement, resourceLabels: string[], strResources: string[], groupId: number, groupOrder: number, sourceId: number, sourceOrder: number) {
 		this.actual = actual;
 		this.label = actual.label;
 		this.resourceLabels = resourceLabels;
 		this.strResources = strResources;
 		this.groupId = groupId;
 		this.groupOrder = groupOrder;
+		this.sourceId = sourceId;
+		this.sourceOrder = sourceOrder;
 		this.removedResources = null;
 		this.invalidatedResources = null;
 	}
@@ -490,11 +498,11 @@ export class UndoRedoService implements IUndoRedoService {
 		console.log(str.join('\n'));
 	}
 
-	public pushElement(element: IUndoRedoElement, group: UndoRedoGroup = UndoRedoGroup.None): void {
+	public pushElement(element: IUndoRedoElement, group: UndoRedoGroup = UndoRedoGroup.None, source: UndoRedoSource = UndoRedoSource.None): void {
 		if (element.type === UndoRedoElementType.Resource) {
 			const resourceLabel = getResourceLabel(element.resource);
 			const strResource = this.getUriComparisonKey(element.resource);
-			this._pushElement(new ResourceStackElement(element, resourceLabel, strResource, group.id, group.nextOrder()));
+			this._pushElement(new ResourceStackElement(element, resourceLabel, strResource, group.id, group.nextOrder(), source.id, source.nextOrder()));
 		} else {
 			const seen = new Set<string>();
 			const resourceLabels: string[] = [];
@@ -512,9 +520,9 @@ export class UndoRedoService implements IUndoRedoService {
 			}
 
 			if (resourceLabels.length === 1) {
-				this._pushElement(new ResourceStackElement(element, resourceLabels[0], strResources[0], group.id, group.nextOrder()));
+				this._pushElement(new ResourceStackElement(element, resourceLabels[0], strResources[0], group.id, group.nextOrder(), source.id, source.nextOrder()));
 			} else {
-				this._pushElement(new WorkspaceStackElement(element, resourceLabels, strResources, group.id, group.nextOrder()));
+				this._pushElement(new WorkspaceStackElement(element, resourceLabels, strResources, group.id, group.nextOrder(), source.id, source.nextOrder()));
 			}
 		}
 		if (DEBUG) {
@@ -558,7 +566,7 @@ export class UndoRedoService implements IUndoRedoService {
 		for (const _element of individualArr) {
 			const resourceLabel = getResourceLabel(_element.resource);
 			const strResource = this.getUriComparisonKey(_element.resource);
-			const element = new ResourceStackElement(_element, resourceLabel, strResource, 0, 0);
+			const element = new ResourceStackElement(_element, resourceLabel, strResource, 0, 0, 0, 0);
 			individualMap.set(element.strResource, element);
 		}
 
@@ -577,7 +585,7 @@ export class UndoRedoService implements IUndoRedoService {
 		for (const _element of individualArr) {
 			const resourceLabel = getResourceLabel(_element.resource);
 			const strResource = this.getUriComparisonKey(_element.resource);
-			const element = new ResourceStackElement(_element, resourceLabel, strResource, 0, 0);
+			const element = new ResourceStackElement(_element, resourceLabel, strResource, 0, 0, 0, 0);
 			individualMap.set(element.strResource, element);
 		}
 
@@ -657,8 +665,37 @@ export class UndoRedoService implements IUndoRedoService {
 		return { past: [], future: [] };
 	}
 
-	public canUndo(resource: URI): boolean {
-		const strResource = this.getUriComparisonKey(resource);
+	private _findClosestUndoElementWithSource(sourceId: number): [StackElement | null, string | null] {
+		if (!sourceId) {
+			return [null, null];
+		}
+
+		// find an element with the sourceId and with the highest sourceOrder ready to be undone
+		let matchedElement: StackElement | null = null;
+		let matchedStrResource: string | null = null;
+
+		for (const [strResource, editStack] of this._editStacks) {
+			const candidate = editStack.getClosestPastElement();
+			if (!candidate) {
+				continue;
+			}
+			if (candidate.sourceId === sourceId) {
+				if (!matchedElement || candidate.sourceOrder > matchedElement.sourceOrder) {
+					matchedElement = candidate;
+					matchedStrResource = strResource;
+				}
+			}
+		}
+
+		return [matchedElement, matchedStrResource];
+	}
+
+	public canUndo(resourceOrSource: URI | UndoRedoSource): boolean {
+		if (resourceOrSource instanceof UndoRedoSource) {
+			const [, matchedStrResource] = this._findClosestUndoElementWithSource(resourceOrSource.id);
+			return matchedStrResource ? true : false;
+		}
+		const strResource = this.getUriComparisonKey(resourceOrSource);
 		if (this._editStacks.has(strResource)) {
 			const editStack = this._editStacks.get(strResource)!;
 			return editStack.hasPastElements();
@@ -1011,8 +1048,12 @@ export class UndoRedoService implements IUndoRedoService {
 		}
 	}
 
-	public undo(resource: URI | string): Promise<void> | void {
-		const strResource = typeof resource === 'string' ? resource : this.getUriComparisonKey(resource);
+	public undo(resourceOrSource: URI | UndoRedoSource | string): Promise<void> | void {
+		if (resourceOrSource instanceof UndoRedoSource) {
+			const [, matchedStrResource] = this._findClosestUndoElementWithSource(resourceOrSource.id);
+			return matchedStrResource ? this.undo(matchedStrResource) : undefined;
+		}
+		const strResource = typeof resourceOrSource === 'string' ? resourceOrSource : this.getUriComparisonKey(resourceOrSource);
 		if (!this._editStacks.has(strResource)) {
 			return;
 		}
@@ -1045,8 +1086,37 @@ export class UndoRedoService implements IUndoRedoService {
 		}
 	}
 
-	public canRedo(resource: URI): boolean {
-		const strResource = this.getUriComparisonKey(resource);
+	private _findClosestRedoElementWithSource(sourceId: number): [StackElement | null, string | null] {
+		if (!sourceId) {
+			return [null, null];
+		}
+
+		// find an element with sourceId and with the lowest sourceOrder ready to be redone
+		let matchedElement: StackElement | null = null;
+		let matchedStrResource: string | null = null;
+
+		for (const [strResource, editStack] of this._editStacks) {
+			const candidate = editStack.getClosestFutureElement();
+			if (!candidate) {
+				continue;
+			}
+			if (candidate.sourceId === sourceId) {
+				if (!matchedElement || candidate.sourceOrder < matchedElement.sourceOrder) {
+					matchedElement = candidate;
+					matchedStrResource = strResource;
+				}
+			}
+		}
+
+		return [matchedElement, matchedStrResource];
+	}
+
+	public canRedo(resourceOrSource: URI | UndoRedoSource): boolean {
+		if (resourceOrSource instanceof UndoRedoSource) {
+			const [, matchedStrResource] = this._findClosestRedoElementWithSource(resourceOrSource.id);
+			return matchedStrResource ? true : false;
+		}
+		const strResource = this.getUriComparisonKey(resourceOrSource);
 		if (this._editStacks.has(strResource)) {
 			const editStack = this._editStacks.get(strResource)!;
 			return editStack.hasFutureElements();
@@ -1234,8 +1304,12 @@ export class UndoRedoService implements IUndoRedoService {
 		}
 	}
 
-	public redo(resource: URI | string): Promise<void> | void {
-		const strResource = typeof resource === 'string' ? resource : this.getUriComparisonKey(resource);
+	public redo(resourceOrSource: URI | UndoRedoSource | string): Promise<void> | void {
+		if (resourceOrSource instanceof UndoRedoSource) {
+			const [, matchedStrResource] = this._findClosestRedoElementWithSource(resourceOrSource.id);
+			return matchedStrResource ? this.redo(matchedStrResource) : undefined;
+		}
+		const strResource = typeof resourceOrSource === 'string' ? resourceOrSource : this.getUriComparisonKey(resourceOrSource);
 		if (!this._editStacks.has(strResource)) {
 			return;
 		}

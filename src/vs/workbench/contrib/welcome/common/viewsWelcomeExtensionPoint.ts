@@ -11,6 +11,7 @@ export enum ViewsWelcomeExtensionPointFields {
 	contents = 'contents',
 	when = 'when',
 	group = 'group',
+	enablement = 'enablement',
 }
 
 export interface ViewWelcome {
@@ -18,6 +19,7 @@ export interface ViewWelcome {
 	readonly [ViewsWelcomeExtensionPointFields.contents]: string;
 	readonly [ViewsWelcomeExtensionPointFields.when]: string;
 	readonly [ViewsWelcomeExtensionPointFields.group]: string;
+	readonly [ViewsWelcomeExtensionPointFields.enablement]: string;
 }
 
 export type ViewsWelcomeExtensionPoint = ViewWelcome[];
@@ -63,6 +65,10 @@ const viewsWelcomeExtensionPointSchema = Object.freeze<IConfigurationPropertySch
 			[ViewsWelcomeExtensionPointFields.group]: {
 				type: 'string',
 				description: nls.localize('contributes.viewsWelcome.view.group', "Group to which this welcome content belongs."),
+			},
+			[ViewsWelcomeExtensionPointFields.enablement]: {
+				type: 'string',
+				description: nls.localize('contributes.viewsWelcome.view.enablement', "Condition when the welcome content buttons should be enabled."),
 			},
 		}
 	}

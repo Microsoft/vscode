@@ -263,6 +263,10 @@
           "name": "meta.resultLinePrefix.lineNumber.search"
         }
       }
+    },
+    {
+      "match": "⟪ [0-9]+ characters skipped ⟫",
+      "name": "meta.resultBlock.search comment meta.resultLine.elision"
     }
   ],
   "repository": {

@@ -3,11 +3,16 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { EditorModel, EditorInput, SideBySideEditorInput, TEXT_DIFF_EDITOR_ID, BINARY_DIFF_EDITOR_ID } from 'vs/workbench/common/editor';
+import { EditorModel, EditorInput, SideBySideEditorInput, TEXT_DIFF_EDITOR_ID, BINARY_DIFF_EDITOR_ID, Verbosity } from 'vs/workbench/common/editor';
 import { BaseTextEditorModel } from 'vs/workbench/common/editor/textEditorModel';
 import { DiffEditorModel } from 'vs/workbench/common/editor/diffEditorModel';
 import { TextDiffEditorModel } from 'vs/workbench/common/editor/textDiffEditorModel';
 import { localize } from 'vs/nls';
+import { AbstractTextResourceEditorInput } from 'vs/workbench/common/editor/textResourceEditorInput';
+import { dirname } from 'vs/base/common/resources';
+import { ILabelService } from 'vs/platform/label/common/label';
+import { IFileService } from 'vs/platform/files/common/files';
+import { URI } from 'vs/base/common/uri';
 
 /**
  * The base editor input for the diff editor. It is made up of two editor inputs, the original version
@@ -21,10 +26,12 @@ export class DiffEditorInput extends SideBySideEditorInput {
 
 	constructor(
 		protected name: string | undefined,
-		description: string | undefined,
+		protected description: string | undefined,
 		public readonly originalInput: EditorInput,
 		public readonly modifiedInput: EditorInput,
-		private readonly forceOpenAsBinary?: boolean
+		private readonly forceOpenAsBinary: boolean | undefined,
+		@ILabelService private readonly labelService: ILabelService,
+		@IFileService private readonly fileService: IFileService
 	) {
 		super(name, description, originalInput, modifiedInput);
 	}
@@ -35,10 +42,51 @@ export class DiffEditorInput extends SideBySideEditorInput {
 
 	getName(): string {
 		if (!this.name) {
+
+			// Craft a name from original and modified input that includes the
+			// relative path in case both sides have different parents and we
+			// compare file resources.
+			const fileResources = this.asFileResources();
+			if (fileResources && dirname(fileResources.original).path !== dirname(fileResources.modified).path
+			) {
+				return `${this.labelService.getUriLabel(fileResources.original, { relative: true })} ↔ ${this.labelService.getUriLabel(fileResources.modified, { relative: true })}`;
+			}
+
 			return localize('sideBySideLabels', "{0} ↔ {1}", this.originalInput.getName(), this.modifiedInput.getName());
 		}
 
 		return this.name;
+	}
+
+	getDescription(verbosity: Verbosity = Verbosity.MEDIUM): string | undefined {
+		if (typeof this.description !== 'string') {
+
+			// Pass the description of the modified side in case both original
+			// and modified input have the same parent and we compare file resources.
+			const fileResources = this.asFileResources();
+			if (fileResources && dirname(fileResources.original).path === dirname(fileResources.modified).path
+			) {
+				return this.modifiedInput.getDescription(verbosity);
+			}
+		}
+
+		return this.description;
+	}
+
+	private asFileResources(): { original: URI, modified: URI } | undefined {
+		if (
+			this.originalInput instanceof AbstractTextResourceEditorInput &&
+			this.modifiedInput instanceof AbstractTextResourceEditorInput &&
+			this.fileService.canHandleResource(this.originalInput.preferredResource) &&
+			this.fileService.canHandleResource(this.modifiedInput.preferredResource)
+		) {
+			return {
+				original: this.originalInput.preferredResource,
+				modified: this.modifiedInput.preferredResource
+			};
+		}
+
+		return undefined;
 	}
 
 	async resolve(): Promise<EditorModel> {

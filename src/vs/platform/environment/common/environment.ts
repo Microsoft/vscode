@@ -119,7 +119,7 @@ export interface INativeEnvironmentService extends IEnvironmentService {
 	sharedIPCHandle: string;
 
 	// --- Extensions
-	extensionsPath?: string;
+	extensionsPath: string;
 	extensionsDownloadPath: string;
 	builtinExtensionsPath: string;
 

@@ -112,7 +112,7 @@ class ExtensionBisectService implements IExtensionBisectService {
 		}
 		const extensionIds = extensions.map(ext => ext.identifier.id);
 		const newState = new BisectState(extensionIds, 0, extensionIds.length);
-		this._storageService.store2(ExtensionBisectService._storageKey, JSON.stringify(newState), StorageScope.GLOBAL, StorageTarget.MACHINE);
+		this._storageService.store(ExtensionBisectService._storageKey, JSON.stringify(newState), StorageScope.GLOBAL, StorageTarget.MACHINE);
 		await this._storageService.flush();
 	}
 
@@ -132,7 +132,7 @@ class ExtensionBisectService implements IExtensionBisectService {
 			seeingBad ? this._state.low : this._state.mid,
 			seeingBad ? this._state.mid : this._state.high,
 		);
-		this._storageService.store2(ExtensionBisectService._storageKey, JSON.stringify(nextState), StorageScope.GLOBAL, StorageTarget.MACHINE);
+		this._storageService.store(ExtensionBisectService._storageKey, JSON.stringify(nextState), StorageScope.GLOBAL, StorageTarget.MACHINE);
 		await this._storageService.flush();
 		return undefined;
 	}

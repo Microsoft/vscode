@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { isWindows, isMacintosh } from 'vs/base/common/platform';
-import { ipcMain as ipc, nativeTheme } from 'electron';
+import { ipcMain, nativeTheme } from 'electron';
 import { IStateService } from 'vs/platform/state/node/state';
 import { createDecorator } from 'vs/platform/instantiation/common/instantiation';
 
@@ -28,7 +28,7 @@ export class ThemeMainService implements IThemeMainService {
 	declare readonly _serviceBrand: undefined;
 
 	constructor(@IStateService private stateService: IStateService) {
-		ipc.on('vscode:changeColorTheme', (e: Event, windowId: number, broadcast: string) => {
+		ipcMain.on('vscode:changeColorTheme', (e: Event, windowId: number, broadcast: string) => {
 			// Theme changes
 			if (typeof broadcast === 'string') {
 				this.storeBackgroundColor(JSON.parse(broadcast));

@@ -26,7 +26,8 @@
 		"ms-vscode.vscode-js-profile-flame",
 		"ms-vscode.vscode-js-profile-table",
 		"ms-vscode.references-view",
-		"ms-vscode.github-browser"
+		"ms-vscode.github-browser",
+		"ms-vscode.github-richnav"
 	],
 	"builtInExtensions": [
 		{
@@ -61,7 +62,7 @@
 		},
 		{
 			"name": "ms-vscode.references-view",
-			"version": "0.0.71",
+			"version": "0.0.73",
 			"repo": "https://github.com/microsoft/vscode-reference-view",
 			"metadata": {
 				"id": "dc489f46-520d-4556-ae85-1f9eab3c412d",

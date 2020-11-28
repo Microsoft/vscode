@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Dimension } from 'vs/base/browser/dom';
+import * as DOM from 'vs/base/browser/dom';
 import { CancellationTokenSource } from 'vs/base/common/cancellation';
 import { Emitter } from 'vs/base/common/event';
 import { DisposableStore, MutableDisposable, toDisposable } from 'vs/base/common/lifecycle';
@@ -16,7 +16,7 @@ import { IInstantiationService } from 'vs/platform/instantiation/common/instanti
 import { IKeybindingService } from 'vs/platform/keybinding/common/keybinding';
 import { IOpenerService } from 'vs/platform/opener/common/opener';
 import { IProgressService } from 'vs/platform/progress/common/progress';
-import { IStorageService, StorageScope } from 'vs/platform/storage/common/storage';
+import { IStorageService, StorageScope, StorageTarget } from 'vs/platform/storage/common/storage';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 import { IThemeService } from 'vs/platform/theme/common/themeService';
 import { ViewPane } from 'vs/workbench/browser/parts/views/viewPaneContainer';
@@ -24,6 +24,7 @@ import { IViewletViewOptions } from 'vs/workbench/browser/parts/views/viewsViewl
 import { Memento, MementoObject } from 'vs/workbench/common/memento';
 import { IViewDescriptorService, IViewsService } from 'vs/workbench/common/views';
 import { IWebviewService, WebviewOverlay } from 'vs/workbench/contrib/webview/browser/webview';
+import { WebviewWindowDragMonitor } from 'vs/workbench/contrib/webview/browser/webviewWindowDragMonitor';
 import { IWebviewViewService, WebviewView } from 'vs/workbench/contrib/webviewView/browser/webviewViewService';
 import { IExtensionService } from 'vs/workbench/services/extensions/common/extensions';
 
@@ -70,7 +71,7 @@ export class WebviewViewPane extends ViewPane {
 		this.defaultTitle = this.title;
 
 		this.memento = new Memento(`webviewView.${this.id}`, storageService);
-		this.viewState = this.memento.legacygetMemento(StorageScope.WORKSPACE);
+		this.viewState = this.memento.getMemento(StorageScope.WORKSPACE, StorageTarget.MACHINE);
 
 		this._register(this.onDidChangeBodyVisibility(() => this.updateTreeVisibility()));
 
@@ -139,14 +140,14 @@ export class WebviewViewPane extends ViewPane {
 		}
 
 		if (this._container) {
-			this._webview.value.layoutWebviewOverElement(this._container, new Dimension(width, height));
+			this._webview.value.layoutWebviewOverElement(this._container, new DOM.Dimension(width, height));
 		}
 	}
 
 	private updateTreeVisibility() {
 		if (this.isBodyVisible()) {
 			this.activate();
-			this._webview.value?.claim(this);
+			this._webview.value?.claim(this, undefined);
 		} else {
 			this._webview.value?.release(this);
 		}
@@ -172,6 +173,9 @@ export class WebviewViewPane extends ViewPane {
 			this._webviewDisposables.add(webview.onDidUpdateState(() => {
 				this.viewState[storageKeys.webviewState] = webview.state;
 			}));
+
+			this._webviewDisposables.add(new WebviewWindowDragMonitor(() => this._webview.value));
+
 			const source = this._webviewDisposables.add(new CancellationTokenSource());
 
 			this.withProgress(async () => {

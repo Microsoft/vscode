@@ -11,13 +11,13 @@ import { domEvent } from 'vs/base/browser/event';
 import { StandardKeyboardEvent } from 'vs/base/browser/keyboardEvent';
 import { KeyCode, KeyMod } from 'vs/base/common/keyCodes';
 import { Color } from 'vs/base/common/color';
-import { ButtonGroup, IButtonStyles } from 'vs/base/browser/ui/button/button';
+import { ButtonBar, IButtonStyles } from 'vs/base/browser/ui/button/button';
 import { ActionBar } from 'vs/base/browser/ui/actionbar/actionbar';
 import { Action } from 'vs/base/common/actions';
 import { mnemonicButtonLabel } from 'vs/base/common/labels';
 import { isMacintosh, isLinux } from 'vs/base/common/platform';
 import { SimpleCheckbox, ISimpleCheckboxStyles } from 'vs/base/browser/ui/checkbox/checkbox';
-import { Codicon, registerIcon } from 'vs/base/common/codicons';
+import { Codicon, registerCodicon } from 'vs/base/common/codicons';
 import { InputBox } from 'vs/base/browser/ui/inputbox/inputBox';
 
 export interface IDialogInputOptions {
@@ -60,10 +60,10 @@ interface ButtonMapEntry {
 	readonly index: number;
 }
 
-const dialogErrorIcon = registerIcon('dialog-error', Codicon.error);
-const dialogWarningIcon = registerIcon('dialog-warning', Codicon.warning);
-const dialogInfoIcon = registerIcon('dialog-info', Codicon.info);
-const dialogCloseIcon = registerIcon('dialog-close', Codicon.close);
+const dialogErrorIcon = registerCodicon('dialog-error', Codicon.error);
+const dialogWarningIcon = registerCodicon('dialog-warning', Codicon.warning);
+const dialogInfoIcon = registerCodicon('dialog-info', Codicon.info);
+const dialogCloseIcon = registerCodicon('dialog-close', Codicon.close);
 
 export class Dialog extends Disposable {
 	private readonly element: HTMLElement;
@@ -74,7 +74,7 @@ export class Dialog extends Disposable {
 	private readonly iconElement: HTMLElement;
 	private readonly checkbox: SimpleCheckbox | undefined;
 	private readonly toolbarContainer: HTMLElement;
-	private buttonGroup: ButtonGroup | undefined;
+	private buttonBar: ButtonBar | undefined;
 	private styles: IDialogStyles | undefined;
 	private focusToReturn: HTMLElement | undefined;
 	private readonly inputs: InputBox[];
@@ -173,11 +173,12 @@ export class Dialog extends Disposable {
 		return new Promise<IDialogResult>((resolve) => {
 			clearNode(this.buttonsContainer);
 
-			const buttonGroup = this.buttonGroup = this._register(new ButtonGroup(this.buttonsContainer, this.buttons.length, { title: true }));
+			const buttonBar = this.buttonBar = this._register(new ButtonBar(this.buttonsContainer));
 			const buttonMap = this.rearrangeButtons(this.buttons, this.options.cancelId);
 
 			// Handle button clicks
-			buttonGroup.buttons.forEach((button, index) => {
+			buttonMap.forEach((entry, index) => {
+				const button = this._register(buttonBar.addButton({ title: true }));
 				button.label = mnemonicButtonLabel(buttonMap[index].label, true);
 
 				this._register(button.onDidClick(e => {
@@ -237,8 +238,8 @@ export class Dialog extends Disposable {
 						}
 					}
 
-					if (this.buttonGroup) {
-						for (const button of this.buttonGroup.buttons) {
+					if (this.buttonBar) {
+						for (const button of this.buttonBar.buttons) {
 							focusableElements.push(button);
 							if (button.hasFocus()) {
 								focusedIndex = focusableElements.length - 1;
@@ -349,7 +350,7 @@ export class Dialog extends Disposable {
 			} else {
 				buttonMap.forEach((value, index) => {
 					if (value.index === 0) {
-						buttonGroup.buttons[index].focus();
+						buttonBar.buttons[index].focus();
 					}
 				});
 			}
@@ -371,8 +372,8 @@ export class Dialog extends Disposable {
 			this.element.style.backgroundColor = bgColor?.toString() ?? '';
 			this.element.style.border = border;
 
-			if (this.buttonGroup) {
-				this.buttonGroup.buttons.forEach(button => button.style(style));
+			if (this.buttonBar) {
+				this.buttonBar.buttons.forEach(button => button.style(style));
 			}
 
 			if (this.checkbox) {

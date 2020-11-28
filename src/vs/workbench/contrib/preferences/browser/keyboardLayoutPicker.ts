@@ -6,7 +6,7 @@
 import * as nls from 'vs/nls';
 import { StatusbarAlignment, IStatusbarService, IStatusbarEntryAccessor } from 'vs/workbench/services/statusbar/common/statusbar';
 import { Disposable, MutableDisposable } from 'vs/base/common/lifecycle';
-import { IKeymapService, areKeyboardLayoutsEqual, parseKeyboardLayoutDescription, getKeyboardLayoutId, IKeyboardLayoutInfo } from 'vs/workbench/services/keybinding/common/keymapInfo';
+import { parseKeyboardLayoutDescription, areKeyboardLayoutsEqual, getKeyboardLayoutId, IKeyboardLayoutService, IKeyboardLayoutInfo } from 'vs/platform/keyboardLayout/common/keyboardLayout';
 import { LifecyclePhase } from 'vs/workbench/services/lifecycle/common/lifecycle';
 import { Registry } from 'vs/platform/registry/common/platform';
 import { Extensions as WorkbenchExtensions, IWorkbenchContribution, IWorkbenchContributionsRegistry } from 'vs/workbench/common/contributions';
@@ -27,12 +27,12 @@ export class KeyboardLayoutPickerContribution extends Disposable implements IWor
 	private readonly pickerElement = this._register(new MutableDisposable<IStatusbarEntryAccessor>());
 
 	constructor(
-		@IKeymapService private readonly keymapService: IKeymapService,
+		@IKeyboardLayoutService private readonly keyboardLayoutService: IKeyboardLayoutService,
 		@IStatusbarService private readonly statusbarService: IStatusbarService,
 	) {
 		super();
 
-		let layout = this.keymapService.getCurrentKeyboardLayout();
+		let layout = this.keyboardLayoutService.getCurrentKeyboardLayout();
 		if (layout) {
 			let layoutInfo = parseKeyboardLayoutDescription(layout);
 			const text = nls.localize('keyboardLayout', "Layout: {0}", layoutInfo.label);
@@ -49,8 +49,8 @@ export class KeyboardLayoutPickerContribution extends Disposable implements IWor
 			);
 		}
 
-		this._register(keymapService.onDidChangeKeyboardMapper(() => {
-			let layout = this.keymapService.getCurrentKeyboardLayout();
+		this._register(keyboardLayoutService.onDidChangeKeyboardLayout(() => {
+			let layout = this.keyboardLayoutService.getCurrentKeyboardLayout();
 			let layoutInfo = parseKeyboardLayoutDescription(layout);
 
 			if (this.pickerElement.value) {
@@ -101,7 +101,7 @@ export class KeyboardLayoutPickerAction extends Action {
 		actionLabel: string,
 		@IFileService private readonly fileService: IFileService,
 		@IQuickInputService private readonly quickInputService: IQuickInputService,
-		@IKeymapService private readonly keymapService: IKeymapService,
+		@IKeyboardLayoutService private readonly keyboardLayoutService: IKeyboardLayoutService,
 		@IConfigurationService private readonly configurationService: IConfigurationService,
 		@IEnvironmentService private readonly environmentService: IEnvironmentService,
 		@IEditorService private readonly editorService: IEditorService
@@ -110,8 +110,8 @@ export class KeyboardLayoutPickerAction extends Action {
 	}
 
 	async run(): Promise<void> {
-		let layouts = this.keymapService.getAllKeyboardLayouts();
-		let currentLayout = this.keymapService.getCurrentKeyboardLayout();
+		let layouts = this.keyboardLayoutService.getAllKeyboardLayouts();
+		let currentLayout = this.keyboardLayoutService.getCurrentKeyboardLayout();
 		let layoutConfig = this.configurationService.getValue('keyboard.layout');
 		let isAutoDetect = layoutConfig === 'autodetect';
 

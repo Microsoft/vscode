@@ -220,7 +220,9 @@ export enum UserDataSyncErrorCode {
 	TooManyRequestsAndRetryAfter = 'TooManyRequestsAndRetryAfter', /* 429 + Retry-After */
 
 	// Local Errors
-	ConnectionRefused = 'ConnectionRefused',
+	RequestFailed = 'RequestFailed',
+	RequestCanceled = 'RequestCanceled',
+	RequestTimeout = 'RequestTimeout',
 	NoRef = 'NoRef',
 	TurnedOff = 'TurnedOff',
 	SessionExpired = 'SessionExpired',
@@ -252,7 +254,7 @@ export class UserDataSyncError extends Error {
 }
 
 export class UserDataSyncStoreError extends UserDataSyncError {
-	constructor(message: string, code: UserDataSyncErrorCode, readonly operationId: string | undefined) {
+	constructor(message: string, readonly url: string, code: UserDataSyncErrorCode, readonly operationId: string | undefined) {
 		super(message, code, undefined, operationId);
 	}
 }

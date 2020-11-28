@@ -22,6 +22,7 @@ export class TestCodeEditorService extends AbstractCodeEditorService {
 	public registerDecorationType(key: string, options: IDecorationRenderOptions, parentTypeKey?: string): void { }
 	public removeDecorationType(key: string): void { }
 	public resolveDecorationOptions(decorationTypeKey: string, writable: boolean): IModelDecorationOptions { return {}; }
+	public resolveDecorationCSSRules(decorationTypeKey: string): CSSRuleList | null { return null; }
 }
 
 export class TestCommandService implements ICommandService {

@@ -6,7 +6,7 @@
 import { Event, Emitter } from 'vs/base/common/event';
 import { DisposableStore } from 'vs/base/common/lifecycle';
 import { Dimension } from 'vs/base/browser/dom';
-import { Orientation, Sash, SashState } from 'vs/base/browser/ui/sash/sash';
+import { Orientation, OrthogonalEdge, Sash, SashState } from 'vs/base/browser/ui/sash/sash';
 
 
 export interface IResizeEvent {
@@ -43,8 +43,8 @@ export class ResizableHTMLElement {
 		this.domNode = document.createElement('div');
 		this._eastSash = new Sash(this.domNode, { getVerticalSashLeft: () => this._size.width }, { orientation: Orientation.VERTICAL });
 		this._westSash = new Sash(this.domNode, { getVerticalSashLeft: () => 0 }, { orientation: Orientation.VERTICAL });
-		this._northSash = new Sash(this.domNode, { getHorizontalSashTop: () => 0 }, { orientation: Orientation.HORIZONTAL });
-		this._southSash = new Sash(this.domNode, { getHorizontalSashTop: () => this._size.height }, { orientation: Orientation.HORIZONTAL });
+		this._northSash = new Sash(this.domNode, { getHorizontalSashTop: () => 0 }, { orientation: Orientation.HORIZONTAL, orthogonalEdge: OrthogonalEdge.North });
+		this._southSash = new Sash(this.domNode, { getHorizontalSashTop: () => this._size.height }, { orientation: Orientation.HORIZONTAL, orthogonalEdge: OrthogonalEdge.South });
 
 		this._northSash.orthogonalStartSash = this._westSash;
 		this._northSash.orthogonalEndSash = this._eastSash;

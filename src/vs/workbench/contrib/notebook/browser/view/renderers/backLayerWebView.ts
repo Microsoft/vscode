@@ -6,7 +6,6 @@
 import * as DOM from 'vs/base/browser/dom';
 import { Emitter, Event } from 'vs/base/common/event';
 import { Disposable } from 'vs/base/common/lifecycle';
-import * as path from 'vs/base/common/path';
 import { isWeb } from 'vs/base/common/platform';
 import { URI } from 'vs/base/common/uri';
 import * as UUID from 'vs/base/common/uuid';
@@ -373,7 +372,7 @@ export class BackLayerWebView extends Disposable {
 			}());
 			</script>`;
 			const htmlContent = this.generateContent(CELL_OUTPUT_PADDING, coreDependencies, baseUrl.toString());
-			this.initialize(htmlContent);
+			this._initialize(htmlContent);
 			resolveFunc!();
 		} else {
 			const loaderUri = FileAccess.asBrowserUri('vs/loader.js', require);
@@ -397,7 +396,7 @@ var requirejs = (function() {
 `;
 
 				const htmlContent = this.generateContent(CELL_OUTPUT_PADDING, coreDependencies, baseUrl.toString());
-				this.initialize(htmlContent);
+				this._initialize(htmlContent);
 				resolveFunc!();
 			});
 		}
@@ -405,7 +404,7 @@ var requirejs = (function() {
 		await this._initalized;
 	}
 
-	async initialize(content: string) {
+	private async _initialize(content: string) {
 		if (!document.body.contains(this.element)) {
 			throw new Error('Element is already detached from the DOM tree');
 		}
@@ -555,9 +554,8 @@ var requirejs = (function() {
 	}
 
 	private _createInset(webviewService: IWebviewService, content: string) {
-		const rootPathStr = path.dirname(FileAccess.asFileUri('', require).fsPath);
+		const rootPath = isWeb ? FileAccess.asBrowserUri('', require) : FileAccess.asFileUri('', require);
 
-		const rootPath = isWeb ? FileAccess.asBrowserUri(rootPathStr, require) : FileAccess.asFileUri(rootPathStr, require);
 		const workspaceFolders = this.contextService.getWorkspace().folders.map(x => x.uri);
 
 		this.localResourceRootsCache = [...this.notebookService.getNotebookProviderResourceRoots(), ...workspaceFolders, rootPath];

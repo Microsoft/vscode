@@ -9,9 +9,12 @@ import { CodiconLabel } from 'vs/base/browser/ui/codicons/codiconLabel';
 import { WorkbenchActionExecutedClassification, WorkbenchActionExecutedEvent } from 'vs/base/common/actions';
 import { stripCodicons } from 'vs/base/common/codicons';
 import { toErrorMessage } from 'vs/base/common/errorMessage';
+import { Emitter, Event } from 'vs/base/common/event';
 import { KeyCode } from 'vs/base/common/keyCodes';
 import { Disposable, DisposableStore } from 'vs/base/common/lifecycle';
 import { extUri } from 'vs/base/common/resources';
+import { ElementSizeObserver } from 'vs/editor/browser/config/elementSizeObserver';
+import { IDimension } from 'vs/editor/common/editorCommon';
 import { IModeService } from 'vs/editor/common/services/modeService';
 import { localize } from 'vs/nls';
 import { ICommandService } from 'vs/platform/commands/common/commands';
@@ -20,10 +23,24 @@ import { INotificationService } from 'vs/platform/notification/common/notificati
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 import { ChangeCellLanguageAction, INotebookCellActionContext } from 'vs/workbench/contrib/notebook/browser/contrib/coreActions';
 import { ICellViewModel, INotebookEditor } from 'vs/workbench/contrib/notebook/browser/notebookBrowser';
+import { BaseCellViewModel } from 'vs/workbench/contrib/notebook/browser/viewModel/baseCellViewModel';
 import { INotebookCellStatusBarService } from 'vs/workbench/contrib/notebook/common/notebookCellStatusBarService';
 import { CellKind, CellStatusbarAlignment, INotebookCellStatusBarEntry } from 'vs/workbench/contrib/notebook/common/notebookCommon';
 
+
 const $ = DOM.$;
+
+export interface IClickTarget {
+	type: ClickTargetType;
+	event: MouseEvent;
+}
+
+export const enum ClickTargetType {
+	Container = 0,
+	CellStatus = 1,
+	ContributedTextItem = 2,
+	ContributedCommandItem = 3
+}
 
 export class CellEditorStatusBar extends Disposable {
 	readonly cellStatusMessageContainer: HTMLElement;
@@ -37,6 +54,8 @@ export class CellEditorStatusBar extends Disposable {
 	private readonly itemsDisposable: DisposableStore;
 
 	private currentContext: INotebookCellActionContext | undefined;
+	protected readonly _onDidClick: Emitter<IClickTarget> = this._register(new Emitter<IClickTarget>());
+	readonly onDidClick: Event<IClickTarget> = this._onDidClick.event;
 
 	constructor(
 		container: HTMLElement,
@@ -58,6 +77,38 @@ export class CellEditorStatusBar extends Disposable {
 		this._register(this.notebookCellStatusBarService.onDidChangeEntriesForCell(e => {
 			if (this.currentContext && extUri.isEqual(e, this.currentContext.cell.uri)) {
 				this.updateStatusBarItems();
+			}
+		}));
+
+		this._register(DOM.addDisposableListener(this.statusBarContainer, DOM.EventType.CLICK, e => {
+			if (e.target === leftItemsContainer || e.target === rightItemsContainer || e.target === this.statusBarContainer) {
+				// hit on empty space
+				this._onDidClick.fire({
+					type: ClickTargetType.Container,
+					event: e
+				});
+			} else if (e.target && (
+				this.cellStatusMessageContainer.contains(e.target as Node)
+				|| this.cellRunStatusContainer.contains(e.target as Node)
+				|| this.durationContainer.contains(e.target as Node)
+			)) {
+				this._onDidClick.fire({
+					type: ClickTargetType.CellStatus,
+					event: e
+				});
+			} else {
+				if ((e.target as HTMLElement).classList.contains('cell-status-item-has-command')) {
+					this._onDidClick.fire({
+						type: ClickTargetType.ContributedCommandItem,
+						event: e
+					});
+				} else {
+					// text
+					this._onDidClick.fire({
+						type: ClickTargetType.ContributedTextItem,
+						event: e
+					});
+				}
 			}
 		}));
 	}
@@ -109,6 +160,10 @@ class CellStatusBarItem extends Disposable {
 	) {
 		super();
 		new CodiconLabel(this.container).text = this._itemModel.text;
+
+		if (this._itemModel.opacity) {
+			this.container.style.opacity = this._itemModel.opacity;
+		}
 
 		let ariaLabel: string;
 		let role: string | undefined;
@@ -181,11 +236,12 @@ export class CellLanguageStatusBarItem extends Disposable {
 		super();
 		this.labelElement = DOM.append(container, $('.cell-language-picker.cell-status-item'));
 		this.labelElement.tabIndex = 0;
+		this.labelElement.classList.add('cell-status-item-has-command');
 
 		this._register(DOM.addDisposableListener(this.labelElement, DOM.EventType.CLICK, () => {
 			this.run();
 		}));
-		this._register(DOM.addDisposableListener(this.labelElement, DOM.EventType.KEY_UP, e => {
+		this._register(DOM.addDisposableListener(this.labelElement, DOM.EventType.KEY_DOWN, e => {
 			const event = new StandardKeyboardEvent(e);
 			if (event.equals(KeyCode.Space) || event.equals(KeyCode.Enter)) {
 				this.run();
@@ -196,7 +252,10 @@ export class CellLanguageStatusBarItem extends Disposable {
 
 	private run() {
 		this.instantiationService.invokeFunction(accessor => {
-			new ChangeCellLanguageAction().run(accessor, { notebookEditor: this.editor!, cell: this.cell! });
+			if (!this.editor || !this.editor.hasModel() || !this.cell) {
+				return;
+			}
+			new ChangeCellLanguageAction().run(accessor, { notebookEditor: this.editor, cell: this.cell });
 		});
 	}
 
@@ -214,4 +273,88 @@ export class CellLanguageStatusBarItem extends Disposable {
 		this.labelElement.textContent = this.modeService.getLanguageName(modeId) || this.modeService.getLanguageName('plaintext');
 		this.labelElement.title = localize('notebook.cell.status.language', "Select Cell Language Mode");
 	}
+}
+
+declare const ResizeObserver: any;
+
+export interface IResizeObserver {
+	startObserving: () => void;
+	stopObserving: () => void;
+	getWidth(): number;
+	getHeight(): number;
+	dispose(): void;
+}
+
+export class BrowserResizeObserver extends Disposable implements IResizeObserver {
+	private readonly referenceDomElement: HTMLElement | null;
+
+	private readonly observer: any;
+	private width: number;
+	private height: number;
+
+	constructor(referenceDomElement: HTMLElement | null, dimension: IDimension | undefined, changeCallback: () => void) {
+		super();
+
+		this.referenceDomElement = referenceDomElement;
+		this.width = -1;
+		this.height = -1;
+
+		this.observer = new ResizeObserver((entries: any) => {
+			for (const entry of entries) {
+				if (entry.target === referenceDomElement && entry.contentRect) {
+					if (this.width !== entry.contentRect.width || this.height !== entry.contentRect.height) {
+						this.width = entry.contentRect.width;
+						this.height = entry.contentRect.height;
+						DOM.scheduleAtNextAnimationFrame(() => {
+							changeCallback();
+						});
+					}
+				}
+			}
+		});
+	}
+
+	getWidth(): number {
+		return this.width;
+	}
+
+	getHeight(): number {
+		return this.height;
+	}
+
+	startObserving(): void {
+		this.observer.observe(this.referenceDomElement!);
+	}
+
+	stopObserving(): void {
+		this.observer.unobserve(this.referenceDomElement!);
+	}
+
+	dispose(): void {
+		this.observer.disconnect();
+		super.dispose();
+	}
+}
+
+export function getResizesObserver(referenceDomElement: HTMLElement | null, dimension: IDimension | undefined, changeCallback: () => void): IResizeObserver {
+	if (ResizeObserver) {
+		return new BrowserResizeObserver(referenceDomElement, dimension, changeCallback);
+	} else {
+		return new ElementSizeObserver(referenceDomElement, dimension, changeCallback);
+	}
+}
+
+export function getExecuteCellPlaceholder(viewCell: BaseCellViewModel) {
+	return {
+		alignment: CellStatusbarAlignment.LEFT,
+		priority: -1,
+		cellResource: viewCell.uri,
+		command: undefined,
+		// text: `${keybinding?.getLabel() || 'Ctrl + Enter'} to run`,
+		// tooltip: `${keybinding?.getLabel() || 'Ctrl + Enter'} to run`,
+		text: 'Ctrl + Enter to run',
+		tooltip: 'Ctrl + Enter to run',
+		visible: true,
+		opacity: '0.7'
+	};
 }

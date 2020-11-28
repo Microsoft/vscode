@@ -446,10 +446,18 @@ suite('Untitled text editors', () => {
 		assert.equal(input.getName(), '([]}hello');
 		assert.equal(model.name, '([]}hello');
 
-		assert.equal(counter, 4);
+		model.textEditorModel.setValue('12345678901234567890123456789012345678901234567890'); // trimmed at 40chars max
+		assert.equal(input.getName(), '1234567890123456789012345678901234567890');
+		assert.equal(model.name, '1234567890123456789012345678901234567890');
+
+		model.textEditorModel.setValue('123456789012345678901234567890123456789🌞'); // do not break grapehems (#111235)
+		assert.equal(input.getName(), '123456789012345678901234567890123456789');
+		assert.equal(model.name, '123456789012345678901234567890123456789');
+
+		assert.equal(counter, 6);
 
 		model.textEditorModel.setValue('Hello\nWorld');
-		assert.equal(counter, 5);
+		assert.equal(counter, 7);
 
 		function createSingleEditOp(text: string, positionLineNumber: number, positionColumn: number, selectionLineNumber: number = positionLineNumber, selectionColumn: number = positionColumn): IIdentifiedSingleEditOperation {
 			let range = new Range(
@@ -468,7 +476,7 @@ suite('Untitled text editors', () => {
 		}
 
 		model.textEditorModel.applyEdits([createSingleEditOp('hello', 2, 2)]);
-		assert.equal(counter, 5); // change was not on first line
+		assert.equal(counter, 7); // change was not on first line
 
 		input.dispose();
 		model.dispose();

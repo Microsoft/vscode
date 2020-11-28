@@ -12,9 +12,9 @@ jobs:
         if: contains(github.event.issue.labels.*.name, 'testplan-item') || contains(github.event.issue.labels.*.name, 'invalid-testplan-item')
         uses: actions/checkout@v2
         with:
-          repository: 'microsoft/vscode-github-triage-actions'
+          repository: "microsoft/vscode-github-triage-actions"
           path: ./actions
-          ref: v39
+          ref: v40
       - name: Install Actions
         if: contains(github.event.issue.labels.*.name, 'testplan-item') || contains(github.event.issue.labels.*.name, 'invalid-testplan-item')
         run: npm install --production --prefix ./actions

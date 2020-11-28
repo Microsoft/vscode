@@ -123,22 +123,22 @@ jobs:
       CHILD_CONCURRENCY: "1"
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-    - uses: actions/checkout@v1
-    # TODO: rename azure-pipelines/linux/xvfb.init to github-actions
-    - run: |
-        sudo apt-get update
-        sudo apt-get install -y libxkbfile-dev pkg-config libsecret-1-dev libxss1 dbus xvfb libgtk-3-0 libgbm1
-        sudo cp build/azure-pipelines/linux/xvfb.init /etc/init.d/xvfb
-        sudo chmod +x /etc/init.d/xvfb
-        sudo update-rc.d xvfb defaults
-        sudo service xvfb start
-      name: Setup Build Environment
-    - uses: actions/setup-node@v1
-      with:
-        node-version: 10
-    - run: yarn --frozen-lockfile
-      name: Install Dependencies
-    - run: yarn monaco-compile-check
-      name: Run Monaco Editor Checks
-    - run: yarn gulp editor-esm-bundle
-      name: Editor Distro & ESM Bundle
+      - uses: actions/checkout@v1
+      # TODO: rename azure-pipelines/linux/xvfb.init to github-actions
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y libxkbfile-dev pkg-config libsecret-1-dev libxss1 dbus xvfb libgtk-3-0 libgbm1
+          sudo cp build/azure-pipelines/linux/xvfb.init /etc/init.d/xvfb
+          sudo chmod +x /etc/init.d/xvfb
+          sudo update-rc.d xvfb defaults
+          sudo service xvfb start
+        name: Setup Build Environment
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 10
+      - run: yarn --frozen-lockfile
+        name: Install Dependencies
+      - run: yarn monaco-compile-check
+        name: Run Monaco Editor Checks
+      - run: yarn gulp editor-esm-bundle
+        name: Editor Distro & ESM Bundle

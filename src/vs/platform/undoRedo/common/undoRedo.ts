@@ -81,6 +81,27 @@ export class UndoRedoGroup {
 	public static None = new UndoRedoGroup();
 }
 
+export class UndoRedoSource {
+	private static _ID = 0;
+
+	public readonly id: number;
+	private order: number;
+
+	constructor() {
+		this.id = UndoRedoSource._ID++;
+		this.order = 1;
+	}
+
+	public nextOrder(): number {
+		if (this.id === 0) {
+			return 0;
+		}
+		return this.order++;
+	}
+
+	public static None = new UndoRedoSource();
+}
+
 export interface IUndoRedoService {
 	readonly _serviceBrand: undefined;
 
@@ -100,7 +121,7 @@ export interface IUndoRedoService {
 	 * Add a new element to the `undo` stack.
 	 * This will destroy the `redo` stack.
 	 */
-	pushElement(element: IUndoRedoElement, group?: UndoRedoGroup): void;
+	pushElement(element: IUndoRedoElement, group?: UndoRedoGroup, source?: UndoRedoSource): void;
 
 	/**
 	 * Get the last pushed element for a resource.
@@ -133,9 +154,9 @@ export interface IUndoRedoService {
 	 */
 	restoreSnapshot(snapshot: ResourceEditStackSnapshot): void;
 
-	canUndo(resource: URI): boolean;
-	undo(resource: URI): Promise<void> | void;
+	canUndo(resource: URI | UndoRedoSource): boolean;
+	undo(resource: URI | UndoRedoSource): Promise<void> | void;
 
-	canRedo(resource: URI): boolean;
-	redo(resource: URI): Promise<void> | void;
+	canRedo(resource: URI | UndoRedoSource): boolean;
+	redo(resource: URI | UndoRedoSource): Promise<void> | void;
 }

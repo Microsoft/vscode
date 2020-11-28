@@ -71,6 +71,16 @@
 	position: absolute;
 }
 
+.monaco-sash.horizontal.orthogonal-edge-north:not(.disabled).orthogonal-start::before,
+.monaco-sash.horizontal.orthogonal-edge-south:not(.disabled).orthogonal-end::after {
+	cursor: nwse-resize;
+}
+
+.monaco-sash.horizontal.orthogonal-edge-north:not(.disabled).orthogonal-end::after,
+.monaco-sash.horizontal.orthogonal-edge-south:not(.disabled).orthogonal-start::before {
+	cursor: nesw-resize;
+}
+
 .monaco-sash.orthogonal-start.vertical::before {
 	left: -calc(var(--sash-size) / 2);
 	top: calc(var(--sash-size) * -1);

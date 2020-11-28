@@ -7,11 +7,6 @@ import { createDecorator } from 'vs/platform/instantiation/common/instantiation'
 import { IStringDictionary } from 'vs/base/common/collections';
 import { Event } from 'vs/base/common/event';
 
-export interface IExtensionsConfigContent {
-	recommendations: string[];
-	unwantedRecommendations: string[];
-}
-
 export type DynamicRecommendation = 'dynamic';
 export type ConfigRecommendation = 'config';
 export type ExecutableRecommendation = 'executable';

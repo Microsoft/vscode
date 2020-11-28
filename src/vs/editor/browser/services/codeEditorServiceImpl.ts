@@ -21,6 +21,10 @@ export class RefCountedStyleSheet {
 	private readonly _styleSheet: HTMLStyleElement;
 	private _refCount: number;
 
+	public get sheet() {
+		return this._styleSheet.sheet as CSSStyleSheet;
+	}
+
 	constructor(parent: CodeEditorServiceImpl, editorId: string, styleSheet: HTMLStyleElement) {
 		this._parent = parent;
 		this._editorId = editorId;
@@ -52,6 +56,10 @@ export class RefCountedStyleSheet {
 
 export class GlobalStyleSheet {
 	private readonly _styleSheet: HTMLStyleElement;
+
+	public get sheet() {
+		return this._styleSheet.sheet as CSSStyleSheet;
+	}
 
 	constructor(styleSheet: HTMLStyleElement) {
 		this._styleSheet = styleSheet;
@@ -129,6 +137,7 @@ export abstract class CodeEditorServiceImpl extends AbstractCodeEditorService {
 				provider = new DecorationSubTypeOptionsProvider(this._themeService, styleSheet, providerArgs);
 			}
 			this._decorationOptionProviders.set(key, provider);
+			this._onDecorationTypeRegistered.fire(key);
 		}
 		provider.refCount++;
 	}
@@ -153,6 +162,14 @@ export abstract class CodeEditorServiceImpl extends AbstractCodeEditorService {
 		return provider.getOptions(this, writable);
 	}
 
+	public resolveDecorationCSSRules(decorationTypeKey: string) {
+		const provider = this._decorationOptionProviders.get(decorationTypeKey);
+		if (!provider) {
+			return null;
+		}
+		return provider.resolveDecorationCSSRules();
+	}
+
 	abstract getActiveCodeEditor(): ICodeEditor | null;
 	abstract openCodeEditor(input: IResourceEditorInput, source: ICodeEditor | null, sideBySide?: boolean): Promise<ICodeEditor | null>;
 }
@@ -160,9 +177,10 @@ export abstract class CodeEditorServiceImpl extends AbstractCodeEditorService {
 interface IModelDecorationOptionsProvider extends IDisposable {
 	refCount: number;
 	getOptions(codeEditorService: AbstractCodeEditorService, writable: boolean): IModelDecorationOptions;
+	resolveDecorationCSSRules(): CSSRuleList;
 }
 
-class DecorationSubTypeOptionsProvider implements IModelDecorationOptionsProvider {
+export class DecorationSubTypeOptionsProvider implements IModelDecorationOptionsProvider {
 
 	private readonly _styleSheet: GlobalStyleSheet | RefCountedStyleSheet;
 	public refCount: number;
@@ -192,6 +210,10 @@ class DecorationSubTypeOptionsProvider implements IModelDecorationOptionsProvide
 		return options;
 	}
 
+	public resolveDecorationCSSRules(): CSSRuleList {
+		return this._styleSheet.sheet.cssRules;
+	}
+
 	public dispose(): void {
 		if (this._beforeContentRules) {
 			this._beforeContentRules.dispose();
@@ -213,7 +235,7 @@ interface ProviderArguments {
 }
 
 
-class DecorationTypeOptionsProvider implements IModelDecorationOptionsProvider {
+export class DecorationTypeOptionsProvider implements IModelDecorationOptionsProvider {
 
 	private readonly _disposables = new DisposableStore();
 	private readonly _styleSheet: GlobalStyleSheet | RefCountedStyleSheet;
@@ -293,6 +315,10 @@ class DecorationTypeOptionsProvider implements IModelDecorationOptionsProvider {
 			overviewRuler: this.overviewRuler,
 			stickiness: this.stickiness
 		};
+	}
+
+	public resolveDecorationCSSRules(): CSSRuleList {
+		return this._styleSheet.sheet.rules;
 	}
 
 	public dispose(): void {

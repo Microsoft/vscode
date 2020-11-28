@@ -76,7 +76,6 @@
 .extension-editor > .header > .details > .title > .identifier {
 	margin-left: 10px;
 	font-size: 14px;
-	opacity: 0.6;
 	background: rgba(173, 173, 173, 0.31);
 	padding: 0px 4px;
 	border-radius: 4px;
@@ -400,7 +399,7 @@
 	word-break: keep-all;
 }
 
-.extension-editor > .body > .content table code:not(:empty) {
+.extension-editor > .body > .content code:not(:empty) {
 	font-family: var(--monaco-monospace-font);
 	font-size: 90%;
 	background-color: rgba(128, 128, 128, 0.17);

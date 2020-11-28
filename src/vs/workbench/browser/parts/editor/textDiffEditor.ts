@@ -24,7 +24,6 @@ import { ScrollType, IDiffEditorViewState, IDiffEditorModel } from 'vs/editor/co
 import { DisposableStore } from 'vs/base/common/lifecycle';
 import { Registry } from 'vs/platform/registry/common/platform';
 import { URI } from 'vs/base/common/uri';
-import { Event } from 'vs/base/common/event';
 import { IEditorGroupsService } from 'vs/workbench/services/editor/common/editorGroupsService';
 import { IEditorService, ACTIVE_GROUP } from 'vs/workbench/services/editor/common/editorService';
 import { CancellationToken } from 'vs/base/common/cancellation';
@@ -32,6 +31,7 @@ import { EditorActivation, IEditorOptions } from 'vs/platform/editor/common/edit
 import { IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
 import { isEqual } from 'vs/base/common/resources';
 import { multibyteAwareBtoa } from 'vs/base/browser/dom';
+import { IFileService } from 'vs/platform/files/common/files';
 
 /**
  * The text editor that leverages the diff text editor for the editing experience.
@@ -62,9 +62,28 @@ export class TextDiffEditor extends BaseTextEditor implements ITextDiffEditorPan
 		@ITextResourceConfigurationService configurationService: ITextResourceConfigurationService,
 		@IEditorService editorService: IEditorService,
 		@IThemeService themeService: IThemeService,
-		@IEditorGroupsService editorGroupService: IEditorGroupsService
+		@IEditorGroupsService editorGroupService: IEditorGroupsService,
+		@IFileService private readonly fileService: IFileService
 	) {
 		super(TextDiffEditor.ID, telemetryService, instantiationService, storageService, configurationService, themeService, editorService, editorGroupService);
+
+		// Listen to file system provider changes
+		this._register(this.fileService.onDidChangeFileSystemProviderCapabilities(e => this.onDidFileSystemProviderChange(e.scheme)));
+		this._register(this.fileService.onDidChangeFileSystemProviderRegistrations(e => this.onDidFileSystemProviderChange(e.scheme)));
+	}
+
+	private onDidFileSystemProviderChange(scheme: string): void {
+		const control = this.getControl();
+		const input = this.input;
+
+		if (control && input instanceof DiffEditorInput) {
+			if (input.originalInput.resource?.scheme === scheme || input.modifiedInput.resource?.scheme === scheme) {
+				control.updateOptions({
+					readOnly: input.modifiedInput.isReadonly(),
+					originalEditable: !input.originalInput.isReadonly()
+				});
+			}
+		}
 	}
 
 	protected onWillCloseEditorInGroup(editor: IEditorInput): void {
@@ -175,7 +194,7 @@ export class TextDiffEditor extends BaseTextEditor implements ITextDiffEditorPan
 			const originalInput = input.originalInput;
 			const modifiedInput = input.modifiedInput;
 
-			const binaryDiffInput = new DiffEditorInput(input.getName(), input.getDescription(), originalInput, modifiedInput, true);
+			const binaryDiffInput = this.instantiationService.createInstance(DiffEditorInput, input.getName(), input.getDescription(), originalInput, modifiedInput, true);
 
 			// Forward binary flag to input if supported
 			const fileEditorInputFactory = Registry.as<IEditorInputFactoryRegistry>(EditorInputExtensions.EditorInputFactories).getFileEditorInputFactory();
@@ -217,16 +236,17 @@ export class TextDiffEditor extends BaseTextEditor implements ITextDiffEditorPan
 
 		// Handle diff editor specially by merging in diffEditor configuration
 		if (isObject(configuration.diffEditor)) {
-			// User settings defines `diffEditor.codeLens`, but there is also `editor.codeLens`.
-			// Due to the mixin, the two settings cannot be distinguished anymore.
-			//
-			// So we map `diffEditor.codeLens` to `diffEditor.originalCodeLens` and `diffEditor.modifiedCodeLens`.
 			const diffEditorConfiguration = <IDiffEditorOptions>objects.deepClone(configuration.diffEditor);
-			diffEditorConfiguration.originalCodeLens = diffEditorConfiguration.codeLens;
-			diffEditorConfiguration.modifiedCodeLens = diffEditorConfiguration.codeLens;
+
+			// User settings defines `diffEditor.codeLens`, but here we rename that to `diffEditor.diffCodeLens` to avoid collisions with `editor.codeLens`.
+			diffEditorConfiguration.diffCodeLens = diffEditorConfiguration.codeLens;
 			delete diffEditorConfiguration.codeLens;
 
-			objects.mixin(editorConfiguration, diffEditorConfiguration);
+			// User settings defines `diffEditor.wordWrap`, but here we rename that to `diffEditor.diffWordWrap` to avoid collisions with `editor.wordWrap`.
+			diffEditorConfiguration.diffWordWrap = <'off' | 'on' | 'inherit' | undefined>diffEditorConfiguration.wordWrap;
+			delete diffEditorConfiguration.wordWrap;
+
+			Object.assign(editorConfiguration, diffEditorConfiguration);
 		}
 
 		return editorConfiguration;
@@ -309,12 +329,7 @@ export class TextDiffEditor extends BaseTextEditor implements ITextDiffEditorPan
 
 		// Otherwise save it
 		else {
-			super.saveTextEditorViewState(resource);
-
-			// Make sure to clean up when the input gets disposed
-			Event.once(input.onDispose)(() => {
-				super.clearTextEditorViewState([resource], this.group);
-			});
+			super.saveTextEditorViewState(resource, input);
 		}
 	}
 

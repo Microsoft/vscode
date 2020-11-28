@@ -36,9 +36,11 @@ export class ViewsWelcomeContribution extends Disposable implements IWorkbenchCo
 				for (const welcome of contribution.value) {
 					const id = ViewIdentifierMap[welcome.view] ?? welcome.view;
 					const { group, order } = parseGroupAndOrder(welcome, contribution);
+					const precondition = ContextKeyExpr.deserialize(welcome.enablement);
 					const disposable = viewsRegistry.registerViewWelcomeContent(id, {
 						content: welcome.contents,
 						when: ContextKeyExpr.deserialize(welcome.when),
+						precondition,
 						group,
 						order
 					});

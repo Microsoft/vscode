@@ -74,6 +74,13 @@ export abstract class AbstractRemoteAgentService extends Disposable implements I
 		return this._environment;
 	}
 
+	whenExtensionsReady(): Promise<void> {
+		return this._withChannel(
+			channel => RemoteExtensionEnvironmentChannelClient.whenExtensionsReady(channel),
+			undefined
+		);
+	}
+
 	scanExtensions(skipExtensions: ExtensionIdentifier[] = []): Promise<IExtensionDescription[]> {
 		return this._withChannel(
 			(channel, connection) => RemoteExtensionEnvironmentChannelClient.scanExtensions(channel, connection.remoteAuthority, this._environmentService.extensionDevelopmentLocationURI, skipExtensions),

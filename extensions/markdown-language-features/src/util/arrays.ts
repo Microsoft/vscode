@@ -16,7 +16,3 @@ export function equals<T>(one: ReadonlyArray<T>, other: ReadonlyArray<T>, itemEq
 
 	return true;
 }
-
-export function flatten<T>(arr: ReadonlyArray<T>[]): T[] {
-	return ([] as T[]).concat.apply([], arr);
-}

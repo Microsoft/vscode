@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { ResourceMap, TernarySearchTree, PathIterator, StringIterator, LinkedMap, Touch, LRUCache, UriIterator } from 'vs/base/common/map';
+import { ResourceMap, TernarySearchTree, PathIterator, StringIterator, LinkedMap, Touch, LRUCache, UriIterator, ConfigKeysIterator } from 'vs/base/common/map';
 import * as assert from 'assert';
 import { URI } from 'vs/base/common/uri';
 import { extUriIgnorePathCase } from 'vs/base/common/resources';
@@ -368,7 +368,7 @@ suite('Map', () => {
 	});
 
 	test('URIIterator', function () {
-		const iter = new UriIterator(false);
+		const iter = new UriIterator(() => false);
 		iter.reset(URI.parse('file:///usr/bin/file.txt'));
 
 		assert.equal(iter.value(), 'file');
@@ -549,13 +549,15 @@ suite('Map', () => {
 		trie.set('foo', 1);
 		trie.set('foobar', 2);
 		trie.set('bar', 3);
+		trie.set('foobarbaz', 4);
 		trie.deleteSuperstr('foo');
-		assertTernarySearchTree(trie, ['bar', 3]);
+		assertTernarySearchTree(trie, ['foo', 1], ['bar', 3]);
 
 		trie = new TernarySearchTree<string, number>(new StringIterator());
 		trie.set('foo', 1);
 		trie.set('foobar', 2);
 		trie.set('bar', 3);
+		trie.set('foobarbaz', 4);
 		trie.deleteSuperstr('fo');
 		assertTernarySearchTree(trie, ['bar', 3]);
 
@@ -612,17 +614,17 @@ suite('Map', () => {
 		map.set('/user/foo/flip/flop', 3);
 		map.set('/usr/foo', 4);
 
-		let item: IteratorResult<number>;
+		let item: IteratorResult<[string, number]>;
 		let iter = map.findSuperstr('/user');
 
 		item = iter!.next();
-		assert.equal(item.value, 2);
+		assert.equal(item.value[1], 2);
 		assert.equal(item.done, false);
 		item = iter!.next();
-		assert.equal(item.value, 1);
+		assert.equal(item.value[1], 1);
 		assert.equal(item.done, false);
 		item = iter!.next();
-		assert.equal(item.value, 3);
+		assert.equal(item.value[1], 3);
 		assert.equal(item.done, false);
 		item = iter!.next();
 		assert.equal(item.value, undefined);
@@ -630,7 +632,7 @@ suite('Map', () => {
 
 		iter = map.findSuperstr('/usr');
 		item = iter!.next();
-		assert.equal(item.value, 4);
+		assert.equal(item.value[1], 4);
 		assert.equal(item.done, false);
 
 		item = iter!.next();
@@ -675,12 +677,12 @@ suite('Map', () => {
 		map.set('/usr/foo', 4);
 		map.deleteSuperstr('/user/foo');
 		assertTernarySearchTree(map,
-			['/usr/foo', 4],
+			['/user/foo', 2], ['/usr/foo', 4],
 		);
 	});
 
 	test('TernarySearchTree (URI) - basics', function () {
-		let trie = new TernarySearchTree<URI, number>(new UriIterator(false));
+		let trie = new TernarySearchTree<URI, number>(new UriIterator(() => false));
 
 		trie.set(URI.file('/user/foo/bar'), 1);
 		trie.set(URI.file('/user/foo'), 2);
@@ -700,7 +702,7 @@ suite('Map', () => {
 
 	test('TernarySearchTree (URI) - lookup', function () {
 
-		const map = new TernarySearchTree<URI, number>(new UriIterator(false));
+		const map = new TernarySearchTree<URI, number>(new UriIterator(() => false));
 		map.set(URI.parse('http://foo.bar/user/foo/bar'), 1);
 		map.set(URI.parse('http://foo.bar/user/foo?query'), 2);
 		map.set(URI.parse('http://foo.bar/user/foo?QUERY'), 3);
@@ -715,25 +717,35 @@ suite('Map', () => {
 		assert.equal(map.get(URI.parse('http://foo.bar/user/foo/bar/boo')), undefined);
 	});
 
-	test('TernarySearchTree (PathSegments) - superstr', function () {
+	test('TernarySearchTree (URI) - lookup, casing', function () {
 
-		const map = new TernarySearchTree<URI, number>(new UriIterator(false));
+		const map = new TernarySearchTree<URI, number>(new UriIterator(uri => /^https?$/.test(uri.scheme)));
+		map.set(URI.parse('http://foo.bar/user/foo/bar'), 1);
+		assert.equal(map.get(URI.parse('http://foo.bar/USER/foo/bar')), 1);
+
+		map.set(URI.parse('foo://foo.bar/user/foo/bar'), 1);
+		assert.equal(map.get(URI.parse('foo://foo.bar/USER/foo/bar')), undefined);
+	});
+
+	test('TernarySearchTree (URI) - superstr', function () {
+
+		const map = new TernarySearchTree<URI, number>(new UriIterator(() => false));
 		map.set(URI.file('/user/foo/bar'), 1);
 		map.set(URI.file('/user/foo'), 2);
 		map.set(URI.file('/user/foo/flip/flop'), 3);
 		map.set(URI.file('/usr/foo'), 4);
 
-		let item: IteratorResult<number>;
+		let item: IteratorResult<[URI, number]>;
 		let iter = map.findSuperstr(URI.file('/user'))!;
 
 		item = iter.next();
-		assert.equal(item.value, 2);
+		assert.equal(item.value[1], 2);
 		assert.equal(item.done, false);
 		item = iter.next();
-		assert.equal(item.value, 1);
+		assert.equal(item.value[1], 1);
 		assert.equal(item.done, false);
 		item = iter.next();
-		assert.equal(item.value, 3);
+		assert.equal(item.value[1], 3);
 		assert.equal(item.done, false);
 		item = iter.next();
 		assert.equal(item.value, undefined);
@@ -741,7 +753,7 @@ suite('Map', () => {
 
 		iter = map.findSuperstr(URI.file('/usr'))!;
 		item = iter.next();
-		assert.equal(item.value, 4);
+		assert.equal(item.value[1], 4);
 		assert.equal(item.done, false);
 
 		item = iter.next();
@@ -750,16 +762,16 @@ suite('Map', () => {
 
 		iter = map.findSuperstr(URI.file('/'))!;
 		item = iter.next();
-		assert.equal(item.value, 2);
+		assert.equal(item.value[1], 2);
 		assert.equal(item.done, false);
 		item = iter.next();
-		assert.equal(item.value, 1);
+		assert.equal(item.value[1], 1);
 		assert.equal(item.done, false);
 		item = iter.next();
-		assert.equal(item.value, 3);
+		assert.equal(item.value[1], 3);
 		assert.equal(item.done, false);
 		item = iter.next();
-		assert.equal(item.value, 4);
+		assert.equal(item.value[1], 4);
 		assert.equal(item.done, false);
 		item = iter.next();
 		assert.equal(item.value, undefined);
@@ -771,6 +783,103 @@ suite('Map', () => {
 		assert.equal(map.findSuperstr(URI.file('/userr')), undefined);
 	});
 
+	test('TernarySearchTree (ConfigKeySegments) - basics', function () {
+		let trie = new TernarySearchTree<string, number>(new ConfigKeysIterator());
+
+		trie.set('config.foo.bar', 1);
+		trie.set('config.foo', 2);
+		trie.set('config.foo.flip.flop', 3);
+
+		assert.equal(trie.get('config.foo.bar'), 1);
+		assert.equal(trie.get('config.foo'), 2);
+		assert.equal(trie.get('config.foo.flip.flop'), 3);
+
+		assert.equal(trie.findSubstr('config.bar'), undefined);
+		assert.equal(trie.findSubstr('config.foo'), 2);
+		assert.equal(trie.findSubstr('config.foo.ba'), 2);
+		assert.equal(trie.findSubstr('config.foo.far.boo'), 2);
+		assert.equal(trie.findSubstr('config.foo.bar'), 1);
+		assert.equal(trie.findSubstr('config.foo.bar.far.boo'), 1);
+	});
+
+	test('TernarySearchTree (ConfigKeySegments) - lookup', function () {
+
+		const map = new TernarySearchTree<string, number>(new ConfigKeysIterator());
+		map.set('config.foo.bar', 1);
+		map.set('config.foo', 2);
+		map.set('config.foo.flip.flop', 3);
+
+		assert.equal(map.get('foo'), undefined);
+		assert.equal(map.get('config'), undefined);
+		assert.equal(map.get('config.foo'), 2);
+		assert.equal(map.get('config.foo.bar'), 1);
+		assert.equal(map.get('config.foo.bar.boo'), undefined);
+	});
+
+	test('TernarySearchTree (ConfigKeySegments) - superstr', function () {
+
+		const map = new TernarySearchTree<string, number>(new ConfigKeysIterator());
+		map.set('config.foo.bar', 1);
+		map.set('config.foo', 2);
+		map.set('config.foo.flip.flop', 3);
+		map.set('boo', 4);
+
+		let item: IteratorResult<[string, number]>;
+		let iter = map.findSuperstr('config');
+
+		item = iter!.next();
+		assert.equal(item.value[1], 2);
+		assert.equal(item.done, false);
+		item = iter!.next();
+		assert.equal(item.value[1], 1);
+		assert.equal(item.done, false);
+		item = iter!.next();
+		assert.equal(item.value[1], 3);
+		assert.equal(item.done, false);
+		item = iter!.next();
+		assert.equal(item.value, undefined);
+		assert.equal(item.done, true);
+
+		assert.equal(map.findSuperstr('foo'), undefined);
+		assert.equal(map.findSuperstr('config.foo.no'), undefined);
+		assert.equal(map.findSuperstr('config.foop'), undefined);
+	});
+
+
+	test('TernarySearchTree (ConfigKeySegments) - delete_superstr', function () {
+
+		const map = new TernarySearchTree<string, number>(new ConfigKeysIterator());
+		map.set('config.foo.bar', 1);
+		map.set('config.foo', 2);
+		map.set('config.foo.flip.flop', 3);
+		map.set('boo', 4);
+
+		assertTernarySearchTree(map,
+			['config.foo.bar', 1],
+			['config.foo', 2],
+			['config.foo.flip.flop', 3],
+			['boo', 4],
+		);
+
+		// not a segment
+		map.deleteSuperstr('config.fo');
+		assertTernarySearchTree(map,
+			['config.foo.bar', 1],
+			['config.foo', 2],
+			['config.foo.flip.flop', 3],
+			['boo', 4],
+		);
+
+		// delete a segment
+		map.set('config.foo.bar', 1);
+		map.set('config.foo', 2);
+		map.set('config.foo.flip.flop', 3);
+		map.set('config.boo', 4);
+		map.deleteSuperstr('config.foo');
+		assertTernarySearchTree(map,
+			['config.foo', 2], ['boo', 4],
+		);
+	});
 
 	test('ResourceMap - basics', function () {
 		const map = new ResourceMap<any>();

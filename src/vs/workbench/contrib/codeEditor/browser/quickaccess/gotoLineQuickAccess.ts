@@ -5,7 +5,6 @@
 
 import { localize } from 'vs/nls';
 import { IKeyMods, IQuickInputService } from 'vs/platform/quickinput/common/quickInput';
-import { IEditor } from 'vs/editor/common/editorCommon';
 import { IEditorService, SIDE_GROUP } from 'vs/workbench/services/editor/common/editorService';
 import { IRange } from 'vs/editor/common/core/range';
 import { AbstractGotoLineQuickAccessProvider } from 'vs/editor/contrib/quickAccess/gotoLineQuickAccess';
@@ -17,6 +16,7 @@ import { Action2, registerAction2 } from 'vs/platform/actions/common/actions';
 import { KeyMod, KeyCode } from 'vs/base/common/keyCodes';
 import { ServicesAccessor } from 'vs/platform/instantiation/common/instantiation';
 import { KeybindingWeight } from 'vs/platform/keybinding/common/keybindingsRegistry';
+import { IQuickAccessTextEditorContext } from 'vs/editor/contrib/quickAccess/editorNavigationQuickAccess';
 
 export class GotoLineQuickAccessProvider extends AbstractGotoLineQuickAccessProvider {
 
@@ -41,10 +41,12 @@ export class GotoLineQuickAccessProvider extends AbstractGotoLineQuickAccessProv
 		return this.editorService.activeTextEditorControl;
 	}
 
-	protected gotoLocation(editor: IEditor, options: { range: IRange, keyMods: IKeyMods, forceSideBySide?: boolean, preserveFocus?: boolean }): void {
+	protected gotoLocation(context: IQuickAccessTextEditorContext, options: { range: IRange, keyMods: IKeyMods, forceSideBySide?: boolean, preserveFocus?: boolean }): void {
 
 		// Check for sideBySide use
 		if ((options.keyMods.ctrlCmd || options.forceSideBySide) && this.editorService.activeEditor) {
+			context.restoreViewState?.(); // since we open to the side, restore view state in this editor
+
 			this.editorService.openEditor(this.editorService.activeEditor, {
 				selection: options.range,
 				pinned: options.keyMods.alt || this.configuration.openEditorPinned,
@@ -54,7 +56,7 @@ export class GotoLineQuickAccessProvider extends AbstractGotoLineQuickAccessProv
 
 		// Otherwise let parent handle it
 		else {
-			super.gotoLocation(editor, options);
+			super.gotoLocation(context, options);
 		}
 	}
 }

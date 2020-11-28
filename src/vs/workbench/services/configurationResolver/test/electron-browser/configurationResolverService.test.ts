@@ -175,6 +175,10 @@ suite('Configuration Resolver Service', () => {
 		}
 	});
 
+	test('disallows nested keys (#77289)', () => {
+		assert.strictEqual(configurationResolverService!.resolve(workspace, '${env:key1} ${env:key1${env:key2}}'), 'Value for key1 ${env:key1${env:key2}}');
+	});
+
 	// test('substitute keys and values in object', () => {
 	// 	const myObject = {
 	// 		'${workspaceRootFolderName}': '${lineNumber}',
@@ -209,6 +213,17 @@ suite('Configuration Resolver Service', () => {
 
 		let service = new TestConfigurationResolverService({ getExecPath: () => undefined }, environmentService.userEnv, new TestEditorServiceWithActiveEditor(), configurationService, mockCommandService, new TestContextService(), quickInputService, labelService);
 		assert.strictEqual(service.resolve(workspace, 'abc ${config:editor.fontFamily} xyz'), 'abc foo xyz');
+	});
+
+	test('substitute configuration variable with undefined workspace folder', () => {
+		let configurationService: IConfigurationService = new TestConfigurationService({
+			editor: {
+				fontFamily: 'foo'
+			}
+		});
+
+		let service = new TestConfigurationResolverService({ getExecPath: () => undefined }, environmentService.userEnv, new TestEditorServiceWithActiveEditor(), configurationService, mockCommandService, new TestContextService(), quickInputService, labelService);
+		assert.strictEqual(service.resolve(undefined, 'abc ${config:editor.fontFamily} xyz'), 'abc foo xyz');
 	});
 
 	test('substitute many configuration variables', () => {

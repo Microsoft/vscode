@@ -103,7 +103,7 @@ export class ExtensionIgnoredRecommendationsService extends Disposable implement
 	}
 
 	private setStoredIgnoredRecommendationsValue(value: string): void {
-		this.storageService.store2(ignoredRecommendationsStorageKey, value, StorageScope.GLOBAL, StorageTarget.USER);
+		this.storageService.store(ignoredRecommendationsStorageKey, value, StorageScope.GLOBAL, StorageTarget.USER);
 	}
 
 }

@@ -12,6 +12,7 @@ import { Extensions as JSONExtensions, IJSONContributionRegistry } from 'vs/plat
 import { RunOnceScheduler } from 'vs/base/common/async';
 import * as Codicons from 'vs/base/common/codicons';
 
+
 //  ------ API types
 
 
@@ -29,14 +30,14 @@ export interface IconDefinition {
 
 export interface IconContribution {
 	id: string;
-	description: string;
+	description: string | undefined;
 	deprecationMessage?: string;
 	defaults: IconDefaults;
 }
 
 export interface IIconRegistry {
 
-	readonly onDidChangeSchema: Event<void>;
+	readonly onDidChange: Event<void>;
 
 	/**
 	 * Register a icon to the registry.
@@ -44,7 +45,7 @@ export interface IIconRegistry {
 	 * @param defaults The default values
 	 * @description the description
 	 */
-	registerIcon(id: string, defaults: IconDefaults, description: string): ThemeIcon;
+	registerIcon(id: string, defaults: IconDefaults, description?: string): ThemeIcon;
 
 	/**
 	 * Register a icon to the registry.
@@ -71,12 +72,17 @@ export interface IIconRegistry {
 	 */
 	getIconReferenceSchema(): IJSONSchema;
 
+	/**
+	 * The CSS for all icons
+	 */
+	getCSS(): string;
+
 }
 
 class IconRegistry implements IIconRegistry {
 
-	private readonly _onDidChangeSchema = new Emitter<void>();
-	readonly onDidChangeSchema: Event<void> = this._onDidChangeSchema.event;
+	private readonly _onDidChange = new Emitter<void>();
+	readonly onDidChange: Event<void> = this._onDidChange.event;
 
 	private iconsById: { [key: string]: IconContribution };
 	private iconSchema: IJSONSchema & { properties: IJSONSchemaMap } = {
@@ -101,8 +107,18 @@ class IconRegistry implements IIconRegistry {
 	}
 
 	public registerIcon(id: string, defaults: IconDefaults, description?: string, deprecationMessage?: string): ThemeIcon {
-		if (!description) {
-			description = localize('icon.defaultDescription', 'Icon with identifier \'{0}\'', id);
+		const existing = this.iconsById[id];
+		if (existing) {
+			if (description && !existing.description) {
+				existing.description = description;
+				this.iconSchema.properties[id].markdownDescription = `${description}: $(${id})`;
+				const enumIndex = this.iconReferenceSchema.enum.indexOf(id);
+				if (enumIndex !== -1) {
+					this.iconReferenceSchema.enumDescriptions[enumIndex] = description;
+				}
+				this._onDidChange.fire();
+			}
+			return existing;
 		}
 		let iconContribution: IconContribution = { id, description, defaults, deprecationMessage };
 		this.iconsById[id] = iconContribution;
@@ -110,12 +126,14 @@ class IconRegistry implements IIconRegistry {
 		if (deprecationMessage) {
 			propertySchema.deprecationMessage = deprecationMessage;
 		}
-		propertySchema.markdownDescription = `${description}: $(${id})`;
+		if (description) {
+			propertySchema.markdownDescription = `${description}: $(${id})`;
+		}
 		this.iconSchema.properties[id] = propertySchema;
 		this.iconReferenceSchema.enum.push(id);
-		this.iconReferenceSchema.enumDescriptions.push(description);
+		this.iconReferenceSchema.enumDescriptions.push(description || '');
 
-		this._onDidChangeSchema.fire();
+		this._onDidChange.fire();
 		return { id };
 	}
 
@@ -128,7 +146,7 @@ class IconRegistry implements IIconRegistry {
 			this.iconReferenceSchema.enum.splice(index, 1);
 			this.iconReferenceSchema.enumDescriptions.splice(index, 1);
 		}
-		this._onDidChangeSchema.fire();
+		this._onDidChange.fire();
 	}
 
 	public getIcons(): IconContribution[] {
@@ -145,6 +163,29 @@ class IconRegistry implements IIconRegistry {
 
 	public getIconReferenceSchema(): IJSONSchema {
 		return this.iconReferenceSchema;
+	}
+
+	public getCSS() {
+		const rules = [];
+		for (let id in this.iconsById) {
+			const rule = this.formatRule(id);
+			if (rule) {
+				rules.push(rule);
+			}
+		}
+		return rules.join('\n');
+	}
+
+	private formatRule(id: string): string | undefined {
+		let definition = this.iconsById[id].defaults;
+		while (ThemeIcon.isThemeIcon(definition)) {
+			const c = this.iconsById[definition.id];
+			if (!c) {
+				return undefined;
+			}
+			definition = c.defaults;
+		}
+		return `.codicon-${id}:before { content: '${definition.character}'; }`;
 	}
 
 	public toString() {
@@ -183,7 +224,7 @@ class IconRegistry implements IIconRegistry {
 const iconRegistry = new IconRegistry();
 platform.Registry.add(Extensions.IconContribution, iconRegistry);
 
-export function registerIcon(id: string, defaults: IconDefaults, description?: string, deprecationMessage?: string): ThemeIcon {
+export function registerIcon(id: string, defaults: IconDefaults, description: string, deprecationMessage?: string): ThemeIcon {
 	return iconRegistry.registerIcon(id, defaults, description, deprecationMessage);
 }
 
@@ -193,12 +234,11 @@ export function getIconRegistry(): IIconRegistry {
 
 function initialize() {
 	for (const icon of Codicons.iconRegistry.all) {
-		registerIcon(icon.id, icon.definition);
+		iconRegistry.registerIcon(icon.id, icon.definition, icon.description);
 	}
-	Codicons.iconRegistry.onDidRegister(icon => registerIcon(icon.id, icon.definition));
+	Codicons.iconRegistry.onDidRegister(icon => iconRegistry.registerIcon(icon.id, icon.definition, icon.description));
 }
 initialize();
-
 
 export const iconsSchemaId = 'vscode://schemas/icons';
 
@@ -206,7 +246,7 @@ let schemaRegistry = platform.Registry.as<IJSONContributionRegistry>(JSONExtensi
 schemaRegistry.registerSchema(iconsSchemaId, iconRegistry.getIconSchema());
 
 const delayer = new RunOnceScheduler(() => schemaRegistry.notifySchemaChanged(iconsSchemaId), 200);
-iconRegistry.onDidChangeSchema(() => {
+iconRegistry.onDidChange(() => {
 	if (!delayer.isScheduled()) {
 		delayer.schedule();
 	}
@@ -214,3 +254,11 @@ iconRegistry.onDidChangeSchema(() => {
 
 
 //setTimeout(_ => console.log(iconRegistry.toString()), 5000);
+
+
+// common icons
+
+export const widgetClose = registerIcon('widget-close', Codicons.Codicon.close, localize('widgetClose', 'Icon for the close action in widgets.'));
+
+export const gotoPreviousLocation = registerIcon('goto-previous-location', Codicons.Codicon.arrowUp, localize('previousChangeIcon', 'Icon for goto previous editor location.'));
+export const gotoNextLocation = registerIcon('goto-next-location', Codicons.Codicon.arrowDown, localize('nextChangeIcon', 'Icon for goto next editor location.'));

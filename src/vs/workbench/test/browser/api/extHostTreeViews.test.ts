@@ -488,41 +488,53 @@ suite('ExtHostTreeView', function () {
 	test('reveal will return empty array for root element', () => {
 		const revealTarget = sinon.spy(target, '$reveal');
 		const treeView = testObject.createTreeView('treeDataProvider', { treeDataProvider: aCompleteNodeTreeDataProvider() }, { enableProposedApi: true } as IExtensionDescription);
+		const expected = {
+			item:
+				{ handle: '0/0:a', label: { label: 'a' }, collapsibleState: TreeItemCollapsibleState.Collapsed },
+			parentChain: []
+		};
 		return treeView.reveal({ key: 'a' })
 			.then(() => {
 				assert.ok(revealTarget.calledOnce);
 				assert.deepEqual('treeDataProvider', revealTarget.args[0][0]);
-				assert.deepEqual({ handle: '0/0:a', label: { label: 'a' }, collapsibleState: TreeItemCollapsibleState.Collapsed }, removeUnsetKeys(revealTarget.args[0][1]));
-				assert.deepEqual([], revealTarget.args[0][2]);
-				assert.deepEqual({ select: true, focus: false, expand: false }, revealTarget.args[0][3]);
+				assert.deepEqual(expected, removeUnsetKeys(revealTarget.args[0][1]));
+				assert.deepEqual({ select: true, focus: false, expand: false }, revealTarget.args[0][2]);
 			});
 	});
 
 	test('reveal will return parents array for an element when hierarchy is not loaded', () => {
 		const revealTarget = sinon.spy(target, '$reveal');
 		const treeView = testObject.createTreeView('treeDataProvider', { treeDataProvider: aCompleteNodeTreeDataProvider() }, { enableProposedApi: true } as IExtensionDescription);
+		const expected = {
+			item: { handle: '0/0:a/0:aa', label: { label: 'aa' }, collapsibleState: TreeItemCollapsibleState.None, parentHandle: '0/0:a' },
+			parentChain: [{ handle: '0/0:a', label: { label: 'a' }, collapsibleState: TreeItemCollapsibleState.Collapsed }]
+		};
 		return treeView.reveal({ key: 'aa' })
 			.then(() => {
 				assert.ok(revealTarget.calledOnce);
 				assert.deepEqual('treeDataProvider', revealTarget.args[0][0]);
-				assert.deepEqual({ handle: '0/0:a/0:aa', label: { label: 'aa' }, collapsibleState: TreeItemCollapsibleState.None, parentHandle: '0/0:a' }, removeUnsetKeys(revealTarget.args[0][1]));
-				assert.deepEqual([{ handle: '0/0:a', label: { label: 'a' }, collapsibleState: TreeItemCollapsibleState.Collapsed }], (<Array<any>>revealTarget.args[0][2]).map(arg => removeUnsetKeys(arg)));
-				assert.deepEqual({ select: true, focus: false, expand: false }, revealTarget.args[0][3]);
+				assert.deepEqual(expected.item, removeUnsetKeys(revealTarget.args[0][1].item));
+				assert.deepEqual(expected.parentChain, (<Array<any>>(revealTarget.args[0][1].parentChain)).map(arg => removeUnsetKeys(arg)));
+				assert.deepEqual({ select: true, focus: false, expand: false }, revealTarget.args[0][2]);
 			});
 	});
 
 	test('reveal will return parents array for an element when hierarchy is loaded', () => {
 		const revealTarget = sinon.spy(target, '$reveal');
 		const treeView = testObject.createTreeView('treeDataProvider', { treeDataProvider: aCompleteNodeTreeDataProvider() }, { enableProposedApi: true } as IExtensionDescription);
+		const expected = {
+			item: { handle: '0/0:a/0:aa', label: { label: 'aa' }, collapsibleState: TreeItemCollapsibleState.None, parentHandle: '0/0:a' },
+			parentChain: [{ handle: '0/0:a', label: { label: 'a' }, collapsibleState: TreeItemCollapsibleState.Collapsed }]
+		};
 		return testObject.$getChildren('treeDataProvider')
 			.then(() => testObject.$getChildren('treeDataProvider', '0/0:a'))
 			.then(() => treeView.reveal({ key: 'aa' })
 				.then(() => {
 					assert.ok(revealTarget.calledOnce);
 					assert.deepEqual('treeDataProvider', revealTarget.args[0][0]);
-					assert.deepEqual({ handle: '0/0:a/0:aa', label: { label: 'aa' }, collapsibleState: TreeItemCollapsibleState.None, parentHandle: '0/0:a' }, removeUnsetKeys(revealTarget.args[0][1]));
-					assert.deepEqual([{ handle: '0/0:a', label: { label: 'a' }, collapsibleState: TreeItemCollapsibleState.Collapsed }], (<Array<any>>revealTarget.args[0][2]).map(arg => removeUnsetKeys(arg)));
-					assert.deepEqual({ select: true, focus: false, expand: false }, revealTarget.args[0][3]);
+					assert.deepEqual(expected.item, removeUnsetKeys(revealTarget.args[0][1].item));
+					assert.deepEqual(expected.parentChain, (<Array<any>>(revealTarget.args[0][1].parentChain)).map(arg => removeUnsetKeys(arg)));
+					assert.deepEqual({ select: true, focus: false, expand: false }, revealTarget.args[0][2]);
 				}));
 	});
 
@@ -536,22 +548,30 @@ suite('ExtHostTreeView', function () {
 		};
 		const revealTarget = sinon.spy(target, '$reveal');
 		const treeView = testObject.createTreeView('treeDataProvider', { treeDataProvider: aCompleteNodeTreeDataProvider() }, { enableProposedApi: true } as IExtensionDescription);
+		const expected = {
+			item: { handle: '0/0:b/0:ba/0:bac', label: { label: 'bac' }, collapsibleState: TreeItemCollapsibleState.None, parentHandle: '0/0:b/0:ba' },
+			parentChain: [
+				{ handle: '0/0:b', label: { label: 'b' }, collapsibleState: TreeItemCollapsibleState.Collapsed },
+				{ handle: '0/0:b/0:ba', label: { label: 'ba' }, collapsibleState: TreeItemCollapsibleState.Collapsed, parentHandle: '0/0:b' }
+			]
+		};
 		return treeView.reveal({ key: 'bac' }, { select: false, focus: false, expand: false })
 			.then(() => {
 				assert.ok(revealTarget.calledOnce);
 				assert.deepEqual('treeDataProvider', revealTarget.args[0][0]);
-				assert.deepEqual({ handle: '0/0:b/0:ba/0:bac', label: { label: 'bac' }, collapsibleState: TreeItemCollapsibleState.None, parentHandle: '0/0:b/0:ba' }, removeUnsetKeys(revealTarget.args[0][1]));
-				assert.deepEqual([
-					{ handle: '0/0:b', label: { label: 'b' }, collapsibleState: TreeItemCollapsibleState.Collapsed },
-					{ handle: '0/0:b/0:ba', label: { label: 'ba' }, collapsibleState: TreeItemCollapsibleState.Collapsed, parentHandle: '0/0:b' }
-				], (<Array<any>>revealTarget.args[0][2]).map(arg => removeUnsetKeys(arg)));
-				assert.deepEqual({ select: false, focus: false, expand: false }, revealTarget.args[0][3]);
+				assert.deepEqual(expected.item, removeUnsetKeys(revealTarget.args[0][1].item));
+				assert.deepEqual(expected.parentChain, (<Array<any>>(revealTarget.args[0][1].parentChain)).map(arg => removeUnsetKeys(arg)));
+				assert.deepEqual({ select: false, focus: false, expand: false }, revealTarget.args[0][2]);
 			});
 	});
 
 	test('reveal after first udpate', () => {
 		const revealTarget = sinon.spy(target, '$reveal');
 		const treeView = testObject.createTreeView('treeDataProvider', { treeDataProvider: aCompleteNodeTreeDataProvider() }, { enableProposedApi: true } as IExtensionDescription);
+		const expected = {
+			item: { handle: '0/0:a/0:ac', label: { label: 'ac' }, collapsibleState: TreeItemCollapsibleState.None, parentHandle: '0/0:a' },
+			parentChain: [{ handle: '0/0:a', label: { label: 'a' }, collapsibleState: TreeItemCollapsibleState.Collapsed }]
+		};
 		return loadCompleteTree('treeDataProvider')
 			.then(() => {
 				tree = {
@@ -570,9 +590,9 @@ suite('ExtHostTreeView', function () {
 					.then(() => {
 						assert.ok(revealTarget.calledOnce);
 						assert.deepEqual('treeDataProvider', revealTarget.args[0][0]);
-						assert.deepEqual({ handle: '0/0:a/0:ac', label: { label: 'ac' }, collapsibleState: TreeItemCollapsibleState.None, parentHandle: '0/0:a' }, removeUnsetKeys(revealTarget.args[0][1]));
-						assert.deepEqual([{ handle: '0/0:a', label: { label: 'a' }, collapsibleState: TreeItemCollapsibleState.Collapsed }], (<Array<any>>revealTarget.args[0][2]).map(arg => removeUnsetKeys(arg)));
-						assert.deepEqual({ select: true, focus: false, expand: false }, revealTarget.args[0][3]);
+						assert.deepEqual(expected.item, removeUnsetKeys(revealTarget.args[0][1].item));
+						assert.deepEqual(expected.parentChain, (<Array<any>>(revealTarget.args[0][1].parentChain)).map(arg => removeUnsetKeys(arg)));
+						assert.deepEqual({ select: true, focus: false, expand: false }, revealTarget.args[0][2]);
 					});
 			});
 	});

@@ -31,7 +31,7 @@
 							"null"
 						]
 					},
-					"description": "Remote environment variables."
+					"description": "Remote environment variables. If these are used in the Integrated Terminal, make sure the 'Terminal > Integrated: Inherit Env' setting is enabled."
 				},
 				"remoteUser": {
 					"type": "string",

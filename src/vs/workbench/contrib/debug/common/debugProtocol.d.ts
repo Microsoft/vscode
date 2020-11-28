@@ -16,7 +16,7 @@ declare module DebugProtocol {
 		/** Message type.
 			Values: 'request', 'response', 'event', etc.
 		*/
-		type: string;
+		type: 'request' | 'response' | 'event' | string;
 	}
 
 	/** A client or debug adapter initiated request. */
@@ -56,7 +56,7 @@ declare module DebugProtocol {
 			'cancelled': request was cancelled.
 			etc.
 		*/
-		message?: string;
+		message?: 'cancelled' | string;
 		/** Contains request result if success is true and optional error details if success is false. */
 		body?: any;
 	}
@@ -129,7 +129,7 @@ declare module DebugProtocol {
 				For backward compatibility this string is shown in the UI if the 'description' attribute is missing (but it must not be translated).
 				Values: 'step', 'breakpoint', 'exception', 'pause', 'entry', 'goto', 'function breakpoint', 'data breakpoint', 'instruction breakpoint', etc.
 			*/
-			reason: string;
+			reason: 'step' | 'breakpoint' | 'exception' | 'pause' | 'entry' | 'goto' | 'function breakpoint' | 'data breakpoint' | 'instruction breakpoint' | string;
 			/** The full reason for the event, e.g. 'Paused on exception'. This string is shown in the UI as is and must be translated. */
 			description?: string;
 			/** The thread which was stopped. */
@@ -194,7 +194,7 @@ declare module DebugProtocol {
 			/** The reason for the event.
 				Values: 'started', 'exited', etc.
 			*/
-			reason: string;
+			reason: 'started' | 'exited' | string;
 			/** The identifier of the thread. */
 			threadId: number;
 		};
@@ -209,7 +209,7 @@ declare module DebugProtocol {
 			/** The output category. If not specified, 'console' is assumed.
 				Values: 'console', 'stdout', 'stderr', 'telemetry', etc.
 			*/
-			category?: string;
+			category?: 'console' | 'stdout' | 'stderr' | 'telemetry' | string;
 			/** The output to report. */
 			output: string;
 			/** Support for keeping an output log organized by grouping related messages.
@@ -221,7 +221,7 @@ declare module DebugProtocol {
 				A non empty 'output' attribute is shown as the unindented end of the group.
 			*/
 			group?: 'start' | 'startCollapsed' | 'end';
-			/** If an attribute 'variablesReference' exists and its value is > 0, the output contains objects which can be retrieved by passing 'variablesReference' to the 'variables' request. The value should be less than or equal to 2147483647 (2^31 - 1). */
+			/** If an attribute 'variablesReference' exists and its value is > 0, the output contains objects which can be retrieved by passing 'variablesReference' to the 'variables' request. The value should be less than or equal to 2147483647 (2^31-1). */
 			variablesReference?: number;
 			/** An optional source location where the output was produced. */
 			source?: Source;
@@ -243,7 +243,7 @@ declare module DebugProtocol {
 			/** The reason for the event.
 				Values: 'changed', 'new', 'removed', etc.
 			*/
-			reason: string;
+			reason: 'changed' | 'new' | 'removed' | string;
 			/** The 'id' attribute is used to find the target breakpoint and the other attributes are used as the new values. */
 			breakpoint: Breakpoint;
 		};
@@ -383,7 +383,7 @@ declare module DebugProtocol {
 	export interface InvalidatedEvent extends Event {
 		// event: 'invalidated';
 		body: {
-			/** Optional set of logical areas that got invalidated. If this property is missing or empty, a single value 'all' is assumed. */
+			/** Optional set of logical areas that got invalidated. This property has a hint characteristic: a client can only be expected to make a 'best effort' in honouring the areas but there are no guarantees. If this property is missing, empty, or if values are not understand the client should assume a single value 'all'. */
 			areas?: InvalidatedAreas[];
 			/** If specified, the client only needs to refetch data related to this thread. */
 			threadId?: number;
@@ -408,7 +408,7 @@ declare module DebugProtocol {
 		kind?: 'integrated' | 'external';
 		/** Optional title of the terminal. */
 		title?: string;
-		/** Working directory of the command. */
+		/** Working directory for the command. For non-empty, valid paths this typically results in execution of a change directory command. */
 		cwd: string;
 		/** List of arguments. The first argument is the command to run. */
 		args: string[];
@@ -419,9 +419,9 @@ declare module DebugProtocol {
 	/** Response to 'runInTerminal' request. */
 	export interface RunInTerminalResponse extends Response {
 		body: {
-			/** The process ID. The value should be less than or equal to 2147483647 (2^31 - 1). */
+			/** The process ID. The value should be less than or equal to 2147483647 (2^31-1). */
 			processId?: number;
-			/** The process ID of the terminal shell. The value should be less than or equal to 2147483647 (2^31 - 1). */
+			/** The process ID of the terminal shell. The value should be less than or equal to 2147483647 (2^31-1). */
 			shellProcessId?: number;
 		};
 	}
@@ -455,7 +455,7 @@ declare module DebugProtocol {
 		/** Determines in what format paths are specified. The default is 'path', which is the native format.
 			Values: 'path', 'uri', etc.
 		*/
-		pathFormat?: string;
+		pathFormat?: 'path' | 'uri' | string;
 		/** Client supports the optional type attribute for variables. */
 		supportsVariableType?: boolean;
 		/** Client supports the paging of variables. */
@@ -712,8 +712,10 @@ declare module DebugProtocol {
 
 	/** Arguments for 'setExceptionBreakpoints' request. */
 	export interface SetExceptionBreakpointsArguments {
-		/** IDs of checked exception options. The set of IDs is returned via the 'exceptionBreakpointFilters' capability. */
+		/** Set of exception filters specified by their ID. The set of all possible exception filters is defined by the 'exceptionBreakpointFilters' capability. The 'filter' and 'filterOptions' sets are additive. */
 		filters: string[];
+		/** Set of exception filters and their options. The set of all possible exception filters is defined by the 'exceptionBreakpointFilters' capability. This attribute is only honored by a debug adapter if the capability 'supportsExceptionFilterOptions' is true. The 'filter' and 'filterOptions' sets are additive. */
+		filterOptions?: ExceptionFilterOptions[];
 		/** Configuration options for selected exceptions.
 			The attribute is only honored by a debug adapter if the capability 'supportsExceptionOptions' is true.
 		*/
@@ -1009,7 +1011,8 @@ declare module DebugProtocol {
 	}
 
 	/** StackTrace request; value of command field is 'stackTrace'.
-		The request returns a stacktrace from the current execution state.
+		The request returns a stacktrace from the current execution state of a given thread.
+		A client can request all stack frames by omitting the startFrame and levels arguments. For performance conscious clients stack frames can be retrieved in a piecemeal way with the startFrame and levels arguments. The response of the stackTrace request may contain a totalFrames property that hints at the total number of frames in the stack. If a client needs this total number upfront, it can issue a request for a single (first) frame and depending on the value of totalFrames decide how to proceed. In any case a client should be prepared to receive less frames than requested, which is an indication that the end of the stack has been reached.
 	*/
 	export interface StackTraceRequest extends Request {
 		// command: 'stackTrace';
@@ -1037,7 +1040,7 @@ declare module DebugProtocol {
 				This means that there is no location information available.
 			*/
 			stackFrames: StackFrame[];
-			/** The total number of frames available. */
+			/** The total number of frames available in the stack. If omitted or if totalFrames is larger than the available frames, a client is expected to request frames until a request returns less frames than requested (which indicates the end of the stack). Returning monotonically increasing totalFrames values for subsequent requests can be used to enforce paging in the client. */
 			totalFrames?: number;
 		};
 	}
@@ -1125,17 +1128,17 @@ declare module DebugProtocol {
 			/** The type of the new value. Typically shown in the UI when hovering over the value. */
 			type?: string;
 			/** If variablesReference is > 0, the new value is structured and its children can be retrieved by passing variablesReference to the VariablesRequest.
-				The value should be less than or equal to 2147483647 (2^31 - 1).
+				The value should be less than or equal to 2147483647 (2^31-1).
 			*/
 			variablesReference?: number;
 			/** The number of named child variables.
 				The client can use this optional information to present the variables in a paged UI and fetch them in chunks.
-				The value should be less than or equal to 2147483647 (2^31 - 1).
+				The value should be less than or equal to 2147483647 (2^31-1).
 			*/
 			namedVariables?: number;
 			/** The number of indexed child variables.
 				The client can use this optional information to present the variables in a paged UI and fetch them in chunks.
-				The value should be less than or equal to 2147483647 (2^31 - 1).
+				The value should be less than or equal to 2147483647 (2^31-1).
 			*/
 			indexedVariables?: number;
 		};
@@ -1275,7 +1278,7 @@ declare module DebugProtocol {
 			The attribute is only honored by a debug adapter if the capability 'supportsClipboardContext' is true.
 			etc.
 		*/
-		context?: string;
+		context?: 'watch' | 'repl' | 'hover' | 'clipboard' | string;
 		/** Specifies details on how to format the Evaluate result.
 			The attribute is only honored by a debug adapter if the capability 'supportsValueFormattingOptions' is true.
 		*/
@@ -1294,17 +1297,17 @@ declare module DebugProtocol {
 			/** Properties of a evaluate result that can be used to determine how to render the result in the UI. */
 			presentationHint?: VariablePresentationHint;
 			/** If variablesReference is > 0, the evaluate result is structured and its children can be retrieved by passing variablesReference to the VariablesRequest.
-				The value should be less than or equal to 2147483647 (2^31 - 1).
+				The value should be less than or equal to 2147483647 (2^31-1).
 			*/
 			variablesReference: number;
 			/** The number of named child variables.
 				The client can use this optional information to present the variables in a paged UI and fetch them in chunks.
-				The value should be less than or equal to 2147483647 (2^31 - 1).
+				The value should be less than or equal to 2147483647 (2^31-1).
 			*/
 			namedVariables?: number;
 			/** The number of indexed child variables.
 				The client can use this optional information to present the variables in a paged UI and fetch them in chunks.
-				The value should be less than or equal to 2147483647 (2^31 - 1).
+				The value should be less than or equal to 2147483647 (2^31-1).
 			*/
 			indexedVariables?: number;
 			/** Optional memory reference to a location appropriate for this result.
@@ -1349,17 +1352,17 @@ declare module DebugProtocol {
 			/** Properties of a value that can be used to determine how to render the result in the UI. */
 			presentationHint?: VariablePresentationHint;
 			/** If variablesReference is > 0, the value is structured and its children can be retrieved by passing variablesReference to the VariablesRequest.
-				The value should be less than or equal to 2147483647 (2^31 - 1).
+				The value should be less than or equal to 2147483647 (2^31-1).
 			*/
 			variablesReference?: number;
 			/** The number of named child variables.
 				The client can use this optional information to present the variables in a paged UI and fetch them in chunks.
-				The value should be less than or equal to 2147483647 (2^31 - 1).
+				The value should be less than or equal to 2147483647 (2^31-1).
 			*/
 			namedVariables?: number;
 			/** The number of indexed child variables.
 				The client can use this optional information to present the variables in a paged UI and fetch them in chunks.
-				The value should be less than or equal to 2147483647 (2^31 - 1).
+				The value should be less than or equal to 2147483647 (2^31-1).
 			*/
 			indexedVariables?: number;
 		};
@@ -1556,7 +1559,7 @@ declare module DebugProtocol {
 		supportsHitConditionalBreakpoints?: boolean;
 		/** The debug adapter supports a (side effect free) evaluate request for data hovers. */
 		supportsEvaluateForHovers?: boolean;
-		/** Available filters or options for the setExceptionBreakpoints request. */
+		/** Available exception filter options for the 'setExceptionBreakpoints' request. */
 		exceptionBreakpointFilters?: ExceptionBreakpointsFilter[];
 		/** The debug adapter supports stepping back via the 'stepBack' and 'reverseContinue' requests. */
 		supportsStepBack?: boolean;
@@ -1616,16 +1619,20 @@ declare module DebugProtocol {
 		supportsSteppingGranularity?: boolean;
 		/** The debug adapter supports adding breakpoints based on instruction references. */
 		supportsInstructionBreakpoints?: boolean;
+		/** The debug adapter supports 'filterOptions' as an argument on the 'setExceptionBreakpoints' request. */
+		supportsExceptionFilterOptions?: boolean;
 	}
 
-	/** An ExceptionBreakpointsFilter is shown in the UI as an option for configuring how exceptions are dealt with. */
+	/** An ExceptionBreakpointsFilter is shown in the UI as an filter option for configuring how exceptions are dealt with. */
 	export interface ExceptionBreakpointsFilter {
-		/** The internal ID of the filter. This value is passed to the setExceptionBreakpoints request. */
+		/** The internal ID of the filter option. This value is passed to the 'setExceptionBreakpoints' request. */
 		filter: string;
-		/** The name of the filter. This will be shown in the UI. */
+		/** The name of the filter option. This will be shown in the UI. */
 		label: string;
-		/** Initial value of the filter. If not specified a value 'false' is assumed. */
+		/** Initial value of the filter option. If not specified a value 'false' is assumed. */
 		default?: boolean;
+		/** Controls whether a condition can be specified for this filter option. If false or missing, a condition can not be set. */
+		supportsCondition?: boolean;
 	}
 
 	/** A structured message object. Used to return errors from requests. */
@@ -1730,7 +1737,7 @@ declare module DebugProtocol {
 		path?: string;
 		/** If sourceReference > 0 the contents of the source must be retrieved through the SourceRequest (even if a path is specified).
 			A sourceReference is only valid for a session, so it must not be used to persist a source.
-			The value should be less than or equal to 2147483647 (2^31 - 1).
+			The value should be less than or equal to 2147483647 (2^31-1).
 		*/
 		sourceReference?: number;
 		/** An optional hint for how to present the source in the UI.
@@ -1788,7 +1795,7 @@ declare module DebugProtocol {
 			'registers': Scope contains registers. Only a single 'registers' scope should be returned from a 'scopes' request.
 			etc.
 		*/
-		presentationHint?: string;
+		presentationHint?: 'arguments' | 'locals' | 'registers' | string;
 		/** The variables of this scope can be retrieved by passing the value of variablesReference to the VariablesRequest. */
 		variablesReference: number;
 		/** The number of named variables in this scope.
@@ -1867,7 +1874,7 @@ declare module DebugProtocol {
 			'dataBreakpoint': Indicates that a data breakpoint is registered for the object.
 			etc.
 		*/
-		kind?: string;
+		kind?: 'property' | 'method' | 'class' | 'data' | 'event' | 'baseClass' | 'innerClass' | 'interface' | 'mostDerivedClass' | 'virtual' | 'dataBreakpoint' | string;
 		/** Set of attributes represented as an array of strings. Before introducing additional values, try to use the listed values.
 			Values:
 			'static': Indicates that the object is static.
@@ -1879,11 +1886,11 @@ declare module DebugProtocol {
 			'hasSideEffects': Indicates that the evaluation had side effects.
 			etc.
 		*/
-		attributes?: string[];
+		attributes?: ('static' | 'constant' | 'readOnly' | 'rawString' | 'hasObjectId' | 'canHaveObjectId' | 'hasSideEffects' | string)[];
 		/** Visibility of variable. Before introducing additional values, try to use the listed values.
 			Values: 'public', 'private', 'protected', 'internal', 'final', etc.
 		*/
-		visibility?: string;
+		visibility?: 'public' | 'private' | 'protected' | 'internal' | 'final' | string;
 	}
 
 	/** Properties of a breakpoint location returned from the 'breakpointLocations' request. */
@@ -2108,6 +2115,16 @@ declare module DebugProtocol {
 		includeAll?: boolean;
 	}
 
+	/** An ExceptionFilterOptions is used to specify an exception filter together with a condition for the setExceptionsFilter request. */
+	export interface ExceptionFilterOptions {
+		/** ID of an exception filter returned by the 'exceptionBreakpointFilters' capability. */
+		filterId: string;
+		/** An optional expression for conditional exceptions.
+			The exception will break into the debugger if the result of the condition is true.
+		*/
+		condition?: string;
+	}
+
 	/** An ExceptionOptions assigns configuration options to a set of exceptions. */
 	export interface ExceptionOptions {
 		/** A path that selects a single or multiple exceptions in a tree. If 'path' is missing, the whole tree is selected.
@@ -2179,11 +2196,13 @@ declare module DebugProtocol {
 	}
 
 	/** Logical areas that can be invalidated by the 'invalidated' event.
+		Values:
 		'all': All previously fetched data has become invalid and needs to be refetched.
 		'stacks': Previously fetched stack related data has become invalid and needs to be refetched.
 		'threads': Previously fetched thread related data has become invalid and needs to be refetched.
 		'variables': Previously fetched variable data has become invalid and needs to be refetched.
+		etc.
 	*/
-	export type InvalidatedAreas = 'all' | 'stacks' | 'threads' | 'variables';
+	export type InvalidatedAreas = 'all' | 'stacks' | 'threads' | 'variables' | string;
 }
 

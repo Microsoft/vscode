@@ -50,7 +50,7 @@ class DiffEditorHelperContribution extends Disposable implements IDiffEditorCont
 					[{
 						label: nls.localize('removeTimeout', "Remove limit"),
 						run: () => {
-							this._configurationService.updateValue('diffEditor.maxComputationTime', 0, ConfigurationTarget.USER);
+							this._configurationService.updateValue('diffEditor.maxComputationTime', 0);
 						}
 					}],
 					{}

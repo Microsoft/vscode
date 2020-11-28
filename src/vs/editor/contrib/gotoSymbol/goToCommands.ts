@@ -162,6 +162,9 @@ abstract class SymbolNavigationAction extends EditorAction {
 		if (!range) {
 			range = reference.range;
 		}
+		if (!range) {
+			return undefined;
+		}
 
 		const targetEditor = await editorService.openCodeEditor({
 			resource: reference.uri,

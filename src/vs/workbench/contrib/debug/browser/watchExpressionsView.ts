@@ -30,8 +30,9 @@ import { IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
 import { dispose } from 'vs/base/common/lifecycle';
 import { IViewDescriptorService } from 'vs/workbench/common/views';
 import { IOpenerService } from 'vs/platform/opener/common/opener';
-import { IThemeService } from 'vs/platform/theme/common/themeService';
+import { IThemeService, ThemeIcon } from 'vs/platform/theme/common/themeService';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
+import { debugCollapseAll } from 'vs/workbench/contrib/debug/browser/debugIcons';
 
 const MAX_VALUE_RENDER_LENGTH_IN_VIEWLET = 1024;
 let ignoreViewUpdates = false;
@@ -160,7 +161,7 @@ export class WatchExpressionsView extends ViewPane {
 	getActions(): IAction[] {
 		return [
 			new AddWatchExpressionAction(AddWatchExpressionAction.ID, AddWatchExpressionAction.LABEL, this.debugService, this.keybindingService),
-			new CollapseAction(() => this.tree, true, 'explorer-action codicon-collapse-all'),
+			new CollapseAction(() => this.tree, true, 'explorer-action ' + ThemeIcon.asClassName(debugCollapseAll)),
 			new RemoveAllWatchExpressionsAction(RemoveAllWatchExpressionsAction.ID, RemoveAllWatchExpressionsAction.LABEL, this.debugService, this.keybindingService)
 		];
 	}

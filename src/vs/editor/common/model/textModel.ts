@@ -387,6 +387,9 @@ export class TextModel extends Disposable implements model.ITextModel {
 		this._isDisposed = true;
 		super.dispose();
 		this._isDisposing = false;
+		// Manually release reference to previous text buffer to avoid large leaks
+		// in case someone leaks a TextModel reference
+		this._buffer = createTextBuffer('', this._options.defaultEOL);
 	}
 
 	private _assertNotDisposed(): void {
@@ -828,6 +831,15 @@ export class TextModel extends Disposable implements model.ITextModel {
 	public getEOL(): string {
 		this._assertNotDisposed();
 		return this._buffer.getEOL();
+	}
+
+	public getEndOfLineSequence(): model.EndOfLineSequence {
+		this._assertNotDisposed();
+		return (
+			this._buffer.getEOL() === '\n'
+				? model.EndOfLineSequence.LF
+				: model.EndOfLineSequence.CRLF
+		);
 	}
 
 	public getLineMinColumn(lineNumber: number): number {

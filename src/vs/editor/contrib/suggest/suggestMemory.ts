@@ -82,8 +82,7 @@ export class LRUMemory extends Memory {
 	private _seq = 0;
 
 	memorize(model: ITextModel, pos: IPosition, item: CompletionItem): void {
-		const { label } = item.completion;
-		const key = `${model.getLanguageIdentifier().language}/${label}`;
+		const key = `${model.getLanguageIdentifier().language}/${item.textLabel}`;
 		this._cache.set(key, {
 			touch: this._seq++,
 			type: item.completion.kind,
@@ -111,7 +110,7 @@ export class LRUMemory extends Memory {
 				// consider only top items
 				break;
 			}
-			const key = `${model.getLanguageIdentifier().language}/${items[i].completion.label}`;
+			const key = `${model.getLanguageIdentifier().language}/${items[i].textLabel}`;
 			const item = this._cache.peek(key);
 			if (item && item.touch > seq && item.type === items[i].completion.kind && item.insertText === items[i].completion.insertText) {
 				seq = item.touch;
@@ -295,7 +294,7 @@ export class SuggestMemoryService implements ISuggestMemoryService {
 			const share = this._configService.getValue<boolean>('editor.suggest.shareSuggestSelections');
 			const scope = share ? StorageScope.GLOBAL : StorageScope.WORKSPACE;
 			const raw = JSON.stringify(this._strategy);
-			this._storageService.store2(`${SuggestMemoryService._storagePrefix}/${this._strategy.name}`, raw, scope, StorageTarget.MACHINE);
+			this._storageService.store(`${SuggestMemoryService._storagePrefix}/${this._strategy.name}`, raw, scope, StorageTarget.MACHINE);
 		}
 	}
 }

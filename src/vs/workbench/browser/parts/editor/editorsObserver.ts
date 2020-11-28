@@ -339,7 +339,7 @@ export class EditorsObserver extends Disposable {
 		if (this.mostRecentEditorsMap.isEmpty()) {
 			this.storageService.remove(EditorsObserver.STORAGE_KEY, StorageScope.WORKSPACE);
 		} else {
-			this.storageService.store2(EditorsObserver.STORAGE_KEY, JSON.stringify(this.serialize()), StorageScope.WORKSPACE, StorageTarget.MACHINE);
+			this.storageService.store(EditorsObserver.STORAGE_KEY, JSON.stringify(this.serialize()), StorageScope.WORKSPACE, StorageTarget.MACHINE);
 		}
 	}
 

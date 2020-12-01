@@ -11,9 +11,8 @@ schedules:
 resources:
   containers:
     - container: vscode-x64
-      image: vscodehub.azurecr.io/vscode-linux-build-agent:bionic
+      image: vscodehub.azurecr.io/vscode-linux-build-agent:x64
       endpoint: VSCodeHub
-      options: --user 0:0
     - container: vscode-arm64
       image: vscodehub.azurecr.io/vscode-linux-build-agent:stretch-arm64
       endpoint: VSCodeHub
@@ -28,8 +27,10 @@ stages:
     jobs:
       - job: Compile
         pool:
-          vmImage: "Ubuntu-18.04"
+          vmImage: "Ubuntu-16.04"
         container: vscode-x64
+        variables:
+          VSCODE_ARCH: x64
         steps:
           - template: product-compile.yml
 
@@ -69,7 +70,7 @@ stages:
       - Compile
     condition: and(succeeded(), eq(variables['VSCODE_COMPILE_ONLY'], 'false'))
     pool:
-      vmImage: "Ubuntu-18.04"
+      vmImage: "Ubuntu-16.04"
     jobs:
       - job: Linux
         condition: and(succeeded(), eq(variables['VSCODE_BUILD_LINUX'], 'true'))
@@ -178,7 +179,7 @@ stages:
       - macOSARM64
     condition: and(succeededOrFailed(), eq(variables['VSCODE_COMPILE_ONLY'], 'false'))
     pool:
-      vmImage: "Ubuntu-18.04"
+      vmImage: "Ubuntu-16.04"
     jobs:
       - job: SyncMooncake
         displayName: Sync Mooncake
@@ -193,7 +194,7 @@ stages:
       - macOSARM64
     condition: and(succeeded(), eq(variables['VSCODE_COMPILE_ONLY'], 'false'), or(eq(variables['VSCODE_RELEASE'], 'true'), and(or(eq(variables['VSCODE_QUALITY'], 'insider'), eq(variables['VSCODE_QUALITY'], 'exploration')), eq(variables['Build.Reason'], 'Schedule'))))
     pool:
-      vmImage: "Ubuntu-18.04"
+      vmImage: "Ubuntu-16.04"
     jobs:
       - job: BuildService
         displayName: Build Service

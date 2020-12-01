@@ -75,7 +75,7 @@ export class ElectronIframeWebview extends IFrameWebview {
 
 	protected createElement(options: WebviewOptions, contentOptions: WebviewContentOptions) {
 		const element = super.createElement(options, contentOptions);
-		this._elementFocusImpl = element.focus.bind(element);
+		this._elementFocusImpl = () => element.contentWindow?.focus();
 		element.focus = () => {
 			this.doFocus();
 		};

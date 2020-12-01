@@ -15,6 +15,7 @@ import { IProductService } from 'vs/platform/product/common/productService';
 import { memoize } from 'vs/base/common/decorators';
 import { onUnexpectedError } from 'vs/base/common/errors';
 import { parseLineAndColumnAware } from 'vs/base/common/extpath';
+import { LogLevelToString } from 'vs/platform/log/common/log';
 
 class BrowserWorkbenchConfiguration implements IWindowConfiguration {
 
@@ -114,7 +115,8 @@ export class BrowserWorkbenchEnvironmentService implements IWorkbenchEnvironment
 	@memoize
 	get logsPath(): string { return this.options.logsPath.path; }
 
-	get logLevel(): string | undefined { return this.payload?.get('logLevel'); }
+	@memoize
+	get logLevel(): string | undefined { return this.payload?.get('logLevel') || (this.options.logLevel !== undefined ? LogLevelToString(this.options.logLevel) : undefined); }
 
 	@memoize
 	get logFile(): URI { return joinPath(this.options.logsPath, 'window.log'); }

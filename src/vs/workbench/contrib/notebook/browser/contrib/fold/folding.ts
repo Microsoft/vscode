@@ -116,7 +116,7 @@ export class FoldingController extends Disposable implements INotebookEditorCont
 
 		const target = e.event.target as HTMLElement;
 
-		if (target.classList.contains('codicon-chevron-down') || target.classList.contains('codicon-chevron-right')) {
+		if (target.classList.contains('codicon-notebook-collapsed') || target.classList.contains('codicon-notebook-expanded')) {
 			const parent = target.parentElement as HTMLElement;
 
 			if (!parent.classList.contains('notebook-folding-indicator')) {

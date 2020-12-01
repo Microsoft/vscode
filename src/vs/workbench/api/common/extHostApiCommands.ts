@@ -312,6 +312,18 @@ const newCommands: ApiCommand[] = [
 		ApiCommandResult.Void
 	),
 	new ApiCommand(
+		'vscode.openWith', '_workbench.openWith', 'Opens the provided resource with a specific editor.',
+		[
+			ApiCommandArgument.Uri.with('resource', 'Resource to open'),
+			ApiCommandArgument.String.with('viewId', 'Custom editor view id or \'default\' to use VS Code\'s default editor'),
+			new ApiCommandArgument<vscode.ViewColumn | typeConverters.TextEditorOpenOptions | undefined, [number?, ITextEditorOptions?] | undefined>('columnOrOptions', 'Either the column in which to open or editor options, see vscode.TextDocumentShowOptions',
+				v => v === undefined || typeof v === 'number' || typeof v === 'object',
+				v => !v ? v : typeof v === 'number' ? [v, undefined] : [typeConverters.ViewColumn.from(v.viewColumn), typeConverters.TextEditorOpenOptions.from(v)],
+			).optional()
+		],
+		ApiCommandResult.Void
+	),
+	new ApiCommand(
 		'vscode.diff', '_workbench.diff', 'Opens the provided resources in the diff editor to compare their contents.',
 		[
 			ApiCommandArgument.Uri.with('left', 'Left-hand side resource of the diff editor'),

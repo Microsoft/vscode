@@ -5,7 +5,7 @@
 
 import { LanguageModelCache, getLanguageModelCache } from '../languageModelCache';
 import { Stylesheet, LanguageService as CSSLanguageService } from 'vscode-css-languageservice';
-import { LanguageMode, Workspace, Color, TextDocument, Position, Range, CompletionList, DocumentContext } from './languageModes';
+import { LanguageMode, Workspace, Color, TextDocument, Position, Range, CompletionList, DocumentContext, Settings } from './languageModes';
 import { HTMLDocumentRegions, CSS_STYLE_RULE } from './embeddedSupport';
 
 export function getCSSMode(cssLanguageService: CSSLanguageService, documentRegions: LanguageModelCache<HTMLDocumentRegions>, workspace: Workspace): LanguageMode {
@@ -25,9 +25,9 @@ export function getCSSMode(cssLanguageService: CSSLanguageService, documentRegio
 			const stylesheet = cssStylesheets.get(embedded);
 			return cssLanguageService.doComplete2(embedded, position, stylesheet, documentContext) || CompletionList.create();
 		},
-		async doHover(document: TextDocument, position: Position) {
+		async doHover(document: TextDocument, position: Position, settings?: Settings) {
 			let embedded = embeddedCSSDocuments.get(document);
-			return cssLanguageService.doHover(embedded, position, cssStylesheets.get(embedded));
+			return cssLanguageService.doHover(embedded, position, cssStylesheets.get(embedded), settings?.html?.hover);
 		},
 		async findDocumentHighlight(document: TextDocument, position: Position) {
 			let embedded = embeddedCSSDocuments.get(document);

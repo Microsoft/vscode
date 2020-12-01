@@ -1,7 +1,7 @@
 {
   "name": "code-oss-dev",
   "version": "1.52.0",
-  "distro": "19950a29d290a699141f8328af0c457dc0a9f204",
+  "distro": "9793eaebda7151620938b28371d118d9f1ce533a",
   "author": {
     "name": "Microsoft Corporation"
   },
@@ -55,12 +55,12 @@
     "https-proxy-agent": "^2.2.3",
     "iconv-lite-umd": "0.6.8",
     "jschardet": "2.2.1",
-    "keytar": "deepak1556/node-keytar#b36cc753e645ad72a39f8dd6348994e0c4f4905c",
+    "keytar": "7.2.0",
     "minimist": "^1.2.5",
     "native-is-elevated": "0.4.1",
     "native-keymap": "2.2.1",
     "native-watchdog": "1.3.0",
-    "node-pty": "0.10.0-beta18",
+    "node-pty": "0.10.0-beta17",
     "spdlog": "^0.11.1",
     "sudo-prompt": "9.1.1",
     "tas-client-umd": "0.1.2",
@@ -112,7 +112,7 @@
     "css-loader": "^3.2.0",
     "debounce": "^1.0.0",
     "deemon": "^1.4.0",
-    "electron": "11.0.2",
+    "electron": "9.3.5",
     "electron-rebuild": "2.0.3",
     "eslint": "6.8.0",
     "eslint-plugin-jsdoc": "^19.1.0",
@@ -191,7 +191,7 @@
     "url": "https://github.com/microsoft/vscode/issues"
   },
   "optionalDependencies": {
-    "vscode-windows-ca-certs": "^0.3.0",
+    "vscode-windows-ca-certs": "0.2.0",
     "vscode-windows-registry": "1.0.3",
     "windows-foreground-love": "0.2.0",
     "windows-mutex": "0.3.0",

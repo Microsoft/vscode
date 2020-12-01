@@ -993,11 +993,11 @@ export class NotebookService extends Disposable implements INotebookService, ICu
 		if (modelData) {
 			// delete editors and documents
 			const willRemovedEditors: INotebookEditor[] = [];
-			this._notebookEditors.forEach(editor => {
-				if (editor.textModel === modelData!.model) {
+			for (const editor of this._notebookEditors.values()) {
+				if (editor.textModel === modelData.model) {
 					willRemovedEditors.push(editor);
 				}
-			});
+			}
 
 			modelData.model.dispose();
 			modelData.dispose();

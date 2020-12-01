@@ -30,6 +30,9 @@
     "@types/minimatch": "^3.0.3",
     "@types/node": "^12.11.7"
   },
+  "resolutions": {
+    "which-pm/load-yaml-file/**/argparse": "1.0.9"
+  },
   "main": "./out/npmMain",
   "browser": "./dist/browser/npmBrowserMain",
   "activationEvents": [

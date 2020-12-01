@@ -12,7 +12,6 @@ import { CellDiffRenderTemplate, CellDiffViewModelLayoutChangeEvent, DIFF_CELL_M
 import { EDITOR_BOTTOM_PADDING } from 'vs/workbench/contrib/notebook/browser/constants';
 import { CodeEditorWidget } from 'vs/editor/browser/widget/codeEditorWidget';
 import { DiffEditorWidget } from 'vs/editor/browser/widget/diffEditorWidget';
-import { renderCodicons } from 'vs/base/browser/codicons';
 import { IModelService } from 'vs/editor/common/services/modelService';
 import { IModeService } from 'vs/editor/common/services/modeService';
 import { format } from 'vs/base/common/jsonFormatter';
@@ -29,6 +28,9 @@ import { createAndFillInActionBarActions } from 'vs/platform/actions/browser/men
 import { IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
 import { CodiconActionViewItem } from 'vs/workbench/contrib/notebook/browser/view/renderers/cellActionView';
 import { getEditorTopPadding } from 'vs/workbench/contrib/notebook/browser/notebookBrowser';
+import { ThemeIcon } from 'vs/platform/theme/common/themeService';
+import { collapsedIcon, expandedIcon } from 'vs/workbench/contrib/notebook/browser/notebookIcons';
+import { renderCodicons } from 'vs/base/browser/codicons';
 
 const fixedEditorOptions: IEditorOptions = {
 	padding: {
@@ -146,7 +148,7 @@ class PropertyHeader extends Disposable {
 
 			const target = e.event.target as HTMLElement;
 
-			if (target.classList.contains('codicon-chevron-down') || target.classList.contains('codicon-chevron-right')) {
+			if (target.classList.contains('codicon-notebook-collapsed') || target.classList.contains('codicon-notebook-expanded')) {
 				const parent = target.parentElement as HTMLElement;
 
 				if (!parent) {
@@ -198,9 +200,9 @@ class PropertyHeader extends Disposable {
 
 	private _updateFoldingIcon() {
 		if (this.accessor.getFoldingState(this.cell) === PropertyFoldingState.Collapsed) {
-			DOM.reset(this._foldingIndicator, ...renderCodicons('$(chevron-right)'));
+			DOM.reset(this._foldingIndicator, ...renderCodicons(ThemeIcon.asCodiconLabel(collapsedIcon)));
 		} else {
-			DOM.reset(this._foldingIndicator, ...renderCodicons('$(chevron-down)'));
+			DOM.reset(this._foldingIndicator, ...renderCodicons(ThemeIcon.asCodiconLabel(expandedIcon)));
 		}
 	}
 }

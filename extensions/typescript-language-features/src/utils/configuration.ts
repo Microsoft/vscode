@@ -79,7 +79,7 @@ export class ImplicitProjectConfiguration {
 	}
 
 	private static readImplicitStrictNullChecks(configuration: vscode.WorkspaceConfiguration): boolean {
-		return configuration.get<boolean>('js/ts.implicitProjectConfig.strictNullChecks', true);
+		return configuration.get<boolean>('js/ts.implicitProjectConfig.strictNullChecks', false);
 	}
 
 	private static readImplicitStrictFunctionTypes(configuration: vscode.WorkspaceConfiguration): boolean {

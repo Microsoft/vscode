@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<meta http-equiv="Content-Security-Policy" content="default-src 'none'; child-src 'self' data:; script-src 'unsafe-eval' 'sha256-O98pkmgtvUCQGVoddaGy891K52PVRnySDRxRszVLPNQ=' http: https:; connect-src http: https:" />
+		<meta http-equiv="Content-Security-Policy" content="default-src 'none'; child-src 'self' data:; script-src 'unsafe-eval' 'sha256-DhNBVT9y4y9LG937ZrEbN5CwALd+WSpQnG3z5u1MOFk=' http: https:; connect-src http: https:" />
 	</head>
 	<body>
 	<script>
@@ -25,14 +25,9 @@
 
 		worker.onmessage = (event) => {
 			const { data } = event;
-			if (!(data instanceof MessagePort)) {
-				console.warn('Unknown data received', event);
-				sendError({ name: 'Error', message: 'Unknown data received', stack: [] });
-				return;
-			}
 			window.parent.postMessage({
 				vscodeWebWorkerExtHostId,
-				data: data
+				data
 			}, '*', [data]);
 		};
 

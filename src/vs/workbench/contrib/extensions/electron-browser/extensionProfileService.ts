@@ -56,7 +56,7 @@ export class ExtensionHostProfileService extends Disposable implements IExtensio
 		this._profileSession = null;
 		this._setState(ProfileSessionState.None);
 
-		CommandsRegistry.registerCommand('workbench.action.extensionHostProfilder.stop', () => {
+		CommandsRegistry.registerCommand('workbench.action.extensionHostProfiler.stop', () => {
 			this.stopProfiling();
 			this._editorService.openEditor(RuntimeExtensionsInput.instance, { revealIfOpened: true, pinned: true });
 		});
@@ -86,7 +86,7 @@ export class ExtensionHostProfileService extends Disposable implements IExtensio
 				showProgress: true,
 				ariaLabel: nls.localize('profilingExtensionHost', "Profiling Extension Host"),
 				tooltip: nls.localize('selectAndStartDebug', "Click to stop profiling."),
-				command: 'workbench.action.extensionHostProfilder.stop'
+				command: 'workbench.action.extensionHostProfiler.stop'
 			};
 
 			const timeStarted = Date.now();

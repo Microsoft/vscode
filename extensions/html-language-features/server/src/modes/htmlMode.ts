@@ -8,7 +8,7 @@ import {
 	LanguageService as HTMLLanguageService, HTMLDocument, DocumentContext, FormattingOptions,
 	HTMLFormatConfiguration, SelectionRange,
 	TextDocument, Position, Range, FoldingRange,
-	LanguageMode, Workspace
+	LanguageMode, Workspace, Settings
 } from './languageModes';
 
 export function getHTMLMode(htmlLanguageService: HTMLLanguageService, workspace: Workspace): LanguageMode {
@@ -31,8 +31,8 @@ export function getHTMLMode(htmlLanguageService: HTMLLanguageService, workspace:
 			let completionList = htmlLanguageService.doComplete2(document, position, htmlDocument, documentContext, options);
 			return completionList;
 		},
-		async doHover(document: TextDocument, position: Position) {
-			return htmlLanguageService.doHover(document, position, htmlDocuments.get(document));
+		async doHover(document: TextDocument, position: Position, settings?: Settings) {
+			return htmlLanguageService.doHover(document, position, htmlDocuments.get(document), settings?.html?.hover);
 		},
 		async findDocumentHighlight(document: TextDocument, position: Position) {
 			return htmlLanguageService.findDocumentHighlights(document, position, htmlDocuments.get(document));
@@ -82,7 +82,7 @@ export function getHTMLMode(htmlLanguageService: HTMLLanguageService, workspace:
 		},
 		async doLinkedEditing(document: TextDocument, position: Position) {
 			const htmlDocument = htmlDocuments.get(document);
-			return htmlLanguageService.findOnTypeRenameRanges(document, position, htmlDocument);
+			return htmlLanguageService.findLinkedEditingRanges(document, position, htmlDocument);
 		},
 		dispose() {
 			htmlDocuments.dispose();

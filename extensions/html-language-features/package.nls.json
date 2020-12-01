@@ -29,5 +29,7 @@
 	"html.validate.styles": "Controls whether the built-in HTML language support validates embedded styles.",
 	"html.autoClosingTags": "Enable/disable autoclosing of HTML tags.",
 	"html.mirrorCursorOnMatchingTag": "Enable/disable mirroring cursor on matching HTML tag.",
-	"html.mirrorCursorOnMatchingTagDeprecationMessage": "Deprecated in favor of `editor.linkedEditing`"
+	"html.mirrorCursorOnMatchingTagDeprecationMessage": "Deprecated in favor of `editor.linkedEditing`",
+	"html.hover.documentation": "Show tag and attribute documentation in hover.",
+	"html.hover.references": "Show references to MDN in hover."
 }

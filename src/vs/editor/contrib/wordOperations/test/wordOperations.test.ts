@@ -90,7 +90,7 @@ suite('WordOperations', () => {
 		runEditorCommand(editor, _deleteWordEndRight);
 	}
 	function deleteInsideWord(editor: ICodeEditor): void {
-		runEditorCommand(editor, _deleteInsideWord);
+		_deleteInsideWord.run(null!, editor, null);
 	}
 
 	test('cursorWordLeft - simple', () => {

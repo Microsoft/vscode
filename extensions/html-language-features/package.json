@@ -187,6 +187,18 @@
           "default": true,
           "description": "%html.autoClosingTags%"
         },
+        "html.hover.documentation": {
+          "type": "boolean",
+          "scope": "resource",
+          "default": true,
+          "description": "%html.hover.documentation%"
+        },
+        "html.hover.references": {
+          "type": "boolean",
+          "scope": "resource",
+          "default": true,
+          "description": "%html.hover.references%"
+        },
         "html.mirrorCursorOnMatchingTag": {
           "type": "boolean",
           "scope": "resource",
@@ -229,7 +241,7 @@
   "dependencies": {
     "vscode-extension-telemetry": "0.1.1",
     "vscode-languageclient": "7.0.0-next.5.1",
-    "vscode-nls": "^4.1.2"
+    "vscode-nls": "^5.0.0"
   },
   "devDependencies": {
     "@types/node": "^12.11.7"

@@ -163,7 +163,7 @@ export class NotebookTextDiffEditor extends EditorPane implements INotebookTextD
 				return;
 			}
 
-			if (e.contains(this._model!.modified.resource)) {
+			if (e.contains(this._model.modified.resource)) {
 				if (this._model.modified.isDirty()) {
 					return;
 				}
@@ -179,7 +179,7 @@ export class NotebookTextDiffEditor extends EditorPane implements INotebookTextD
 				}
 			}
 
-			if (e.contains(this._model!.original.resource)) {
+			if (e.contains(this._model.original.resource)) {
 				if (this._model.original.isDirty()) {
 					return;
 				}
@@ -328,7 +328,7 @@ export class NotebookTextDiffEditor extends EditorPane implements INotebookTextD
 
 	layoutNotebookCell(cell: CellDiffViewModel, height: number) {
 		const relayout = (cell: CellDiffViewModel, height: number) => {
-			const viewIndex = this._list!.indexOf(cell);
+			const viewIndex = this._list.indexOf(cell);
 
 			this._list?.updateElementHeight(viewIndex, height);
 		};

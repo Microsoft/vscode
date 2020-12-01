@@ -43,7 +43,7 @@ export const content: GettingStartedContent = [
 					title: localize('pickColorTask.title', "Color Theme"),
 					button: { title: localize('pickColorTask.button', "Find a Theme"), command: 'workbench.action.selectTheme' },
 					doneOn: { eventFired: 'themeSelected' },
-					media: 'Square.png'
+					media: 'ColorTheme.jpg'
 				},
 
 				{
@@ -55,7 +55,7 @@ export const content: GettingStartedContent = [
 						command: 'workbench.extensions.action.showRecommendedKeymapExtensions'
 					},
 					doneOn: { commandExecuted: 'workbench.extensions.action.showRecommendedKeymapExtensions' },
-					media: 'Tall.png',
+					media: 'Extensions.jpg',
 				},
 
 				{
@@ -67,7 +67,7 @@ export const content: GettingStartedContent = [
 						command: 'workbench.extensions.action.showLanguageExtensions',
 					},
 					doneOn: { commandExecuted: 'workbench.extensions.action.showLanguageExtensions' },
-					media: 'Short.png',
+					media: 'Languages.jpg',
 				},
 
 				{
@@ -80,7 +80,7 @@ export const content: GettingStartedContent = [
 						command: 'workbench.action.files.openFileFolder'
 					},
 					doneOn: { commandExecuted: 'workbench.action.files.openFileFolder' },
-					media: 'Square.png'
+					media: 'OpenFolder.jpg'
 				},
 
 				{
@@ -93,7 +93,7 @@ export const content: GettingStartedContent = [
 						command: 'workbench.action.files.openFolder'
 					},
 					doneOn: { commandExecuted: 'workbench.action.files.openFolder' },
-					media: 'Square.png'
+					media: 'OpenFolder.png'
 				}
 			]
 		}

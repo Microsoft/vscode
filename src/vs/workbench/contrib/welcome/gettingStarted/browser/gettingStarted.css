@@ -8,11 +8,11 @@
 	background-image: url('../../../../browser/media/code-icon.svg');
 }
 
-
 .monaco-workbench .part.editor > .content .walkThroughContent .gettingStartedContainer .gettingStartedSlide {
 	width: 100%;
+	height: 100%;
 	position: absolute;
-	transition: left 0.25s;
+	transition: left 0.25s, opacity 0.25s;
 	left: 0;
 }
 
@@ -58,7 +58,7 @@
 
 .monaco-workbench .part.editor > .content .walkThroughContent .gettingStartedContainer .gettingStartedSlide .getting-started-category {
 	width: 330px;
-	height: 100px;
+	min-height: 100px;
 	text-align: left;
 	display: flex;
 }
@@ -88,6 +88,7 @@
 
 .monaco-workbench .part.editor > .content .walkThroughContent .gettingStartedContainer .gettingStartedSlide.detail #getting-started-detail-columns {
 	display: flex;
+	height: 100%;
 	justify-content: center;
 	padding: 30px;
 }
@@ -153,6 +154,7 @@
 	width: 66%;
 	text-align: center;
 	padding: 35px;
+	margin-bottom: 50px;
 }
 
 .monaco-workbench .part.editor > .content .walkThroughContent .gettingStartedContainer button {
@@ -179,6 +181,7 @@
 	background-image: url('../../../../browser/media/code-icon.svg');
 	width: 75px;
 	height: 75px;
+	background-size: contain;
 	display: inline-block;
 	margin-right: 20px;
 }
@@ -217,14 +220,16 @@
 	position: absolute;
 	text-align: center;
 	bottom: 0;
-	width: 100%;
+	width: calc(100% - 40px);
 	margin-bottom: 20px;
 }
 
 .monaco-workbench .part.editor > .content .walkThroughContent .gettingStartedContainer .gettingStartedSlide.next {
 	left: 100%;
+	opacity: 0;
 }
 
 .monaco-workbench .part.editor > .content .walkThroughContent .gettingStartedContainer .gettingStartedSlide.prev {
 	left: -100%;
+	opacity: 0;
 }

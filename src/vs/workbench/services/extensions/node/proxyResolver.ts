@@ -498,7 +498,7 @@ async function readWindowsCaCertificates() {
 	const winCA = await import('vscode-windows-ca-certs');
 
 	let ders: any[] = [];
-	const store = new winCA.Crypt32();
+	const store = winCA();
 	try {
 		let der: any;
 		while (der = store.next()) {

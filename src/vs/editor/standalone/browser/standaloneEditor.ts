@@ -363,6 +363,7 @@ export function createMonacoEditorAPI(): typeof monaco.editor {
 		EditorOption: standaloneEnums.EditorOption,
 		EndOfLinePreference: standaloneEnums.EndOfLinePreference,
 		EndOfLineSequence: standaloneEnums.EndOfLineSequence,
+		InDiffEditorState: standaloneEnums.InDiffEditorState,
 		MinimapPosition: standaloneEnums.MinimapPosition,
 		MouseTargetType: standaloneEnums.MouseTargetType,
 		OverlayWidgetPositionPreference: standaloneEnums.OverlayWidgetPositionPreference,

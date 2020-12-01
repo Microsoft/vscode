@@ -337,14 +337,12 @@ class WelcomePage extends Disposable {
 			prodName.textContent = this.productService.nameLong;
 		}
 
-		const pageElement = container.querySelector('.welcomePage') as HTMLElement;
-		pageElement.classList.add(this.contextService.getWorkbenchState() === WorkbenchState.EMPTY ? 'empty-window' : 'none-empty-window');
-
 		recentlyOpened.then(({ workspaces }) => {
 			// Filter out the current workspace
 			workspaces = workspaces.filter(recent => !this.contextService.isCurrentWorkspace(isRecentWorkspace(recent) ? recent.workspace : recent.folderUri));
 			if (!workspaces.length) {
-				pageElement.classList.add('emptyRecent');
+				const recent = container.querySelector('.welcomePage') as HTMLElement;
+				recent.classList.add('emptyRecent');
 				return;
 			}
 			const ul = container.querySelector('.recent ul');

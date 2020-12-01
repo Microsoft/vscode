@@ -47,8 +47,7 @@ export class DiffEditorInput extends SideBySideEditorInput {
 			// relative path in case both sides have different parents and we
 			// compare file resources.
 			const fileResources = this.asFileResources();
-			if (fileResources && dirname(fileResources.original).path !== dirname(fileResources.modified).path
-			) {
+			if (fileResources && dirname(fileResources.original).path !== dirname(fileResources.modified).path) {
 				return `${this.labelService.getUriLabel(fileResources.original, { relative: true })} ↔ ${this.labelService.getUriLabel(fileResources.modified, { relative: true })}`;
 			}
 
@@ -64,8 +63,7 @@ export class DiffEditorInput extends SideBySideEditorInput {
 			// Pass the description of the modified side in case both original
 			// and modified input have the same parent and we compare file resources.
 			const fileResources = this.asFileResources();
-			if (fileResources && dirname(fileResources.original).path === dirname(fileResources.modified).path
-			) {
+			if (fileResources && dirname(fileResources.original).path === dirname(fileResources.modified).path) {
 				return this.modifiedInput.getDescription(verbosity);
 			}
 		}

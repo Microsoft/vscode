@@ -5,6 +5,7 @@
 
 import * as DOM from 'vs/base/browser/dom';
 import { CancellationToken } from 'vs/base/common/cancellation';
+import { diffMaps, diffSets } from 'vs/base/common/collections';
 import { Emitter } from 'vs/base/common/event';
 import { IRelativePattern } from 'vs/base/common/glob';
 import { combinedDisposable, Disposable, DisposableStore, dispose, IDisposable, IReference } from 'vs/base/common/lifecycle';
@@ -34,38 +35,6 @@ import { IWorkingCopyService } from 'vs/workbench/services/workingCopy/common/wo
 import { ExtHostContext, ExtHostNotebookShape, IExtHostContext, INotebookCellStatusBarEntryDto, INotebookDocumentsAndEditorsDelta, INotebookDocumentShowOptions, INotebookModelAddedData, MainContext, MainThreadNotebookShape, NotebookEditorRevealType, NotebookExtensionDescription } from '../common/extHost.protocol';
 
 class DocumentAndEditorState {
-	static ofSets<T>(before: Set<T>, after: Set<T>): { removed: T[], added: T[] } {
-		const removed: T[] = [];
-		const added: T[] = [];
-		before.forEach(element => {
-			if (!after.has(element)) {
-				removed.push(element);
-			}
-		});
-		after.forEach(element => {
-			if (!before.has(element)) {
-				added.push(element);
-			}
-		});
-		return { removed, added };
-	}
-
-	static ofMaps<K, V>(before: Map<K, V>, after: Map<K, V>): { removed: V[], added: V[] } {
-		const removed: V[] = [];
-		const added: V[] = [];
-		before.forEach((value, index) => {
-			if (!after.has(index)) {
-				removed.push(value);
-			}
-		});
-		after.forEach((value, index) => {
-			if (!before.has(index)) {
-				added.push(value);
-			}
-		});
-		return { removed, added };
-	}
-
 	static compute(before: DocumentAndEditorState | undefined, after: DocumentAndEditorState): INotebookDocumentsAndEditorsDelta {
 		if (!before) {
 			const apiEditors = [];
@@ -80,8 +49,8 @@ class DocumentAndEditorState {
 				visibleEditors: [...after.visibleEditors].map(editor => editor[0])
 			};
 		}
-		const documentDelta = DocumentAndEditorState.ofSets(before.documents, after.documents);
-		const editorDelta = DocumentAndEditorState.ofMaps(before.textEditors, after.textEditors);
+		const documentDelta = diffSets(before.documents, after.documents);
+		const editorDelta = diffMaps(before.textEditors, after.textEditors);
 		const addedAPIEditors = editorDelta.added.map(add => ({
 			id: add.getId(),
 			documentUri: add.uri!,
@@ -94,7 +63,7 @@ class DocumentAndEditorState {
 		// const oldActiveEditor = before.activeEditor !== after.activeEditor ? before.activeEditor : undefined;
 		const newActiveEditor = before.activeEditor !== after.activeEditor ? after.activeEditor : undefined;
 
-		const visibleEditorDelta = DocumentAndEditorState.ofMaps(before.visibleEditors, after.visibleEditors);
+		const visibleEditorDelta = diffMaps(before.visibleEditors, after.visibleEditors);
 
 		return {
 			addedDocuments: documentDelta.added.map((e: NotebookTextModel): INotebookModelAddedData => {

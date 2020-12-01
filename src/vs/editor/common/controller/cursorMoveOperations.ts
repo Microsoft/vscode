@@ -47,7 +47,7 @@ export class MoveOperations {
 	}
 
 	public static left(config: CursorConfiguration, model: ICursorSimpleModel, lineNumber: number, column: number): CursorPosition {
-		const pos = config.atomicSoftTabs
+		const pos = config.stickyTabStops
 			? MoveOperations.leftPositionAtomicSoftTabs(model, lineNumber, column, config.tabSize)
 			: MoveOperations.leftPosition(model, lineNumber, column);
 		return new CursorPosition(pos.lineNumber, pos.column, 0);
@@ -91,7 +91,7 @@ export class MoveOperations {
 	}
 
 	public static right(config: CursorConfiguration, model: ICursorSimpleModel, lineNumber: number, column: number): CursorPosition {
-		const pos = config.atomicSoftTabs
+		const pos = config.stickyTabStops
 			? MoveOperations.rightPositionAtomicSoftTabs(model, lineNumber, column, config.tabSize, config.indentSize)
 			: MoveOperations.rightPosition(model, lineNumber, column);
 		return new CursorPosition(pos.lineNumber, pos.column, 0);

@@ -90,7 +90,7 @@ suite('Native Modules (all platforms)', () => {
 	test('vscode-windows-ca-certs', async () => {
 		// @ts-ignore Windows only
 		const windowsCerts = await import('vscode-windows-ca-certs');
-		const store = new windowsCerts.Crypt32();
+		const store = windowsCerts();
 		assert.ok(windowsCerts, testErrorMessage('vscode-windows-ca-certs'));
 		let certCount = 0;
 		try {

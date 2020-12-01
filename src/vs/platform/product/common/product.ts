@@ -32,7 +32,6 @@ if (isWeb || typeof require === 'undefined' || typeof require.__$__nodeRequire !
 			extensionAllowedProposedApi: [
 				'ms-vscode.vscode-js-profile-flame',
 				'ms-vscode.vscode-js-profile-table',
-				'ms-vscode.references-view',
 				'ms-vscode.github-browser'
 			],
 		});

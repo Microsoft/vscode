@@ -4,8 +4,7 @@ steps:
       "$env:BUILD_SOURCEVERSION" | Out-File -Encoding ascii -NoNewLine .build\commit
       "$env:VSCODE_QUALITY" | Out-File -Encoding ascii -NoNewLine .build\quality
       "$env:ENABLE_TERRAPIN" | Out-File -Encoding ascii -NoNewLine .build\terrapin
-      "$env:VSCODE_ARCH" | Out-File -Encoding ascii -NoNewLine .build\arch
-    displayName: Prepare cache flag
+    displayName: Prepare compilation cache flags
 
   - task: 1ESLighthouseEng.PipelineArtifactCaching.RestoreCacheV1.RestoreCache@1
     inputs:
@@ -23,7 +22,7 @@ steps:
 
   - task: NodeTool@0
     inputs:
-      versionSpec: "12.18.3"
+      versionSpec: "12.14.1"
 
   - task: geeklearningio.gl-vsts-tasks-yarn.yarn-installer-task.YarnInstaller@2
     inputs:
@@ -62,6 +61,10 @@ steps:
     displayName: Switch to Terrapin packages
     timeoutInMinutes: 5
     condition: and(succeeded(), eq(variables['ENABLE_TERRAPIN'], 'true'))
+
+  - powershell: |
+      "$(VSCODE_ARCH)" | Out-File -Encoding ascii -NoNewLine .build\arch
+    displayName: Prepare yarn cache flags
 
   - task: 1ESLighthouseEng.PipelineArtifactCaching.RestoreCacheV1.RestoreCache@1
     inputs:
@@ -103,9 +106,9 @@ steps:
       . build/azure-pipelines/win32/exec.ps1
       $ErrorActionPreference = "Stop"
       $env:VSCODE_MIXIN_PASSWORD="$(github-distro-mixin-password)"
-      exec { yarn gulp "vscode-win32-$env:VSCODE_ARCH-min-ci" }
-      exec { yarn gulp "vscode-win32-$env:VSCODE_ARCH-code-helper" }
-      exec { yarn gulp "vscode-win32-$env:VSCODE_ARCH-inno-updater" }
+      exec { yarn gulp "vscode-win32-$(VSCODE_ARCH)-min-ci" }
+      exec { yarn gulp "vscode-win32-$(VSCODE_ARCH)-code-helper" }
+      exec { yarn gulp "vscode-win32-$(VSCODE_ARCH)-inno-updater" }
       echo "##vso[task.setvariable variable=CodeSigningFolderPath]$(agent.builddirectory)/VSCode-win32-$(VSCODE_ARCH)"
     displayName: Build
 
@@ -113,8 +116,8 @@ steps:
       . build/azure-pipelines/win32/exec.ps1
       $ErrorActionPreference = "Stop"
       $env:VSCODE_MIXIN_PASSWORD="$(github-distro-mixin-password)"
-      exec { yarn gulp "vscode-reh-win32-$env:VSCODE_ARCH-min-ci" }
-      exec { yarn gulp "vscode-reh-web-win32-$env:VSCODE_ARCH-min-ci" }
+      exec { yarn gulp "vscode-reh-win32-$(VSCODE_ARCH)-min-ci" }
+      exec { yarn gulp "vscode-reh-web-win32-$(VSCODE_ARCH)-min-ci" }
       echo "##vso[task.setvariable variable=CodeSigningFolderPath]$(CodeSigningFolderPath),$(agent.builddirectory)/vscode-reh-win32-$(VSCODE_ARCH)"
     displayName: Build Server
     condition: and(succeeded(), ne(variables['VSCODE_ARCH'], 'arm64'))

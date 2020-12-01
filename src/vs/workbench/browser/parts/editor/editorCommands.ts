@@ -480,13 +480,13 @@ function registerOpenEditorAPICommands(): void {
 		}, viewColumnToEditorGroup(editorGroupService, column));
 	});
 
-	CommandsRegistry.registerCommand(API_OPEN_WITH_EDITOR_COMMAND_ID, (accessor: ServicesAccessor, payload: [UriComponents, string, ITextEditorOptions | undefined, EditorGroupColumn | undefined]) => {
+	CommandsRegistry.registerCommand(API_OPEN_WITH_EDITOR_COMMAND_ID, (accessor: ServicesAccessor, resource: UriComponents, id: string, columnAndOptions?: [EditorGroupColumn?, ITextEditorOptions?]) => {
 		const editorService = accessor.get(IEditorService);
 		const editorGroupsService = accessor.get(IEditorGroupsService);
 		const configurationService = accessor.get(IConfigurationService);
 		const quickInputService = accessor.get(IQuickInputService);
 
-		const [resource, id, optionsArg, columnArg] = payload;
+		const [columnArg, optionsArg] = columnAndOptions ?? [];
 		let group: IEditorGroup | undefined = undefined;
 
 		if (columnArg === SIDE_GROUP) {

@@ -97,11 +97,6 @@
                     "default": 5000,
                     "description": "%json.maxItemsComputed.desc%"
                 },
-                "json.maxItemsExceededInformation": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "%json.maxItemsExceededInformation.desc%"
-                },
                 "json.schemaDownload.enable": {
                   "type": "boolean",
                   "default": true,
@@ -132,10 +127,10 @@
         ]
     },
     "dependencies": {
-        "request-light": "^0.3.0",
+        "request-light": "^0.4.0",
         "vscode-extension-telemetry": "0.1.1",
         "vscode-languageclient": "7.0.0-next.5.1",
-        "vscode-nls": "^4.1.2"
+        "vscode-nls": "^5.0.0"
     },
     "devDependencies": {
         "@types/node": "^12.11.7"

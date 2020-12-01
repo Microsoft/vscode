@@ -419,23 +419,43 @@ export function getLogLevel(environmentService: IEnvironmentService): LogLevel {
 		return LogLevel.Trace;
 	}
 	if (typeof environmentService.logLevel === 'string') {
-		const logLevel = environmentService.logLevel.toLowerCase();
-		switch (logLevel) {
-			case 'trace':
-				return LogLevel.Trace;
-			case 'debug':
-				return LogLevel.Debug;
-			case 'info':
-				return LogLevel.Info;
-			case 'warn':
-				return LogLevel.Warning;
-			case 'error':
-				return LogLevel.Error;
-			case 'critical':
-				return LogLevel.Critical;
-			case 'off':
-				return LogLevel.Off;
+		const logLevel = parseLogLevel(environmentService.logLevel.toLowerCase());
+		if (logLevel !== undefined) {
+			return logLevel;
 		}
 	}
 	return DEFAULT_LOG_LEVEL;
 }
+
+export function parseLogLevel(logLevel: string): LogLevel | undefined {
+	switch (logLevel) {
+		case 'trace':
+			return LogLevel.Trace;
+		case 'debug':
+			return LogLevel.Debug;
+		case 'info':
+			return LogLevel.Info;
+		case 'warn':
+			return LogLevel.Warning;
+		case 'error':
+			return LogLevel.Error;
+		case 'critical':
+			return LogLevel.Critical;
+		case 'off':
+			return LogLevel.Off;
+	}
+	return undefined;
+}
+
+export function LogLevelToString(logLevel: LogLevel): string {
+	switch (logLevel) {
+		case LogLevel.Trace: return 'trace';
+		case LogLevel.Debug: return 'debug';
+		case LogLevel.Info: return 'info';
+		case LogLevel.Warning: return 'warn';
+		case LogLevel.Error: return 'error';
+		case LogLevel.Critical: return 'critical';
+		case LogLevel.Off: return 'off';
+	}
+}
+

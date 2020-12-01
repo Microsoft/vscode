@@ -3,7 +3,6 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Codicon } from 'vs/base/common/codicons';
 import { IBulkEditService, ResourceTextEdit } from 'vs/editor/browser/services/bulkEditService';
 import { localize } from 'vs/nls';
 import { Action2, MenuId, registerAction2 } from 'vs/platform/actions/common/actions';
@@ -12,6 +11,7 @@ import { ActiveEditorContext, viewColumnToEditorGroup } from 'vs/workbench/commo
 import { CellDiffViewModel } from 'vs/workbench/contrib/notebook/browser/diff/celllDiffViewModel';
 import { NotebookTextDiffEditor } from 'vs/workbench/contrib/notebook/browser/diff/notebookTextDiffEditor';
 import { NotebookDiffEditorInput } from 'vs/workbench/contrib/notebook/browser/notebookDiffEditorInput';
+import { openAsTextIcon, revertIcon } from 'vs/workbench/contrib/notebook/browser/notebookIcons';
 import { IEditorGroupsService } from 'vs/workbench/services/editor/common/editorGroupsService';
 import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
 
@@ -21,7 +21,7 @@ registerAction2(class extends Action2 {
 	constructor() {
 		super({
 			id: 'notebook.diff.switchToText',
-			icon: Codicon.fileCode,
+			icon: openAsTextIcon,
 			title: { value: localize('notebook.diff.switchToText', "Open Text Diff Editor"), original: 'Open Text Diff Editor' },
 			precondition: ActiveEditorContext.isEqualTo(NotebookTextDiffEditor.ID),
 			menu: [{
@@ -57,7 +57,7 @@ registerAction2(class extends Action2 {
 			{
 				id: 'notebook.diff.cell.revertMetadata',
 				title: localize('notebook.diff.cell.revertMetadata', "Revert Metadata"),
-				icon: Codicon.discard,
+				icon: revertIcon,
 				f1: false,
 				menu: {
 					id: MenuId.NotebookDiffCellMetadataTitle
@@ -87,7 +87,7 @@ registerAction2(class extends Action2 {
 			{
 				id: 'notebook.diff.cell.revertOutputs',
 				title: localize('notebook.diff.cell.revertOutputs', "Revert Outputs"),
-				icon: Codicon.discard,
+				icon: revertIcon,
 				f1: false,
 				menu: {
 					id: MenuId.NotebookDiffCellOutputsTitle
@@ -117,7 +117,7 @@ registerAction2(class extends Action2 {
 			{
 				id: 'notebook.diff.cell.revertInput',
 				title: localize('notebook.diff.cell.revertInput', "Revert Input"),
-				icon: Codicon.discard,
+				icon: revertIcon,
 				f1: false,
 				menu: {
 					id: MenuId.NotebookDiffCellInputTitle

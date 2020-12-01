@@ -17,7 +17,7 @@ export function setup() {
 
 			await app.workbench.extensions.openExtensionsViewlet();
 
-			await app.workbench.extensions.installExtension('michelkaporin.vscode-smoketest-check');
+			await app.workbench.extensions.installExtension('michelkaporin.vscode-smoketest-check', true);
 
 			await app.workbench.extensions.waitForExtensionsViewlet();
 

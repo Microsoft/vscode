@@ -10,7 +10,7 @@ import { IEditorService } from 'vs/workbench/services/editor/common/editorServic
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { WalkThroughInput } from 'vs/workbench/contrib/welcome/walkThrough/browser/walkThroughInput';
 import { FileAccess, Schemas } from 'vs/base/common/network';
-import { IEditorInputFactory, EditorInput } from 'vs/workbench/common/editor';
+import { IEditorInputFactory } from 'vs/workbench/common/editor';
 import { Disposable, DisposableStore } from 'vs/base/common/lifecycle';
 import { IEditorOptions } from 'vs/platform/editor/common/editor';
 import { assertIsDefined } from 'vs/base/common/types';
@@ -28,8 +28,15 @@ import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 export const gettingStartedInputTypeId = 'workbench.editors.gettingStartedInput';
 const telemetryFrom = 'gettingStartedPage';
 
+export class GettingStartedInput extends WalkThroughInput {
+	static readonly ID = gettingStartedInputTypeId;
+
+	selectedCategory: string | undefined;
+	selectedTask: string | undefined;
+}
+
 export class GettingStartedPage extends Disposable {
-	readonly editorInput: WalkThroughInput;
+	readonly editorInput: GettingStartedInput;
 	private inProgressScroll = Promise.resolve();
 
 	private dispatchListeners = new DisposableStore();
@@ -37,16 +44,16 @@ export class GettingStartedPage extends Disposable {
 	private gettingStartedCategories: IGettingStartedCategoryWithProgress[];
 	private currentCategory: IGettingStartedCategoryWithProgress | undefined;
 
-
-
 	constructor(
+		initialState: { selectedCategory?: string, selectedTask?: string },
 		@IEditorService private readonly editorService: IEditorService,
 		@ICommandService private readonly commandService: ICommandService,
 		@IProductService private readonly productService: IProductService,
 		@IKeybindingService private readonly keybindingService: IKeybindingService,
 		@IGettingStartedService private readonly gettingStartedService: IGettingStartedService,
 		@ITelemetryService private readonly telemetryService: ITelemetryService,
-		@IInstantiationService private readonly instantiationService: IInstantiationService) {
+		@IInstantiationService private readonly instantiationService: IInstantiationService
+	) {
 		super();
 
 		const resource = FileAccess.asBrowserUri('./vs_code_editor_getting_started.md', require)
@@ -56,13 +63,16 @@ export class GettingStartedPage extends Disposable {
 			});
 
 
-		this.editorInput = this.instantiationService.createInstance(WalkThroughInput, {
+		this.editorInput = this.instantiationService.createInstance(GettingStartedInput, {
 			typeId: gettingStartedInputTypeId,
 			name: localize('editorGettingStarted.title', "Getting Started"),
 			resource,
 			telemetryFrom,
 			onReady: (container: HTMLElement) => this.onReady(container)
 		});
+
+		this.editorInput.selectedCategory = initialState.selectedCategory;
+		this.editorInput.selectedTask = initialState.selectedTask;
 
 		this.gettingStartedCategories = this.gettingStartedService.getCategories();
 		this._register(this.dispatchListeners);
@@ -164,6 +174,7 @@ export class GettingStartedPage extends Disposable {
 			if (!this.currentCategory || this.currentCategory.content.type !== 'items') {
 				throw Error('cannot expand task for category of non items type' + this.currentCategory?.id);
 			}
+			this.editorInput.selectedTask = id;
 			const taskToExpand = assertIsDefined(this.currentCategory.content.items.find(task => task.id === id));
 			mediaElement.setAttribute('src', taskToExpand.media.toString());
 			taskElement.parentElement?.querySelectorAll('.expanded').forEach(node => node.classList.remove('expanded'));
@@ -194,14 +205,29 @@ export class GettingStartedPage extends Disposable {
 		const rightColumn = assertIsDefined(container.querySelector('#getting-started-detail-right'));
 		rightColumn.appendChild($('img#getting-started-media'));
 
+		const categoriesContainer = assertIsDefined(document.getElementById('getting-started-categories-container'));
 		categoryElements.forEach(element => {
-			assertIsDefined(document.getElementById('getting-started-categories-container')).appendChild(element);
+			categoriesContainer.appendChild(element);
 		});
 
 		this.updateCategoryProgress();
 
 		assertIsDefined(document.getElementById('product-name')).textContent = this.productService.nameLong;
 		this.registerDispatchListeners(container);
+
+		const categoriesSlide = assertIsDefined(document.getElementById('gettingStartedSlideCategory'));
+		const tasksSlide = assertIsDefined(document.getElementById('gettingStartedSlideDetails'));
+
+		if (this.editorInput.selectedCategory) {
+			this.currentCategory = this.gettingStartedCategories.find(category => category.id === this.editorInput.selectedCategory);
+			if (!this.currentCategory) {
+				throw Error('Could not restore to category ' + this.editorInput.selectedCategory + ' as it was not found');
+			}
+			this.buildCategorySlide(container, this.editorInput.selectedCategory, this.editorInput.selectedTask);
+			categoriesSlide.classList.add('prev');
+		} else {
+			tasksSlide.classList.add('next');
+		}
 	}
 
 	private updateCategoryProgress() {
@@ -229,57 +255,60 @@ export class GettingStartedPage extends Disposable {
 	private async scrollToCategory(container: HTMLElement, categoryID: string) {
 		this.inProgressScroll = this.inProgressScroll.then(async () => {
 			this.clearDetialView();
+			this.editorInput.selectedCategory = categoryID;
 			this.currentCategory = this.gettingStartedCategories.find(category => category.id === categoryID);
-			if (!this.currentCategory) { throw Error('could not find category with ID ' + categoryID); }
-			if (this.currentCategory.content.type !== 'items') { throw Error('category with ID ' + categoryID + ' is not of items type'); }
 			const slides = [...container.querySelectorAll('.gettingStartedSlide').values()];
-			const currentSlide = slides.findIndex(element =>
-				!element.classList.contains('prev') && !element.classList.contains('next'));
+			const currentSlide = slides.findIndex(element => !element.classList.contains('prev') && !element.classList.contains('next'));
 			if (currentSlide < slides.length - 1) {
+				this.buildCategorySlide(container, categoryID);
 				slides[currentSlide].classList.add('prev');
-
-				const detailSlide = assertIsDefined(slides[currentSlide + 1]);
-				detailSlide.classList.remove('next');
-				const detailTitle = assertIsDefined(document.getElementById('getting-started-detail-title'));
-				detailTitle.appendChild(
-					$('.getting-started-category',
-						{},
-						$('.codicon.codicon-' + this.currentCategory.codicon, {}),
-						$('.category-description-container', {},
-							$('h2.category-title', {}, this.currentCategory.title),
-							$('.category-description.description', {}, this.currentCategory.description))));
-
-				const categoryElements = this.currentCategory.content.items.map(
-					(task, i, arr) =>
-						$('button.getting-started-task',
-							{ 'x-dispatch': 'selectTask:' + task.id, id: 'getting-started-task-' + task.id },
-							$('.codicon' + (task.done ? '.codicon-star-full' : '.codicon-star-empty'), { id: 'done-task-' + task.id },),
-							$('.task-description-container', {},
-								$('h3.task-title', {}, task.title),
-								$('.task-description.description', {}, task.description),
-								...(
-									task.button
-										? [$('button.emphasis.getting-started-task-action', { 'x-dispatch': 'runTaskAction:' + task.id },
-											task.button.title + this.getKeybindingLabel(task.button.command)
-										)]
-										: []),
-								...(
-									arr[i + 1]
-										? [
-											$('a.task-next',
-												{ 'x-dispatch': 'selectTask:' + arr[i + 1].id }, localize('next', "Next")),
-										] : []
-								)
-							)));
-
-				const detailContainer = assertIsDefined(document.getElementById('getting-started-detail-container'));
-				categoryElements.forEach(element => detailContainer.appendChild(element));
-
-				const toExpand = this.currentCategory.content.items.find(item => !item.done) ?? this.currentCategory.content.items[0];
-				this.selectTask(toExpand.id);
-				this.registerDispatchListeners(container);
+				slides[currentSlide + 1].classList.remove('next');
 			}
 		});
+	}
+
+	private buildCategorySlide(container: HTMLElement, categoryID: string, selectedItem?: string) {
+		const category = this.gettingStartedCategories.find(category => category.id === categoryID);
+		if (!category) { throw Error('could not find category with ID ' + categoryID); }
+		if (category.content.type !== 'items') { throw Error('category with ID ' + categoryID + ' is not of items type'); }
+
+		const detailTitle = assertIsDefined(document.getElementById('getting-started-detail-title'));
+		detailTitle.appendChild(
+			$('.getting-started-category',
+				{},
+				$('.codicon.codicon-' + category.codicon, {}),
+				$('.category-description-container', {},
+					$('h2.category-title', {}, category.title),
+					$('.category-description.description', {}, category.description))));
+
+		const categoryElements = category.content.items.map(
+			(task, i, arr) => $('button.getting-started-task',
+				{ 'x-dispatch': 'selectTask:' + task.id, id: 'getting-started-task-' + task.id },
+				$('.codicon' + (task.done ? '.codicon-star-full' : '.codicon-star-empty'), { id: 'done-task-' + task.id }),
+				$('.task-description-container', {},
+					$('h3.task-title', {}, task.title),
+					$('.task-description.description', {}, task.description),
+					...(
+						task.button
+							? [$('button.emphasis.getting-started-task-action', { 'x-dispatch': 'runTaskAction:' + task.id },
+								task.button.title + this.getKeybindingLabel(task.button.command)
+							)]
+							: []),
+					...(
+						arr[i + 1]
+							? [
+								$('a.task-next',
+									{ 'x-dispatch': 'selectTask:' + arr[i + 1].id }, localize('next', "Next")),
+							] : []
+					)
+				)));
+
+		const detailContainer = assertIsDefined(document.getElementById('getting-started-detail-container'));
+		categoryElements.forEach(element => detailContainer.appendChild(element));
+
+		const toExpand = category.content.items.find(item => !item.done) ?? category.content.items[0];
+		this.selectTask(selectedItem ?? toExpand.id);
+		this.registerDispatchListeners(container);
 	}
 
 	private clearDetialView() {
@@ -298,6 +327,8 @@ export class GettingStartedPage extends Disposable {
 	private async scrollPrev(container: HTMLElement) {
 		this.inProgressScroll = this.inProgressScroll.then(async () => {
 			this.currentCategory = undefined;
+			this.editorInput.selectedCategory = undefined;
+			this.editorInput.selectedTask = undefined;
 			this.selectTask(undefined);
 			const slides = [...container.querySelectorAll('.gettingStartedSlide').values()];
 			const currentSlide = slides.findIndex(element =>
@@ -311,19 +342,20 @@ export class GettingStartedPage extends Disposable {
 }
 
 export class GettingStartedInputFactory implements IEditorInputFactory {
-
-	static readonly ID = gettingStartedInputTypeId;
-
-	public canSerialize(editorInput: EditorInput): boolean {
+	public canSerialize(editorInput: GettingStartedInput): boolean {
 		return true;
 	}
 
-	public serialize(editorInput: EditorInput): string {
-		return '{}';
+	public serialize(editorInput: GettingStartedInput): string {
+		return JSON.stringify({ selectedCategory: editorInput.selectedCategory, selectedTask: editorInput.selectedTask });
 	}
 
-	public deserialize(instantiationService: IInstantiationService, serializedEditorInput: string): WalkThroughInput {
-		return instantiationService.createInstance(GettingStartedPage).editorInput;
+	public deserialize(instantiationService: IInstantiationService, serializedEditorInput: string): GettingStartedInput {
+		try {
+			const { selectedCategory, selectedTask } = JSON.parse(serializedEditorInput);
+			return instantiationService.createInstance(GettingStartedPage, { selectedCategory, selectedTask }).editorInput;
+		} catch { }
+		return instantiationService.createInstance(GettingStartedPage, {}).editorInput;
 	}
 }
 

@@ -28,44 +28,45 @@ This project incorporates components from the projects listed below. The origina
 21.	Ionic documentation version 1.2.4 (https://github.com/ionic-team/ionic-site)
 22.	ionide/ionide-fsgrammar (https://github.com/ionide/ionide-fsgrammar)
 23.	jeff-hykin/cpp-textmate-grammar version 1.12.11 (https://github.com/jeff-hykin/cpp-textmate-grammar)
-24.	jeff-hykin/cpp-textmate-grammar version 1.14.15 (https://github.com/jeff-hykin/cpp-textmate-grammar)
+24.	jeff-hykin/cpp-textmate-grammar version 1.15.3 (https://github.com/jeff-hykin/cpp-textmate-grammar)
 25.	js-beautify version 1.6.8 (https://github.com/beautify-web/js-beautify)
 26.	Jxck/assert version 1.0.0 (https://github.com/Jxck/assert)
 27.	language-docker (https://github.com/moby/moby)
 28.	language-less version 0.34.2 (https://github.com/atom/language-less)
 29.	language-php version 0.44.5 (https://github.com/atom/language-php)
-30.	language-rust version 0.4.12 (https://github.com/zargony/atom-language-rust)
-31.	MagicStack/MagicPython version 1.1.1 (https://github.com/MagicStack/MagicPython)
-32.	marked version 0.6.2 (https://github.com/markedjs/marked)
-33.	mdn-data version 1.1.12 (https://github.com/mdn/data)
-34.	microsoft/TypeScript-TmLanguage version 0.0.1 (https://github.com/microsoft/TypeScript-TmLanguage)
-35.	microsoft/vscode-JSON.tmLanguage (https://github.com/microsoft/vscode-JSON.tmLanguage)
+30.	MagicStack/MagicPython version 1.1.1 (https://github.com/MagicStack/MagicPython)
+31.	marked version 1.1.0 (https://github.com/markedjs/marked)
+32.	mdn-data version 1.1.12 (https://github.com/mdn/data)
+33.	microsoft/TypeScript-TmLanguage version 0.0.1 (https://github.com/microsoft/TypeScript-TmLanguage)
+34.	microsoft/vscode-JSON.tmLanguage (https://github.com/microsoft/vscode-JSON.tmLanguage)
+35.	microsoft/vscode-markdown-tm-grammar (https://github.com/microsoft/vscode-markdown-tm-grammar)
 36.	microsoft/vscode-mssql version 1.9.0 (https://github.com/microsoft/vscode-mssql)
 37.	mmims/language-batchfile version 0.7.5 (https://github.com/mmims/language-batchfile)
 38.	octref/language-css version 0.42.11 (https://github.com/octref/language-css)
 39.	PowerShell/EditorSyntax version 1.0.0 (https://github.com/PowerShell/EditorSyntax)
-40.	seti-ui version 0.1.0 (https://github.com/jesseweed/seti-ui)
-41.	shaders-tmLanguage version 0.1.0 (https://github.com/tgjones/shaders-tmLanguage)
-42.	textmate/asp.vb.net.tmbundle (https://github.com/textmate/asp.vb.net.tmbundle)
-43.	textmate/c.tmbundle (https://github.com/textmate/c.tmbundle)
-44.	textmate/diff.tmbundle (https://github.com/textmate/diff.tmbundle)
-45.	textmate/git.tmbundle (https://github.com/textmate/git.tmbundle)
-46.	textmate/groovy.tmbundle (https://github.com/textmate/groovy.tmbundle)
-47.	textmate/html.tmbundle (https://github.com/textmate/html.tmbundle)
-48.	textmate/ini.tmbundle (https://github.com/textmate/ini.tmbundle)
-49.	textmate/javascript.tmbundle (https://github.com/textmate/javascript.tmbundle)
-50.	textmate/lua.tmbundle (https://github.com/textmate/lua.tmbundle)
-51.	textmate/markdown.tmbundle (https://github.com/textmate/markdown.tmbundle)
-52.	textmate/perl.tmbundle (https://github.com/textmate/perl.tmbundle)
-53.	textmate/ruby.tmbundle (https://github.com/textmate/ruby.tmbundle)
-54.	textmate/yaml.tmbundle (https://github.com/textmate/yaml.tmbundle)
-55.	TypeScript-TmLanguage version 0.1.8 (https://github.com/microsoft/TypeScript-TmLanguage)
-56.	TypeScript-TmLanguage version 1.0.0 (https://github.com/microsoft/TypeScript-TmLanguage)
-57.	Unicode version 12.0.0 (https://home.unicode.org/)
-58.	vscode-codicons version 0.0.1 (https://github.com/microsoft/vscode-codicons)
-59.	vscode-logfile-highlighter version 2.8.0 (https://github.com/emilast/vscode-logfile-highlighter)
-60.	vscode-swift version 0.0.1 (https://github.com/owensd/vscode-swift)
-61.	Web Background Synchronization (https://github.com/WICG/background-sync)
+40.	rust-syntax version 0.2.13 (https://github.com/dustypomerleau/rust-syntax)
+41.	seti-ui version 0.1.0 (https://github.com/jesseweed/seti-ui)
+42.	shaders-tmLanguage version 0.1.0 (https://github.com/tgjones/shaders-tmLanguage)
+43.	textmate/asp.vb.net.tmbundle (https://github.com/textmate/asp.vb.net.tmbundle)
+44.	textmate/c.tmbundle (https://github.com/textmate/c.tmbundle)
+45.	textmate/diff.tmbundle (https://github.com/textmate/diff.tmbundle)
+46.	textmate/git.tmbundle (https://github.com/textmate/git.tmbundle)
+47.	textmate/groovy.tmbundle (https://github.com/textmate/groovy.tmbundle)
+48.	textmate/html.tmbundle (https://github.com/textmate/html.tmbundle)
+49.	textmate/ini.tmbundle (https://github.com/textmate/ini.tmbundle)
+50.	textmate/javascript.tmbundle (https://github.com/textmate/javascript.tmbundle)
+51.	textmate/lua.tmbundle (https://github.com/textmate/lua.tmbundle)
+52.	textmate/markdown.tmbundle (https://github.com/textmate/markdown.tmbundle)
+53.	textmate/perl.tmbundle (https://github.com/textmate/perl.tmbundle)
+54.	textmate/ruby.tmbundle (https://github.com/textmate/ruby.tmbundle)
+55.	textmate/yaml.tmbundle (https://github.com/textmate/yaml.tmbundle)
+56.	TypeScript-TmLanguage version 0.1.8 (https://github.com/microsoft/TypeScript-TmLanguage)
+57.	TypeScript-TmLanguage version 1.0.0 (https://github.com/microsoft/TypeScript-TmLanguage)
+58.	Unicode version 12.0.0 (https://home.unicode.org/)
+59.	vscode-codicons version 0.0.1 (https://github.com/microsoft/vscode-codicons)
+60.	vscode-logfile-highlighter version 2.8.0 (https://github.com/emilast/vscode-logfile-highlighter)
+61.	vscode-swift version 0.0.1 (https://github.com/owensd/vscode-swift)
+62.	Web Background Synchronization (https://github.com/WICG/BackgroundSync)
 
 
 %% atom/language-clojure NOTICES AND INFORMATION BEGIN HERE
@@ -1101,31 +1102,6 @@ suitability for any purpose.
 =========================================
 END OF language-php NOTICES AND INFORMATION
 
-%% language-rust NOTICES AND INFORMATION BEGIN HERE
-=========================================
-The MIT License (MIT)
-
-Copyright © `2013` `Andreas Neuhaus` `http://zargony.com/`
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
-the Software, and to permit persons to whom the Software is furnished to do so,
-subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-=========================================
-END OF language-rust NOTICES AND INFORMATION
-
 %% MagicStack/MagicPython NOTICES AND INFORMATION BEGIN HERE
 =========================================
 The MIT License
@@ -1164,6 +1140,7 @@ all code is your original work. `</legalese>`
 
 ## Marked
 
+Copyright (c) 2018+, MarkedJS (https://github.com/markedjs/)
 Copyright (c) 2011-2018, Christopher Jeffrey (https://github.com/chjj/)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -1632,6 +1609,32 @@ CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFT
 =========================================
 END OF microsoft/vscode-JSON.tmLanguage NOTICES AND INFORMATION
 
+%% microsoft/vscode-markdown-tm-grammar NOTICES AND INFORMATION BEGIN HERE
+=========================================
+The MIT License (MIT)
+
+Copyright (c) Microsoft 2018
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+=========================================
+END OF microsoft/vscode-markdown-tm-grammar NOTICES AND INFORMATION
+
 %% microsoft/vscode-mssql NOTICES AND INFORMATION BEGIN HERE
 =========================================
 ------------------------------------------ START OF LICENSE -----------------------------------------
@@ -1737,6 +1740,32 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 =========================================
 END OF PowerShell/EditorSyntax NOTICES AND INFORMATION
+
+%% rust-syntax NOTICES AND INFORMATION BEGIN HERE
+=========================================
+MIT License
+
+Copyright (c) 2020 Dustin Pomerleau
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+=========================================
+END OF rust-syntax NOTICES AND INFORMATION
 
 %% seti-ui NOTICES AND INFORMATION BEGIN HERE
 =========================================

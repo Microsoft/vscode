@@ -38,19 +38,12 @@
 	width: 22px;
 }
 
-.monaco-pane-view .pane > .pane-header > .twisties {
-	width: 20px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	transform-origin: center;
-	color: inherit;
-	flex-shrink: 0;
+.monaco-pane-view .pane > .pane-header > .codicon:first-of-type {
+	margin: 0 2px;
 }
 
-.monaco-pane-view .pane.horizontal:not(.expanded) > .pane-header > .twisties {
-	margin-top: 2px;
-	margin-bottom: 2px;
+.monaco-pane-view .pane.horizontal:not(.expanded) > .pane-header > .codicon:first-of-type {
+	margin: 2px;
 }
 
 /* TODO: actions should be part of the pane, but they aren't yet */

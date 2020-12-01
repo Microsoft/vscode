@@ -17,6 +17,7 @@ import { isStandalone } from 'vs/base/browser/browser';
 import { localize } from 'vs/nls';
 import { Schemas } from 'vs/base/common/network';
 import product from 'vs/platform/product/common/product';
+import { parseLogLevel } from 'vs/platform/log/common/log';
 
 function doCreateUri(path: string, queryValues: Map<string, string>): URI {
 	let query: string | undefined = undefined;
@@ -417,6 +418,7 @@ class WindowIndicator implements IWindowIndicator {
 	let foundWorkspace = false;
 	let workspace: IWorkspace;
 	let payload = Object.create(null);
+	let logLevel: string | undefined = undefined;
 
 	const query = new URL(document.location.href).searchParams;
 	query.forEach((value, key) => {
@@ -447,6 +449,11 @@ class WindowIndicator implements IWindowIndicator {
 				} catch (error) {
 					console.error(error); // possible invalid JSON
 				}
+				break;
+
+			// Log level
+			case 'logLevel':
+				logLevel = value;
 				break;
 		}
 	});
@@ -514,6 +521,7 @@ class WindowIndicator implements IWindowIndicator {
 	// Finally create workbench
 	create(document.body, {
 		...config,
+		logLevel: logLevel ? parseLogLevel(logLevel) : undefined,
 		settingsSyncOptions,
 		homeIndicator,
 		windowIndicator,

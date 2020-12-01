@@ -6,7 +6,6 @@
 import * as DOM from 'vs/base/browser/dom';
 import { raceCancellation } from 'vs/base/common/async';
 import { CancellationTokenSource } from 'vs/base/common/cancellation';
-import { renderCodicons } from 'vs/base/browser/codicons';
 import { Disposable, DisposableStore, IDisposable, toDisposable } from 'vs/base/common/lifecycle';
 import { CodeEditorWidget } from 'vs/editor/browser/widget/codeEditorWidget';
 import { IEditorOptions } from 'vs/editor/common/config/editorOptions';
@@ -22,6 +21,9 @@ import { EditorContextKeys } from 'vs/editor/common/editorContextKeys';
 import { getExecuteCellPlaceholder, getResizesObserver } from 'vs/workbench/contrib/notebook/browser/view/renderers/cellWidgets';
 import { INotebookCellStatusBarService } from 'vs/workbench/contrib/notebook/common/notebookCellStatusBarService';
 import { NotebookCellsChangeType } from 'vs/workbench/contrib/notebook/common/notebookCommon';
+import { ThemeIcon } from 'vs/platform/theme/common/themeService';
+import { collapsedIcon, expandedIcon } from 'vs/workbench/contrib/notebook/browser/notebookIcons';
+import { renderCodicons } from 'vs/base/browser/codicons';
 
 export class StatefulMarkdownCell extends Disposable {
 
@@ -353,10 +355,10 @@ export class StatefulMarkdownCell extends Disposable {
 				this.templateData.foldingIndicator.innerText = '';
 				break;
 			case CellFoldingState.Collapsed:
-				DOM.reset(this.templateData.foldingIndicator, ...renderCodicons('$(chevron-right)'));
+				DOM.reset(this.templateData.foldingIndicator, ...renderCodicons(ThemeIcon.asCodiconLabel(collapsedIcon)));
 				break;
 			case CellFoldingState.Expanded:
-				DOM.reset(this.templateData.foldingIndicator, ...renderCodicons('$(chevron-down)'));
+				DOM.reset(this.templateData.foldingIndicator, ...renderCodicons(ThemeIcon.asCodiconLabel(expandedIcon)));
 				break;
 
 			default:
@@ -388,7 +390,7 @@ export class StatefulMarkdownCell extends Disposable {
 			const primarySelection = editor.getSelection();
 
 			if (primarySelection) {
-				this.notebookEditor.revealLineInViewAsync(this.viewCell, primarySelection!.positionLineNumber);
+				this.notebookEditor.revealLineInViewAsync(this.viewCell, primarySelection.positionLineNumber);
 			}
 		}));
 

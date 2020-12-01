@@ -1365,6 +1365,9 @@ export class Repository {
 			args.push('--no-verify');
 		}
 
+		// Stops git from guessing at user/email
+		args.splice(0, 0, '-c', 'user.useConfigOnly=true');
+
 		try {
 			await this.run(args, !opts.amend || message ? { input: message || '' } : {});
 		} catch (commitErr) {

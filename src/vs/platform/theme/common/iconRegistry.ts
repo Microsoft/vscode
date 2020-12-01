@@ -210,7 +210,7 @@ class IconRegistry implements IIconRegistry {
 		const contributions = Object.keys(this.iconsById).map(key => this.iconsById[key]);
 
 		for (const i of contributions.sort(sorter)) {
-			reference.push(`|<i class="${classNames(i)}"></i>|${i.id}|${ThemeIcon.isThemeIcon(i.defaults) ? i.defaults.id : ''}|`);
+			reference.push(`|<i class="${classNames(i)}"></i>|${i.id}|${ThemeIcon.isThemeIcon(i.defaults) ? i.defaults.id : ''}|${i.description || ''}|`);
 
 			if (!ThemeIcon.isThemeIcon((i.defaults))) {
 				docCss.push(`.codicon-${i.id}:before { content: "${i.defaults.character}" }`);

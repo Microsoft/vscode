@@ -21,6 +21,8 @@ import { IOpenerService } from 'vs/platform/opener/common/opener';
 import { ITextFileService } from 'vs/workbench/services/textfile/common/textfiles';
 import { format } from 'vs/base/common/jsonFormatter';
 import { applyEdits } from 'vs/base/common/jsonEdit';
+import { ThemeIcon } from 'vs/platform/theme/common/themeService';
+import { mimetypeIcon } from 'vs/workbench/contrib/notebook/browser/notebookIcons';
 
 const OUTPUT_COUNT_LIMIT = 500;
 
@@ -69,7 +71,7 @@ export class OutputElement extends Disposable {
 			if (mimeTypes.length > 1) {
 				outputItemDiv.style.position = 'relative';
 				const mimeTypePicker = DOM.$('.multi-mimetype-output');
-				mimeTypePicker.classList.add('codicon', 'codicon-code');
+				mimeTypePicker.classList.add(...ThemeIcon.asClassNameArray(mimetypeIcon));
 				mimeTypePicker.tabIndex = 0;
 				mimeTypePicker.title = nls.localize('mimeTypePicker', "Choose a different output mimetype, available mimetypes: {0}", mimeTypes.map(mimeType => mimeType.mimeType).join(', '));
 				outputItemDiv.appendChild(mimeTypePicker);
@@ -286,7 +288,7 @@ export class OutputContainer extends Disposable {
 				this._relayoutCell();
 			}
 
-			this.templateData.outputContainer!.style.display = 'block';
+			this.templateData.outputContainer.style.display = 'block';
 			// there are outputs, we need to calcualte their sizes and trigger relayout
 			// @TODO@rebornix, if there is no resizable output, we should not check their height individually, which hurts the performance
 			const outputsToRender = this._calcuateOutputsToRender();
@@ -312,7 +314,7 @@ export class OutputContainer extends Disposable {
 			// noop
 			this.viewCell.editorHeight = editorHeight;
 			this._relayoutCell();
-			this.templateData.outputContainer!.style.display = 'none';
+			this.templateData.outputContainer.style.display = 'none';
 		}
 
 		this.templateData.outputShowMoreContainer.innerText = '';
@@ -406,9 +408,9 @@ export class OutputContainer extends Disposable {
 		const previousOutputHeight = this.viewCell.layoutInfo.outputTotalHeight;
 
 		if (this.viewCell.outputs.length) {
-			this.templateData.outputContainer!.style.display = 'block';
+			this.templateData.outputContainer.style.display = 'block';
 		} else {
-			this.templateData.outputContainer!.style.display = 'none';
+			this.templateData.outputContainer.style.display = 'none';
 		}
 
 		const reversedSplices = splices.reverse();
@@ -457,7 +459,7 @@ export class OutputContainer extends Disposable {
 			this.templateData.outputShowMoreContainer.style.display = 'none';
 		}
 
-		const editorHeight = this.templateData.editor!.getContentHeight();
+		const editorHeight = this.templateData.editor.getContentHeight();
 		this.viewCell.editorHeight = editorHeight;
 
 		if (previousOutputHeight === 0 || this.viewCell.outputs.length === 0) {

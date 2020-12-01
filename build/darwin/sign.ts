@@ -29,6 +29,7 @@ async function main(): Promise<void> {
 	const appFrameworkPath = path.join(appRoot, appName, 'Contents', 'Frameworks');
 	const helperAppBaseName = product.nameShort;
 	const gpuHelperAppName = helperAppBaseName + ' Helper (GPU).app';
+	const pluginHelperAppName = helperAppBaseName + ' Helper (Plugin).app';
 	const rendererHelperAppName = helperAppBaseName + ' Helper (Renderer).app';
 
 	const defaultOpts: codesign.SignOptions = {
@@ -50,6 +51,7 @@ async function main(): Promise<void> {
 		// TODO(deepak1556): Incorrectly declared type in electron-osx-sign
 		ignore: (filePath: string) => {
 			return filePath.includes(gpuHelperAppName) ||
+				filePath.includes(pluginHelperAppName) ||
 				filePath.includes(rendererHelperAppName);
 		}
 	};
@@ -61,6 +63,13 @@ async function main(): Promise<void> {
 		'entitlements-inherit': path.join(baseDir, 'azure-pipelines', 'darwin', 'helper-gpu-entitlements.plist'),
 	};
 
+	const pluginHelperOpts: codesign.SignOptions = {
+		...defaultOpts,
+		app: path.join(appFrameworkPath, pluginHelperAppName),
+		entitlements: path.join(baseDir, 'azure-pipelines', 'darwin', 'helper-plugin-entitlements.plist'),
+		'entitlements-inherit': path.join(baseDir, 'azure-pipelines', 'darwin', 'helper-plugin-entitlements.plist'),
+	};
+
 	const rendererHelperOpts: codesign.SignOptions = {
 		...defaultOpts,
 		app: path.join(appFrameworkPath, rendererHelperAppName),
@@ -69,6 +78,7 @@ async function main(): Promise<void> {
 	};
 
 	await codesign.signAsync(gpuHelperOpts);
+	await codesign.signAsync(pluginHelperOpts);
 	await codesign.signAsync(rendererHelperOpts);
 	await codesign.signAsync(appOpts as any);
 }

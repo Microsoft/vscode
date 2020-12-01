@@ -111,7 +111,8 @@ export class PreferencesEditor extends EditorPane {
 			placeholder: nls.localize('SearchSettingsWidget.Placeholder', "Search Settings"),
 			focusKey: this.searchFocusContextKey,
 			showResultCount: true,
-			ariaLive: 'assertive'
+			ariaLive: 'assertive',
+			history: [],
 		}));
 		this._register(this.searchWidget.onDidChange(value => this.onInputChanged()));
 		this._register(this.searchWidget.onFocus(() => this.lastFocusedWidget = this.searchWidget));

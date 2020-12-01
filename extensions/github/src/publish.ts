@@ -149,7 +149,7 @@ export async function publishRepository(gitAPI: GitAPI, repository?: Repository)
 					new Promise<undefined>(c => quickpick.onDidHide(() => c(undefined)))
 				]);
 
-				if (!result) {
+				if (!result || result.length === 0) {
 					return;
 				}
 

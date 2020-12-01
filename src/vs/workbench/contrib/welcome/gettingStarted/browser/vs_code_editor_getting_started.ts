@@ -9,7 +9,7 @@ import { localize } from 'vs/nls';
 export default () => `
 <div class="gettingStartedContainer">
 	<div class="gettingStarted" role="document">
-		<div class="gettingStartedSlide categories">
+		<div id="gettingStartedSlideCategory" class="gettingStartedSlide categories">
 			<div class="header">
 				<div class="product-icon"></div>
 				<div class="title">
@@ -19,7 +19,7 @@ export default () => `
 			</div>
 			<div id="getting-started-categories-container"></div>
 		</div>
-		<div class="gettingStartedSlide detail next">
+		<div id="gettingStartedSlideDetails" class="gettingStartedSlide detail">
 			<a class="prev-button" x-dispatch="scrollPrev"><span
 					class="scroll-button codicon codicon-chevron-left"></span>Back</a>
 			<div id="getting-started-detail-columns">

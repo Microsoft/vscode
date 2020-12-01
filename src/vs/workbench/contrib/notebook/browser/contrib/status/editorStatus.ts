@@ -21,7 +21,8 @@ import { Disposable, DisposableStore, MutableDisposable } from 'vs/base/common/l
 import { IStatusbarEntryAccessor, IStatusbarService, StatusbarAlignment } from 'vs/workbench/services/statusbar/common/statusbar';
 import { NotebookKernelProviderAssociation, NotebookKernelProviderAssociations, notebookKernelProviderAssociationsSettingId } from 'vs/workbench/contrib/notebook/browser/notebookKernelAssociation';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
-import { Codicon } from 'vs/base/common/codicons';
+import { configureKernelIcon, selectKernelIcon } from 'vs/workbench/contrib/notebook/browser/notebookIcons';
+import { ThemeIcon } from 'vs/platform/theme/common/themeService';
 
 
 registerAction2(class extends Action2 {
@@ -31,7 +32,7 @@ registerAction2(class extends Action2 {
 			category: NOTEBOOK_ACTIONS_CATEGORY,
 			title: { value: nls.localize('notebookActions.selectKernel', "Select Notebook Kernel"), original: 'Select Notebook Kernel' },
 			precondition: NOTEBOOK_IS_ACTIVE_EDITOR,
-			icon: Codicon.serverEnvironment,
+			icon: selectKernelIcon,
 			f1: true
 		});
 	}
@@ -74,7 +75,7 @@ registerAction2(class extends Action2 {
 					a.resolve(editor.uri!, editor.getId(), tokenSource.token);
 				},
 				buttons: [{
-					iconClass: 'codicon-settings-gear',
+					iconClass: ThemeIcon.asClassName(configureKernelIcon),
 					tooltip: nls.localize('notebook.promptKernel.setDefaultTooltip', "Set as default kernel provider for '{0}'", editor.viewModel!.viewType)
 				}]
 			};

@@ -114,7 +114,7 @@ export class NotebookFindWidget extends SimpleFindReplaceWidget implements INote
 		if (!this._findMatchesStarts) {
 			this.set(this._findMatches, true);
 		} else {
-			const totalVal = this._findMatchesStarts!.getTotalValue();
+			const totalVal = this._findMatchesStarts.getTotalValue();
 			const nextVal = (this._currentMatch + (previous ? -1 : 1) + totalVal) % totalVal;
 			this._currentMatch = nextVal;
 		}

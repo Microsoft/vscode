@@ -4,8 +4,7 @@ steps:
       echo -n $BUILD_SOURCEVERSION > .build/commit
       echo -n $VSCODE_QUALITY > .build/quality
       echo -n $ENABLE_TERRAPIN > .build/terrapin
-      echo -n $VSCODE_ARCH > .build/arch
-    displayName: Prepare cache flag
+    displayName: Prepare compilation cache flags
 
   - task: 1ESLighthouseEng.PipelineArtifactCaching.RestoreCacheV1.RestoreCache@1
     inputs:
@@ -23,7 +22,7 @@ steps:
 
   - task: NodeTool@0
     inputs:
-      versionSpec: "12.18.3"
+      versionSpec: "12.14.1"
 
   - task: geeklearningio.gl-vsts-tasks-yarn.yarn-installer-task.YarnInstaller@2
     inputs:
@@ -60,6 +59,10 @@ steps:
     timeoutInMinutes: 5
     condition: and(succeeded(), eq(variables['ENABLE_TERRAPIN'], 'true'))
 
+  - script: |
+      echo -n $(VSCODE_ARCH) > .build/arch
+    displayName: Prepare yarn cache flags
+
   - task: 1ESLighthouseEng.PipelineArtifactCaching.RestoreCacheV1.RestoreCache@1
     inputs:
       keyfile: ".build/arch, .build/terrapin, build/.cachesalt, .yarnrc, remote/.yarnrc, **/yarn.lock, !**/node_modules/**/yarn.lock, !**/.*/**/yarn.lock"
@@ -68,7 +71,7 @@ steps:
 
   - script: |
       set -e
-      export npm_config_arch=$(VSCODE_ARCH)
+      export npm_config_arch=$(NPM_ARCH)
       export CHILD_CONCURRENCY="1"
       for i in {1..3}; do # try 3 times, for Terrapin
         yarn --frozen-lockfile && break
@@ -108,6 +111,12 @@ steps:
       VSCODE_MIXIN_PASSWORD="$(github-distro-mixin-password)" \
         yarn gulp vscode-reh-web-linux-$(VSCODE_ARCH)-min-ci
     displayName: Build
+
+  - script: |
+      set -e
+      service xvfb start
+    displayName: Start xvfb
+    condition: and(succeeded(), eq(variables['VSCODE_ARCH'], 'x64'), eq(variables['VSCODE_STEP_ON_IT'], 'false'))
 
   - script: |
       set -e

@@ -1622,10 +1622,8 @@ export function viewColumnToEditorGroup(editorGroupService: IEditorGroupsService
 }
 
 export function editorGroupToViewColumn(editorGroupService: IEditorGroupsService, editorGroup: IEditorGroup | GroupIdentifier): EditorGroupColumn {
-	const group = (typeof editorGroup === 'number') ? editorGroupService.getGroup(editorGroup) : editorGroup;
-	if (!group) {
-		throw new Error('Invalid group provided');
-	}
+	let group = (typeof editorGroup === 'number') ? editorGroupService.getGroup(editorGroup) : editorGroup;
+	group = group ?? editorGroupService.activeGroup;
 
 	return editorGroupService.getGroups(GroupsOrder.GRID_APPEARANCE).indexOf(group);
 }

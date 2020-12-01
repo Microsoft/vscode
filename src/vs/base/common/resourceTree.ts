@@ -5,7 +5,7 @@
 
 import { memoize } from 'vs/base/common/decorators';
 import * as paths from 'vs/base/common/path';
-import { relativePath, joinPath } from 'vs/base/common/resources';
+import { IExtUri, extUri as defaultExtUri } from 'vs/base/common/resources';
 import { URI } from 'vs/base/common/uri';
 import { PathIterator } from 'vs/base/common/map';
 
@@ -95,12 +95,12 @@ export class ResourceTree<T extends NonNullable<any>, C> {
 		return obj instanceof Node;
 	}
 
-	constructor(context: C, rootURI: URI = URI.file('/')) {
+	constructor(context: C, rootURI: URI = URI.file('/'), private extUri: IExtUri = defaultExtUri) {
 		this.root = new Node(rootURI, '', context);
 	}
 
 	add(uri: URI, element: T): void {
-		const key = relativePath(this.root.uri, uri) || uri.fsPath;
+		const key = this.extUri.relativePath(this.root.uri, uri) || uri.path;
 		const iterator = new PathIterator(false).reset(key);
 		let node = this.root;
 		let path = '';
@@ -113,7 +113,7 @@ export class ResourceTree<T extends NonNullable<any>, C> {
 
 			if (!child) {
 				child = new Node(
-					joinPath(this.root.uri, path),
+					this.extUri.joinPath(this.root.uri, path),
 					path,
 					this.root.context,
 					iterator.hasNext() ? undefined : element,
@@ -136,7 +136,7 @@ export class ResourceTree<T extends NonNullable<any>, C> {
 	}
 
 	delete(uri: URI): T | undefined {
-		const key = relativePath(this.root.uri, uri) || uri.fsPath;
+		const key = this.extUri.relativePath(this.root.uri, uri) || uri.path;
 		const iterator = new PathIterator(false).reset(key);
 		return this._delete(this.root, iterator);
 	}
@@ -168,7 +168,7 @@ export class ResourceTree<T extends NonNullable<any>, C> {
 	}
 
 	getNode(uri: URI): IResourceNode<T, C> | undefined {
-		const key = relativePath(this.root.uri, uri) || uri.fsPath;
+		const key = this.extUri.relativePath(this.root.uri, uri) || uri.path;
 		const iterator = new PathIterator(false).reset(key);
 		let node = this.root;
 

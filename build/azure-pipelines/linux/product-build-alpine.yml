@@ -4,8 +4,7 @@ steps:
       echo -n $BUILD_SOURCEVERSION > .build/commit
       echo -n $VSCODE_QUALITY > .build/quality
       echo -n $ENABLE_TERRAPIN > .build/terrapin
-      echo -n "alpine" > .build/arch
-    displayName: Prepare cache flag
+    displayName: Prepare compilation cache flags
 
   - task: 1ESLighthouseEng.PipelineArtifactCaching.RestoreCacheV1.RestoreCache@1
     inputs:
@@ -23,7 +22,7 @@ steps:
 
   - task: NodeTool@0
     inputs:
-      versionSpec: "12.18.3"
+      versionSpec: "12.14.1"
 
   - task: geeklearningio.gl-vsts-tasks-yarn.yarn-installer-task.YarnInstaller@2
     inputs:
@@ -69,6 +68,10 @@ steps:
     displayName: Switch to Terrapin packages
     timeoutInMinutes: 5
     condition: and(succeeded(), eq(variables['ENABLE_TERRAPIN'], 'true'))
+
+  - script: |
+      echo -n "alpine" > .build/arch
+    displayName: Prepare yarn cache flags
 
   - task: 1ESLighthouseEng.PipelineArtifactCaching.RestoreCacheV1.RestoreCache@1
     inputs:

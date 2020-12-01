@@ -38,7 +38,7 @@
   {
     "kind": 2,
     "language": "github-issues",
-    "value": "$REPOS $MILESTONE is:issue is:open -label:iteration-plan -label:endgame-plan",
+    "value": "$REPOS $MILESTONE is:issue is:open -label:iteration-plan -label:endgame-plan -label:testplan-item",
     "editable": true
   },
   {

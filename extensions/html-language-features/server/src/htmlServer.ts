@@ -284,7 +284,7 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 			if (!mode || !mode.doComplete) {
 				return { isIncomplete: true, items: [] };
 			}
-			const doComplete = mode.doComplete!;
+			const doComplete = mode.doComplete;
 
 			if (mode.getId() !== 'html') {
 				/* __GDPR__
@@ -321,8 +321,10 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 			const document = documents.get(textDocumentPosition.textDocument.uri);
 			if (document) {
 				const mode = languageModes.getModeAtPosition(document, textDocumentPosition.position);
-				if (mode && mode.doHover) {
-					return mode.doHover(document, textDocumentPosition.position);
+				const doHover = mode?.doHover;
+				if (doHover) {
+					const settings = await getDocumentSettings(document, () => doHover.length > 2);
+					return doHover(document, textDocumentPosition.position, settings);
 				}
 			}
 			return null;

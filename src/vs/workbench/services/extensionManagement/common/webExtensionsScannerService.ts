@@ -25,6 +25,7 @@ import { Event } from 'vs/base/common/event';
 import { localizeManifest } from 'vs/platform/extensionManagement/common/extensionNls';
 import { localize } from 'vs/nls';
 import * as semver from 'vs/base/common/semver/semver';
+import { isArray } from 'vs/base/common/types';
 
 interface IUserExtension {
 	identifier: IExtensionIdentifier;
@@ -125,25 +126,31 @@ export class WebExtensionsScannerService extends Disposable implements IWebExten
 
 	private async readDefaultUserWebExtensions(): Promise<IStaticExtension[]> {
 		const result: IStaticExtension[] = [];
-		const defaultUserWebExtensions = this.configurationService.getValue<{ location: string }[]>('_extensions.defaultUserWebExtensions') || [];
-		for (const webExtension of defaultUserWebExtensions) {
-			const extensionLocation = URI.parse(webExtension.location);
-			const manifestLocation = joinPath(extensionLocation, 'package.json');
-			const context = await this.requestService.request({ type: 'GET', url: manifestLocation.toString(true) }, CancellationToken.None);
-			if (!isSuccess(context)) {
-				this.logService.warn('Skipped default user web extension as there is an error while fetching manifest', manifestLocation);
-				continue;
+		const defaultUserWebExtensions = this.configurationService.getValue<{ location: string }[]>('_extensions.defaultUserWebExtensions');
+		if (isArray(defaultUserWebExtensions)) {
+			for (const webExtension of defaultUserWebExtensions) {
+				try {
+					const extensionLocation = URI.parse(webExtension.location);
+					const manifestLocation = joinPath(extensionLocation, 'package.json');
+					const context = await this.requestService.request({ type: 'GET', url: manifestLocation.toString(true) }, CancellationToken.None);
+					if (!isSuccess(context)) {
+						this.logService.warn('Skipped default user web extension as there is an error while fetching manifest', manifestLocation);
+						continue;
+					}
+					const content = await asText(context);
+					if (!content) {
+						this.logService.warn('Skipped default user web extension as there is manifest is not found', manifestLocation);
+						continue;
+					}
+					const packageJSON = JSON.parse(content);
+					result.push({
+						packageJSON,
+						extensionLocation,
+					});
+				} catch (error) {
+					this.logService.warn('Skipped default user web extension as there is an error while fetching manifest', webExtension);
+				}
 			}
-			const content = await asText(context);
-			if (!content) {
-				this.logService.warn('Skipped default user web extension as there is manifest is not found', manifestLocation);
-				continue;
-			}
-			const packageJSON = JSON.parse(content);
-			result.push({
-				packageJSON,
-				extensionLocation,
-			});
 		}
 		return result;
 	}

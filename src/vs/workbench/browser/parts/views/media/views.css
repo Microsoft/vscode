@@ -68,6 +68,11 @@
 	margin-right: auto;
 }
 
+.monaco-workbench .pane > .pane-body.wide > .welcome-view .monaco-button {
+	margin-left: inherit;
+	max-width: 260px;
+}
+
 .monaco-workbench .pane > .pane-body .welcome-view-content {
 	padding: 0 20px 0 20px;
 	box-sizing: border-box;

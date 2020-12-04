@@ -226,5 +226,32 @@ suite('RipgrepTextSearchEngine', () => {
 					}
 				]);
 		});
+
+
+		test('empty result (#100569)', () => {
+			testParser(
+				[
+					makeRgMatch('file1.js', 'foobar', 4, []),
+					makeRgMatch('file1.js', '', 5, []),
+				],
+				[
+					{
+						preview: {
+							text: 'foobar',
+							matches: [new Range(0, 0, 0, 1)]
+						},
+						uri: joinPath(TEST_FOLDER, 'file1.js'),
+						ranges: [new Range(3, 0, 3, 1)]
+					},
+					{
+						preview: {
+							text: '',
+							matches: [new Range(0, 0, 0, 0)]
+						},
+						uri: joinPath(TEST_FOLDER, 'file1.js'),
+						ranges: [new Range(4, 0, 4, 0)]
+					}
+				]);
+		});
 	});
 });

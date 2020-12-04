@@ -21,13 +21,14 @@ import { UndoRedoSource } from 'vs/platform/undoRedo/common/undoRedo';
 import { IExplorerView, IExplorerService } from 'vs/workbench/contrib/files/browser/files';
 import { IProgressService, ProgressLocation } from 'vs/platform/progress/common/progress';
 import { CancellationTokenSource } from 'vs/base/common/cancellation';
+import { RunOnceScheduler } from 'vs/base/common/async';
 
 export const UNDO_REDO_SOURCE = new UndoRedoSource();
 
 export class ExplorerService implements IExplorerService {
 	declare readonly _serviceBrand: undefined;
 
-	private static readonly EXPLORER_FILE_CHANGES_REACT_DELAY = 500; // delay in ms to react to file changes to give our internal events a chance to react first
+	private static readonly EXPLORER_FILE_CHANGES_REACT_DELAY = 1000; // delay in ms to react to file changes to give our internal events a chance to react first
 
 	private readonly disposables = new DisposableStore();
 	private editable: { stat: ExplorerItem, data: IEditableData } | undefined;
@@ -35,6 +36,8 @@ export class ExplorerService implements IExplorerService {
 	private cutItems: ExplorerItem[] | undefined;
 	private view: IExplorerView | undefined;
 	private model: ExplorerModel;
+	private onFileChangesScheduler: RunOnceScheduler;
+	private fileChangeEvents: FileChangesEvent[] = [];
 
 	constructor(
 		@IFileService private fileService: IFileService,
@@ -51,7 +54,36 @@ export class ExplorerService implements IExplorerService {
 		this.model = new ExplorerModel(this.contextService, this.uriIdentityService, this.fileService);
 		this.disposables.add(this.model);
 		this.disposables.add(this.fileService.onDidRunOperation(e => this.onDidRunOperation(e)));
-		this.disposables.add(this.fileService.onDidFilesChange(e => this.onDidFilesChange(e)));
+
+		this.onFileChangesScheduler = new RunOnceScheduler(async () => {
+			const events = this.fileChangeEvents;
+			this.fileChangeEvents = [];
+
+			// Filter to the ones we care
+			const types = [FileChangeType.ADDED, FileChangeType.DELETED];
+			if (this._sortOrder === SortOrder.Modified) {
+				types.push(FileChangeType.UPDATED);
+			}
+
+			let shouldRefresh = false;
+			this.roots.forEach(r => {
+				if (this.view && !shouldRefresh) {
+					shouldRefresh = doesFileEventAffect(r, this.view, events, types);
+				}
+			});
+
+			if (shouldRefresh) {
+				await this.refresh(false);
+			}
+
+		}, ExplorerService.EXPLORER_FILE_CHANGES_REACT_DELAY);
+
+		this.disposables.add(this.fileService.onDidFilesChange(e => {
+			this.fileChangeEvents.push(e);
+			if (!this.onFileChangesScheduler.isScheduled()) {
+				this.onFileChangesScheduler.schedule();
+			}
+		}));
 		this.disposables.add(this.configurationService.onDidChangeConfiguration(e => this.onConfigurationUpdated(this.configurationService.getValue<IFilesConfiguration>())));
 		this.disposables.add(Event.any<{ scheme: string }>(this.fileService.onDidChangeFileSystemProviderRegistrations, this.fileService.onDidChangeFileSystemProviderCapabilities)(async e => {
 			let affected = false;
@@ -296,32 +328,6 @@ export class ExplorerService implements IExplorerService {
 		}
 	}
 
-	private onDidFilesChange(e: FileChangesEvent): void {
-		// Check if an explorer refresh is necessary (delayed to give internal events a chance to react first)
-		// Note: there is no guarantee when the internal events are fired vs real ones. Code has to deal with the fact that one might
-		// be fired first over the other or not at all.
-		setTimeout(async () => {
-			// Filter to the ones we care
-			const types = [FileChangeType.ADDED, FileChangeType.DELETED];
-			if (this._sortOrder === SortOrder.Modified) {
-				types.push(FileChangeType.UPDATED);
-			}
-
-			const allResolvedDirectories: ExplorerItem[] = [];
-			this.roots.forEach(r => {
-				allResolvedDirectories.push(r);
-				if (this.view) {
-					getAllNonFilteredDescendants(r, allResolvedDirectories, this.view);
-				}
-			});
-
-			const shouldRefresh = allResolvedDirectories.some(r => e.affects(r.resource, ...types));
-			if (shouldRefresh) {
-				await this.refresh(false);
-			}
-		}, ExplorerService.EXPLORER_FILE_CHANGES_REACT_DELAY);
-	}
-
 	private async onConfigurationUpdated(configuration: IFilesConfiguration, event?: IConfigurationChangeEvent): Promise<void> {
 		const configSortOrder = configuration?.explorer?.sortOrder || 'default';
 		if (this._sortOrder !== configSortOrder) {
@@ -338,13 +344,19 @@ export class ExplorerService implements IExplorerService {
 	}
 }
 
-function getAllNonFilteredDescendants(item: ExplorerItem, result: ExplorerItem[], view: IExplorerView): void {
+function doesFileEventAffect(item: ExplorerItem, view: IExplorerView, events: FileChangesEvent[], types: FileChangeType[]): boolean {
+	if (events.some(e => e.affects(item.resource, ...types))) {
+		return true;
+	}
 	for (let [_name, child] of item.children) {
 		if (view.isItemVisible(child)) {
 			if (child.isDirectory && child.isDirectoryResolved) {
-				result.push(child);
-				getAllNonFilteredDescendants(child, result, view);
+				if (doesFileEventAffect(child, view, events, types)) {
+					return true;
+				}
 			}
 		}
 	}
+
+	return false;
 }

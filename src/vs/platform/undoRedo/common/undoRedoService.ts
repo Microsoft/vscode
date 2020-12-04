@@ -811,7 +811,7 @@ export class UndoRedoService implements IUndoRedoService {
 		if (element.canSplit()) {
 			this._splitPastWorkspaceElement(element, ignoreResources);
 			this._notificationService.info(message);
-			return new WorkspaceVerificationError(this.undo(strResource));
+			return new WorkspaceVerificationError(this._undo(strResource));
 		} else {
 			// Cannot safely split this workspace element => flush all undo/redo stacks
 			for (const strResource of element.strResources) {
@@ -959,7 +959,7 @@ export class UndoRedoService implements IUndoRedoService {
 			if (result.choice === 1) {
 				// choice: undo this file
 				this._splitPastWorkspaceElement(element, null);
-				return this.undo(strResource);
+				return this._undo(strResource);
 			}
 
 			// choice: undo in all files
@@ -1044,16 +1044,22 @@ export class UndoRedoService implements IUndoRedoService {
 
 		const [, matchedStrResource] = this._findClosestUndoElementInGroup(groupId);
 		if (matchedStrResource) {
-			return this.undo(matchedStrResource);
+			return this._undo(matchedStrResource);
 		}
 	}
 
-	public undo(resourceOrSource: URI | UndoRedoSource | string): Promise<void> | void {
+	public undo(resourceOrSource: URI | UndoRedoSource): Promise<void> | void {
 		if (resourceOrSource instanceof UndoRedoSource) {
 			const [, matchedStrResource] = this._findClosestUndoElementWithSource(resourceOrSource.id);
-			return matchedStrResource ? this.undo(matchedStrResource) : undefined;
+			return matchedStrResource ? this._undo(matchedStrResource, resourceOrSource.id) : undefined;
 		}
-		const strResource = typeof resourceOrSource === 'string' ? resourceOrSource : this.getUriComparisonKey(resourceOrSource);
+		if (typeof resourceOrSource === 'string') {
+			return this._undo(resourceOrSource);
+		}
+		return this._undo(this.getUriComparisonKey(resourceOrSource));
+	}
+
+	private _undo(strResource: string, sourceId: number = 0): Promise<void> | void {
 		if (!this._editStacks.has(strResource)) {
 			return;
 		}
@@ -1069,8 +1075,13 @@ export class UndoRedoService implements IUndoRedoService {
 			const [matchedElement, matchedStrResource] = this._findClosestUndoElementInGroup(element.groupId);
 			if (element !== matchedElement && matchedStrResource) {
 				// there is an element in the same group that should be undone before this one
-				return this.undo(matchedStrResource);
+				return this._undo(matchedStrResource);
 			}
+		}
+
+		if (element.sourceId !== sourceId) {
+			// Hit a different source, prompt for confirmation
+			return this._confirmDifferentSourceAndContinueUndo(strResource, element);
 		}
 
 		try {
@@ -1084,6 +1095,28 @@ export class UndoRedoService implements IUndoRedoService {
 				this._print('undo');
 			}
 		}
+	}
+
+	private async _confirmDifferentSourceAndContinueUndo(strResource: string, element: StackElement): Promise<void> {
+		const result = await this._dialogService.show(
+			Severity.Info,
+			nls.localize('confirmDifferentSource', "Would you like to undo '{0}'?", element.label),
+			[
+				nls.localize('confirmDifferentSource.ok', "Undo"),
+				nls.localize('cancel', "Cancel"),
+			],
+			{
+				cancelId: 1
+			}
+		);
+
+		if (result.choice === 1) {
+			// choice: cancel
+			return;
+		}
+
+		// choice: undo
+		return this._undo(strResource, element.sourceId);
 	}
 
 	private _findClosestRedoElementWithSource(sourceId: number): [StackElement | null, string | null] {
@@ -1128,7 +1161,7 @@ export class UndoRedoService implements IUndoRedoService {
 		if (element.canSplit()) {
 			this._splitFutureWorkspaceElement(element, ignoreResources);
 			this._notificationService.info(message);
-			return new WorkspaceVerificationError(this.redo(strResource));
+			return new WorkspaceVerificationError(this._redo(strResource));
 		} else {
 			// Cannot safely split this workspace element => flush all undo/redo stacks
 			for (const strResource of element.strResources) {
@@ -1300,16 +1333,22 @@ export class UndoRedoService implements IUndoRedoService {
 
 		const [, matchedStrResource] = this._findClosestRedoElementInGroup(groupId);
 		if (matchedStrResource) {
-			return this.redo(matchedStrResource);
+			return this._redo(matchedStrResource);
 		}
 	}
 
 	public redo(resourceOrSource: URI | UndoRedoSource | string): Promise<void> | void {
 		if (resourceOrSource instanceof UndoRedoSource) {
 			const [, matchedStrResource] = this._findClosestRedoElementWithSource(resourceOrSource.id);
-			return matchedStrResource ? this.redo(matchedStrResource) : undefined;
+			return matchedStrResource ? this._redo(matchedStrResource) : undefined;
 		}
-		const strResource = typeof resourceOrSource === 'string' ? resourceOrSource : this.getUriComparisonKey(resourceOrSource);
+		if (typeof resourceOrSource === 'string') {
+			return this._redo(resourceOrSource);
+		}
+		return this._redo(this.getUriComparisonKey(resourceOrSource));
+	}
+
+	private _redo(strResource: string): Promise<void> | void {
 		if (!this._editStacks.has(strResource)) {
 			return;
 		}
@@ -1325,7 +1364,7 @@ export class UndoRedoService implements IUndoRedoService {
 			const [matchedElement, matchedStrResource] = this._findClosestRedoElementInGroup(element.groupId);
 			if (element !== matchedElement && matchedStrResource) {
 				// there is an element in the same group that should be redone before this one
-				return this.redo(matchedStrResource);
+				return this._redo(matchedStrResource);
 			}
 		}
 

@@ -33,10 +33,15 @@ export class ViewEventHandler extends Disposable {
 
 	// --- begin event handlers
 
+	public onCompositionStart(e: viewEvents.ViewCompositionStartEvent): boolean {
+		return false;
+	}
+	public onCompositionEnd(e: viewEvents.ViewCompositionEndEvent): boolean {
+		return false;
+	}
 	public onConfigurationChanged(e: viewEvents.ViewConfigurationChangedEvent): boolean {
 		return false;
 	}
-
 	public onCursorStateChanged(e: viewEvents.ViewCursorStateChangedEvent): boolean {
 		return false;
 	}
@@ -93,6 +98,18 @@ export class ViewEventHandler extends Disposable {
 			let e = events[i];
 
 			switch (e.type) {
+
+				case viewEvents.ViewEventType.ViewCompositionStart:
+					if (this.onCompositionStart(e)) {
+						shouldRender = true;
+					}
+					break;
+
+				case viewEvents.ViewEventType.ViewCompositionEnd:
+					if (this.onCompositionEnd(e)) {
+						shouldRender = true;
+					}
+					break;
 
 				case viewEvents.ViewEventType.ViewConfigurationChanged:
 					if (this.onConfigurationChanged(e)) {

@@ -10,7 +10,7 @@ function entrypoint(name) {
 exports.base = [{
 	name: 'vs/base/common/worker/simpleWorker',
 	include: ['vs/editor/common/services/editorSimpleWorker'],
-	prepend: ['vs/loader.js'],
+	prepend: ['vs/loader.js', 'vs/nls.js'],
 	append: ['vs/base/worker/workerMain'],
 	dest: 'vs/base/worker/workerMain.js'
 }];

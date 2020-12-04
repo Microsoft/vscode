@@ -375,16 +375,9 @@ export abstract class AbstractTimerService implements ITimerService {
 		this._telemetryService.publicLog('startupTimeVaried', metrics);
 
 		// report raw timers as telemetry
-		const entries: Record<string, number> = Object.create(null);
-		for (const entry of perf.getEntries()) {
-			entries[entry.name] = entry.startTime;
-		}
-		/* __GDPR__
-			"startupRawTimers" : {
-				"entries": { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth" }
-			}
-		*/
-		this._telemetryService.publicLog('startupRawTimers', { entries });
+		type Durations = { entries: string; };
+		type DurationsClassification = { entries: { classification: 'SystemMetaData', purpose: 'PerformanceAndHealth' } };
+		this._telemetryService.publicLog2<Durations, DurationsClassification>('startup.timers.raw', { entries: JSON.stringify(perf.getEntries()) });
 	}
 
 	private async _computeStartupMetrics(): Promise<IStartupMetrics> {

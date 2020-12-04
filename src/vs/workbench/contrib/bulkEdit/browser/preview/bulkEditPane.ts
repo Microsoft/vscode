@@ -298,7 +298,7 @@ export class BulkEditPane extends ViewPane {
 		}
 	}
 
-	private async _openElementAsEditor(e: IOpenEvent<BulkEditElement | null>): Promise<void> {
+	private async _openElementAsEditor(e: IOpenEvent<BulkEditElement | undefined>): Promise<void> {
 		type Mutable<T> = {
 			-readonly [P in keyof T]: T[P]
 		};

@@ -58,7 +58,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 	}));
 	context.subscriptions.push(vscode.commands.registerCommand('npm.packageManager', (args) => {
 		if (args instanceof vscode.Uri) {
-			return getPackageManager(args);
+			return getPackageManager(context, args);
 		}
 		return '';
 	}));
@@ -83,7 +83,7 @@ function registerTaskProvider(context: vscode.ExtensionContext): vscode.Disposab
 		let workspaceWatcher = vscode.workspace.onDidChangeWorkspaceFolders((_e) => invalidateScriptCaches());
 		context.subscriptions.push(workspaceWatcher);
 
-		taskProvider = new NpmTaskProvider();
+		taskProvider = new NpmTaskProvider(context);
 		let disposable = vscode.tasks.registerTaskProvider('npm', taskProvider);
 		context.subscriptions.push(disposable);
 		return disposable;

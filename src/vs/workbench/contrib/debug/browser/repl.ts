@@ -305,7 +305,7 @@ export class Repl extends ViewPane implements IHistoryNavigationWidget {
 		if (this.styleElement) {
 			const debugConsole = this.configurationService.getValue<IDebugConfiguration>('debug').console;
 			const fontSize = debugConsole.fontSize;
-			const fontFamily = debugConsole.fontFamily === 'default' ? 'var(--monaco-monospace-font)' : debugConsole.fontFamily;
+			const fontFamily = debugConsole.fontFamily === 'default' ? 'var(--monaco-monospace-font)' : `'${debugConsole.fontFamily}'`;
 			const lineHeight = debugConsole.lineHeight ? `${debugConsole.lineHeight}px` : '1.4em';
 			const backgroundColor = this.themeService.getColorTheme().getColor(this.getBackgroundColor());
 

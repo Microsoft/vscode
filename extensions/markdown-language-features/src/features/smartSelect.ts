@@ -34,7 +34,7 @@ export default class MarkdownSmartSelect implements vscode.SelectionRangeProvide
 
 		const tokens = await this.engine.parse(document);
 
-		const blockTokens = getBlockTokensForPosition(tokens, position);
+		const blockTokens = getBlockTokensForPosition(tokens, position, headerRange);
 
 		if (blockTokens.length === 0) {
 			return undefined;
@@ -91,13 +91,13 @@ function createHeaderRange(header: TocEntry, isClosestHeaderToPosition: boolean,
 		// of this header then all content then header
 		return new vscode.SelectionRange(contentRange.with(undefined, startOfChildRange), new vscode.SelectionRange(contentRange, (new vscode.SelectionRange(range, parent))));
 	} else {
-		// no children and not on this header line so select content then header
+		// not on this header line so select content then header
 		return new vscode.SelectionRange(contentRange, new vscode.SelectionRange(range, parent));
 	}
 }
 
-function getBlockTokensForPosition(tokens: Token[], position: vscode.Position): Token[] {
-	const enclosingTokens = tokens.filter(token => token.map && (token.map[0] <= position.line && token.map[1] > position.line) && isBlockElement(token));
+function getBlockTokensForPosition(tokens: Token[], position: vscode.Position, parent?: vscode.SelectionRange): Token[] {
+	const enclosingTokens = tokens.filter(token => token.map && (token.map[0] <= position.line && token.map[1] > position.line) && (!parent || (token.map[0] >= parent.range.start.line && token.map[1] <= parent.range.end.line + 1)) && isBlockElement(token));
 	if (enclosingTokens.length === 0) {
 		return [];
 	}
@@ -131,9 +131,17 @@ function createInlineRange(document: vscode.TextDocument, cursorPosition: vscode
 	const lineText = document.lineAt(cursorPosition.line).text;
 	const boldSelection = createBoldRange(lineText, cursorPosition.character, cursorPosition.line, parent);
 	const italicSelection = createOtherInlineRange(lineText, cursorPosition.character, cursorPosition.line, true, parent);
-	const linkSelection = createLinkRange(lineText, cursorPosition.character, cursorPosition.line, boldSelection ? boldSelection : italicSelection || parent);
+	let comboSelection: vscode.SelectionRange | undefined;
+	if (boldSelection && italicSelection && !boldSelection.range.isEqual(italicSelection.range)) {
+		if (boldSelection.range.contains(italicSelection.range)) {
+			comboSelection = createOtherInlineRange(lineText, cursorPosition.character, cursorPosition.line, true, boldSelection);
+		} else if (italicSelection.range.contains(boldSelection.range)) {
+			comboSelection = createBoldRange(lineText, cursorPosition.character, cursorPosition.line, italicSelection);
+		}
+	}
+	const linkSelection = createLinkRange(lineText, cursorPosition.character, cursorPosition.line, comboSelection || boldSelection || italicSelection || parent);
 	const inlineCodeBlockSelection = createOtherInlineRange(lineText, cursorPosition.character, cursorPosition.line, false, linkSelection || parent);
-	return inlineCodeBlockSelection || linkSelection || boldSelection || italicSelection;
+	return inlineCodeBlockSelection || linkSelection || comboSelection || boldSelection || italicSelection;
 }
 
 function createFencedRange(token: Token, cursorLine: number, document: vscode.TextDocument, parent?: vscode.SelectionRange): vscode.SelectionRange {
@@ -154,61 +162,31 @@ function createFencedRange(token: Token, cursorLine: number, document: vscode.Te
 }
 
 function createBoldRange(lineText: string, cursorChar: number, cursorLine: number, parent?: vscode.SelectionRange): vscode.SelectionRange | undefined {
-	// find closest ** that occurs before cursor position
-	let startBold = lineText.substring(0, cursorChar).lastIndexOf('**');
-
-	// find closest ** that occurs after the start **
-	const endBoldIndex = lineText.substring(startBold + 2).indexOf('**');
-	let endBold = startBold + 2 + lineText.substring(startBold + 2).indexOf('**');
-
-	if (startBold >= 0 && endBoldIndex >= 0 && startBold + 1 < endBold && startBold <= cursorChar && endBold >= cursorChar) {
-		const range = new vscode.Range(cursorLine, startBold, cursorLine, endBold + 2);
-		// **content cursor content** so select content then ** on both sides
-		const contentRange = new vscode.Range(cursorLine, startBold + 2, cursorLine, endBold);
-		return new vscode.SelectionRange(contentRange, new vscode.SelectionRange(range, parent));
-	} else if (startBold >= 0) {
-		// **content**cursor or **content*cursor*
-		// find end ** from end of start ** to end of line (since the cursor is within the end stars)
-		let adjustedEnd = startBold + 2 + lineText.substring(startBold + 2).indexOf('**');
-		startBold = lineText.substring(0, adjustedEnd - 2).lastIndexOf('**');
-		if (adjustedEnd >= 0 && cursorChar === adjustedEnd || cursorChar === adjustedEnd + 1) {
-			if (lineText.charAt(adjustedEnd + 1) === '*') {
-				// *cursor* so need to extend end to include the second *
-				adjustedEnd += 1;
-			}
-			return new vscode.SelectionRange(new vscode.Range(cursorLine, startBold, cursorLine, adjustedEnd + 1), parent);
-		}
-	} else if (endBold > 0) {
-		// cursor**content** or *cursor*content**
-		// find start ** from start of string to cursor + 2 (since the cursor is within the start stars)
-		const adjustedStart = lineText.substring(0, cursorChar + 2).lastIndexOf('**');
-		endBold = adjustedStart + 2 + lineText.substring(adjustedStart + 2).indexOf('**');
-		if (adjustedStart >= 0 && adjustedStart === cursorChar || adjustedStart === cursorChar - 1) {
-			return new vscode.SelectionRange(new vscode.Range(cursorLine, adjustedStart, cursorLine, endBold + 2), parent);
-		}
+	const regex = /(?:^|(?<=\s))(?:\*\*\s*([^*]+)(?:\*\s*([^*]+)\s*?\*)*([^*]+)\s*?\*\*)/g;
+	const matches = [...lineText.matchAll(regex)].filter(match => lineText.indexOf(match[0]) <= cursorChar && lineText.indexOf(match[0]) + match[0].length >= cursorChar);
+	if (matches.length > 0) {
+		// should only be one match, so select first and index 0 contains the entire match
+		const bold = matches[0][0];
+		const startIndex = lineText.indexOf(bold);
+		const cursorOnStars = cursorChar === startIndex || cursorChar === startIndex + 1 || cursorChar === startIndex + bold.length || cursorChar === startIndex + bold.length - 1;
+		const contentAndStars = new vscode.SelectionRange(new vscode.Range(cursorLine, startIndex, cursorLine, startIndex + bold.length), parent);
+		const content = new vscode.SelectionRange(new vscode.Range(cursorLine, startIndex + 2, cursorLine, startIndex + bold.length - 2), contentAndStars);
+		return cursorOnStars ? contentAndStars : content;
 	}
 	return undefined;
 }
 
 function createOtherInlineRange(lineText: string, cursorChar: number, cursorLine: number, isItalic: boolean, parent?: vscode.SelectionRange): vscode.SelectionRange | undefined {
-	const type = isItalic ? '*' : '`';
-	const start = lineText.substring(0, cursorChar + 1).lastIndexOf(type);
-	let end = lineText.substring(cursorChar).indexOf(type);
-
-	if (start >= 0 && end >= 0) {
-		end += cursorChar;
-		// ensure there's no * or ` before end
-		const intermediate = lineText.substring(start + 1, end - 1).indexOf(type);
-		if (intermediate < 0) {
-			const range = new vscode.Range(cursorLine, start, cursorLine, end + 1);
-			if (cursorChar > start && cursorChar <= end) {
-				// within the content so select content then include the stars or backticks
-				const contentRange = new vscode.Range(cursorLine, start + 1, cursorLine, end);
-				return new vscode.SelectionRange(contentRange, new vscode.SelectionRange(range, parent));
-			} else if (cursorChar === start) {
-				return new vscode.SelectionRange(range, parent);
-			}
-		}
+	const regex = isItalic ? /(?:^|(?<=\s))(?:\*\s*([^*]+)(?:\*\*\s*([^*]+)\s*?\*\*)*([^*]+)\s*?\*)/g : /\`[^\`]*\`/g;
+	const matches = [...lineText.matchAll(regex)].filter(match => lineText.indexOf(match[0]) <= cursorChar && lineText.indexOf(match[0]) + match[0].length >= cursorChar);
+	if (matches.length > 0) {
+		// should only be one match, so select first and index 0 contains the entire match
+		const match = matches[0][0];
+		const startIndex = lineText.indexOf(match);
+		const cursorOnType = cursorChar === startIndex || cursorChar === startIndex + match.length;
+		const contentAndType = new vscode.SelectionRange(new vscode.Range(cursorLine, startIndex, cursorLine, startIndex + match.length), parent);
+		const content = new vscode.SelectionRange(new vscode.Range(cursorLine, startIndex + 1, cursorLine, startIndex + match.length - 1), contentAndType);
+		return cursorOnType ? contentAndType : content;
 	}
 	return undefined;
 }
@@ -228,11 +206,12 @@ function createLinkRange(lineText: string, cursorChar: number, cursorLine: numbe
 		// determine if cursor is within [text] or (url) in order to know which should be selected
 		const nearestType = cursorChar >= lineText.indexOf(linkText) && cursorChar < lineText.indexOf(linkText) + linkText.length ? linkText : url;
 
+		const indexOfType = lineText.indexOf(nearestType);
 		// determine if cursor is on a bracket or paren and if so, return the [content] or (content), skipping over the content range
-		const cursorOnType = cursorChar === lineText.indexOf(nearestType) || cursorChar === lineText.indexOf(nearestType) + nearestType.length;
+		const cursorOnType = cursorChar === indexOfType || cursorChar === indexOfType + nearestType.length;
 
-		const contentAndNearestType = new vscode.SelectionRange(new vscode.Range(cursorLine, lineText.indexOf(nearestType), cursorLine, lineText.indexOf(nearestType) + nearestType.length), linkRange);
-		const content = new vscode.SelectionRange(new vscode.Range(cursorLine, lineText.indexOf(nearestType) + 1, cursorLine, lineText.indexOf(nearestType) + nearestType.length - 1), contentAndNearestType);
+		const contentAndNearestType = new vscode.SelectionRange(new vscode.Range(cursorLine, indexOfType, cursorLine, indexOfType + nearestType.length), linkRange);
+		const content = new vscode.SelectionRange(new vscode.Range(cursorLine, indexOfType + 1, cursorLine, indexOfType + nearestType.length - 1), contentAndNearestType);
 		return cursorOnType ? contentAndNearestType : content;
 	}
 	return undefined;

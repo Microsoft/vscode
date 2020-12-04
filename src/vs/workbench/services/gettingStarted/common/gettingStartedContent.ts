@@ -12,7 +12,7 @@ type GettingStartedItem = {
 	button: { title: string, command: string },
 	doneOn: { commandExecuted: string, eventFired?: never } | { eventFired: string, commandExecuted?: never, }
 	when?: string,
-	media: string,
+	media: { type: 'image', path: string, altText: string },
 };
 
 type GettingStartedCategory = {
@@ -33,7 +33,7 @@ export const content: GettingStartedContent = [
 		id: 'Beginner',
 		title: localize('gettingStarted.beginner.title', "Get Started"),
 		codicon: 'lightbulb',
-		description: localize('gettingStarted.beginner.description', "Get to know your new Editor"),
+		description: localize('gettingStarted.beginner.description', "Get to know your new editor"),
 		content: {
 			type: 'items',
 			items: [
@@ -43,7 +43,7 @@ export const content: GettingStartedContent = [
 					title: localize('pickColorTask.title', "Color Theme"),
 					button: { title: localize('pickColorTask.button', "Find a Theme"), command: 'workbench.action.selectTheme' },
 					doneOn: { eventFired: 'themeSelected' },
-					media: 'ColorTheme.jpg'
+					media: { type: 'image', altText: 'ColorTheme', path: 'ColorTheme.jpg', }
 				},
 
 				{
@@ -55,7 +55,7 @@ export const content: GettingStartedContent = [
 						command: 'workbench.extensions.action.showRecommendedKeymapExtensions'
 					},
 					doneOn: { commandExecuted: 'workbench.extensions.action.showRecommendedKeymapExtensions' },
-					media: 'Extensions.jpg',
+					media: { type: 'image', altText: 'Extensions', path: 'Extensions.jpg', }
 				},
 
 				{
@@ -67,7 +67,7 @@ export const content: GettingStartedContent = [
 						command: 'workbench.extensions.action.showLanguageExtensions',
 					},
 					doneOn: { commandExecuted: 'workbench.extensions.action.showLanguageExtensions' },
-					media: 'Languages.jpg',
+					media: { type: 'image', altText: 'Languages', path: 'Languages.jpg', }
 				},
 
 				{
@@ -80,7 +80,7 @@ export const content: GettingStartedContent = [
 						command: 'workbench.action.files.openFileFolder'
 					},
 					doneOn: { commandExecuted: 'workbench.action.files.openFileFolder' },
-					media: 'OpenFolder.jpg'
+					media: { type: 'image', altText: 'OpenFolder', path: 'OpenFolder.jpg' }
 				},
 
 				{
@@ -93,7 +93,7 @@ export const content: GettingStartedContent = [
 						command: 'workbench.action.files.openFolder'
 					},
 					doneOn: { commandExecuted: 'workbench.action.files.openFolder' },
-					media: 'OpenFolder.png'
+					media: { type: 'image', altText: 'OpenFolder', path: 'OpenFolder.jpg' }
 				}
 			]
 		}
@@ -116,7 +116,7 @@ export const content: GettingStartedContent = [
 						command: 'workbench.action.showCommands'
 					},
 					doneOn: { commandExecuted: 'workbench.action.showCommands' },
-					media: 'https://code.visualstudio.com/assets/updates/1_51/custom-tree-hover.gif',
+					media: { type: 'image', altText: 'gif of a custom tree hover', path: 'https://code.visualstudio.com/assets/updates/1_51/custom-tree-hover.gif' },
 				}
 			]
 		}

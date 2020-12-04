@@ -11,7 +11,7 @@ import { IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
 import { IAction, Action, SubmenuAction, Separator } from 'vs/base/common/actions';
 import * as DOM from 'vs/base/browser/dom';
 import { IKeybindingService } from 'vs/platform/keybinding/common/keybinding';
-import { isMacintosh, isWeb, isIOS } from 'vs/base/common/platform';
+import { isMacintosh, isWeb, isIOS, isNative } from 'vs/base/common/platform';
 import { IConfigurationService, IConfigurationChangeEvent } from 'vs/platform/configuration/common/configuration';
 import { Event, Emitter } from 'vs/base/common/event';
 import { Disposable } from 'vs/base/common/lifecycle';
@@ -199,13 +199,27 @@ export abstract class MenubarControl extends Disposable {
 		if (event.affectsConfiguration('editor.accessibilitySupport')) {
 			this.notifyUserOfCustomMenubarAccessibility();
 		}
+
+		// Since we try not update when hidden, we should
+		// try to update the recently opened list on visibility changes
+		if (event.affectsConfiguration('window.menuBarVisibility')) {
+			this.onRecentlyOpenedChange();
+		}
+	}
+
+	private get menubarHidden(): boolean {
+		return isMacintosh && isNative ? false : getMenuBarVisibility(this.configurationService) === 'hidden';
 	}
 
 	protected onRecentlyOpenedChange(): void {
-		this.workspacesService.getRecentlyOpened().then(recentlyOpened => {
-			this.recentlyOpened = recentlyOpened;
-			this.updateMenubar();
-		});
+
+		// Do not update recently opened when the menubar is hidden #108712
+		if (!this.menubarHidden) {
+			this.workspacesService.getRecentlyOpened().then(recentlyOpened => {
+				this.recentlyOpened = recentlyOpened;
+				this.updateMenubar();
+			});
+		}
 	}
 
 	private createOpenRecentMenuAction(recent: IRecent): IAction & { uri: URI } {

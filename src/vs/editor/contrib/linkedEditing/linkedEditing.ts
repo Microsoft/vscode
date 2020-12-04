@@ -220,6 +220,7 @@ export class LinkedEditingContribution extends Disposable implements IEditorCont
 		}
 
 		try {
+			this._editor.popUndoStop();
 			this._ignoreChangeEvent = true;
 			const prevEditOperationType = this._editor._getViewModel().getPrevEditOperationType();
 			this._editor.executeEdits('linkedEditing', edits);

@@ -238,12 +238,12 @@ export class WebExtensionsScannerService extends Disposable implements IWebExten
 		};
 	}
 
-	async canAddExtension(galleryExtension: IGalleryExtension): Promise<boolean> {
+	canAddExtension(galleryExtension: IGalleryExtension): boolean {
 		return !!galleryExtension.properties.webExtension && !!galleryExtension.webResource;
 	}
 
 	async addExtension(galleryExtension: IGalleryExtension): Promise<IScannedExtension> {
-		if (!(await this.canAddExtension(galleryExtension))) {
+		if (!this.canAddExtension(galleryExtension)) {
 			const error = new Error(localize('cannot be installed', "Cannot install '{0}' because this extension is not a web extension.", galleryExtension.displayName || galleryExtension.name));
 			error.name = INSTALL_ERROR_NOT_SUPPORTED;
 			throw error;

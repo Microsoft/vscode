@@ -4,7 +4,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as nls from 'vs/nls';
-import * as semver from 'vs/base/common/semver/semver';
 import severity from 'vs/base/common/severity';
 import { Action } from 'vs/base/common/actions';
 import { Disposable, MutableDisposable } from 'vs/base/common/lifecycle';
@@ -116,6 +115,30 @@ export class ShowCurrentReleaseNotesAction extends AbstractShowReleaseNotesActio
 	}
 }
 
+interface IVersion {
+	major: number;
+	minor: number;
+	patch: number;
+}
+
+function parseVersion(version: string): IVersion | undefined {
+	const match = /([0-9]+)\.([0-9]+)\.([0-9]+)/.exec(version);
+
+	if (!match) {
+		return undefined;
+	}
+
+	return {
+		major: parseInt(match[1]),
+		minor: parseInt(match[2]),
+		patch: parseInt(match[3])
+	};
+}
+
+function isMajorMinorUpdate(before: IVersion, after: IVersion): boolean {
+	return before.major < after.major || before.minor < after.minor;
+}
+
 export class ProductContribution implements IWorkbenchContribution {
 
 	private static readonly KEY = 'releaseNotes/lastVersion';
@@ -135,12 +158,13 @@ export class ProductContribution implements IWorkbenchContribution {
 				return;
 			}
 
-			const lastVersion = storageService.get(ProductContribution.KEY, StorageScope.GLOBAL, '');
+			const lastVersion = parseVersion(storageService.get(ProductContribution.KEY, StorageScope.GLOBAL, ''));
+			const currentVersion = parseVersion(productService.version);
 			const shouldShowReleaseNotes = configurationService.getValue<boolean>('update.showReleaseNotes');
-
-			// was there an update? if so, open release notes
 			const releaseNotesUrl = productService.releaseNotesUrl;
-			if (shouldShowReleaseNotes && !environmentService.skipReleaseNotes && releaseNotesUrl && lastVersion && productService.version !== lastVersion) {
+
+			// was there a major/minor update? if so, open release notes
+			if (shouldShowReleaseNotes && !environmentService.skipReleaseNotes && releaseNotesUrl && lastVersion && currentVersion && isMajorMinorUpdate(lastVersion, currentVersion)) {
 				showReleaseNotes(instantiationService, productService.version)
 					.then(undefined, () => {
 						notificationService.prompt(
@@ -159,7 +183,7 @@ export class ProductContribution implements IWorkbenchContribution {
 			}
 
 			// should we show the new license?
-			if (productService.licenseUrl && lastVersion && semver.satisfies(lastVersion, '<1.0.0') && semver.satisfies(productService.version, '>=1.0.0')) {
+			if (productService.licenseUrl && lastVersion && lastVersion.major < 1 && currentVersion && currentVersion.major >= 1) {
 				notificationService.info(nls.localize('licenseChanged', "Our license terms have changed, please click [here]({0}) to go through them.", productService.licenseUrl));
 			}
 

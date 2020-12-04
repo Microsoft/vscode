@@ -25,7 +25,7 @@ export interface IGettingStartedTask {
 	order: number,
 	button: { title: string, command: string },
 	doneOn: { commandExecuted: string, eventFired?: never } | { eventFired: string, commandExecuted?: never, }
-	media: URI
+	media: { type: 'image', path: URI, altText: string },
 }
 
 export interface IGettingStartedCategoryDescriptor {
@@ -134,9 +134,13 @@ content.forEach(category => {
 				category: category.id,
 				order: index,
 				when: ContextKeyExpr.deserialize(item.when) ?? ContextKeyExpr.true(),
-				media: item.media.startsWith('https://')
-					? URI.parse(item.media, true)
-					: FileAccess.asFileUri('vs/workbench/services/gettingStarted/common/media/' + item.media, require)
+				media: {
+					type: item.media.type,
+					altText: item.media.altText,
+					path: item.media.path.startsWith('https://')
+						? URI.parse(item.media.path, true)
+						: FileAccess.asFileUri('vs/workbench/services/gettingStarted/common/media/' + item.media.path, require)
+				}
 			});
 		});
 	}

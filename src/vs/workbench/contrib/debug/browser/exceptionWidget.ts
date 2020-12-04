@@ -120,4 +120,8 @@ export class ExceptionWidget extends ZoneWidget {
 		// Focus into the container for accessibility purposes so the exception and stack trace gets read
 		this.container?.focus();
 	}
+
+	hasfocus(): boolean {
+		return dom.isAncestor(document.activeElement, this.container);
+	}
 }

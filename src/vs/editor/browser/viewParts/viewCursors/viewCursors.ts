@@ -25,6 +25,7 @@ export class ViewCursors extends ViewPart {
 	private _cursorStyle: TextEditorCursorStyle;
 	private _cursorSmoothCaretAnimation: boolean;
 	private _selectionIsEmpty: boolean;
+	private _isComposingInput: boolean;
 
 	private _isVisible: boolean;
 
@@ -49,6 +50,7 @@ export class ViewCursors extends ViewPart {
 		this._cursorStyle = options.get(EditorOption.cursorStyle);
 		this._cursorSmoothCaretAnimation = options.get(EditorOption.cursorSmoothCaretAnimation);
 		this._selectionIsEmpty = true;
+		this._isComposingInput = false;
 
 		this._isVisible = false;
 
@@ -83,7 +85,16 @@ export class ViewCursors extends ViewPart {
 	}
 
 	// --- begin event handlers
-
+	public onCompositionStart(e: viewEvents.ViewCompositionStartEvent): boolean {
+		this._isComposingInput = true;
+		this._updateBlinking();
+		return true;
+	}
+	public onCompositionEnd(e: viewEvents.ViewCompositionEndEvent): boolean {
+		this._isComposingInput = false;
+		this._updateBlinking();
+		return true;
+	}
 	public onConfigurationChanged(e: viewEvents.ViewConfigurationChangedEvent): boolean {
 		const options = this._context.configuration.options;
 
@@ -195,6 +206,10 @@ export class ViewCursors extends ViewPart {
 	// ---- blinking logic
 
 	private _getCursorBlinking(): TextEditorCursorBlinkingStyle {
+		if (this._isComposingInput) {
+			// avoid double cursors
+			return TextEditorCursorBlinkingStyle.Hidden;
+		}
 		if (!this._editorHasFocus) {
 			return TextEditorCursorBlinkingStyle.Hidden;
 		}

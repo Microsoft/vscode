@@ -97,7 +97,7 @@ export interface IWebExtensionsScannerService {
 	scanExtensions(type?: ExtensionType): Promise<IScannedExtension[]>;
 	scanAndTranslateExtensions(type?: ExtensionType): Promise<ITranslatedScannedExtension[]>;
 	scanAndTranslateSingleExtension(extensionLocation: URI, extensionType: ExtensionType): Promise<ITranslatedScannedExtension | null>;
-	canAddExtension(galleryExtension: IGalleryExtension): Promise<boolean>;
+	canAddExtension(galleryExtension: IGalleryExtension): boolean;
 	addExtension(galleryExtension: IGalleryExtension): Promise<IScannedExtension>;
 	removeExtension(identifier: IExtensionIdentifier, version?: string): Promise<void>;
 }

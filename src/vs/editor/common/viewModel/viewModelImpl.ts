@@ -183,6 +183,14 @@ export class ViewModel extends Disposable implements IViewModel {
 		this._eventDispatcher.emitOutgoingEvent(new FocusChangedEvent(!hasFocus, hasFocus));
 	}
 
+	public onCompositionStart(): void {
+		this._eventDispatcher.emitSingleViewEvent(new viewEvents.ViewCompositionStartEvent());
+	}
+
+	public onCompositionEnd(): void {
+		this._eventDispatcher.emitSingleViewEvent(new viewEvents.ViewCompositionEndEvent());
+	}
+
 	public onDidColorThemeChange(): void {
 		this._eventDispatcher.emitSingleViewEvent(new viewEvents.ViewThemeChangedEvent());
 	}

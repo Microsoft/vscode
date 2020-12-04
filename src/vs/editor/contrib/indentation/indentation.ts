@@ -472,7 +472,6 @@ export class AutoIndentOnPaste implements IEditorContribution {
 		}
 		const autoIndent = this.editor.getOption(EditorOption.autoIndent);
 		const { tabSize, indentSize, insertSpaces } = model.getOptions();
-		this.editor.pushUndoStop();
 		let textEdits: TextEdit[] = [];
 
 		let indentConverter = {
@@ -583,9 +582,12 @@ export class AutoIndentOnPaste implements IEditorContribution {
 			}
 		}
 
-		let cmd = new AutoIndentOnPasteCommand(textEdits, this.editor.getSelection()!);
-		this.editor.executeCommand('autoIndentOnPaste', cmd);
-		this.editor.pushUndoStop();
+		if (textEdits.length > 0) {
+			this.editor.pushUndoStop();
+			let cmd = new AutoIndentOnPasteCommand(textEdits, this.editor.getSelection()!);
+			this.editor.executeCommand('autoIndentOnPaste', cmd);
+			this.editor.pushUndoStop();
+		}
 	}
 
 	private shouldIgnoreLine(model: ITextModel, lineNumber: number): boolean {

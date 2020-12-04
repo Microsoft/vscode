@@ -790,6 +790,10 @@ class ModelSemanticColoring extends Disposable {
 		}
 		const provider = this._getSemanticColoringProvider();
 		if (!provider) {
+			if (this._currentDocumentResponse) {
+				// there are semantic tokens set
+				this._model.setSemanticTokens(null, false);
+			}
 			return;
 		}
 		this._currentDocumentRequestCancellationTokenSource = new CancellationTokenSource();

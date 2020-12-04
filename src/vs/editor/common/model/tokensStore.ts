@@ -884,6 +884,10 @@ export class TokensStore2 {
 		this._isComplete = false;
 	}
 
+	public isEmpty(): boolean {
+		return (this._pieces.length === 0);
+	}
+
 	public set(pieces: MultilineTokens2[] | null, isComplete: boolean): void {
 		this._pieces = pieces || [];
 		this._isComplete = isComplete;

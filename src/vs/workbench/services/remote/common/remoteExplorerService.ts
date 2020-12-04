@@ -119,6 +119,9 @@ export class TunnelModel extends Disposable {
 	public onCandidatesChanged: Event<Map<string, { host: string, port: number }>> = this._onCandidatesChanged.event;
 	private _candidateFilter: ((candidates: { host: string, port: number, detail: string }[]) => Promise<{ host: string, port: number, detail: string }[]>) | undefined;
 	private tunnelRestoreValue: string | undefined;
+	private _onEnvironmentTunnelsSet: Emitter<void> = new Emitter();
+	public onEnvironmentTunnelsSet: Event<void> = this._onEnvironmentTunnelsSet.event;
+	private _environmentTunnelsSet: boolean = false;
 
 	constructor(
 		@ITunnelService private readonly tunnelService: ITunnelService,
@@ -247,16 +250,24 @@ export class TunnelModel extends Disposable {
 		return (this.forwarded.get(key) || this.detected.get(key))?.localAddress;
 	}
 
-	addEnvironmentTunnels(tunnels: TunnelDescription[]): void {
-		tunnels.forEach(tunnel => {
-			this.detected.set(makeAddress(tunnel.remoteAddress.host, tunnel.remoteAddress.port), {
-				remoteHost: tunnel.remoteAddress.host,
-				remotePort: tunnel.remoteAddress.port,
-				localAddress: typeof tunnel.localAddress === 'string' ? tunnel.localAddress : makeAddress(tunnel.localAddress.host, tunnel.localAddress.port),
-				closeable: false,
-				runningProcess: mapHasAddressLocalhostOrAllInterfaces(this._candidates, tunnel.remoteAddress.host, tunnel.remoteAddress.port)?.detail
+	public get environmentTunnelsSet(): boolean {
+		return this._environmentTunnelsSet;
+	}
+
+	addEnvironmentTunnels(tunnels: TunnelDescription[] | undefined): void {
+		if (tunnels) {
+			tunnels.forEach(tunnel => {
+				this.detected.set(makeAddress(tunnel.remoteAddress.host, tunnel.remoteAddress.port), {
+					remoteHost: tunnel.remoteAddress.host,
+					remotePort: tunnel.remoteAddress.port,
+					localAddress: typeof tunnel.localAddress === 'string' ? tunnel.localAddress : makeAddress(tunnel.localAddress.host, tunnel.localAddress.port),
+					closeable: false,
+					runningProcess: mapHasAddressLocalhostOrAllInterfaces(this._candidates, tunnel.remoteAddress.host, tunnel.remoteAddress.port)?.detail
+				});
 			});
-		});
+		}
+		this._environmentTunnelsSet = true;
+		this._onEnvironmentTunnelsSet.fire();
 		this._onForwardPort.fire();
 	}
 
@@ -386,9 +397,7 @@ class RemoteExplorerService implements IRemoteExplorerService {
 	}
 
 	setTunnelInformation(tunnelInformation: TunnelInformation | undefined): void {
-		if (tunnelInformation && tunnelInformation.environmentTunnels) {
-			this.tunnelModel.addEnvironmentTunnels(tunnelInformation.environmentTunnels);
-		}
+		this.tunnelModel.addEnvironmentTunnels(tunnelInformation?.environmentTunnels);
 	}
 
 	setEditable(tunnelItem: ITunnelItem | undefined, data: IEditableData | null): void {

@@ -66,7 +66,7 @@ This project incorporates components from the projects listed below. The origina
 59.	vscode-codicons version 0.0.1 (https://github.com/microsoft/vscode-codicons)
 60.	vscode-logfile-highlighter version 2.8.0 (https://github.com/emilast/vscode-logfile-highlighter)
 61.	vscode-swift version 0.0.1 (https://github.com/owensd/vscode-swift)
-62.	Web Background Synchronization (https://github.com/WICG/BackgroundSync)
+62.	Web Background Synchronization (https://github.com/WICG/background-sync)
 
 
 %% atom/language-clojure NOTICES AND INFORMATION BEGIN HERE

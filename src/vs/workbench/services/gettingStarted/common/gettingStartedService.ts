@@ -166,7 +166,6 @@ export class GettingStartedService implements IGettingStartedService {
 
 	progressByEvent(event: string): void {
 		const listening = this.eventListeners.get(event) ?? [];
-		console.log(event, listening, this.eventListeners);
 		listening.forEach(id => this.progressTask(id));
 	}
 }

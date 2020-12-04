@@ -164,6 +164,8 @@ export interface IViewModel extends ICursorSimpleModel {
 	setViewport(startLineNumber: number, endLineNumber: number, centeredLineNumber: number): void;
 	tokenizeViewport(): void;
 	setHasFocus(hasFocus: boolean): void;
+	onCompositionStart(): void;
+	onCompositionEnd(): void;
 	onDidColorThemeChange(): void;
 
 	getDecorationsInViewport(visibleRange: Range): ViewModelDecoration[];

@@ -535,6 +535,11 @@
 	cursor: grab;
 }
 
+.monaco-workbench .notebookOverlay.notebook-editor-editable > .cell-list-container > .monaco-list > .monaco-scrollable-element > .scrollbar.visible {
+	z-index: 25;
+	cursor: default;
+}
+
 .monaco-workbench .notebookOverlay .monaco-list .monaco-list-row .cell-focus-indicator .codicon:hover {
 	cursor: pointer;
 }

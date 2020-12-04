@@ -75,9 +75,11 @@ export function setLanguageConfiguration(languageId: string, configuration: Lang
  */
 export class EncodedTokenizationSupport2Adapter implements modes.ITokenizationSupport {
 
+	private readonly _languageIdentifier: modes.LanguageIdentifier;
 	private readonly _actual: EncodedTokensProvider;
 
-	constructor(actual: EncodedTokensProvider) {
+	constructor(languageIdentifier: modes.LanguageIdentifier, actual: EncodedTokensProvider) {
+		this._languageIdentifier = languageIdentifier;
 		this._actual = actual;
 	}
 
@@ -86,6 +88,9 @@ export class EncodedTokenizationSupport2Adapter implements modes.ITokenizationSu
 	}
 
 	public tokenize(line: string, state: modes.IState, offsetDelta: number): TokenizationResult {
+		if (typeof this._actual.tokenize === 'function') {
+			return TokenizationSupport2Adapter.adaptTokenize(this._languageIdentifier.language, <{ tokenize(line: string, state: modes.IState): ILineTokens; }>this._actual, line, state, offsetDelta);
+		}
 		throw new Error('Not supported!');
 	}
 
@@ -114,7 +119,7 @@ export class TokenizationSupport2Adapter implements modes.ITokenizationSupport {
 		return this._actual.getInitialState();
 	}
 
-	private _toClassicTokens(tokens: IToken[], language: string, offsetDelta: number): Token[] {
+	private static _toClassicTokens(tokens: IToken[], language: string, offsetDelta: number): Token[] {
 		let result: Token[] = [];
 		let previousStartIndex: number = 0;
 		for (let i = 0, len = tokens.length; i < len; i++) {
@@ -137,9 +142,9 @@ export class TokenizationSupport2Adapter implements modes.ITokenizationSupport {
 		return result;
 	}
 
-	public tokenize(line: string, state: modes.IState, offsetDelta: number): TokenizationResult {
-		let actualResult = this._actual.tokenize(line, state);
-		let tokens = this._toClassicTokens(actualResult.tokens, this._languageIdentifier.language, offsetDelta);
+	public static adaptTokenize(language: string, actual: { tokenize(line: string, state: modes.IState): ILineTokens; }, line: string, state: modes.IState, offsetDelta: number): TokenizationResult {
+		let actualResult = actual.tokenize(line, state);
+		let tokens = TokenizationSupport2Adapter._toClassicTokens(actualResult.tokens, language, offsetDelta);
 
 		let endState: modes.IState;
 		// try to save an object if possible
@@ -150,6 +155,10 @@ export class TokenizationSupport2Adapter implements modes.ITokenizationSupport {
 		}
 
 		return new TokenizationResult(tokens, endState);
+	}
+
+	public tokenize(line: string, state: modes.IState, offsetDelta: number): TokenizationResult {
+		return TokenizationSupport2Adapter.adaptTokenize(this._languageIdentifier.language, this._actual, line, state, offsetDelta);
 	}
 
 	private _toBinaryTokens(tokens: IToken[], offsetDelta: number): Uint32Array {
@@ -287,6 +296,10 @@ export interface EncodedTokensProvider {
 	 * Tokenize a line given the state at the beginning of the line.
 	 */
 	tokenizeEncoded(line: string, state: modes.IState): IEncodedLineTokens;
+	/**
+	 * Tokenize a line given the state at the beginning of the line.
+	 */
+	tokenize?(line: string, state: modes.IState): ILineTokens;
 }
 
 function isEncodedTokensProvider(provider: TokensProvider | EncodedTokensProvider): provider is EncodedTokensProvider {
@@ -307,7 +320,7 @@ export function setTokensProvider(languageId: string, provider: TokensProvider |
 	}
 	const create = (provider: TokensProvider | EncodedTokensProvider) => {
 		if (isEncodedTokensProvider(provider)) {
-			return new EncodedTokenizationSupport2Adapter(provider);
+			return new EncodedTokenizationSupport2Adapter(languageIdentifier!, provider);
 		} else {
 			return new TokenizationSupport2Adapter(StaticServices.standaloneThemeService.get(), languageIdentifier!, provider);
 		}

@@ -356,19 +356,13 @@ KeybindingsRegistry.registerCommandAndKeybindingRule({
 
 		// List
 		if (focused instanceof List || focused instanceof PagedList) {
-			const list = focused;
-
-			list.focusPreviousPage();
-			list.reveal(list.getFocus()[0]);
+			focused.focusPreviousPage();
 		}
 
 		// Tree
 		else if (focused instanceof ObjectTree || focused instanceof DataTree || focused instanceof AsyncDataTree) {
-			const list = focused;
-
 			const fakeKeyboardEvent = new KeyboardEvent('keydown');
-			list.focusPreviousPage(fakeKeyboardEvent);
-			list.reveal(list.getFocus()[0]);
+			focused.focusPreviousPage(fakeKeyboardEvent);
 		}
 
 		// Ensure DOM Focus
@@ -386,19 +380,13 @@ KeybindingsRegistry.registerCommandAndKeybindingRule({
 
 		// List
 		if (focused instanceof List || focused instanceof PagedList) {
-			const list = focused;
-
-			list.focusNextPage();
-			list.reveal(list.getFocus()[0]);
+			focused.focusNextPage();
 		}
 
 		// Tree
 		else if (focused instanceof ObjectTree || focused instanceof DataTree || focused instanceof AsyncDataTree) {
-			const list = focused;
-
 			const fakeKeyboardEvent = new KeyboardEvent('keydown');
-			list.focusNextPage(fakeKeyboardEvent);
-			list.reveal(list.getFocus()[0]);
+			focused.focusNextPage(fakeKeyboardEvent);
 		}
 
 		// Ensure DOM Focus

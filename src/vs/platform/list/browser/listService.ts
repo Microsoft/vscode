@@ -126,7 +126,7 @@ const automaticKeyboardNavigationSettingKey = 'workbench.list.automaticKeyboardN
 const treeIndentKey = 'workbench.tree.indent';
 const treeRenderIndentGuidesKey = 'workbench.tree.renderIndentGuides';
 const listSmoothScrolling = 'workbench.list.smoothScrolling';
-const treeExpandOnFolderClick = 'workbench.tree.expandOnFolderClick';
+const treeExpandMode = 'workbench.tree.expandMode';
 
 function useAltAsMultipleSelectionModifier(configurationService: IConfigurationService): boolean {
 	return configurationService.getValue(multiSelectModifierSettingKey) === 'alt';
@@ -445,11 +445,11 @@ abstract class ResourceNavigator<T> extends Disposable {
 	private readonly openOnFocus: boolean;
 	private openOnSingleClick: boolean;
 
-	private readonly _onDidOpen = this._register(new Emitter<IOpenEvent<T | null>>());
-	readonly onDidOpen: Event<IOpenEvent<T | null>> = this._onDidOpen.event;
+	private readonly _onDidOpen = this._register(new Emitter<IOpenEvent<T | undefined>>());
+	readonly onDidOpen: Event<IOpenEvent<T | undefined>> = this._onDidOpen.event;
 
 	constructor(
-		private readonly widget: ListWidget,
+		protected readonly widget: ListWidget,
 		options?: IResourceNavigatorOptions
 	) {
 		super();
@@ -457,8 +457,8 @@ abstract class ResourceNavigator<T> extends Disposable {
 		this.openOnFocus = options?.openOnFocus ?? false;
 
 		this._register(Event.filter(this.widget.onDidChangeSelection, e => e.browserEvent instanceof KeyboardEvent)(e => this.onSelectionFromKeyboard(e)));
-		this._register(this.widget.onPointer((e: { browserEvent: MouseEvent }) => this.onPointer(e.browserEvent)));
-		this._register(this.widget.onMouseDblClick((e: { browserEvent: MouseEvent }) => this.onMouseDblClick(e.browserEvent)));
+		this._register(this.widget.onPointer((e: { browserEvent: MouseEvent, element: T | undefined }) => this.onPointer(e.element, e.browserEvent)));
+		this._register(this.widget.onMouseDblClick((e: { browserEvent: MouseEvent, element: T | undefined }) => this.onMouseDblClick(e.element, e.browserEvent)));
 
 		if (this.openOnFocus) {
 			this._register(Event.filter(this.widget.onDidChangeFocus, e => e.browserEvent instanceof KeyboardEvent)(e => this.onFocusFromKeyboard(e)));
@@ -482,7 +482,7 @@ abstract class ResourceNavigator<T> extends Disposable {
 		const pinned = !preserveFocus;
 		const sideBySide = false;
 
-		this._open(preserveFocus, pinned, sideBySide, event.browserEvent);
+		this._open(this.getSelectedElement(), preserveFocus, pinned, sideBySide, event.browserEvent);
 	}
 
 	private onSelectionFromKeyboard(event: ITreeEvent<any>): void {
@@ -494,10 +494,10 @@ abstract class ResourceNavigator<T> extends Disposable {
 		const pinned = !preserveFocus;
 		const sideBySide = false;
 
-		this._open(preserveFocus, pinned, sideBySide, event.browserEvent);
+		this._open(this.getSelectedElement(), preserveFocus, pinned, sideBySide, event.browserEvent);
 	}
 
-	private onPointer(browserEvent: MouseEvent): void {
+	private onPointer(element: T | undefined, browserEvent: MouseEvent): void {
 		if (!this.openOnSingleClick) {
 			return;
 		}
@@ -513,10 +513,10 @@ abstract class ResourceNavigator<T> extends Disposable {
 		const pinned = isMiddleClick;
 		const sideBySide = browserEvent.ctrlKey || browserEvent.metaKey || browserEvent.altKey;
 
-		this._open(preserveFocus, pinned, sideBySide, browserEvent);
+		this._open(element, preserveFocus, pinned, sideBySide, browserEvent);
 	}
 
-	private onMouseDblClick(browserEvent?: MouseEvent): void {
+	private onMouseDblClick(element: T | undefined, browserEvent?: MouseEvent): void {
 		if (!browserEvent) {
 			return;
 		}
@@ -525,10 +525,14 @@ abstract class ResourceNavigator<T> extends Disposable {
 		const pinned = true;
 		const sideBySide = (browserEvent.ctrlKey || browserEvent.metaKey || browserEvent.altKey);
 
-		this._open(preserveFocus, pinned, sideBySide, browserEvent);
+		this._open(element, preserveFocus, pinned, sideBySide, browserEvent);
 	}
 
-	private _open(preserveFocus: boolean, pinned: boolean, sideBySide: boolean, browserEvent?: UIEvent): void {
+	private _open(element: T | undefined, preserveFocus: boolean, pinned: boolean, sideBySide: boolean, browserEvent?: UIEvent): void {
+		if (!element) {
+			return;
+		}
+
 		this._onDidOpen.fire({
 			editorOptions: {
 				preserveFocus,
@@ -536,27 +540,39 @@ abstract class ResourceNavigator<T> extends Disposable {
 				revealIfVisible: true
 			},
 			sideBySide,
-			element: this.widget.getSelection()[0],
+			element,
 			browserEvent
 		});
 	}
+
+	abstract getSelectedElement(): T | undefined;
 }
 
-export class ListResourceNavigator<T> extends ResourceNavigator<number> {
+export class ListResourceNavigator<T> extends ResourceNavigator<T> {
+
 	constructor(
-		list: List<T> | PagedList<T>,
+		protected readonly widget: List<T> | PagedList<T>,
 		options?: IResourceNavigatorOptions
 	) {
-		super(list, options);
+		super(widget, options);
+	}
+
+	getSelectedElement(): T | undefined {
+		return this.widget.getSelectedElements()[0];
 	}
 }
 
 class TreeResourceNavigator<T, TFilterData> extends ResourceNavigator<T> {
+
 	constructor(
-		tree: ObjectTree<T, TFilterData> | CompressibleObjectTree<T, TFilterData> | DataTree<any, T, TFilterData> | AsyncDataTree<any, T, TFilterData> | CompressibleAsyncDataTree<any, T, TFilterData>,
+		protected readonly widget: ObjectTree<T, TFilterData> | CompressibleObjectTree<T, TFilterData> | DataTree<any, T, TFilterData> | AsyncDataTree<any, T, TFilterData> | CompressibleAsyncDataTree<any, T, TFilterData>,
 		options: IResourceNavigatorOptions
 	) {
-		super(tree, options);
+		super(widget, options);
+	}
+
+	getSelectedElement(): T | undefined {
+		return this.widget.getSelection()[0] ?? undefined;
 	}
 }
 
@@ -591,7 +607,7 @@ export class WorkbenchObjectTree<T extends NonNullable<any>, TFilterData = void>
 	private internals: WorkbenchTreeInternals<any, T, TFilterData>;
 	get contextKeyService(): IContextKeyService { return this.internals.contextKeyService; }
 	get useAltAsMultipleSelectionModifier(): boolean { return this.internals.useAltAsMultipleSelectionModifier; }
-	get onDidOpen(): Event<IOpenEvent<T | null>> { return this.internals.onDidOpen; }
+	get onDidOpen(): Event<IOpenEvent<T | undefined>> { return this.internals.onDidOpen; }
 
 	constructor(
 		user: string,
@@ -627,7 +643,7 @@ export class WorkbenchCompressibleObjectTree<T extends NonNullable<any>, TFilter
 	private internals: WorkbenchTreeInternals<any, T, TFilterData>;
 	get contextKeyService(): IContextKeyService { return this.internals.contextKeyService; }
 	get useAltAsMultipleSelectionModifier(): boolean { return this.internals.useAltAsMultipleSelectionModifier; }
-	get onDidOpen(): Event<IOpenEvent<T | null>> { return this.internals.onDidOpen; }
+	get onDidOpen(): Event<IOpenEvent<T | undefined>> { return this.internals.onDidOpen; }
 
 	constructor(
 		user: string,
@@ -671,7 +687,7 @@ export class WorkbenchDataTree<TInput, T, TFilterData = void> extends DataTree<T
 	private internals: WorkbenchTreeInternals<TInput, T, TFilterData>;
 	get contextKeyService(): IContextKeyService { return this.internals.contextKeyService; }
 	get useAltAsMultipleSelectionModifier(): boolean { return this.internals.useAltAsMultipleSelectionModifier; }
-	get onDidOpen(): Event<IOpenEvent<T | null>> { return this.internals.onDidOpen; }
+	get onDidOpen(): Event<IOpenEvent<T | undefined>> { return this.internals.onDidOpen; }
 
 	constructor(
 		user: string,
@@ -716,7 +732,7 @@ export class WorkbenchAsyncDataTree<TInput, T, TFilterData = void> extends Async
 	private internals: WorkbenchTreeInternals<TInput, T, TFilterData>;
 	get contextKeyService(): IContextKeyService { return this.internals.contextKeyService; }
 	get useAltAsMultipleSelectionModifier(): boolean { return this.internals.useAltAsMultipleSelectionModifier; }
-	get onDidOpen(): Event<IOpenEvent<T | null>> { return this.internals.onDidOpen; }
+	get onDidOpen(): Event<IOpenEvent<T | undefined>> { return this.internals.onDidOpen; }
 
 	constructor(
 		user: string,
@@ -758,7 +774,7 @@ export class WorkbenchCompressibleAsyncDataTree<TInput, T, TFilterData = void> e
 	private internals: WorkbenchTreeInternals<TInput, T, TFilterData>;
 	get contextKeyService(): IContextKeyService { return this.internals.contextKeyService; }
 	get useAltAsMultipleSelectionModifier(): boolean { return this.internals.useAltAsMultipleSelectionModifier; }
-	get onDidOpen(): Event<IOpenEvent<T | null>> { return this.internals.onDidOpen; }
+	get onDidOpen(): Event<IOpenEvent<T | undefined>> { return this.internals.onDidOpen; }
 
 	constructor(
 		user: string,
@@ -833,7 +849,7 @@ function workbenchTreeDataPreamble<T, TFilterData, TOptions extends IAbstractTre
 			additionalScrollHeight,
 			hideTwistiesOfChildlessElements: options.hideTwistiesOfChildlessElements,
 			expandOnlyOnDoubleClick: configurationService.getValue(openModeSettingKey) === 'doubleClick',
-			expandOnlyOnTwistieClick: options.expandOnlyOnTwistieClick ?? !configurationService.getValue<boolean>(treeExpandOnFolderClick)
+			expandOnlyOnTwistieClick: options.expandOnlyOnTwistieClick ?? (configurationService.getValue<'singleClick' | 'doubleClick'>(treeExpandMode) === 'doubleClick')
 		} as TOptions
 	};
 }
@@ -849,7 +865,7 @@ class WorkbenchTreeInternals<TInput, T, TFilterData> {
 	private styler: IDisposable | undefined;
 	private navigator: TreeResourceNavigator<T, TFilterData>;
 
-	get onDidOpen(): Event<IOpenEvent<T | null>> { return this.navigator.onDidOpen; }
+	get onDidOpen(): Event<IOpenEvent<T | undefined>> { return this.navigator.onDidOpen; }
 
 	constructor(
 		private tree: WorkbenchObjectTree<T, TFilterData> | WorkbenchCompressibleObjectTree<T, TFilterData> | WorkbenchDataTree<TInput, T, TFilterData> | WorkbenchAsyncDataTree<TInput, T, TFilterData> | WorkbenchCompressibleAsyncDataTree<TInput, T, TFilterData>,
@@ -935,8 +951,8 @@ class WorkbenchTreeInternals<TInput, T, TFilterData> {
 				if (e.affectsConfiguration(openModeSettingKey)) {
 					newOptions = { ...newOptions, expandOnlyOnDoubleClick: configurationService.getValue(openModeSettingKey) === 'doubleClick' };
 				}
-				if (e.affectsConfiguration(treeExpandOnFolderClick) && options.expandOnlyOnTwistieClick === undefined) {
-					newOptions = { ...newOptions, expandOnlyOnTwistieClick: !configurationService.getValue<boolean>(treeExpandOnFolderClick) };
+				if (e.affectsConfiguration(treeExpandMode) && options.expandOnlyOnTwistieClick === undefined) {
+					newOptions = { ...newOptions, expandOnlyOnTwistieClick: configurationService.getValue<'singleClick' | 'doubleClick'>(treeExpandMode) === 'doubleClick' };
 				}
 				if (Object.keys(newOptions).length > 0) {
 					tree.updateOptions(newOptions);
@@ -1042,10 +1058,11 @@ configurationRegistry.registerConfiguration({
 			'default': true,
 			markdownDescription: localize('automatic keyboard navigation setting', "Controls whether keyboard navigation in lists and trees is automatically triggered simply by typing. If set to `false`, keyboard navigation is only triggered when executing the `list.toggleKeyboardNavigation` command, for which you can assign a keyboard shortcut.")
 		},
-		[treeExpandOnFolderClick]: {
-			type: 'boolean',
-			default: true,
-			description: localize('list expand on folder click setting', "Controls whether tree folders are expanded when clicking the folder names."),
+		[treeExpandMode]: {
+			type: 'string',
+			enum: ['singleClick', 'doubleClick'],
+			default: 'singleClick',
+			description: localize('expand mode', "Controls how tree folders are expanded when clicking the folder names."),
 		}
 	}
 });

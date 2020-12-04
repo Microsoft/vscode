@@ -267,20 +267,16 @@ export class OpenEditorsView extends ViewPane {
 		}));
 		const resourceNavigator = this._register(new ListResourceNavigator(this.list, { configurationService: this.configurationService }));
 		this._register(resourceNavigator.onDidOpen(e => {
-			if (typeof e.element !== 'number') {
+			if (!e.element) {
 				return;
-			}
-
-			const element = this.list.element(e.element);
-
-			if (element instanceof OpenEditor) {
+			} else if (e.element instanceof OpenEditor) {
 				if (e.browserEvent instanceof MouseEvent && e.browserEvent.button === 1) {
 					return; // middle click already handled above: closes the editor
 				}
 
-				this.openEditor(element, { preserveFocus: e.editorOptions.preserveFocus, pinned: e.editorOptions.pinned, sideBySide: e.sideBySide });
+				this.openEditor(e.element, { preserveFocus: e.editorOptions.preserveFocus, pinned: e.editorOptions.pinned, sideBySide: e.sideBySide });
 			} else {
-				this.editorGroupService.activateGroup(element);
+				this.editorGroupService.activateGroup(e.element);
 			}
 		}));
 

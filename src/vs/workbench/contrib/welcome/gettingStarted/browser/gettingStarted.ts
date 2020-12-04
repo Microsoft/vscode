@@ -176,11 +176,15 @@ export class GettingStartedPage extends Disposable {
 			}
 			this.editorInput.selectedTask = id;
 			const taskToExpand = assertIsDefined(this.currentCategory.content.items.find(task => task.id === id));
-			mediaElement.setAttribute('src', taskToExpand.media.toString());
+			console.log(taskToExpand.media.path, taskToExpand.media.path.toString());
+
+			mediaElement.setAttribute('src', taskToExpand.media.path.toString());
+			mediaElement.setAttribute('alt', taskToExpand.media.altText);
 			taskElement.parentElement?.querySelectorAll('.expanded').forEach(node => node.classList.remove('expanded'));
 			taskElement.classList.add('expanded');
 		} else {
 			mediaElement.setAttribute('src', '');
+			mediaElement.setAttribute('alt', '');
 		}
 	}
 
@@ -284,23 +288,24 @@ export class GettingStartedPage extends Disposable {
 		const categoryElements = category.content.items.map(
 			(task, i, arr) => $('button.getting-started-task',
 				{ 'x-dispatch': 'selectTask:' + task.id, id: 'getting-started-task-' + task.id },
-				$('.codicon' + (task.done ? '.codicon-star-full' : '.codicon-star-empty'), { id: 'done-task-' + task.id }),
+				$('.codicon' + (task.done ? '.codicon-pass-filled' : '.codicon-circle-large-outline'), { id: 'done-task-' + task.id }),
 				$('.task-description-container', {},
 					$('h3.task-title', {}, task.title),
 					$('.task-description.description', {}, task.description),
-					...(
-						task.button
-							? [$('button.emphasis.getting-started-task-action', { 'x-dispatch': 'runTaskAction:' + task.id },
-								task.button.title + this.getKeybindingLabel(task.button.command)
-							)]
-							: []),
-					...(
-						arr[i + 1]
-							? [
-								$('a.task-next',
-									{ 'x-dispatch': 'selectTask:' + arr[i + 1].id }, localize('next', "Next")),
-							] : []
-					)
+					$('.actions', {},
+						...(
+							task.button
+								? [$('button.emphasis.getting-started-task-action', { 'x-dispatch': 'runTaskAction:' + task.id },
+									task.button.title + this.getKeybindingLabel(task.button.command)
+								)]
+								: []),
+						...(
+							arr[i + 1]
+								? [
+									$('a.task-next',
+										{ 'x-dispatch': 'selectTask:' + arr[i + 1].id }, localize('next', "Next")),
+								] : []
+						))
 				)));
 
 		const detailContainer = assertIsDefined(document.getElementById('getting-started-detail-container'));

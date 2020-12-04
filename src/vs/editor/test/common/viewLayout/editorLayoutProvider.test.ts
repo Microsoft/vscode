@@ -79,7 +79,8 @@ suite('Editor ViewLayout - EditorLayoutProvider', () => {
 
 		options._write(EditorOption.wordWrap, 'off');
 		options._write(EditorOption.wordWrapColumn, 80);
-		options._write(EditorOption.wordWrapMinified, true);
+		options._write(EditorOption.wordWrapOverride1, 'inherit');
+		options._write(EditorOption.wordWrapOverride2, 'inherit');
 		options._write(EditorOption.accessibilitySupport, 'auto');
 
 		const actual = EditorLayoutInfoComputer.computeLayout(options, {

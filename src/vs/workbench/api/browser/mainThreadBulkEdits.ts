@@ -39,6 +39,12 @@ export class MainThreadBulkEdits implements MainThreadBulkEditsShape {
 
 	$tryApplyWorkspaceEdit(dto: IWorkspaceEditDto, undoRedoGroupId?: number): Promise<boolean> {
 		const edits = reviveWorkspaceEditDto2(dto);
-		return this._bulkEditService.apply(edits, { undoRedoGroupId }).then(() => true, _err => false);
+		return this._bulkEditService.apply(edits, {
+			// having a undoRedoGroupId means that this is a nested workspace edit,
+			// e.g one from a onWill-handler and for now we need to forcefully suppress
+			// refactor previewing, see: https://github.com/microsoft/vscode/issues/111873#issuecomment-738739852
+			undoRedoGroupId,
+			suppressPreview: typeof undoRedoGroupId === 'number' ? true : undefined
+		}).then(() => true, _err => false);
 	}
 }

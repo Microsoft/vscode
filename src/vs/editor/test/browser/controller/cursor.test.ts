@@ -2208,6 +2208,42 @@ suite('Editor Controller - Regression tests', () => {
 		});
 	});
 
+	test('issue #110376: multiple selections with wordwrap behave differently', () => {
+		// a single model line => 4 view lines
+		withTestCodeEditor([
+			[
+				'just a sentence. just a ',
+				'sentence. just a sentence.',
+			].join('')
+		], { wordWrap: 'wordWrapColumn', wordWrapColumn: 25 }, (editor, viewModel) => {
+			viewModel.setSelections('test', [
+				new Selection(1, 1, 1, 16),
+				new Selection(1, 18, 1, 33),
+				new Selection(1, 35, 1, 50),
+			]);
+
+			moveLeft(editor, viewModel);
+			assertCursor(viewModel, [
+				new Selection(1, 1, 1, 1),
+				new Selection(1, 18, 1, 18),
+				new Selection(1, 35, 1, 35),
+			]);
+
+			viewModel.setSelections('test', [
+				new Selection(1, 1, 1, 16),
+				new Selection(1, 18, 1, 33),
+				new Selection(1, 35, 1, 50),
+			]);
+
+			moveRight(editor, viewModel);
+			assertCursor(viewModel, [
+				new Selection(1, 16, 1, 16),
+				new Selection(1, 33, 1, 33),
+				new Selection(1, 50, 1, 50),
+			]);
+		});
+	});
+
 	test('issue #98320: Multi-Cursor, Wrap lines and cursorSelectRight ==> cursors out of sync', () => {
 		// a single model line => 4 view lines
 		withTestCodeEditor([

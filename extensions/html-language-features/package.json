@@ -144,7 +144,7 @@
             "null"
           ],
           "scope": "resource",
-          "default": "null",
+          "default": null,
           "description": "%html.format.wrapAttributesIndentSize.desc%"
         },
         "html.format.templating": {

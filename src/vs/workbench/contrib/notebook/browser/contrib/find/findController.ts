@@ -43,6 +43,7 @@ export class NotebookFindWidget extends SimpleFindReplaceWidget implements INote
 	private _currentMatchDecorations: ICellModelDecorations[] = [];
 	private _showTimeout: number | null = null;
 	private _hideTimeout: number | null = null;
+	private _previousFocusElement?: HTMLElement;
 
 	constructor(
 		private readonly _notebookEditor: INotebookEditor,
@@ -65,6 +66,10 @@ export class NotebookFindWidget extends SimpleFindReplaceWidget implements INote
 		this._register(this._state.onFindReplaceStateChange(() => {
 			this.onInputChanged();
 		}));
+
+		this._register(DOM.addDisposableListener(this.getDomNode(), DOM.EventType.FOCUS, e => {
+			this._previousFocusElement = e.relatedTarget instanceof HTMLElement ? e.relatedTarget : undefined;
+		}, true));
 	}
 
 	private _onFindInputKeyDown(e: IKeyboardEvent): void {
@@ -167,6 +172,7 @@ export class NotebookFindWidget extends SimpleFindReplaceWidget implements INote
 	}
 
 	protected onFocusTrackerBlur() {
+		this._previousFocusElement = undefined;
 		this._findWidgetFocused.reset();
 	}
 
@@ -323,6 +329,11 @@ export class NotebookFindWidget extends SimpleFindReplaceWidget implements INote
 			}, 200);
 		} else {
 			// no op
+		}
+
+		if (this._previousFocusElement && this._previousFocusElement.offsetParent) {
+			this._previousFocusElement.focus();
+			this._previousFocusElement = undefined;
 		}
 	}
 

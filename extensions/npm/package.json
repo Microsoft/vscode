@@ -228,6 +228,12 @@
             "yarn",
             "pnpm"
           ],
+          "enumDescriptions": [
+            "%config.npm.packageManager.auto%",
+            "%config.npm.packageManager.npm%",
+            "%config.npm.packageManager.yarn%",
+            "%config.npm.packageManager.pnpm%"
+          ],
           "default": "auto",
           "description": "%config.npm.packageManager%"
         },

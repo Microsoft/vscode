@@ -11,6 +11,8 @@ import { ScrollType } from 'vs/editor/common/editorCommon';
 import { IModelDecorationsChangedEvent } from 'vs/editor/common/model/textModelEvents';
 
 export const enum ViewEventType {
+	ViewCompositionStart,
+	ViewCompositionEnd,
 	ViewConfigurationChanged,
 	ViewCursorStateChanged,
 	ViewDecorationsChanged,
@@ -27,6 +29,16 @@ export const enum ViewEventType {
 	ViewTokensChanged,
 	ViewTokensColorsChanged,
 	ViewZonesChanged,
+}
+
+export class ViewCompositionStartEvent {
+	public readonly type = ViewEventType.ViewCompositionStart;
+	constructor() { }
+}
+
+export class ViewCompositionEndEvent {
+	public readonly type = ViewEventType.ViewCompositionEnd;
+	constructor() { }
 }
 
 export class ViewConfigurationChangedEvent {
@@ -285,7 +297,9 @@ export class ViewZonesChangedEvent {
 }
 
 export type ViewEvent = (
-	ViewConfigurationChangedEvent
+	ViewCompositionStartEvent
+	| ViewCompositionEndEvent
+	| ViewConfigurationChangedEvent
 	| ViewCursorStateChangedEvent
 	| ViewDecorationsChangedEvent
 	| ViewFlushedEvent

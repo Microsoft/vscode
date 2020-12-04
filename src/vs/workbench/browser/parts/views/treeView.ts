@@ -880,10 +880,12 @@ class TreeRenderer extends Disposable implements ITreeRenderer<ITreeItem, FuzzyS
 		}
 
 		return {
-			markdown: new Promise<IMarkdownString | string | undefined>(async (resolve) => {
-				await node.resolve();
-				resolve(node.tooltip);
-			}),
+			markdown: (): Promise<IMarkdownString | string | undefined> => {
+				return new Promise<IMarkdownString | string | undefined>(async (resolve) => {
+					await node.resolve();
+					resolve(node.tooltip);
+				});
+			},
 			markdownNotSupportedFallback: resource ? undefined : '' // Passing undefined as the fallback for a resource falls back to the old native hover
 		};
 	}

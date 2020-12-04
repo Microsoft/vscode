@@ -182,7 +182,6 @@ export class HoverWidget extends Widget {
 		} else {
 			const targetBottom = Math.max(...targetBounds.map(e => e.bottom));
 			if (targetBottom + this._hover.containerDomNode.clientHeight > window.innerHeight) {
-				console.log(targetBottom, this._hover.containerDomNode.clientHeight, window.innerHeight);
 				const targetTop = Math.min(...targetBounds.map(e => e.top));
 				this._anchor = AnchorPosition.ABOVE;
 				this._y = targetTop;

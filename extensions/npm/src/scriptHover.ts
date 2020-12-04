@@ -30,7 +30,7 @@ export function invalidateHoverScriptsCache(document?: TextDocument) {
 
 export class NpmScriptHoverProvider implements HoverProvider {
 
-	constructor(context: ExtensionContext) {
+	constructor(private context: ExtensionContext) {
 		context.subscriptions.push(commands.registerCommand('npm.runScriptFromHover', this.runScriptFromHover, this));
 		context.subscriptions.push(commands.registerCommand('npm.debugScriptFromHover', this.debugScriptFromHover, this));
 		context.subscriptions.push(workspace.onDidChangeTextDocument((e) => {
@@ -103,7 +103,7 @@ export class NpmScriptHoverProvider implements HoverProvider {
 		let documentUri = args.documentUri;
 		let folder = workspace.getWorkspaceFolder(documentUri);
 		if (folder) {
-			let task = await createTask(script, `run ${script}`, folder, documentUri);
+			let task = await createTask(this.context, script, `run ${script}`, folder, documentUri);
 			await tasks.executeTask(task);
 		}
 	}
@@ -113,7 +113,7 @@ export class NpmScriptHoverProvider implements HoverProvider {
 		let documentUri = args.documentUri;
 		let folder = workspace.getWorkspaceFolder(documentUri);
 		if (folder) {
-			startDebugging(script, dirname(documentUri.fsPath), folder);
+			startDebugging(this.context, script, dirname(documentUri.fsPath), folder);
 		}
 	}
 }

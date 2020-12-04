@@ -215,14 +215,16 @@ export class ExtensionEnablementService extends Disposable implements IWorkbench
 					}
 				}
 				if (extensionKind === 'web') {
-					const enableLocalWebWorker = this.configurationService.getValue<boolean>(webWorkerExtHostConfig);
-					if (enableLocalWebWorker) {
-						// Web extensions are enabled on all configurations
-						return false;
-					}
-					if (this.extensionManagementServerService.localExtensionManagementServer === null) {
-						// Web extensions run only in the web
-						return false;
+					if (this.extensionManagementServerService.webExtensionManagementServer) {
+						if (server === this.extensionManagementServerService.webExtensionManagementServer) {
+							return false;
+						}
+					} else if (server === this.extensionManagementServerService.localExtensionManagementServer) {
+						const enableLocalWebWorker = this.configurationService.getValue<boolean>(webWorkerExtHostConfig);
+						if (enableLocalWebWorker) {
+							// Web extensions are enabled on all configurations
+							return false;
+						}
 					}
 				}
 			}

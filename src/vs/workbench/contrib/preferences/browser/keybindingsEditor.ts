@@ -691,8 +691,10 @@ export class KeybindingsEditor extends EditorPane implements IKeybindingsEditorP
 					...(keybindingItemEntry.keybindingItem.keybinding
 						? [this.createDefineKeybindingAction(keybindingItemEntry), this.createAddKeybindingAction(keybindingItemEntry)]
 						: [this.createDefineKeybindingAction(keybindingItemEntry)]),
+					new Separator(),
 					this.createRemoveAction(keybindingItemEntry),
 					this.createResetAction(keybindingItemEntry),
+					new Separator(),
 					this.createDefineWhenExpressionAction(keybindingItemEntry),
 					new Separator(),
 					this.createShowConflictsAction(keybindingItemEntry)]
@@ -713,7 +715,7 @@ export class KeybindingsEditor extends EditorPane implements IKeybindingsEditorP
 
 	private createDefineKeybindingAction(keybindingItemEntry: IKeybindingItemEntry): IAction {
 		return <IAction>{
-			label: keybindingItemEntry.keybindingItem.keybinding ? localize('changeLabel', "Change Keybinding") : localize('addLabel', "Add Keybinding"),
+			label: keybindingItemEntry.keybindingItem.keybinding ? localize('changeLabel', "Change Keybinding...") : localize('addLabel', "Add Keybinding..."),
 			enabled: true,
 			id: KEYBINDINGS_EDITOR_COMMAND_DEFINE,
 			run: () => this.defineKeybinding(keybindingItemEntry, false)
@@ -722,7 +724,7 @@ export class KeybindingsEditor extends EditorPane implements IKeybindingsEditorP
 
 	private createAddKeybindingAction(keybindingItemEntry: IKeybindingItemEntry): IAction {
 		return <IAction>{
-			label: localize('addLabel', "Add Keybinding"),
+			label: localize('addLabel', "Add Keybinding..."),
 			enabled: true,
 			id: KEYBINDINGS_EDITOR_COMMAND_ADD,
 			run: () => this.defineKeybinding(keybindingItemEntry, true)

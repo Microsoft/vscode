@@ -31,7 +31,7 @@ import { onUnexpectedError } from 'vs/base/common/errors';
 import { IOpenerService, NullOpenerService } from 'vs/platform/opener/common/opener';
 import { MarkerController, NextMarkerAction } from 'vs/editor/contrib/gotoError/gotoError';
 import { IKeybindingService } from 'vs/platform/keybinding/common/keybinding';
-import { CancelablePromise, createCancelablePromise } from 'vs/base/common/async';
+import { CancelablePromise, createCancelablePromise, disposableTimeout } from 'vs/base/common/async';
 import { getCodeActions, CodeActionSet } from 'vs/editor/contrib/codeAction/codeAction';
 import { QuickFixAction, QuickFixController } from 'vs/editor/contrib/codeAction/codeActionCommands';
 import { CodeActionKind, CodeActionTrigger } from 'vs/editor/contrib/codeAction/types';
@@ -578,6 +578,7 @@ export class ModesContentHoverWidget extends ContentHoverWidget {
 		return hoverElement;
 	}
 
+	private recentMarkerCodeActionsInfo: { marker: IMarker, hasCodeActions: boolean } | undefined = undefined;
 	private renderMarkerStatusbar(markerHover: MarkerHover): HTMLElement {
 		const hoverElement = $('div.hover-row.status-bar');
 		const disposables = new DisposableStore();
@@ -596,24 +597,28 @@ export class ModesContentHoverWidget extends ContentHoverWidget {
 
 		if (!this._editor.getOption(EditorOption.readOnly)) {
 			const quickfixPlaceholderElement = dom.append(actionsElement, $('div'));
-			quickfixPlaceholderElement.style.opacity = '0';
-			quickfixPlaceholderElement.style.transition = 'opacity 0.2s';
-			setTimeout(() => quickfixPlaceholderElement.style.opacity = '1', 200);
-			quickfixPlaceholderElement.textContent = nls.localize('checkingForQuickFixes', "Checking for quick fixes...");
-			disposables.add(toDisposable(() => quickfixPlaceholderElement.remove()));
-
+			if (this.recentMarkerCodeActionsInfo) {
+				if (IMarkerData.makeKey(this.recentMarkerCodeActionsInfo.marker) === IMarkerData.makeKey(markerHover.marker)) {
+					if (!this.recentMarkerCodeActionsInfo.hasCodeActions) {
+						quickfixPlaceholderElement.textContent = nls.localize('noQuickFixes', "No quick fixes available");
+					}
+				} else {
+					this.recentMarkerCodeActionsInfo = undefined;
+				}
+			}
+			const updatePlaceholderDisposable = disposables.add(disposableTimeout(() => quickfixPlaceholderElement.textContent = nls.localize('checkingForQuickFixes', "Checking for quick fixes..."), 64));
 			const codeActionsPromise = this.getCodeActions(markerHover.marker);
 			disposables.add(toDisposable(() => codeActionsPromise.cancel()));
 			codeActionsPromise.then(actions => {
-				quickfixPlaceholderElement.style.transition = '';
-				quickfixPlaceholderElement.style.opacity = '1';
+				updatePlaceholderDisposable.dispose();
+				this.recentMarkerCodeActionsInfo = { marker: markerHover.marker, hasCodeActions: actions.validActions.length > 0 };
 
-				if (!actions.validActions.length) {
+				if (!this.recentMarkerCodeActionsInfo.hasCodeActions) {
 					actions.dispose();
 					quickfixPlaceholderElement.textContent = nls.localize('noQuickFixes', "No quick fixes available");
 					return;
 				}
-				quickfixPlaceholderElement.remove();
+				quickfixPlaceholderElement.style.display = 'none';
 
 				let showing = false;
 				disposables.add(toDisposable(() => {

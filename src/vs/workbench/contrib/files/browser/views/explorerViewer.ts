@@ -20,7 +20,7 @@ import { IContextViewService } from 'vs/platform/contextview/browser/contextView
 import { IThemeService } from 'vs/platform/theme/common/themeService';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { IFilesConfiguration, VIEW_ID } from 'vs/workbench/contrib/files/common/files';
-import { dirname, joinPath, basename, distinctParents, basenameOrAuthority } from 'vs/base/common/resources';
+import { dirname, joinPath, basename, distinctParents } from 'vs/base/common/resources';
 import { InputBox, MessageType } from 'vs/base/browser/ui/inputbox/inputBox';
 import { localize } from 'vs/nls';
 import { attachInputBoxStyler } from 'vs/platform/theme/common/styler';
@@ -982,7 +982,7 @@ export class FileDragAndDrop implements ITreeDragAndDrop<ExplorerItem> {
 		}
 	}
 
-	drop(data: IDragAndDropData, target: ExplorerItem | undefined, targetIndex: number | undefined, originalEvent: DragEvent): void {
+	async drop(data: IDragAndDropData, target: ExplorerItem | undefined, targetIndex: number | undefined, originalEvent: DragEvent): Promise<void> {
 		this.compressedDropTargetDisposable.dispose();
 
 		// Find compressed target
@@ -1013,24 +1013,28 @@ export class FileDragAndDrop implements ITreeDragAndDrop<ExplorerItem> {
 		if (data instanceof NativeDragAndDropData) {
 			const cts = new CancellationTokenSource();
 
-			// Indicate progress globally
-			try {
-				if (isWeb) {
-					const dropPromise = this.progressService.withProgress({
-						location: ProgressLocation.Window,
-						delay: 800,
-						cancellable: true,
-						title: localize('uploadingFiles', "Uploading")
-					}, async progress => {
-						this.handleWebExternalDrop(resolvedTarget, originalEvent, progress, cts.token);
-					}, () => cts.dispose(true));
-					// Also indicate progress in the files view
-					this.progressService.withProgress({ location: VIEW_ID, delay: 500 }, () => dropPromise);
-				} else {
-					this.handleExternalDrop(resolvedTarget, originalEvent, cts.token);
+			if (isWeb) {
+				// Indicate progress globally
+				const dropPromise = this.progressService.withProgress({
+					location: ProgressLocation.Window,
+					delay: 800,
+					cancellable: true,
+					title: localize('uploadingFiles', "Uploading")
+				}, async progress => {
+					try {
+						await this.handleWebExternalDrop(resolvedTarget, originalEvent, progress, cts.token);
+					} catch (error) {
+						this.notificationService.warn(error);
+					}
+				}, () => cts.dispose(true));
+				// Also indicate progress in the files view
+				this.progressService.withProgress({ location: VIEW_ID, delay: 500 }, () => dropPromise);
+			} else {
+				try {
+					await this.handleExternalDrop(resolvedTarget, originalEvent, cts.token);
+				} catch (error) {
+					this.notificationService.warn(error);
 				}
-			} catch (error) {
-				this.notificationService.warn(error);
 			}
 		}
 		// In-Explorer DND (Move/Copy file)
@@ -1074,7 +1078,7 @@ export class FileDragAndDrop implements ITreeDragAndDrop<ExplorerItem> {
 				}
 
 				await this.explorerService.applyBulkEdit([new ResourceFileEdit(joinPath(target.resource, entry.name), undefined, { recursive: true })], {
-					undoLabel: localize('overwrite', "Overwriting {0}", entry.name),
+					undoLabel: localize('overwrite', "Overwrite {0}", entry.name),
 					progressLabel: localize('overwriting', "Overwriting {0}", entry.name),
 				});
 
@@ -1345,14 +1349,14 @@ export class FileDragAndDrop implements ITreeDragAndDrop<ExplorerItem> {
 			});
 
 			await this.explorerService.applyBulkEdit(resourceFileEdits, {
-				undoLabel: resourcesFiltered.length === 1 ? localize('copyFile', "Copy {0}", basename(resourcesFiltered[0])) : localize('copynFile', "Copy {0} files", resourcesFiltered.length),
-				progressLabel: resourcesFiltered.length === 1 ? localize('copyingFile', "Copying {0}", basename(resourcesFiltered[0])) : localize('copyingnFile', "Copying {0} files", resourcesFiltered.length)
+				undoLabel: resourcesFiltered.length === 1 ? localize('copyFile', "Copy {0}", basename(resourcesFiltered[0])) : localize('copynFile', "Copy {0} resources", resourcesFiltered.length),
+				progressLabel: resourcesFiltered.length === 1 ? localize('copyingFile', "Copying {0}", basename(resourcesFiltered[0])) : localize('copyingnFile', "Copying {0} resources", resourcesFiltered.length)
 			});
 
 			// if we only add one file, just open it directly
 			if (resourceFileEdits.length === 1) {
 				const item = this.explorerService.findClosest(resourceFileEdits[0].newResource!);
-				if (item) {
+				if (item && !item.isDirectory) {
 					this.editorService.openEditor({ resource: item.resource, options: { pinned: true } });
 				}
 			}
@@ -1440,9 +1444,10 @@ export class FileDragAndDrop implements ITreeDragAndDrop<ExplorerItem> {
 		// Reuse duplicate action when user copies
 		const incrementalNaming = this.configurationService.getValue<IFilesConfiguration>().explorer.incrementalNaming;
 		const resourceFileEdits = sources.map(({ resource, isDirectory }) => (new ResourceFileEdit(resource, findValidPasteFileTarget(this.explorerService, target, { resource, isDirectory, allowOverwrite: false }, incrementalNaming), { copy: true })));
+		const labelSufix = getFileOrFolderLabelSufix(sources);
 		await this.explorerService.applyBulkEdit(resourceFileEdits, {
-			undoLabel: resourceFileEdits.length > 1 ? localize('copy', "Copy {0} files", resourceFileEdits.length) : localize('copyOneFile', "Copy {0}", basenameOrAuthority(resourceFileEdits[0].newResource!)),
-			progressLabel: resourceFileEdits.length > 1 ? localize('copying', "Copying {0} files", resourceFileEdits.length) : localize('copyingOneFile', "Copying {0}", basenameOrAuthority(resourceFileEdits[0].newResource!)),
+			undoLabel: localize('copy', "Copy {0}", labelSufix),
+			progressLabel: localize('copying', "Copying {0}", labelSufix),
 		});
 
 		const editors = resourceFileEdits.filter(edit => {
@@ -1457,9 +1462,10 @@ export class FileDragAndDrop implements ITreeDragAndDrop<ExplorerItem> {
 
 		// Do not allow moving readonly items
 		const resourceFileEdits = sources.filter(source => !source.isReadonly).map(source => new ResourceFileEdit(source.resource, joinPath(target.resource, source.name)));
+		const labelSufix = getFileOrFolderLabelSufix(sources);
 		const options = {
-			undoLabel: sources.length > 1 ? localize('move', "Move {0} files", sources.length) : localize('moveOneFile', "Move {0}", sources[0].name),
-			progressLabel: sources.length > 1 ? localize('moving', "Moving {0} files", sources.length) : localize('movingOneFile', "Moving {0}", sources[0].name),
+			undoLabel: localize('move', "Move {0}", labelSufix),
+			progressLabel: localize('moving', "Moving {0}", labelSufix)
 		};
 
 		try {
@@ -1563,4 +1569,19 @@ export class ExplorerCompressionDelegate implements ITreeCompressionDelegate<Exp
 	isIncompressible(stat: ExplorerItem): boolean {
 		return stat.isRoot || !stat.isDirectory || stat instanceof NewExplorerItem || (!stat.parent || stat.parent.isRoot);
 	}
+}
+
+function getFileOrFolderLabelSufix(items: ExplorerItem[]): string {
+	if (items.length === 1) {
+		return items[0].name;
+	}
+
+	if (items.every(i => i.isDirectory)) {
+		return `${items.length} folders`;
+	}
+	if (items.every(i => !i.isDirectory)) {
+		return `${items.length} files`;
+	}
+
+	return `${items.length} files and folders`;
 }

@@ -111,7 +111,7 @@ class IconRegistry implements IIconRegistry {
 		if (existing) {
 			if (description && !existing.description) {
 				existing.description = description;
-				this.iconSchema.properties[id].markdownDescription = `${description}: $(${id})`;
+				this.iconSchema.properties[id].markdownDescription = `${description} $(${id})`;
 				const enumIndex = this.iconReferenceSchema.enum.indexOf(id);
 				if (enumIndex !== -1) {
 					this.iconReferenceSchema.enumDescriptions[enumIndex] = description;

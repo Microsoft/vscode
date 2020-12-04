@@ -36,7 +36,7 @@ export class SettingsChangeRelauncher extends Disposable implements IWorkbenchCo
 	private updateMode: string | undefined;
 	private debugConsoleWordWrap: boolean | undefined;
 	private accessibilitySupport: 'on' | 'off' | 'auto' | undefined;
-	private enableExperimentalProxyLoginDialog: boolean | undefined;
+	private enableExperimentalProxyLoginDialog = true; // default
 
 	constructor(
 		@IHostService private readonly hostService: IHostService,

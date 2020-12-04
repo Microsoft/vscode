@@ -137,6 +137,7 @@ steps:
       set -e
       APP_ROOT=$(agent.builddirectory)/VSCode-linux-$(VSCODE_ARCH)
       APP_NAME=$(node -p "require(\"$APP_ROOT/resources/app/product.json\").applicationName")
+      INTEGRATION_TEST_APP_NAME="$APP_NAME" \
       INTEGRATION_TEST_ELECTRON_PATH="$APP_ROOT/$APP_NAME" \
       VSCODE_REMOTE_SERVER_PATH="$(agent.builddirectory)/vscode-reh-linux-$(VSCODE_ARCH)" \
       DISPLAY=:10 ./scripts/test-integration.sh --build --tfs "Integration Tests"
@@ -154,6 +155,7 @@ steps:
       set -e
       APP_ROOT=$(agent.builddirectory)/VSCode-linux-$(VSCODE_ARCH)
       APP_NAME=$(node -p "require(\"$APP_ROOT/resources/app/product.json\").applicationName")
+      INTEGRATION_TEST_APP_NAME="$APP_NAME" \
       INTEGRATION_TEST_ELECTRON_PATH="$APP_ROOT/$APP_NAME" \
       VSCODE_REMOTE_SERVER_PATH="$(agent.builddirectory)/vscode-reh-linux-$(VSCODE_ARCH)" \
       DISPLAY=:10 ./resources/server/test/test-remote-integration.sh

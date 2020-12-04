@@ -108,7 +108,7 @@ class PerfModelContentProvider implements ITextModelContentProvider {
 			this._modelDisposables.push(langId);
 			this._modelDisposables.push(this._extensionService.onDidChangeExtensionsStatus(this._updateModel, this));
 
-			writeTransientState(this._model, { forceWordWrap: 'off', forceWordWrapMinified: false }, this._editorService);
+			writeTransientState(this._model, { wordWrapOverride: 'off' }, this._editorService);
 		}
 		this._updateModel();
 		return Promise.resolve(this._model);

@@ -93,8 +93,9 @@ class CopyOperation implements IFileOperation {
 			return new Noop(); // not overwriting, but ignoring, and the target file exists
 		}
 
-		await this._workingCopyFileService.copy([{ source: this.oldUri, target: this.newUri }], { overwrite: this.options.overwrite, ...this.undoRedoInfo }, token);
-		return this._instaService.createInstance(DeleteOperation, this.newUri, this.options, { isUndoing: true }, true);
+		const stat = await this._workingCopyFileService.copy([{ source: this.oldUri, target: this.newUri }], { overwrite: this.options.overwrite, ...this.undoRedoInfo }, token);
+		const folder = this.options.folder || (stat.length === 1 && stat[0].isDirectory);
+		return this._instaService.createInstance(DeleteOperation, this.newUri, { recursive: true, folder, ...this.options }, { isUndoing: true }, false);
 	}
 
 	toString(): string {

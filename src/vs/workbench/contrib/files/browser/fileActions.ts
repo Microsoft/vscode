@@ -914,8 +914,8 @@ async function openExplorerAndCreate(accessor: ServicesAccessor, isFolder: boole
 		try {
 			const resourceToCreate = resources.joinPath(folder.resource, value);
 			await explorerService.applyBulkEdit([new ResourceFileEdit(undefined, resourceToCreate, { folder: isFolder })], {
-				progressLabel: nls.localize('newBulkEdit', "New {0}", value),
-				undoLabel: nls.localize('newBulkEdit', "New {0}", value)
+				undoLabel: nls.localize('createBulkEdit', "Create {0}", value),
+				progressLabel: nls.localize('creatingBulkEdit', "Creating {0}", value)
 			});
 			await refreshIfSeparator(value, explorerService);
 
@@ -1025,7 +1025,7 @@ export const cutFileHandler = async (accessor: ServicesAccessor) => {
 };
 
 export const DOWNLOAD_COMMAND_ID = 'explorer.download';
-const downloadFileHandler = (accessor: ServicesAccessor) => {
+const downloadFileHandler = async (accessor: ServicesAccessor) => {
 	const logService = accessor.get(ILogService);
 	const fileService = accessor.get(IFileService);
 	const fileDialogService = accessor.get(IFileDialogService);
@@ -1037,7 +1037,7 @@ const downloadFileHandler = (accessor: ServicesAccessor) => {
 
 	const cts = new CancellationTokenSource();
 
-	const downloadPromise = progressService.withProgress({
+	await progressService.withProgress({
 		location: ProgressLocation.Window,
 		delay: 800,
 		cancellable: isWeb,
@@ -1257,9 +1257,6 @@ const downloadFileHandler = (accessor: ServicesAccessor) => {
 			}
 		}));
 	}, () => cts.dispose(true));
-
-	// Also indicate progress in the files view
-	progressService.withProgress({ location: VIEW_ID, delay: 800 }, () => downloadPromise);
 };
 
 CommandsRegistry.registerCommand({
@@ -1303,24 +1300,24 @@ export const pasteFileHandler = async (accessor: ServicesAccessor) => {
 			return { source: fileToPaste, target: targetFile };
 		}));
 
-		// Move/Copy File
-		if (pasteShouldMove) {
-			const resourceFileEdits = sourceTargetPairs.map(pair => new ResourceFileEdit(pair.source, pair.target));
-			const options = {
-				progressLabel: sourceTargetPairs.length > 1 ? nls.localize('movingBulkEdit', "Moving {0} files", sourceTargetPairs.length) : nls.localize('movingFileBulkEdit', "Moving {0}", resources.basenameOrAuthority(sourceTargetPairs[0].target)),
-				undoLabel: sourceTargetPairs.length > 1 ? nls.localize('moveBulkEdit', "Move {0} files", sourceTargetPairs.length) : nls.localize('moveFileBulkEdit', "Move {0}", resources.basenameOrAuthority(sourceTargetPairs[0].target))
-			};
-			await explorerService.applyBulkEdit(resourceFileEdits, options);
-		} else {
-			const resourceFileEdits = sourceTargetPairs.map(pair => new ResourceFileEdit(pair.source, pair.target, { copy: true }));
-			const options = {
-				progressLabel: sourceTargetPairs.length > 1 ? nls.localize('copyingBulkEdit', "Copying {0} files", sourceTargetPairs.length) : nls.localize('copyingFileBulkEdit', "Copying {0}", resources.basenameOrAuthority(sourceTargetPairs[0].target)),
-				undoLabel: sourceTargetPairs.length > 1 ? nls.localize('copyBulkEdit', "Copy {0} files", sourceTargetPairs.length) : nls.localize('copyFileBulkEdit', "Copy {0}", resources.basenameOrAuthority(sourceTargetPairs[0].target))
-			};
-			await explorerService.applyBulkEdit(resourceFileEdits, options);
-		}
-
 		if (sourceTargetPairs.length >= 1) {
+			// Move/Copy File
+			if (pasteShouldMove) {
+				const resourceFileEdits = sourceTargetPairs.map(pair => new ResourceFileEdit(pair.source, pair.target));
+				const options = {
+					progressLabel: sourceTargetPairs.length > 1 ? nls.localize('movingBulkEdit', "Moving {0} files", sourceTargetPairs.length) : nls.localize('movingFileBulkEdit', "Moving {0}", resources.basenameOrAuthority(sourceTargetPairs[0].target)),
+					undoLabel: sourceTargetPairs.length > 1 ? nls.localize('moveBulkEdit', "Move {0} files", sourceTargetPairs.length) : nls.localize('moveFileBulkEdit', "Move {0}", resources.basenameOrAuthority(sourceTargetPairs[0].target))
+				};
+				await explorerService.applyBulkEdit(resourceFileEdits, options);
+			} else {
+				const resourceFileEdits = sourceTargetPairs.map(pair => new ResourceFileEdit(pair.source, pair.target, { copy: true }));
+				const options = {
+					progressLabel: sourceTargetPairs.length > 1 ? nls.localize('copyingBulkEdit', "Copying {0} files", sourceTargetPairs.length) : nls.localize('copyingFileBulkEdit', "Copying {0}", resources.basenameOrAuthority(sourceTargetPairs[0].target)),
+					undoLabel: sourceTargetPairs.length > 1 ? nls.localize('copyBulkEdit', "Copy {0} files", sourceTargetPairs.length) : nls.localize('copyFileBulkEdit', "Copy {0}", resources.basenameOrAuthority(sourceTargetPairs[0].target))
+				};
+				await explorerService.applyBulkEdit(resourceFileEdits, options);
+			}
+
 			const pair = sourceTargetPairs[0];
 			await explorerService.select(pair.target);
 			if (sourceTargetPairs.length === 1) {

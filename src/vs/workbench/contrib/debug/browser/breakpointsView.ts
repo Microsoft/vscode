@@ -124,7 +124,7 @@ export class BreakpointsView extends ViewPane {
 
 		const resourceNavigator = this._register(new ListResourceNavigator(this.list, { configurationService: this.configurationService }));
 		this._register(resourceNavigator.onDidOpen(async e => {
-			if (e.element === null) {
+			if (!e.element) {
 				return;
 			}
 
@@ -132,14 +132,12 @@ export class BreakpointsView extends ViewPane {
 				return;
 			}
 
-			const element = this.list.element(e.element);
-
-			if (element instanceof Breakpoint) {
-				openBreakpointSource(element, e.sideBySide, e.editorOptions.preserveFocus || false, e.editorOptions.pinned || !e.editorOptions.preserveFocus, this.debugService, this.editorService);
+			if (e.element instanceof Breakpoint) {
+				openBreakpointSource(e.element, e.sideBySide, e.editorOptions.preserveFocus || false, e.editorOptions.pinned || !e.editorOptions.preserveFocus, this.debugService, this.editorService);
 			}
-			if (e.browserEvent instanceof MouseEvent && e.browserEvent.detail === 2 && element instanceof FunctionBreakpoint && element !== this.debugService.getViewModel().getSelectedBreakpoint()) {
+			if (e.browserEvent instanceof MouseEvent && e.browserEvent.detail === 2 && e.element instanceof FunctionBreakpoint && e.element !== this.debugService.getViewModel().getSelectedBreakpoint()) {
 				// double click
-				this.debugService.getViewModel().setSelectedBreakpoint(element);
+				this.debugService.getViewModel().setSelectedBreakpoint(e.element);
 				this.onBreakpointsChange();
 			}
 		}));
@@ -190,44 +188,47 @@ export class BreakpointsView extends ViewPane {
 		const actions: IAction[] = [];
 		const element = e.element;
 
-		const breakpointType = element instanceof Breakpoint && element.logMessage ? nls.localize('Logpoint', "Logpoint") : nls.localize('Breakpoint', "Breakpoint");
-		if (element instanceof Breakpoint || element instanceof FunctionBreakpoint) {
-			actions.push(new Action('workbench.action.debug.openEditorAndEditBreakpoint', nls.localize('editBreakpoint', "Edit {0}...", breakpointType), '', true, async () => {
-				if (element instanceof Breakpoint) {
-					const editor = await openBreakpointSource(element, false, false, true, this.debugService, this.editorService);
-					if (editor) {
-						const codeEditor = editor.getControl();
-						if (isCodeEditor(codeEditor)) {
-							codeEditor.getContribution<IBreakpointEditorContribution>(BREAKPOINT_EDITOR_CONTRIBUTION_ID).showBreakpointWidget(element.lineNumber, element.column);
-						}
-					}
-				} else {
+		if (element instanceof ExceptionBreakpoint) {
+			if (element.supportsCondition) {
+				actions.push(new Action('workbench.action.debug.editExceptionBreakpointCondition', nls.localize('editCondition', "Edit Condition"), '', true, async () => {
 					this.debugService.getViewModel().setSelectedBreakpoint(element);
 					this.onBreakpointsChange();
-				}
-			}));
+				}));
+			}
+		} else {
+			const breakpointType = element instanceof Breakpoint && element.logMessage ? nls.localize('Logpoint', "Logpoint") : nls.localize('Breakpoint', "Breakpoint");
+			if (element instanceof Breakpoint || element instanceof FunctionBreakpoint) {
+				actions.push(new Action('workbench.action.debug.openEditorAndEditBreakpoint', nls.localize('editBreakpoint', "Edit {0}...", breakpointType), '', true, async () => {
+					if (element instanceof Breakpoint) {
+						const editor = await openBreakpointSource(element, false, false, true, this.debugService, this.editorService);
+						if (editor) {
+							const codeEditor = editor.getControl();
+							if (isCodeEditor(codeEditor)) {
+								codeEditor.getContribution<IBreakpointEditorContribution>(BREAKPOINT_EDITOR_CONTRIBUTION_ID).showBreakpointWidget(element.lineNumber, element.column);
+							}
+						}
+					} else {
+						this.debugService.getViewModel().setSelectedBreakpoint(element);
+						this.onBreakpointsChange();
+					}
+				}));
+				actions.push(new Separator());
+			}
+
+
+			actions.push(new RemoveBreakpointAction(RemoveBreakpointAction.ID, nls.localize('removeBreakpoint', "Remove {0}", breakpointType), this.debugService));
+
+			if (this.debugService.getModel().getBreakpoints().length + this.debugService.getModel().getFunctionBreakpoints().length >= 1) {
+				actions.push(new RemoveAllBreakpointsAction(RemoveAllBreakpointsAction.ID, RemoveAllBreakpointsAction.LABEL, this.debugService, this.keybindingService));
+				actions.push(new Separator());
+
+				actions.push(new EnableAllBreakpointsAction(EnableAllBreakpointsAction.ID, EnableAllBreakpointsAction.LABEL, this.debugService, this.keybindingService));
+				actions.push(new DisableAllBreakpointsAction(DisableAllBreakpointsAction.ID, DisableAllBreakpointsAction.LABEL, this.debugService, this.keybindingService));
+			}
+
 			actions.push(new Separator());
+			actions.push(new ReapplyBreakpointsAction(ReapplyBreakpointsAction.ID, ReapplyBreakpointsAction.LABEL, this.debugService, this.keybindingService));
 		}
-		if (element instanceof ExceptionBreakpoint && element.supportsCondition) {
-			actions.push(new Action('workbench.action.debug.editExceptionBreakpointCondition', nls.localize('editCondition', "Edit Condition..."), '', true, async () => {
-				this.debugService.getViewModel().setSelectedBreakpoint(element);
-				this.onBreakpointsChange();
-			}));
-			actions.push(new Separator());
-		}
-
-		actions.push(new RemoveBreakpointAction(RemoveBreakpointAction.ID, nls.localize('removeBreakpoint', "Remove {0}", breakpointType), this.debugService));
-
-		if (this.debugService.getModel().getBreakpoints().length + this.debugService.getModel().getFunctionBreakpoints().length > 1) {
-			actions.push(new RemoveAllBreakpointsAction(RemoveAllBreakpointsAction.ID, RemoveAllBreakpointsAction.LABEL, this.debugService, this.keybindingService));
-			actions.push(new Separator());
-
-			actions.push(new EnableAllBreakpointsAction(EnableAllBreakpointsAction.ID, EnableAllBreakpointsAction.LABEL, this.debugService, this.keybindingService));
-			actions.push(new DisableAllBreakpointsAction(DisableAllBreakpointsAction.ID, DisableAllBreakpointsAction.LABEL, this.debugService, this.keybindingService));
-		}
-
-		actions.push(new Separator());
-		actions.push(new ReapplyBreakpointsAction(ReapplyBreakpointsAction.ID, ReapplyBreakpointsAction.LABEL, this.debugService, this.keybindingService));
 
 		this.contextMenuService.showContextMenu({
 			getAnchor: () => e.anchor,

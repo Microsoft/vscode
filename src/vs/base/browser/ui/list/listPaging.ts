@@ -258,6 +258,10 @@ export class PagedList<T> implements IThemable, IDisposable {
 		return this.list.getSelection();
 	}
 
+	getSelectedElements(): T[] {
+		return this.getSelection().map(i => this.model.get(i));
+	}
+
 	layout(height?: number, width?: number): void {
 		this.list.layout(height, width);
 	}

@@ -574,7 +574,7 @@ Registry.as<IViewContainersRegistry>(Extensions.ViewContainersRegistry).register
 				matches = /^details(@(\d+))?$/.exec(group);
 
 				if (matches) {
-					return -500;
+					return -500 + Number(matches[2]);
 				}
 
 				matches = /^help(@(\d+))?$/.exec(group);

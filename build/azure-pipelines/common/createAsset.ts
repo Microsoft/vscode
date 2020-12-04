@@ -93,15 +93,11 @@ async function main(): Promise<void> {
 	const blobExists = await doesAssetExist(blobService, quality, blobName);
 
 	if (blobExists) {
-		console.log(`Blob ${quality}, ${blobName} already exists, not publishing again.`);
-		return;
+		console.log(`Blob ${quality}, ${blobName} already exists, not uploading again.`);
+	} else {
+		await uploadBlob(blobService, quality, blobName, filePath, fileName);
+		console.log('Blobs successfully uploaded.');
 	}
-
-	console.log('Uploading blobs to Azure storage...');
-
-	await uploadBlob(blobService, quality, blobName, filePath, fileName);
-
-	console.log('Blobs successfully uploaded.');
 
 	const asset: Asset = {
 		platform,

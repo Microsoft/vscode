@@ -735,7 +735,7 @@ export class SettingsEditor2 extends EditorPane {
 	private notifyNoSaveNeeded() {
 		if (!this.storageService.getBoolean(SETTINGS_AUTOSAVE_NOTIFIED_KEY, StorageScope.GLOBAL, false)) {
 			this.storageService.store(SETTINGS_AUTOSAVE_NOTIFIED_KEY, true, StorageScope.GLOBAL, StorageTarget.USER);
-			this.notificationService.info(localize('settingsNoSaveNeeded', "Your changes are automatically saved as you edit."));
+			this.notificationService.info(localize('settingsNoSaveNeeded', "Changes to settings are saved automatically."));
 		}
 	}
 

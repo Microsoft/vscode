@@ -186,4 +186,73 @@ suite('ContextKeyExpr', () => {
 		);
 		assert.equal(actual!.equals(expected!), true);
 	});
+
+	test('Greater, GreaterEquals, Smaller, SmallerEquals evaluate', () => {
+		function checkEvaluate(expr: string, ctx: any, expected: any): void {
+			const _expr = ContextKeyExpr.deserialize(expr)!;
+			assert.equal(_expr.evaluate(createContext(ctx)), expected);
+		}
+
+		checkEvaluate('a>1', {}, false);
+		checkEvaluate('a>1', { a: 0 }, false);
+		checkEvaluate('a>1', { a: 1 }, false);
+		checkEvaluate('a>1', { a: 2 }, true);
+		checkEvaluate('a>1', { a: '0' }, false);
+		checkEvaluate('a>1', { a: '1' }, false);
+		checkEvaluate('a>1', { a: '2' }, true);
+		checkEvaluate('a>1', { a: 'a' }, false);
+
+		checkEvaluate('a>10', { a: 2 }, false);
+		checkEvaluate('a>10', { a: 11 }, true);
+		checkEvaluate('a>10', { a: '11' }, true);
+		checkEvaluate('a>10', { a: '2' }, false);
+		checkEvaluate('a>10', { a: '11' }, true);
+
+		checkEvaluate('a>1.1', { a: 1 }, false);
+		checkEvaluate('a>1.1', { a: 2 }, true);
+		checkEvaluate('a>1.1', { a: 11 }, true);
+		checkEvaluate('a>1.1', { a: '1.1' }, false);
+		checkEvaluate('a>1.1', { a: '2' }, true);
+		checkEvaluate('a>1.1', { a: '11' }, true);
+
+		checkEvaluate('a>b', { a: 'b' }, false);
+		checkEvaluate('a>b', { a: 'c' }, false);
+		checkEvaluate('a>b', { a: 1000 }, false);
+
+		checkEvaluate('a >= 2', { a: '1' }, false);
+		checkEvaluate('a >= 2', { a: '2' }, true);
+		checkEvaluate('a >= 2', { a: '3' }, true);
+
+		checkEvaluate('a < 2', { a: '1' }, true);
+		checkEvaluate('a < 2', { a: '2' }, false);
+		checkEvaluate('a < 2', { a: '3' }, false);
+
+		checkEvaluate('a <= 2', { a: '1' }, true);
+		checkEvaluate('a <= 2', { a: '2' }, true);
+		checkEvaluate('a <= 2', { a: '3' }, false);
+	});
+
+	test('Greater, GreaterEquals, Smaller, SmallerEquals negate', () => {
+		function checkNegate(expr: string, expected: string): void {
+			const a = ContextKeyExpr.deserialize(expr)!;
+			const b = a.negate();
+			assert.equal(b.serialize(), expected);
+		}
+
+		checkNegate('a>1', 'a <= 1');
+		checkNegate('a>1.1', 'a <= 1.1');
+		checkNegate('a>b', 'a <= b');
+
+		checkNegate('a>=1', 'a < 1');
+		checkNegate('a>=1.1', 'a < 1.1');
+		checkNegate('a>=b', 'a < b');
+
+		checkNegate('a<1', 'a >= 1');
+		checkNegate('a<1.1', 'a >= 1.1');
+		checkNegate('a<b', 'a >= b');
+
+		checkNegate('a<=1', 'a > 1');
+		checkNegate('a<=1.1', 'a > 1.1');
+		checkNegate('a<=b', 'a > b');
+	});
 });

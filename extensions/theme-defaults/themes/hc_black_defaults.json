@@ -9,21 +9,14 @@
 		"statusBarItem.remoteBackground": "#00000000",
 		"sideBarTitle.foreground": "#FFFFFF"
 	},
-	"settings": [
-		{
-			"settings": {
-				"foreground": "#FFFFFF",
-				"background": "#000000"
-			}
-		},
+	"tokenColors": [
 		{
 			"scope": [
 				"meta.embedded",
 				"source.groovy.embedded"
 			],
 			"settings": {
-				"foreground": "#FFFFFF",
-				"background": "#000000"
+				"foreground": "#FFFFFF"
 			}
 		},
 		{

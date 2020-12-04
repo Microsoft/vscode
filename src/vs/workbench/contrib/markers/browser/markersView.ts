@@ -54,6 +54,7 @@ import { IUriIdentityService } from 'vs/workbench/services/uriIdentity/common/ur
 import { DisposableStore, IDisposable, toDisposable } from 'vs/base/common/lifecycle';
 import { groupBy } from 'vs/base/common/arrays';
 import { ResourceMap } from 'vs/base/common/map';
+import { EditorResourceAccessor, SideBySideEditor } from 'vs/workbench/common/editor';
 
 function createResourceMarkersIterator(resourceMarkers: ResourceMarkers): Iterable<ITreeElement<TreeElement>> {
 	return Iterable.map(resourceMarkers.markers, m => {
@@ -327,11 +328,15 @@ export class MarkersView extends ViewPane implements IMarkerFilterController {
 	}
 
 	private setTreeSelection(): void {
-		if (this.tree && this.tree.getSelection().length === 0) {
-			const firstMarker = this.markersModel.resourceMarkers[0]?.markers[0];
-			if (firstMarker) {
-				this.tree.setFocus([firstMarker]);
-				this.tree.setSelection([firstMarker]);
+		if (this.tree && this.tree.isVisible() && this.tree.getSelection().length === 0) {
+			const firstVisibleElement = this.tree.firstVisibleElement;
+			const marker = firstVisibleElement ?
+				firstVisibleElement instanceof ResourceMarkers ? firstVisibleElement.markers[0] :
+					firstVisibleElement instanceof Marker ? firstVisibleElement : undefined
+				: undefined;
+			if (marker) {
+				this.tree.setFocus([marker]);
+				this.tree.setSelection([marker]);
 			}
 		}
 	}
@@ -603,7 +608,7 @@ export class MarkersView extends ViewPane implements IMarkerFilterController {
 
 	private setCurrentActiveEditor(): void {
 		const activeEditor = this.editorService.activeEditor;
-		this.currentActiveResource = activeEditor ? withUndefinedAsNull(activeEditor.resource) : null;
+		this.currentActiveResource = activeEditor ? withUndefinedAsNull(EditorResourceAccessor.getOriginalUri(activeEditor, { supportSideBySide: SideBySideEditor.PRIMARY })) : null;
 	}
 
 	private onSelected(): void {
@@ -944,6 +949,10 @@ class MarkersTree extends WorkbenchObjectTree<TreeElement, FilterData> {
 
 	toggleVisibility(hide: boolean): void {
 		this.container.classList.toggle('hidden', hide);
+	}
+
+	isVisible(): boolean {
+		return !this.container.classList.contains('hidden');
 	}
 
 }

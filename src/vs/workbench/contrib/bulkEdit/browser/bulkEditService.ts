@@ -139,7 +139,7 @@ export class BulkEditService implements IBulkEditService {
 			return { ariaSummary: localize('nothing', "Made no edits") };
 		}
 
-		if (this._previewHandler && (options?.showPreview || edits.some(value => value.metadata?.needsConfirmation))) {
+		if (this._previewHandler && !options?.suppressPreview && (options?.showPreview || edits.some(value => value.metadata?.needsConfirmation))) {
 			edits = await this._previewHandler(edits, options);
 		}
 

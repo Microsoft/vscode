@@ -60,20 +60,29 @@ export class DialogHandlerContribution extends Disposable implements IWorkbenchC
 			this.currentDialog = this.model.dialogs[0];
 
 			let result: IDialogResult | undefined = undefined;
+
+			// Confirm
 			if (this.currentDialog.args.confirmArgs) {
 				const args = this.currentDialog.args.confirmArgs;
 				result = this.useCustomDialog ? await this.browserImpl.confirm(args.confirmation) : await this.nativeImpl.confirm(args.confirmation);
-			} else if (this.currentDialog.args.inputArgs) {
+			}
+
+			// Input (custom only)
+			else if (this.currentDialog.args.inputArgs) {
 				const args = this.currentDialog.args.inputArgs;
-				result = this.useCustomDialog ?
-					await this.browserImpl.input(args.severity, args.message, args.buttons, args.inputs, args.options) :
-					await this.nativeImpl.input(args.severity, args.message, args.buttons, args.inputs, args.options);
-			} else if (this.currentDialog.args.showArgs) {
+				result = await this.browserImpl.input(args.severity, args.message, args.buttons, args.inputs, args.options);
+			}
+
+			// Message
+			else if (this.currentDialog.args.showArgs) {
 				const args = this.currentDialog.args.showArgs;
 				result = this.useCustomDialog ?
 					await this.browserImpl.show(args.severity, args.message, args.buttons, args.options) :
 					await this.nativeImpl.show(args.severity, args.message, args.buttons, args.options);
-			} else {
+			}
+
+			// About
+			else {
 				await this.nativeImpl.about();
 			}
 

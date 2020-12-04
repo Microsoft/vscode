@@ -22,7 +22,7 @@ export function setup() {
 			const app = this.app as Application;
 			await app.workbench.activitybar.waitForActivityBar(ActivityBarPosition.LEFT);
 
-			await app.workbench.keybindingsEditor.updateKeybinding('workbench.action.toggleSidebarPosition', 'ctrl+u', 'Control+U');
+			await app.workbench.keybindingsEditor.updateKeybinding('workbench.action.toggleSidebarPosition', 'View: Toggle Side Bar Position', 'ctrl+u', 'Control+U');
 
 			await app.code.dispatchKeybinding('ctrl+u');
 			await app.workbench.activitybar.waitForActivityBar(ActivityBarPosition.RIGHT);

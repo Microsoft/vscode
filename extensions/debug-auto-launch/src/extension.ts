@@ -156,7 +156,7 @@ async function toggleAutoAttachSetting(context: vscode.ExtensionContext, scope?:
 
 	quickPick.show();
 
-	const result = await new Promise<PickResult>(resolve => {
+	let result = await new Promise<PickResult>(resolve => {
 		quickPick.onDidAccept(() => resolve(quickPick.selectedItems[0]));
 		quickPick.onDidHide(() => resolve(undefined));
 		quickPick.onDidTriggerButton(() => {
@@ -179,7 +179,11 @@ async function toggleAutoAttachSetting(context: vscode.ExtensionContext, scope?:
 	}
 
 	if ('state' in result) {
-		section.update(SETTING_STATE, result.state, scope);
+		if (result.state !== current) {
+			section.update(SETTING_STATE, result.state, scope);
+		} else if (isTemporarilyDisabled) {
+			result = { setTempDisabled: false };
+		}
 	}
 
 	if ('setTempDisabled' in result) {

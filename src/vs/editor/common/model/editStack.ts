@@ -199,6 +199,12 @@ export class SingleModelEditStackElement implements IResourceUndoRedoElement {
 		}
 	}
 
+	public open(): void {
+		if (!(this._data instanceof SingleModelEditStackData)) {
+			this._data = SingleModelEditStackData.deserialize(this._data);
+		}
+	}
+
 	public undo(): void {
 		if (URI.isUri(this.model)) {
 			// don't have a model
@@ -315,6 +321,10 @@ export class MultiModelEditStackElement implements IWorkspaceUndoRedoElement {
 		this._isOpen = false;
 	}
 
+	public open(): void {
+		// cannot reopen
+	}
+
 	public undo(): void {
 		this._isOpen = false;
 
@@ -383,6 +393,13 @@ export class EditStack {
 		const lastElement = this._undoRedoService.getLastElement(this._model.uri);
 		if (isEditStackElement(lastElement)) {
 			lastElement.close();
+		}
+	}
+
+	public popStackElement(): void {
+		const lastElement = this._undoRedoService.getLastElement(this._model.uri);
+		if (isEditStackElement(lastElement)) {
+			lastElement.open();
 		}
 	}
 

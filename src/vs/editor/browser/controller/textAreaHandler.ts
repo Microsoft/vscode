@@ -276,6 +276,7 @@ export class TextAreaHandler extends ViewPart {
 			this.textArea.setClassName(`inputarea ${MOUSE_CURSOR_TEXT_CSS_CLASS_NAME} ime-input`);
 
 			this._viewController.compositionStart();
+			this._context.model.onCompositionStart();
 		}));
 
 		this._register(this._textAreaInput.onCompositionUpdate((e: ICompositionData) => {
@@ -297,6 +298,7 @@ export class TextAreaHandler extends ViewPart {
 
 			this.textArea.setClassName(`inputarea ${MOUSE_CURSOR_TEXT_CSS_CLASS_NAME}`);
 			this._viewController.compositionEnd();
+			this._context.model.onCompositionEnd();
 		}));
 
 		this._register(this._textAreaInput.onFocus(() => {

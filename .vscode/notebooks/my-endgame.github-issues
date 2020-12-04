@@ -104,7 +104,7 @@
   {
     "kind": 2,
     "language": "github-issues",
-    "value": "$REPOS $MILESTONE -$MINE is:issue is:closed -assignee:@me label:feature-request label:verification-needed",
+    "value": "$REPOS $MILESTONE -$MINE is:issue is:closed -assignee:@me -label:verified label:feature-request label:verification-needed",
     "editable": true
   },
   {
@@ -122,7 +122,7 @@
   {
     "kind": 2,
     "language": "github-issues",
-    "value": "$REPOS $MILESTONE $MINE is:issue is:open",
+    "value": "$REPOS $MILESTONE $MINE is:issue is:open -label:endgame-plan",
     "editable": true
   },
   {
@@ -177,6 +177,18 @@
     "kind": 2,
     "language": "github-issues",
     "value": "$REPOS $MILESTONE -$MINE is:issue is:closed author:@me sort:updated-asc label:bug -label:verified -label:on-testplan -label:*duplicate -label:invalid -label:*as-designed -label:error-telemetry -label:verification-steps-needed -label:verification-found",
+    "editable": true
+  },
+  {
+    "kind": 1,
+    "language": "markdown",
+    "value": "## Issues filed from outside team",
+    "editable": true
+  },
+  {
+    "kind": 2,
+    "language": "github-issues",
+    "value": "$REPOS $MILESTONE -$MINE is:issue is:closed sort:updated-asc label:bug -label:verified -label:on-testplan -label:*duplicate -label:invalid -label:*as-designed -label:error-telemetry -label:verification-steps-needed -label:verification-found -author:aeschli -author:alexdima -author:alexr00 -author:AmandaSilver -author:bamurtaugh -author:bpasero -author:btholt -author:chrisdias -author:chrmarti -author:Chuxel -author:connor4312 -author:dbaeumer -author:deepak1556 -author:devinvalenciano -author:digitarald -author:eamodio -author:egamma -author:fiveisprime -author:gregvanl -author:isidorn -author:ItalyPaleAle -author:JacksonKearl -author:joaomoreno -author:jrieken -author:kieferrm -author:lszomoru -author:meganrogge -author:misolori -author:mjbvz -author:ornellaalt -author:orta -author:rebornix -author:RMacfarlane -author:roblourens -author:rzhao271 -author:sana-ajani -author:sandy081 -author:sbatten -author:stevencl -author:Tyriar -author:weinand",
     "editable": true
   },
   {

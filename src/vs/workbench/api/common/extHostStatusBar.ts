@@ -15,7 +15,15 @@ import { checkProposedApiEnabled } from 'vs/workbench/services/extensions/common
 
 export class ExtHostStatusBarEntry implements vscode.StatusBarItem {
 	private static ID_GEN = 0;
-	private static ALLOWED_BACKGROUND_COLORS = new Set<string>(['statusBarItem.errorBackground']);
+
+	private static ALLOWED_BACKGROUND_COLORS = (() => {
+		const map = new Map<string, ThemeColor>();
+
+		// https://github.com/microsoft/vscode/issues/110214
+		map.set('statusBarItem.errorBackground', new ThemeColor('statusBarItem.errorForeground'));
+
+		return map;
+	})();
 
 	private _id: number;
 	private _alignment: number;
@@ -79,6 +87,10 @@ export class ExtHostStatusBarEntry implements vscode.StatusBarItem {
 	}
 
 	public get backgroundColor(): ThemeColor | undefined {
+		if (this._extension) {
+			checkProposedApiEnabled(this._extension);
+		}
+
 		return this._backgroundColor;
 	}
 
@@ -167,9 +179,15 @@ export class ExtHostStatusBarEntry implements vscode.StatusBarItem {
 		this._timeoutHandle = setTimeout(() => {
 			this._timeoutHandle = undefined;
 
+			// If a background color is set, the foreground is determined
+			let color = this._color;
+			if (this._backgroundColor) {
+				color = ExtHostStatusBarEntry.ALLOWED_BACKGROUND_COLORS.get(this._backgroundColor.id);
+			}
+
 			// Set to status bar
-			this._proxy.$setEntry(this.id, this._statusId, this._statusName, this.text, this.tooltip, this._command?.internal, this.color,
-				this.backgroundColor, this._alignment === ExtHostStatusBarAlignment.Left ? MainThreadStatusBarAlignment.LEFT : MainThreadStatusBarAlignment.RIGHT,
+			this._proxy.$setEntry(this.id, this._statusId, this._statusName, this._text, this._tooltip, this._command?.internal, color,
+				this._backgroundColor, this._alignment === ExtHostStatusBarAlignment.Left ? MainThreadStatusBarAlignment.LEFT : MainThreadStatusBarAlignment.RIGHT,
 				this._priority, this._accessibilityInformation);
 		}, 0);
 	}

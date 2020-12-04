@@ -5,7 +5,7 @@
 import * as nls from 'vs/nls';
 import { Disposable, IDisposable } from 'vs/base/common/lifecycle';
 import { IWorkbenchContribution } from 'vs/workbench/common/contributions';
-import { Extensions, IViewContainersRegistry, IViewDescriptorService, IViewsRegistry, IViewsService, ViewContainerLocation } from 'vs/workbench/common/views';
+import { Extensions, IViewContainersRegistry, IViewDescriptorService, IViewsRegistry, IViewsService, ViewContainer, ViewContainerLocation } from 'vs/workbench/common/views';
 import { IRemoteExplorerService, makeAddress, mapHasAddressLocalhostOrAllInterfaces, TUNNEL_VIEW_ID } from 'vs/workbench/services/remote/common/remoteExplorerService';
 import { PORT_AUTO_FORWARD_SETTING, forwardedPortsViewEnabled, ForwardPortAction, OpenPortInBrowserAction, TunnelPanel, TunnelPanelDescriptor, TunnelViewModel } from 'vs/workbench/contrib/remote/browser/tunnelView';
 import { IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
@@ -26,6 +26,8 @@ import { Codicon } from 'vs/base/common/codicons';
 import { SyncDescriptor } from 'vs/platform/instantiation/common/descriptors';
 import { ViewPaneContainer } from 'vs/workbench/browser/parts/views/viewPaneContainer';
 import { IActivityService, NumberBadge } from 'vs/workbench/services/activity/common/activity';
+import { ITASExperimentService } from 'vs/workbench/services/experiment/common/experimentService';
+import { optional } from 'vs/platform/instantiation/common/instantiation';
 
 export const VIEWLET_ID = 'workbench.view.remote';
 
@@ -33,6 +35,7 @@ export class ForwardedPortsView extends Disposable implements IWorkbenchContribu
 	private contextKeyListener?: IDisposable;
 	private _activityBadge?: IDisposable;
 	private entryAccessor: IStatusbarEntryAccessor | undefined;
+	private readonly tasExperimentService: ITASExperimentService | undefined;
 
 	constructor(
 		@IContextKeyService private readonly contextKeyService: IContextKeyService,
@@ -41,9 +44,11 @@ export class ForwardedPortsView extends Disposable implements IWorkbenchContribu
 		@IViewDescriptorService private readonly viewDescriptorService: IViewDescriptorService,
 		@IActivityService private readonly activityService: IActivityService,
 		@IStatusbarService private readonly statusbarService: IStatusbarService,
-		@IConfigurationService private readonly configurationService: IConfigurationService
+		@IConfigurationService private readonly configurationService: IConfigurationService,
+		@optional(ITASExperimentService) tasExperimentService: ITASExperimentService,
 	) {
 		super();
+		this.tasExperimentService = tasExperimentService;
 		this._register(Registry.as<IViewsRegistry>(Extensions.ViewsRegistry).registerViewWelcomeContent(TUNNEL_VIEW_ID, {
 			content: `Forwarded ports allow you to access your running services locally.\n[Forward a Port](command:${ForwardPortAction.INLINE_ID})`,
 		}));
@@ -51,15 +56,16 @@ export class ForwardedPortsView extends Disposable implements IWorkbenchContribu
 		this.enableForwardedPortsView();
 	}
 
-	private enableForwardedPortsView() {
-		if (this.contextKeyListener) {
-			this.contextKeyListener.dispose();
-			this.contextKeyListener = undefined;
+	private async usePanelTreatment(): Promise<boolean> {
+		if (this.tasExperimentService) {
+			return !!(await this.tasExperimentService.getTreatment<boolean>('portspanel'));
 		}
+		return false;
+	}
 
-		const viewEnabled: boolean = !!forwardedPortsViewEnabled.getValue(this.contextKeyService);
-		if (this.environmentService.remoteAuthority && viewEnabled) {
-			const viewContainer = Registry.as<IViewContainersRegistry>(Extensions.ViewContainersRegistry).registerViewContainer({
+	private async getViewContainer(): Promise<ViewContainer | null> {
+		if (await this.usePanelTreatment()) {
+			return Registry.as<IViewContainersRegistry>(Extensions.ViewContainersRegistry).registerViewContainer({
 				id: TunnelPanel.ID,
 				name: nls.localize('ports', "Ports"),
 				icon: Codicon.plug,
@@ -68,7 +74,21 @@ export class ForwardedPortsView extends Disposable implements IWorkbenchContribu
 				hideIfEmpty: true,
 				order: 5
 			}, ViewContainerLocation.Panel);
+		} else {
+			return this.viewDescriptorService.getViewContainerById(VIEWLET_ID);
+		}
+	}
 
+	private async enableForwardedPortsView() {
+		if (this.contextKeyListener) {
+			this.contextKeyListener.dispose();
+			this.contextKeyListener = undefined;
+		}
+
+		const viewEnabled: boolean = !!forwardedPortsViewEnabled.getValue(this.contextKeyService);
+
+		if (this.environmentService.remoteAuthority && viewEnabled) {
+			const viewContainer = await this.getViewContainer();
 			const tunnelPanelDescriptor = new TunnelPanelDescriptor(new TunnelViewModel(this.remoteExplorerService, this.configurationService), this.environmentService);
 			const viewsRegistry = Registry.as<IViewsRegistry>(Extensions.ViewsRegistry);
 			if (viewContainer) {
@@ -102,9 +122,12 @@ export class ForwardedPortsView extends Disposable implements IWorkbenchContribu
 		});
 	}
 
-	private updateActivityBadge() {
+	private async updateActivityBadge() {
 		if (this._activityBadge) {
 			this._activityBadge.dispose();
+		}
+		if (!(await this.usePanelTreatment())) {
+			return;
 		}
 		if (this.remoteExplorerService.tunnelModel.forwarded.size > 0) {
 			const viewContainer = this.viewDescriptorService.getViewContainerByViewId(TUNNEL_VIEW_ID);
@@ -190,21 +213,48 @@ class ForwardedPortNotifier extends Disposable {
 		this.lastNotifyTime.setFullYear(this.lastNotifyTime.getFullYear() - 1);
 	}
 
-	public notify(tunnels: RemoteTunnel[]) {
-		if (Date.now() - this.lastNotifyTime.getTime() > ForwardedPortNotifier.COOL_DOWN) {
-			this.showNotification(tunnels);
+	public async notify(tunnels: RemoteTunnel[]) {
+		const tunnel = await this.portNumberHeuristicDelay(tunnels);
+		if (tunnel) {
+			if (Date.now() - this.lastNotifyTime.getTime() > ForwardedPortNotifier.COOL_DOWN) {
+				this.showNotification(tunnel);
+			}
 		}
 	}
 
-	private showNotification(tunnels: RemoteTunnel[]) {
+	private newerTunnel: RemoteTunnel | undefined;
+	private async portNumberHeuristicDelay(tunnels: RemoteTunnel[]): Promise<RemoteTunnel | undefined> {
 		if (tunnels.length === 0) {
 			return;
 		}
 		tunnels = tunnels.sort((a, b) => a.tunnelRemotePort - b.tunnelRemotePort);
 		const firstTunnel = tunnels.shift()!;
-		const address = makeAddress(firstTunnel.tunnelRemoteHost, firstTunnel.tunnelRemotePort);
+		// Heuristic.
+		if (firstTunnel.tunnelRemotePort % 1000 === 0) {
+			this.newerTunnel = firstTunnel;
+			return firstTunnel;
+			// 9229 is the node inspect port
+		} else if (firstTunnel.tunnelRemotePort < 10000 && firstTunnel.tunnelRemotePort !== 9229) {
+			this.newerTunnel = firstTunnel;
+			return firstTunnel;
+		}
+
+		this.newerTunnel = undefined;
+		return new Promise(resolve => {
+			setTimeout(() => {
+				if (this.newerTunnel) {
+					resolve(undefined);
+				} else {
+					resolve(firstTunnel);
+				}
+			}, 3000);
+		});
+	}
+
+	private showNotification(tunnel: RemoteTunnel) {
+		const address = makeAddress(tunnel.tunnelRemoteHost, tunnel.tunnelRemotePort);
 		const message = nls.localize('remote.tunnelsView.automaticForward', "Your service running on port {0} is available. [See all forwarded ports](command:{1}.focus)",
-			firstTunnel.tunnelRemotePort, TunnelPanel.ID);
+			tunnel.tunnelRemotePort, TunnelPanel.ID);
 		const browserChoice: IPromptChoice = {
 			label: OpenPortInBrowserAction.LABEL,
 			run: () => OpenPortInBrowserAction.run(this.remoteExplorerService.tunnelModel, this.openerService, address)
@@ -298,24 +348,24 @@ class LinuxAutomaticPortForwarding extends Disposable {
 	) {
 		super();
 		this.notifier = new ForwardedPortNotifier(notificationService, remoteExplorerService, openerService);
-		this._register(configurationService.onDidChangeConfiguration((e) => {
+		this._register(configurationService.onDidChangeConfiguration(async (e) => {
 			if (e.affectsConfiguration(PORT_AUTO_FORWARD_SETTING)) {
-				this.startStopCandidateListener();
+				await this.startStopCandidateListener();
 			}
 		}));
 
-		this.contextServiceListener = this._register(this.contextKeyService.onDidChangeContext(e => {
+		this.contextServiceListener = this._register(this.contextKeyService.onDidChangeContext(async (e) => {
 			if (e.affectsSome(new Set(forwardedPortsViewEnabled.keys()))) {
-				this.startStopCandidateListener();
+				await this.startStopCandidateListener();
 			}
 		}));
 
 		this.startStopCandidateListener();
 	}
 
-	private startStopCandidateListener() {
+	private async startStopCandidateListener() {
 		if (this.configurationService.getValue(PORT_AUTO_FORWARD_SETTING)) {
-			this.startCandidateListener();
+			await this.startCandidateListener();
 		} else {
 			this.stopCandidateListener();
 		}
@@ -328,7 +378,7 @@ class LinuxAutomaticPortForwarding extends Disposable {
 		}
 	}
 
-	private startCandidateListener() {
+	private async startCandidateListener() {
 		if (this.candidateListener || !forwardedPortsViewEnabled.getValue(this.contextKeyService)) {
 			return;
 		}
@@ -336,9 +386,14 @@ class LinuxAutomaticPortForwarding extends Disposable {
 			this.contextServiceListener.dispose();
 		}
 
-		this.candidateListener = this._register(this.remoteExplorerService.tunnelModel.onCandidatesChanged(this.handleCandidateUpdate, this));
+		if (!this.remoteExplorerService.tunnelModel.environmentTunnelsSet) {
+			await new Promise<void>(resolve => this.remoteExplorerService.tunnelModel.onEnvironmentTunnelsSet(() => resolve()));
+		}
+
 		// Capture list of starting candidates so we don't auto forward them later.
 		this.setInitialCandidates();
+
+		this.candidateListener = this._register(this.remoteExplorerService.tunnelModel.onCandidatesChanged(this.handleCandidateUpdate, this));
 	}
 
 	private setInitialCandidates() {
@@ -351,6 +406,9 @@ class LinuxAutomaticPortForwarding extends Disposable {
 		const allTunnels = <RemoteTunnel[]>(await Promise.all(this.remoteExplorerService.tunnelModel.candidates.map(async (value) => {
 			const address = makeAddress(value.host, value.port);
 			if (this.initialCandidates.has(address)) {
+				return undefined;
+			}
+			if (mapHasAddressLocalhostOrAllInterfaces(this.remoteExplorerService.tunnelModel.detected, value.host, value.port)) {
 				return undefined;
 			}
 			const forwarded = await this.remoteExplorerService.forward(value);

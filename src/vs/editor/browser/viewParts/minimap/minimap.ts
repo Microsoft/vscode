@@ -237,6 +237,7 @@ class MinimapLayout {
 		options: MinimapOptions,
 		viewportStartLineNumber: number,
 		viewportEndLineNumber: number,
+		viewportStartLineNumberVerticalOffset: number,
 		viewportHeight: number,
 		viewportContainsWhitespaceGaps: boolean,
 		lineCount: number,
@@ -331,7 +332,8 @@ class MinimapLayout {
 			}
 
 			const endLineNumber = Math.min(lineCount, startLineNumber + minimapLinesFitting - 1);
-			const sliderTopAligned = (scrollTop / lineHeight - startLineNumber + 1) * minimapLineHeight / pixelRatio;
+			const partialLine = (scrollTop - viewportStartLineNumberVerticalOffset) / lineHeight;
+			const sliderTopAligned = (viewportStartLineNumber - startLineNumber + partialLine) * minimapLineHeight / pixelRatio;
 
 			return new MinimapLayout(scrollTop, scrollHeight, true, computedSliderRatio, sliderTopAligned, sliderHeight, startLineNumber, endLineNumber);
 		}
@@ -505,6 +507,7 @@ interface IMinimapRenderingContext {
 
 	readonly viewportStartLineNumber: number;
 	readonly viewportEndLineNumber: number;
+	readonly viewportStartLineNumberVerticalOffset: number;
 
 	readonly scrollTop: number;
 	readonly scrollLeft: number;
@@ -891,6 +894,7 @@ export class Minimap extends ViewPart implements IMinimapModel {
 
 			viewportStartLineNumber: viewportStartLineNumber,
 			viewportEndLineNumber: viewportEndLineNumber,
+			viewportStartLineNumberVerticalOffset: ctx.getVerticalOffsetForLineNumber(viewportStartLineNumber),
 
 			scrollTop: ctx.scrollTop,
 			scrollLeft: ctx.scrollLeft,
@@ -1344,6 +1348,7 @@ class InnerMinimap extends Disposable {
 			this._model.options,
 			renderingCtx.viewportStartLineNumber,
 			renderingCtx.viewportEndLineNumber,
+			renderingCtx.viewportStartLineNumberVerticalOffset,
 			renderingCtx.viewportHeight,
 			renderingCtx.viewportContainsWhitespaceGaps,
 			this._model.getLineCount(),

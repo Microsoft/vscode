@@ -455,7 +455,7 @@ export class CodeApplication extends Disposable {
 		}
 
 		// Setup Auth Handler (TODO@ben remove old auth handler eventually)
-		if (this.configurationService.getValue('window.enableExperimentalProxyLoginDialog') !== true) {
+		if (this.configurationService.getValue('window.enableExperimentalProxyLoginDialog') === false) {
 			this._register(new ProxyAuthHandler());
 		} else {
 			this._register(appInstantiationService.createInstance(ProxyAuthHandler2));

@@ -642,4 +642,10 @@ suite('ExtHostTypes', function () {
 			1, 0, 3, 3, (1 << 2) | (1 << 4)
 		]);
 	});
+
+	test('Markdown codeblock rendering is swapped #111604', function () {
+		const md = new types.MarkdownString().appendCodeblock('<img src=0 onerror="alert(1)">', 'html');
+		assert.deepEqual(md.value, '\n```html\n<img src=0 onerror="alert(1)">\n```\n');
+	});
+
 });

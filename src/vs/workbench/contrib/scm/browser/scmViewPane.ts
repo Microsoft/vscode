@@ -1900,7 +1900,7 @@ export class SCMViewPane extends ViewPane {
 		return this.viewModel.getViewActionsContext();
 	}
 
-	private async open(e: IOpenEvent<TreeElement | null>): Promise<void> {
+	private async open(e: IOpenEvent<TreeElement | undefined>): Promise<void> {
 		if (!e.element) {
 			return;
 		} else if (isSCMRepository(e.element)) {

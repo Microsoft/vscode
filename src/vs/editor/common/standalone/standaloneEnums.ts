@@ -282,15 +282,16 @@ export enum EditorOption {
 	wordWrapBreakAfterCharacters = 112,
 	wordWrapBreakBeforeCharacters = 113,
 	wordWrapColumn = 114,
-	wordWrapMinified = 115,
-	wrappingIndent = 116,
-	wrappingStrategy = 117,
-	showDeprecated = 118,
-	editorClassName = 119,
-	pixelRatio = 120,
-	tabFocusMode = 121,
-	layoutInfo = 122,
-	wrappingInfo = 123
+	wordWrapOverride1 = 115,
+	wordWrapOverride2 = 116,
+	wrappingIndent = 117,
+	wrappingStrategy = 118,
+	showDeprecated = 119,
+	editorClassName = 120,
+	pixelRatio = 121,
+	tabFocusMode = 122,
+	layoutInfo = 123,
+	wrappingInfo = 124
 }
 
 /**
@@ -323,14 +324,6 @@ export enum EndOfLineSequence {
 	 * Use carriage return and line feed (\r\n) as the end of line character.
 	 */
 	CRLF = 1
-}
-
-export enum InDiffEditorState {
-	None = 0,
-	SideBySideLeft = 1,
-	SideBySideRight = 2,
-	InlineLeft = 3,
-	InlineRight = 4
 }
 
 /**

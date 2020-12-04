@@ -4542,6 +4542,50 @@ declare module 'vscode' {
 	}
 
 	/**
+	 * Represents a list of ranges that can be edited together along with a word pattern to describe valid range contents.
+	 */
+	export class LinkedEditingRanges {
+		/**
+		 * Create a new linked editing ranges object.
+		 *
+		 * @param ranges A list of ranges that can be edited together
+		 * @param wordPattern An optional word pattern that describes valid contents for the given ranges
+		 */
+		constructor(ranges: Range[], wordPattern?: RegExp);
+
+		/**
+		 * A list of ranges that can be edited together. The ranges must have
+		 * identical length and text content. The ranges cannot overlap.
+		 */
+		readonly ranges: Range[];
+
+		/**
+		 * An optional word pattern that describes valid contents for the given ranges.
+		 * If no pattern is provided, the language configuration's word pattern will be used.
+		 */
+		readonly wordPattern?: RegExp;
+	}
+
+	/**
+	 * The linked editing range provider interface defines the contract between extensions and
+	 * the linked editing feature.
+	 */
+	export interface LinkedEditingRangeProvider {
+		/**
+		 * For a given position in a document, returns the range of the symbol at the position and all ranges
+		 * that have the same content. A change to one of the ranges can be applied to all other ranges if the new content
+		 * is valid. An optional word pattern can be returned with the result to describe valid contents.
+		 * If no result-specific word pattern is provided, the word pattern from the language configuration is used.
+		 *
+		 * @param document The document in which the provider was invoked.
+		 * @param position The position at which the provider was invoked.
+		 * @param token A cancellation token.
+		 * @return A list of ranges that can be edited together
+		 */
+		provideLinkedEditingRanges(document: TextDocument, position: Position, token: CancellationToken): ProviderResult<LinkedEditingRanges>;
+	}
+
+	/**
 	 * A tuple of two characters, like a pair of
 	 * opening and closing brackets.
 	 */
@@ -8818,6 +8862,8 @@ declare module 'vscode' {
 		 *
 		 * Will only ever be called once per TreeItem.
 		 *
+		 * onDidChangeTreeData should not be triggered from within resolveTreeItem.
+		 *
 		 * *Note* that this function is called when tree items are already showing in the UI.
 		 * Because of that, no property that changes the presentation (label, description, command, etc.)
 		 * can be changed.
@@ -10843,6 +10889,19 @@ declare module 'vscode' {
 		export function registerCallHierarchyProvider(selector: DocumentSelector, provider: CallHierarchyProvider): Disposable;
 
 		/**
+		 * Register a linked editing range provider.
+		 *
+		 * Multiple providers can be registered for a language. In that case providers are sorted
+		 * by their [score](#languages.match) and the best-matching provider that has a result is used. Failure
+		 * of the selected provider will cause a failure of the whole operation.
+		 *
+		 * @param selector A selector that defines the documents this provider is applicable to.
+		 * @param provider A linked editing range provider.
+		 * @return A [disposable](#Disposable) that unregisters this provider when being disposed.
+		 */
+		export function registerLinkedEditingRangeProvider(selector: DocumentSelector, provider: LinkedEditingRangeProvider): Disposable;
+
+		/**
 		 * Set a [language configuration](#LanguageConfiguration) for a language.
 		 *
 		 * @param language A language identifier like `typescript`.
@@ -10850,6 +10909,7 @@ declare module 'vscode' {
 		 * @return A [disposable](#Disposable) that unsets this configuration.
 		 */
 		export function setLanguageConfiguration(language: string, configuration: LanguageConfiguration): Disposable;
+
 	}
 
 	/**

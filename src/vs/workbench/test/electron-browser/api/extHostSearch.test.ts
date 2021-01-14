@@ -23,6 +23,7 @@ import { mock } from 'vs/base/test/common/mock';
 import { IExtHostInitDataService } from 'vs/workbench/api/common/extHostInitDataService';
 import { TextSearchManager } from 'vs/workbench/services/search/common/textSearchManager';
 import { NativeTextSearchManager } from 'vs/workbench/services/search/node/textSearchManager';
+import { ExtHostCommands } from 'vs/workbench/api/common/extHostCommands';
 
 let rpcProtocol: TestRPCProtocol;
 let extHostSearch: NativeExtHostSearch;
@@ -146,7 +147,8 @@ suite('ExtHostSearch', () => {
 					rpcProtocol,
 					new class extends mock<IExtHostInitDataService>() { remote = { isRemote: false, authority: undefined, connectionData: null }; },
 					new URITransformerService(null),
-					logService
+					logService,
+					new ExtHostCommands(rpcProtocol, new NullLogService())
 				);
 				this._pfs = mockPFS as any;
 			}

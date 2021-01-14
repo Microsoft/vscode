@@ -14,6 +14,7 @@ import { ILogService } from 'vs/platform/log/common/log';
 import { IRawFileQuery, ISearchCompleteStats, IFileQuery, IRawTextQuery, IRawQuery, ITextQuery, IFolderQuery } from 'vs/workbench/services/search/common/search';
 import { URI, UriComponents } from 'vs/base/common/uri';
 import { TextSearchManager } from 'vs/workbench/services/search/common/textSearchManager';
+import { ExtHostCommands } from 'vs/workbench/api/common/extHostCommands';
 
 export interface IExtHostSearch extends ExtHostSearchShape {
 	registerTextSearchProvider(scheme: string, provider: vscode.TextSearchProvider): IDisposable;
@@ -37,8 +38,27 @@ export class ExtHostSearch implements ExtHostSearchShape {
 	constructor(
 		@IExtHostRpcService private extHostRpc: IExtHostRpcService,
 		@IURITransformerService protected _uriTransformer: IURITransformerService,
-		@ILogService protected _logService: ILogService
-	) { }
+		@ILogService protected _logService: ILogService,
+		commands: ExtHostCommands,
+	) {
+		commands.registerArgumentProcessor({
+			processArgument: arg => {
+				if (arg && Array.isArray(arg)) {
+					return arg.map(matchContext => {
+						if (matchContext.$mid === 13 /* SearchViewContextMid */) {
+							const filteredProperties = { ...matchContext };
+							delete filteredProperties.renderableMatch;
+							return filteredProperties;
+						} else {
+							return matchContext;
+						}
+					});
+				} else {
+					return arg;
+				}
+			}
+		});
+	}
 
 	protected _transformScheme(scheme: string): string {
 		return this._uriTransformer.transformOutgoingScheme(scheme);

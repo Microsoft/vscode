@@ -70,6 +70,8 @@ import { ServiceCollection } from 'vs/platform/instantiation/common/serviceColle
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 import { Orientation } from 'vs/base/browser/ui/sash/sash';
 import { searchDetailsIcon } from 'vs/workbench/contrib/search/browser/searchIcons';
+import { Location, Range } from 'vs/workbench/api/common/extHostTypes';
+import { flatten } from 'vs/base/common/arrays';
 
 const $ = dom.$;
 
@@ -82,6 +84,43 @@ enum SearchUIState {
 export enum SearchViewPosition {
 	SideBar,
 	Panel
+}
+
+export type SearchViewContextMid = 13;
+export const SearchViewContextMid = 13;
+
+export interface IMatchContext {
+	/** locations of where the matched texts are */
+	locations: Location[];
+	renderableMatch: Match;
+	$mid: SearchViewContextMid;
+}
+
+export interface IFileMatchContext {
+	/** matches for this particular file */
+	locations: Location[];
+	renderableMatch: FileMatch;
+	$mid: SearchViewContextMid;
+}
+
+export interface IFolderMatchContext {
+	/** matches for this particular folder */
+	locations: Location[];
+	renderableMatch: FolderMatch;
+	$mid: SearchViewContextMid;
+}
+
+export interface IFolderMatchWithResourceContext extends IFolderMatchContext {
+	renderableMatch: FolderMatchWithResource;
+}
+
+export type IRenderableMatchContext = (IMatchContext | IFileMatchContext | IFolderMatchContext);
+
+function toLocation(match: Match): Location {
+	const range = match.range();
+	const location = new Location(URI.parse(match.parent().id()),
+		new Range(range.startLineNumber, range.startColumn, range.endLineNumber, range.endColumn));
+	return location;
 }
 
 const SEARCH_CANCELLED_MESSAGE = nls.localize('searchCanceled', "Search was canceled before any results could be found - ");
@@ -779,13 +818,29 @@ export class SearchView extends ViewPane {
 		e.browserEvent.preventDefault();
 		e.browserEvent.stopPropagation();
 
+		const match = e.element;
+		let locations: Location[] = [];
+		if (match instanceof FileMatch) {
+			locations = match.matches().map(toLocation);
+		} else if (match instanceof Match) {
+			locations = [toLocation(match)];
+		} else if (match instanceof FolderMatch) {
+			locations = flatten(match.matches().map(fileMatch => fileMatch.matches().map(toLocation)));
+		}
+
+		let context = {
+			locations,
+			renderableMatch: match,
+			$mid: SearchViewContextMid
+		};
+
 		const actions: IAction[] = [];
 		const actionsDisposable = createAndFillInContextMenuActions(this.contextMenu, { shouldForwardArgs: true }, actions);
 
 		this.contextMenuService.showContextMenu({
 			getAnchor: () => e.anchor,
 			getActions: () => actions,
-			getActionsContext: () => e.element,
+			getActionsContext: () => [context],
 			onHide: () => dispose(actionsDisposable)
 		});
 	}

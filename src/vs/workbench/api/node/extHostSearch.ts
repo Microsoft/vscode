@@ -19,6 +19,7 @@ import { ExtHostSearch, reviveQuery } from 'vs/workbench/api/common/extHostSearc
 import { Schemas } from 'vs/base/common/network';
 import { NativeTextSearchManager } from 'vs/workbench/services/search/node/textSearchManager';
 import { TextSearchManager } from 'vs/workbench/services/search/common/textSearchManager';
+import { ExtHostCommands } from 'vs/workbench/api/common/extHostCommands';
 
 export class NativeExtHostSearch extends ExtHostSearch {
 
@@ -32,8 +33,9 @@ export class NativeExtHostSearch extends ExtHostSearch {
 		@IExtHostInitDataService initData: IExtHostInitDataService,
 		@IURITransformerService _uriTransformer: IURITransformerService,
 		@ILogService _logService: ILogService,
+		commands: ExtHostCommands,
 	) {
-		super(extHostRpc, _uriTransformer, _logService);
+		super(extHostRpc, _uriTransformer, _logService, commands);
 
 		if (initData.remote.isRemote && initData.remote.authority) {
 			this._registerEHSearchProviders();

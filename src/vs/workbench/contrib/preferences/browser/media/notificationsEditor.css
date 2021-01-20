@@ -1,0 +1,178 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.notifications-editor {
+	padding: 11px 0px 0px 27px;
+}
+
+/* header styling */
+
+.notifications-editor > .notifications-header {
+	padding: 0px 10px 11px 0;
+}
+
+.notifications-editor > .notifications-header > .search-container {
+	position: relative;
+}
+
+.notifications-editor > .notifications-header > .search-container > .notifications-search-actions-container {
+	position: absolute;
+	top: 0;
+	right: 10px;
+	margin-top: 5px;
+	display: flex;
+}
+
+.notifications-editor > .notifications-header > .search-container > .notifications-search-actions-container > .recording-badge {
+	margin-right: 8px;
+}
+
+.notifications-editor > .notifications-header.small > .search-container > .notifications-search-actions-container > .recording-badge,
+.notifications-editor > .notifications-header > .search-container > .notifications-search-actions-container > .recording-badge.disabled {
+	display: none;
+}
+
+.notifications-editor > .notifications-header > .search-container > .notifications-search-actions-container > .monaco-action-bar .action-item > .icon {
+	width:16px;
+	height: 18px;
+}
+
+.notifications-editor > .notifications-header > .search-container > .notifications-search-actions-container > .monaco-action-bar .action-item {
+	margin-right: 4px;
+}
+
+.notifications-editor .monaco-action-bar .action-item > .codicon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: inherit;
+}
+
+.notifications-editor > .notifications-header .open-notifications-container {
+	margin-top: 10px;
+	display: flex;
+}
+
+.notifications-editor > .notifications-header .open-notifications-container > div {
+	opacity: 0.7;
+}
+
+.notifications-editor > .notifications-header .open-notifications-container > .file-name {
+	text-decoration: underline;
+	cursor: pointer;
+	margin-left: 4px;
+}
+
+.notifications-editor > .notifications-header .open-notifications-container > .file-name:focus {
+	opacity: 1;
+}
+
+/** List based styling **/
+
+.notifications-editor > .notifications-body > .notifications-list-header,
+.notifications-editor > .notifications-body .notifications-list-container {
+	width: 100%;
+	border-spacing: 0;
+	border-collapse: separate;
+}
+
+.notifications-editor > .notifications-body > .notifications-list-header,
+.notifications-editor > .notifications-body > .notifications-list-container .monaco-list-row {
+	cursor: default;
+	display: flex;
+}
+
+.notifications-editor > .notifications-body > .notifications-list-header > .header {
+	text-align: left;
+	font-weight: bold;
+}
+
+.notifications-editor > .notifications-body > .notifications-list-header > .header,
+.notifications-editor > .notifications-body > .notifications-list-container .monaco-list-row .column {
+	align-items: center;
+	display: flex;
+	overflow: hidden;
+}
+
+.notifications-editor > .notifications-body > .notifications-list-container .monaco-list-row .command.vertical-align-column {
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: center;
+}
+
+.notifications-editor > .notifications-body > .notifications-list-container .monaco-list-row .command .command-default-label {
+	opacity: 0.8;
+	margin-top: 2px;
+}
+
+.notifications-editor > .notifications-body > .notifications-list-container .monaco-list-row .keybinding .monaco-highlighted-label {
+	padding-left: 10px;
+}
+
+.notifications-editor > .notifications-body > .notifications-list-container .monaco-list-row > .when .empty {
+	padding-left: 4px;
+}
+
+.notifications-editor > .notifications-body > .notifications-list-container .monaco-list-row > .when:not(.input-mode) .monaco-inputbox,
+.notifications-editor > .notifications-body > .notifications-list-container .monaco-list-row > .when.input-mode .when-label {
+	display: none;
+}
+
+.notifications-editor > .notifications-body > .notifications-list-container .monaco-list-row > .when .monaco-inputbox {
+	width: 100%;
+	line-height: normal;
+}
+
+.monaco-workbench.mac .notifications-editor > .notifications-body > .notifications-list-container .monaco-list-row > .when .monaco-inputbox,
+.monaco-workbench.mac .notifications-editor > .notifications-body > .notifications-list-container .monaco-list-row > .when .monaco-inputbox {
+	height: 24px;
+}
+
+.notifications-editor > .notifications-body > .notifications-list-container .monaco-list-row .command .monaco-highlighted-label,
+.notifications-editor > .notifications-body > .notifications-list-container .monaco-list-row .source .monaco-highlighted-label,
+.notifications-editor > .notifications-body > .notifications-list-container .monaco-list-row .when .monaco-highlighted-label {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.notifications-editor > .notifications-body > .notifications-list-container .monaco-list-row > .column > .code {
+	font-family: var(--monaco-monospace-font);
+	font-size: 90%;
+	display: flex;
+	overflow: hidden;
+}
+
+.notifications-editor > .notifications-body > .notifications-list-container .monaco-list-row > .column > .code.strong {
+	padding: 1px 4px;
+	background-color: rgba(128, 128, 128, 0.17);
+	border-radius: 4px;
+}
+
+.notifications-editor > .notifications-body > .notifications-list-container .monaco-list-row > .column .highlight {
+	font-weight: bold;
+}
+
+.notifications-editor > .notifications-body > .notifications-list-container .monaco-list:focus .monaco-list-row.selected > .column .highlight,
+.notifications-editor > .notifications-body > .notifications-list-container .monaco-list:focus .monaco-list-row.selected.focused > .column .highlight {
+	color: inherit;
+}
+
+.notifications-editor > .notifications-body > .notifications-list-container .monaco-list-row > .column.actions .monaco-action-bar {
+	display: none;
+	flex: 1;
+}
+
+.notifications-editor > .notifications-body > .notifications-list-container .monaco-list-row.selected > .column.actions .monaco-action-bar,
+.notifications-editor > .notifications-body > .notifications-list-container .monaco-list.focused .monaco-list-row.focused > .column.actions .monaco-action-bar,
+.notifications-editor > .notifications-body > .notifications-list-container .monaco-list-row:hover > .column.actions .monaco-action-bar {
+	display: flex;
+}
+
+.notifications-editor > .notifications-body > .notifications-list-container .monaco-list-row > .column .monaco-action-bar .action-item > .icon {
+	width:16px;
+	height: 16px;
+	cursor: pointer;
+	margin-top: 3px;
+}

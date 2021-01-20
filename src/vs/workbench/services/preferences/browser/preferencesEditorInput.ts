@@ -20,6 +20,7 @@ import { IFileService } from 'vs/platform/files/common/files';
 import { ILabelService } from 'vs/platform/label/common/label';
 import { IFilesConfigurationService } from 'vs/workbench/services/filesConfiguration/common/filesConfigurationService';
 import { Schemas } from 'vs/base/common/network';
+import { NotificationsEditorModel } from 'vs/workbench/services/preferences/browser/notificationsEditorModel';
 
 export class PreferencesEditorInput extends SideBySideEditorInput {
 	static readonly ID: string = 'workbench.editorinputs.preferencesEditorInput';
@@ -102,6 +103,42 @@ export class KeybindingsEditorInput extends EditorInput {
 
 	dispose(): void {
 		this.keybindingsModel.dispose();
+
+		super.dispose();
+	}
+}
+
+export class NotificationsEditorInput extends EditorInput {
+
+	static readonly ID: string = 'workbench.input.notifications';
+	readonly notificationsModel: NotificationsEditorModel;
+
+	readonly resource = undefined;
+
+	constructor(@IInstantiationService instantiationService: IInstantiationService) {
+		super();
+
+		this.notificationsModel = instantiationService.createInstance(NotificationsEditorModel);
+	}
+
+	getTypeId(): string {
+		return NotificationsEditorInput.ID;
+	}
+
+	getName(): string {
+		return nls.localize('notificationsInputName', "Notifications");
+	}
+
+	async resolve(): Promise<NotificationsEditorModel> {
+		return this.notificationsModel;
+	}
+
+	matches(otherInput: unknown): boolean {
+		return otherInput instanceof NotificationsEditorInput;
+	}
+
+	dispose(): void {
+		this.notificationsModel.dispose();
 
 		super.dispose();
 	}

@@ -39,8 +39,9 @@ import { IEditorService } from 'vs/workbench/services/editor/common/editorServic
 import { IWorkbenchEnvironmentService } from 'vs/workbench/services/environment/common/environmentService';
 import { IExtensionService } from 'vs/workbench/services/extensions/common/extensions';
 import { IPreferencesService } from 'vs/workbench/services/preferences/common/preferences';
-import { DefaultPreferencesEditorInput, KeybindingsEditorInput, PreferencesEditorInput, SettingsEditor2Input } from 'vs/workbench/services/preferences/browser/preferencesEditorInput';
+import { DefaultPreferencesEditorInput, KeybindingsEditorInput, NotificationsEditorInput, PreferencesEditorInput, SettingsEditor2Input } from 'vs/workbench/services/preferences/browser/preferencesEditorInput';
 import { preferencesOpenSettingsIcon } from 'vs/workbench/contrib/preferences/browser/preferencesIcons';
+import { NotificationsEditor } from 'vs/workbench/contrib/preferences/browser/notificationsEditor';
 
 const SETTINGS_EDITOR_COMMAND_SEARCH = 'settings.action.search';
 
@@ -92,6 +93,16 @@ Registry.as<IEditorRegistry>(EditorExtensions.Editors).registerEditor(
 		new SyncDescriptor(KeybindingsEditorInput)
 	]
 );
+Registry.as<IEditorRegistry>(EditorExtensions.Editors).registerEditor(
+	EditorDescriptor.create(
+		NotificationsEditor,
+		NotificationsEditor.ID,
+		nls.localize('notificationsEditor', "Notifications Editor")
+	),
+	[
+		new SyncDescriptor(NotificationsEditorInput)
+	]
+);
 
 // Register Preferences Editor Input Factory
 class PreferencesEditorInputFactory extends AbstractSideBySideEditorInputFactory {
@@ -117,6 +128,25 @@ class KeybindingsEditorInputFactory implements IEditorInputFactory {
 
 	deserialize(instantiationService: IInstantiationService, serializedEditorInput: string): EditorInput {
 		return instantiationService.createInstance(KeybindingsEditorInput);
+	}
+}
+
+class NotificationsEditorInputFactory implements IEditorInputFactory {
+
+	canSerialize(editorInput: EditorInput): boolean {
+		return true;
+	}
+
+	serialize(editorInput: EditorInput): string {
+		const input = <NotificationsEditorInput>editorInput;
+		return JSON.stringify({
+			name: input.getName(),
+			typeId: input.getTypeId()
+		});
+	}
+
+	deserialize(instantiationService: IInstantiationService, serializedEditorInput: string): EditorInput {
+		return instantiationService.createInstance(NotificationsEditorInput);
 	}
 }
 
@@ -164,6 +194,7 @@ class DefaultPreferencesEditorInputFactory implements IEditorInputFactory {
 Registry.as<IEditorInputFactoryRegistry>(EditorInputExtensions.EditorInputFactories).registerEditorInputFactory(PreferencesEditorInput.ID, PreferencesEditorInputFactory);
 Registry.as<IEditorInputFactoryRegistry>(EditorInputExtensions.EditorInputFactories).registerEditorInputFactory(DefaultPreferencesEditorInput.ID, DefaultPreferencesEditorInputFactory);
 Registry.as<IEditorInputFactoryRegistry>(EditorInputExtensions.EditorInputFactories).registerEditorInputFactory(KeybindingsEditorInput.ID, KeybindingsEditorInputFactory);
+Registry.as<IEditorInputFactoryRegistry>(EditorInputExtensions.EditorInputFactories).registerEditorInputFactory(NotificationsEditorInput.ID, NotificationsEditorInputFactory);
 Registry.as<IEditorInputFactoryRegistry>(EditorInputExtensions.EditorInputFactories).registerEditorInputFactory(SettingsEditor2Input.ID, SettingsEditor2InputFactory);
 
 const OPEN_SETTINGS2_ACTION_TITLE = { value: nls.localize('openSettings2', "Open Settings (UI)"), original: 'Open Settings (UI)' };
@@ -232,6 +263,20 @@ class PreferencesActionsContribution extends Disposable implements IWorkbenchCon
 			}
 			run(accessor: ServicesAccessor) {
 				return accessor.get(IPreferencesService).openSettings(false, undefined);
+			}
+		});
+
+		registerAction2(class extends Action2 {
+			constructor() {
+				super({
+					id: 'workbench.action.manageNotifications',
+					title: { value: nls.localize('manageNotifications', "Manage Notifications"), original: 'Manage Notifications' },
+					category,
+					f1: true,
+				});
+			}
+			run(accessor: ServicesAccessor) {
+				return accessor.get(IPreferencesService).openNotifications();
 			}
 		});
 		registerAction2(class extends Action2 {
@@ -379,6 +424,7 @@ class PreferencesActionsContribution extends Disposable implements IWorkbenchCon
 				}
 			}
 		});
+
 		registerAction2(class extends Action2 {
 			constructor() {
 				super({
@@ -867,6 +913,7 @@ class PreferencesActionsContribution extends Disposable implements IWorkbenchCon
 				return accessor.get(IPreferencesService).openDefaultKeybindingsFile();
 			}
 		});
+
 		registerAction2(class extends Action2 {
 			constructor() {
 				super({

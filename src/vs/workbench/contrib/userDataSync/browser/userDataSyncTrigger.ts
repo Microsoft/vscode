@@ -6,7 +6,7 @@
 import { Event } from 'vs/base/common/event';
 import { Disposable } from 'vs/base/common/lifecycle';
 import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
-import { SettingsEditor2Input, KeybindingsEditorInput, PreferencesEditorInput } from 'vs/workbench/services/preferences/browser/preferencesEditorInput';
+import { SettingsEditor2Input, KeybindingsEditorInput, PreferencesEditorInput, NotificationsEditorInput } from 'vs/workbench/services/preferences/browser/preferencesEditorInput';
 import { isEqual } from 'vs/base/common/resources';
 import { IWorkbenchEnvironmentService } from 'vs/workbench/services/environment/common/environmentService';
 import { VIEWLET_ID } from 'vs/workbench/contrib/extensions/common/extensions';
@@ -57,12 +57,18 @@ export class UserDataSyncTrigger extends Disposable implements IWorkbenchContrib
 		if (editorInput instanceof KeybindingsEditorInput) {
 			return 'keybindingsEditor';
 		}
+		if (editorInput instanceof NotificationsEditorInput) {
+			return 'notificationsEditor';
+		}
 		const resource = editorInput.resource;
 		if (isEqual(resource, this.environmentService.settingsResource)) {
 			return 'settingsEditor';
 		}
 		if (isEqual(resource, this.environmentService.keybindingsResource)) {
 			return 'keybindingsEditor';
+		}
+		if (isEqual(resource, this.environmentService.notificationsResource)) {
+			return 'notificationsEditor';
 		}
 		return undefined;
 	}

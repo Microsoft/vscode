@@ -74,6 +74,9 @@ export class NativeEnvironmentService implements INativeEnvironmentService {
 	get keybindingsResource(): URI { return resources.joinPath(this.userRoamingDataHome, 'keybindings.json'); }
 
 	@memoize
+	get notificationsResource(): URI { return resources.joinPath(this.userRoamingDataHome, 'notifications.json'); }
+
+	@memoize
 	get keyboardLayoutResource(): URI { return resources.joinPath(this.userRoamingDataHome, 'keyboardLayout.json'); }
 
 	@memoize

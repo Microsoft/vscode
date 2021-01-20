@@ -15,9 +15,9 @@ import { Extensions as WorkbenchExtensions, IWorkbenchContributionsRegistry } fr
 import { ExternalUriResolverContribution } from 'vs/workbench/contrib/url/browser/externalUriResolver';
 import { manageTrustedDomainSettingsCommand } from 'vs/workbench/contrib/url/browser/trustedDomains';
 import { TrustedDomainsFileSystemProvider } from 'vs/workbench/contrib/url/browser/trustedDomainsFileSystemProvider';
-import { OpenerValidatorContributions } from 'vs/workbench/contrib/url/browser/trustedDomainsValidator';
 import { ServicesAccessor } from 'vs/platform/instantiation/common/instantiation';
 import { CATEGORIES } from 'vs/workbench/common/actions';
+import { OpenerValidatorContributions } from 'vs/workbench/contrib/url/browser/trustedDomainsValidator';
 
 class OpenUrlAction extends Action2 {
 

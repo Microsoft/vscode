@@ -59,6 +59,7 @@ export class UserDataSyncClient extends Disposable {
 			userRoamingDataHome,
 			settingsResource: joinPath(userRoamingDataHome, 'settings.json'),
 			keybindingsResource: joinPath(userRoamingDataHome, 'keybindings.json'),
+			notificationsResource: joinPath(userRoamingDataHome, 'notifications.json'),
 			snippetsHome: joinPath(userRoamingDataHome, 'snippets'),
 			argvResource: joinPath(userRoamingDataHome, 'argv.json'),
 			sync: 'on',

@@ -72,6 +72,7 @@ export class SimpleNativeWorkbenchEnvironmentService implements INativeWorkbench
 	get globalStorageHome(): URI { return URI.joinPath(this.userRoamingDataHome, 'globalStorage'); }
 	get workspaceStorageHome(): URI { return URI.joinPath(this.userRoamingDataHome, 'workspaceStorage'); }
 	get keybindingsResource(): URI { return joinPath(this.userRoamingDataHome, 'keybindings.json'); }
+	get notificationsResource(): URI { return joinPath(this.userRoamingDataHome, 'notifications.json'); }
 	get logFile(): URI { return joinPath(this.userRoamingDataHome, 'window.log'); }
 	get untitledWorkspacesHome(): URI { return joinPath(this.userRoamingDataHome, 'Workspaces'); }
 	get serviceMachineIdResource(): URI { return joinPath(this.userRoamingDataHome, 'machineid'); }

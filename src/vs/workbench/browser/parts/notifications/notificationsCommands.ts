@@ -11,10 +11,14 @@ import { INotificationViewItem, isNotificationViewItem } from 'vs/workbench/comm
 import { MenuRegistry, MenuId } from 'vs/platform/actions/common/actions';
 import { localize } from 'vs/nls';
 import { IListService, WorkbenchList } from 'vs/platform/list/browser/listService';
+// import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
+// import { URI } from 'vs/base/common/uri';
+import { IPreferencesService } from 'vs/workbench/services/preferences/common/preferences';
 
 // Center
 export const SHOW_NOTIFICATIONS_CENTER = 'notifications.showList';
 export const HIDE_NOTIFICATIONS_CENTER = 'notifications.hideList';
+export const MANAGE_NOTIFICATIONS = 'notifications.manage';
 const TOGGLE_NOTIFICATIONS_CENTER = 'notifications.toggleList';
 
 // Toasts
@@ -86,6 +90,19 @@ export function registerNotificationCommands(center: INotificationsCenterControl
 		when: NotificationsCenterVisibleContext,
 		primary: KeyCode.Escape,
 		handler: accessor => center.hide()
+	});
+
+	// Manage Notifications
+	KeybindingsRegistry.registerCommandAndKeybindingRule({
+		id: MANAGE_NOTIFICATIONS,
+		weight: KeybindingWeight.WorkbenchContrib + 50,
+		when: NotificationsCenterVisibleContext,
+		primary: KeyCode.Enter,
+		handler: async accessor => {
+			center.hide();
+			accessor.get(IPreferencesService).openNotifications();
+			return;
+		}
 	});
 
 	// Toggle Notifications Center

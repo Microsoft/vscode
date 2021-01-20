@@ -11,6 +11,13 @@ import { IDisposable } from 'vs/base/common/lifecycle';
 
 export import Severity = BaseSeverity;
 
+export interface INotificationItem {
+	label: string;
+	id: string;
+	when: string;
+	templateId: 'notification.template';
+}
+
 export const INotificationService = createDecorator<INotificationService>('notificationService');
 
 export type NotificationMessage = string | Error;

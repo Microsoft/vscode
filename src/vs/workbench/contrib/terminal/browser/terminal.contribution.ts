@@ -37,6 +37,8 @@ import { TerminalQuickAccessProvider } from 'vs/workbench/contrib/terminal/brows
 import { terminalConfiguration } from 'vs/workbench/contrib/terminal/common/terminalConfiguration';
 import { CONTEXT_ACCESSIBILITY_MODE_ENABLED } from 'vs/platform/accessibility/common/accessibility';
 import { terminalViewIcon } from 'vs/workbench/contrib/terminal/browser/terminalIcons';
+import { NotificationRegistry } from 'vs/platform/notification/common/notificationRegistry';
+import { INotificationItem } from 'vs/platform/notification/common/notification';
 
 // Register services
 registerSingleton(ITerminalService, TerminalService, true);
@@ -55,6 +57,8 @@ const quickAccessNavigateNextInTerminalPickerId = 'workbench.action.quickOpenNav
 CommandsRegistry.registerCommand({ id: quickAccessNavigateNextInTerminalPickerId, handler: getQuickNavigateHandler(quickAccessNavigateNextInTerminalPickerId, true) });
 const quickAccessNavigatePreviousInTerminalPickerId = 'workbench.action.quickOpenNavigatePreviousInTerminalPicker';
 CommandsRegistry.registerCommand({ id: quickAccessNavigatePreviousInTerminalPickerId, handler: getQuickNavigateHandler(quickAccessNavigatePreviousInTerminalPickerId, false) });
+
+NotificationRegistry.registerNotification({ label: 'Configure Terminal Settings', id: 'terminal.integrated.neverShowTerminalConfigPrompt', when: 'terminal is focused and user has entered input and fires keybinding corresponding to command to skip shell' } as INotificationItem);
 
 // Register configurations
 const configurationRegistry = Registry.as<IConfigurationRegistry>(Extensions.Configuration);

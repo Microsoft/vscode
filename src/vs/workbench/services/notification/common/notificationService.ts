@@ -119,12 +119,15 @@ export class NotificationService extends Disposable implements INotificationServ
 			// If the user already picked to not show the notification
 			// again, we return with a no-op notification here
 			if (this.storageService.getBoolean(id, scope)) {
+				// check if key already in storage
 				return new NoOpNotification();
 			}
 
 			const neverShowAgainChoice = {
 				label: nls.localize('neverShowAgain', "Don't Show Again"),
-				run: () => this.storageService.store(id, true, scope, StorageTarget.USER),
+				run: () => {
+					this.storageService.store(id, true, scope, StorageTarget.USER);
+				},
 				isSecondary: options.neverShowAgain.isSecondary
 			};
 

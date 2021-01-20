@@ -43,6 +43,7 @@ export interface IEnvironmentService {
 	userRoamingDataHome: URI;
 	settingsResource: URI;
 	keybindingsResource: URI;
+	notificationsResource: URI;
 	keyboardLayoutResource: URI;
 	argvResource: URI;
 	snippetsHome: URI;

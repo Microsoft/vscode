@@ -547,12 +547,11 @@ export class TerminalInstance extends Disposable implements ITerminalInstance {
 				return false;
 			}
 
-			const SHOW_TERMINAL_CONFIG_PROMPT = 'terminal.integrated.showTerminalConfigPrompt';
+			const NEVER_SHOW_TERMINAL_CONFIG_PROMPT = 'terminal.integrated.neverShowTerminalConfigPrompt';
 			const EXCLUDED_KEYS = ['RightArrow', 'LeftArrow', 'UpArrow', 'DownArrow', 'Space', 'Meta', 'Control', 'Shift', 'Alt', '', 'Delete', 'Backspace', 'Tab'];
 
 			// only keep track of input if prompt hasn't already been shown
-			if (this._storageService.getBoolean(SHOW_TERMINAL_CONFIG_PROMPT, StorageScope.GLOBAL, true) &&
-				!EXCLUDED_KEYS.includes(event.key) &&
+			if (!EXCLUDED_KEYS.includes(event.key) &&
 				!event.ctrlKey &&
 				!event.shiftKey &&
 				!event.altKey) {
@@ -563,12 +562,10 @@ export class TerminalInstance extends Disposable implements ITerminalInstance {
 			// within commandsToSkipShell, either alert or skip processing by xterm.js
 			if (resolveResult && resolveResult.commandId && this._skipTerminalCommands.some(k => k === resolveResult.commandId) && !this._configHelper.config.sendKeybindingsToShell) {
 				// don't alert when terminal is opened or closed
-				if (this._storageService.getBoolean(SHOW_TERMINAL_CONFIG_PROMPT, StorageScope.GLOBAL, true) &&
-					this.hasHadInput &&
+				if (this.hasHadInput &&
 					!TERMINAL_CREATION_COMMANDS.includes(resolveResult.commandId)) {
-					this._notificationService.prompt(
-						Severity.Info,
-						nls.localize('configure terminal settings', "Some keybindings are dispatched to the workbench by default."),
+					const message = nls.localize('configure terminal settings', "Some keybindings are dispatched to the workbench by default.");
+					this._notificationService.prompt(Severity.Info, message,
 						[
 							{
 								label: nls.localize('configureTerminalSettings', "Configure Terminal Settings"),
@@ -576,9 +573,8 @@ export class TerminalInstance extends Disposable implements ITerminalInstance {
 									this._preferencesService.openSettings(false, '@id:terminal.integrated.commandsToSkipShell,terminal.integrated.sendKeybindingsToShell,terminal.integrated.allowChords');
 								}
 							} as IPromptChoice
-						]
+						], { neverShowAgain: { id: NEVER_SHOW_TERMINAL_CONFIG_PROMPT } }
 					);
-					this._storageService.store(SHOW_TERMINAL_CONFIG_PROMPT, false, StorageScope.GLOBAL, StorageTarget.USER);
 				}
 				event.preventDefault();
 				return false;

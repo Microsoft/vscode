@@ -125,6 +125,7 @@ export function isAuthenticationProvider(thing: any): thing is IAuthenticationPr
 export const enum SyncResource {
 	Settings = 'settings',
 	Keybindings = 'keybindings',
+	Notifications = 'notifications',
 	Snippets = 'snippets',
 	Extensions = 'extensions',
 	GlobalState = 'globalState'

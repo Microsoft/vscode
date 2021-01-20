@@ -29,6 +29,7 @@ import { IEnvironmentService } from 'vs/platform/environment/common/environment'
 import { IExtensionService, toExtensionDescription } from 'vs/workbench/services/extensions/common/extensions';
 import { areSameExtensions } from 'vs/platform/extensionManagement/common/extensionManagementUtil';
 import { mark } from 'vs/base/common/performance';
+import { NotificationsInitializer } from 'vs/platform/userDataSync/common/notificationsSync';
 
 export const IUserDataInitializationService = createDecorator<IUserDataInitializationService>('IUserDataInitializationService');
 export interface IUserDataInitializationService {
@@ -171,6 +172,7 @@ export class UserDataInitializationService implements IUserDataInitializationSer
 		switch (syncResource) {
 			case SyncResource.Settings: return new SettingsInitializer(this.fileService, this.environmentService, this.logService);
 			case SyncResource.Keybindings: return new KeybindingsInitializer(this.fileService, this.environmentService, this.logService);
+			case SyncResource.Notifications: return new NotificationsInitializer(this.fileService, this.environmentService, this.logService);
 			case SyncResource.Snippets: return new SnippetsInitializer(this.fileService, this.environmentService, this.logService);
 			case SyncResource.GlobalState: return new GlobalStateInitializer(this.storageService, this.fileService, this.environmentService, this.logService);
 			case SyncResource.Extensions:

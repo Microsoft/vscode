@@ -157,6 +157,9 @@ export class BrowserWorkbenchEnvironmentService implements IWorkbenchEnvironment
 	get keybindingsResource(): URI { return joinPath(this.userRoamingDataHome, 'keybindings.json'); }
 
 	@memoize
+	get notificationsResource(): URI { return joinPath(this.userRoamingDataHome, 'notifications.json'); }
+
+	@memoize
 	get keyboardLayoutResource(): URI { return joinPath(this.userRoamingDataHome, 'keyboardLayout.json'); }
 
 	@memoize

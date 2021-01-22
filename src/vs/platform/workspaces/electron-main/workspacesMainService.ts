@@ -166,7 +166,14 @@ export class WorkspacesMainService extends Disposable implements IWorkspacesMain
 	}
 
 	private newUntitledWorkspace(folders: IWorkspaceFolderCreationData[] = [], remoteAuthority?: string): { workspace: IWorkspaceIdentifier, storedWorkspace: IStoredWorkspace } {
-		const randomId = (Date.now() + Math.round(Math.random() * 1000)).toString();
+		// Generate the workspace ID based off of the folders specified. This
+		// prevents identical workspace configurations from spawning since
+		// the untitled workspace is determined by the folders it contains.
+		let idSeed = '';
+		folders.forEach(folder => idSeed += folder.uri.path);
+		// Set the randomId to be based on a hash to avoid a directory path
+		// that is too long
+		const randomId = createHash('md5').update(idSeed).digest('hex');
 		const untitledWorkspaceConfigFolder = joinPath(this.untitledWorkspacesHome, randomId);
 		const untitledWorkspaceConfigPath = joinPath(untitledWorkspaceConfigFolder, UNTITLED_WORKSPACE_NAME);
 
@@ -319,6 +326,7 @@ export class WorkspacesMainService extends Disposable implements IWorkspacesMain
 
 		return { workspace, backupPath };
 	}
+
 }
 
 function getWorkspaceId(configPath: URI): string {
@@ -326,7 +334,6 @@ function getWorkspaceId(configPath: URI): string {
 	if (!isLinux) {
 		workspaceConfigPath = workspaceConfigPath.toLowerCase(); // sanitize for platform file system
 	}
-
 	return createHash('md5').update(workspaceConfigPath).digest('hex');
 }
 

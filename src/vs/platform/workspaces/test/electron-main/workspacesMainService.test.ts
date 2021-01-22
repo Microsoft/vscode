@@ -215,6 +215,41 @@ suite('WorkspacesMainService', () => {
 		assert.equal(ws.remoteAuthority, 'server');
 	});
 
+	test('createUntitledWorkspace (workspaces with the same folders have equivalent IDs)', async () => {
+		const folder1URI = URI.parse('myscheme://server/work/p/f1');
+		const folder2URI = URI.parse('myscheme://server/work/o/f3');
+
+		const workspace = await service.createUntitledWorkspace([{ uri: folder1URI }, { uri: folder2URI }], 'server');
+		assert.ok(workspace);
+		assert.ok(fs.existsSync(workspace.configPath.fsPath));
+		assert.ok(service.isUntitledWorkspace(workspace));
+
+		const workspace_clone = await service.createUntitledWorkspace([{ uri: folder1URI }, { uri: folder2URI }], 'server');
+		assert.ok(workspace_clone);
+		assert.ok(fs.existsSync(workspace_clone.configPath.fsPath));
+		assert.ok(service.isUntitledWorkspace(workspace_clone));
+
+		assert.equal(workspace.id, workspace_clone.id);
+	});
+
+	test('createUntitledWorkspace (workspaces with the same folders and files have equivalent IDs)', async () => {
+		const folder1URI = URI.parse('myscheme://server/work/p/f1');
+		const folder2URI = URI.parse('myscheme://server/work/o/f3');
+		const folder1URIwithFile = URI.parse('myscheme://server/work/o/f3/file.txt');
+
+		const workspace = await service.createUntitledWorkspace([{ uri: folder1URI }, { uri: folder2URI }, { uri: folder1URIwithFile }], 'server');
+		assert.ok(workspace);
+		assert.ok(fs.existsSync(workspace.configPath.fsPath));
+		assert.ok(service.isUntitledWorkspace(workspace));
+
+		const workspace_clone = await service.createUntitledWorkspace([{ uri: folder1URI }, { uri: folder2URI }, { uri: folder1URIwithFile }], 'server');
+		assert.ok(workspace_clone);
+		assert.ok(fs.existsSync(workspace_clone.configPath.fsPath));
+		assert.ok(service.isUntitledWorkspace(workspace_clone));
+
+		assert.equal(workspace.id, workspace_clone.id);
+	});
+
 	test('createWorkspaceSync (folders)', () => {
 		const workspace = createUntitledWorkspaceSync([process.cwd(), os.tmpdir()]);
 		assert.ok(workspace);

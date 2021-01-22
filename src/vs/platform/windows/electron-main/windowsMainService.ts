@@ -208,6 +208,14 @@ export class WindowsMainService extends Disposable implements IWindowsMainServic
 		let filesToOpen: IFilesToOpen | undefined;
 		let emptyToOpen = 0;
 
+		// If folders are specified to be opened at the command line, delete the current
+		// untitled workspaces to avoid opening duplicates. This prevents the bug of
+		// old workspaces being restored when a new workspace is generated, resulting
+		// in two workspaces being opened when only one was intended.
+		if (openConfig.cli._.length) {
+			this.workspacesMainService.getUntitledWorkspacesSync().forEach(workspace => this.workspacesMainService.deleteUntitledWorkspaceSync(workspace.workspace));
+		}
+
 		// Identify things to open from open config
 		const pathsToOpen = this.getPathsToOpen(openConfig);
 		this.logService.trace('windowsManager#open pathsToOpen', pathsToOpen);

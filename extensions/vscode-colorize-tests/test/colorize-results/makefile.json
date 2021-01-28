@@ -990,7 +990,7 @@
 		}
 	},
 	{
-		"c": " And we can see variables are highlited as supposed to be:",
+		"c": " And we can see variables are highlighted as supposed to be:",
 		"t": "source.makefile comment.line.number-sign.makefile",
 		"r": {
 			"dark_plus": "comment: #6A9955",
@@ -1254,7 +1254,7 @@
 		}
 	},
 	{
-		"c": " Checking existance of ",
+		"c": " Checking existence of ",
 		"t": "source.makefile meta.scope.conditional.makefile string.interpolated.makefile meta.scope.function-call.makefile",
 		"r": {
 			"dark_plus": "string: #CE9178",

@@ -876,11 +876,11 @@ export class Repository implements Disposable {
 
 		// FS changes should trigger `git status`:
 		// 	- any change inside the repository working tree
-		//	- any change whithin the first level of the `.git` folder, except the folder itself and `index.lock`
+		//	- any change within the first level of the `.git` folder, except the folder itself and `index.lock`
 		const onFileChange = anyEvent(onWorkspaceWorkingTreeFileChange, onDotGitFileChange);
 		onFileChange(this.onFileChange, this, this.disposables);
 
-		// Relevate repository changes should trigger virtual document change events
+		// Relevant repository changes should trigger virtual document change events
 		onDotGitFileChange(this._onDidChangeRepository.fire, this._onDidChangeRepository, this.disposables);
 
 		this.disposables.push(new FileEventLogger(onWorkspaceWorkingTreeFileChange, onDotGitFileChange, outputChannel));

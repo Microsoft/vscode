@@ -14,7 +14,7 @@ import { NodeLogDirectoryProvider } from './tsServer/logDirectoryProvider.electr
 import { ChildServerProcess } from './tsServer/serverProcess.electron';
 import { DiskTypeScriptVersionProvider } from './tsServer/versionProvider.electron';
 import { CommandManager } from './commands/commandManager';
-import { onCaseInsenitiveFileSystem } from './utils/fileSystem.electron';
+import { onCaseInsensitiveFileSystem } from './utils/fileSystem.electron';
 import { PluginManager } from './utils/plugins';
 import * as temp from './utils/temp.electron';
 
@@ -35,7 +35,7 @@ export function activate(
 
 	context.subscriptions.push(new LanguageConfigurationManager());
 
-	const lazyClientHost = createLazyClientHost(context, onCaseInsenitiveFileSystem(), {
+	const lazyClientHost = createLazyClientHost(context, onCaseInsensitiveFileSystem(), {
 		pluginManager,
 		commandManager,
 		logDirectoryProvider,

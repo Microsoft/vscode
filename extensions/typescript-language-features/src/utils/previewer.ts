@@ -47,7 +47,7 @@ function getTagBodyText(tag: Proto.JSDocTagInfo): string | undefined {
 				return makeCodeblock(tag.text);
 			}
 		case 'author':
-			// fix obsucated email address, #80898
+			// fix obfuscated email address, #80898
 			const emailMatch = tag.text.match(/(.+)\s<([-.\w]+@[-.\w]+)>/);
 
 			if (emailMatch === null) {

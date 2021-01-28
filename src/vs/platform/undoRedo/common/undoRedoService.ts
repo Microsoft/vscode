@@ -709,7 +709,7 @@ export class UndoRedoService implements IUndoRedoService {
 
 	private _onError(err: Error, element: StackElement): void {
 		onUnexpectedError(err);
-		// An error occured while undoing or redoing => drop the undo/redo stack for all affected resources
+		// An error occurred while undoing or redoing => drop the undo/redo stack for all affected resources
 		for (const strResource of element.strResources) {
 			this.removeElements(strResource);
 		}

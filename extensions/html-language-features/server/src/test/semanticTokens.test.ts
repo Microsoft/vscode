@@ -13,7 +13,7 @@ interface ExpectedToken {
 	startLine: number;
 	character: number;
 	length: number;
-	tokenClassifiction: string;
+	tokenClassification: string;
 }
 
 async function assertTokens(lines: string[], expected: ExpectedToken[], ranges?: Range[], message?: string): Promise<void> {
@@ -35,16 +35,16 @@ async function assertTokens(lines: string[], expected: ExpectedToken[], ranges?:
 		const lineDelta = actual[i], charDelta = actual[i + 1], len = actual[i + 2], typeIdx = actual[i + 3], modSet = actual[i + 4];
 		const line = lastLine + lineDelta;
 		const character = lineDelta === 0 ? lastCharacter + charDelta : charDelta;
-		const tokenClassifiction = [legend.types[typeIdx], ...legend.modifiers.filter((_, i) => modSet & 1 << i)].join('.');
-		actualRanges.push(t(line, character, len, tokenClassifiction));
+		const tokenClassification = [legend.types[typeIdx], ...legend.modifiers.filter((_, i) => modSet & 1 << i)].join('.');
+		actualRanges.push(t(line, character, len, tokenClassification));
 		lastLine = line;
 		lastCharacter = character;
 	}
 	assert.deepEqual(actualRanges, expected, message);
 }
 
-function t(startLine: number, character: number, length: number, tokenClassifiction: string): ExpectedToken {
-	return { startLine, character, length, tokenClassifiction };
+function t(startLine: number, character: number, length: number, tokenClassification: string): ExpectedToken {
+	return { startLine, character, length, tokenClassification };
 }
 
 suite('HTML Semantic Tokens', () => {
@@ -176,7 +176,7 @@ suite('HTML Semantic Tokens', () => {
 			/*9*/'</html>',
 		];
 		await assertTokens(input, [
-			t(3, 7, 5, 'type.declaration'), t(3, 15, 3, 'interface') /* to investiagte */,
+			t(3, 7, 5, 'type.declaration'), t(3, 15, 3, 'interface') /* to investigate */,
 			t(4, 11, 1, 'function.declaration'), t(4, 13, 1, 'typeParameter.declaration'), t(4, 23, 5, 'type'), t(4, 30, 1, 'parameter.declaration'), t(4, 33, 1, 'typeParameter'), t(4, 47, 1, 'typeParameter'),
 			t(5, 12, 1, 'typeParameter'), t(5, 29, 3, 'interface'), t(5, 41, 5, 'type'),
 		]);

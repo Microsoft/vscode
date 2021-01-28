@@ -53,7 +53,7 @@ export class Keychain {
 			Logger.error(`Setting token failed: ${e}`);
 
 			// Temporary fix for #94005
-			// This happens when processes write simulatenously to the keychain, most
+			// This happens when processes write simultaneously to the keychain, most
 			// likely when trying to refresh the token. Ignore the error since additional
 			// writes after the first one do not matter. Should actually be fixed upstream.
 			if (e.message === 'The specified item already exists in the keychain.') {

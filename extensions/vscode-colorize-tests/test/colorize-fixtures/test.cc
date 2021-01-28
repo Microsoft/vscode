@@ -8,7 +8,7 @@
  void main(O obj) {
     LOG_INFO("not hilighted as string");
     LOG_INFO(obj << ", even worse; " << obj.x << " check this out.");
-    // everything from this point on is interpeted as a string literal...
+    // everything from this point on is interpreted as a string literal...
     O x;
     std::unique_ptr<O> o(new O);
     // sadness.

@@ -128,7 +128,7 @@ export default class TypeScriptServiceClient extends Disposable implements IType
 
 	constructor(
 		private readonly context: vscode.ExtensionContext,
-		onCaseInsenitiveFileSystem: boolean,
+		onCaseInsensitiveFileSystem: boolean,
 		services: {
 			pluginManager: PluginManager,
 			logDirectoryProvider: ILogDirectoryProvider,
@@ -170,10 +170,10 @@ export default class TypeScriptServiceClient extends Disposable implements IType
 			this.restartTsServer();
 		}));
 
-		this.bufferSyncSupport = new BufferSyncSupport(this, allModeIds, onCaseInsenitiveFileSystem);
+		this.bufferSyncSupport = new BufferSyncSupport(this, allModeIds, onCaseInsensitiveFileSystem);
 		this.onReady(() => { this.bufferSyncSupport.listen(); });
 
-		this.diagnosticsManager = new DiagnosticsManager('typescript', onCaseInsenitiveFileSystem);
+		this.diagnosticsManager = new DiagnosticsManager('typescript', onCaseInsensitiveFileSystem);
 		this.bufferSyncSupport.onDelete(resource => {
 			this.cancelInflightRequestsForResource(resource);
 			this.diagnosticsManager.delete(resource);
@@ -193,7 +193,7 @@ export default class TypeScriptServiceClient extends Disposable implements IType
 			this.tracer.updateConfiguration();
 
 			if (this.serverState.type === ServerState.Type.Running) {
-				if (!this._configuration.implictProjectConfiguration.isEqualTo(oldConfiguration.implictProjectConfiguration)) {
+				if (!this._configuration.implicitProjectConfiguration.isEqualTo(oldConfiguration.implicitProjectConfiguration)) {
 					this.setCompilerOptionsForInferredProjects(this._configuration);
 				}
 
@@ -801,7 +801,7 @@ export default class TypeScriptServiceClient extends Disposable implements IType
 			}
 		*/
 		this.logTelemetry('fatalError', { ...(error instanceof TypeScriptServerError ? error.telemetry : { command }) });
-		console.error(`A non-recoverable error occured while executing tsserver command: ${command}`);
+		console.error(`A non-recoverable error occurred while executing tsserver command: ${command}`);
 		if (error instanceof TypeScriptServerError && error.serverErrorText) {
 			console.error(error.serverErrorText);
 		}
@@ -827,7 +827,7 @@ export default class TypeScriptServiceClient extends Disposable implements IType
 				const diagnosticEvent = event as Proto.DiagnosticEvent;
 				if (diagnosticEvent.body && diagnosticEvent.body.diagnostics) {
 					this._onDiagnosticsReceived.fire({
-						kind: getDignosticsKind(event),
+						kind: getDiagnosticsKind(event),
 						resource: this.toResource(diagnosticEvent.body.file),
 						diagnostics: diagnosticEvent.body.diagnostics
 					});
@@ -1003,13 +1003,13 @@ ${error.serverStack}
 	};
 }
 
-function getDignosticsKind(event: Proto.Event) {
+function getDiagnosticsKind(event: Proto.Event) {
 	switch (event.event) {
 		case 'syntaxDiag': return DiagnosticKind.Syntax;
 		case 'semanticDiag': return DiagnosticKind.Semantic;
 		case 'suggestionDiag': return DiagnosticKind.Suggestion;
 	}
-	throw new Error('Unknown dignostics kind');
+	throw new Error('Unknown Diagnostics kind');
 }
 
 class ServerInitializingIndicator extends Disposable {

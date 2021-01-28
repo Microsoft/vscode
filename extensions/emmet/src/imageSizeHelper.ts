@@ -97,7 +97,7 @@ function getImageSizeFromURL(urlStr: string) {
 
 /**
  * Returns size object for given file name. If file name contains `@Nx` token,
- * the final dimentions will be downscaled by N
+ * the final dimensions will be downscaled by N
  */
 function sizeForFileName(fileName: string, size: any) {
 	const m = fileName.match(/@(\d+)x\./);

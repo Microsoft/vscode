@@ -151,11 +151,11 @@ export class DiagnosticsManager extends Disposable {
 
 	constructor(
 		owner: string,
-		onCaseInsenitiveFileSystem: boolean
+		onCaseInsensitiveFileSystem: boolean
 	) {
 		super();
-		this._diagnostics = new ResourceMap<FileDiagnostics>(undefined, { onCaseInsenitiveFileSystem });
-		this._pendingUpdates = new ResourceMap<any>(undefined, { onCaseInsenitiveFileSystem });
+		this._diagnostics = new ResourceMap<FileDiagnostics>(undefined, { onCaseInsensitiveFileSystem });
+		this._pendingUpdates = new ResourceMap<any>(undefined, { onCaseInsensitiveFileSystem });
 
 		this._currentDiagnostics = this._register(vscode.languages.createDiagnosticCollection(owner));
 	}

@@ -491,7 +491,7 @@ export class TerminalInstance extends Disposable implements ITerminalInstance {
 			return;
 		}
 
-		// Attach has not occured yet
+		// Attach has not occurred yet
 		if (!this._wrapperElement) {
 			this._attachToElement(container);
 			return;

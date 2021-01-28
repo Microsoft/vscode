@@ -24,7 +24,7 @@ const ERR_FILE_NOT_DIR = createFileSystemProviderError(localize('fileNotDirector
 const ERR_DIR_NOT_EMPTY = createFileSystemProviderError(localize('dirIsNotEmpty', "Directory is not empty"), FileSystemProviderErrorCode.Unknown);
 
 // Arbitrary Internal Errors (should never be thrown in production)
-const ERR_UNKNOWN_INTERNAL = (message: string) => createFileSystemProviderError(localize('internal', "Internal error occured in IndexedDB File System Provider. ({0})", message), FileSystemProviderErrorCode.Unknown);
+const ERR_UNKNOWN_INTERNAL = (message: string) => createFileSystemProviderError(localize('internal', "Internal error occurred in IndexedDB File System Provider. ({0})", message), FileSystemProviderErrorCode.Unknown);
 
 export class IndexedDB {
 

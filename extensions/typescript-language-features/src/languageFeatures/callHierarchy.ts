@@ -54,7 +54,7 @@ class TypeScriptCallHierarchySupport implements vscode.CallHierarchyProvider {
 			return undefined;
 		}
 
-		return response.body.map(fromProtocolCallHierchyIncomingCall);
+		return response.body.map(fromProtocolCallHierarchyIncomingCall);
 	}
 
 	public async provideCallHierarchyOutgoingCalls(item: vscode.CallHierarchyItem, token: vscode.CancellationToken): Promise<vscode.CallHierarchyOutgoingCall[] | undefined> {
@@ -69,7 +69,7 @@ class TypeScriptCallHierarchySupport implements vscode.CallHierarchyProvider {
 			return undefined;
 		}
 
-		return response.body.map(fromProtocolCallHierchyOutgoingCall);
+		return response.body.map(fromProtocolCallHierarchyOutgoingCall);
 	}
 }
 
@@ -91,20 +91,20 @@ function fromProtocolCallHierarchyItem(item: Proto.CallHierarchyItem): vscode.Ca
 	);
 
 	const kindModifiers = item.kindModifiers ? parseKindModifier(item.kindModifiers) : undefined;
-	if (kindModifiers?.has(PConst.KindModifiers.depreacted)) {
+	if (kindModifiers?.has(PConst.KindModifiers.deprecated)) {
 		result.tags = [vscode.SymbolTag.Deprecated];
 	}
 	return result;
 }
 
-function fromProtocolCallHierchyIncomingCall(item: Proto.CallHierarchyIncomingCall): vscode.CallHierarchyIncomingCall {
+function fromProtocolCallHierarchyIncomingCall(item: Proto.CallHierarchyIncomingCall): vscode.CallHierarchyIncomingCall {
 	return new vscode.CallHierarchyIncomingCall(
 		fromProtocolCallHierarchyItem(item.from),
 		item.fromSpans.map(typeConverters.Range.fromTextSpan)
 	);
 }
 
-function fromProtocolCallHierchyOutgoingCall(item: Proto.CallHierarchyOutgoingCall): vscode.CallHierarchyOutgoingCall {
+function fromProtocolCallHierarchyOutgoingCall(item: Proto.CallHierarchyOutgoingCall): vscode.CallHierarchyOutgoingCall {
 	return new vscode.CallHierarchyOutgoingCall(
 		fromProtocolCallHierarchyItem(item.to),
 		item.fromSpans.map(typeConverters.Range.fromTextSpan)

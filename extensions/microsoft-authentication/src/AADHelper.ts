@@ -105,7 +105,7 @@ export class AzureActiveDirectoryService {
 	// Used to keep track of current requests when not using the local server approach.
 	private _pendingStates = new Map<string, string[]>();
 	private _codeExchangePromises = new Map<string, Promise<vscode.AuthenticationSession>>();
-	private _codeVerfifiers = new Map<string, string>();
+	private _codeVerifiers = new Map<string, string>();
 
 	private _keychain: Keychain;
 
@@ -418,13 +418,13 @@ export class AzureActiveDirectoryService {
 			this._codeExchangePromises.set(scope, existingPromise);
 		}
 
-		this._codeVerfifiers.set(state, codeVerifier);
+		this._codeVerifiers.set(state, codeVerifier);
 
 		return Promise.race([existingPromise, timeoutPromise])
 			.finally(() => {
 				this._pendingStates.delete(scope);
 				this._codeExchangePromises.delete(scope);
-				this._codeVerfifiers.delete(state);
+				this._codeVerifiers.delete(state);
 			});
 	}
 
@@ -442,7 +442,7 @@ export class AzureActiveDirectoryService {
 						throw new Error('State does not match.');
 					}
 
-					const verifier = this._codeVerfifiers.get(query.state) ?? this._codeVerfifiers.get(decodeURIComponent(query.state));
+					const verifier = this._codeVerifiers.get(query.state) ?? this._codeVerifiers.get(decodeURIComponent(query.state));
 					if (!verifier) {
 						throw new Error('No available code verifier');
 					}

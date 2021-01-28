@@ -61,7 +61,7 @@
 		"commands": [
 			{
 				"title": "%command.untrustValidationExecutable%",
-				"category": "%commands.categroy.php%",
+				"category": "%commands.category.php%",
 				"command": "php.untrustValidationExecutable"
 			}
 		],

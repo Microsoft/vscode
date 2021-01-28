@@ -73,10 +73,10 @@ class BufferSynchronizer {
 	constructor(
 		private readonly client: ITypeScriptServiceClient,
 		pathNormalizer: (path: vscode.Uri) => string | undefined,
-		onCaseInsenitiveFileSystem: boolean
+		onCaseInsensitiveFileSystem: boolean
 	) {
 		this._pending = new ResourceMap<BufferOperation>(pathNormalizer, {
-			onCaseInsenitiveFileSystem
+			onCaseInsensitiveFileSystem
 		});
 	}
 
@@ -357,7 +357,7 @@ export default class BufferSyncSupport extends Disposable {
 	constructor(
 		client: ITypeScriptServiceClient,
 		modeIds: readonly string[],
-		onCaseInsenitiveFileSystem: boolean
+		onCaseInsensitiveFileSystem: boolean
 	) {
 		super();
 		this.client = client;
@@ -366,9 +366,9 @@ export default class BufferSyncSupport extends Disposable {
 		this.diagnosticDelayer = new Delayer<any>(300);
 
 		const pathNormalizer = (path: vscode.Uri) => this.client.normalizedPath(path);
-		this.syncedBuffers = new SyncedBufferMap(pathNormalizer, { onCaseInsenitiveFileSystem });
-		this.pendingDiagnostics = new PendingDiagnostics(pathNormalizer, { onCaseInsenitiveFileSystem });
-		this.synchronizer = new BufferSynchronizer(client, pathNormalizer, onCaseInsenitiveFileSystem);
+		this.syncedBuffers = new SyncedBufferMap(pathNormalizer, { onCaseInsensitiveFileSystem });
+		this.pendingDiagnostics = new PendingDiagnostics(pathNormalizer, { onCaseInsensitiveFileSystem });
+		this.synchronizer = new BufferSynchronizer(client, pathNormalizer, onCaseInsensitiveFileSystem);
 
 		this.updateConfiguration();
 		vscode.workspace.onDidChangeConfiguration(this.updateConfiguration, this, this._disposables);
@@ -485,7 +485,7 @@ export default class BufferSyncSupport extends Disposable {
 
 	public interruptGetErr<R>(f: () => R): R {
 		if (!this.pendingGetErr
-			|| this.client.configuration.enableProjectDiagnostics // `geterr` happens on seperate server so no need to cancel it.
+			|| this.client.configuration.enableProjectDiagnostics // `geterr` happens on separate server so no need to cancel it.
 		) {
 			return f();
 		}

@@ -98,7 +98,7 @@ suite.skip('TypeScript Completions', () => {
 		});
 	});
 
-	test('Should insert backets when completing dot properties with spaces in name', async () => {
+	test('Should insert brackets when completing dot properties with spaces in name', async () => {
 		await enumerateConfig(testDocumentUri, Config.insertMode, insertModes, async config => {
 			const editor = await createTestEditor(testDocumentUri,
 				'const x = { "hello world": 1 };',
@@ -115,7 +115,7 @@ suite.skip('TypeScript Completions', () => {
 		});
 	});
 
-	test('Should allow commit characters for backet completions', async () => {
+	test('Should allow commit characters for bracket completions', async () => {
 		for (const { char, insert } of [
 			{ char: '.', insert: '.' },
 			{ char: '(', insert: '()' },

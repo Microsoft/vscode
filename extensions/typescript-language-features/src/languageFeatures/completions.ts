@@ -59,7 +59,7 @@ class MyCompletionItem extends vscode.CompletionItem {
 		super(tsEntry.name, MyCompletionItem.convertKind(tsEntry.kind));
 
 		if (tsEntry.source) {
-			// De-prioritze auto-imports
+			// De-prioritize auto-imports
 			// https://github.com/microsoft/vscode/issues/40311
 			this.sortText = '\uffff' + tsEntry.sortText;
 
@@ -110,7 +110,7 @@ class MyCompletionItem extends vscode.CompletionItem {
 				}
 				this.label += '?';
 			}
-			if (kindModifiers.has(PConst.KindModifiers.depreacted)) {
+			if (kindModifiers.has(PConst.KindModifiers.deprecated)) {
 				this.tags = [vscode.CompletionItemTag.Deprecated];
 			}
 

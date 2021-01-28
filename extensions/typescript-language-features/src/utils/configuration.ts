@@ -94,7 +94,7 @@ export class TypeScriptServiceConfiguration {
 	public readonly npmLocation: string | null;
 	public readonly tsServerLogLevel: TsServerLogLevel = TsServerLogLevel.Off;
 	public readonly tsServerPluginPaths: readonly string[];
-	public readonly implictProjectConfiguration: ImplicitProjectConfiguration;
+	public readonly implicitProjectConfiguration: ImplicitProjectConfiguration;
 	public readonly disableAutomaticTypeAcquisition: boolean;
 	public readonly separateSyntaxServer: SeparateSyntaxServerConfiguration;
 	public readonly enableProjectDiagnostics: boolean;
@@ -117,7 +117,7 @@ export class TypeScriptServiceConfiguration {
 		this.npmLocation = TypeScriptServiceConfiguration.readNpmLocation(configuration);
 		this.tsServerLogLevel = TypeScriptServiceConfiguration.readTsServerLogLevel(configuration);
 		this.tsServerPluginPaths = TypeScriptServiceConfiguration.readTsServerPluginPaths(configuration);
-		this.implictProjectConfiguration = new ImplicitProjectConfiguration(configuration);
+		this.implicitProjectConfiguration = new ImplicitProjectConfiguration(configuration);
 		this.disableAutomaticTypeAcquisition = TypeScriptServiceConfiguration.readDisableAutomaticTypeAcquisition(configuration);
 		this.separateSyntaxServer = TypeScriptServiceConfiguration.readUseSeparateSyntaxServer(configuration);
 		this.enableProjectDiagnostics = TypeScriptServiceConfiguration.readEnableProjectDiagnostics(configuration);

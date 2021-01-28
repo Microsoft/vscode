@@ -33,7 +33,7 @@ import * as ProjectStatus from './utils/largeProjectStatus';
 // Style check diagnostics that can be reported as warnings
 const styleCheckDiagnostics = new Set([
 	...errorCodes.variableDeclaredButNeverUsed,
-	...errorCodes.propertyDeclaretedButNeverUsed,
+	...errorCodes.propertyDeclaredButNeverUsed,
 	...errorCodes.allImportsAreUnused,
 	...errorCodes.unreachableCode,
 	...errorCodes.unusedLabel,
@@ -58,7 +58,7 @@ export default class TypeScriptServiceClientHost extends Disposable {
 	constructor(
 		descriptions: LanguageDescription[],
 		context: vscode.ExtensionContext,
-		onCaseInsenitiveFileSystem: boolean,
+		onCaseInsensitiveFileSystem: boolean,
 		services: {
 			pluginManager: PluginManager,
 			commandManager: CommandManager,
@@ -76,7 +76,7 @@ export default class TypeScriptServiceClientHost extends Disposable {
 		const allModeIds = this.getAllModeIds(descriptions, services.pluginManager);
 		this.client = this._register(new TypeScriptServiceClient(
 			context,
-			onCaseInsenitiveFileSystem,
+			onCaseInsensitiveFileSystem,
 			services,
 			allModeIds));
 
@@ -92,7 +92,7 @@ export default class TypeScriptServiceClientHost extends Disposable {
 		this.typingsStatus = this._register(new TypingsStatus(this.client));
 		this._register(ProjectStatus.create(this.client));
 
-		this.fileConfigurationManager = this._register(new FileConfigurationManager(this.client, onCaseInsenitiveFileSystem));
+		this.fileConfigurationManager = this._register(new FileConfigurationManager(this.client, onCaseInsensitiveFileSystem));
 
 		for (const description of descriptions) {
 			const manager = new LanguageProvider(this.client, description, this.commandManager, this.client.telemetryReporter, this.typingsStatus, this.fileConfigurationManager, onCompletionAccepted);

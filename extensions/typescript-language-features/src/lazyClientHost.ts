@@ -19,7 +19,7 @@ import { PluginManager } from './utils/plugins';
 
 export function createLazyClientHost(
 	context: vscode.ExtensionContext,
-	onCaseInsenitiveFileSystem: boolean,
+	onCaseInsensitiveFileSystem: boolean,
 	services: {
 		pluginManager: PluginManager,
 		commandManager: CommandManager,
@@ -34,7 +34,7 @@ export function createLazyClientHost(
 		const clientHost = new TypeScriptServiceClientHost(
 			standardLanguageDescriptions,
 			context,
-			onCaseInsenitiveFileSystem,
+			onCaseInsensitiveFileSystem,
 			services,
 			onCompletionAccepted);
 

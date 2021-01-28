@@ -6,7 +6,7 @@
 import * as fs from 'fs';
 import { getTempFile } from './temp.electron';
 
-export const onCaseInsenitiveFileSystem = (() => {
+export const onCaseInsensitiveFileSystem = (() => {
 	let value: boolean | undefined;
 	return (): boolean => {
 		if (typeof value === 'undefined') {

@@ -51,7 +51,7 @@ y`);
 		assert.strictEqual(firstFold.end, 3);
 	});
 
-	test('Should collapse multuple newlines to single newline before next header', async () => {
+	test('Should collapse multiple newlines to single newline before next header', async () => {
 		const folds = await getFoldsForDocument(`
 # a
 x

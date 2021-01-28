@@ -10,7 +10,7 @@ import * as vscode from 'vscode';
 const reNumber = /[0-9]/;
 
 /**
- * Incerement number under caret of given editor
+ * Increment number under caret of given editor
  */
 export function incrementDecrement(delta: number): Thenable<boolean> | undefined {
 	if (!vscode.window.activeTextEditor) {

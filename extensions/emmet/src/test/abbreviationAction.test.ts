@@ -43,7 +43,7 @@ const htmlContents = `
 
 suite('Tests for Expand Abbreviations (HTML)', () => {
 	const oldValueForExcludeLanguages = workspace.getConfiguration('emmet').inspect('excludeLanguages');
-	const oldValueForInlcudeLanguages = workspace.getConfiguration('emmet').inspect('includeLanguages');
+	const oldValueForIncludeLanguages = workspace.getConfiguration('emmet').inspect('includeLanguages');
 	teardown(() => {
 		// close all editors
 		return closeAllEditors;
@@ -171,7 +171,7 @@ suite('Tests for Expand Abbreviations (HTML)', () => {
 			editor.selection = new Selection(2, 4, 2, 4);
 			const cancelSrc = new CancellationTokenSource();
 			const completionPromise = completionProvider.provideCompletionItems(editor.document, editor.selection.active, cancelSrc.token, { triggerKind: CompletionTriggerKind.Invoke });
-			assert.strictEqual(!completionPromise, true, `Got unexpected comapletion promise instead of undefined`);
+			assert.strictEqual(!completionPromise, true, `Got unexpected completion promise instead of undefined`);
 			return Promise.resolve();
 		});
 	});
@@ -190,7 +190,7 @@ suite('Tests for Expand Abbreviations (HTML)', () => {
 			editor.selection = new Selection(9, 8, 9, 8);
 			const cancelSrc = new CancellationTokenSource();
 			const completionPromise = completionProvider.provideCompletionItems(editor.document, editor.selection.active, cancelSrc.token, { triggerKind: CompletionTriggerKind.Invoke });
-			assert.strictEqual(!completionPromise, true, `Got unexpected comapletion promise instead of undefined`);
+			assert.strictEqual(!completionPromise, true, `Got unexpected completion promise instead of undefined`);
 			return Promise.resolve();
 		});
 	});
@@ -211,7 +211,7 @@ suite('Tests for Expand Abbreviations (HTML)', () => {
 			editor.selection = new Selection(0, 6, 0, 6);
 			const cancelSrc = new CancellationTokenSource();
 			const completionPromise = completionProvider.provideCompletionItems(editor.document, editor.selection.active, cancelSrc.token, { triggerKind: CompletionTriggerKind.Invoke });
-			assert.strictEqual(!completionPromise, true, `Got unexpected comapletion promise instead of undefined`);
+			assert.strictEqual(!completionPromise, true, `Got unexpected completion promise instead of undefined`);
 			return Promise.resolve();
 		});
 	});
@@ -356,7 +356,7 @@ suite('Tests for Expand Abbreviations (HTML)', () => {
 			editor.selection = new Selection(24, 12, 24, 12);
 			const cancelSrc = new CancellationTokenSource();
 			const completionPromise = completionProvider.provideCompletionItems(editor.document, editor.selection.active, cancelSrc.token, { triggerKind: CompletionTriggerKind.Invoke });
-			assert.strictEqual(!completionPromise, true, `Got unexpected comapletion promise instead of undefined`);
+			assert.strictEqual(!completionPromise, true, `Got unexpected completion promise instead of undefined`);
 			return Promise.resolve();
 		});
 	});
@@ -372,7 +372,7 @@ suite('Tests for Expand Abbreviations (HTML)', () => {
 			await expandPromise;
 			assert.strictEqual(editor.document.getText(), htmlContents.replace('span.bye', '<span class="bye"></span>'));
 		});
-		return workspace.getConfiguration('emmet').update('includeLanguages', oldValueForInlcudeLanguages || {}, ConfigurationTarget.Global);
+		return workspace.getConfiguration('emmet').update('includeLanguages', oldValueForIncludeLanguages || {}, ConfigurationTarget.Global);
 	});
 
 	test('Expand html in completion list when inside script tag with javascript type if js is mapped to html (HTML)', async () => {
@@ -397,7 +397,7 @@ suite('Tests for Expand Abbreviations (HTML)', () => {
 			assert.strictEqual(((<string>emmetCompletionItem.documentation) || '').replace(/\|/g, ''), expandedText, `Docs of completion item doesnt match.`);
 			return Promise.resolve();
 		});
-		return workspace.getConfiguration('emmet').update('includeLanguages', oldValueForInlcudeLanguages || {}, ConfigurationTarget.Global);
+		return workspace.getConfiguration('emmet').update('includeLanguages', oldValueForIncludeLanguages || {}, ConfigurationTarget.Global);
 	});
 
 	// test('No expanding when html is excluded in the settings', () => {
@@ -549,7 +549,7 @@ function testNoCompletion(syntax: string, fileContents: string, selection: Selec
 		editor.selection = selection;
 		const cancelSrc = new CancellationTokenSource();
 		const completionPromise = completionProvider.provideCompletionItems(editor.document, editor.selection.active, cancelSrc.token, { triggerKind: CompletionTriggerKind.Invoke });
-		assert.strictEqual(!completionPromise, true, `Got unexpected comapletion promise instead of undefined`);
+		assert.strictEqual(!completionPromise, true, `Got unexpected completion promise instead of undefined`);
 		return Promise.resolve();
 	});
 }

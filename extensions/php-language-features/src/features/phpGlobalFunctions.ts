@@ -816,7 +816,7 @@ export const globalfunctions: IEntries = {
 		signature: '( string $data , string $signature , mixed $priv_key_id [, mixed $signature_alg = OPENSSL_ALGO_SHA1 ]): bool'
 	},
 	openssl_spki_export_challenge: {
-		description: 'Exports the challenge assoicated with a signed public key and challenge',
+		description: 'Exports the challenge associated with a signed public key and challenge',
 		signature: '( string $spkac ): string'
 	},
 	openssl_spki_export: {

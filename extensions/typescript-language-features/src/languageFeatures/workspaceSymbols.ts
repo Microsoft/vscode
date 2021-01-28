@@ -97,7 +97,7 @@ class TypeScriptWorkspaceSymbolProvider implements vscode.WorkspaceSymbolProvide
 			item.containerName || '',
 			typeConverters.Location.fromTextSpan(this.client.toResource(item.file), item));
 		const kindModifiers = item.kindModifiers ? parseKindModifier(item.kindModifiers) : undefined;
-		if (kindModifiers?.has(PConst.KindModifiers.depreacted)) {
+		if (kindModifiers?.has(PConst.KindModifiers.deprecated)) {
 			info.tags = [vscode.SymbolTag.Deprecated];
 		}
 		return info;

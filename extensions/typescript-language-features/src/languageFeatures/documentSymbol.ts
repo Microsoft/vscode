@@ -65,7 +65,7 @@ class TypeScriptDocumentSymbolProvider implements vscode.DocumentSymbolProvider 
 		output: vscode.DocumentSymbol[],
 		item: Proto.NavigationTree,
 	): boolean {
-		let shouldInclude = TypeScriptDocumentSymbolProvider.shouldInclueEntry(item);
+		let shouldInclude = TypeScriptDocumentSymbolProvider.shouldIncludeEntry(item);
 		if (!shouldInclude && !item.childItems?.length) {
 			return false;
 		}
@@ -109,14 +109,14 @@ class TypeScriptDocumentSymbolProvider implements vscode.DocumentSymbolProvider 
 
 
 		const kindModifiers = parseKindModifier(item.kindModifiers);
-		if (kindModifiers.has(PConst.KindModifiers.depreacted)) {
+		if (kindModifiers.has(PConst.KindModifiers.deprecated)) {
 			symbolInfo.tags = [vscode.SymbolTag.Deprecated];
 		}
 
 		return symbolInfo;
 	}
 
-	private static shouldInclueEntry(item: Proto.NavigationTree | Proto.NavigationBarItem): boolean {
+	private static shouldIncludeEntry(item: Proto.NavigationTree | Proto.NavigationBarItem): boolean {
 		if (item.kind === PConst.Kind.alias) {
 			return false;
 		}

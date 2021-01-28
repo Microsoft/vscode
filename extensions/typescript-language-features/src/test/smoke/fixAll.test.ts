@@ -92,7 +92,7 @@ suite.skip('TypeScript Fix All', () => {
 		));
 	});
 
-	test('Remove unused should handle nested ununused', async () => {
+	test('Remove unused should handle nested unused', async () => {
 		const editor = await createTestEditor(testDocumentUri,
 			`export const _ = 1;`,
 			`function unused() {`,

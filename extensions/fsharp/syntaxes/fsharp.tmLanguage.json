@@ -1265,7 +1265,7 @@
 							"match": "\\\\([\\\\''ntbr]|x[a-fA-F0-9]{2}|u[a-fA-F0-9]{4}|u[a-fA-F0-9]{8})"
 						},
 						{
-							"name": "invalid.illeagal.character.string.fsharp",
+							"name": "invalid.illegal.character.string.fsharp",
 							"match": "\\\\(?![\\\\''ntbr]|x[a-fA-F0-9]{2}|u[a-fA-F0-9]{4}|u[a-fA-F0-9]{8})."
 						},
 						{

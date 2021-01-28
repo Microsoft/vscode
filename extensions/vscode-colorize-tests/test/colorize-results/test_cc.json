@@ -1155,7 +1155,7 @@
 		}
 	},
 	{
-		"c": " everything from this point on is interpeted as a string literal...",
+		"c": " everything from this point on is interpreted as a string literal...",
 		"t": "source.cpp meta.function.definition.cpp meta.body.function.definition.cpp comment.line.double-slash.cpp",
 		"r": {
 			"dark_plus": "comment: #6A9955",

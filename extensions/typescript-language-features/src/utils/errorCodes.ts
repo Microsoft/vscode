@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 export const variableDeclaredButNeverUsed = new Set([6196, 6133]);
-export const propertyDeclaretedButNeverUsed = new Set([6138]);
+export const propertyDeclaredButNeverUsed = new Set([6138]);
 export const allImportsAreUnused = new Set([6192]);
 export const unreachableCode = new Set([7027]);
 export const unusedLabel = new Set([7028]);

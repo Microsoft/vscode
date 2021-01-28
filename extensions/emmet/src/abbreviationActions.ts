@@ -63,7 +63,7 @@ function doWrapping(_: boolean, args: any) {
 	let currentValue = '';
 	const helper = getEmmetHelper();
 
-	// Fetch general information for the succesive expansions. i.e. the ranges to replace and its contents
+	// Fetch general information for the successive expansions. i.e. the ranges to replace and its contents
 	const rangesToReplace: PreviewRangesWithContent[] = editor.selections.sort((a: vscode.Selection, b: vscode.Selection) => { return a.start.compareTo(b.start); }).map(selection => {
 		let rangeToReplace: vscode.Range = selection.isReversed ? new vscode.Range(selection.active, selection.anchor) : selection;
 		if (!rangeToReplace.isSingleLine && rangeToReplace.end.character === 0) {
@@ -168,8 +168,8 @@ function doWrapping(_: boolean, args: any) {
 				// get the current preview range, format the new wrapped text, and then replace
 				// the text in the preview range with that new text
 				const oldPreviewRange = rangesToReplace[i].previewRange;
-				const preceedingText = editor.document.getText(new vscode.Range(oldPreviewRange.start.line, 0, oldPreviewRange.start.line, oldPreviewRange.start.character));
-				const indentPrefix = (preceedingText.match(/^(\s*)/) || ['', ''])[1];
+				const precedingText = editor.document.getText(new vscode.Range(oldPreviewRange.start.line, 0, oldPreviewRange.start.line, oldPreviewRange.start.character));
+				const indentPrefix = (precedingText.match(/^(\s*)/) || ['', ''])[1];
 
 				let newText = expandedText;
 				newText = newText.replace(/\n/g, '\n' + indentPrefix); // Adding indentation on each line of expanded text
@@ -204,7 +204,7 @@ function doWrapping(_: boolean, args: any) {
 					newPreviewStart = lastNewPreviewRange.end.character + (oldPreviewRange.start.character - lastOldPreviewRange.end.character);
 				}
 				else if (expandedTextLines.length === 1) {
-					// If the expandedText is single line, add the length of preceeding text as it will not be included in line length.
+					// If the expandedText is single line, add the length of preceding text as it will not be included in line length.
 					newPreviewEnd += oldPreviewRange.start.character;
 				}
 

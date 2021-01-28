@@ -45,7 +45,7 @@ export class DiagnosticCategory {
 
 export class KindModifiers {
 	public static readonly optional = 'optional';
-	public static readonly depreacted = 'deprecated';
+	public static readonly deprecated = 'deprecated';
 	public static readonly color = 'color';
 
 	public static readonly dtsFile = '.d.ts';

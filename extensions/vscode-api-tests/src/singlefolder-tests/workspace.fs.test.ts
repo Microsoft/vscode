@@ -104,7 +104,7 @@ suite('vscode API - workspace-fs', () => {
 		// delete non empty folder with recursive-flag
 		await vscode.workspace.fs.delete(folder, { recursive: true, useTrash: false });
 
-		// esnure folder/file are gone
+		// ensure folder/file are gone
 		try {
 			await vscode.workspace.fs.stat(folder);
 			assert.ok(false);

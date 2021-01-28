@@ -14,7 +14,7 @@ export interface IEditorWhitespace {
 }
 
 /**
- * An accessor that allows for whtiespace to be added, removed or changed in bulk.
+ * An accessor that allows for whitespace to be added, removed or changed in bulk.
  */
 export interface IWhitespaceChangeAccessor {
 	insertWhitespace(afterLineNumber: number, ordinal: number, heightInPx: number, minWidth: number): string;

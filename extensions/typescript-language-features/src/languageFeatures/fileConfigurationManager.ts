@@ -27,10 +27,10 @@ export default class FileConfigurationManager extends Disposable {
 
 	public constructor(
 		private readonly client: ITypeScriptServiceClient,
-		onCaseInsenitiveFileSystem: boolean
+		onCaseInsensitiveFileSystem: boolean
 	) {
 		super();
-		this.formatOptions = new ResourceMap(undefined, { onCaseInsenitiveFileSystem });
+		this.formatOptions = new ResourceMap(undefined, { onCaseInsensitiveFileSystem });
 		vscode.workspace.onDidCloseTextDocument(textDocument => {
 			// When a document gets closed delete the cached formatting options.
 			// This is necessary since the tsserver now closed a project when its

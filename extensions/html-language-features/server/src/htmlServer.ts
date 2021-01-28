@@ -286,11 +286,11 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 
 			if (mode.getId() !== 'html') {
 				/* __GDPR__
-					"html.embbedded.complete" : {
+					"html.embedded.complete" : {
 						"languageId" : { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
 					}
 				 */
-				connection.telemetry.logEvent({ key: 'html.embbedded.complete', value: { languageId: mode.getId() } });
+				connection.telemetry.logEvent({ key: 'html.embedded.complete', value: { languageId: mode.getId() } });
 			}
 
 			const settings = await getDocumentSettings(document, () => doComplete.length > 2);

@@ -20,7 +20,7 @@ export class CachedResponse<T extends Proto.Response> {
 	/**
 	 * Execute a request. May return cached value or resolve the new value
 	 *
-	 * Caller must ensure that all input `resolve` functions return equivilent results (keyed only off of document).
+	 * Caller must ensure that all input `resolve` functions return equivalent results (keyed only off of document).
 	 */
 	public execute(
 		document: vscode.TextDocument,

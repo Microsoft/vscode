@@ -695,7 +695,7 @@ suite('Notebook API tests', () => {
 		await saveAllFilesAndCloseAll(resource);
 	});
 
-	test('initialzation should not emit cell change events.', async function () {
+	test('initialization should not emit cell change events.', async function () {
 		assertInitalState();
 		const resource = await createRandomFile('', undefined, 'first', '.vsctestnb');
 

@@ -36,12 +36,12 @@ echo:
 		and '\' will be continued
 	@echo Shell is not printed out, just a message.
 	@-+-+echo Error will be ignored here; invalidcommand
-	# And we can see variables are highlited as supposed to be:
+	# And we can see variables are highlighted as supposed to be:
 	@echo '$(CC) $(shell echo "123") -o $@'
 	@-./point-and-slash-should-not-be-highlighted
 
 define defined
-  $(info Checking existance of $(1) $(flavor $(1)))
+  $(info Checking existence of $(1) $(flavor $(1)))
   $(if $(filter undefined,$(flavor $(1))),0,1)
 endef
 

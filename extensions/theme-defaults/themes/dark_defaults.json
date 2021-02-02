@@ -8,6 +8,7 @@
 		"editorIndentGuide.background": "#404040",
 		"editorIndentGuide.activeBackground": "#707070",
 		"editor.selectionHighlightBackground": "#ADD6FF26",
+		"inputOption.activeBorder": "#a39d9d",
 		"list.dropBackground": "#383B3D",
 		"activityBarBadge.background": "#007ACC",
 		"sideBarTitle.foreground": "#BBBBBB",

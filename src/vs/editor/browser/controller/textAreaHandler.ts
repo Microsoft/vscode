@@ -86,7 +86,7 @@ export class TextAreaHandler extends ViewPart {
 	 */
 	private _lastRenderPosition: Position | null;
 
-	public readonly textArea: FastDomNode<HTMLTextAreaElement>;
+	public readonly textArea: FastDomNode<HTMLDivElement>;
 	public readonly textAreaCover: FastDomNode<HTMLElement>;
 	private readonly _textAreaInput: TextAreaInput;
 
@@ -116,7 +116,8 @@ export class TextAreaHandler extends ViewPart {
 		this._lastRenderPosition = null;
 
 		// Text Area (The focus will always be in the textarea when the cursor is blinking)
-		this.textArea = createFastDomNode(document.createElement('textarea'));
+		this.textArea = createFastDomNode(document.createElement('div'));
+		this.textArea.setAttribute('contenteditable', 'true');
 		PartFingerprints.write(this.textArea, PartFingerprint.TextArea);
 		this.textArea.setClassName(`inputarea ${MOUSE_CURSOR_TEXT_CSS_CLASS_NAME}`);
 		this.textArea.setAttribute('wrap', 'off');

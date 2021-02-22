@@ -160,7 +160,7 @@ export class TextAreaInput extends Disposable {
 	private _isDoingComposition: boolean;
 	private _nextCommand: ReadFromTextArea;
 
-	constructor(host: ITextAreaInputHost, private textArea: FastDomNode<HTMLTextAreaElement>) {
+	constructor(host: ITextAreaInputHost, private textArea: FastDomNode<HTMLDivElement>) {
 		super();
 		this._host = host;
 		this._textArea = this._register(new TextAreaWrapper(textArea));
@@ -699,13 +699,17 @@ class ClipboardEventUtils {
 
 class TextAreaWrapper extends Disposable implements ITextAreaWrapper {
 
-	private readonly _actual: FastDomNode<HTMLTextAreaElement>;
+	private readonly _actual: FastDomNode<HTMLDivElement>;
 	private _ignoreSelectionChangeTime: number;
+	private _selectionStart: number;
+	private _selectionEnd: number;
 
-	constructor(_textArea: FastDomNode<HTMLTextAreaElement>) {
+	constructor(_textArea: FastDomNode<HTMLDivElement>) {
 		super();
 		this._actual = _textArea;
 		this._ignoreSelectionChangeTime = 0;
+		this._selectionStart = 0;
+		this._selectionEnd = 0;
 	}
 
 	public setIgnoreSelectionChangeTime(reason: string): void {
@@ -722,26 +726,26 @@ class TextAreaWrapper extends Disposable implements ITextAreaWrapper {
 
 	public getValue(): string {
 		// console.log('current value: ' + this._textArea.value);
-		return this._actual.domNode.value;
+		return this._actual.domNode.textContent || '';
 	}
 
 	public setValue(reason: string, value: string): void {
 		const textArea = this._actual.domNode;
-		if (textArea.value === value) {
+		if (textArea.textContent === value) {
 			// No change
 			return;
 		}
 		// console.log('reason: ' + reason + ', current value: ' + textArea.value + ' => new value: ' + value);
 		this.setIgnoreSelectionChangeTime('setValue');
-		textArea.value = value;
+		textArea.textContent = value;
 	}
 
 	public getSelectionStart(): number {
-		return this._actual.domNode.selectionStart;
+		return this._selectionStart;
 	}
 
 	public getSelectionEnd(): number {
-		return this._actual.domNode.selectionEnd;
+		return this._selectionEnd;
 	}
 
 	public setSelectionRange(reason: string, selectionStart: number, selectionEnd: number): void {
@@ -756,8 +760,8 @@ class TextAreaWrapper extends Disposable implements ITextAreaWrapper {
 		}
 
 		const currentIsFocused = (activeElement === textArea);
-		const currentSelectionStart = textArea.selectionStart;
-		const currentSelectionEnd = textArea.selectionEnd;
+		const currentSelectionStart = this._selectionStart;
+		const currentSelectionEnd = this._selectionEnd;
 
 		if (currentIsFocused && currentSelectionStart === selectionStart && currentSelectionEnd === selectionEnd) {
 			// No change
@@ -770,10 +774,23 @@ class TextAreaWrapper extends Disposable implements ITextAreaWrapper {
 
 		// console.log('reason: ' + reason + ', setSelectionRange: ' + selectionStart + ' -> ' + selectionEnd);
 
+		const setSelection = () => {
+			const range = document.createRange();
+			range.setStart(textArea.firstChild!, selectionStart);
+			range.setEnd(textArea.firstChild!, selectionEnd);
+			const selection = window.getSelection();
+			if (selection) {
+				selection.removeAllRanges();
+				selection.addRange(range);
+			}
+			this._selectionStart = selectionStart;
+			this._selectionEnd = selectionEnd;
+		};
+
 		if (currentIsFocused) {
 			// No need to focus, only need to change the selection range
 			this.setIgnoreSelectionChangeTime('setSelectionRange');
-			textArea.setSelectionRange(selectionStart, selectionEnd);
+			setSelection();
 			if (browser.isFirefox && window.parent !== window) {
 				textArea.focus();
 			}
@@ -786,7 +803,7 @@ class TextAreaWrapper extends Disposable implements ITextAreaWrapper {
 			const scrollState = dom.saveParentsScrollTop(textArea);
 			this.setIgnoreSelectionChangeTime('setSelectionRange');
 			textArea.focus();
-			textArea.setSelectionRange(selectionStart, selectionEnd);
+			setSelection();
 			dom.restoreParentsScrollTop(textArea, scrollState);
 		} catch (e) {
 			// Sometimes IE throws when setting selection (e.g. textarea is off-DOM)

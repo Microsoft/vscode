@@ -84,9 +84,10 @@ function doCreateTest(description: string, inputStr: string, expectedStr: string
 	container.appendChild(startBtn);
 
 
-	let input = document.createElement('textarea');
+	let input = document.createElement('div');
 	input.setAttribute('rows', '10');
 	input.setAttribute('cols', '40');
+	input.setAttribute('contenteditable', 'true');
 	container.appendChild(input);
 
 	let model = new SingleLineTestModel('some  text');

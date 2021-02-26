@@ -97,7 +97,7 @@ export class IFrameWebview extends BaseWebview<HTMLIFrameElement> implements Web
 		const element = document.createElement('iframe');
 		element.className = `webview ${options.customClasses || ''}`;
 		element.sandbox.add('allow-scripts', 'allow-same-origin', 'allow-forms', 'allow-pointer-lock', 'allow-downloads');
-		element.setAttribute('allow', 'clipboard-read; clipboard-write;');
+		element.setAttribute('allow', 'clipboard-read; clipboard-write; usb;');
 		element.style.border = 'none';
 		element.style.width = '100%';
 		element.style.height = '100%';

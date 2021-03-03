@@ -65,6 +65,8 @@ export class QuickInputService extends Themable implements IQuickInputService {
 			idPrefix: 'quickInput_', // Constant since there is still only one.
 			container: host.container,
 			ignoreFocusOut: () => false,
+			maximumWidth: () => 600,
+			relativeWidth: () => 0.62,
 			isScreenReaderOptimized: () => this.accessibilityService.isScreenReaderOptimized(),
 			backKeybindingLabel: () => undefined,
 			setContextKey: (id?: string) => this.setContextKey(id),

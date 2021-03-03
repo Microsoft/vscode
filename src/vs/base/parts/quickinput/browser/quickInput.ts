@@ -36,6 +36,8 @@ export interface IQuickInputOptions {
 	idPrefix: string;
 	container: HTMLElement;
 	ignoreFocusOut(): boolean;
+	maximumWidth(): number;
+	relativeWidth(): number;
 	isScreenReaderOptimized(): boolean;
 	backKeybindingLabel(): string | undefined;
 	setContextKey(id?: string): void;
@@ -1668,7 +1670,7 @@ export class QuickInputController extends Disposable {
 			this.ui.container.style.top = `${this.titleBarOffset}px`;
 
 			const style = this.ui.container.style;
-			const width = this.dimension!.width * 0.75;
+			const width = Math.min(this.dimension!.width * this.options.relativeWidth(), this.options.maximumWidth());
 			style.width = width + 'px';
 			style.marginLeft = '-' + (width / 2) + 'px';
 

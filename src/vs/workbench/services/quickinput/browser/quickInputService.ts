@@ -41,6 +41,8 @@ export class QuickInputService extends BaseQuickInputService {
 
 	protected createController(): QuickInputController {
 		return super.createController(this.layoutService, {
+			maximumWidth: () => this.configurationService.getValue('workbench.quickOpen.maximumWidth'),
+			relativeWidth: () => this.configurationService.getValue('workbench.quickOpen.relativeWidth'),
 			ignoreFocusOut: () => !this.configurationService.getValue('workbench.quickOpen.closeOnFocusLost'),
 			backKeybindingLabel: () => this.keybindingService.lookupKeybinding('workbench.action.quickInputBack')?.getLabel() || undefined,
 		});

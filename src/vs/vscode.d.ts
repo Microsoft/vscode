@@ -7115,6 +7115,13 @@ declare module 'vscode' {
 		readonly enableScripts?: boolean;
 
 		/**
+		 * Controls whether WebUSB is enabled in the webview content or not.
+		 *
+		 * Defaults to false.
+		 */
+		readonly enableWebUSB?: boolean;
+
+		/**
 		 * Controls whether command uris are enabled in webview content or not.
 		 *
 		 * Defaults to false.

@@ -973,6 +973,7 @@ var requirejs = (function() {
 		}, {
 			allowMultipleAPIAcquire: true,
 			allowScripts: true,
+			allowWebUSB: true,
 			localResourceRoots: this.localResourceRootsCache
 		}, undefined);
 

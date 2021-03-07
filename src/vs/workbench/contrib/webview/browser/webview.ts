@@ -76,6 +76,7 @@ export interface WebviewOptions {
 export interface WebviewContentOptions {
 	readonly allowMultipleAPIAcquire?: boolean;
 	readonly allowScripts?: boolean;
+	readonly allowWebUSB?: boolean;
 	readonly localResourceRoots?: ReadonlyArray<URI>;
 	readonly portMapping?: ReadonlyArray<IWebviewPortMapping>;
 	readonly enableCommandUris?: boolean;
@@ -85,6 +86,7 @@ export function areWebviewContentOptionsEqual(a: WebviewContentOptions, b: Webvi
 	return (
 		a.allowMultipleAPIAcquire === b.allowMultipleAPIAcquire
 		&& a.allowScripts === b.allowScripts
+		&& a.allowWebUSB === b.allowWebUSB
 		&& equals(a.localResourceRoots, b.localResourceRoots, isEqual)
 		&& equals(a.portMapping, b.portMapping, (a, b) => a.extensionHostPort === b.extensionHostPort && a.webviewPort === b.webviewPort)
 		&& a.enableCommandUris === b.enableCommandUris

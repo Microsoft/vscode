@@ -39,6 +39,7 @@ import { IHostColorSchemeService } from 'vs/workbench/services/themes/common/hos
 import { RunOnceScheduler, Sequencer } from 'vs/base/common/async';
 import { IUserDataInitializationService } from 'vs/workbench/services/userData/browser/userDataInit';
 import { getIconsStyleSheet } from 'vs/platform/theme/browser/iconsStyleSheet';
+import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 
 // implementation
 
@@ -113,7 +114,8 @@ export class WorkbenchThemeService implements IWorkbenchThemeService {
 		@IWorkbenchLayoutService readonly layoutService: IWorkbenchLayoutService,
 		@ILogService private readonly logService: ILogService,
 		@IHostColorSchemeService private readonly hostColorService: IHostColorSchemeService,
-		@IUserDataInitializationService readonly userDataInitializationService: IUserDataInitializationService
+		@IUserDataInitializationService readonly userDataInitializationService: IUserDataInitializationService,
+		@IInstantiationService readonly instantiationService: IInstantiationService
 	) {
 		this.container = layoutService.container;
 		this.settings = new ThemeConfiguration(configurationService);
@@ -564,7 +566,7 @@ export class WorkbenchThemeService implements IWorkbenchThemeService {
 			}
 
 			const newThemeData = this.fileIconThemeRegistry.findThemeById(iconTheme) || FileIconThemeData.noIconTheme;
-			await newThemeData.ensureLoaded(this.fileService);
+			await newThemeData.ensureLoaded(this.instantiationService);
 
 			this.applyAndSetFileIconTheme(newThemeData);
 
@@ -580,7 +582,7 @@ export class WorkbenchThemeService implements IWorkbenchThemeService {
 
 	private async reloadCurrentFileIconTheme() {
 		return this.fileIconThemeSequencer.queue(async () => {
-			await this.currentFileIconTheme.reload(this.fileService);
+			await this.currentFileIconTheme.reload(this.instantiationService);
 			this.applyAndSetFileIconTheme(this.currentFileIconTheme);
 		});
 	}

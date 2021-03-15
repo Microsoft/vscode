@@ -223,6 +223,10 @@ export function parseSearchPort(args: NativeParsedArgs, isBuild: boolean): IDebu
 	return parseDebugPort(args['inspect-search'], args['inspect-brk-search'], 5876, isBuild);
 }
 
+export function parseWatchServicePort(args: NativeParsedArgs): IDebugParams {
+	return parseDebugPort(args['inspect-file-watcher'], args['inspect-brk-file-watcher'], 5879, true);
+}
+
 function parseDebugPort(debugArg: string | undefined, debugBrkArg: string | undefined, defaultBuildPort: number, isBuild: boolean, debugId?: string): IExtensionHostDebugParams {
 	const portStr = debugBrkArg || debugArg;
 	const port = Number(portStr) || (!isBuild ? defaultBuildPort : null);

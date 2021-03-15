@@ -117,7 +117,7 @@ class CliMain extends Disposable {
 		const fileService = this._register(new FileService(logService));
 		services.set(IFileService, fileService);
 
-		const diskFileSystemProvider = this._register(new DiskFileSystemProvider(logService));
+		const diskFileSystemProvider = this._register(new DiskFileSystemProvider(logService, environmentService.args));
 		fileService.registerProvider(Schemas.file, diskFileSystemProvider);
 
 		// Configuration

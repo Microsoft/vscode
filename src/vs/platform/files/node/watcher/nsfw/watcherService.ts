@@ -4,11 +4,12 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { ProxyChannel, getNextTickChannel } from 'vs/base/parts/ipc/common/ipc';
-import { Client } from 'vs/base/parts/ipc/node/ipc.cp';
+import { Client, IIPCOptions } from 'vs/base/parts/ipc/node/ipc.cp';
 import { IDiskFileChange, ILogMessage } from 'vs/platform/files/node/watcher/watcher';
 import { Disposable } from 'vs/base/common/lifecycle';
 import { IWatcherRequest, IWatcherService } from 'vs/platform/files/node/watcher/nsfw/watcher';
 import { FileAccess } from 'vs/base/common/network';
+import { IDebugParams } from 'vs/platform/environment/common/environment';
 
 export class FileWatcher extends Disposable {
 
@@ -23,6 +24,7 @@ export class FileWatcher extends Disposable {
 		private onDidFilesChange: (changes: IDiskFileChange[]) => void,
 		private onLogMessage: (msg: ILogMessage) => void,
 		private verboseLogging: boolean,
+		private watcherDebugOpts?: IDebugParams,
 	) {
 		super();
 
@@ -33,18 +35,24 @@ export class FileWatcher extends Disposable {
 	}
 
 	private startWatching(): void {
-		const client = this._register(new Client(
-			FileAccess.asFileUri('bootstrap-fork', require).fsPath,
-			{
-				serverName: 'File Watcher (nsfw)',
-				args: ['--type=watcherService'],
-				env: {
-					VSCODE_AMD_ENTRYPOINT: 'vs/platform/files/node/watcher/nsfw/watcherApp',
-					VSCODE_PIPE_LOGGING: 'true',
-					VSCODE_VERBOSE_LOGGING: 'true' // transmit console logs from server to client
-				}
+		const opts: IIPCOptions = {
+			serverName: 'File Watcher (nsfw)',
+			args: ['--type=watcherService'],
+			env: {
+				VSCODE_AMD_ENTRYPOINT: 'vs/platform/files/node/watcher/nsfw/watcherApp',
+				VSCODE_PIPE_LOGGING: 'true',
+				VSCODE_VERBOSE_LOGGING: 'true' // transmit console logs from server to client
 			}
-		));
+		};
+		if (this.watcherDebugOpts) {
+			if (this.watcherDebugOpts.break && this.watcherDebugOpts.port) {
+				opts.debugBrk = this.watcherDebugOpts.port;
+			} else if (!this.watcherDebugOpts.break && this.watcherDebugOpts.port) {
+				opts.debug = this.watcherDebugOpts.port;
+			}
+		}
+		const client = this._register(new Client(
+			FileAccess.asFileUri('bootstrap-fork', require).fsPath, opts));
 
 		this._register(client.onDidProcessExit(() => {
 			// our watcher app should never be completed because it keeps on watching. being in here indicates

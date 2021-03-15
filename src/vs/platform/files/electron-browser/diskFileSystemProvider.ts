@@ -18,7 +18,7 @@ export class DiskFileSystemProvider extends NodeDiskFileSystemProvider {
 		private readonly nativeHostService: INativeHostService,
 		options?: IDiskFileSystemProviderOptions
 	) {
-		super(logService, options);
+		super(logService, undefined, options);
 	}
 
 	get capabilities(): FileSystemProviderCapabilities {

@@ -89,6 +89,8 @@ export const OPTIONS: OptionDescriptions<Required<NativeParsedArgs>> = {
 	'debugRenderer': { type: 'boolean' },
 	'inspect-search': { type: 'string', deprecates: 'debugSearch' },
 	'inspect-brk-search': { type: 'string', deprecates: 'debugBrkSearch' },
+	'inspect-file-watcher': { type: 'string' },
+	'inspect-brk-file-watcher': { type: 'string' },
 	'export-default-configuration': { type: 'string' },
 	'install-source': { type: 'string' },
 	'driver': { type: 'string' },

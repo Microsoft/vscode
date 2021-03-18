@@ -3,13 +3,16 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import * as os from 'os';
+import { CancellationToken, commands, Disposable, env, Event, SourceControl, SourceControlInputBox, Uri, version as vscodeVersion, workspace } from 'vscode';
+import { findGit, Git as GitClient, ICloneOptions } from '../git';
 import { Model } from '../model';
+import { pickRemoteSource, PickRemoteSourceOptions } from '../remoteSource';
 import { Repository as BaseRepository, Resource } from '../repository';
 import { InputBox, Git, API, Repository, Remote, RepositoryState, Branch, ForcePushMode, Ref, Submodule, Commit, Change, RepositoryUIState, Status, LogOptions, APIState, CommitOptions, RefType, RemoteSourceProvider, CredentialsProvider, BranchQuery, PushErrorHandler, PublishEvent, FetchOptions } from './git';
 import { Event, SourceControlInputBox, Uri, SourceControl, Disposable, commands } from 'vscode';
 import { mapEvent } from '../util';
 import { toGitUri } from '../uri';
-import { pickRemoteSource, PickRemoteSourceOptions } from '../remoteSource';
 import { GitExtensionImpl } from './extension';
 
 class ApiInputBox implements InputBox {
@@ -259,6 +262,20 @@ export class ApiImpl implements API {
 
 	get repositories(): Repository[] {
 		return this._model.repositories.map(r => new ApiRepository(r));
+	}
+
+	async clone(url: string, options: ICloneOptions, cancellationToken?: CancellationToken): Promise<string> {
+		const pathHint = workspace.getConfiguration('git').get<string | string[]>('path');
+		const info = await findGit(pathHint, () => {/* ignore empty block */ });
+
+		const git = new GitClient({
+			gitPath: info.path,
+			userAgent: `git/${info.version} (${(os as any).version?.() ?? os.type()} ${os.release()}; ${os.platform()} ${os.arch()}) vscode/${vscodeVersion} (${env.appName})`,
+			version: info.version,
+			env: {},
+		});
+
+		return git.clone(url, options, cancellationToken);
 	}
 
 	toGitUri(uri: Uri, ref: string): Uri {

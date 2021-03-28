@@ -498,6 +498,16 @@ import { isStandalone } from 'vs/base/browser/browser';
 				'default': true,
 				'description': localize('zenMode.hideLineNumbers', "Controls whether turning on Zen Mode also hides the editor line numbers.")
 			},
+			'zenMode.hideTitleBar': {
+				'type': 'string',
+				'enum': ['fullScreen', 'always'],
+				'enumDescriptions': [
+					localize('zenMode.hideTitleBar.fullScreen', "Hide the title bar only when in Zen Mode and full screen mode."),
+					localize('zenMode.hideTitleBar.always', "Always hide the title bar when in Zen Mode."),
+				],
+				'default': 'fullScreen',
+				'description': localize('zenMode.hideTitleBar', "Controls when to hide the title bar in zen mode. Currently this requires 'window.menuBarVisibility' to be set to 'toggle'")
+			},
 			'zenMode.restore': {
 				'type': 'boolean',
 				'default': true,

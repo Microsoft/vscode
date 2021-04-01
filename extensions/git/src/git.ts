@@ -11,7 +11,7 @@ import * as which from 'which';
 import { EventEmitter } from 'events';
 import * as iconv from 'iconv-lite-umd';
 import * as filetype from 'file-type';
-import { assign, groupBy, IDisposable, toDisposable, dispose, mkdirp, readBytes, detectUnicodeEncoding, Encoding, onceEvent, splitInChunks, Limiter } from './util';
+import { assign, groupBy, IDisposable, toDisposable, dispose, mkdirp, readBytes, detectUnicodeEncoding, Encoding, onceEvent, splitInChunks, Limiter, isDescendant } from './util';
 import { CancellationToken, Progress, Uri } from 'vscode';
 import { detectEncoding } from './encoding';
 import { Ref, RefType, Branch, Remote, ForcePushMode, GitErrorCodes, LogOptions, Change, Status, CommitOptions, BranchQuery } from './api/git';
@@ -454,6 +454,29 @@ export class Git {
 
 		// Keep trailing spaces which are part of the directory name
 		const repoPath = path.normalize(result.stdout.trimLeft().replace(/[\r\n]+$/, ''));
+
+		// Try to normalize it back to the soft link, if possible
+		if (!isDescendant(repoPath, repositoryPath)) {
+			let dirName = repositoryPath;
+			while (dirName) {
+				const realPath = await new Promise<string>(resolve =>
+					realpath.native(dirName, { encoding: 'utf8' }, (err, resolvedPath) =>
+						resolve(err !== null ? undefined : resolvedPath),
+					),
+				);
+
+				if (realPath === repoPath) {
+					return dirName;
+				}
+
+				let parentPath = path.dirname(dirName);
+				if (parentPath === dirName) {
+					break;
+				} else {
+					dirName = parentPath;
+				}
+			}
+		}
 
 		if (isWindows) {
 			// On Git 2.25+ if you call `rev-parse --show-toplevel` on a mapped drive, instead of getting the mapped drive path back, you get the UNC path for the mapped drive.

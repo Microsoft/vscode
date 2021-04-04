@@ -15,9 +15,11 @@
 }
 
 .extension-editor > .header {
+	height: 17%;
+	min-height: 75px;
 	display: flex;
-	padding-top: 20px;
-	padding-bottom: 14px;
+	padding-top: 0.5%;
+	padding-bottom: 0.5%;
 	padding-left: 20px;
 	padding-right: 20px;
 	overflow: hidden;
@@ -26,11 +28,13 @@
 
 .extension-editor > .header > .icon-container {
 	position: relative;
+	height: 100%;
+	width: 11.5%;
 }
 
 .extension-editor > .header > .icon-container .icon {
-	height: 128px;
-	width: 128px;
+	height: 100%;
+	width: 100%;
 	object-fit: contain;
 }
 
@@ -54,6 +58,10 @@
 }
 
 .extension-editor > .header > .details {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	height: 100%;
 	padding-left: 20px;
 	overflow: hidden;
 	user-select: text;
@@ -67,15 +75,15 @@
 
 .extension-editor > .header > .details > .title > .name {
 	flex: 0;
-	font-size: 26px;
-	line-height: 30px;
+	font-size: 1.8em;
 	font-weight: 600;
 	white-space: nowrap;
 }
 
 .extension-editor > .header > .details > .title > .identifier {
 	margin-left: 10px;
-	font-size: 14px;
+	font-size: 1em;
+	opacity: 0.6;
 	background: rgba(173, 173, 173, 0.31);
 	padding: 0px 4px;
 	border-radius: 4px;
@@ -85,7 +93,7 @@
 }
 
 .extension-editor > .header > .details > .title > .builtin {
-	font-size: 10px;
+	font-size: 0.7em;
 	font-style: italic;
 	margin-left: 10px;
 }
@@ -96,7 +104,7 @@
 
 .extension-editor > .header > .details > .title > .preview {
 	background: rgb(214, 63, 38);
-	font-size: 10px;
+	font-size: 0.7em;
 	font-style: italic;
 	margin-left: 10px;
 	padding: 0px 4px;
@@ -106,14 +114,12 @@
 }
 
 .extension-editor > .header > .details > .subtitle {
-	padding-top: 6px;
 	white-space: nowrap;
-	height: 20px;
 	line-height: 20px;
 }
 
-.extension-editor > .header > .details > .subtitle .publisher {
-	font-size: 18px;
+.extension-editor > .header > .details > .subtitle > .publisher {
+	font-size: 1.3em;
 }
 
 .extension-editor > .header > .details > .subtitle,
@@ -134,14 +140,9 @@
 }
 
 .extension-editor > .header > .details > .description {
-	margin-top: 10px;
 	white-space: nowrap;
 	text-overflow: ellipsis;
 	overflow: hidden;
-}
-
-.extension-editor > .header > .details > .actions {
-	margin-top: 10px;
 }
 
 .extension-editor > .header > .details > .actions > .monaco-action-bar {
@@ -169,6 +170,8 @@
 .extension-editor > .header > .details > .actions > .monaco-action-bar > .actions-container > .action-item > .extension-action.label,
 .extension-editor > .header > .details > .actions > .monaco-action-bar > .actions-container > .action-item.action-dropdown-item .extension-action.label {
 	font-weight: 600;
+	padding: 1px 6px;
+	font-size: 1em;
 	max-width: 300px;
 }
 
@@ -192,7 +195,7 @@
 	display: block;
 	float: left;
 	margin-top: 0;
-	font-size: 13px;
+	font-size: 1em;
 	font-style: italic;
 }
 
@@ -203,8 +206,7 @@
 }
 
 .extension-editor > .header > .details > .subtext-container > .subtext {
-	float:left;
-	margin-top: 5px;
+	float: left;
 	margin-right: 4px;
 }
 

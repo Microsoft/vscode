@@ -84,10 +84,11 @@
     "vscode-ripgrep": "^1.11.1",
     "vscode-sqlite3": "4.0.10",
     "vscode-textmate": "5.2.0",
-    "xterm": "4.12.0-beta.15",
+    "xterm": "4.12.0-beta.19",
+    "xterm-addon-ligatures": "0.5.0-beta.2",
     "xterm-addon-search": "0.9.0-beta.1",
     "xterm-addon-unicode11": "0.3.0-beta.4",
-    "xterm-addon-webgl": "0.11.0-beta.4",
+    "xterm-addon-webgl": "0.11.0-beta.7",
     "yauzl": "^2.9.2",
     "yazl": "^2.4.3"
   },

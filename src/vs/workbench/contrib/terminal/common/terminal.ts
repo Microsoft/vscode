@@ -119,7 +119,7 @@ export interface ITerminalConfiguration {
 	minimumContrastRatio: number;
 	mouseWheelScrollSensitivity: number;
 	sendKeybindingsToShell: boolean;
-	// fontLigatures: boolean;
+	fontLigatures: boolean;
 	fontSize: number;
 	letterSpacing: number;
 	lineHeight: number;

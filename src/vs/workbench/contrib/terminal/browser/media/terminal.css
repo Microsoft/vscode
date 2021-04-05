@@ -69,10 +69,6 @@
 	top: auto;
 }
 
-.monaco-workbench .pane-body.integrated-terminal {
-	font-variant-ligatures: none;
-}
-
 .monaco-workbench .pane-body.integrated-terminal .split-view-view {
 	box-sizing: border-box;
 	overflow: hidden;

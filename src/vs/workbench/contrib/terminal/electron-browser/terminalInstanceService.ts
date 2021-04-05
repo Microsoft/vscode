@@ -16,12 +16,14 @@ import { IConfigurationResolverService } from 'vs/workbench/services/configurati
 import { IShellEnvironmentService } from 'vs/workbench/services/environment/electron-sandbox/shellEnvironmentService';
 import { IHistoryService } from 'vs/workbench/services/history/common/history';
 import type { Terminal as XTermTerminal } from 'xterm';
+import type { LigaturesAddon as XTermLigaturesAddon } from 'xterm-addon-ligatures';
 import type { SearchAddon as XTermSearchAddon } from 'xterm-addon-search';
 import type { Unicode11Addon as XTermUnicode11Addon } from 'xterm-addon-unicode11';
 import type { WebglAddon as XTermWebglAddon } from 'xterm-addon-webgl';
 import { createVariableResolver, getDefaultShell, getDefaultShellArgs } from 'vs/workbench/contrib/terminal/common/terminalEnvironment';
 
 let Terminal: typeof XTermTerminal;
+let LigaturesAddon: typeof XTermLigaturesAddon;
 let SearchAddon: typeof XTermSearchAddon;
 let Unicode11Addon: typeof XTermUnicode11Addon;
 let WebglAddon: typeof XTermWebglAddon;
@@ -46,6 +48,13 @@ export class TerminalInstanceService extends Disposable implements ITerminalInst
 			Terminal = (await import('xterm')).Terminal;
 		}
 		return Terminal;
+	}
+
+	public async getXtermLigaturesConstructor(): Promise<typeof XTermLigaturesAddon> {
+		if (!LigaturesAddon) {
+			LigaturesAddon = (await import('xterm-addon-ligatures')).LigaturesAddon;
+		}
+		return LigaturesAddon;
 	}
 
 	public async getXtermSearchConstructor(): Promise<typeof XTermSearchAddon> {

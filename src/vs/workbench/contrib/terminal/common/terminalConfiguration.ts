@@ -259,12 +259,11 @@ export const terminalConfiguration: IConfigurationNode = {
 			markdownDescription: localize('terminal.integrated.fontFamily', "Controls the font family of the terminal, this defaults to `#editor.fontFamily#`'s value."),
 			type: 'string'
 		},
-		// TODO: Support font ligatures
-		// 'terminal.integrated.fontLigatures': {
-		// 	'description': localize('terminal.integrated.fontLigatures', "Controls whether font ligatures are enabled in the terminal."),
-		// 	'type': 'boolean',
-		// 	'default': false
-		// },
+		'terminal.integrated.fontLigatures': {
+			'description': localize('terminal.integrated.fontLigatures', "Controls whether font ligatures are enabled in the terminal."),
+			'type': 'boolean',
+			'default': false
+		},
 		'terminal.integrated.fontSize': {
 			description: localize('terminal.integrated.fontSize', "Controls the font size in pixels of the terminal."),
 			type: 'number',

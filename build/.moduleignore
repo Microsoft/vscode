@@ -13,12 +13,10 @@ fsevents/test/**
 !fsevents/**/*.node
 
 vscode-sqlite3/binding.gyp
-vscode-sqlite3/benchmark/**
-vscode-sqlite3/cloudformation/**
 vscode-sqlite3/deps/**
-vscode-sqlite3/test/**
 vscode-sqlite3/build/**
 vscode-sqlite3/src/**
+vscode-sqlite3/tools/**
 !vscode-sqlite3/build/Release/*.node
 
 windows-mutex/binding.gyp

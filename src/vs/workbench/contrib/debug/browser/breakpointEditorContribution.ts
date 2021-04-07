@@ -35,6 +35,7 @@ import { registerThemingParticipant, themeColorFromId, ThemeIcon } from 'vs/plat
 import { registerColor } from 'vs/platform/theme/common/colorRegistry';
 import { ILabelService } from 'vs/platform/label/common/label';
 import * as icons from 'vs/workbench/contrib/debug/browser/debugIcons';
+import { applyDragImage } from 'vs/base/browser/dnd';
 
 const $ = dom.$;
 
@@ -144,6 +145,7 @@ async function createCandidateDecorations(model: ITextModel, breakpointDecoratio
 	return result;
 }
 
+let draggedBreakpoints: ReadonlyArray<IBreakpoint> | undefined;
 export class BreakpointEditorContribution implements IBreakpointEditorContribution {
 
 	private breakpointHintDecoration: string[] = [];
@@ -191,8 +193,35 @@ export class BreakpointEditorContribution implements IBreakpointEditorContributi
 	}
 
 	private registerListeners(): void {
-		this.toDispose.push(this.editor.onMouseDown(async (e: IEditorMouseEvent) => {
-			if (!this.debugService.getAdapterManager().hasDebuggers()) {
+		this.toDispose.push(this.editor.onMouseDrag(e => {
+			const data = e.target.detail as IMarginData;
+			const model = this.editor.getModel();
+			if (!draggedBreakpoints && e.target.type === MouseTargetType.GUTTER_GLYPH_MARGIN && e.target.position && !data.isAfterLines && model) {
+				const lineNumber = e.target.position.lineNumber;
+				draggedBreakpoints = this.debugService.getModel().getBreakpoints({ uri: model.uri, lineNumber });
+				if (draggedBreakpoints.length >= 1) {
+					// applyDragImage(e.event,
+					applyDragImage((e.event.browserEvent as DragEvent), 'HELLO', 'monaco-editor-group-drag-image');
+				}
+			}
+		}));
+		this.toDispose.push(this.editor.onMouseDropCanceled(() => {
+			draggedBreakpoints = undefined;
+		}));
+		this.toDispose.push(this.editor.onMouseDrop(e => {
+			const model = this.editor.getModel();
+			if (draggedBreakpoints && draggedBreakpoints.length > 0 && model && e.target && e.target.type === MouseTargetType.GUTTER_GLYPH_MARGIN && e.target.position) {
+				const lineNumber = e.target.position.lineNumber;
+				const uri = model.uri;
+				const updateMap = new Map<string, IBreakpointUpdateData>();
+				draggedBreakpoints.forEach(bp => updateMap.set(bp.getId(), { uri: uri, lineNumber: lineNumber }));
+				this.debugService.updateBreakpoints(uri, updateMap, false);
+			}
+			draggedBreakpoints = undefined;
+		}));
+
+		this.toDispose.push(this.editor.onMouseUp(async (e: IEditorMouseEvent) => {
+			if ((draggedBreakpoints && draggedBreakpoints.length > 0) || !this.debugService.getAdapterManager().hasDebuggers()) {
 				return;
 			}
 

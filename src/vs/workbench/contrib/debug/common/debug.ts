@@ -388,6 +388,7 @@ export interface IBreakpointUpdateData {
 	readonly logMessage?: string;
 	readonly lineNumber?: number;
 	readonly column?: number;
+	readonly uri?: uri;
 }
 
 export interface IBaseBreakpoint extends IEnablement {

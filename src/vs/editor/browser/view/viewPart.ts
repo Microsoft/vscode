@@ -36,7 +36,8 @@ export const enum PartFingerprint {
 	ScrollableElement,
 	TextArea,
 	ViewLines,
-	Minimap
+	Minimap,
+	GlyphMargin
 }
 
 export class PartFingerprints {

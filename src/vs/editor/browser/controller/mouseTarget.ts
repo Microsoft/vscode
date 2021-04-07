@@ -231,6 +231,14 @@ class ElementPath {
 			&& path[1] === PartFingerprint.OverlayWidgets
 		);
 	}
+
+	public static isChildOfGlyphMargin(path: Uint8Array): boolean {
+		return (
+			path.length >= 2
+			&& path[0] === PartFingerprint.OverflowGuard
+			&& path[1] === PartFingerprint.GlyphMargin
+		);
+	}
 }
 
 export class HitTestContext {
@@ -528,6 +536,7 @@ export class MouseTargetFactory {
 		result = result || MouseTargetFactory._hitTestTextArea(ctx, resolvedRequest);
 		result = result || MouseTargetFactory._hitTestViewLines(ctx, resolvedRequest, domHitTestExecuted);
 		result = result || MouseTargetFactory._hitTestScrollbar(ctx, resolvedRequest);
+		result = result || MouseTargetFactory._hitTestGlyphMargin(ctx, resolvedRequest);
 
 		return (result || request.fulfill(MouseTargetType.UNKNOWN));
 	}
@@ -740,6 +749,16 @@ export class MouseTargetFactory {
 			const possibleLineNumber = ctx.getLineNumberAtVerticalOffset(request.mouseVerticalOffset);
 			const maxColumn = ctx.model.getLineMaxColumn(possibleLineNumber);
 			return request.fulfill(MouseTargetType.SCROLLBAR, new Position(possibleLineNumber, maxColumn));
+		}
+
+		return null;
+	}
+
+	private static _hitTestGlyphMargin(ctx: HitTestContext, request: ResolvedHitTestRequest): MouseTarget | null {
+		if (ElementPath.isChildOfGlyphMargin(request.targetPath)) {
+			const possibleLineNumber = ctx.getLineNumberAtVerticalOffset(request.mouseVerticalOffset);
+			const maxColumn = ctx.model.getLineMaxColumn(possibleLineNumber);
+			return request.fulfill(MouseTargetType.GUTTER_GLYPH_MARGIN, new Position(possibleLineNumber, maxColumn));
 		}
 
 		return null;

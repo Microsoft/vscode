@@ -629,7 +629,7 @@ export abstract class BaseBreakpoint extends Enablement implements IBaseBreakpoi
 		return this.data ? this.data.verified : true;
 	}
 
-	get sessionsThatVerified() {
+	get sessionsThatVerified(): string[] {
 		const sessionIds: string[] = [];
 		for (const [sessionId, data] of this.sessionData) {
 			if (data.verified) {
@@ -717,7 +717,7 @@ export class Breakpoint extends BaseBreakpoint implements IBreakpoint {
 	}
 
 	get message(): string | undefined {
-		if (this.textFileService.isDirty(this.uri)) {
+		if (this.textFileService.isDirty(this.uri) && this.sessionsThatVerified.length > 0) {
 			return nls.localize('breakpointDirtydHover', "Unverified breakpoint. File is modified, please restart debug session.");
 		}
 
@@ -788,6 +788,9 @@ export class Breakpoint extends BaseBreakpoint implements IBreakpoint {
 		}
 		if (!isUndefinedOrNull(data.column)) {
 			this._column = data.column;
+		}
+		if (!isUndefinedOrNull(data.uri)) {
+			this._uri = data.uri;
 		}
 		if (!isUndefinedOrNull(data.condition)) {
 			this.condition = data.condition;

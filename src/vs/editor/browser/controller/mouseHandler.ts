@@ -242,13 +242,13 @@ export class MouseHandler extends ViewEventHandler {
 			this.viewHelper.focusTextArea();
 		};
 
-		if (shouldHandle && (targetIsContent || (targetIsLineNumbers && selectOnLineNumbers))) {
+		if (shouldHandle && (targetIsGutter || targetIsContent || (targetIsLineNumbers && selectOnLineNumbers))) {
 			focus();
 			this._mouseDownOperation.start(t.type, e);
-
-		} else if (targetIsGutter) {
-			// Do not steal focus
-			e.preventDefault();
+			if (targetIsGutter) {
+				// Do not steal focus
+				e.preventDefault();
+			}
 		} else if (targetIsViewZone) {
 			const viewZoneData = <IViewZoneData>t.detail;
 			if (this.viewHelper.shouldSuppressMouseDownOnViewZone(viewZoneData.viewZoneId)) {
@@ -322,7 +322,6 @@ class MouseDownOperation extends Disposable {
 	private _onMouseDownThenMove(e: EditorMouseEvent): void {
 		this._lastMouseEvent = e;
 		this._mouseState.setModifiers(e);
-
 		const position = this._findMousePosition(e, true);
 		if (!position) {
 			// Ignoring because position is unknown
@@ -358,15 +357,16 @@ class MouseDownOperation extends Disposable {
 
 		const options = this._context.configuration.options;
 
-		if (!options.get(EditorOption.readOnly)
-			&& options.get(EditorOption.dragAndDrop)
-			&& !options.get(EditorOption.columnSelection)
-			&& !this._mouseState.altKey // we don't support multiple mouse
+		if (!this._mouseState.altKey // we don't support multiple mouse
 			&& e.detail < 2 // only single click on a selection can work
 			&& !this._isActive // the mouse is not down yet
-			&& !this._currentSelection.isEmpty() // we don't drag single cursor
-			&& (position.type === MouseTargetType.CONTENT_TEXT) // single click on text
-			&& position.position && this._currentSelection.containsPosition(position.position) // single click on a selection
+			&& (position.type === MouseTargetType.GUTTER_GLYPH_MARGIN
+				|| (!options.get(EditorOption.readOnly)
+					&& options.get(EditorOption.dragAndDrop)
+					&& !options.get(EditorOption.columnSelection)
+					&& !this._currentSelection.isEmpty() // we don't drag single cursor
+					&& (position.type === MouseTargetType.CONTENT_TEXT) // single click on text
+					&& position.position && this._currentSelection.containsPosition(position.position))) // single click on a selection
 		) {
 			this._mouseState.isDragAndDrop = true;
 			this._isActive = true;

@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { FastDomNode, createFastDomNode } from 'vs/base/browser/fastDomNode';
-import { ViewPart } from 'vs/editor/browser/view/viewPart';
+import { ViewPart, PartFingerprints, PartFingerprint } from 'vs/editor/browser/view/viewPart';
 import { RenderingContext, RestrictedRenderingContext } from 'vs/editor/common/view/renderingContext';
 import { ViewContext } from 'vs/editor/common/view/viewContext';
 import * as viewEvents from 'vs/editor/common/view/viewEvents';
@@ -43,6 +43,7 @@ export class Margin extends ViewPart {
 		this._glyphMarginBackgroundDomNode.setClassName(Margin.CLASS_NAME);
 
 		this._domNode.appendChild(this._glyphMarginBackgroundDomNode);
+		PartFingerprints.write(this._domNode, PartFingerprint.GlyphMargin);
 	}
 
 	public dispose(): void {

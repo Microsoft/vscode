@@ -102,6 +102,10 @@ export class ProcessTaskSystem implements ITaskSystem {
 		return result;
 	}
 
+	public getFirstInstance(task: Task): Task | undefined {
+		return this.getLastInstance(task);
+	}
+
 	public getBusyTasks(): Task[] {
 		return [];
 	}

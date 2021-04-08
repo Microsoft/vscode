@@ -249,6 +249,7 @@ export class TerminalTaskSystem implements ITaskSystem {
 		this.currentTask = new VerifiedTask(task, resolver, trigger);
 		if (instance > 0) {
 			task.instance = this.instances[recentTaskKey].counter;
+			task._id = task._id.split('|')[0] + '|' + this.instances[recentTaskKey].counter.toString();
 		}
 		let lastTaskInstance = this.getLastInstance(task);
 		let terminalData = lastTaskInstance ? this.activeTasks[lastTaskInstance.getMapKey()] : undefined;
@@ -365,6 +366,16 @@ export class TerminalTaskSystem implements ITaskSystem {
 			}
 		});
 		return lastInstance;
+	}
+
+	public getFirstInstance(task: Task): Task | undefined {
+		const recentKey = task.getRecentlyUsedKey();
+		for (let task of this.getActiveTasks()) {
+			if (recentKey && recentKey === task.getRecentlyUsedKey()) {
+				return task;
+			}
+		}
+		return undefined;
 	}
 
 	public getBusyTasks(): Task[] {

@@ -52,7 +52,7 @@ import {
 	Task, CustomTask, ConfiguringTask, ContributedTask, InMemoryTask, TaskEvent,
 	TaskSet, TaskGroup, GroupType, ExecutionEngine, JsonSchemaVersion, TaskSourceKind,
 	TaskSorter, TaskIdentifier, KeyedTaskIdentifier, TASK_RUNNING_STATE, TaskRunSource,
-	KeyedTaskIdentifier as NKeyedTaskIdentifier, TaskDefinition
+	KeyedTaskIdentifier as NKeyedTaskIdentifier, TaskDefinition, InstancePolicy
 } from 'vs/workbench/contrib/tasks/common/tasks';
 import { ITaskService, ITaskProvider, ProblemMatcherRunOptions, CustomizationProperties, TaskFilter, WorkspaceFolderTaskResult, USER_TASKS_GROUP_KEY, CustomExecutionSupportedContext, ShellExecutionSupportedContext, ProcessExecutionSupportedContext } from 'vs/workbench/contrib/tasks/common/taskService';
 import { getTemplates as getTaskTemplates } from 'vs/workbench/contrib/tasks/common/taskTemplates';
@@ -1537,28 +1537,46 @@ export abstract class AbstractTaskService extends Disposable implements ITaskSer
 		if (executeResult.kind === TaskExecuteKind.Active) {
 			let active = executeResult.active;
 			if (active && active.same) {
-				if (this._taskSystem?.isTaskVisible(executeResult.task)) {
-					const message = nls.localize('TaskSystem.activeSame.noBackground', 'The task \'{0}\' is already active.', executeResult.task.getQualifiedLabel());
-					let lastInstance = this.getTaskSystem().getLastInstance(executeResult.task) ?? executeResult.task;
-					this.notificationService.prompt(Severity.Warning, message,
-						[{
-							label: nls.localize('terminateTask', "Terminate Task"),
-							run: () => this.terminate(lastInstance)
-						},
-						{
-							label: nls.localize('restartTask', "Restart Task"),
-							run: () => this.restart(lastInstance)
-						}],
-						{ sticky: true }
-					);
-				} else {
-					this._taskSystem?.revealTask(executeResult.task);
-				}
+				this.handleInstancePolicy(executeResult.task, executeResult.task.runOptions!.instancePolicy);
 			} else {
 				throw new TaskError(Severity.Warning, nls.localize('TaskSystem.active', 'There is already a task running. Terminate it first before executing another task.'), TaskErrors.RunningTask);
 			}
 		}
 		return executeResult.promise;
+	}
+
+	private handleInstancePolicy(task: Task, policy?: InstancePolicy): void {
+		switch (policy) {
+			case InstancePolicy.terminateNewest:
+				this.restart(this.getTaskSystem().getLastInstance(task) ?? task);
+				break;
+			case InstancePolicy.terminateOldest:
+				this.restart(this.getTaskSystem().getFirstInstance(task) ?? task);
+				break;
+			case InstancePolicy.silent:
+				break;
+			case InstancePolicy.warn:
+				this.notificationService.warn(nls.localize('TaskSystem.InstancePolicy.warn', 'The instance limit for this task has been reached.'));
+				break;
+			case InstancePolicy.prompt:
+			default:
+				let commonId = task._id.split('|')[0];
+				this.showQuickPick(this._taskSystem!.getActiveTasks().filter(t => commonId === t._id.split('|')[0]),
+					nls.localize('TaskService.instanceToTerminate', 'Select an instance to terminate'),
+					{
+						label: nls.localize('TaskService.noInstanceRunning', 'No instance is currently running'),
+						task: undefined
+					},
+					false, true,
+					undefined
+				).then(entry => {
+					let task: Task | undefined | null = entry ? entry.task : undefined;
+					if (task === undefined || task === null) {
+						return;
+					}
+					this.restart(task);
+				});
+		}
 	}
 
 	public restart(task: Task): void {
@@ -2200,11 +2218,12 @@ export abstract class AbstractTaskService extends Disposable implements ITaskSer
 		}
 		const TaskQuickPickEntry = (task: Task): TaskQuickPickEntry => {
 			let entryLabel = task._label;
-			if (count[task._id]) {
-				entryLabel = entryLabel + ' (' + count[task._id].toString() + ')';
-				count[task._id]++;
+			const commonKey = task._id.split('|')[0];
+			if (count[commonKey]) {
+				entryLabel = entryLabel + ' (' + count[commonKey].toString() + ')';
+				count[commonKey]++;
 			} else {
-				count[task._id] = 1;
+				count[commonKey] = 1;
 			}
 			return { label: entryLabel, description: this.getTaskDescription(task), task, detail: this.showDetail() ? task.configurationProperties.detail : undefined };
 

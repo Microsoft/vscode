@@ -116,16 +116,34 @@ export class BareFontInfo {
 	 * @internal
 	 */
 	public getMassagedFontFamily(): string {
-		if (/[,"']/.test(this.fontFamily)) {
-			// Looks like the font family might be already escaped
-			return this.fontFamily;
-		}
-		if (/[+ ]/.test(this.fontFamily)) {
-			// Wrap a font family using + or <space> with quotes
-			return `"${this.fontFamily}"`;
-		}
-
-		return this.fontFamily;
+		return this.fontFamily
+			// Replace \, with \002c
+			.replace(/\\,/g, '\\002c')
+			// Replace , in quotes with \002c
+			.replace(/".*?,.*?[^\\]"|'.*?,.*?[^\\]'/g, match => match.replace(/,/g, '\\002c'))
+			// Replace ", not \", in single quotes with \0022
+			.replace(/'.*?".*?[^\\]'/g, match => match.replace(/(?<!\\)"/g, '\\0022'))
+			// Replace \" with \0022
+			.replace(/\\"/g, '\\0022')
+			// Replace ', not \', in double quotes with \0027
+			.replace(/".*?'.*?[^\\]"/g, match => match.replace(/(?<!\\)'/g, '\\0027'))
+			// Replace \' with \0027
+			.replace(/\\'/g, '\\0027')
+			// Replace double quotes with single quotes so that rich text can be coped properly.
+			.replace(/"/g, '\'')
+			.split(/ *, */)
+			.filter(name => name !== '')
+			// Replace \002c with \,
+			.map(name => name.replace('\\002c', '\\,'))
+			// add a space if the next character is one of a-f, A-F, 0-9
+			.map(name => name.replace(/\\002[27](?=[a-fA-F0-9])/g, '$& '))
+			.map(name =>
+				/'/.test(name) ? name :
+					/\\\w+/.test(name) ? `'${name}'` :
+						// Quotes are required around font-family names when they are not valid CSS identifiers.
+						/[^\w\xa0-\uffff-]/ ? `'${name}'` : name
+			)
+			.join(', ');
 	}
 }
 

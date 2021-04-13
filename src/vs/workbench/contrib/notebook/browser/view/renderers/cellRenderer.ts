@@ -554,8 +554,7 @@ class EditorTextRenderer {
 
 		const colorMap = this.getDefaultColorMap();
 		const fontInfo = editor.getOptions().get(EditorOption.fontInfo);
-		const fontFamily = fontInfo.fontFamily === EDITOR_FONT_DEFAULTS.fontFamily ? fontInfo.fontFamily : `'${fontInfo.fontFamily}', ${EDITOR_FONT_DEFAULTS.fontFamily}`;
-
+		const fontFamily = fontInfo.fontFamily === EDITOR_FONT_DEFAULTS.fontFamily ? fontInfo.fontFamily : `${fontInfo.getMassagedFontFamily()}, ${EDITOR_FONT_DEFAULTS.fontFamily}`;
 
 		const style = ``
 			+ `color: ${colorMap[modes.ColorId.DefaultForeground]};`

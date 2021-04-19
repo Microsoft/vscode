@@ -30,6 +30,7 @@ export interface IDecodeStreamOptions {
 	guessEncoding: boolean;
 	minBytesRequiredForDetection?: number;
 
+	setBuf?(buffer: Uint8Array): any;
 	overwriteEncoding(detectedEncoding: string | null): Promise<string>;
 }
 
@@ -112,6 +113,7 @@ export function toDecodeStream(source: VSBufferReadableStream, options: IDecodeS
 					bytesRead: bytesBuffered
 				}, options.guessEncoding);
 
+				if (options.setBuf) { options.setBuf(VSBuffer.concat(bufferedChunks).buffer); }
 				// ensure to respect overwrite of encoding
 				detected.encoding = await options.overwriteEncoding(detected.encoding);
 

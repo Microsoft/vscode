@@ -40,6 +40,7 @@ import { IModeService } from 'vs/editor/common/services/modeService';
 import { ILogService } from 'vs/platform/log/common/log';
 import { CancellationToken } from 'vs/base/common/cancellation';
 
+
 /**
  * The workbench file service implementation implements the raw file service spec and adds additional methods on top.
  */
@@ -138,7 +139,8 @@ export abstract class AbstractTextFileService extends Disposable implements ITex
 		// read through encoding library
 		const decoder = await toDecodeStream(bufferStream.value, {
 			guessEncoding: options?.autoGuessEncoding || this.textResourceConfigurationService.getValue(resource, 'files.autoGuessEncoding'),
-			overwriteEncoding: detectedEncoding => this.encoding.getReadEncoding(resource, options, detectedEncoding)
+			overwriteEncoding: (detectedEncoding) => this.encoding.getReadEncoding(resource, options, detectedEncoding),
+			setBuf: (buf) => this.encoding.setBuf(buf)
 		});
 
 		// validate binary
@@ -599,9 +601,9 @@ export class EncodingOracle extends Disposable implements IResourceEncodings {
 			hasBOM: resourceEncoding === UTF16be || resourceEncoding === UTF16le || resourceEncoding === UTF8_with_bom // enforce BOM for certain encodings
 		};
 	}
-
 	getReadEncoding(resource: URI, options: IReadTextFileOptions | undefined, detectedEncoding: string | null): Promise<string> {
 		let preferredEncoding: string | undefined;
+		let candidate = this.checkCandidate(resource);
 
 		// Encoding passed in as option
 		if (options?.encoding) {
@@ -611,7 +613,10 @@ export class EncodingOracle extends Disposable implements IResourceEncodings {
 				preferredEncoding = options.encoding; // give passed in encoding highest priority
 			}
 		}
-
+		// Encoding candidate
+		else if (candidate) {
+			preferredEncoding = candidate;
+		}
 		// Encoding detected
 		else if (detectedEncoding) {
 			preferredEncoding = detectedEncoding;
@@ -624,6 +629,33 @@ export class EncodingOracle extends Disposable implements IResourceEncodings {
 
 		return this.getEncodingForResource(resource, preferredEncoding);
 	}
+
+	private _buf: Uint8Array | undefined = undefined;
+	setBuf(buffer: Uint8Array): any {
+		this._buf = buffer;
+	}
+	private checkCandidate(resource: URI): string | undefined {
+		let buffer = this._buf;
+		let candidates: string[] = this.textResourceConfigurationService.getValue(resource, 'files.encoding_candidate');
+		if (typeof candidates === 'undefined') {
+			return undefined;
+		}
+
+		for (const cand of candidates) {
+			try {
+				let textdecoder = new TextDecoder(cand, { fatal: true });
+				if (buffer) {
+					textdecoder.decode(buffer);
+				}
+				// decode successfully : match the code page of this file
+				return cand;
+			} catch (error) {
+				// decode unsuccessfully: skip this candidate
+			}
+		}
+		return undefined; // no candidate matches the file
+	}
+
 
 	private async getEncodingForResource(resource: URI, preferredEncoding?: string): Promise<string> {
 		let fileEncoding: string;
@@ -661,6 +693,7 @@ export class EncodingOracle extends Disposable implements IResourceEncodings {
 				}
 			}
 		}
+
 
 		return undefined;
 	}

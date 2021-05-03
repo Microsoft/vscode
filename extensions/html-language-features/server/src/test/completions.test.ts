@@ -94,6 +94,21 @@ suite('HTML Completion', () => {
 	});
 });
 
+suite('JSDoc Imports', () => {
+	const fixtureRoot = path.resolve(__dirname, '../../src/test/jsdocImportFixtures');
+	const fixtureWorkspace = { name: 'fixture', uri: URI.file(fixtureRoot).toString() };
+	const indexHtmlUri = URI.file(path.resolve(fixtureRoot, 'index.html')).toString();
+
+	test('Imports across files', async () => {
+		await testCompletionFor('<html><script>/** @type {import("./jsDocTypes").SomeType } */\nconst a = {}; \n a.| \n</script><html>', {
+			items: [
+				{ label: 'other',  },
+				{ label: 'property', },
+			]
+		}, indexHtmlUri, [fixtureWorkspace] );
+	});
+});
+
 suite('HTML Path Completion', () => {
 	const triggerSuggestCommand = {
 		title: 'Suggest',

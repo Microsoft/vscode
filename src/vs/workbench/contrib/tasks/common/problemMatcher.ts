@@ -424,7 +424,7 @@ class SingleLineMatcher extends AbstractLineMatcher {
 		return 1;
 	}
 
-	public handle(lines: string[], start: number = 0): HandleResult {
+	public override handle(lines: string[], start: number = 0): HandleResult {
 		Assert.ok(lines.length - start === 1);
 		let data: ProblemData = Object.create(null);
 		if (this.pattern.kind !== undefined) {
@@ -441,7 +441,7 @@ class SingleLineMatcher extends AbstractLineMatcher {
 		return { match: null, continue: false };
 	}
 
-	public next(line: string): ProblemMatch | null {
+	public override next(line: string): ProblemMatch | null {
 		return null;
 	}
 }
@@ -460,7 +460,7 @@ class MultiLineMatcher extends AbstractLineMatcher {
 		return this.patterns.length;
 	}
 
-	public handle(lines: string[], start: number = 0): HandleResult {
+	public override handle(lines: string[], start: number = 0): HandleResult {
 		Assert.ok(lines.length - start === this.patterns.length);
 		this.data = Object.create(null);
 		let data = this.data!;
@@ -486,7 +486,7 @@ class MultiLineMatcher extends AbstractLineMatcher {
 		return { match: markerMatch ? markerMatch : null, continue: loop };
 	}
 
-	public next(line: string): ProblemMatch | null {
+	public override next(line: string): ProblemMatch | null {
 		let pattern = this.patterns[this.patterns.length - 1];
 		Assert.ok(pattern.loop === true && this.data !== null);
 		let matches = pattern.regexp.exec(line);
@@ -1294,7 +1294,7 @@ class ProblemPatternRegistryImpl implements IProblemPatternRegistry {
 		});
 		this.add('eslint-stylish', [
 			{
-				regexp: /^([^\s].*)$/,
+				regexp: /^((?:[a-zA-Z]:)*[\\\/.]+.*?)$/,
 				kind: ProblemLocationKind.Location,
 				file: 1
 			},

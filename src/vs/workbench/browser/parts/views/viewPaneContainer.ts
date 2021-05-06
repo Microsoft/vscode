@@ -96,7 +96,7 @@ class ViewPaneDropOverlay extends Themable {
 		private orientation: Orientation | undefined,
 		private bounds: BoundingRect | undefined,
 		protected location: ViewContainerLocation,
-		protected themeService: IThemeService,
+		themeService: IThemeService,
 	) {
 		super(themeService);
 		this.cleanupOverlayScheduler = this._register(new RunOnceScheduler(() => this.dispose(), 300));
@@ -134,7 +134,7 @@ class ViewPaneDropOverlay extends Themable {
 		this.updateStyles();
 	}
 
-	protected updateStyles(): void {
+	protected override updateStyles(): void {
 
 		// Overlay drop background
 		this.overlay.style.backgroundColor = this.getColor(this.location === ViewContainerLocation.Panel ? PANEL_SECTION_DRAG_AND_DROP_BACKGROUND : SIDE_BAR_DRAG_AND_DROP_BACKGROUND) || '';
@@ -287,7 +287,7 @@ class ViewPaneDropOverlay extends Themable {
 		return element === this.container || element === this.overlay;
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		super.dispose();
 
 		this._disposed = true;
@@ -381,7 +381,7 @@ export class ViewPaneContainer extends Component implements IViewPaneContainer {
 		@IContextMenuService protected contextMenuService: IContextMenuService,
 		@ITelemetryService protected telemetryService: ITelemetryService,
 		@IExtensionService protected extensionService: IExtensionService,
-		@IThemeService protected themeService: IThemeService,
+		@IThemeService themeService: IThemeService,
 		@IStorageService protected storageService: IStorageService,
 		@IWorkspaceContextService protected contextService: IWorkspaceContextService,
 		@IViewDescriptorService protected viewDescriptorService: IViewDescriptorService,
@@ -720,7 +720,7 @@ export class ViewPaneContainer extends Component implements IViewPaneContainer {
 		return sizes;
 	}
 
-	saveState(): void {
+	override saveState(): void {
 		this.panes.forEach((view) => view.saveState());
 		this.storageService.store(this.visibleViewsStorageId, this.length, StorageScope.WORKSPACE, StorageTarget.USER);
 	}
@@ -1064,7 +1064,7 @@ export class ViewPaneContainer extends Component implements IViewPaneContainer {
 		return true;
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		super.dispose();
 		this.paneItems.forEach(i => i.disposable.dispose());
 		if (this.paneview) {
@@ -1074,8 +1074,10 @@ export class ViewPaneContainer extends Component implements IViewPaneContainer {
 }
 
 export abstract class ViewPaneContainerAction<T extends IViewPaneContainer> extends Action2 {
-	constructor(readonly desc: Readonly<IAction2Options> & { viewPaneContainerId: string }) {
+	override readonly desc: Readonly<IAction2Options> & { viewPaneContainerId: string };
+	constructor(desc: Readonly<IAction2Options> & { viewPaneContainerId: string }) {
 		super(desc);
+		this.desc = desc;
 	}
 
 	run(accessor: ServicesAccessor, ...args: any[]) {

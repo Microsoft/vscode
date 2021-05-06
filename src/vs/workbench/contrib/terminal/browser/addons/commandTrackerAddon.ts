@@ -27,12 +27,12 @@ export class CommandTrackerAddon implements ICommandTracker, ITerminalAddon {
 	private _isDisposable: boolean = false;
 	private _terminal: Terminal | undefined;
 
-	public activate(terminal: Terminal): void {
+	activate(terminal: Terminal): void {
 		this._terminal = terminal;
 		terminal.onKey(e => this._onKey(e.key));
 	}
 
-	public dispose(): void {
+	dispose(): void {
 	}
 
 	private _onKey(key: string): void {
@@ -55,7 +55,7 @@ export class CommandTrackerAddon implements ICommandTracker, ITerminalAddon {
 		}
 	}
 
-	public scrollToPreviousCommand(scrollPosition: ScrollPosition = ScrollPosition.Top, retainSelection: boolean = false): void {
+	scrollToPreviousCommand(scrollPosition: ScrollPosition = ScrollPosition.Top, retainSelection: boolean = false): void {
 		if (!this._terminal) {
 			return;
 		}
@@ -94,7 +94,7 @@ export class CommandTrackerAddon implements ICommandTracker, ITerminalAddon {
 		this._scrollToMarker(this._currentMarker, scrollPosition);
 	}
 
-	public scrollToNextCommand(scrollPosition: ScrollPosition = ScrollPosition.Top, retainSelection: boolean = false): void {
+	scrollToNextCommand(scrollPosition: ScrollPosition = ScrollPosition.Top, retainSelection: boolean = false): void {
 		if (!this._terminal) {
 			return;
 		}
@@ -144,7 +144,7 @@ export class CommandTrackerAddon implements ICommandTracker, ITerminalAddon {
 		this._terminal.scrollToLine(line);
 	}
 
-	public selectToPreviousCommand(): void {
+	selectToPreviousCommand(): void {
 		if (!this._terminal) {
 			return;
 		}
@@ -155,7 +155,7 @@ export class CommandTrackerAddon implements ICommandTracker, ITerminalAddon {
 		this._selectLines(this._terminal, this._currentMarker, this._selectionStart);
 	}
 
-	public selectToNextCommand(): void {
+	selectToNextCommand(): void {
 		if (!this._terminal) {
 			return;
 		}
@@ -166,7 +166,7 @@ export class CommandTrackerAddon implements ICommandTracker, ITerminalAddon {
 		this._selectLines(this._terminal, this._currentMarker, this._selectionStart);
 	}
 
-	public selectToPreviousLine(): void {
+	selectToPreviousLine(): void {
 		if (!this._terminal) {
 			return;
 		}
@@ -177,7 +177,7 @@ export class CommandTrackerAddon implements ICommandTracker, ITerminalAddon {
 		this._selectLines(this._terminal, this._currentMarker, this._selectionStart);
 	}
 
-	public selectToNextLine(): void {
+	selectToNextLine(): void {
 		if (!this._terminal) {
 			return;
 		}
@@ -222,7 +222,7 @@ export class CommandTrackerAddon implements ICommandTracker, ITerminalAddon {
 		return marker.line;
 	}
 
-	public scrollToPreviousLine(xterm: Terminal, scrollPosition: ScrollPosition = ScrollPosition.Top, retainSelection: boolean = false): void {
+	scrollToPreviousLine(xterm: Terminal, scrollPosition: ScrollPosition = ScrollPosition.Top, retainSelection: boolean = false): void {
 		if (!retainSelection) {
 			this._selectionStart = null;
 		}
@@ -245,7 +245,7 @@ export class CommandTrackerAddon implements ICommandTracker, ITerminalAddon {
 		this._scrollToMarker(this._currentMarker, scrollPosition);
 	}
 
-	public scrollToNextLine(xterm: Terminal, scrollPosition: ScrollPosition = ScrollPosition.Top, retainSelection: boolean = false): void {
+	scrollToNextLine(xterm: Terminal, scrollPosition: ScrollPosition = ScrollPosition.Top, retainSelection: boolean = false): void {
 		if (!retainSelection) {
 			this._selectionStart = null;
 		}

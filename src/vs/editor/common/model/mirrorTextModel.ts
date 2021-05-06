@@ -25,7 +25,11 @@ export interface IModelChangedEvent {
 	readonly versionId: number;
 }
 
-export class MirrorTextModel {
+export interface IMirrorTextModel {
+	readonly version: number;
+}
+
+export class MirrorTextModel implements IMirrorTextModel {
 
 	protected _uri: URI;
 	protected _lines: string[];

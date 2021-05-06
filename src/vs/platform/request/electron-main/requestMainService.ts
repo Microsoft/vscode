@@ -14,7 +14,7 @@ function getRawRequest(options: IRequestOptions): IRawRequestFunction {
 
 export class RequestMainService extends NodeRequestService {
 
-	request(options: IRequestOptions, token: CancellationToken): Promise<IRequestContext> {
+	override request(options: IRequestOptions, token: CancellationToken): Promise<IRequestContext> {
 		return super.request({ ...(options || {}), getRawRequest }, token);
 	}
 }

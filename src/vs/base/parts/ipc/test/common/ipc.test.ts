@@ -66,7 +66,7 @@ class TestIPCClient extends IPCClient<string> {
 		super(protocol, id);
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this._onDidDisconnect.fire();
 		super.dispose();
 	}
@@ -253,7 +253,7 @@ suite('Base IPC', function () {
 
 		test('call success', async function () {
 			const r = await ipcService.marco();
-			return assert.equal(r, 'polo');
+			return assert.strictEqual(r, 'polo');
 		});
 
 		test('call error', async function () {
@@ -261,7 +261,7 @@ suite('Base IPC', function () {
 				await ipcService.error('nice error');
 				return assert.fail('should not reach here');
 			} catch (err) {
-				return assert.equal(err.message, 'nice error');
+				return assert.strictEqual(err.message, 'nice error');
 			}
 		});
 
@@ -304,20 +304,20 @@ suite('Base IPC', function () {
 			ipcService.onPong(msg => messages.push(msg));
 			await timeout(0);
 
-			assert.deepEqual(messages, []);
+			assert.deepStrictEqual(messages, []);
 			service.ping('hello');
 			await timeout(0);
 
-			assert.deepEqual(messages, ['hello']);
+			assert.deepStrictEqual(messages, ['hello']);
 			service.ping('world');
 			await timeout(0);
 
-			assert.deepEqual(messages, ['hello', 'world']);
+			assert.deepStrictEqual(messages, ['hello', 'world']);
 		});
 
 		test('buffers in arrays', async function () {
 			const r = await ipcService.buffersLength([VSBuffer.alloc(2), VSBuffer.alloc(3)]);
-			return assert.equal(r, 5);
+			return assert.strictEqual(r, 5);
 		});
 	});
 
@@ -345,7 +345,7 @@ suite('Base IPC', function () {
 
 		test('call success', async function () {
 			const r = await ipcService.marco();
-			return assert.equal(r, 'polo');
+			return assert.strictEqual(r, 'polo');
 		});
 
 		test('call error', async function () {
@@ -353,7 +353,7 @@ suite('Base IPC', function () {
 				await ipcService.error('nice error');
 				return assert.fail('should not reach here');
 			} catch (err) {
-				return assert.equal(err.message, 'nice error');
+				return assert.strictEqual(err.message, 'nice error');
 			}
 		});
 
@@ -363,15 +363,15 @@ suite('Base IPC', function () {
 			ipcService.onPong(msg => messages.push(msg));
 			await timeout(0);
 
-			assert.deepEqual(messages, []);
+			assert.deepStrictEqual(messages, []);
 			service.ping('hello');
 			await timeout(0);
 
-			assert.deepEqual(messages, ['hello']);
+			assert.deepStrictEqual(messages, ['hello']);
 			service.ping('world');
 			await timeout(0);
 
-			assert.deepEqual(messages, ['hello', 'world']);
+			assert.deepStrictEqual(messages, ['hello', 'world']);
 		});
 
 		test('marshalling uri', async function () {
@@ -383,7 +383,7 @@ suite('Base IPC', function () {
 
 		test('buffers in arrays', async function () {
 			const r = await ipcService.buffersLength([VSBuffer.alloc(2), VSBuffer.alloc(3)]);
-			return assert.equal(r, 5);
+			return assert.strictEqual(r, 5);
 		});
 	});
 
@@ -411,7 +411,7 @@ suite('Base IPC', function () {
 
 		test('call extra context', async function () {
 			const r = await ipcService.context();
-			return assert.equal(r, 'Super Context');
+			return assert.strictEqual(r, 'Super Context');
 		});
 	});
 
@@ -461,7 +461,7 @@ suite('Base IPC', function () {
 			clientService1.ping('hello 1');
 
 			await timeout(1);
-			assert.deepEqual(pings, ['hello 1']);
+			assert.deepStrictEqual(pings, ['hello 1']);
 
 			const client2 = server.createConnection('client2');
 			const clientService2 = new TestService();
@@ -472,19 +472,19 @@ suite('Base IPC', function () {
 			clientService2.ping('hello 2');
 
 			await timeout(1);
-			assert.deepEqual(pings, ['hello 1', 'hello 2']);
+			assert.deepStrictEqual(pings, ['hello 1', 'hello 2']);
 
 			client1.dispose();
 			clientService1.ping('hello 1');
 
 			await timeout(1);
-			assert.deepEqual(pings, ['hello 1', 'hello 2']);
+			assert.deepStrictEqual(pings, ['hello 1', 'hello 2']);
 
 			await timeout(1);
 			clientService2.ping('hello again 2');
 
 			await timeout(1);
-			assert.deepEqual(pings, ['hello 1', 'hello 2', 'hello again 2']);
+			assert.deepStrictEqual(pings, ['hello 1', 'hello 2', 'hello again 2']);
 
 			client2.dispose();
 			server.dispose();

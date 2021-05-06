@@ -32,8 +32,11 @@ import { CursorState } from 'vs/editor/common/controller/cursorCommon';
 
 function announceCursorChange(previousCursorState: CursorState[], cursorState: CursorState[]): void {
 	const cursorDiff = cursorState.filter(cs => !previousCursorState.find(pcs => pcs.equals(cs)));
-	const cursorPositions = cursorDiff.map(cs => `${cs.viewState.position.lineNumber}:${cs.viewState.position.column}`).join(', ');
-	status(nls.localize('cursorAdded', "Cursor added {0}", cursorPositions));
+	if (cursorDiff.length >= 1) {
+		const cursorPositions = cursorDiff.map(cs => `line ${cs.viewState.position.lineNumber} column ${cs.viewState.position.column}`).join(', ');
+		const msg = cursorDiff.length === 1 ? nls.localize('cursorAdded', "Cursor added: {0}", cursorPositions) : nls.localize('cursorsAdded', "Cursors added: {0}", cursorPositions);
+		status(msg);
+	}
 }
 
 export class InsertCursorAbove extends EditorAction {
@@ -215,9 +218,12 @@ class InsertCursorAtEndOfLineSelected extends EditorAction {
 			newSelections.push(new Selection(i, selections[0].startColumn, i, selections[0].endColumn));
 		}
 
+		const viewModel = editor._getViewModel();
+		const previousCursorState = viewModel.getCursorStates();
 		if (newSelections.length > 0) {
 			editor.setSelections(newSelections);
 		}
+		announceCursorChange(previousCursorState, viewModel.getCursorStates());
 	}
 }
 
@@ -244,9 +250,12 @@ class InsertCursorAtTopOfLineSelected extends EditorAction {
 			newSelections.push(new Selection(i, selections[0].startColumn, i, selections[0].endColumn));
 		}
 
+		const viewModel = editor._getViewModel();
+		const previousCursorState = viewModel.getCursorStates();
 		if (newSelections.length > 0) {
 			editor.setSelections(newSelections);
 		}
+		announceCursorChange(previousCursorState, viewModel.getCursorStates());
 	}
 }
 
@@ -454,7 +463,7 @@ export class MultiCursorSelectionController extends Disposable implements IEdito
 		this._session = null;
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		this._endSession();
 		super.dispose();
 	}
@@ -1051,7 +1060,7 @@ export class SelectionHighlighter extends Disposable implements IEditorContribut
 		className: 'selectionHighlight',
 	});
 
-	public dispose(): void {
+	public override dispose(): void {
 		this._setState(null);
 		super.dispose();
 	}

@@ -5,33 +5,51 @@
 
 import { IMarkdownString } from 'vs/base/common/htmlContent';
 import { URI } from 'vs/base/common/uri';
-import { Range } from 'vs/editor/common/core/range';
+import { IRange, Range } from 'vs/editor/common/core/range';
 import { ExtHostTestingResource } from 'vs/workbench/api/common/extHost.protocol';
-import { TestMessageSeverity, TestResult } from 'vs/workbench/api/common/extHostTypes';
+import { TestMessageSeverity, TestResultState } from 'vs/workbench/api/common/extHostTypes';
 
-export interface TestIdWithProvider {
+export type TestIdWithSrc = Required<TestIdWithMaybeSrc>;
+
+export interface TestIdWithMaybeSrc {
 	testId: string;
-	providerId: string;
+	src?: { controller: string; tree: number };
 }
+
+/**
+ * Defines the path to a test, as a list of test IDs. The last element of the
+ * array is the test ID, and the predecessors are its parents, in order.
+ */
+export type TestIdPath = string[];
 
 /**
  * Request to the main thread to run a set of tests.
  */
 export interface RunTestsRequest {
-	tests: TestIdWithProvider[];
+	tests: TestIdWithMaybeSrc[];
 	exclude?: string[];
 	debug: boolean;
 	isAutoRun?: boolean;
 }
 
 /**
- * Request from the main thread to run tests for a single provider.
+ * Request to the main thread to run a set of tests.
+ */
+export interface ExtensionRunTestsRequest {
+	id: string;
+	tests: string[];
+	exclude: string[];
+	debug: boolean;
+	persist: boolean;
+}
+
+/**
+ * Request from the main thread to run tests for a single controller.
  */
 export interface RunTestForProviderRequest {
 	runId: string;
 	excludeExtIds: string[];
-	providerId: string;
-	ids: string[];
+	tests: TestIdWithSrc[];
 	debug: boolean;
 }
 
@@ -51,50 +69,91 @@ export interface ITestMessage {
 	location: IRichLocation | undefined;
 }
 
-export interface ITestState {
-	state: TestResult;
+export interface ITestTaskState {
+	state: TestResultState;
 	duration: number | undefined;
 	messages: ITestMessage[];
+}
+
+export interface ITestRunTask {
+	id: string;
+	name: string | undefined;
+	running: boolean;
 }
 
 /**
  * The TestItem from .d.ts, as a plain object without children.
  */
 export interface ITestItem {
-	/** ID of the test given by the test provider */
+	/** ID of the test given by the test controller */
 	extId: string;
 	label: string;
 	children?: never;
-	location: IRichLocation | undefined;
-	description: string | undefined;
+	uri: URI;
+	range: IRange | null;
+	description: string | null;
+	error: string | IMarkdownString | null;
 	runnable: boolean;
 	debuggable: boolean;
+}
+
+export const enum TestItemExpandState {
+	NotExpandable,
+	Expandable,
+	BusyExpanding,
+	Expanded,
 }
 
 /**
  * TestItem-like shape, butm with an ID and children as strings.
  */
 export interface InternalTestItem {
-	providerId: string;
+	src: { controller: string; tree: number };
+	expand: TestItemExpandState;
 	parent: string | null;
 	item: ITestItem;
 }
 
 /**
+ * A partial update made to an existing InternalTestItem.
+ */
+export interface ITestItemUpdate {
+	extId: string;
+	expand?: TestItemExpandState;
+	item?: Partial<ITestItem>;
+}
+
+export const applyTestItemUpdate = (internal: InternalTestItem | ITestItemUpdate, patch: ITestItemUpdate) => {
+	if (patch.expand !== undefined) {
+		internal.expand = patch.expand;
+	}
+	if (patch.item !== undefined) {
+		internal.item = internal.item ? Object.assign(internal.item, patch.item) : patch.item;
+	}
+};
+
+/**
  * Test result item used in the main thread.
  */
-export interface TestResultItem extends IncrementalTestCollectionItem {
-	/** Current state of this test */
-	state: ITestState;
+export interface TestResultItem {
+	/** Parent ID, if any */
+	parent: string | null;
+	/** Raw test item properties */
+	item: ITestItem;
+	/** State of this test in various tasks */
+	tasks: ITestTaskState[];
+	/** State of this test as a computation of its tasks */
+	ownComputedState: TestResultState;
 	/** Computed state based on children */
-	computedState: TestResult;
+	computedState: TestResultState;
 	/** True if the test is outdated */
 	retired: boolean;
 	/** True if the test was directly requested by the run (is not a child or parent) */
 	direct?: boolean;
 }
 
-export type SerializedTestResultItem = Omit<TestResultItem, 'children' | 'retired'> & { children: string[], retired: undefined };
+export type SerializedTestResultItem = Omit<TestResultItem, 'children' | 'expandable' | 'retired'>
+	& { children: string[], retired: undefined };
 
 /**
  * Test results serialized for transport and storage.
@@ -104,8 +163,12 @@ export interface ISerializedTestResults {
 	id: string;
 	/** Time the results were compelted */
 	completedAt: number;
+	/** Raw output, given for tests published by extensiosn */
+	output?: string;
 	/** Subset of test result items */
 	items: SerializedTestResultItem[];
+	/** Tasks involved in the run. */
+	tasks: ITestRunTask[];
 }
 
 export const enum TestDiffOpType {
@@ -115,17 +178,18 @@ export const enum TestDiffOpType {
 	Update,
 	/** Removes a test (and all its children) */
 	Remove,
-	/** Changes the number of providers running initial test discovery. */
-	DeltaDiscoverComplete,
-	/** Changes the number of providers who are yet to publish their collection roots. */
-	DeltaRootsComplete,
+	/** Changes the number of controllers who are yet to publish their collection roots. */
+	IncrementPendingExtHosts,
+	/** Retires a test/result */
+	Retire,
 }
 
 export type TestsDiffOp =
 	| [op: TestDiffOpType.Add, item: InternalTestItem]
-	| [op: TestDiffOpType.Update, item: InternalTestItem]
+	| [op: TestDiffOpType.Update, item: ITestItemUpdate]
 	| [op: TestDiffOpType.Remove, itemId: string]
-	| [op: TestDiffOpType.DeltaDiscoverComplete | TestDiffOpType.DeltaRootsComplete, amount: number];
+	| [op: TestDiffOpType.Retire, itemId: string]
+	| [op: TestDiffOpType.IncrementPendingExtHosts, amount: number];
 
 /**
  * Utility function to get a unique string for a subscription to a resource,
@@ -190,6 +254,16 @@ export abstract class AbstractIncrementalTestCollection<T extends IncrementalTes
 	protected readonly roots = new Set<string>();
 
 	/**
+	 * Number of 'busy' controllers.
+	 */
+	protected busyControllerCount = 0;
+
+	/**
+	 * Number of pending roots.
+	 */
+	protected pendingRootCount = 0;
+
+	/**
 	 * Applies the diff to the collection.
 	 */
 	public apply(diff: TestsDiff) {
@@ -211,16 +285,31 @@ export abstract class AbstractIncrementalTestCollection<T extends IncrementalTes
 						this.items.set(internalTest.item.extId, created);
 						changes.add(created);
 					}
+
+					if (internalTest.expand === TestItemExpandState.BusyExpanding) {
+						this.busyControllerCount++;
+					}
 					break;
 				}
 
 				case TestDiffOpType.Update: {
-					const internalTest = op[1];
-					const existing = this.items.get(internalTest.item.extId);
-					if (existing) {
-						Object.assign(existing.item, internalTest.item);
-						changes.update(existing);
+					const patch = op[1];
+					const existing = this.items.get(patch.extId);
+					if (!existing) {
+						break;
 					}
+
+					if (patch.expand !== undefined) {
+						if (existing.expand === TestItemExpandState.BusyExpanding) {
+							this.busyControllerCount--;
+						}
+						if (patch.expand === TestItemExpandState.BusyExpanding) {
+							this.busyControllerCount++;
+						}
+					}
+
+					applyTestItemUpdate(existing, patch);
+					changes.update(existing);
 					break;
 				}
 
@@ -245,17 +334,21 @@ export abstract class AbstractIncrementalTestCollection<T extends IncrementalTes
 								queue.push(existing.children);
 								this.items.delete(itemId);
 								changes.remove(existing, existing !== toRemove);
+
+								if (existing.expand === TestItemExpandState.BusyExpanding) {
+									this.busyControllerCount--;
+								}
 							}
 						}
 					}
 					break;
 				}
 
-				case TestDiffOpType.DeltaDiscoverComplete:
-					this.updateBusyProviders(op[1]);
+				case TestDiffOpType.Retire:
+					this.retireTest(op[1]);
 					break;
 
-				case TestDiffOpType.DeltaRootsComplete:
+				case TestDiffOpType.IncrementPendingExtHosts:
 					this.updatePendingRoots(op[1]);
 					break;
 			}
@@ -265,19 +358,19 @@ export abstract class AbstractIncrementalTestCollection<T extends IncrementalTes
 	}
 
 	/**
-	 * Updates the number of providers who are still discovering items.
+	 * Called when the extension signals a test result should be retired.
 	 */
-	protected updateBusyProviders(delta: number) {
+	protected retireTest(testId: string) {
 		// no-op
 	}
 
 	/**
 	 * Updates the number of test root sources who are yet to report. When
-	 * the total pending test roots reaches 0, the roots for all providers
+	 * the total pending test roots reaches 0, the roots for all controllers
 	 * will exist in the collection.
 	 */
-	protected updatePendingRoots(delta: number) {
-		// no-op
+	public updatePendingRoots(delta: number) {
+		this.pendingRootCount += delta;
 	}
 
 	/**

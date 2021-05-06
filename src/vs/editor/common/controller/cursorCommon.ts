@@ -6,7 +6,7 @@
 import { CharCode } from 'vs/base/common/charCode';
 import { onUnexpectedError } from 'vs/base/common/errors';
 import * as strings from 'vs/base/common/strings';
-import { EditorAutoClosingStrategy, EditorAutoSurroundStrategy, ConfigurationChangedEvent, EditorAutoClosingOvertypeStrategy, EditorOption, EditorAutoIndentStrategy } from 'vs/editor/common/config/editorOptions';
+import { EditorAutoClosingStrategy, EditorAutoSurroundStrategy, ConfigurationChangedEvent, EditorAutoClosingEditStrategy, EditorOption, EditorAutoIndentStrategy } from 'vs/editor/common/config/editorOptions';
 import { Position } from 'vs/editor/common/core/position';
 import { Range } from 'vs/editor/common/core/range';
 import { ISelection, Selection } from 'vs/editor/common/core/selection';
@@ -73,7 +73,8 @@ export class CursorConfiguration {
 	public readonly multiCursorPaste: 'spread' | 'full';
 	public readonly autoClosingBrackets: EditorAutoClosingStrategy;
 	public readonly autoClosingQuotes: EditorAutoClosingStrategy;
-	public readonly autoClosingOvertype: EditorAutoClosingOvertypeStrategy;
+	public readonly autoClosingDelete: EditorAutoClosingEditStrategy;
+	public readonly autoClosingOvertype: EditorAutoClosingEditStrategy;
 	public readonly autoSurround: EditorAutoSurroundStrategy;
 	public readonly autoIndent: EditorAutoIndentStrategy;
 	public readonly autoClosingPairs: AutoClosingPairs;
@@ -92,6 +93,7 @@ export class CursorConfiguration {
 			|| e.hasChanged(EditorOption.multiCursorPaste)
 			|| e.hasChanged(EditorOption.autoClosingBrackets)
 			|| e.hasChanged(EditorOption.autoClosingQuotes)
+			|| e.hasChanged(EditorOption.autoClosingDelete)
 			|| e.hasChanged(EditorOption.autoClosingOvertype)
 			|| e.hasChanged(EditorOption.autoSurround)
 			|| e.hasChanged(EditorOption.useTabStops)
@@ -125,6 +127,7 @@ export class CursorConfiguration {
 		this.multiCursorPaste = options.get(EditorOption.multiCursorPaste);
 		this.autoClosingBrackets = options.get(EditorOption.autoClosingBrackets);
 		this.autoClosingQuotes = options.get(EditorOption.autoClosingQuotes);
+		this.autoClosingDelete = options.get(EditorOption.autoClosingDelete);
 		this.autoClosingOvertype = options.get(EditorOption.autoClosingOvertype);
 		this.autoSurround = options.get(EditorOption.autoSurround);
 		this.autoIndent = options.get(EditorOption.autoIndent);
@@ -559,14 +562,14 @@ export class CursorColumns {
 	 * ATTENTION: This works with 0-based columns (as opposed to the regular 1-based columns)
 	 */
 	public static prevRenderTabStop(column: number, tabSize: number): number {
-		return column - 1 - (column - 1) % tabSize;
+		return Math.max(0, column - 1 - (column - 1) % tabSize);
 	}
 
 	/**
 	 * ATTENTION: This works with 0-based columns (as opposed to the regular 1-based columns)
 	 */
 	public static prevIndentTabStop(column: number, indentSize: number): number {
-		return column - 1 - (column - 1) % indentSize;
+		return Math.max(0, column - 1 - (column - 1) % indentSize);
 	}
 }
 

@@ -59,7 +59,7 @@ export class NativeExtHostSearch extends ExtHostSearch {
 		});
 	}
 
-	$provideFileSearchResults(handle: number, session: number, rawQuery: IRawFileQuery, token: vscode.CancellationToken): Promise<ISearchCompleteStats> {
+	override $provideFileSearchResults(handle: number, session: number, rawQuery: IRawFileQuery, token: vscode.CancellationToken): Promise<ISearchCompleteStats> {
 		const query = reviveQuery(rawQuery);
 		if (handle === this._internalFileSearchHandle) {
 			return this.doInternalFileSearch(handle, session, query, token);
@@ -91,7 +91,7 @@ export class NativeExtHostSearch extends ExtHostSearch {
 		return <Promise<ISearchCompleteStats>>this._internalFileSearchProvider.doFileSearch(rawQuery, onResult, token);
 	}
 
-	$clearCache(cacheKey: string): Promise<void> {
+	override $clearCache(cacheKey: string): Promise<void> {
 		if (this._internalFileSearchProvider) {
 			this._internalFileSearchProvider.clearCache(cacheKey);
 		}
@@ -99,7 +99,7 @@ export class NativeExtHostSearch extends ExtHostSearch {
 		return super.$clearCache(cacheKey);
 	}
 
-	protected createTextSearchManager(query: ITextQuery, provider: vscode.TextSearchProvider): TextSearchManager {
+	protected override createTextSearchManager(query: ITextQuery, provider: vscode.TextSearchProvider): TextSearchManager {
 		return new NativeTextSearchManager(query, provider);
 	}
 }

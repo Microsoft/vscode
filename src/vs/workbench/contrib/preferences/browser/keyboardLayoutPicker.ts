@@ -84,6 +84,12 @@ interface LayoutQuickPickItem extends IQuickPickItem {
 	layout: IKeyboardLayoutInfo;
 }
 
+interface IUnknownLayout {
+	text?: string;
+	lang?: string;
+	layout?: string;
+}
+
 export class KeyboardLayoutPickerAction extends Action {
 	static readonly ID = KEYBOARD_LAYOUT_OPEN_PICKER;
 	static readonly LABEL = nls.localize('keyboard.chooseLayout', "Change Keyboard Layout");
@@ -109,7 +115,7 @@ export class KeyboardLayoutPickerAction extends Action {
 		super(actionId, actionLabel, undefined, true);
 	}
 
-	async run(): Promise<void> {
+	override async run(): Promise<void> {
 		let layouts = this.keyboardLayoutService.getAllKeyboardLayouts();
 		let currentLayout = this.keyboardLayoutService.getCurrentKeyboardLayout();
 		let layoutConfig = this.configurationService.getValue('keyboard.layout');
@@ -121,7 +127,7 @@ export class KeyboardLayoutPickerAction extends Action {
 			return {
 				layout: layout,
 				label: [layoutInfo.label, (layout && layout.isUserKeyboardLayout) ? '(User configured layout)' : ''].join(' '),
-				id: (<any>layout).text || (<any>layout).lang || (<any>layout).layout,
+				id: (layout as IUnknownLayout).text || (layout as IUnknownLayout).lang || (layout as IUnknownLayout).layout,
 				description: layoutInfo.description + (picked ? ' (Current layout)' : ''),
 				picked: !isAutoDetect && areKeyboardLayoutsEqual(currentLayout, layout)
 			};

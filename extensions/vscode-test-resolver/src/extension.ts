@@ -203,7 +203,8 @@ export function activate(context: vscode.ExtensionContext) {
 				proxyServer.listen(0, () => {
 					const port = (<net.AddressInfo>proxyServer.address()).port;
 					outputChannel.appendLine(`Going through proxy at port ${port}`);
-					res(new vscode.ResolvedAuthority('127.0.0.1', port));
+					const r: vscode.ResolverResult = new vscode.ResolvedAuthority('127.0.0.1', port);
+					res(r);
 				});
 				context.subscriptions.push({
 					dispose: () => {
@@ -302,7 +303,7 @@ function getActions(): ActionItem[] {
 		actions.push({
 			title: 'Close Remote',
 			execute: async () => {
-				await vscode.commands.executeCommand('vscode.newWindow', { reuseWindow: true });
+				await vscode.commands.executeCommand('vscode.newWindow', { reuseWindow: true, remoteAuthority: null });
 			}
 		});
 	}

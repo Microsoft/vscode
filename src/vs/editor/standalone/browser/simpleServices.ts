@@ -39,7 +39,7 @@ import { ILabelService, ResourceLabelFormatter, IFormatterChangeEvent } from 'vs
 import { INotification, INotificationHandle, INotificationService, IPromptChoice, IPromptOptions, NoOpNotification, IStatusMessageOptions, NotificationsFilter } from 'vs/platform/notification/common/notification';
 import { IProgressRunner, IEditorProgressService } from 'vs/platform/progress/common/progress';
 import { ITelemetryInfo, ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
-import { IWorkspace, IWorkspaceContextService, IWorkspaceFolder, IWorkspaceFoldersChangeEvent, WorkbenchState, WorkspaceFolder } from 'vs/platform/workspace/common/workspace';
+import { IWorkspace, IWorkspaceContextService, IWorkspaceFolder, IWorkspaceFoldersChangeEvent, IWorkspaceFoldersWillChangeEvent, WorkbenchState, WorkspaceFolder } from 'vs/platform/workspace/common/workspace';
 import { ISingleFolderWorkspaceIdentifier, IWorkspaceIdentifier } from 'vs/platform/workspaces/common/workspaces';
 import { ILayoutService } from 'vs/platform/layout/browser/layoutService';
 import { SimpleServicesNLS } from 'vs/editor/common/standaloneStrings';
@@ -51,19 +51,19 @@ import { ILogService } from 'vs/platform/log/common/log';
 export class SimpleModel implements IResolvedTextEditorModel {
 
 	private readonly model: ITextModel;
-	private readonly _onDispose: Emitter<void>;
+	private readonly _onWillDispose: Emitter<void>;
 
 	constructor(model: ITextModel) {
 		this.model = model;
-		this._onDispose = new Emitter<void>();
+		this._onWillDispose = new Emitter<void>();
 	}
 
-	public get onDispose(): Event<void> {
-		return this._onDispose.event;
+	public get onWillDispose(): Event<void> {
+		return this._onWillDispose.event;
 	}
 
-	public load(): Promise<SimpleModel> {
-		return Promise.resolve(this);
+	public resolve(): Promise<void> {
+		return Promise.resolve();
 	}
 
 	public get textEditorModel(): ITextModel {
@@ -82,7 +82,7 @@ export class SimpleModel implements IResolvedTextEditorModel {
 	public dispose(): void {
 		this.disposed = true;
 
-		this._onDispose.fire();
+		this._onWillDispose.fire();
 	}
 
 	public isDisposed(): boolean {
@@ -217,6 +217,10 @@ export class SimpleDialogService implements IDialogService {
 }
 
 export class SimpleNotificationService implements INotificationService {
+
+	readonly onDidAddNotification: Event<INotification> = Event.None;
+
+	readonly onDidRemoveNotification: Event<INotification> = Event.None;
 
 	public _serviceBrand: undefined;
 
@@ -608,6 +612,9 @@ export class SimpleWorkspaceContextService implements IWorkspaceContextService {
 
 	private readonly _onDidChangeWorkspaceName = new Emitter<void>();
 	public readonly onDidChangeWorkspaceName: Event<void> = this._onDidChangeWorkspaceName.event;
+
+	private readonly _onWillChangeWorkspaceFolders = new Emitter<IWorkspaceFoldersWillChangeEvent>();
+	public readonly onWillChangeWorkspaceFolders: Event<IWorkspaceFoldersWillChangeEvent> = this._onWillChangeWorkspaceFolders.event;
 
 	private readonly _onDidChangeWorkspaceFolders = new Emitter<IWorkspaceFoldersChangeEvent>();
 	public readonly onDidChangeWorkspaceFolders: Event<IWorkspaceFoldersChangeEvent> = this._onDidChangeWorkspaceFolders.event;

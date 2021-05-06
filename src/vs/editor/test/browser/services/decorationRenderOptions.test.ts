@@ -32,11 +32,11 @@ class TestGlobalStyleSheet extends GlobalStyleSheet {
 		super(null!);
 	}
 
-	public insertRule(rule: string, index?: number): void {
+	public override insertRule(rule: string, index?: number): void {
 		this.rules.unshift(rule);
 	}
 
-	public removeRulesContainingSelector(ruleName: string): void {
+	public override removeRulesContainingSelector(ruleName: string): void {
 		for (let i = 0; i < this.rules.length; i++) {
 			if (this.rules[i].indexOf(ruleName) >= 0) {
 				this.rules.splice(i, 1);

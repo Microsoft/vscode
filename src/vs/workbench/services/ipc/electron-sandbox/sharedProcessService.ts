@@ -42,7 +42,7 @@ export class SharedProcessService extends Disposable implements ISharedProcessSe
 		// as a result. As such, make sure we await the `Restored`
 		// phase before making a connection attempt, but also add a
 		// timeout to be safe against possible deadlocks.
-		// TODO@bpasero revisit this when the shared process connection
+		// TODO@sandbox revisit this when the shared process connection
 		// is more cruicial.
 		await Promise.race([this.lifecycleService.when(LifecyclePhase.Restored), timeout(2000)]);
 

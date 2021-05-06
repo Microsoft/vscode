@@ -206,7 +206,7 @@ export class GlobalStorageMain extends BaseStorageMain implements IStorageMain {
 		}));
 	}
 
-	protected async doInit(storage: IStorage): Promise<void> {
+	protected override async doInit(storage: IStorage): Promise<void> {
 		await super.doInit(storage);
 
 		// Apply global telemetry values as part of the initialization

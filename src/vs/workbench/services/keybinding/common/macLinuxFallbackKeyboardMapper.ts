@@ -46,7 +46,7 @@ export class MacLinuxFallbackKeyboardMapper implements IKeyboardMapper {
 
 	private _scanCodeToKeyCode(scanCode: ScanCode): KeyCode {
 		const immutableKeyCode = IMMUTABLE_CODE_TO_KEY_CODE[scanCode];
-		if (immutableKeyCode !== -1) {
+		if (immutableKeyCode !== KeyCode.DependsOnKbLayout) {
 			return immutableKeyCode;
 		}
 

@@ -66,6 +66,24 @@ export function groupBy<T>(data: T[], groupFn: (element: T) => string): IStringD
 	return result;
 }
 
+/**
+ * Groups the collection into a dictionary based on the provided
+ * group function.
+ */
+export function groupByNumber<T>(data: T[], groupFn: (element: T) => number): Map<number, T[]> {
+	const result = new Map<number, T[]>();
+	for (const element of data) {
+		const key = groupFn(element);
+		let target = result.get(key);
+		if (!target) {
+			target = [];
+			result.set(key, target);
+		}
+		target.push(element);
+	}
+	return result;
+}
+
 export function fromMap<T>(original: Map<string, T>): IStringDictionary<T> {
 	const result: IStringDictionary<T> = Object.create(null);
 	if (original) {

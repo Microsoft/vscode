@@ -3,115 +3,21 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { createDecorator, IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
+import { createDecorator } from 'vs/platform/instantiation/common/instantiation';
 import { URI } from 'vs/base/common/uri';
-import { CellUri, IResolvedNotebookEditorModel } from 'vs/workbench/contrib/notebook/common/notebookCommon';
-import { NotebookEditorModel } from 'vs/workbench/contrib/notebook/common/notebookEditorModel';
-import { combinedDisposable, DisposableStore, IDisposable, IReference, ReferenceCollection } from 'vs/base/common/lifecycle';
-import { INotebookService } from 'vs/workbench/contrib/notebook/common/notebookService';
-import { ILogService } from 'vs/platform/log/common/log';
+import { IResolvedNotebookEditorModel } from 'vs/workbench/contrib/notebook/common/notebookCommon';
+import { IReference } from 'vs/base/common/lifecycle';
 import { Event } from 'vs/base/common/event';
 
 export const INotebookEditorModelResolverService = createDecorator<INotebookEditorModelResolverService>('INotebookModelResolverService');
 
 export interface INotebookEditorModelResolverService {
 	readonly _serviceBrand: undefined;
+
+	readonly onDidSaveNotebook: Event<URI>;
+	readonly onDidChangeDirty: Event<IResolvedNotebookEditorModel>;
+
+	isDirty(resource: URI): boolean;
+
 	resolve(resource: URI, viewType?: string): Promise<IReference<IResolvedNotebookEditorModel>>;
-}
-
-
-export class NotebookModelReferenceCollection extends ReferenceCollection<Promise<IResolvedNotebookEditorModel>> {
-
-	constructor(
-		@IInstantiationService readonly _instantiationService: IInstantiationService,
-		@INotebookService private readonly _notebookService: INotebookService,
-		@ILogService private readonly _logService: ILogService,
-	) {
-		super();
-	}
-
-	protected createReferencedObject(key: string, viewType: string): Promise<IResolvedNotebookEditorModel> {
-		const uri = URI.parse(key);
-		const model = this._instantiationService.createInstance(NotebookEditorModel, uri, viewType);
-		const promise = model.load();
-		return promise;
-	}
-
-	protected destroyReferencedObject(_key: string, object: Promise<IResolvedNotebookEditorModel>): void {
-		object.then(model => {
-			this._notebookService.destoryNotebookDocument(model.viewType, model.notebook);
-			model.dispose();
-		}).catch(err => {
-			this._logService.critical('FAILED to destory notebook', err);
-		});
-	}
-}
-
-export class NotebookModelResolverService implements INotebookEditorModelResolverService {
-
-	readonly _serviceBrand: undefined;
-
-	private readonly _data: NotebookModelReferenceCollection;
-
-	constructor(
-		@IInstantiationService instantiationService: IInstantiationService,
-		@INotebookService private readonly _notebookService: INotebookService
-	) {
-		this._data = instantiationService.createInstance(NotebookModelReferenceCollection);
-	}
-
-	async resolve(resource: URI, viewType?: string): Promise<IReference<IResolvedNotebookEditorModel>> {
-		if (resource.scheme === CellUri.scheme) {
-			throw new Error(`CANNOT open a cell-uri as notebook. Tried with ${resource.toString()}`);
-		}
-
-		const existingViewType = this._notebookService.getNotebookTextModel(resource)?.viewType;
-		if (!viewType) {
-			if (existingViewType) {
-				viewType = existingViewType;
-			} else {
-				const providers = this._notebookService.getContributedNotebookProviders(resource);
-				const exclusiveProvider = providers.find(provider => provider.exclusive);
-				viewType = exclusiveProvider?.id || providers[0]?.id;
-			}
-		}
-
-		if (!viewType) {
-			throw new Error(`Missing viewType for '${resource}'`);
-		}
-
-		if (existingViewType && existingViewType !== viewType) {
-			throw new Error(`A notebook with view type '${existingViewType}' already exists for '${resource}', CANNOT create another notebook with view type ${viewType}`);
-		}
-
-		const reference = this._data.acquire(resource.toString(), viewType);
-		const model = await reference.object;
-		const autoRef = NotebookModelResolverService._autoReferenceDirtyModel(model, () => this._data.acquire(resource.toString(), viewType));
-		return {
-			object: model,
-			dispose() {
-				reference.dispose();
-				autoRef.dispose();
-			}
-		};
-	}
-
-	private static _autoReferenceDirtyModel(model: IResolvedNotebookEditorModel, ref: () => IDisposable): IDisposable {
-
-		const references = new DisposableStore();
-		const listener = model.onDidChangeDirty(() => {
-			if (model.isDirty()) {
-				references.add(ref());
-			} else {
-				references.clear();
-			}
-		});
-
-		const onceListener = Event.once(model.notebook.onWillDispose)(() => {
-			listener.dispose();
-			references.dispose();
-		});
-
-		return combinedDisposable(references, listener, onceListener);
-	}
 }

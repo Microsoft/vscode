@@ -130,6 +130,11 @@ export interface PresentationOptionsConfig {
 	 * Controls whether the task is executed in a specific terminal group using split panes.
 	 */
 	group?: string;
+
+	/**
+	 * Controls whether the terminal that the task runs in is closed when the task completes.
+	 */
+	close?: boolean;
 }
 
 export interface RunOptionsConfig {
@@ -829,7 +834,7 @@ namespace CommandOptions {
 namespace CommandConfiguration {
 
 	export namespace PresentationOptions {
-		const properties: MetaData<Tasks.PresentationOptions, void>[] = [{ property: 'echo' }, { property: 'reveal' }, { property: 'revealProblems' }, { property: 'focus' }, { property: 'panel' }, { property: 'showReuseMessage' }, { property: 'clear' }, { property: 'group' }];
+		const properties: MetaData<Tasks.PresentationOptions, void>[] = [{ property: 'echo' }, { property: 'reveal' }, { property: 'revealProblems' }, { property: 'focus' }, { property: 'panel' }, { property: 'showReuseMessage' }, { property: 'clear' }, { property: 'group' }, { property: 'close' }];
 
 		interface PresentationOptionsShape extends LegacyCommandProperties {
 			presentation?: PresentationOptionsConfig;
@@ -844,6 +849,7 @@ namespace CommandConfiguration {
 			let showReuseMessage: boolean;
 			let clear: boolean;
 			let group: string | undefined;
+			let close: boolean | undefined;
 			let hasProps = false;
 			if (Types.isBoolean(config.echoCommand)) {
 				echo = config.echoCommand;
@@ -879,12 +885,15 @@ namespace CommandConfiguration {
 				if (Types.isString(presentation.group)) {
 					group = presentation.group;
 				}
+				if (Types.isBoolean(presentation.close)) {
+					close = presentation.close;
+				}
 				hasProps = true;
 			}
 			if (!hasProps) {
 				return undefined;
 			}
-			return { echo: echo!, reveal: reveal!, revealProblems: revealProblems!, focus: focus!, panel: panel!, showReuseMessage: showReuseMessage!, clear: clear!, group };
+			return { echo: echo!, reveal: reveal!, revealProblems: revealProblems!, focus: focus!, panel: panel!, showReuseMessage: showReuseMessage!, clear: clear!, group, close: close };
 		}
 
 		export function assignProperties(target: Tasks.PresentationOptions, source: Tasks.PresentationOptions | undefined): Tasks.PresentationOptions | undefined {

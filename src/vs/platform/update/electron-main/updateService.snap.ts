@@ -15,7 +15,7 @@ import { spawn } from 'child_process';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 import { UpdateNotAvailableClassification } from 'vs/platform/update/electron-main/abstractUpdateService';
 
-abstract class AbstractUpdateService2 implements IUpdateService {
+abstract class AbstractUpdateService implements IUpdateService {
 
 	declare readonly _serviceBrand: undefined;
 
@@ -52,21 +52,21 @@ abstract class AbstractUpdateService2 implements IUpdateService {
 
 	private scheduleCheckForUpdates(delay = 60 * 60 * 1000): Promise<void> {
 		return timeout(delay)
-			.then(() => this.checkForUpdates(null))
+			.then(() => this.checkForUpdates(false))
 			.then(() => {
 				// Check again after 1 hour
 				return this.scheduleCheckForUpdates(60 * 60 * 1000);
 			});
 	}
 
-	async checkForUpdates(context: any): Promise<void> {
+	async checkForUpdates(explicit: boolean): Promise<void> {
 		this.logService.trace('update#checkForUpdates, state = ', this.state.type);
 
 		if (this.state.type !== StateType.Idle) {
 			return;
 		}
 
-		this.doCheckForUpdates(context);
+		this.doCheckForUpdates(explicit);
 	}
 
 	async downloadUpdate(): Promise<void> {
@@ -106,7 +106,7 @@ abstract class AbstractUpdateService2 implements IUpdateService {
 
 		this.logService.trace('update#quitAndInstall(): before lifecycle quit()');
 
-		this.lifecycleMainService.quit(true /* from update */).then(vetod => {
+		this.lifecycleMainService.quit(true /* will restart */).then(vetod => {
 			this.logService.trace(`update#quitAndInstall(): after lifecycle quit() with veto: ${vetod}`);
 			if (vetod) {
 				return;
@@ -132,9 +132,7 @@ abstract class AbstractUpdateService2 implements IUpdateService {
 	protected abstract doCheckForUpdates(context: any): void;
 }
 
-export class SnapUpdateService extends AbstractUpdateService2 {
-
-	declare readonly _serviceBrand: undefined;
+export class SnapUpdateService extends AbstractUpdateService {
 
 	constructor(
 		private snap: string,
@@ -150,7 +148,7 @@ export class SnapUpdateService extends AbstractUpdateService2 {
 		const onChange = Event.fromNodeEventEmitter(watcher, 'change', (_, fileName: string) => fileName);
 		const onCurrentChange = Event.filter(onChange, n => n === 'current');
 		const onDebouncedCurrentChange = Event.debounce(onCurrentChange, (_, e) => e, 2000);
-		const listener = onDebouncedCurrentChange(this.checkForUpdates, this);
+		const listener = onDebouncedCurrentChange(() => this.checkForUpdates(false));
 
 		lifecycleMainService.onWillShutdown(() => {
 			listener.dispose();
@@ -158,24 +156,24 @@ export class SnapUpdateService extends AbstractUpdateService2 {
 		});
 	}
 
-	protected doCheckForUpdates(context: any): void {
-		this.setState(State.CheckingForUpdates(context));
+	protected doCheckForUpdates(): void {
+		this.setState(State.CheckingForUpdates(false));
 		this.isUpdateAvailable().then(result => {
 			if (result) {
 				this.setState(State.Ready({ version: 'something', productVersion: 'something' }));
 			} else {
-				this.telemetryService.publicLog2<{ explicit: boolean }, UpdateNotAvailableClassification>('update:notAvailable', { explicit: !!context });
+				this.telemetryService.publicLog2<{ explicit: boolean }, UpdateNotAvailableClassification>('update:notAvailable', { explicit: false });
 
 				this.setState(State.Idle(UpdateType.Snap));
 			}
 		}, err => {
 			this.logService.error(err);
-			this.telemetryService.publicLog2<{ explicit: boolean }, UpdateNotAvailableClassification>('update:notAvailable', { explicit: !!context });
+			this.telemetryService.publicLog2<{ explicit: boolean }, UpdateNotAvailableClassification>('update:notAvailable', { explicit: false });
 			this.setState(State.Idle(UpdateType.Snap, err.message || err));
 		});
 	}
 
-	protected doQuitAndInstall(): void {
+	protected override doQuitAndInstall(): void {
 		this.logService.trace('update#quitAndInstall(): running raw#quitAndInstall()');
 
 		// Allow 3 seconds for VS Code to close

@@ -106,7 +106,7 @@ suite('Files - TextFileEditorModelManager', () => {
 		model1.dispose();
 
 		const model3 = await manager.resolve(resource, { encoding });
-		assert.notEqual(model3, model2);
+		assert.notStrictEqual(model3, model2);
 		assert.strictEqual(manager.get(resource), model3);
 		model3.dispose();
 
@@ -186,16 +186,16 @@ suite('Files - TextFileEditorModelManager', () => {
 		const resource1 = toResource.call(this, '/path/index.txt');
 		const resource2 = toResource.call(this, '/path/other.txt');
 
-		let loadedCounter = 0;
+		let resolvedCounter = 0;
 		let gotDirtyCounter = 0;
 		let gotNonDirtyCounter = 0;
 		let revertedCounter = 0;
 		let savedCounter = 0;
 		let encodingCounter = 0;
 
-		manager.onDidLoad(({ model }) => {
+		manager.onDidResolve(({ model }) => {
 			if (model.resource.toString() === resource1.toString()) {
-				loadedCounter++;
+				resolvedCounter++;
 			}
 		});
 
@@ -228,13 +228,13 @@ suite('Files - TextFileEditorModelManager', () => {
 		});
 
 		const model1 = await manager.resolve(resource1, { encoding: 'utf8' });
-		assert.strictEqual(loadedCounter, 1);
+		assert.strictEqual(resolvedCounter, 1);
 
 		accessor.fileService.fireFileChanges(new FileChangesEvent([{ resource: resource1, type: FileChangeType.DELETED }], false));
 		accessor.fileService.fireFileChanges(new FileChangesEvent([{ resource: resource1, type: FileChangeType.ADDED }], false));
 
 		const model2 = await manager.resolve(resource2, { encoding: 'utf8' });
-		assert.strictEqual(loadedCounter, 2);
+		assert.strictEqual(resolvedCounter, 2);
 
 		model1.updateTextEditorModel(createTextBufferFactory('changed'));
 		model1.updatePreferredEncoding('utf16');

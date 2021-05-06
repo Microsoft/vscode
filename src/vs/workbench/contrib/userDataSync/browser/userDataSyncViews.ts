@@ -339,7 +339,7 @@ class RemoteUserDataSyncActivityViewDataProvider extends UserDataSyncActivityVie
 		super(userDataSyncService, userDataAutoSyncService, userDataSyncWorkbenchService, notificationService);
 	}
 
-	async getChildren(element?: ITreeItem): Promise<ITreeItem[]> {
+	override async getChildren(element?: ITreeItem): Promise<ITreeItem[]> {
 		if (!element) {
 			this.machinesPromise = undefined;
 		}
@@ -357,7 +357,7 @@ class RemoteUserDataSyncActivityViewDataProvider extends UserDataSyncActivityVie
 		return this.userDataSyncService.getRemoteSyncResourceHandles(syncResource);
 	}
 
-	protected async getChildrenForSyncResourceTreeItem(element: SyncResourceHandleTreeItem): Promise<ITreeItem[]> {
+	protected override async getChildrenForSyncResourceTreeItem(element: SyncResourceHandleTreeItem): Promise<ITreeItem[]> {
 		const children = await super.getChildrenForSyncResourceTreeItem(element);
 		if (children.length) {
 			const machineId = await this.userDataSyncService.getMachineId(element.syncResourceHandle.syncResource, element.syncResourceHandle);

@@ -92,6 +92,7 @@ interface FileQuickPickItem extends IQuickPickItem {
 
 enum UpdateResult {
 	Updated,
+	UpdatedWithTrailing,
 	Updating,
 	NotUpdated,
 	InvalidPath
@@ -119,7 +120,7 @@ export class SimpleFileDialog {
 	private remoteAgentEnvironment: IRemoteAgentEnvironment | null | undefined;
 	private separator: string = '/';
 	private readonly onBusyChangeEmitter = new Emitter<boolean>();
-	private updatingPromise: CancelablePromise<void> | undefined;
+	private updatingPromise: CancelablePromise<boolean> | undefined;
 
 	protected disposables: IDisposable[] = [
 		this.onBusyChangeEmitter
@@ -416,7 +417,7 @@ export class SimpleFileDialog {
 					if (!resources.extUriIgnorePathCase.isEqual(this.currentFolder, filePickBoxUri)) {
 						updated = await this.tryUpdateItems(value, filePickBoxUri);
 					}
-					if (updated === UpdateResult.NotUpdated) {
+					if ((updated === UpdateResult.NotUpdated) || (updated === UpdateResult.UpdatedWithTrailing)) {
 						this.setActiveItems(value);
 					}
 				} else {
@@ -538,19 +539,24 @@ export class SimpleFileDialog {
 		return dir;
 	}
 
+	private tildaReplace(value: string): URI {
+		const home = this.userHome;
+		if ((value[0] === '~') && (value.length > 1)) {
+			return resources.joinPath(home, value.substring(1));
+		} else if (value[value.length - 1] === '~') {
+			return home;
+		}
+		return this.remoteUriFrom(value);
+	}
+
 	private async tryUpdateItems(value: string, valueUri: URI): Promise<UpdateResult> {
 		if ((value.length > 0) && ((value[value.length - 1] === '~') || (value[0] === '~'))) {
-			let newDir = this.userHome;
-			if ((value[0] === '~') && (value.length > 1)) {
-				newDir = resources.joinPath(newDir, value.substring(1));
-			}
-			await this.updateItems(newDir, true);
-			return UpdateResult.Updated;
+			let newDir = this.tildaReplace(value);
+			return await this.updateItems(newDir, true) ? UpdateResult.UpdatedWithTrailing : UpdateResult.Updated;
 		} else if (value === '\\') {
 			valueUri = this.root(this.currentFolder);
 			value = this.pathFromUri(valueUri);
-			await this.updateItems(valueUri, true);
-			return UpdateResult.Updated;
+			return await this.updateItems(valueUri, true) ? UpdateResult.UpdatedWithTrailing : UpdateResult.Updated;
 		} else if (!resources.extUriIgnorePathCase.isEqual(this.currentFolder, valueUri) && (this.endsWithSlash(value) || (!resources.extUriIgnorePathCase.isEqual(this.currentFolder, resources.dirname(valueUri)) && resources.extUriIgnorePathCase.isEqualOrParent(this.currentFolder, resources.dirname(valueUri))))) {
 			let stat: IFileStat | undefined;
 			try {
@@ -559,8 +565,7 @@ export class SimpleFileDialog {
 				// do nothing
 			}
 			if (stat && stat.isDirectory && (resources.basename(valueUri) !== '.') && this.endsWithSlash(value)) {
-				await this.updateItems(valueUri);
-				return UpdateResult.Updated;
+				return await this.updateItems(valueUri) ? UpdateResult.UpdatedWithTrailing : UpdateResult.Updated;
 			} else if (this.endsWithSlash(value)) {
 				// The input box contains a path that doesn't exist on the system.
 				this.filePickBox.validationMessage = nls.localize('remoteFileDialog.badPath', 'The path does not exist.');
@@ -579,9 +584,8 @@ export class SimpleFileDialog {
 						// do nothing
 					}
 					if (statWithoutTrailing && statWithoutTrailing.isDirectory) {
-						await this.updateItems(inputUriDirname, false, resources.basename(valueUri));
 						this.badPath = undefined;
-						return UpdateResult.Updated;
+						return await this.updateItems(inputUriDirname, false, resources.basename(valueUri)) ? UpdateResult.UpdatedWithTrailing : UpdateResult.Updated;
 					}
 				}
 			}
@@ -591,6 +595,7 @@ export class SimpleFileDialog {
 	}
 
 	private setActiveItems(value: string) {
+		value = this.pathFromUri(this.tildaReplace(value));
 		const inputBasename = resources.basename(this.remoteUriFrom(value));
 		const userPath = this.constructFullUserPath();
 		// Make sure that the folder whose children we are currently viewing matches the path in the input
@@ -798,31 +803,46 @@ export class SimpleFileDialog {
 		return Promise.resolve(true);
 	}
 
-	private async updateItems(newFolder: URI, force: boolean = false, trailing?: string) {
+	// Returns true if there is a file at the end of the URI.
+	private async updateItems(newFolder: URI, force: boolean = false, trailing?: string): Promise<boolean> {
 		this.busy = true;
-		this.userEnteredPathSegment = trailing ? trailing : '';
 		this.autoCompletePathSegment = '';
-		const newValue = trailing ? this.pathAppend(newFolder, trailing) : this.pathFromUri(newFolder, true);
-		this.currentFolder = resources.addTrailingPathSeparator(newFolder, this.separator);
+		const isSave = !!trailing;
+		let result = false;
 
 		const updatingPromise = createCancelablePromise(async token => {
-			return this.createItems(this.currentFolder, token).then(items => {
+			let folderStat: IFileStat | undefined;
+			try {
+				folderStat = await this.fileService.resolve(newFolder);
+				if (!folderStat.isDirectory) {
+					trailing = resources.basename(newFolder);
+					newFolder = resources.dirname(newFolder);
+					folderStat = undefined;
+					result = true;
+				}
+			} catch (e) {
+				// The file/directory doesn't exist
+			}
+			const newValue = trailing ? this.pathAppend(newFolder, trailing) : this.pathFromUri(newFolder, true);
+			this.currentFolder = resources.addTrailingPathSeparator(newFolder, this.separator);
+			this.userEnteredPathSegment = trailing ? trailing : '';
+
+			return this.createItems(folderStat, this.currentFolder, token).then(items => {
 				if (token.isCancellationRequested) {
 					this.busy = false;
-					return;
+					return false;
 				}
 
 				this.filePickBox.items = items;
 				this.filePickBox.activeItems = [<FileQuickPickItem>this.filePickBox.items[0]];
-				if (this.allowFolderSelection) {
-					this.filePickBox.activeItems = [];
-				}
-				// the user might have continued typing while we were updating. Only update the input box if it doesn't matche directory.
+				this.filePickBox.activeItems = [];
+
+				// the user might have continued typing while we were updating. Only update the input box if it doesn't match the directory.
 				if (!equalsIgnoreCase(this.filePickBox.value, newValue) && force) {
 					this.filePickBox.valueSelection = [0, this.filePickBox.value.length];
 					this.insertText(newValue, newValue);
 				}
-				if (force && trailing) {
+				if (force && trailing && isSave) {
 					// Keep the cursor position in front of the save as name.
 					this.filePickBox.valueSelection = [this.filePickBox.value.length - trailing.length, this.filePickBox.value.length - trailing.length];
 				} else if (!trailing) {
@@ -831,6 +851,7 @@ export class SimpleFileDialog {
 				}
 				this.busy = false;
 				this.updatingPromise = undefined;
+				return result;
 			});
 		});
 
@@ -893,12 +914,14 @@ export class SimpleFileDialog {
 		return null;
 	}
 
-	private async createItems(currentFolder: URI, token: CancellationToken): Promise<FileQuickPickItem[]> {
+	private async createItems(folder: IFileStat | undefined, currentFolder: URI, token: CancellationToken): Promise<FileQuickPickItem[]> {
 		const result: FileQuickPickItem[] = [];
 
 		const backDir = this.createBackItem(currentFolder);
 		try {
-			const folder = await this.fileService.resolve(currentFolder);
+			if (!folder) {
+				folder = await this.fileService.resolve(currentFolder);
+			}
 			const items = folder.children ? await Promise.all(folder.children.map(child => this.createItem(child, currentFolder, token))) : [];
 			for (let item of items) {
 				if (item) {

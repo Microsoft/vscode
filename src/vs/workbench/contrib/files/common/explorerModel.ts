@@ -170,6 +170,10 @@ export class ExplorerItem {
 		return this.resource.toString();
 	}
 
+	toString(): string {
+		return `ExplorerItem: ${this.name}`;
+	}
+
 	get isRoot(): boolean {
 		return this === this.root;
 	}

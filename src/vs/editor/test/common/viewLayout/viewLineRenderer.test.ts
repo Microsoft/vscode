@@ -1643,8 +1643,8 @@ suite('viewLineRenderer.renderLine 2', () => {
 			0,
 			createViewLineTokens([createPart(0, 3)]),
 			[
-				new LineDecoration(1, 2, 'before', InlineDecorationType.Before),
-				new LineDecoration(0, 1, 'after', InlineDecorationType.After),
+				new LineDecoration(1, 1, 'before', InlineDecorationType.Before),
+				new LineDecoration(1, 1, 'after', InlineDecorationType.After),
 			],
 			2,
 			0,
@@ -1662,6 +1662,47 @@ suite('viewLineRenderer.renderLine 2', () => {
 			'<span>',
 			'<span class="before"></span>',
 			'<span class="after"></span>',
+			'</span>'
+		].join('');
+
+		assert.deepStrictEqual(actual.html, expected);
+	});
+
+	test('issue #118759: enable multiple text editor decorations in empty lines', () => {
+
+		let actual = renderViewLine(new RenderLineInput(
+			true,
+			true,
+			'',
+			false,
+			true,
+			false,
+			0,
+			createViewLineTokens([createPart(0, 3)]),
+			[
+				new LineDecoration(1, 1, 'after1', InlineDecorationType.After),
+				new LineDecoration(1, 1, 'after2', InlineDecorationType.After),
+				new LineDecoration(1, 1, 'before1', InlineDecorationType.Before),
+				new LineDecoration(1, 1, 'before2', InlineDecorationType.Before),
+			],
+			2,
+			0,
+			10,
+			10,
+			10,
+			10000,
+			'none',
+			false,
+			false,
+			null
+		));
+
+		let expected = [
+			'<span>',
+			'<span class="before1"></span>',
+			'<span class="before2"></span>',
+			'<span class="after1"></span>',
+			'<span class="after2"></span>',
 			'</span>'
 		].join('');
 
@@ -2059,6 +2100,38 @@ suite('viewLineRenderer.renderLine 2', () => {
 			'<span class="mtk15">then</span>',
 			'<span class="mtkz" style="width:10px">\u00b7</span>',
 			'<span class="mtk11">\'\\b\'</span>',
+			'</span>'
+		].join('');
+
+		assert.deepStrictEqual(actual.html, expected);
+	});
+
+	test('issue #119416: Delete Control Character (U+007F / &#127;) displayed as space', () => {
+		const actual = renderViewLine(new RenderLineInput(
+			false,
+			false,
+			'[' + String.fromCharCode(127) + '] [' + String.fromCharCode(0) + ']',
+			false,
+			true,
+			false,
+			0,
+			createViewLineTokens([createPart(7, 3)]),
+			[],
+			4,
+			0,
+			10,
+			10,
+			10,
+			10000,
+			'none',
+			true,
+			true,
+			null
+		));
+
+		const expected = [
+			'<span>',
+			'<span class="mtk3">[\u2421]\u00a0[\u2400]</span>',
 			'</span>'
 		].join('');
 

@@ -28,7 +28,7 @@ suite('UserDataSyncService', () => {
 		// Sync for first time
 		await (await testObject.createSyncTask()).run();
 
-		assert.deepEqual(target.requests, [
+		assert.deepStrictEqual(target.requests, [
 			// Manifest
 			{ type: 'GET', url: `${target.url}/v1/manifest`, headers: {} },
 			// Settings
@@ -59,7 +59,7 @@ suite('UserDataSyncService', () => {
 		// Sync for first time
 		await (await testObject.createSyncTask()).run();
 
-		assert.deepEqual(target.requests, [
+		assert.deepStrictEqual(target.requests, [
 			// Manifest
 			{ type: 'GET', url: `${target.url}/v1/manifest`, headers: {} },
 			// Settings
@@ -93,7 +93,7 @@ suite('UserDataSyncService', () => {
 		target.reset();
 		await (await testObject.createSyncTask()).run();
 
-		assert.deepEqual(target.requests, [
+		assert.deepStrictEqual(target.requests, [
 			{ type: 'GET', url: `${target.url}/v1/manifest`, headers: {} },
 			{ type: 'GET', url: `${target.url}/v1/resource/settings/latest`, headers: {} },
 			{ type: 'GET', url: `${target.url}/v1/resource/keybindings/latest`, headers: {} },
@@ -127,7 +127,7 @@ suite('UserDataSyncService', () => {
 		target.reset();
 		await (await testObject.createSyncTask()).run();
 
-		assert.deepEqual(target.requests, [
+		assert.deepStrictEqual(target.requests, [
 			{ type: 'GET', url: `${target.url}/v1/manifest`, headers: {} },
 			{ type: 'GET', url: `${target.url}/v1/resource/settings/latest`, headers: {} },
 			{ type: 'POST', url: `${target.url}/v1/resource/settings`, headers: { 'If-Match': '1' } },
@@ -154,7 +154,7 @@ suite('UserDataSyncService', () => {
 		target.reset();
 		await (await testObject.createSyncTask()).run();
 
-		assert.deepEqual(target.requests, [
+		assert.deepStrictEqual(target.requests, [
 			// Manifest
 			{ type: 'GET', url: `${target.url}/v1/manifest`, headers: {} },
 		]);
@@ -181,7 +181,7 @@ suite('UserDataSyncService', () => {
 		// Sync from the client
 		await (await testObject.createSyncTask()).run();
 
-		assert.deepEqual(target.requests, [
+		assert.deepStrictEqual(target.requests, [
 			// Manifest
 			{ type: 'GET', url: `${target.url}/v1/manifest`, headers: {} },
 			// Settings
@@ -222,7 +222,7 @@ suite('UserDataSyncService', () => {
 		target.reset();
 		await (await testObject.createSyncTask()).run();
 
-		assert.deepEqual(target.requests, [
+		assert.deepStrictEqual(target.requests, [
 			// Manifest
 			{ type: 'GET', url: `${target.url}/v1/manifest`, headers: {} },
 			// Settings
@@ -250,7 +250,7 @@ suite('UserDataSyncService', () => {
 		target.reset();
 		await testObject.reset();
 
-		assert.deepEqual(target.requests, [
+		assert.deepStrictEqual(target.requests, [
 			// Manifest
 			{ type: 'DELETE', url: `${target.url}/v1/resource`, headers: {} },
 		]);
@@ -273,7 +273,7 @@ suite('UserDataSyncService', () => {
 		target.reset();
 		await (await testObject.createSyncTask()).run();
 
-		assert.deepEqual(target.requests, [
+		assert.deepStrictEqual(target.requests, [
 			// Manifest
 			{ type: 'GET', url: `${target.url}/v1/manifest`, headers: {} },
 			// Settings
@@ -308,7 +308,7 @@ suite('UserDataSyncService', () => {
 		await (await testObject.createSyncTask()).run();
 
 		disposable.dispose();
-		assert.deepEqual(actualStatuses, [SyncStatus.Syncing, SyncStatus.Idle, SyncStatus.Syncing, SyncStatus.Idle, SyncStatus.Syncing, SyncStatus.Idle, SyncStatus.Syncing, SyncStatus.Idle, SyncStatus.Syncing, SyncStatus.Idle]);
+		assert.deepStrictEqual(actualStatuses, [SyncStatus.Syncing, SyncStatus.Idle, SyncStatus.Syncing, SyncStatus.Idle, SyncStatus.Syncing, SyncStatus.Idle, SyncStatus.Syncing, SyncStatus.Idle, SyncStatus.Syncing, SyncStatus.Idle]);
 	});
 
 	test('test sync conflicts status', async () => {
@@ -333,8 +333,8 @@ suite('UserDataSyncService', () => {
 		// sync from the client
 		await (await testObject.createSyncTask()).run();
 
-		assert.deepEqual(testObject.status, SyncStatus.HasConflicts);
-		assert.deepEqual(testObject.conflicts.map(([syncResource]) => syncResource), [SyncResource.Settings]);
+		assert.deepStrictEqual(testObject.status, SyncStatus.HasConflicts);
+		assert.deepStrictEqual(testObject.conflicts.map(([syncResource]) => syncResource), [SyncResource.Settings]);
 	});
 
 	test('test sync will sync other non conflicted areas', async () => {
@@ -368,10 +368,10 @@ suite('UserDataSyncService', () => {
 		await (await testObject.createSyncTask()).run();
 
 		disposable.dispose();
-		assert.deepEqual(actualStatuses, []);
-		assert.deepEqual(testObject.status, SyncStatus.HasConflicts);
+		assert.deepStrictEqual(actualStatuses, []);
+		assert.deepStrictEqual(testObject.status, SyncStatus.HasConflicts);
 
-		assert.deepEqual(target.requests, [
+		assert.deepStrictEqual(target.requests, [
 			// Manifest
 			{ type: 'GET', url: `${target.url}/v1/manifest`, headers: {} },
 			// Keybindings
@@ -403,8 +403,8 @@ suite('UserDataSyncService', () => {
 		syncTask.run().then(null, () => null /* ignore error */);
 		await syncTask.stop();
 
-		assert.deepEqual(testObject.status, SyncStatus.Idle);
-		assert.deepEqual(testObject.conflicts, []);
+		assert.deepStrictEqual(testObject.status, SyncStatus.Idle);
+		assert.deepStrictEqual(testObject.conflicts, []);
 	});
 
 	test('test sync send execution id header', async () => {

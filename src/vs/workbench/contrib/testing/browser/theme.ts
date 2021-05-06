@@ -7,7 +7,7 @@ import { Color, RGBA } from 'vs/base/common/color';
 import { localize } from 'vs/nls';
 import { editorErrorForeground, editorForeground, editorHintForeground, editorInfoForeground, editorWarningForeground, inputActiveOptionBackground, inputActiveOptionBorder, inputActiveOptionForeground, registerColor } from 'vs/platform/theme/common/colorRegistry';
 import { registerThemingParticipant } from 'vs/platform/theme/common/themeService';
-import { TestMessageSeverity, TestResult } from 'vs/workbench/api/common/extHostTypes';
+import { TestMessageSeverity, TestResultState } from 'vs/workbench/api/common/extHostTypes';
 import { ACTIVITY_BAR_BADGE_BACKGROUND } from 'vs/workbench/common/theme';
 
 export const testingColorIconFailed = registerColor('testing.iconFailed', {
@@ -114,13 +114,13 @@ export const testMessageSeverityColors: {
 	},
 };
 
-export const testStatesToIconColors: { [K in TestResult]?: string } = {
-	[TestResult.Errored]: testingColorIconErrored,
-	[TestResult.Failed]: testingColorIconFailed,
-	[TestResult.Passed]: testingColorIconPassed,
-	[TestResult.Queued]: testingColorIconQueued,
-	[TestResult.Unset]: testingColorIconUnset,
-	[TestResult.Skipped]: testingColorIconUnset,
+export const testStatesToIconColors: { [K in TestResultState]?: string } = {
+	[TestResultState.Errored]: testingColorIconErrored,
+	[TestResultState.Failed]: testingColorIconFailed,
+	[TestResultState.Passed]: testingColorIconPassed,
+	[TestResultState.Queued]: testingColorIconQueued,
+	[TestResultState.Unset]: testingColorIconUnset,
+	[TestResultState.Skipped]: testingColorIconUnset,
 };
 
 
@@ -136,15 +136,15 @@ registerThemingParticipant((theme, collector) => {
 	//#region active buttons
 	const inputActiveOptionBorderColor = theme.getColor(inputActiveOptionBorder);
 	if (inputActiveOptionBorderColor) {
-		collector.addRule(`.testing-filter-button.checked { border-color: ${inputActiveOptionBorderColor}; }`);
+		collector.addRule(`.testing-filter-action-item > .monaco-action-bar .testing-filter-button.checked { border-color: ${inputActiveOptionBorderColor}; }`);
 	}
 	const inputActiveOptionForegroundColor = theme.getColor(inputActiveOptionForeground);
 	if (inputActiveOptionForegroundColor) {
-		collector.addRule(`.testing-filter-button.checked { color: ${inputActiveOptionForegroundColor}; }`);
+		collector.addRule(`.testing-filter-action-item > .monaco-action-bar .testing-filter-button.checked { color: ${inputActiveOptionForegroundColor}; }`);
 	}
 	const inputActiveOptionBackgroundColor = theme.getColor(inputActiveOptionBackground);
 	if (inputActiveOptionBackgroundColor) {
-		collector.addRule(`.testing-filter-button.checked { background-color: ${inputActiveOptionBackgroundColor}; }`);
+		collector.addRule(`.testing-filter-action-item > .monaco-action-bar .testing-filter-button.checked { background-color: ${inputActiveOptionBackgroundColor}; }`);
 	}
 	const badgeColor = theme.getColor(ACTIVITY_BAR_BADGE_BACKGROUND);
 	collector.addRule(`.monaco-workbench .part > .title > .title-actions .action-label.codicon-testing-autorun::after { background-color: ${badgeColor}; }`);

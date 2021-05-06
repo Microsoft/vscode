@@ -47,7 +47,7 @@ export class ResourceTextEdit extends ResourceEdit {
 		readonly resource: URI,
 		readonly textEdit: TextEdit,
 		readonly versionId?: number,
-		readonly metadata?: WorkspaceEditMetadata
+		metadata?: WorkspaceEditMetadata
 	) {
 		super(metadata);
 	}
@@ -58,7 +58,7 @@ export class ResourceFileEdit extends ResourceEdit {
 		readonly oldResource: URI | undefined,
 		readonly newResource: URI | undefined,
 		readonly options?: WorkspaceFileEditOptions,
-		readonly metadata?: WorkspaceEditMetadata
+		metadata?: WorkspaceEditMetadata
 	) {
 		super(metadata);
 	}

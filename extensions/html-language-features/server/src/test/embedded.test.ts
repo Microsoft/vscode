@@ -23,7 +23,7 @@ suite('HTML Embedded Support', () => {
 		const docRegions = embeddedSupport.getDocumentRegions(htmlLanguageService, document);
 		const languageId = docRegions.getLanguageAtPosition(position);
 
-		assert.equal(languageId, expectedLanguageId);
+		assert.strictEqual(languageId, expectedLanguageId);
 	}
 
 	function assertEmbeddedLanguageContent(value: string, languageId: string, expectedContent: string): void {
@@ -31,7 +31,7 @@ suite('HTML Embedded Support', () => {
 
 		const docRegions = embeddedSupport.getDocumentRegions(htmlLanguageService, document);
 		const content = docRegions.getEmbeddedDocument(languageId);
-		assert.equal(content.getText(), expectedContent);
+		assert.strictEqual(content.getText(), expectedContent);
 	}
 
 	test('Styles', function (): any {

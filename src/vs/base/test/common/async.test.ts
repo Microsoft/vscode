@@ -8,6 +8,7 @@ import * as async from 'vs/base/common/async';
 import { isPromiseCanceledError } from 'vs/base/common/errors';
 import { URI } from 'vs/base/common/uri';
 import { CancellationToken, CancellationTokenSource } from 'vs/base/common/cancellation';
+import { Event } from 'vs/base/common/event';
 
 suite('Async', () => {
 
@@ -484,13 +485,11 @@ suite('Async', () => {
 		});
 	});
 
-	test('Queue - events', function (done) {
+	test('Queue - events', function () {
 		let queue = new async.Queue();
 
 		let finished = false;
-		queue.onFinished(() => {
-			done();
-		});
+		const onFinished = Event.toPromise(queue.onFinished);
 
 		let res: number[] = [];
 
@@ -508,6 +507,8 @@ suite('Async', () => {
 				assert.ok(!finished);
 			});
 		});
+
+		return onFinished;
 	});
 
 	test('ResourceQueue - simple', function () {
@@ -529,7 +530,7 @@ suite('Async', () => {
 
 		return new Promise<void>(c => setTimeout(() => c(), 0)).then(() => {
 			const r1Queue2 = queue.queueFor(URI.file('/some/path'));
-			assert.notEqual(r1Queue, r1Queue2); // previous one got disposed after finishing
+			assert.notStrictEqual(r1Queue, r1Queue2); // previous one got disposed after finishing
 		});
 	});
 

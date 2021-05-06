@@ -6,8 +6,10 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 	ROOT=$(dirname $(dirname $(realpath "$0")))
 else
 	ROOT=$(dirname $(dirname $(readlink -f $0)))
-	# Electron 6 introduces a chrome-sandbox that requires root to run. This can fail. Disable sandbox via --no-sandbox.
-	LINUX_EXTRA_ARGS="--no-sandbox"
+	# --disable-setuid-sandbox: setuid sandboxes requires root and is used in containers so we disable this
+	# --disable-dev-shm-usage --use-gl=swiftshader: when run on docker containers where size of /dev/shm
+	# partition < 64MB which causes OOM failure for chromium compositor that uses the partition for shared memory
+	LINUX_EXTRA_ARGS="--disable-setuid-sandbox --disable-dev-shm-usage --use-gl=swiftshader"
 fi
 
 VSCODEUSERDATADIR=`mktemp -d 2>/dev/null`
@@ -36,19 +38,13 @@ else
 				compile-extension:css-language-features-server \
 				compile-extension:html-language-features-server \
 				compile-extension:json-language-features-server \
-				compile-extension:git
+				compile-extension:git \
+				compile-extension-media
 
 	# Configuration for more verbose output
 	export VSCODE_CLI=1
 	export ELECTRON_ENABLE_STACK_DUMPING=1
 	export ELECTRON_ENABLE_LOGGING=1
-
-	# Production builds are run on docker containers where size of /dev/shm partition < 64MB which causes OOM failure
-	# for chromium compositor that uses the partition for shared memory
-	if [ "$LINUX_EXTRA_ARGS" ]
-	then
-		LINUX_EXTRA_ARGS="$LINUX_EXTRA_ARGS  --disable-dev-shm-usage --use-gl=swiftshader"
-	fi
 
 	echo "Storing crash reports into '$VSCODECRASHDIR'."
 	echo "Running integration tests with '$INTEGRATION_TEST_ELECTRON_PATH' as build."
@@ -83,7 +79,7 @@ after_suite
 "$INTEGRATION_TEST_ELECTRON_PATH" $LINUX_EXTRA_ARGS $ROOT/extensions/typescript-language-features/test-workspace --extensionDevelopmentPath=$ROOT/extensions/typescript-language-features --extensionTestsPath=$ROOT/extensions/typescript-language-features/out/test/unit $ALL_PLATFORMS_API_TESTS_EXTRA_ARGS
 after_suite
 
-"$INTEGRATION_TEST_ELECTRON_PATH" $LINUX_EXTRA_ARGS $ROOT/extensions/emmet/out/test/test-fixtures --extensionDevelopmentPath=$ROOT/extensions/emmet --extensionTestsPath=$ROOT/extensions/emmet/out/test $ALL_PLATFORMS_API_TESTS_EXTRA_ARGS
+"$INTEGRATION_TEST_ELECTRON_PATH" $LINUX_EXTRA_ARGS $ROOT/extensions/emmet/test-workspace --extensionDevelopmentPath=$ROOT/extensions/emmet --extensionTestsPath=$ROOT/extensions/emmet/out/test $ALL_PLATFORMS_API_TESTS_EXTRA_ARGS
 after_suite
 
 "$INTEGRATION_TEST_ELECTRON_PATH" $LINUX_EXTRA_ARGS $(mktemp -d 2>/dev/null) --enable-proposed-api=vscode.git --extensionDevelopmentPath=$ROOT/extensions/git --extensionTestsPath=$ROOT/extensions/git/out/test $ALL_PLATFORMS_API_TESTS_EXTRA_ARGS

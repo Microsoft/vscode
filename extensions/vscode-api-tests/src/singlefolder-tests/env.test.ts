@@ -12,12 +12,12 @@ suite('vscode API - env', () => {
 	teardown(assertNoRpc);
 
 	test('env is set', function () {
-		assert.equal(typeof env.language, 'string');
-		assert.equal(typeof env.appRoot, 'string');
-		assert.equal(typeof env.appName, 'string');
-		assert.equal(typeof env.machineId, 'string');
-		assert.equal(typeof env.sessionId, 'string');
-		assert.equal(typeof env.shell, 'string');
+		assert.strictEqual(typeof env.language, 'string');
+		assert.strictEqual(typeof env.appRoot, 'string');
+		assert.strictEqual(typeof env.appName, 'string');
+		assert.strictEqual(typeof env.machineId, 'string');
+		assert.strictEqual(typeof env.sessionId, 'string');
+		assert.strictEqual(typeof env.shell, 'string');
 	});
 
 	test('env is readonly', function () {
@@ -32,19 +32,21 @@ suite('vscode API - env', () => {
 	test('env.remoteName', function () {
 		const remoteName = env.remoteName;
 		const knownWorkspaceExtension = extensions.getExtension('vscode.git');
-		const knownUiExtension = extensions.getExtension('vscode.git-ui');
+		const knownUiAndWorkspaceExtension = extensions.getExtension('vscode.image-preview');
 		if (typeof remoteName === 'undefined') {
 			// not running in remote, so we expect both extensions
 			assert.ok(knownWorkspaceExtension);
-			assert.ok(knownUiExtension);
-			assert.equal(ExtensionKind.UI, knownUiExtension!.extensionKind);
+			assert.ok(knownUiAndWorkspaceExtension);
+			assert.strictEqual(ExtensionKind.UI, knownUiAndWorkspaceExtension!.extensionKind);
 		} else if (typeof remoteName === 'string') {
 			// running in remote, so we only expect workspace extensions
 			assert.ok(knownWorkspaceExtension);
 			if (env.uiKind === UIKind.Desktop) {
-				assert.ok(!knownUiExtension); // we currently can only access extensions that run on same host
+				assert.ok(!knownUiAndWorkspaceExtension); // we currently can only access extensions that run on same host
+			} else {
+				assert.ok(knownUiAndWorkspaceExtension);
 			}
-			assert.equal(ExtensionKind.Workspace, knownWorkspaceExtension!.extensionKind);
+			assert.strictEqual(ExtensionKind.Workspace, knownWorkspaceExtension!.extensionKind);
 		} else {
 			assert.fail();
 		}
@@ -56,9 +58,9 @@ suite('vscode API - env', () => {
 
 		const kind = env.uiKind;
 		if (result.scheme === 'http' || result.scheme === 'https') {
-			assert.equal(kind, UIKind.Web);
+			assert.strictEqual(kind, UIKind.Web);
 		} else {
-			assert.equal(kind, UIKind.Desktop);
+			assert.strictEqual(kind, UIKind.Desktop);
 		}
 	});
 
@@ -68,9 +70,9 @@ suite('vscode API - env', () => {
 		assert.ok(result);
 
 		if (env.uiKind === UIKind.Desktop) {
-			assert.equal(uri.scheme, result.scheme);
-			assert.equal(uri.authority, result.authority);
-			assert.equal(uri.path, result.path);
+			assert.strictEqual(uri.scheme, result.scheme);
+			assert.strictEqual(uri.authority, result.authority);
+			assert.strictEqual(uri.path, result.path);
 		} else {
 			assert.ok(result.scheme === 'http' || result.scheme === 'https');
 		}

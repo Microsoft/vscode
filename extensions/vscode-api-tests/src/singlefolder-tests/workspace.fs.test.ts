@@ -20,11 +20,11 @@ suite('vscode API - workspace-fs', () => {
 
 	test('fs.stat', async function () {
 		const stat = await vscode.workspace.fs.stat(root);
-		assert.equal(stat.type, vscode.FileType.Directory);
+		assert.strictEqual(stat.type, vscode.FileType.Directory);
 
-		assert.equal(typeof stat.size, 'number');
-		assert.equal(typeof stat.mtime, 'number');
-		assert.equal(typeof stat.ctime, 'number');
+		assert.strictEqual(typeof stat.size, 'number');
+		assert.strictEqual(typeof stat.mtime, 'number');
+		assert.strictEqual(typeof stat.ctime, 'number');
 
 		assert.ok(stat.mtime > 0);
 		assert.ok(stat.ctime > 0);
@@ -35,8 +35,8 @@ suite('vscode API - workspace-fs', () => {
 		// find far.js
 		const tuple = entries.find(tuple => tuple[0] === 'far.js')!;
 		assert.ok(tuple);
-		assert.equal(tuple[0], 'far.js');
-		assert.equal(tuple[1], vscode.FileType.File);
+		assert.strictEqual(tuple[0], 'far.js');
+		assert.strictEqual(tuple[1], vscode.FileType.File);
 	});
 
 	test('fs.stat - bad scheme', async function () {
@@ -63,7 +63,7 @@ suite('vscode API - workspace-fs', () => {
 		await vscode.workspace.fs.writeFile(uri, Buffer.from('HELLO'));
 
 		const stat = await vscode.workspace.fs.stat(uri);
-		assert.equal(stat.type, vscode.FileType.File);
+		assert.strictEqual(stat.type, vscode.FileType.File);
 
 		await vscode.workspace.fs.delete(uri);
 
@@ -129,7 +129,7 @@ suite('vscode API - workspace-fs', () => {
 			assert.ok(false);
 		} catch (e) {
 			assert.ok(e instanceof vscode.FileSystemError);
-			assert.equal(e.name, vscode.FileSystemError.FileNotFound().name);
+			assert.strictEqual(e.name, vscode.FileSystemError.FileNotFound().name);
 		}
 	});
 
@@ -140,7 +140,7 @@ suite('vscode API - workspace-fs', () => {
 			assert.ok(false);
 		} catch (e) {
 			assert.ok(e instanceof vscode.FileSystemError);
-			assert.equal(e.name, vscode.FileSystemError.Unavailable().name);
+			assert.strictEqual(e.name, vscode.FileSystemError.Unavailable().name);
 		}
 	});
 

@@ -2,134 +2,96 @@
   {
     "kind": 1,
     "language": "markdown",
-    "value": "##### `Config`: This should be changed every month/milestone",
-    "editable": true,
-    "outputs": []
+    "value": "##### `Config`: This should be changed every month/milestone"
   },
   {
     "kind": 2,
     "language": "github-issues",
-    "value": "// list of repos we work in\n$repos=repo:microsoft/vscode repo:microsoft/vscode-remote-release repo:microsoft/vscode-js-debug repo:microsoft/vscode-pull-request-github repo:microsoft/vscode-github-issue-notebooks repo:microsoft/vscode-internalbacklog\n\n// current milestone name\n$milestone=milestone:\"March 2021\"",
-    "editable": true,
-    "outputs": []
+    "value": "// list of repos we work in\n$repos=repo:microsoft/vscode repo:microsoft/vscode-remote-release repo:microsoft/vscode-js-debug repo:microsoft/vscode-pull-request-github repo:microsoft/vscode-github-issue-notebooks repo:microsoft/vscode-internalbacklog\n\n// current milestone name\n$milestone=milestone:\"May 2021\""
   },
   {
     "kind": 1,
     "language": "github-issues",
-    "value": "## Milestone Work",
-    "editable": true,
-    "outputs": []
+    "value": "## Milestone Work"
   },
   {
     "kind": 2,
     "language": "github-issues",
-    "value": "$repos $milestone assignee:@me is:open",
-    "editable": true,
-    "outputs": []
+    "value": "$repos $milestone assignee:@me is:open"
   },
   {
     "kind": 1,
     "language": "github-issues",
-    "value": "## Bugs, Debt, Features...",
-    "editable": true,
-    "outputs": []
+    "value": "## Bugs, Debt, Features..."
   },
   {
     "kind": 1,
     "language": "markdown",
-    "value": "#### My Bugs",
-    "editable": true,
-    "outputs": []
+    "value": "#### My Bugs"
   },
   {
     "kind": 2,
     "language": "github-issues",
-    "value": "$repos assignee:@me is:open label:bug",
-    "editable": true,
-    "outputs": []
+    "value": "$repos assignee:@me is:open label:bug"
   },
   {
     "kind": 1,
     "language": "markdown",
-    "value": "#### Debt & Engineering",
-    "editable": true,
-    "outputs": []
+    "value": "#### Debt & Engineering"
   },
   {
     "kind": 2,
     "language": "github-issues",
-    "value": "$repos assignee:@me is:open label:debt OR $repos assignee:@me is:open label:engineering",
-    "editable": true,
-    "outputs": []
+    "value": "$repos assignee:@me is:open label:debt OR $repos assignee:@me is:open label:engineering"
   },
   {
     "kind": 1,
     "language": "markdown",
-    "value": "#### Performance 🐌 🔜 🏎",
-    "editable": true,
-    "outputs": []
+    "value": "#### Performance 🐌 🔜 🏎"
   },
   {
     "kind": 2,
     "language": "github-issues",
-    "value": "$repos assignee:@me is:open label:perf OR $repos assignee:@me is:open label:perf-startup OR $repos assignee:@me is:open label:perf-bloat OR $repos assignee:@me is:open label:freeze-slow-crash-leak",
-    "editable": true,
-    "outputs": []
+    "value": "$repos assignee:@me is:open label:perf OR $repos assignee:@me is:open label:perf-startup OR $repos assignee:@me is:open label:perf-bloat OR $repos assignee:@me is:open label:freeze-slow-crash-leak"
   },
   {
     "kind": 1,
     "language": "markdown",
-    "value": "#### Feature Requests",
-    "editable": true,
-    "outputs": []
+    "value": "#### Feature Requests"
   },
   {
     "kind": 2,
     "language": "github-issues",
-    "value": "$repos assignee:@me is:open label:feature-request milestone:Backlog sort:reactions-+1-desc",
-    "editable": true,
-    "outputs": []
+    "value": "$repos assignee:@me is:open label:feature-request milestone:Backlog sort:reactions-+1-desc"
   },
   {
     "kind": 2,
     "language": "github-issues",
-    "value": "$repos assignee:@me is:open milestone:\"Backlog Candidates\"",
-    "editable": true,
-    "outputs": []
+    "value": "$repos assignee:@me is:open milestone:\"Backlog Candidates\""
   },
   {
     "kind": 1,
     "language": "markdown",
-    "value": "### Personal Inbox\n",
-    "editable": true,
-    "outputs": []
+    "value": "### Personal Inbox\n"
   },
   {
     "kind": 1,
     "language": "markdown",
-    "value": "\n#### Missing Type label",
-    "editable": true,
-    "outputs": []
+    "value": "\n#### Missing Type label"
   },
   {
     "kind": 2,
     "language": "github-issues",
-    "value": "$repos assignee:@me is:open type:issue -label:bug -label:\"needs more info\" -label:feature-request -label:under-discussion -label:debt -label:plan-item -label:upstream",
-    "editable": true,
-    "outputs": []
+    "value": "$repos assignee:@me is:open type:issue -label:bug -label:\"needs more info\" -label:feature-request -label:under-discussion -label:debt -label:plan-item -label:upstream"
   },
   {
     "kind": 1,
     "language": "markdown",
-    "value": "#### Not Actionable",
-    "editable": true,
-    "outputs": []
+    "value": "#### Not Actionable"
   },
   {
     "kind": 2,
     "language": "github-issues",
-    "value": "$repos assignee:@me is:open label:\"needs more info\"",
-    "editable": true,
-    "outputs": []
+    "value": "$repos assignee:@me is:open label:\"needs more info\""
   }
 ]

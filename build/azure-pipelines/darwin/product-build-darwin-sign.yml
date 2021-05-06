@@ -1,0 +1,125 @@
+steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: "14.x"
+
+  - task: AzureKeyVault@1
+    displayName: "Azure Key Vault: Get Secrets"
+    inputs:
+      azureSubscription: "vscode-builds-subscription"
+      KeyVaultName: vscode
+
+  - script: |
+      set -e
+      cat << EOF > ~/.netrc
+      machine github.com
+      login vscode
+      password $(github-distro-mixin-password)
+      EOF
+
+      git config user.email "vscode@microsoft.com"
+      git config user.name "VSCode"
+    displayName: Prepare tooling
+
+  - script: |
+      set -e
+      git pull --no-rebase https://github.com/$(VSCODE_MIXIN_REPO).git $(node -p "require('./package.json').distro")
+    displayName: Merge distro
+
+  - script: |
+      pushd build \
+      && yarn \
+      && npm install -g typescript \
+      && tsc azure-pipelines/common/createAsset.ts \
+      && popd
+    displayName: Restore modules for just build folder and compile it
+
+  - download: current
+    artifact: unsigned_vscode_client_darwin_$(VSCODE_ARCH)_archive
+    displayName: Download $(VSCODE_ARCH) artifact
+
+  - script: |
+      set -e
+      unzip $(Pipeline.Workspace)/unsigned_vscode_client_darwin_$(VSCODE_ARCH)_archive/VSCode-darwin-$(VSCODE_ARCH).zip -d $(agent.builddirectory)/VSCode-darwin-$(VSCODE_ARCH)
+      mv $(Pipeline.Workspace)/unsigned_vscode_client_darwin_$(VSCODE_ARCH)_archive/VSCode-darwin-$(VSCODE_ARCH).zip $(agent.builddirectory)/VSCode-darwin-$(VSCODE_ARCH).zip
+    displayName: Unzip & move
+
+  - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@1
+    inputs:
+      ConnectedServiceName: "ESRP CodeSign"
+      FolderPath: "$(agent.builddirectory)"
+      Pattern: "VSCode-darwin-$(VSCODE_ARCH).zip"
+      signConfigType: inlineSignParams
+      inlineOperation: |
+        [
+          {
+            "keyCode": "CP-401337-Apple",
+            "operationSetCode": "MacAppDeveloperSign",
+            "parameters": [
+              {
+                "parameterName": "Hardening",
+                "parameterValue": "--options=runtime"
+              }
+            ],
+            "toolName": "sign",
+            "toolVersion": "1.0"
+          }
+        ]
+      SessionTimeout: 60
+    displayName: Codesign
+
+  - script: |
+      APP_ROOT=$(agent.builddirectory)/VSCode-darwin-$(VSCODE_ARCH)
+      APP_NAME="`ls $APP_ROOT | head -n 1`"
+      BUNDLE_IDENTIFIER=$(node -p "require(\"$APP_ROOT/$APP_NAME/Contents/Resources/app/product.json\").darwinBundleIdentifier")
+      echo "##vso[task.setvariable variable=BundleIdentifier]$BUNDLE_IDENTIFIER"
+    displayName: Export bundle identifier
+
+  - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@1
+    inputs:
+      ConnectedServiceName: "ESRP CodeSign"
+      FolderPath: "$(agent.builddirectory)"
+      Pattern: "VSCode-darwin-$(VSCODE_ARCH).zip"
+      signConfigType: inlineSignParams
+      inlineOperation: |
+        [
+          {
+            "keyCode": "CP-401337-Apple",
+            "operationSetCode": "MacAppNotarize",
+            "parameters": [
+              {
+                "parameterName": "BundleId",
+                "parameterValue": "$(BundleIdentifier)"
+              }
+            ],
+            "toolName": "sign",
+            "toolVersion": "1.0"
+          }
+        ]
+      SessionTimeout: 60
+    displayName: Notarization
+
+  - script: |
+      set -e
+      APP_ROOT=$(agent.builddirectory)/VSCode-darwin-$(VSCODE_ARCH)
+      APP_NAME="`ls $APP_ROOT | head -n 1`"
+      "$APP_ROOT/$APP_NAME/Contents/Resources/app/bin/code" --export-default-configuration=.build
+    displayName: Verify start after signing (export configuration)
+    condition: and(succeeded(), ne(variables['VSCODE_ARCH'], 'arm64'))
+
+  - script: |
+      # For legacy purposes, arch for x64 is just 'darwin'
+      case $VSCODE_ARCH in
+        x64) ASSET_ID="darwin" ;;
+        arm64) ASSET_ID="darwin-arm64" ;;
+        universal) ASSET_ID="darwin-universal" ;;
+      esac
+      echo "##vso[task.setvariable variable=ASSET_ID]$ASSET_ID"
+    displayName: Set asset id variable
+
+  - script: mv $(agent.builddirectory)/VSCode-darwin-x64.zip $(agent.builddirectory)/VSCode-darwin.zip
+    displayName: Rename x64 build to it's legacy name
+    condition: and(succeeded(), eq(variables['VSCODE_ARCH'], 'x64'))
+
+  - publish: $(Agent.BuildDirectory)/VSCode-$(ASSET_ID).zip
+    artifact: vscode_client_darwin_$(VSCODE_ARCH)_archive

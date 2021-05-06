@@ -10,10 +10,9 @@ import { join, sep } from 'vs/base/common/path';
 import { generateUuid } from 'vs/base/common/uuid';
 import { copy, exists, move, readdir, readDirsInDir, rimraf, RimRafMode, rimrafSync, SymlinkSupport, writeFile, writeFileSync } from 'vs/base/node/pfs';
 import { timeout } from 'vs/base/common/async';
-import { getPathFromAmdModule } from 'vs/base/common/amd';
 import { canNormalize } from 'vs/base/common/normalization';
 import { VSBuffer } from 'vs/base/common/buffer';
-import { flakySuite, getRandomTestPath } from 'vs/base/test/node/testUtils';
+import { flakySuite, getRandomTestPath, getPathFromAmdModule } from 'vs/base/test/node/testUtils';
 import { isWindows } from 'vs/base/common/platform';
 
 flakySuite('PFS', function () {

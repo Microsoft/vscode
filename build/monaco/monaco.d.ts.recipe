@@ -91,6 +91,7 @@ declare namespace monaco.languages {
 
 declare namespace monaco.worker {
 
+#include(vs/editor/common/model/mirrorTextModel): IMirrorTextModel
 #includeAll(vs/editor/common/services/editorSimpleWorker;):
 
 }

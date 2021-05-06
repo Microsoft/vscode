@@ -16,7 +16,7 @@ function filterOk(filter: IIconFilter, word: string, target: IParsedLabelWithIco
 	let r = filter(word, target);
 	assert(r);
 	if (highlights) {
-		assert.deepEqual(r, highlights);
+		assert.deepStrictEqual(r, highlights);
 	}
 }
 

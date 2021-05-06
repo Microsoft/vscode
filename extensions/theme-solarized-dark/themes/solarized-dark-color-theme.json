@@ -350,7 +350,7 @@
 
 		"list.activeSelectionBackground": "#005A6F",
 		// "list.activeSelectionForeground": "",
-		"quickInput.list.focusBackground": "#005A6F",
+		"quickInputList.focusBackground": "#005A6F",
 		"list.hoverBackground": "#004454AA",
 		"list.inactiveSelectionBackground": "#00445488",
 		"list.dropBackground": "#00445488",
@@ -462,6 +462,7 @@
 		"statusBar.debuggingBackground": "#00212B",
 		"statusBar.noFolderBackground": "#00212B",
 		"statusBarItem.remoteBackground": "#2AA19899",
+		"ports.iconRunningProcessForeground": "#369432",
 		"statusBarItem.prominentBackground": "#003847",
 		"statusBarItem.prominentHoverBackground": "#003847",
 		// "statusBarItem.activeBackground": "",

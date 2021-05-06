@@ -5,14 +5,12 @@
 
 import { CancellationToken } from 'vs/base/common/cancellation';
 import { onUnexpectedExternalError } from 'vs/base/common/errors';
-import { extUri } from 'vs/base/common/resources';
 import { registerModelAndPositionCommand } from 'vs/editor/browser/editorExtensions';
 import { Position } from 'vs/editor/common/core/position';
 import { ITextModel } from 'vs/editor/common/model';
-import { Range } from 'vs/editor/common/core/range';
-import { Location, LocationLink, DefinitionProviderRegistry, ImplementationProviderRegistry, TypeDefinitionProviderRegistry, DeclarationProviderRegistry, ProviderResult, ReferenceProviderRegistry } from 'vs/editor/common/modes';
+import { LocationLink, DefinitionProviderRegistry, ImplementationProviderRegistry, TypeDefinitionProviderRegistry, DeclarationProviderRegistry, ProviderResult, ReferenceProviderRegistry } from 'vs/editor/common/modes';
 import { LanguageFeatureRegistry } from 'vs/editor/common/modes/languageFeatureRegistry';
-
+import { ReferencesModel } from 'vs/editor/contrib/gotoSymbol/referencesModel';
 
 function getLocationLinks<T>(
 	model: ITextModel,
@@ -39,11 +37,9 @@ function getLocationLinks<T>(
 				result.push(value);
 			}
 		}
-
-		return sortAndDeduplicate(result);
+		return result;
 	});
 }
-
 
 export function getDefinitionsAtPosition(model: ITextModel, position: Position, token: CancellationToken): Promise<LocationLink[]> {
 	return getLocationLinks(model, position, DefinitionProviderRegistry, (provider, model, position) => {
@@ -83,24 +79,18 @@ export function getReferencesAtPosition(model: ITextModel, position: Position, c
 	});
 }
 
-export function sortAndDeduplicate(locations: Location[]): Location[] {
-	const result: LocationLink[] = [];
-	let last: LocationLink | undefined;
-	for (const link of locations.sort(compareLocations)) {
-		if (last === undefined || compareLocations(last, link) !== 0) {
-			result.push(link);
-			last = link;
-		}
-	}
-	return result;
+// -- API commands ----
+
+async function _sortedAndDeduped(callback: () => Promise<LocationLink[]>): Promise<LocationLink[]> {
+	const rawLinks = await callback();
+	const model = new ReferencesModel(rawLinks, '');
+	const modelLinks = model.references.map(ref => ref.link);
+	model.dispose();
+	return modelLinks;
 }
 
-function compareLocations(a: Location, b: Location): number {
-	return extUri.compare(a.uri, b.uri) || Range.compareRangesUsingStarts(a.range, b.range);
-}
-
-registerModelAndPositionCommand('_executeDefinitionProvider', (model, position) => getDefinitionsAtPosition(model, position, CancellationToken.None));
-registerModelAndPositionCommand('_executeDeclarationProvider', (model, position) => getDeclarationsAtPosition(model, position, CancellationToken.None));
-registerModelAndPositionCommand('_executeImplementationProvider', (model, position) => getImplementationsAtPosition(model, position, CancellationToken.None));
-registerModelAndPositionCommand('_executeTypeDefinitionProvider', (model, position) => getTypeDefinitionsAtPosition(model, position, CancellationToken.None));
-registerModelAndPositionCommand('_executeReferenceProvider', (model, position) => getReferencesAtPosition(model, position, false, CancellationToken.None));
+registerModelAndPositionCommand('_executeDefinitionProvider', (model, position) => _sortedAndDeduped(() => getDefinitionsAtPosition(model, position, CancellationToken.None)));
+registerModelAndPositionCommand('_executeDeclarationProvider', (model, position) => _sortedAndDeduped(() => getDeclarationsAtPosition(model, position, CancellationToken.None)));
+registerModelAndPositionCommand('_executeImplementationProvider', (model, position) => _sortedAndDeduped(() => getImplementationsAtPosition(model, position, CancellationToken.None)));
+registerModelAndPositionCommand('_executeTypeDefinitionProvider', (model, position) => _sortedAndDeduped(() => getTypeDefinitionsAtPosition(model, position, CancellationToken.None)));
+registerModelAndPositionCommand('_executeReferenceProvider', (model, position) => _sortedAndDeduped(() => getReferencesAtPosition(model, position, false, CancellationToken.None)));

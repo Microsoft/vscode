@@ -230,7 +230,7 @@ export class LinkedEditingContribution extends Disposable implements IEditorCont
 		}
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		this.clearRanges();
 		super.dispose();
 	}
@@ -378,7 +378,7 @@ export class LinkedEditingAction extends EditorAction {
 		});
 	}
 
-	runCommand(accessor: ServicesAccessor, args: [URI, IPosition]): void | Promise<void> {
+	override runCommand(accessor: ServicesAccessor, args: [URI, IPosition]): void | Promise<void> {
 		const editorService = accessor.get(ICodeEditorService);
 		const [uri, pos] = Array.isArray(args) && args || [undefined, undefined];
 

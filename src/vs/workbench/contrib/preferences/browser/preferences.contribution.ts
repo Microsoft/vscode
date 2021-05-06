@@ -23,17 +23,17 @@ import { Registry } from 'vs/platform/registry/common/platform';
 import { IWorkspaceContextService, IWorkspaceFolder, WorkbenchState } from 'vs/platform/workspace/common/workspace';
 import { PICK_WORKSPACE_FOLDER_COMMAND_ID } from 'vs/workbench/browser/actions/workspaceCommands';
 import { RemoteNameContext, WorkbenchStateContext } from 'vs/workbench/browser/contextkeys';
-import { EditorDescriptor, Extensions as EditorExtensions, IEditorRegistry } from 'vs/workbench/browser/editor';
-import { AbstractSideBySideEditorInputFactory } from 'vs/workbench/browser/parts/editor/editor.contribution';
+import { EditorDescriptor, IEditorRegistry } from 'vs/workbench/browser/editor';
+import { AbstractSideBySideEditorInputSerializer } from 'vs/workbench/browser/parts/editor/editor.contribution';
 import { Extensions as WorkbenchExtensions, IWorkbenchContribution, IWorkbenchContributionsRegistry } from 'vs/workbench/common/contributions';
-import { EditorInput, Extensions as EditorInputExtensions, IEditorInputFactory, IEditorInputFactoryRegistry } from 'vs/workbench/common/editor';
+import { EditorInput, IEditorInputSerializer, IEditorInputFactoryRegistry, EditorExtensions } from 'vs/workbench/common/editor';
 import { ResourceContextKey } from 'vs/workbench/common/resources';
 import { ExplorerFolderContext, ExplorerRootContext } from 'vs/workbench/contrib/files/common/files';
 import { KeybindingsEditor } from 'vs/workbench/contrib/preferences/browser/keybindingsEditor';
 import { ConfigureLanguageBasedSettingsAction } from 'vs/workbench/contrib/preferences/browser/preferencesActions';
 import { PreferencesEditor } from 'vs/workbench/contrib/preferences/browser/preferencesEditor';
 import { SettingsEditor2, SettingsFocusContext } from 'vs/workbench/contrib/preferences/browser/settingsEditor2';
-import { CONTEXT_KEYBINDINGS_EDITOR, CONTEXT_KEYBINDINGS_SEARCH_FOCUS, CONTEXT_KEYBINDING_FOCUS, CONTEXT_SETTINGS_EDITOR, CONTEXT_SETTINGS_JSON_EDITOR, CONTEXT_SETTINGS_ROW_FOCUS, CONTEXT_SETTINGS_SEARCH_FOCUS, CONTEXT_TOC_ROW_FOCUS, KEYBINDINGS_EDITOR_COMMAND_ADD, KEYBINDINGS_EDITOR_COMMAND_CLEAR_SEARCH_RESULTS, KEYBINDINGS_EDITOR_COMMAND_COPY, KEYBINDINGS_EDITOR_COMMAND_COPY_COMMAND, KEYBINDINGS_EDITOR_COMMAND_DEFINE, KEYBINDINGS_EDITOR_COMMAND_DEFINE_WHEN, KEYBINDINGS_EDITOR_COMMAND_FOCUS_KEYBINDINGS, KEYBINDINGS_EDITOR_COMMAND_RECORD_SEARCH_KEYS, KEYBINDINGS_EDITOR_COMMAND_REMOVE, KEYBINDINGS_EDITOR_COMMAND_RESET, KEYBINDINGS_EDITOR_COMMAND_SEARCH, KEYBINDINGS_EDITOR_COMMAND_SHOW_SIMILAR, KEYBINDINGS_EDITOR_COMMAND_SORTBY_PRECEDENCE, KEYBINDINGS_EDITOR_SHOW_DEFAULT_KEYBINDINGS, KEYBINDINGS_EDITOR_SHOW_EXTENSION_KEYBINDINGS, KEYBINDINGS_EDITOR_SHOW_USER_KEYBINDINGS, MODIFIED_SETTING_TAG, SETTINGS_EDITOR_COMMAND_CLEAR_SEARCH_RESULTS, SETTINGS_EDITOR_COMMAND_SHOW_CONTEXT_MENU } from 'vs/workbench/contrib/preferences/common/preferences';
+import { CONTEXT_KEYBINDINGS_EDITOR, CONTEXT_KEYBINDINGS_SEARCH_FOCUS, CONTEXT_KEYBINDING_FOCUS, CONTEXT_SETTINGS_EDITOR, CONTEXT_SETTINGS_JSON_EDITOR, CONTEXT_SETTINGS_ROW_FOCUS, CONTEXT_SETTINGS_SEARCH_FOCUS, CONTEXT_TOC_ROW_FOCUS, KEYBINDINGS_EDITOR_COMMAND_ADD, KEYBINDINGS_EDITOR_COMMAND_CLEAR_SEARCH_RESULTS, KEYBINDINGS_EDITOR_COMMAND_COPY, KEYBINDINGS_EDITOR_COMMAND_COPY_COMMAND, KEYBINDINGS_EDITOR_COMMAND_DEFINE, KEYBINDINGS_EDITOR_COMMAND_DEFINE_WHEN, KEYBINDINGS_EDITOR_COMMAND_FOCUS_KEYBINDINGS, KEYBINDINGS_EDITOR_COMMAND_RECORD_SEARCH_KEYS, KEYBINDINGS_EDITOR_COMMAND_REMOVE, KEYBINDINGS_EDITOR_COMMAND_RESET, KEYBINDINGS_EDITOR_COMMAND_SEARCH, KEYBINDINGS_EDITOR_COMMAND_SHOW_SIMILAR, KEYBINDINGS_EDITOR_COMMAND_SORTBY_PRECEDENCE, KEYBINDINGS_EDITOR_SHOW_DEFAULT_KEYBINDINGS, KEYBINDINGS_EDITOR_SHOW_EXTENSION_KEYBINDINGS, KEYBINDINGS_EDITOR_SHOW_USER_KEYBINDINGS, MODIFIED_SETTING_TAG, SETTINGS_EDITOR_COMMAND_CLEAR_SEARCH_RESULTS, SETTINGS_EDITOR_COMMAND_SHOW_CONTEXT_MENU, REQUIRE_TRUSTED_WORKSPACE_SETTING_TAG } from 'vs/workbench/contrib/preferences/common/preferences';
 import { PreferencesContribution } from 'vs/workbench/contrib/preferences/common/preferencesContribution';
 import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
 import { IWorkbenchEnvironmentService } from 'vs/workbench/services/environment/common/environmentService';
@@ -57,6 +57,7 @@ const SETTINGS_EDITOR_COMMAND_FOCUS_UP = 'settings.action.focusLevelUp';
 const SETTINGS_EDITOR_COMMAND_SWITCH_TO_JSON = 'settings.switchToJSON';
 const SETTINGS_EDITOR_COMMAND_FILTER_MODIFIED = 'settings.filterByModified';
 const SETTINGS_EDITOR_COMMAND_FILTER_ONLINE = 'settings.filterByOnline';
+const SETTINGS_EDITOR_COMMAND_FILTER_UNTRUSTED = 'settings.filterUntrusted';
 
 const SETTINGS_COMMAND_OPEN_SETTINGS = 'workbench.action.openSettings';
 
@@ -93,15 +94,15 @@ Registry.as<IEditorRegistry>(EditorExtensions.Editors).registerEditor(
 	]
 );
 
-// Register Preferences Editor Input Factory
-class PreferencesEditorInputFactory extends AbstractSideBySideEditorInputFactory {
+// Register Preferences Editor Input Serializer
+class PreferencesEditorInputSerializer extends AbstractSideBySideEditorInputSerializer {
 
 	protected createEditorInput(instantiationService: IInstantiationService, name: string, description: string | undefined, secondaryInput: EditorInput, primaryInput: EditorInput): EditorInput {
 		return new PreferencesEditorInput(name, description, secondaryInput, primaryInput);
 	}
 }
 
-class KeybindingsEditorInputFactory implements IEditorInputFactory {
+class KeybindingsEditorInputSerializer implements IEditorInputSerializer {
 
 	canSerialize(editorInput: EditorInput): boolean {
 		return true;
@@ -111,7 +112,7 @@ class KeybindingsEditorInputFactory implements IEditorInputFactory {
 		const input = <KeybindingsEditorInput>editorInput;
 		return JSON.stringify({
 			name: input.getName(),
-			typeId: input.getTypeId()
+			typeId: input.typeId
 		});
 	}
 
@@ -120,7 +121,7 @@ class KeybindingsEditorInputFactory implements IEditorInputFactory {
 	}
 }
 
-class SettingsEditor2InputFactory implements IEditorInputFactory {
+class SettingsEditor2InputSerializer implements IEditorInputSerializer {
 
 	canSerialize(editorInput: EditorInput): boolean {
 		return true;
@@ -139,8 +140,8 @@ interface ISerializedDefaultPreferencesEditorInput {
 	resource: string;
 }
 
-// Register Default Preferences Editor Input Factory
-class DefaultPreferencesEditorInputFactory implements IEditorInputFactory {
+// Register Default Preferences Editor Input Serializer
+class DefaultPreferencesEditorInputSerializer implements IEditorInputSerializer {
 
 	canSerialize(editorInput: EditorInput): boolean {
 		return true;
@@ -161,10 +162,10 @@ class DefaultPreferencesEditorInputFactory implements IEditorInputFactory {
 	}
 }
 
-Registry.as<IEditorInputFactoryRegistry>(EditorInputExtensions.EditorInputFactories).registerEditorInputFactory(PreferencesEditorInput.ID, PreferencesEditorInputFactory);
-Registry.as<IEditorInputFactoryRegistry>(EditorInputExtensions.EditorInputFactories).registerEditorInputFactory(DefaultPreferencesEditorInput.ID, DefaultPreferencesEditorInputFactory);
-Registry.as<IEditorInputFactoryRegistry>(EditorInputExtensions.EditorInputFactories).registerEditorInputFactory(KeybindingsEditorInput.ID, KeybindingsEditorInputFactory);
-Registry.as<IEditorInputFactoryRegistry>(EditorInputExtensions.EditorInputFactories).registerEditorInputFactory(SettingsEditor2Input.ID, SettingsEditor2InputFactory);
+Registry.as<IEditorInputFactoryRegistry>(EditorExtensions.EditorInputFactories).registerEditorInputSerializer(PreferencesEditorInput.ID, PreferencesEditorInputSerializer);
+Registry.as<IEditorInputFactoryRegistry>(EditorExtensions.EditorInputFactories).registerEditorInputSerializer(DefaultPreferencesEditorInput.ID, DefaultPreferencesEditorInputSerializer);
+Registry.as<IEditorInputFactoryRegistry>(EditorExtensions.EditorInputFactories).registerEditorInputSerializer(KeybindingsEditorInput.ID, KeybindingsEditorInputSerializer);
+Registry.as<IEditorInputFactoryRegistry>(EditorExtensions.EditorInputFactories).registerEditorInputSerializer(SettingsEditor2Input.ID, SettingsEditor2InputSerializer);
 
 const OPEN_SETTINGS2_ACTION_TITLE = { value: nls.localize('openSettings2', "Open Settings (UI)"), original: 'Open Settings (UI)' };
 
@@ -477,6 +478,18 @@ class PreferencesActionsContribution extends Disposable implements IWorkbenchCon
 			order: 2
 		});
 
+		registerAction2(class extends Action2 {
+			constructor() {
+				super({
+					id: SETTINGS_EDITOR_COMMAND_FILTER_UNTRUSTED,
+					title: { value: nls.localize('filterUntrusted', "Show untrusted workspace settings"), original: 'Show untrusted workspace settings' },
+				});
+			}
+			run(accessor: ServicesAccessor) {
+				accessor.get(IPreferencesService).openWorkspaceSettings(false, { query: `@tag:${REQUIRE_TRUSTED_WORKSPACE_SETTING_TAG}` });
+			}
+		});
+
 		this.registerSettingsEditorActions();
 
 		this.extensionService.whenInstalledExtensionsRegistered()
@@ -778,7 +791,7 @@ class PreferencesActionsContribution extends Disposable implements IWorkbenchCon
 			constructor() {
 				super({
 					id: SETTINGS_EDITOR_COMMAND_FOCUS_UP,
-					precondition: ContextKeyExpr.and(CONTEXT_SETTINGS_EDITOR, CONTEXT_SETTINGS_SEARCH_FOCUS.toNegated()),
+					precondition: ContextKeyExpr.and(CONTEXT_SETTINGS_EDITOR, CONTEXT_SETTINGS_SEARCH_FOCUS.toNegated(), CONTEXT_SETTINGS_JSON_EDITOR.toNegated()),
 					keybinding: {
 						primary: KeyCode.Escape,
 						weight: KeybindingWeight.WorkbenchContrib,
@@ -979,7 +992,7 @@ class PreferencesActionsContribution extends Disposable implements IWorkbenchCon
 			id: KEYBINDINGS_EDITOR_COMMAND_DEFINE,
 			weight: KeybindingWeight.WorkbenchContrib,
 			when: ContextKeyExpr.and(CONTEXT_KEYBINDINGS_EDITOR, CONTEXT_KEYBINDING_FOCUS),
-			primary: KeyChord(KeyMod.CtrlCmd | KeyCode.KEY_K, KeyMod.CtrlCmd | KeyCode.KEY_K),
+			primary: KeyCode.Enter,
 			handler: (accessor, args: any) => {
 				const editorPane = accessor.get(IEditorService).activeEditorPane;
 				if (editorPane instanceof KeybindingsEditor) {
@@ -1020,7 +1033,7 @@ class PreferencesActionsContribution extends Disposable implements IWorkbenchCon
 			when: ContextKeyExpr.and(CONTEXT_KEYBINDINGS_EDITOR, CONTEXT_KEYBINDING_FOCUS),
 			primary: KeyCode.Delete,
 			mac: {
-				primary: KeyChord(KeyMod.CtrlCmd | KeyCode.KEY_K, KeyMod.CtrlCmd | KeyCode.Backspace)
+				primary: KeyMod.CtrlCmd | KeyCode.Backspace
 			},
 			handler: (accessor, args: any) => {
 				const editorPane = accessor.get(IEditorService).activeEditorPane;

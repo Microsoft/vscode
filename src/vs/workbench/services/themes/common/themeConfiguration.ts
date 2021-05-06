@@ -70,7 +70,7 @@ const preferredHCThemeSettingSchema: IConfigurationPropertySchema = {
 };
 const detectColorSchemeSettingSchema: IConfigurationPropertySchema = {
 	type: 'boolean',
-	description: nls.localize('detectColorScheme', 'If set, automatically switch to the preferred color theme based on the OS appearance.'),
+	markdownDescription: nls.localize('detectColorScheme', 'If set, automatically switch to the preferred color theme based on the OS appearance. If the OS appearance is dark, the theme specified at `#{0}#` is used, for light `#{1}#`', ThemeSettings.PREFERRED_DARK_THEME, ThemeSettings.PREFERRED_LIGHT_THEME),
 	default: false
 };
 
@@ -106,7 +106,7 @@ const productIconThemeSettingSchema: IConfigurationPropertySchema = {
 const detectHCSchemeSettingSchema: IConfigurationPropertySchema = {
 	type: 'boolean',
 	default: true,
-	description: nls.localize('autoDetectHighContrast', "If enabled, will automatically change to high contrast theme if the OS is using a high contrast theme."),
+	markdownDescription: nls.localize('autoDetectHighContrast', "If enabled, will automatically change to high contrast theme if the OS is using a high contrast theme. The high contrast theme to use is specified by `#{0}#`", ThemeSettings.PREFERRED_HC_THEME),
 	scope: ConfigurationScope.APPLICATION
 };
 

@@ -19,7 +19,7 @@ suite('JSON - edits', () => {
 			lastEditOffset = edit.offset;
 			content = content.substring(0, edit.offset) + edit.content + content.substring(edit.offset + edit.length);
 		}
-		assert.equal(content, expected);
+		assert.strictEqual(content, expected);
 	}
 
 	let formatterOptions: FormattingOptions = {

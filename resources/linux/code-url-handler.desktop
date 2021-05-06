@@ -2,7 +2,7 @@
 Name=@@NAME_LONG@@ - URL Handler
 Comment=Code Editing. Redefined.
 GenericName=Text Editor
-Exec=@@EXEC@@ --no-sandbox --open-url %U
+Exec=@@EXEC@@ --open-url %U
 Icon=@@ICON@@
 Type=Application
 NoDisplay=true

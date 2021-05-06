@@ -29,6 +29,9 @@ function getStringValue(data: unknown): string {
 }
 
 class JSONRendererContrib extends Disposable implements IOutputRendererContribution {
+	getType() {
+		return RenderOutputType.Mainframe;
+	}
 
 	getMimetypes() {
 		return ['application/json'];
@@ -51,7 +54,8 @@ class JSONRendererContrib extends Disposable implements IOutputRendererContribut
 			dimension: {
 				width: 0,
 				height: 0
-			}
+			},
+			automaticLayout: true,
 		}, {
 			isSimpleWidget: true
 		});
@@ -72,11 +76,15 @@ class JSONRendererContrib extends Disposable implements IOutputRendererContribut
 
 		container.style.height = `${height + 8}px`;
 
-		return { type: RenderOutputType.Mainframe };
+		return { type: RenderOutputType.Mainframe, initHeight: height };
 	}
 }
 
 class JavaScriptRendererContrib extends Disposable implements IOutputRendererContribution {
+	getType() {
+		return RenderOutputType.Html;
+	}
+
 	getMimetypes() {
 		return ['application/javascript'];
 	}
@@ -104,6 +112,9 @@ class JavaScriptRendererContrib extends Disposable implements IOutputRendererCon
 }
 
 class CodeRendererContrib extends Disposable implements IOutputRendererContribution {
+	getType() {
+		return RenderOutputType.Mainframe;
+	}
 
 	getMimetypes() {
 		return ['text/x-javascript'];
@@ -151,9 +162,12 @@ class CodeRendererContrib extends Disposable implements IOutputRendererContribut
 }
 
 class StreamRendererContrib extends Disposable implements IOutputRendererContribution {
+	getType() {
+		return RenderOutputType.Mainframe;
+	}
 
 	getMimetypes() {
-		return ['application/x.notebook.stream'];
+		return ['application/x.notebook.stdout', 'application/x.notebook.stream'];
 	}
 
 	constructor(
@@ -180,7 +194,26 @@ class StreamRendererContrib extends Disposable implements IOutputRendererContrib
 	}
 }
 
+class StderrRendererContrib extends StreamRendererContrib {
+	override getType() {
+		return RenderOutputType.Mainframe;
+	}
+
+	override getMimetypes() {
+		return ['application/x.notebook.stderr'];
+	}
+
+	override render(output: ICellOutputViewModel, items: IOutputItemDto[], container: HTMLElement, notebookUri: URI | undefined): IRenderOutput {
+		const result = super.render(output, items, container, notebookUri);
+		container.classList.add('error');
+		return result;
+	}
+}
+
 class ErrorRendererContrib extends Disposable implements IOutputRendererContribution {
+	getType() {
+		return RenderOutputType.Mainframe;
+	}
 
 	getMimetypes() {
 		return ['application/x.notebook.error-traceback'];
@@ -228,6 +261,9 @@ class ErrorRendererContrib extends Disposable implements IOutputRendererContribu
 }
 
 class PlainTextRendererContrib extends Disposable implements IOutputRendererContribution {
+	getType() {
+		return RenderOutputType.Mainframe;
+	}
 
 	getMimetypes() {
 		return ['text/plain'];
@@ -256,6 +292,9 @@ class PlainTextRendererContrib extends Disposable implements IOutputRendererCont
 }
 
 class HTMLRendererContrib extends Disposable implements IOutputRendererContribution {
+	getType() {
+		return RenderOutputType.Html;
+	}
 
 	getMimetypes() {
 		return ['text/html'];
@@ -280,6 +319,9 @@ class HTMLRendererContrib extends Disposable implements IOutputRendererContribut
 }
 
 class SVGRendererContrib extends Disposable implements IOutputRendererContribution {
+	getType() {
+		return RenderOutputType.Html;
+	}
 
 	getMimetypes() {
 		return ['image/svg+xml'];
@@ -302,6 +344,9 @@ class SVGRendererContrib extends Disposable implements IOutputRendererContributi
 }
 
 class MdRendererContrib extends Disposable implements IOutputRendererContribution {
+	getType() {
+		return RenderOutputType.Mainframe;
+	}
 
 	getMimetypes() {
 		return ['text/markdown'];
@@ -329,6 +374,9 @@ class MdRendererContrib extends Disposable implements IOutputRendererContributio
 }
 
 class PNGRendererContrib extends Disposable implements IOutputRendererContribution {
+	getType() {
+		return RenderOutputType.Mainframe;
+	}
 
 	getMimetypes() {
 		return ['image/png'];
@@ -355,6 +403,9 @@ class PNGRendererContrib extends Disposable implements IOutputRendererContributi
 }
 
 class JPEGRendererContrib extends Disposable implements IOutputRendererContribution {
+	getType() {
+		return RenderOutputType.Mainframe;
+	}
 
 	getMimetypes() {
 		return ['image/jpeg'];
@@ -392,6 +443,7 @@ NotebookRegistry.registerOutputTransform('plain', PlainTextRendererContrib);
 NotebookRegistry.registerOutputTransform('code', CodeRendererContrib);
 NotebookRegistry.registerOutputTransform('error-trace', ErrorRendererContrib);
 NotebookRegistry.registerOutputTransform('stream-text', StreamRendererContrib);
+NotebookRegistry.registerOutputTransform('stderr', StderrRendererContrib);
 
 export function getOutputSimpleEditorOptions(): IEditorOptions {
 	return {

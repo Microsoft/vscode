@@ -8,6 +8,14 @@
 	visibility: hidden !important;
 }
 
+.monaco-workbench .part.sidebar .title-actions .actions-container {
+	justify-content: flex-end;
+}
+
+.monaco-workbench .part.sidebar .title-actions .action-item {
+	margin-right: 4px;
+}
+
 .monaco-workbench .part.sidebar > .title > .title-label h2 {
 	text-transform: uppercase;
 }

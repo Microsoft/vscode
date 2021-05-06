@@ -76,7 +76,7 @@ class MonacoWebWorkerImpl<T> extends EditorWorkerClient implements MonacoWebWork
 	}
 
 	// foreign host request
-	public fhr(method: string, args: any[]): Promise<any> {
+	public override fhr(method: string, args: any[]): Promise<any> {
 		if (!this._foreignModuleHost || typeof this._foreignModuleHost[method] !== 'function') {
 			return Promise.reject(new Error('Missing method ' + method + ' or missing main thread foreign host.'));
 		}

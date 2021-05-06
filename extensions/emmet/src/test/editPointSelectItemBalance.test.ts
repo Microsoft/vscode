@@ -352,17 +352,16 @@ suite('Tests for Next/Previous Select/Edit point and Balance actions', () => {
 });
 
 function testSelection(selection: Selection, startChar: number, startline: number, endChar?: number, endLine?: number) {
-
-	assert.equal(selection.anchor.line, startline);
-	assert.equal(selection.anchor.character, startChar);
+	assert.strictEqual(selection.anchor.line, startline);
+	assert.strictEqual(selection.anchor.character, startChar);
 	if (!endLine && endLine !== 0) {
-		assert.equal(selection.isSingleLine, true);
+		assert.strictEqual(selection.isSingleLine, true);
 	} else {
-		assert.equal(selection.active.line, endLine);
+		assert.strictEqual(selection.active.line, endLine);
 	}
 	if (!endChar && endChar !== 0) {
-		assert.equal(selection.isEmpty, true);
+		assert.strictEqual(selection.isEmpty, true);
 	} else {
-		assert.equal(selection.active.character, endChar);
+		assert.strictEqual(selection.active.character, endChar);
 	}
 }

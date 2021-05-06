@@ -7,7 +7,7 @@ import { Codicon } from 'vs/base/common/codicons';
 import { localize } from 'vs/nls';
 import { registerIcon } from 'vs/platform/theme/common/iconRegistry';
 import { registerThemingParticipant, ThemeIcon } from 'vs/platform/theme/common/themeService';
-import { TestResult } from 'vs/workbench/api/common/extHostTypes';
+import { TestResultState } from 'vs/workbench/api/common/extHostTypes';
 import { testingColorRunAction, testStatesToIconColors } from 'vs/workbench/contrib/testing/browser/theme';
 
 export const testingViewIcon = registerIcon('test-view-icon', Codicon.beaker, localize('testViewIcon', 'View icon of the test view.'));
@@ -22,14 +22,14 @@ export const testingHiddenIcon = registerIcon('testing-hidden', Codicon.eyeClose
 export const testingShowAsList = registerIcon('testing-show-as-list-icon', Codicon.listTree, localize('testingShowAsList', 'Icon shown when the test explorer is disabled as a tree.'));
 export const testingShowAsTree = registerIcon('testing-show-as-list-icon', Codicon.listFlat, localize('testingShowAsTree', 'Icon shown when the test explorer is disabled as a list.'));
 
-export const testingStatesToIcons = new Map<TestResult, ThemeIcon>([
-	[TestResult.Errored, registerIcon('testing-error-icon', Codicon.issues, localize('testingErrorIcon', 'Icon shown for tests that have an error.'))],
-	[TestResult.Failed, registerIcon('testing-failed-icon', Codicon.error, localize('testingFailedIcon', 'Icon shown for tests that failed.'))],
-	[TestResult.Passed, registerIcon('testing-passed-icon', Codicon.pass, localize('testingPassedIcon', 'Icon shown for tests that passed.'))],
-	[TestResult.Queued, registerIcon('testing-queued-icon', Codicon.history, localize('testingQueuedIcon', 'Icon shown for tests that are queued.'))],
-	[TestResult.Running, ThemeIcon.modify(Codicon.loading, 'spin')],
-	[TestResult.Skipped, registerIcon('testing-skipped-icon', Codicon.debugStepOver, localize('testingSkippedIcon', 'Icon shown for tests that are skipped.'))],
-	[TestResult.Unset, registerIcon('testing-unset-icon', Codicon.circleOutline, localize('testingUnsetIcon', 'Icon shown for tests that are in an unset state.'))],
+export const testingStatesToIcons = new Map<TestResultState, ThemeIcon>([
+	[TestResultState.Errored, registerIcon('testing-error-icon', Codicon.issues, localize('testingErrorIcon', 'Icon shown for tests that have an error.'))],
+	[TestResultState.Failed, registerIcon('testing-failed-icon', Codicon.error, localize('testingFailedIcon', 'Icon shown for tests that failed.'))],
+	[TestResultState.Passed, registerIcon('testing-passed-icon', Codicon.pass, localize('testingPassedIcon', 'Icon shown for tests that passed.'))],
+	[TestResultState.Queued, registerIcon('testing-queued-icon', Codicon.history, localize('testingQueuedIcon', 'Icon shown for tests that are queued.'))],
+	[TestResultState.Running, ThemeIcon.modify(Codicon.loading, 'spin')],
+	[TestResultState.Skipped, registerIcon('testing-skipped-icon', Codicon.debugStepOver, localize('testingSkippedIcon', 'Icon shown for tests that are skipped.'))],
+	[TestResultState.Unset, registerIcon('testing-unset-icon', Codicon.circleOutline, localize('testingUnsetIcon', 'Icon shown for tests that are in an unset state.'))],
 ]);
 
 registerThemingParticipant((theme, collector) => {

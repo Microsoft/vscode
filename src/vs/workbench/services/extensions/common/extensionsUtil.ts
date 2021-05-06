@@ -10,56 +10,63 @@ import { getGalleryExtensionId } from 'vs/platform/extensionManagement/common/ex
 import { isNonEmptyArray } from 'vs/base/common/arrays';
 import { IProductService } from 'vs/platform/product/common/productService';
 
-export function prefersExecuteOnUI(manifest: IExtensionManifest, productService: IProductService, configurationService: IConfigurationService): boolean {
-	const extensionKind = getExtensionKind(manifest, productService, configurationService);
-	return (extensionKind.length > 0 && extensionKind[0] === 'ui');
-}
-
-export function prefersExecuteOnWorkspace(manifest: IExtensionManifest, productService: IProductService, configurationService: IConfigurationService): boolean {
-	const extensionKind = getExtensionKind(manifest, productService, configurationService);
-	return (extensionKind.length > 0 && extensionKind[0] === 'workspace');
-}
-
-export function prefersExecuteOnWeb(manifest: IExtensionManifest, productService: IProductService, configurationService: IConfigurationService): boolean {
-	const extensionKind = getExtensionKind(manifest, productService, configurationService);
-	return (extensionKind.length > 0 && extensionKind[0] === 'web');
-}
-
-export function canExecuteOnUI(manifest: IExtensionManifest, productService: IProductService, configurationService: IConfigurationService): boolean {
-	const extensionKind = getExtensionKind(manifest, productService, configurationService);
-	return extensionKind.some(kind => kind === 'ui');
-}
-
-export function canExecuteOnWorkspace(manifest: IExtensionManifest, productService: IProductService, configurationService: IConfigurationService): boolean {
-	const extensionKind = getExtensionKind(manifest, productService, configurationService);
-	return extensionKind.some(kind => kind === 'workspace');
-}
-
-export function canExecuteOnWeb(manifest: IExtensionManifest, productService: IProductService, configurationService: IConfigurationService): boolean {
-	const extensionKind = getExtensionKind(manifest, productService, configurationService);
-	return extensionKind.some(kind => kind === 'web');
-}
-
-export function getExtensionKind(manifest: IExtensionManifest, productService: IProductService, configurationService: IConfigurationService): ExtensionKind[] {
-	// check in config
-	let result = getConfiguredExtensionKind(manifest, configurationService);
-	if (typeof result !== 'undefined') {
-		return toArray(result);
+export class ExtensionKindController2 {
+	constructor(
+		@IProductService private readonly productService: IProductService,
+		@IConfigurationService private readonly configurationService: IConfigurationService,
+	) {
+	}
+	prefersExecuteOnUI(manifest: IExtensionManifest): boolean {
+		const extensionKind = this.getExtensionKind(manifest);
+		return (extensionKind.length > 0 && extensionKind[0] === 'ui');
 	}
 
-	// check product.json
-	result = getProductExtensionKind(manifest, productService);
-	if (typeof result !== 'undefined') {
-		return result;
+	prefersExecuteOnWorkspace(manifest: IExtensionManifest): boolean {
+		const extensionKind = this.getExtensionKind(manifest);
+		return (extensionKind.length > 0 && extensionKind[0] === 'workspace');
 	}
 
-	// check the manifest itself
-	result = manifest.extensionKind;
-	if (typeof result !== 'undefined') {
-		return toArray(result);
+	prefersExecuteOnWeb(manifest: IExtensionManifest): boolean {
+		const extensionKind = this.getExtensionKind(manifest);
+		return (extensionKind.length > 0 && extensionKind[0] === 'web');
 	}
 
-	return deduceExtensionKind(manifest);
+	canExecuteOnUI(manifest: IExtensionManifest): boolean {
+		const extensionKind = this.getExtensionKind(manifest);
+		return extensionKind.some(kind => kind === 'ui');
+	}
+
+	canExecuteOnWorkspace(manifest: IExtensionManifest): boolean {
+		const extensionKind = this.getExtensionKind(manifest);
+		return extensionKind.some(kind => kind === 'workspace');
+	}
+
+	canExecuteOnWeb(manifest: IExtensionManifest): boolean {
+		const extensionKind = this.getExtensionKind(manifest);
+		return extensionKind.some(kind => kind === 'web');
+	}
+
+	getExtensionKind(manifest: IExtensionManifest): ExtensionKind[] {
+		// check in config
+		let result = getConfiguredExtensionKind(manifest, this.configurationService);
+		if (typeof result !== 'undefined') {
+			return toArray(result);
+		}
+
+		// check product.json
+		result = getProductExtensionKind(manifest, this.productService);
+		if (typeof result !== 'undefined') {
+			return result;
+		}
+
+		// check the manifest itself
+		result = manifest.extensionKind;
+		if (typeof result !== 'undefined') {
+			return toArray(result);
+		}
+
+		return deduceExtensionKind(manifest);
+	}
 }
 
 export function deduceExtensionKind(manifest: IExtensionManifest): ExtensionKind[] {
@@ -141,3 +148,4 @@ function toArray(extensionKind: ExtensionKind | ExtensionKind[]): ExtensionKind[
 	}
 	return extensionKind === 'ui' ? ['ui', 'workspace'] : [extensionKind];
 }
+

@@ -152,6 +152,11 @@
 	padding-right: 11px;
 }
 
+.extension-list-item > .details > .workspace-trust-description {
+	display: none;
+	padding-right: 11px;
+}
+
 .extension-list-item > .details > .footer {
 	display: flex;
 	justify-content: flex-end;
@@ -176,10 +181,19 @@
 	flex-wrap: wrap-reverse;
 }
 
+
+.extension-list-item > .details > .footer > .monaco-action-bar > .actions-container .action-label:not(.icon) {
+	border-radius: 0;
+}
+
 .extension-list-item > .details > .footer > .monaco-action-bar > .actions-container .extension-action.label {
 	max-width: 150px;
 }
 
 .extension-list-item .footer .monaco-action-bar .action-item.action-dropdown-item.empty > .action-label {
 	margin-right: 4px;
+}
+
+.extension-list-item .monaco-action-bar > .actions-container > .action-item.disabled {
+	min-width: 0;
 }

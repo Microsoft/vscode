@@ -12,9 +12,9 @@ suite('HTML Document Context', () => {
 		const rootFolders = [{ name: '', uri: 'file:///users/test/' }];
 
 		let context = getDocumentContext(docURI, rootFolders);
-		assert.equal(context.resolveReference('/', docURI), 'file:///users/test/');
-		assert.equal(context.resolveReference('/message.html', docURI), 'file:///users/test/message.html');
-		assert.equal(context.resolveReference('message.html', docURI), 'file:///users/test/folder/message.html');
-		assert.equal(context.resolveReference('message.html', 'file:///users/test/'), 'file:///users/test/message.html');
+		assert.strictEqual(context.resolveReference('/', docURI), 'file:///users/test/');
+		assert.strictEqual(context.resolveReference('/message.html', docURI), 'file:///users/test/message.html');
+		assert.strictEqual(context.resolveReference('message.html', docURI), 'file:///users/test/folder/message.html');
+		assert.strictEqual(context.resolveReference('message.html', 'file:///users/test/'), 'file:///users/test/message.html');
 	});
 });

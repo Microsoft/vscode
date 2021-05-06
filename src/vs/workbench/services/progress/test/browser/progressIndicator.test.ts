@@ -4,7 +4,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as assert from 'assert';
-import { IAction } from 'vs/base/common/actions';
 import { IEditorControl } from 'vs/workbench/common/editor';
 import { CompositeScope, CompositeProgressIndicator } from 'vs/workbench/services/progress/browser/progressIndicator';
 import { IViewletService } from 'vs/workbench/services/viewlet/browser/viewlet';
@@ -24,9 +23,6 @@ class TestViewlet implements IViewlet {
 	hasFocus() { return false; }
 	getId(): string { return this.id; }
 	getTitle(): string { return this.id; }
-	getActions(): IAction[] { return []; }
-	getSecondaryActions(): IAction[] { return []; }
-	getContextMenuActions(): IAction[] { return []; }
 	getControl(): IEditorControl { return null!; }
 	focus(): void { }
 	getOptimalWidth(): number { return 10; }

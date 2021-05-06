@@ -143,7 +143,7 @@ export class WorkspaceWatcher extends Disposable {
 		this.watches.clear();
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		super.dispose();
 
 		this.unwatchWorkspaces();

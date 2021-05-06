@@ -95,7 +95,7 @@ export class SpdLogLogger extends AbstractMessageLogger implements ILogger {
 		}
 	}
 
-	flush(): void {
+	override flush(): void {
 		if (this._logger) {
 			this._logger.flush();
 		} else {
@@ -103,7 +103,7 @@ export class SpdLogLogger extends AbstractMessageLogger implements ILogger {
 		}
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		if (this._logger) {
 			this.disposeLogger();
 		} else {

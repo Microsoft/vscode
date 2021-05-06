@@ -18,7 +18,7 @@
 	"html.format.wrapAttributes.forcealign": "Wrap each attribute except first and keep aligned.",
 	"html.format.wrapAttributes.forcemultiline": "Wrap each attribute.",
 	"html.format.wrapAttributes.alignedmultiple": "Wrap when line length is exceeded, align attributes vertically.",
-	"html.format.wrapAttributes.preserve": "Preserve wrapping of attributes",
+	"html.format.wrapAttributes.preserve": "Preserve wrapping of attributes.",
 	"html.format.wrapAttributes.preservealigned": "Preserve wrapping of attributes but align.",
 	"html.format.templating.desc": "Honor django, erb, handlebars and php templating language tags.",
 	"html.format.unformattedContentDelimiter.desc": "Keep text content together between this string.",

@@ -180,7 +180,7 @@ export class ReviewZoneWidget extends ZoneWidget implements ICommentThreadWidget
 		return undefined;
 	}
 
-	protected revealLine(lineNumber: number) {
+	protected override revealLine(lineNumber: number) {
 		// we don't do anything here as we always do the reveal ourselves.
 	}
 
@@ -397,11 +397,11 @@ export class ReviewZoneWidget extends ZoneWidget implements ICommentThreadWidget
 		this.setFocusedComment(this._focusedComment);
 	}
 
-	protected _onWidth(widthInPixel: number): void {
+	protected override _onWidth(widthInPixel: number): void {
 		this._commentReplyComponent?.editor.layout({ height: 5 * 18, width: widthInPixel - 54 /* margin 20px * 10 + scrollbar 14px*/ });
 	}
 
-	protected _doLayout(heightInPixel: number, widthInPixel: number): void {
+	protected override _doLayout(heightInPixel: number, widthInPixel: number): void {
 		this._commentReplyComponent?.editor.layout({ height: 5 * 18, width: widthInPixel - 54 /* margin 20px * 10 + scrollbar 14px*/ });
 	}
 
@@ -941,10 +941,17 @@ export class ReviewZoneWidget extends ZoneWidget implements ICommentThreadWidget
 		}
 
 		const fontInfo = this.editor.getOption(EditorOption.fontInfo);
+		const fontFamilyVar = '--comment-thread-editor-font-family';
+		const fontSizeVar = '--comment-thread-editor-font-size';
+		const fontWeightVar = '--comment-thread-editor-font-weight';
+		this.container?.style.setProperty(fontFamilyVar, fontInfo.fontFamily);
+		this.container?.style.setProperty(fontSizeVar, `${fontInfo.fontSize}px`);
+		this.container?.style.setProperty(fontWeightVar, fontInfo.fontWeight);
+
 		content.push(`.monaco-editor .review-widget .body code {
-			font-family: '${fontInfo.fontFamily}';
-			font-size: ${fontInfo.fontSize}px;
-			font-weight: ${fontInfo.fontWeight};
+			font-family: var(${fontFamilyVar});
+			font-weight: var(${fontWeightVar});
+			font-size: var(${fontSizeVar});
 		}`);
 
 		this._styleElement.textContent = content.join('\n');
@@ -953,13 +960,13 @@ export class ReviewZoneWidget extends ZoneWidget implements ICommentThreadWidget
 		this.setCommentEditorDecorations();
 	}
 
-	show(rangeOrPos: IRange | IPosition, heightInLines: number): void {
+	override show(rangeOrPos: IRange | IPosition, heightInLines: number): void {
 		this._isExpanded = true;
 		super.show(rangeOrPos, heightInLines);
 		this._refresh();
 	}
 
-	hide() {
+	override hide() {
 		if (this._isExpanded) {
 			this._isExpanded = false;
 			// Focus the container so that the comment editor will be blurred before it is hidden
@@ -968,7 +975,7 @@ export class ReviewZoneWidget extends ZoneWidget implements ICommentThreadWidget
 		super.hide();
 	}
 
-	dispose() {
+	override dispose() {
 		super.dispose();
 		if (this._resizeObserver) {
 			this._resizeObserver.disconnect();

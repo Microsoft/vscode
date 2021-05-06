@@ -4,7 +4,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Event } from 'vs/base/common/event';
-import { IDisposable } from 'vs/base/common/lifecycle';
 import { URI } from 'vs/base/common/uri';
 import { IMode, LanguageId, LanguageIdentifier } from 'vs/editor/common/modes';
 import { createDecorator } from 'vs/platform/instantiation/common/instantiation';
@@ -22,7 +21,7 @@ export interface ILanguageExtensionPoint {
 	configuration?: URI;
 }
 
-export interface ILanguageSelection extends IDisposable {
+export interface ILanguageSelection {
 	readonly languageIdentifier: LanguageIdentifier;
 	readonly onDidChange: Event<LanguageIdentifier>;
 }

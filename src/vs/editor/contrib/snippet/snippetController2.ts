@@ -43,7 +43,7 @@ const _defaultOptions: ISnippetInsertOptions = {
 
 export class SnippetController2 implements IEditorContribution {
 
-	public static ID = 'snippetController2';
+	public static readonly ID = 'snippetController2';
 
 	static get(editor: ICodeEditor): SnippetController2 {
 		return editor.getContribution<SnippetController2>(SnippetController2.ID);

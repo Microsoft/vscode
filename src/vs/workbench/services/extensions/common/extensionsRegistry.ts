@@ -415,6 +415,48 @@ export const schema: IJSONSchema = {
 				}
 			]
 		},
+		capabilities: {
+			description: nls.localize('vscode.extension.capabilities', "Declare the set of supported capabilities by the extension."),
+			type: 'object',
+			properties: {
+				virtualWorkspaces: {
+					description: nls.localize('vscode.extension.capabilities.virtualWorkspaces', "Declares whether the extension should be enabled in virtual workspaces. A virtual workspace is a workspace which is not backed by any on-disk resources. When false, this extension will be automatically disabled in virtual workspaces. Default is true."),
+					type: 'boolean',
+					default: true
+				},
+				untrustedWorkspaces: {
+					description: nls.localize('vscode.extension.capabilities.untrustedWorkspaces', 'Declares how the extension should be handled in untrusted workspaces.'),
+					type: 'object',
+					required: ['supported'],
+					defaultSnippets: [
+						{ body: { supported: '${1:limited}', description: '${2}' } },
+					],
+					properties: {
+						supported: {
+							markdownDescription: nls.localize('vscode.extension.capabilities.untrustedWorkspaces.supported', "Declares the level of support for untrusted workspaces by the extension."),
+							type: ['string', 'boolean'],
+							enum: ['limited', true, false],
+							enumDescriptions: [
+								nls.localize('vscode.extension.capabilities.untrustedWorkspaces.supported.limited', "The extension will be enabled in untrusted workspaces with some functionality disabled."),
+								nls.localize('vscode.extension.capabilities.untrustedWorkspaces.supported.true', "The extension will be enabled in untrusted workspaces with all functionality enabled."),
+								nls.localize('vscode.extension.capabilities.untrustedWorkspaces.supported.false', "The extension will not be enabled in untrusted workspaces."),
+							]
+						},
+						restrictedConfigurations: {
+							description: nls.localize('vscode.extension.capabilities.untrustedWorkspaces.restrictedConfigurations', "A list of configuration keys contributed by the extension that should not use workspace values in untrusted workspaces."),
+							type: 'array',
+							items: {
+								type: 'string'
+							}
+						},
+						description: {
+							type: 'string',
+							markdownDescription: nls.localize('vscode.extension.capabilities.untrustedWorkspaces.description', "A description of how workspace trust affects the extensions behavior and why it is needed. This only applies when `supported` is not `true`."),
+						}
+					}
+				}
+			}
+		},
 		scripts: {
 			type: 'object',
 			properties: {

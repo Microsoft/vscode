@@ -247,7 +247,7 @@ CommandsRegistry.registerCommand('_executeCodeActionProvider', async function (a
 	const codeActionSet = await getCodeActions(
 		model,
 		validatedRangeOrSelection,
-		{ type: modes.CodeActionTriggerType.Manual, filter: { includeSourceActions: true, include } },
+		{ type: modes.CodeActionTriggerType.Invoke, filter: { includeSourceActions: true, include } },
 		Progress.None,
 		CancellationToken.None);
 

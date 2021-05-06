@@ -87,7 +87,7 @@ export class ColumnSelection {
 
 	public static columnSelectLeft(config: CursorConfiguration, model: ICursorSimpleModel, prevColumnSelectData: IColumnSelectData): IColumnSelectResult {
 		let toViewVisualColumn = prevColumnSelectData.toViewVisualColumn;
-		if (toViewVisualColumn > 1) {
+		if (toViewVisualColumn > 0) {
 			toViewVisualColumn--;
 		}
 

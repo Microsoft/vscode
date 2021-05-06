@@ -73,6 +73,13 @@ export interface INeverShowAgainOptions {
 export interface INotification extends INotificationProperties {
 
 	/**
+	 * The id of the notification. If provided, will be used to compare
+	 * notifications with others to decide whether a notification is
+	 * duplicate or not.
+	 */
+	readonly id?: string;
+
+	/**
 	 * The severity of the notification. Either `Info`, `Warning` or `Error`.
 	 */
 	readonly severity: Severity;
@@ -86,7 +93,7 @@ export interface INotification extends INotificationProperties {
 	/**
 	 * The source of the notification appears as additional information.
 	 */
-	readonly source?: string;
+	readonly source?: string | { label: string; id: string; };
 
 	/**
 	 * Actions to show as part of the notification. Primary actions show up as
@@ -117,14 +124,14 @@ export interface INotificationActions {
 	 *
 	 * Pass `ActionWithMenuAction` for an action that has additional menu actions.
 	 */
-	readonly primary?: ReadonlyArray<IAction>;
+	readonly primary?: readonly IAction[];
 
 	/**
 	 * Secondary actions are meant to provide additional configuration or context
 	 * for the notification and will show up less prominent. A notification does not
 	 * close automatically when invoking a secondary action.
 	 */
-	readonly secondary?: ReadonlyArray<IAction>;
+	readonly secondary?: readonly IAction[];
 }
 
 export interface INotificationProgressProperties {
@@ -303,6 +310,16 @@ export enum NotificationsFilter {
 export interface INotificationService {
 
 	readonly _serviceBrand: undefined;
+
+	/**
+	 * Emitted when a new notification is added.
+	 */
+	readonly onDidAddNotification: Event<INotification>;
+
+	/**
+	 * Emitted when a notification is removed.
+	 */
+	readonly onDidRemoveNotification: Event<INotification>;
 
 	/**
 	 * Show the provided notification to the user. The returned `INotificationHandle`

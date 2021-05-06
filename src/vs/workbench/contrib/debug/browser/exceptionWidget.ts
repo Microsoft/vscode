@@ -57,7 +57,7 @@ export class ExceptionWidget extends ZoneWidget {
 		}); // style() will trigger _applyStyles
 	}
 
-	protected _applyStyles(): void {
+	protected override _applyStyles(): void {
 		if (this.container) {
 			this.container.style.backgroundColor = this.backgroundColor ? this.backgroundColor.toString() : '';
 		}
@@ -105,7 +105,7 @@ export class ExceptionWidget extends ZoneWidget {
 		container.setAttribute('aria-label', ariaLabel);
 	}
 
-	protected _doLayout(_heightInPixel: number | undefined, _widthInPixel: number | undefined): void {
+	protected override _doLayout(_heightInPixel: number | undefined, _widthInPixel: number | undefined): void {
 		// Reload the height with respect to the exception text content and relayout it to match the line count.
 		this.container!.style.height = 'initial';
 

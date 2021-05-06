@@ -25,15 +25,13 @@ export class NativeLifecycleService extends AbstractLifecycleService {
 	private static readonly BEFORE_SHUTDOWN_WARNING_DELAY = 5000;
 	private static readonly WILL_SHUTDOWN_WARNING_DELAY = 5000;
 
-	declare readonly _serviceBrand: undefined;
-
 	private shutdownReason: ShutdownReason | undefined;
 
 	constructor(
 		@INotificationService private readonly notificationService: INotificationService,
 		@INativeHostService private readonly nativeHostService: INativeHostService,
 		@IStorageService readonly storageService: IStorageService,
-		@ILogService readonly logService: ILogService
+		@ILogService logService: ILogService
 	) {
 		super(logService);
 
@@ -89,8 +87,8 @@ export class NativeLifecycleService extends AbstractLifecycleService {
 			// trigger onWillShutdown events and joining
 			await this.handleWillShutdown(reply.reason);
 
-			// trigger onShutdown event now that we know we will quit
-			this._onShutdown.fire();
+			// trigger onDidShutdown event now that we know we will quit
+			this._onDidShutdown.fire();
 
 			// acknowledge to main side
 			ipcRenderer.send(reply.replyChannel, windowId);

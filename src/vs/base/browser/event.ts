@@ -9,7 +9,7 @@ export type EventHandler = HTMLElement | HTMLDocument | Window;
 
 export interface IDomEvent {
 	<K extends keyof HTMLElementEventMap>(element: EventHandler, type: K, useCapture?: boolean): BaseEvent<HTMLElementEventMap[K]>;
-	(element: EventHandler, type: string, useCapture?: boolean): BaseEvent<any>;
+	(element: EventHandler, type: string, useCapture?: boolean): BaseEvent<unknown>;
 }
 
 export const domEvent: IDomEvent = (element: EventHandler, type: string, useCapture?: boolean) => {

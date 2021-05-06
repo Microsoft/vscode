@@ -35,10 +35,13 @@ export abstract class AbstractGotoSymbolQuickAccessProvider extends AbstractEdit
 	static SCOPE_PREFIX = ':';
 	static PREFIX_BY_CATEGORY = `${AbstractGotoSymbolQuickAccessProvider.PREFIX}${AbstractGotoSymbolQuickAccessProvider.SCOPE_PREFIX}`;
 
-	constructor(protected options: IGotoSymbolQuickAccessProviderOptions = Object.create(null)) {
+	protected override readonly options: IGotoSymbolQuickAccessProviderOptions;
+
+	constructor(options: IGotoSymbolQuickAccessProviderOptions = Object.create(null)) {
 		super(options);
 
-		options.canAcceptInBackground = true;
+		this.options = options;
+		this.options.canAcceptInBackground = true;
 	}
 
 	protected provideWithoutTextEditor(picker: IQuickPick<IGotoSymbolQuickPickItem>): IDisposable {

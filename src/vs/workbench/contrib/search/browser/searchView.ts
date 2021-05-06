@@ -17,14 +17,18 @@ import * as errors from 'vs/base/common/errors';
 import { Event } from 'vs/base/common/event';
 import { Iterable } from 'vs/base/common/iterator';
 import { KeyCode, KeyMod } from 'vs/base/common/keyCodes';
-import { dispose, IDisposable } from 'vs/base/common/lifecycle';
+import { Disposable, DisposableStore, dispose } from 'vs/base/common/lifecycle';
+import { parseLinkedText } from 'vs/base/common/linkedText';
 import * as env from 'vs/base/common/platform';
 import * as strings from 'vs/base/common/strings';
 import { URI } from 'vs/base/common/uri';
 import 'vs/css!./media/searchview';
 import { getCodeEditor, ICodeEditor, isCodeEditor, isDiffEditor } from 'vs/editor/browser/editorBrowser';
+import { ICodeEditorService } from 'vs/editor/browser/services/codeEditorService';
+import { EmbeddedCodeEditorWidget } from 'vs/editor/browser/widget/embeddedCodeEditorWidget';
 import { IEditorOptions } from 'vs/editor/common/config/editorOptions';
 import { Selection } from 'vs/editor/common/core/selection';
+import { IEditor } from 'vs/editor/common/editorCommon';
 import { CommonFindController } from 'vs/editor/contrib/find/findController';
 import { MultiCursorSelectionController } from 'vs/editor/contrib/multicursor/multicursor';
 import * as nls from 'vs/nls';
@@ -41,11 +45,13 @@ import { ServiceCollection } from 'vs/platform/instantiation/common/serviceColle
 import { IKeybindingService } from 'vs/platform/keybinding/common/keybinding';
 import { getSelectionKeyboardEvent, WorkbenchObjectTree } from 'vs/platform/list/browser/listService';
 import { INotificationService } from 'vs/platform/notification/common/notification';
+import { Link } from 'vs/platform/opener/browser/link';
 import { IOpenerService } from 'vs/platform/opener/common/opener';
 import { IProgress, IProgressService, IProgressStep } from 'vs/platform/progress/common/progress';
 import { IStorageService, StorageScope, StorageTarget } from 'vs/platform/storage/common/storage';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
-import { diffInserted, diffInsertedOutline, diffRemoved, diffRemovedOutline, editorFindMatchHighlight, editorFindMatchHighlightBorder, foreground, listActiveSelectionForeground } from 'vs/platform/theme/common/colorRegistry';
+import { diffInserted, diffInsertedOutline, diffRemoved, diffRemovedOutline, editorFindMatchHighlight, editorFindMatchHighlightBorder, foreground, listActiveSelectionForeground, textLinkActiveForeground, textLinkForeground, toolbarActiveBackground, toolbarHoverBackground } from 'vs/platform/theme/common/colorRegistry';
+import { attachLinkStyler } from 'vs/platform/theme/common/styler';
 import { IColorTheme, ICssStyleCollector, IThemeService, registerThemingParticipant, ThemeIcon } from 'vs/platform/theme/common/themeService';
 import { IWorkspaceContextService, WorkbenchState } from 'vs/platform/workspace/common/workspace';
 import { OpenFileFolderAction, OpenFolderAction } from 'vs/workbench/browser/actions/workspaceActions';
@@ -68,7 +74,7 @@ import { FileMatch, FileMatchOrMatch, FolderMatch, FolderMatchWithResource, ICha
 import { createEditorFromSearchResult } from 'vs/workbench/contrib/searchEditor/browser/searchEditorActions';
 import { ACTIVE_GROUP, IEditorService, SIDE_GROUP } from 'vs/workbench/services/editor/common/editorService';
 import { IPreferencesService, ISettingsEditorOptions } from 'vs/workbench/services/preferences/common/preferences';
-import { IPatternInfo, ISearchComplete, ISearchConfiguration, ISearchConfigurationProperties, ITextQuery, SearchCompletionExitCode, SearchSortOrder } from 'vs/workbench/services/search/common/search';
+import { IPatternInfo, ISearchComplete, ISearchConfiguration, ISearchConfigurationProperties, ITextQuery, SearchCompletionExitCode, SearchSortOrder, TextSearchCompleteMessageType } from 'vs/workbench/services/search/common/search';
 import { ITextFileService } from 'vs/workbench/services/textfile/common/textfiles';
 
 const $ = dom.$;
@@ -118,7 +124,7 @@ export class SearchView extends ViewPane {
 	private treeLabels!: ResourceLabels;
 	private viewletState: MementoObject;
 	private messagesElement!: HTMLElement;
-	private messageDisposables: IDisposable[] = [];
+	private readonly messageDisposables: DisposableStore = new DisposableStore();
 	private searchWidgetsContainerElement!: HTMLElement;
 	private searchWidget!: SearchWidget;
 	private size!: dom.Dimension;
@@ -149,6 +155,7 @@ export class SearchView extends ViewPane {
 		options: IViewPaneOptions,
 		@IFileService private readonly fileService: IFileService,
 		@IEditorService private readonly editorService: IEditorService,
+		@ICodeEditorService private readonly codeEditorService: ICodeEditorService,
 		@IProgressService private readonly progressService: IProgressService,
 		@INotificationService private readonly notificationService: INotificationService,
 		@IDialogService private readonly dialogService: IDialogService,
@@ -158,7 +165,7 @@ export class SearchView extends ViewPane {
 		@IConfigurationService configurationService: IConfigurationService,
 		@IWorkspaceContextService private readonly contextService: IWorkspaceContextService,
 		@ISearchWorkbenchService private readonly searchWorkbenchService: ISearchWorkbenchService,
-		@IContextKeyService readonly contextKeyService: IContextKeyService,
+		@IContextKeyService contextKeyService: IContextKeyService,
 		@IReplaceService private readonly replaceService: IReplaceService,
 		@ITextFileService private readonly textFileService: ITextFileService,
 		@IPreferencesService private readonly preferencesService: IPreferencesService,
@@ -220,7 +227,7 @@ export class SearchView extends ViewPane {
 		this.viewletState = this.memento.getMemento(StorageScope.WORKSPACE, StorageTarget.USER);
 
 		this._register(this.fileService.onDidFilesChange(e => this.onFilesChanged(e)));
-		this._register(this.textFileService.untitled.onDidDispose(model => this.onUntitledDidDispose(model.resource)));
+		this._register(this.textFileService.untitled.onWillDispose(model => this.onUntitledDidDispose(model.resource)));
 		this._register(this.contextService.onDidChangeWorkbenchState(() => this.onDidChangeWorkbenchState()));
 		this._register(this.searchHistoryService.onDidClearHistory(() => this.clearHistory()));
 
@@ -255,7 +262,7 @@ export class SearchView extends ViewPane {
 		}
 	}
 
-	renderBody(parent: HTMLElement): void {
+	override renderBody(parent: HTMLElement): void {
 		super.renderBody(parent);
 		this.container = dom.append(parent, dom.$('.search-view'));
 
@@ -313,6 +320,7 @@ export class SearchView extends ViewPane {
 
 		this.inputPatternIncludes = this._register(this.instantiationService.createInstance(IncludePatternInputWidget, folderIncludesList, this.contextViewService, {
 			ariaLabel: nls.localize('label.includes', 'Search Include Patterns'),
+			tooltip: nls.localize('placeholder.includes', "(e.g. *.ts, src/**/include)"),
 			history: patternIncludesHistory,
 		}));
 
@@ -330,6 +338,7 @@ export class SearchView extends ViewPane {
 		dom.append(excludesList, $('h4', undefined, excludesTitle));
 		this.inputPatternExcludes = this._register(this.instantiationService.createInstance(ExcludePatternInputWidget, excludesList, this.contextViewService, {
 			ariaLabel: nls.localize('label.excludes', 'Search Exclude Patterns'),
+			tooltip: nls.localize('placeholder.excludes', "(e.g. *.ts, src/**/exclude)"),
 			history: patternExclusionsHistory,
 		}));
 
@@ -599,7 +608,7 @@ export class SearchView extends ViewPane {
 				this.viewModel.searchResult.replaceAll(progressReporter).then(() => {
 					progressComplete();
 					const messageEl = this.clearMessage();
-					dom.append(messageEl, $('p', undefined, afterReplaceAllMessage));
+					dom.append(messageEl, afterReplaceAllMessage);
 					this.reLayout();
 				}, (error) => {
 					progressComplete();
@@ -680,8 +689,7 @@ export class SearchView extends ViewPane {
 		const wasHidden = this.messagesElement.style.display === 'none';
 		dom.clearNode(this.messagesElement);
 		dom.show(this.messagesElement);
-		dispose(this.messageDisposables);
-		this.messageDisposables = [];
+		this.messageDisposables.clear();
 
 		const newMessage = dom.append(this.messagesElement, $('.message'));
 		if (wasHidden) {
@@ -716,7 +724,7 @@ export class SearchView extends ViewPane {
 				accessibilityProvider: this.treeAccessibilityProvider,
 				dnd: this.instantiationService.createInstance(SearchDND),
 				multipleSelectionSupport: false,
-				openOnFocus: true,
+				selectionNavigation: true,
 				overrideStyles: {
 					listBackground: this.getBackgroundColor()
 				}
@@ -833,7 +841,9 @@ export class SearchView extends ViewPane {
 			if (next === selected) {
 				this.tree.setFocus([]);
 			}
-			this.tree.setFocus([next], getSelectionKeyboardEvent(undefined, false, false));
+			const event = getSelectionKeyboardEvent(undefined, false, false);
+			this.tree.setFocus([next], event);
+			this.tree.setSelection([next], event);
 			this.tree.reveal(next);
 			const ariaLabel = this.treeAccessibilityProvider.getAriaLabel(next);
 			if (ariaLabel) { aria.alert(ariaLabel); }
@@ -874,7 +884,9 @@ export class SearchView extends ViewPane {
 			if (prev === selected) {
 				this.tree.setFocus([]);
 			}
-			this.tree.setFocus([prev], getSelectionKeyboardEvent(undefined, false, false));
+			const event = getSelectionKeyboardEvent(undefined, false, false);
+			this.tree.setFocus([prev], event);
+			this.tree.setSelection([prev], event);
 			this.tree.reveal(prev);
 			const ariaLabel = this.treeAccessibilityProvider.getAriaLabel(prev);
 			if (ariaLabel) { aria.alert(ariaLabel); }
@@ -885,7 +897,7 @@ export class SearchView extends ViewPane {
 		this.tree.domFocus();
 	}
 
-	focus(): void {
+	override focus(): void {
 		super.focus();
 		if (this.lastFocusState === 'input' || !this.hasSearchResults()) {
 			const updatedText = this.searchConfig.seedOnFocus ? this.updateTextFromSelection({ allowSearchOnType: false }) : false;
@@ -896,15 +908,19 @@ export class SearchView extends ViewPane {
 	}
 
 	updateTextFromFindWidgetOrSelection({ allowUnselectedWord = true, allowSearchOnType = true }): boolean {
-		const activeEditor = this.editorService.activeTextEditorControl;
-		if (isCodeEditor(activeEditor)) {
+		let activeEditor = this.editorService.activeTextEditorControl;
+		if (isCodeEditor(activeEditor) && !activeEditor?.hasTextFocus()) {
 			const controller = CommonFindController.get(activeEditor as ICodeEditor);
 			if (controller.isFindInputFocused()) {
 				return this.updateTextFromFindWidget(controller, { allowSearchOnType });
 			}
+
+			const editors = this.codeEditorService.listCodeEditors();
+			activeEditor = editors.find(editor => editor instanceof EmbeddedCodeEditorWidget && editor.getParentEditor() === activeEditor && editor.hasTextFocus())
+				?? activeEditor;
 		}
 
-		return this.updateTextFromSelection({ allowUnselectedWord, allowSearchOnType });
+		return this.updateTextFromSelection({ allowUnselectedWord, allowSearchOnType }, activeEditor);
 	}
 
 	private updateTextFromFindWidget(controller: CommonFindController, { allowSearchOnType = true }): boolean {
@@ -925,13 +941,13 @@ export class SearchView extends ViewPane {
 		return true;
 	}
 
-	private updateTextFromSelection({ allowUnselectedWord = true, allowSearchOnType = true }): boolean {
+	private updateTextFromSelection({ allowUnselectedWord = true, allowSearchOnType = true }, editor?: IEditor): boolean {
 		const seedSearchStringFromSelection = this.configurationService.getValue<IEditorOptions>('editor').find!.seedSearchStringFromSelection;
 		if (!seedSearchStringFromSelection) {
 			return false;
 		}
 
-		let selectedText = this.getSearchTextFromEditor(allowUnselectedWord);
+		let selectedText = this.getSearchTextFromEditor(allowUnselectedWord, editor);
 		if (selectedText === null) {
 			return false;
 		}
@@ -1040,7 +1056,7 @@ export class SearchView extends ViewPane {
 		this.tree.layout(); // The tree will measure its container
 	}
 
-	protected layoutBody(height: number, width: number): void {
+	protected override layoutBody(height: number, width: number): void {
 		super.layoutBody(height, width);
 		this.size = new dom.Dimension(width, height);
 		this.reLayout();
@@ -1101,40 +1117,38 @@ export class SearchView extends ViewPane {
 			this.tree.domFocus();
 			const selection = this.tree.getSelection();
 			if (selection.length === 0) {
-				this.tree.focusNext(undefined, undefined, getSelectionKeyboardEvent());
+				const event = getSelectionKeyboardEvent();
+				this.tree.focusNext(undefined, undefined, event);
+				this.tree.setSelection(this.tree.getFocus(), event);
 			}
 		}
 	}
 
-	private getSearchTextFromEditor(allowUnselectedWord: boolean): string | null {
-		if (!this.editorService.activeEditor) {
-			return null;
-		}
-
+	private getSearchTextFromEditor(allowUnselectedWord: boolean, editor?: IEditor): string | null {
 		if (dom.isAncestor(document.activeElement, this.getContainer())) {
 			return null;
 		}
 
-		let activeTextEditorControl = this.editorService.activeTextEditorControl;
-		if (isDiffEditor(activeTextEditorControl)) {
-			if (activeTextEditorControl.getOriginalEditor().hasTextFocus()) {
-				activeTextEditorControl = activeTextEditorControl.getOriginalEditor();
+		editor = editor ?? this.editorService.activeTextEditorControl;
+		if (isDiffEditor(editor)) {
+			if (editor.getOriginalEditor().hasTextFocus()) {
+				editor = editor.getOriginalEditor();
 			} else {
-				activeTextEditorControl = activeTextEditorControl.getModifiedEditor();
+				editor = editor.getModifiedEditor();
 			}
 		}
 
-		if (!isCodeEditor(activeTextEditorControl) || !activeTextEditorControl.hasModel()) {
+		if (!isCodeEditor(editor) || !editor.hasModel()) {
 			return null;
 		}
 
-		const range = activeTextEditorControl.getSelection();
+		const range = editor.getSelection();
 		if (!range) {
 			return null;
 		}
 
 		if (range.isEmpty() && this.searchConfig.seedWithNearestWord && allowUnselectedWord) {
-			const wordAtPosition = activeTextEditorControl.getModel().getWordAtPosition(range.getStartPosition());
+			const wordAtPosition = editor.getModel().getWordAtPosition(range.getStartPosition());
 			if (wordAtPosition) {
 				return wordAtPosition.word;
 			}
@@ -1143,7 +1157,7 @@ export class SearchView extends ViewPane {
 		if (!range.isEmpty()) {
 			let searchText = '';
 			for (let i = range.startLineNumber; i <= range.endLineNumber; i++) {
-				let lineText = activeTextEditorControl.getModel().getLineContent(i);
+				let lineText = editor.getModel().getLineContent(i);
 				if (i === range.endLineNumber) {
 					lineText = lineText.substring(0, range.endColumn - 1);
 				}
@@ -1435,13 +1449,6 @@ export class SearchView extends ViewPane {
 				return;
 			}
 
-			if (completed && completed.limitHit) {
-				this.searchWidget.searchInput.showMessage({
-					content: nls.localize('searchMaxResultsWarning', "The result set only contains a subset of all matches. Please be more specific in your search to narrow down the results."),
-					type: MessageType.WARNING
-				});
-			}
-
 			if (!hasResults) {
 				const hasExcludes = !!excludePatternText;
 				const hasIncludes = !!includePatternText;
@@ -1475,35 +1482,26 @@ export class SearchView extends ViewPane {
 				aria.status(message);
 
 				const messageEl = this.clearMessage();
-				const p = dom.append(messageEl, $('p', undefined, message));
+				dom.append(messageEl, message);
 
 				if (!completed) {
-					const searchAgainLink = dom.append(p, $('a.pointer.prominent', undefined, nls.localize('rerunSearch.message', "Search again")));
-					this.messageDisposables.push(dom.addDisposableListener(searchAgainLink, dom.EventType.CLICK, (e: MouseEvent) => {
-						dom.EventHelper.stop(e, false);
-						this.triggerQueryChange({ preserveFocus: false });
-					}));
+					const searchAgainButton = this.messageDisposables.add(new SearchLinkButton(
+						nls.localize('rerunSearch.message', "Search again"),
+						() => this.triggerQueryChange({ preserveFocus: false })));
+					dom.append(messageEl, searchAgainButton.element);
 				} else if (hasIncludes || hasExcludes) {
-					const searchAgainLink = dom.append(p, $('a.pointer.prominent', { tabindex: 0 }, nls.localize('rerunSearchInAll.message', "Search again in all files")));
-					this.messageDisposables.push(dom.addDisposableListener(searchAgainLink, dom.EventType.CLICK, (e: MouseEvent) => {
-						dom.EventHelper.stop(e, false);
-
-						this.inputPatternExcludes.setValue('');
-						this.inputPatternIncludes.setValue('');
-						this.inputPatternIncludes.setOnlySearchInOpenEditors(false);
-
-						this.triggerQueryChange({ preserveFocus: false });
-					}));
+					const searchAgainButton = this.messageDisposables.add(new SearchLinkButton(nls.localize('rerunSearchInAll.message', "Search again in all files"), this.onSearchAgain.bind(this)));
+					dom.append(messageEl, searchAgainButton.element);
 				} else {
-					const openSettingsLink = dom.append(p, $('a.pointer.prominent', { tabindex: 0 }, nls.localize('openSettings.message', "Open Settings")));
-					this.addClickEvents(openSettingsLink, this.onOpenSettings);
+					const openSettingsButton = this.messageDisposables.add(new SearchLinkButton(nls.localize('openSettings.message', "Open Settings"), this.onOpenSettings.bind(this)));
+					dom.append(messageEl, openSettingsButton.element);
 				}
 
 				if (completed) {
-					dom.append(p, $('span', undefined, ' - '));
+					dom.append(messageEl, $('span', undefined, ' - '));
 
-					const learnMoreLink = dom.append(p, $('a.pointer.prominent', { tabindex: 0 }, nls.localize('openSettings.learnMore', "Learn More")));
-					this.addClickEvents(learnMoreLink, this.onLearnMore);
+					const learnMoreButton = this.messageDisposables.add(new SearchLinkButton(nls.localize('openSettings.learnMore', "Learn More"), this.onLearnMore.bind(this)));
+					dom.append(messageEl, learnMoreButton.element);
 				}
 
 				if (this.contextService.getWorkbenchState() === WorkbenchState.EMPTY) {
@@ -1515,6 +1513,30 @@ export class SearchView extends ViewPane {
 
 				// Indicate final search result count for ARIA
 				aria.status(nls.localize('ariaSearchResultsStatus', "Search returned {0} results in {1} files", this.viewModel.searchResult.count(), this.viewModel.searchResult.fileCount()));
+			}
+
+			let warningMessage = '';
+
+			if (completed && completed.limitHit) {
+				warningMessage += nls.localize('searchMaxResultsWarning', "The result set only contains a subset of all matches. Be more specific in your search to narrow down the results.");
+			}
+
+			if (completed && completed.messages) {
+				for (const message of completed.messages) {
+					if (message.type === TextSearchCompleteMessageType.Information) {
+						this.addMessage(message.text);
+					}
+					else if (message.type === TextSearchCompleteMessageType.Warning) {
+						warningMessage += (warningMessage ? ' - ' : '') + message.text;
+					}
+				}
+			}
+
+			if (warningMessage) {
+				this.searchWidget.searchInput.showMessage({
+					content: warningMessage,
+					type: MessageType.WARNING
+				});
 			}
 		};
 
@@ -1555,30 +1577,10 @@ export class SearchView extends ViewPane {
 			.then(onComplete, onError);
 	}
 
-	private addClickEvents = (element: HTMLElement, handler: (event: any) => void): void => {
-		this.messageDisposables.push(dom.addDisposableListener(element, dom.EventType.CLICK, handler));
-		this.messageDisposables.push(dom.addDisposableListener(element, dom.EventType.KEY_DOWN, e => {
-			const event = new StandardKeyboardEvent(e);
-			let eventHandled = true;
-
-			if (event.equals(KeyCode.Space) || event.equals(KeyCode.Enter)) {
-				handler(e);
-			} else {
-				eventHandled = false;
-			}
-
-			if (eventHandled) {
-				event.preventDefault();
-				event.stopPropagation();
-			}
-		}));
-	};
-
-	private onOpenSettings = (e: dom.EventLike): void => {
+	private onOpenSettings(e: dom.EventLike): void {
 		dom.EventHelper.stop(e, false);
-
-		this.openSettings('.exclude');
-	};
+		this.openSettings('@id:files.exclude,search.exclude,search.useGlobalIgnoreFiles,search.useIgnoreFiles');
+	}
 
 	private openSettings(query: string): Promise<IEditorPane | undefined> {
 		const options: ISettingsEditorOptions = { query };
@@ -1587,11 +1589,22 @@ export class SearchView extends ViewPane {
 			this.preferencesService.openGlobalSettings(undefined, options);
 	}
 
-	private onLearnMore = (e: MouseEvent): void => {
-		dom.EventHelper.stop(e, false);
-
+	private onLearnMore(): void {
 		this.openerService.open(URI.parse('https://go.microsoft.com/fwlink/?linkid=853977'));
-	};
+	}
+
+	private onSearchAgain(): void {
+		this.inputPatternExcludes.setValue('');
+		this.inputPatternIncludes.setValue('');
+		this.inputPatternIncludes.setOnlySearchInOpenEditors(false);
+
+		this.triggerQueryChange({ preserveFocus: false });
+	}
+
+	private onEnableExcludes(): void {
+		this.toggleQueryDetails(false, true);
+		this.searchExcludePattern.setUseExcludesAndIgnoreFiles(true);
+	}
 
 	private updateSearchResultCount(disregardExcludesAndIgnores?: boolean): void {
 		const fileCount = this.viewModel.searchResult.fileCount();
@@ -1600,30 +1613,57 @@ export class SearchView extends ViewPane {
 		const msgWasHidden = this.messagesElement.style.display === 'none';
 
 		const messageEl = this.clearMessage();
-		let resultMsg = this.buildResultCountMessage(this.viewModel.searchResult.count(), fileCount);
+		const resultMsg = this.buildResultCountMessage(this.viewModel.searchResult.count(), fileCount);
 		this.tree.ariaLabel = resultMsg + nls.localize('forTerm', " - Search: {0}", this.searchResult.query?.contentPattern.pattern ?? '');
+		dom.append(messageEl, resultMsg);
 
 		if (fileCount > 0) {
 			if (disregardExcludesAndIgnores) {
-				resultMsg += nls.localize('useIgnoresAndExcludesDisabled', " - exclude settings and ignore files are disabled");
+				const excludesDisabledMessage = ' - ' + nls.localize('useIgnoresAndExcludesDisabled', "exclude settings and ignore files are disabled") + ' ';
+				const enableExcludesButton = this.messageDisposables.add(new SearchLinkButton(nls.localize('excludes.enable', "enable"), this.onEnableExcludes.bind(this), nls.localize('useExcludesAndIgnoreFilesDescription', "Use Exclude Settings and Ignore Files")));
+				dom.append(messageEl, $('span', undefined, excludesDisabledMessage, '(', enableExcludesButton.element, ')'));
 			}
 
-			dom.append(messageEl, $('span', undefined, resultMsg + ' - '));
-			const span = dom.append(messageEl, $('span'));
-			const openInEditorLink = dom.append(span, $('a.pointer.prominent', undefined, nls.localize('openInEditor.message', "Open in editor")));
+			dom.append(messageEl, ' - ');
 
-			openInEditorLink.title = appendKeyBindingLabel(
+			const openInEditorTooltip = appendKeyBindingLabel(
 				nls.localize('openInEditor.tooltip', "Copy current search results to an editor"),
 				this.keybindingService.lookupKeybinding(Constants.OpenInEditorCommandId), this.keybindingService);
-
-			this.messageDisposables.push(dom.addDisposableListener(openInEditorLink, dom.EventType.CLICK, (e: MouseEvent) => {
-				dom.EventHelper.stop(e, false);
-				this.instantiationService.invokeFunction(createEditorFromSearchResult, this.searchResult, this.searchIncludePattern.getValue(), this.searchExcludePattern.getValue(), this.searchIncludePattern.onlySearchInOpenEditors());
-			}));
+			const openInEditorButton = this.messageDisposables.add(new SearchLinkButton(
+				nls.localize('openInEditor.message', "Open in editor"),
+				() => this.instantiationService.invokeFunction(createEditorFromSearchResult, this.searchResult, this.searchIncludePattern.getValue(), this.searchExcludePattern.getValue(), this.searchIncludePattern.onlySearchInOpenEditors()),
+				openInEditorTooltip));
+			dom.append(messageEl, openInEditorButton.element);
 
 			this.reLayout();
 		} else if (!msgWasHidden) {
 			dom.hide(this.messagesElement);
+		}
+	}
+
+	private addMessage(message: string) {
+		const linkedText = parseLinkedText(message);
+
+		const messageBox = this.messagesElement.firstChild as HTMLDivElement;
+		if (!messageBox) {
+			return;
+		}
+
+		const span = dom.append(messageBox, $('span.providerMessage'));
+
+		if (messageBox.innerText) {
+			dom.append(span, document.createTextNode(' - '));
+		}
+
+		for (const node of linkedText.nodes) {
+			if (typeof node === 'string') {
+				dom.append(span, document.createTextNode(node));
+			} else {
+				const link = this.instantiationService.createInstance(Link, node);
+				dom.append(span, link.el);
+				this.messageDisposables.add(link);
+				this.messageDisposables.add(attachLinkStyler(link, this.themeService));
+			}
 		}
 	}
 
@@ -1645,24 +1685,22 @@ export class SearchView extends ViewPane {
 		const textEl = dom.append(this.searchWithoutFolderMessageElement,
 			$('p', undefined, nls.localize('searchWithoutFolder', "You have not opened or specified a folder. Only open files are currently searched - ")));
 
-		const openFolderLink = dom.append(textEl,
-			$('a.pointer.prominent', { tabindex: 0 }, nls.localize('openFolder', "Open Folder")));
+		const actionRunner = this.messageDisposables.add(new ActionRunner());
+		const openFolderButton = this.messageDisposables.add(new SearchLinkButton(
+			nls.localize('openFolder', "Open Folder"),
+			() => {
+				const action = env.isMacintosh ?
+					this.instantiationService.createInstance(OpenFileFolderAction, OpenFileFolderAction.ID, OpenFileFolderAction.LABEL) :
+					this.instantiationService.createInstance(OpenFolderAction, OpenFolderAction.ID, OpenFolderAction.LABEL);
 
-		const actionRunner = new ActionRunner();
-		this.messageDisposables.push(dom.addDisposableListener(openFolderLink, dom.EventType.CLICK, (e: MouseEvent) => {
-			dom.EventHelper.stop(e, false);
-
-			const action = env.isMacintosh ?
-				this.instantiationService.createInstance(OpenFileFolderAction, OpenFileFolderAction.ID, OpenFileFolderAction.LABEL) :
-				this.instantiationService.createInstance(OpenFolderAction, OpenFolderAction.ID, OpenFolderAction.LABEL);
-
-			actionRunner.run(action).then(() => {
-				action.dispose();
-			}, err => {
-				action.dispose();
-				errors.onUnexpectedError(err);
-			});
-		}));
+				actionRunner.run(action).then(() => {
+					action.dispose();
+				}, err => {
+					action.dispose();
+					errors.onUnexpectedError(err);
+				});
+			}));
+		dom.append(textEl, openFolderButton.element);
 	}
 
 	private showEmptyStage(forceHideMessages = false): void {
@@ -1810,7 +1848,7 @@ export class SearchView extends ViewPane {
 		this.inputPatternIncludes.clearHistory();
 	}
 
-	public saveState(): void {
+	public override saveState(): void {
 		const isRegex = this.searchWidget.searchInput.getRegex();
 		const isWholeWords = this.searchWidget.searchInput.getWholeWords();
 		const isCaseSensitive = this.searchWidget.searchInput.getCaseSensitive();
@@ -1880,7 +1918,7 @@ export class SearchView extends ViewPane {
 		}
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this.isDisposed = true;
 		this.saveState();
 		super.dispose();
@@ -1930,4 +1968,52 @@ registerThemingParticipant((theme: IColorTheme, collector: ICssStyleCollector) =
 			collector.addRule(`.search-view .message { color: ${fgWithOpacity}; }`);
 		}
 	}
+
+	const link = theme.getColor(textLinkForeground);
+	if (link) {
+		collector.addRule(`.monaco-workbench .search-view .message a { color: ${link}; }`);
+	}
+
+	const activeLink = theme.getColor(textLinkActiveForeground);
+	if (activeLink) {
+		collector.addRule(`.monaco-workbench .search-view .message a:hover,
+			.monaco-workbench .search-view .message a:active { color: ${activeLink}; }`);
+	}
+
+	const toolbarHoverColor = theme.getColor(toolbarHoverBackground);
+	if (toolbarHoverColor) {
+		collector.addRule(`.monaco-workbench .search-view .search-widget .toggle-replace-button:hover { background-color: ${toolbarHoverColor} }`);
+	}
+
+	const toolbarActiveColor = theme.getColor(toolbarActiveBackground);
+	if (toolbarActiveColor) {
+		collector.addRule(`.monaco-workbench .search-view .search-widget .toggle-replace-button:active { background-color: ${toolbarActiveColor} }`);
+	}
 });
+
+class SearchLinkButton extends Disposable {
+	public readonly element: HTMLElement;
+
+	constructor(label: string, handler: (e: dom.EventLike) => unknown, tooltip?: string) {
+		super();
+		this.element = $('a.pointer', { tabindex: 0, title: tooltip }, label);
+		this.addEventHandlers(handler);
+	}
+
+	private addEventHandlers(handler: (e: dom.EventLike) => unknown): void {
+		const wrappedHandler = (e: dom.EventLike) => {
+			dom.EventHelper.stop(e, false);
+			handler(e);
+		};
+
+		this._register(dom.addDisposableListener(this.element, dom.EventType.CLICK, wrappedHandler));
+		this._register(dom.addDisposableListener(this.element, dom.EventType.KEY_DOWN, e => {
+			const event = new StandardKeyboardEvent(e);
+			if (event.equals(KeyCode.Space) || event.equals(KeyCode.Enter)) {
+				wrappedHandler(e);
+				event.preventDefault();
+				event.stopPropagation();
+			}
+		}));
+	}
+}

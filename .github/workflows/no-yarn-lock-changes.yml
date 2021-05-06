@@ -6,9 +6,25 @@ jobs:
     name: Prevent yarn.lock changes in PRs
     runs-on: ubuntu-latest
     steps:
-      - id: file_changes
-        uses: trilom/file-changes-action@ce38c8ce2459ca3c303415eec8cb0409857b4272
-      - name: Check for yarn.lock changes
+      - uses: octokit/request-action@v2.x
+        id: get_permissions
+        with:
+          route: GET /repos/microsoft/vscode/collaborators/{username}/permission
+          username: ${{ github.event.pull_request.user.login }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set control output variable
+        id: control
         run: |
-          cat $HOME/files.json | jq -e '.[] | test("yarn\\.lock$") | not' \
+          echo "user: ${{ github.event.pull_request.user.login }}"
+          echo "role: ${{ fromJson(steps.get_permissions.outputs.data).permission }}"
+          echo "should_run: ${{ !contains(fromJson('["admin", "write"]'), fromJson(steps.get_permissions.outputs.data).permission) }}"
+          echo "::set-output name=should_run::${{ !contains(fromJson('["admin", "write"]'), fromJson(steps.get_permissions.outputs.data).permission) }}"
+      - name: Get file changes
+        uses: trilom/file-changes-action@ce38c8ce2459ca3c303415eec8cb0409857b4272
+        if: ${{ steps.control.outputs.should_run == 'true' }}
+      - name: Check for yarn.lock changes
+        if: ${{ steps.control.outputs.should_run == 'true' }}
+        run: |
+          cat $HOME/files.json | jq -e 'any(test("yarn\\.lock$")) | not' \
             || (echo "Changes to yarn.lock files aren't allowed in PRs." && exit 1)

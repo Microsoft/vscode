@@ -28,7 +28,7 @@ export class ConfigureLanguageBasedSettingsAction extends Action {
 		super(id, label);
 	}
 
-	run(): Promise<any> {
+	override async run(): Promise<void> {
 		const languages = this.modeService.getRegisteredLanguageNames();
 		const picks: IQuickPickItem[] = languages.sort().map((lang, index) => {
 			const description: string = nls.localize('languageDescriptionConfigured', "({0})", this.modeService.getModeIdForLanguageName(lang.toLowerCase()));
@@ -50,7 +50,7 @@ export class ConfigureLanguageBasedSettingsAction extends Action {
 			} as IQuickPickItem;
 		});
 
-		return this.quickInputService.pick(picks, { placeHolder: nls.localize('pickLanguage', "Select Language") })
+		await this.quickInputService.pick(picks, { placeHolder: nls.localize('pickLanguage', "Select Language") })
 			.then(pick => {
 				if (pick) {
 					const modeId = this.modeService.getModeIdForLanguageName(pick.label.toLowerCase());

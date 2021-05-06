@@ -13,7 +13,7 @@ import { IExtensionService, IExtensionHost } from 'vs/workbench/services/extensi
 import { registerSingleton } from 'vs/platform/instantiation/common/extensions';
 import { IFileService } from 'vs/platform/files/common/files';
 import { IProductService } from 'vs/platform/product/common/productService';
-import { AbstractExtensionService, ExtensionRunningLocation, ExtensionRunningLocationClassifier, parseScannedExtension } from 'vs/workbench/services/extensions/common/abstractExtensionService';
+import { AbstractExtensionService, ExtensionRunningLocation, ExtensionRunningLocationClassifier, ExtensionRunningPreference, parseScannedExtension } from 'vs/workbench/services/extensions/common/abstractExtensionService';
 import { RemoteExtensionHost, IRemoteExtensionHostDataProvider, IRemoteExtensionHostInitData } from 'vs/workbench/services/extensions/common/remoteExtensionHost';
 import { INotificationService, Severity } from 'vs/platform/notification/common/notification';
 import { WebWorkerExtensionHost } from 'vs/workbench/services/extensions/browser/webWorkerExtensionHost';
@@ -26,6 +26,8 @@ import { IRemoteAuthorityResolverService } from 'vs/platform/remote/common/remot
 import { ILifecycleService, LifecyclePhase } from 'vs/workbench/services/lifecycle/common/lifecycle';
 import { IExtensionManagementService } from 'vs/platform/extensionManagement/common/extensionManagement';
 import { IWorkspaceContextService } from 'vs/platform/workspace/common/workspace';
+import { IExtensionManifestPropertiesService } from 'vs/workbench/services/extensions/common/extensionManifestPropertiesService';
+import { IUserDataInitializationService } from 'vs/workbench/services/userData/browser/userDataInit';
 
 export class ExtensionService extends AbstractExtensionService implements IExtensionService {
 
@@ -47,12 +49,13 @@ export class ExtensionService extends AbstractExtensionService implements IExten
 		@IRemoteAgentService private readonly _remoteAgentService: IRemoteAgentService,
 		@IWebExtensionsScannerService private readonly _webExtensionsScannerService: IWebExtensionsScannerService,
 		@ILifecycleService private readonly _lifecycleService: ILifecycleService,
+		@IExtensionManifestPropertiesService extensionManifestPropertiesService: IExtensionManifestPropertiesService,
+		@IUserDataInitializationService private readonly _userDataInitializationService: IUserDataInitializationService,
 	) {
 		super(
 			new ExtensionRunningLocationClassifier(
-				productService,
-				configurationService,
-				(extensionKinds, isInstalledLocally, isInstalledRemotely) => ExtensionService.pickRunningLocation(extensionKinds, isInstalledLocally, isInstalledRemotely)
+				(extension) => this._getExtensionKind(extension),
+				(extensionKinds, isInstalledLocally, isInstalledRemotely, preference) => ExtensionService.pickRunningLocation(extensionKinds, isInstalledLocally, isInstalledRemotely, preference)
 			),
 			instantiationService,
 			notificationService,
@@ -64,17 +67,21 @@ export class ExtensionService extends AbstractExtensionService implements IExten
 			extensionManagementService,
 			contextService,
 			configurationService,
+			extensionManifestPropertiesService
 		);
 
 		this._runningLocation = new Map<string, ExtensionRunningLocation>();
 
-		// Initialize only after workbench is ready
-		this._lifecycleService.when(LifecyclePhase.Ready).then(() => this._initialize());
+		// Initialize installed extensions first and do it only after workbench is ready
+		this._lifecycleService.when(LifecyclePhase.Ready).then(async () => {
+			await this._userDataInitializationService.initializeInstalledExtensions(this._instantiationService);
+			this._initialize();
+		});
 
 		this._initFetchFileSystem();
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this._disposables.dispose();
 		super.dispose();
 	}
@@ -121,23 +128,39 @@ export class ExtensionService extends AbstractExtensionService implements IExten
 		};
 	}
 
-	public static pickRunningLocation(extensionKinds: ExtensionKind[], isInstalledLocally: boolean, isInstalledRemotely: boolean): ExtensionRunningLocation {
+	public static pickRunningLocation(extensionKinds: ExtensionKind[], isInstalledLocally: boolean, isInstalledRemotely: boolean, preference: ExtensionRunningPreference): ExtensionRunningLocation {
+		const result: ExtensionRunningLocation[] = [];
 		let canRunRemotely = false;
 		for (const extensionKind of extensionKinds) {
 			if (extensionKind === 'ui' && isInstalledRemotely) {
 				// ui extensions run remotely if possible (but only as a last resort)
-				canRunRemotely = true;
+				if (preference === ExtensionRunningPreference.Remote) {
+					return ExtensionRunningLocation.Remote;
+				} else {
+					canRunRemotely = true;
+				}
 			}
 			if (extensionKind === 'workspace' && isInstalledRemotely) {
 				// workspace extensions run remotely if possible
-				return ExtensionRunningLocation.Remote;
+				if (preference === ExtensionRunningPreference.None || preference === ExtensionRunningPreference.Remote) {
+					return ExtensionRunningLocation.Remote;
+				} else {
+					result.push(ExtensionRunningLocation.Remote);
+				}
 			}
 			if (extensionKind === 'web' && isInstalledLocally) {
 				// web worker extensions run in the local web worker if possible
-				return ExtensionRunningLocation.LocalWebWorker;
+				if (preference === ExtensionRunningPreference.None || preference === ExtensionRunningPreference.Local) {
+					return ExtensionRunningLocation.LocalWebWorker;
+				} else {
+					result.push(ExtensionRunningLocation.LocalWebWorker);
+				}
 			}
 		}
-		return (canRunRemotely ? ExtensionRunningLocation.Remote : ExtensionRunningLocation.None);
+		if (canRunRemotely) {
+			result.push(ExtensionRunningLocation.Remote);
+		}
+		return (result.length > 0 ? result[0] : ExtensionRunningLocation.None);
 	}
 
 	protected _createExtensionHosts(_isInitialStart: boolean): IExtensionHost[] {
@@ -195,7 +218,7 @@ export class ExtensionService extends AbstractExtensionService implements IExten
 
 	public _onExtensionHostExit(code: number): void {
 		// Dispose everything associated with the extension host
-		this._stopExtensionHosts();
+		this.stopExtensionHosts();
 
 		// We log the exit code to the console. Do NOT remove this
 		// code as the automated integration tests in browser rely

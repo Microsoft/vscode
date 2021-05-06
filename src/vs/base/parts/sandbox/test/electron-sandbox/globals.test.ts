@@ -4,13 +4,17 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as assert from 'assert';
-import { ipcRenderer, crashReporter, webFrame, process } from 'vs/base/parts/sandbox/electron-sandbox/globals';
+import { ipcRenderer, crashReporter, webFrame, context, process } from 'vs/base/parts/sandbox/electron-sandbox/globals';
 
 suite('Sandbox', () => {
-	test('globals', () => {
-		assert.ok(typeof ipcRenderer.invoke === 'function');
+	test('globals', async () => {
+		assert.ok(typeof ipcRenderer.send === 'function');
 		assert.ok(typeof crashReporter.addExtraParameter === 'function');
 		assert.ok(typeof webFrame.setZoomLevel === 'function');
 		assert.ok(typeof process.platform === 'string');
+
+		const config = await context.resolveConfiguration();
+		assert.ok(config);
+		assert.ok(context.configuration());
 	});
 });

@@ -56,7 +56,7 @@ suite('Indentation Folding', () => {
 			for (let i = 0; i < indentRanges.length; i++) {
 				actual.push({ start: indentRanges.getStartLineNumber(i), end: indentRanges.getEndLineNumber(i) });
 			}
-			assert.deepEqual(actual, expectedRanges, message);
+			assert.deepStrictEqual(actual, expectedRanges, message);
 		}
 
 		assertLimit(1000, [r1, r2, r3, r4, r5, r6, r7, r8, r9], '1000');

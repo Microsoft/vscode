@@ -88,7 +88,7 @@ class ModelWorkerTextMateTokenizer extends Disposable {
 		this._worker.acceptRemovedModel(this._model.uri.toString());
 	}
 
-	public dispose() {
+	public override dispose() {
 		super.dispose();
 		this._endSync();
 	}
@@ -189,7 +189,7 @@ export class TextMateService extends AbstractTextMateService {
 		return response;
 	}
 
-	protected _onDidCreateGrammarFactory(grammarDefinitions: IValidGrammarDefinition[]): void {
+	protected override _onDidCreateGrammarFactory(grammarDefinitions: IValidGrammarDefinition[]): void {
 		this._killWorker();
 
 		if (RUN_TEXTMATE_IN_WORKER) {
@@ -218,14 +218,14 @@ export class TextMateService extends AbstractTextMateService {
 		}
 	}
 
-	protected _doUpdateTheme(grammarFactory: TMGrammarFactory, theme: IRawTheme, colorMap: string[]): void {
+	protected override _doUpdateTheme(grammarFactory: TMGrammarFactory, theme: IRawTheme, colorMap: string[]): void {
 		super._doUpdateTheme(grammarFactory, theme, colorMap);
 		if (this._currentTheme && this._currentTokenColorMap && this._workerProxy) {
 			this._workerProxy.acceptTheme(this._currentTheme, this._currentTokenColorMap);
 		}
 	}
 
-	protected _onDidDisposeGrammarFactory(): void {
+	protected override _onDidDisposeGrammarFactory(): void {
 		this._killWorker();
 	}
 

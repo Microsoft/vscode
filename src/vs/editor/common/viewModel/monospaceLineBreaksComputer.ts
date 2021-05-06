@@ -32,7 +32,7 @@ class WrappingCharacterClassifier extends CharacterClassifier<CharacterClass> {
 		}
 	}
 
-	public get(charCode: number): CharacterClass {
+	public override get(charCode: number): CharacterClass {
 		if (charCode >= 0 && charCode < 256) {
 			return <CharacterClass>this._asciiMap[charCode];
 		} else {

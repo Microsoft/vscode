@@ -7,23 +7,20 @@
 	position: absolute;
 	width: 600px;
 	z-index: 2000;
-	padding-bottom: 6px;
+	padding: 0 1px 6px 1px;
 	left: 50%;
 	margin-left: -300px;
 }
 
 .quick-input-titlebar {
 	display: flex;
+	align-items: center;
 }
 
 .quick-input-left-action-bar {
 	display: flex;
 	margin-left: 4px;
 	flex: 1;
-}
-
-.quick-input-left-action-bar.monaco-action-bar .actions-container {
-	justify-content: flex-start;
 }
 
 .quick-input-title {
@@ -37,12 +34,14 @@
 	flex: 1;
 }
 
+.quick-input-right-action-bar > .actions-container {
+	justify-content: flex-end;
+}
+
 .quick-input-titlebar .monaco-action-bar .action-label.codicon {
-	margin: 0;
-	width: 19px;
-	height: 100%;
 	background-position: center;
 	background-repeat: no-repeat;
+	padding: 2px;
 }
 
 .quick-input-description {
@@ -260,10 +259,8 @@
 }
 
 .quick-input-list .quick-input-list-entry-action-bar .action-label.codicon {
-	margin: 0;
-	height: 100%;
-	padding: 0 2px;
-	vertical-align: middle;
+	margin-right: 4px;
+	padding: 2px;
 }
 
 .quick-input-list .quick-input-list-entry-action-bar {
@@ -274,12 +271,19 @@
 	margin-right: 4px; /* separate from scrollbar */
 }
 
-.quick-input-list .quick-input-list-entry-action-bar .action-label.codicon {
-	margin-right: 4px; /* separate actions */
-}
-
 .quick-input-list .quick-input-list-entry .quick-input-list-entry-action-bar .action-label.always-visible,
 .quick-input-list .quick-input-list-entry:hover .quick-input-list-entry-action-bar .action-label,
 .quick-input-list .monaco-list-row.focused .quick-input-list-entry-action-bar .action-label {
 	display: flex;
+}
+
+/* focused items in quick pick */
+.quick-input-list .monaco-list-row.focused .monaco-keybinding-key,
+.quick-input-list .monaco-list-row.focused .quick-input-list-entry .quick-input-list-separator,
+.quick-input-list .monaco-list-row.focused .quick-input-list-rows .quick-input-list-row .codicon,
+.quick-input-list .monaco-list-row.focused .quick-input-list-entry-action-bar .codicon {
+	color: inherit
+}
+.quick-input-list .monaco-list-row.focused .monaco-keybinding-key {
+	background: none;
 }

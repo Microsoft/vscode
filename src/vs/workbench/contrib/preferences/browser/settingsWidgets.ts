@@ -91,14 +91,21 @@ registerThemingParticipant((theme: IColorTheme, collector: ICssStyleCollector) =
 
 	const link = theme.getColor(textLinkForeground);
 	if (link) {
+		collector.addRule(`.settings-editor > .settings-body > .settings-tree-container .setting-item-contents .setting-item-trust-description a { color: ${link}; }`);
+		collector.addRule(`.settings-editor > .settings-body > .settings-tree-container .setting-item-contents .setting-item-trust-description a > code { color: ${link}; }`);
 		collector.addRule(`.settings-editor > .settings-body > .settings-tree-container .setting-item-contents .setting-item-markdown a { color: ${link}; }`);
 		collector.addRule(`.settings-editor > .settings-body > .settings-tree-container .setting-item-contents .setting-item-markdown a > code { color: ${link}; }`);
 		collector.addRule(`.monaco-select-box-dropdown-container > .select-box-details-pane > .select-box-description-markdown a { color: ${link}; }`);
 		collector.addRule(`.monaco-select-box-dropdown-container > .select-box-details-pane > .select-box-description-markdown a > code { color: ${link}; }`);
+
+		const disabledfgColor = new Color(new RGBA(link.rgba.r, link.rgba.g, link.rgba.b, 0.8));
+		collector.addRule(`.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-untrusted > .setting-item-contents .setting-item-markdown a { color: ${disabledfgColor}; }`);
 	}
 
 	const activeLink = theme.getColor(textLinkActiveForeground);
 	if (activeLink) {
+		collector.addRule(`.settings-editor > .settings-body > .settings-tree-container .setting-item-contents .setting-item-trust-description a:hover, .settings-editor > .settings-body > .settings-tree-container .setting-item-contents .setting-item-trust-description a:active { color: ${activeLink}; }`);
+		collector.addRule(`.settings-editor > .settings-body > .settings-tree-container .setting-item-contents .setting-item-trust-description a:hover > code, .settings-editor > .settings-body > .settings-tree-container .setting-item-contents .setting-item-trust-description a:active > code { color: ${activeLink}; }`);
 		collector.addRule(`.settings-editor > .settings-body > .settings-tree-container .setting-item-contents .setting-item-markdown a:hover, .settings-editor > .settings-body > .settings-tree-container .setting-item-contents .setting-item-markdown a:active { color: ${activeLink}; }`);
 		collector.addRule(`.settings-editor > .settings-body > .settings-tree-container .setting-item-contents .setting-item-markdown a:hover > code, .settings-editor > .settings-body > .settings-tree-container .setting-item-contents .setting-item-markdown a:active > code { color: ${activeLink}; }`);
 		collector.addRule(`.monaco-select-box-dropdown-container > .select-box-details-pane > .select-box-description-markdown a:hover, .monaco-select-box-dropdown-container > .select-box-details-pane > .select-box-description-markdown a:active { color: ${activeLink}; }`);
@@ -150,7 +157,8 @@ registerThemingParticipant((theme: IColorTheme, collector: ICssStyleCollector) =
 	if (codeTextForegroundColor) {
 		collector.addRule(`.settings-editor > .settings-body > .settings-tree-container .setting-item .setting-item-markdown code { color: ${codeTextForegroundColor} }`);
 		collector.addRule(`.monaco-select-box-dropdown-container > .select-box-details-pane > .select-box-description-markdown code { color: ${codeTextForegroundColor} }`);
-
+		const disabledfgColor = new Color(new RGBA(codeTextForegroundColor.rgba.r, codeTextForegroundColor.rgba.g, codeTextForegroundColor.rgba.b, 0.8));
+		collector.addRule(`.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-untrusted > .setting-item-contents .setting-item-description .setting-item-markdown code { color: ${disabledfgColor} }`);
 	}
 
 	const modifiedItemIndicatorColor = theme.getColor(modifiedItemIndicator);
@@ -236,7 +244,7 @@ export interface ISettingListChangeEvent<TDataItem extends object> {
 	targetIndex?: number;
 }
 
-abstract class AbstractListSettingWidget<TDataItem extends object> extends Disposable {
+export abstract class AbstractListSettingWidget<TDataItem extends object> extends Disposable {
 	private listElement: HTMLElement;
 	private rowElements: HTMLElement[] = [];
 
@@ -438,13 +446,13 @@ abstract class AbstractListSettingWidget<TDataItem extends object> extends Dispo
 			return -1;
 		}
 
-		const actionbar = DOM.findParentWithClass(<any>e.target, 'monaco-action-bar');
+		const actionbar = DOM.findParentWithClass(e.target as HTMLElement, 'monaco-action-bar');
 		if (actionbar) {
 			// Don't handle doubleclicks inside the action bar
 			return -1;
 		}
 
-		const element = DOM.findParentWithClass((<any>e.target), 'setting-list-row');
+		const element = DOM.findParentWithClass(e.target as HTMLElement, 'setting-list-row');
 		if (!element) {
 			return -1;
 		}
@@ -623,17 +631,17 @@ export class ListSettingWidget extends AbstractListSettingWidget<IListDataItem> 
 }
 
 export class ExcludeSettingWidget extends ListSettingWidget {
-	protected getContainerClasses() {
+	protected override getContainerClasses() {
 		return ['setting-list-exclude-widget'];
 	}
 
-	protected getLocalizedRowTitle({ value, sibling }: IListDataItem): string {
+	protected override getLocalizedRowTitle({ value, sibling }: IListDataItem): string {
 		return isUndefinedOrNull(sibling)
 			? localize('excludePatternHintLabel', "Exclude files matching `{0}`", value)
 			: localize('excludeSiblingHintLabel', "Exclude files matching `{0}`, only when a file matching `{1}` is present", value, sibling);
 	}
 
-	protected getLocalizedStrings() {
+	protected override getLocalizedStrings() {
 		return {
 			deleteActionTooltip: localize('removeExcludeItem', "Remove Exclude Item"),
 			editActionTooltip: localize('editExcludeItem', "Edit Exclude Item"),
@@ -703,7 +711,7 @@ export class ObjectSettingWidget extends AbstractListSettingWidget<IObjectDataIt
 	private keySuggester: IObjectKeySuggester = () => undefined;
 	private valueSuggester: IObjectValueSuggester = () => undefined;
 
-	setValue(listData: IObjectDataItem[], options?: IObjectSetValueOptions): void {
+	override setValue(listData: IObjectDataItem[], options?: IObjectSetValueOptions): void {
 		this.showAddButton = options?.showAddButton ?? this.showAddButton;
 		this.keySuggester = options?.keySuggester ?? this.keySuggester;
 		this.valueSuggester = options?.valueSuggester ?? this.valueSuggester;
@@ -721,7 +729,7 @@ export class ObjectSettingWidget extends AbstractListSettingWidget<IObjectDataIt
 		return item.key.data === '' && item.value.data === '';
 	}
 
-	protected isAddButtonVisible(): boolean {
+	protected override isAddButtonVisible(): boolean {
 		return this.showAddButton;
 	}
 
@@ -769,7 +777,7 @@ export class ObjectSettingWidget extends AbstractListSettingWidget<IObjectDataIt
 		return actions;
 	}
 
-	protected renderHeader() {
+	protected override renderHeader() {
 		const header = $('.setting-list-row-header');
 		const keyHeader = DOM.append(header, $('.setting-list-object-key'));
 		const valueHeader = DOM.append(header, $('.setting-list-object-value'));

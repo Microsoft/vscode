@@ -6,20 +6,17 @@
 import * as glob from 'vs/base/common/glob';
 import { URI } from 'vs/base/common/uri';
 import { basename } from 'vs/base/common/path';
-import { INotebookExclusiveDocumentFilter, isDocumentExcludePattern, NotebookEditorPriority, TransientOptions } from 'vs/workbench/contrib/notebook/common/notebookCommon';
+import { INotebookExclusiveDocumentFilter, isDocumentExcludePattern, TransientOptions } from 'vs/workbench/contrib/notebook/common/notebookCommon';
+import { ContributedEditorPriority } from 'vs/workbench/services/editor/common/editorOverrideService';
 
-export type NotebookSelector = string | glob.IRelativePattern | INotebookExclusiveDocumentFilter;
+type NotebookSelector = string | glob.IRelativePattern | INotebookExclusiveDocumentFilter;
 
 export interface NotebookEditorDescriptor {
 	readonly id: string;
 	readonly displayName: string;
 	readonly selectors: readonly { filenamePattern?: string; excludeFileNamePattern?: string; }[];
-	readonly priority: NotebookEditorPriority;
-	readonly providerExtensionId?: string;
-	readonly providerDescription?: string;
+	readonly priority: ContributedEditorPriority;
 	readonly providerDisplayName: string;
-	readonly providerExtensionLocation: URI;
-	readonly dynamicContribution: boolean;
 	readonly exclusive: boolean;
 }
 
@@ -28,13 +25,9 @@ export class NotebookProviderInfo {
 	readonly id: string;
 	readonly displayName: string;
 
-	readonly priority: NotebookEditorPriority;
+	readonly priority: ContributedEditorPriority;
 	// it's optional as the memento might not have it
-	readonly providerExtensionId?: string;
-	readonly providerDescription?: string;
 	readonly providerDisplayName: string;
-	readonly providerExtensionLocation: URI;
-	readonly dynamicContribution: boolean;
 	readonly exclusive: boolean;
 	private _selectors: NotebookSelector[];
 	get selectors() {
@@ -53,14 +46,11 @@ export class NotebookProviderInfo {
 			exclude: selector.excludeFileNamePattern || ''
 		})) || [];
 		this.priority = descriptor.priority;
-		this.providerExtensionId = descriptor.providerExtensionId;
-		this.providerDescription = descriptor.providerDescription;
 		this.providerDisplayName = descriptor.providerDisplayName;
-		this.providerExtensionLocation = descriptor.providerExtensionLocation;
-		this.dynamicContribution = descriptor.dynamicContribution;
 		this.exclusive = descriptor.exclusive;
 		this._options = {
-			transientMetadata: {},
+			transientCellMetadata: {},
+			transientDocumentMetadata: {},
 			transientOutputs: false
 		};
 	}

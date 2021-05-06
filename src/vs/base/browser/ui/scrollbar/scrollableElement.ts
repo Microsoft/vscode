@@ -214,7 +214,7 @@ export abstract class AbstractScrollableElement extends Widget {
 			this._domNode.appendChild(this._topShadowDomNode.domNode);
 
 			this._topLeftShadowDomNode = createFastDomNode(document.createElement('div'));
-			this._topLeftShadowDomNode.setClassName('shadow top-left-corner');
+			this._topLeftShadowDomNode.setClassName('shadow');
 			this._domNode.appendChild(this._topLeftShadowDomNode.domNode);
 		} else {
 			this._leftShadowDomNode = null;
@@ -239,7 +239,7 @@ export abstract class AbstractScrollableElement extends Widget {
 		this._revealOnScroll = true;
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		this._mouseWheelToDispose = dispose(this._mouseWheelToDispose);
 		super.dispose();
 	}
@@ -484,9 +484,12 @@ export abstract class AbstractScrollableElement extends Widget {
 			const enableTop = scrollState.scrollTop > 0;
 			const enableLeft = scrollState.scrollLeft > 0;
 
-			this._leftShadowDomNode!.setClassName('shadow' + (enableLeft ? ' left' : ''));
-			this._topShadowDomNode!.setClassName('shadow' + (enableTop ? ' top' : ''));
-			this._topLeftShadowDomNode!.setClassName('shadow top-left-corner' + (enableTop ? ' top' : '') + (enableLeft ? ' left' : ''));
+			const leftClassName = (enableLeft ? ' left' : '');
+			const topClassName = (enableTop ? ' top' : '');
+			const topLeftClassName = (enableLeft || enableTop ? ' top-left-corner' : '');
+			this._leftShadowDomNode!.setClassName(`shadow${leftClassName}`);
+			this._topShadowDomNode!.setClassName(`shadow${topClassName}`);
+			this._topLeftShadowDomNode!.setClassName(`shadow${topLeftClassName}${topClassName}${leftClassName}`);
 		}
 	}
 

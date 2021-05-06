@@ -44,3 +44,7 @@ export function removeFileFromParseCache(document: TextDocument) {
 	const filename = document.uri.toString();
 	_parseCache.delete(filename);
 }
+
+export function clearParseCache() {
+	_parseCache.clear();
+}

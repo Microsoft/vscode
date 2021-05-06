@@ -6,17 +6,22 @@
 //@ts-check
 'use strict';
 
+/**
+ * @typedef {import('./vs/base/common/product').IProductConfiguration} IProductConfiguration
+ * @typedef {import('./vs/base/node/languagePacks').NLSConfiguration} NLSConfiguration
+ * @typedef {import('./vs/platform/environment/common/argv').NativeParsedArgs} NativeParsedArgs
+ */
+
 const perf = require('./vs/base/common/performance');
 perf.mark('code/didStartMain');
 
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
-const { getNLSConfiguration } = require('./vs/base/node/languagePacks');
 const bootstrap = require('./bootstrap');
 const bootstrapNode = require('./bootstrap-node');
-const { getDefaultUserDataPath } = require('./vs/base/node/userDataPath');
-/** @type {Partial<import('./vs/platform/product/common/productService').IProductConfiguration>} */
+const { getUserDataPath } = require('./vs/platform/environment/node/userDataPath');
+/** @type {Partial<IProductConfiguration>} */
 const product = require('../product.json');
 const { app, protocol, crashReporter } = require('electron');
 
@@ -39,7 +44,9 @@ app.setPath('userData', userDataPath);
 const argvConfig = configureCommandlineSwitchesSync(args);
 
 // Configure crash reporter
+perf.mark('code/willStartCrashReporter');
 configureCrashReporter();
+perf.mark('code/didStartCrashReporter');
 
 // Set logs path before app 'ready' event if running portable
 // to ensure that no 'logs' folder is created on disk at a
@@ -49,17 +56,11 @@ if (portable && portable.isPortable) {
 	app.setAppLogsPath(path.join(userDataPath, 'logs'));
 }
 
-// Update cwd based on environment and platform
-setCurrentWorkingDirectory();
-
 // Register custom schemes with privileges
 protocol.registerSchemesAsPrivileged([
 	{
 		scheme: 'vscode-webview',
-		privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true }
-	}, {
-		scheme: 'vscode-webview-resource',
-		privileges: { secure: true, standard: true, supportFetchAPI: true, corsEnabled: true }
+		privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, allowServiceWorkers: true, }
 	},
 	{
 		scheme: 'vscode-file',
@@ -77,13 +78,14 @@ const nodeCachedDataDir = getNodeCachedDir();
  * Support user defined locale: load it early before app('ready')
  * to have more things running in parallel.
  *
- * @type {Promise<import('./vs/base/node/languagePacks').NLSConfiguration> | undefined}
+ * @type {Promise<NLSConfiguration> | undefined}
  */
 let nlsConfigurationPromise = undefined;
 
 const metaDataFile = path.join(__dirname, 'nls.metadata.json');
 const locale = getUserDefinedLocale(argvConfig);
 if (locale) {
+	const { getNLSConfiguration } = require('./vs/base/node/languagePacks');
 	nlsConfigurationPromise = getNLSConfiguration(product.commit, userDataPath, metaDataFile, locale);
 }
 
@@ -107,7 +109,7 @@ app.once('ready', function () {
  * Main startup routine
  *
  * @param {string | undefined} cachedDataDir
- * @param {import('./vs/base/node/languagePacks').NLSConfiguration} nlsConfig
+ * @param {NLSConfiguration} nlsConfig
  */
 function startup(cachedDataDir, nlsConfig) {
 	nlsConfig._languagePackSupport = true;
@@ -135,7 +137,7 @@ async function onReady() {
 }
 
 /**
- * @param {import('./vs/platform/environment/common/argv').NativeParsedArgs} cliArgs
+ * @param {NativeParsedArgs} cliArgs
  */
 function configureCommandlineSwitchesSync(cliArgs) {
 	const SUPPORTED_ELECTRON_SWITCHES = [
@@ -161,13 +163,18 @@ function configureCommandlineSwitchesSync(cliArgs) {
 		// Persistently enable proposed api via argv.json: https://github.com/microsoft/vscode/issues/99775
 		'enable-proposed-api',
 
-		// TODO@bpasero remove me once testing is done on `vscode-file` protocol
-		// (all traces of `enable-browser-code-loading` and `ENABLE_VSCODE_BROWSER_CODE_LOADING`)
-		'enable-browser-code-loading'
+		// TODO@sandbox remove me once testing is done on `vscode-file` protocol
+		// (all traces of `enable-browser-code-loading` and `VSCODE_BROWSER_CODE_LOADING`)
+		'enable-browser-code-loading',
+
+		// Log level to use. Default is 'info'. Allowed values are 'critical', 'error', 'warn', 'info', 'debug', 'trace', 'off'.
+		'log-level'
 	];
 
 	// Read argv config
 	const argvConfig = readArgvConfigSync();
+
+	let browserCodeLoadingStrategy = undefined;
 
 	Object.keys(argvConfig).forEach(argvKey => {
 		const argvValue = argvConfig[argvKey];
@@ -204,8 +211,16 @@ function configureCommandlineSwitchesSync(cliArgs) {
 					break;
 
 				case 'enable-browser-code-loading':
+					if (argvValue === false) {
+						browserCodeLoadingStrategy = undefined;
+					} else if (typeof argvValue === 'string') {
+						browserCodeLoadingStrategy = argvValue;
+					}
+					break;
+
+				case 'log-level':
 					if (typeof argvValue === 'string') {
-						process.env['ENABLE_VSCODE_BROWSER_CODE_LOADING'] = argvValue;
+						process.argv.push('--log', argvValue);
 					}
 					break;
 			}
@@ -218,9 +233,9 @@ function configureCommandlineSwitchesSync(cliArgs) {
 		app.commandLine.appendSwitch('js-flags', jsFlags);
 	}
 
-	// Support __sandbox flag
-	if (cliArgs.__sandbox) {
-		process.env['ENABLE_VSCODE_BROWSER_CODE_LOADING'] = 'bypassHeatCheck';
+	// Configure vscode-file:// code loading environment
+	if (cliArgs.__sandbox || browserCodeLoadingStrategy) {
+		process.env['VSCODE_BROWSER_CODE_LOADING'] = browserCodeLoadingStrategy || 'bypassHeatCheck';
 	}
 
 	return argvConfig;
@@ -405,7 +420,7 @@ function configureCrashReporter() {
 }
 
 /**
- * @param {import('./vs/platform/environment/common/argv').NativeParsedArgs} cliArgs
+ * @param {NativeParsedArgs} cliArgs
  * @returns {string | null}
  */
 function getJSFlags(cliArgs) {
@@ -425,20 +440,7 @@ function getJSFlags(cliArgs) {
 }
 
 /**
- * @param {import('./vs/platform/environment/common/argv').NativeParsedArgs} cliArgs
- *
- * @returns {string}
- */
-function getUserDataPath(cliArgs) {
-	if (portable.isPortable) {
-		return path.join(portable.portableDataPath, 'user-data');
-	}
-
-	return path.resolve(cliArgs['user-data-dir'] || getDefaultUserDataPath());
-}
-
-/**
- * @returns {import('./vs/platform/environment/common/argv').NativeParsedArgs}
+ * @returns {NativeParsedArgs}
  */
 function parseCLIArgs() {
 	const minimist = require('minimist');
@@ -452,19 +454,6 @@ function parseCLIArgs() {
 			'crash-reporter-directory'
 		]
 	});
-}
-
-function setCurrentWorkingDirectory() {
-	try {
-		if (process.platform === 'win32') {
-			process.env['VSCODE_CWD'] = process.cwd(); // remember as environment variable
-			process.chdir(path.dirname(app.getPath('exe'))); // always set application folder as cwd
-		} else if (process.env['VSCODE_CWD']) {
-			process.chdir(process.env['VSCODE_CWD']);
-		}
-	} catch (err) {
-		console.error(err);
-	}
 }
 
 function registerListeners() {
@@ -516,7 +505,7 @@ function getNodeCachedDir() {
 	return new class {
 
 		constructor() {
-			this.value = this._compute();
+			this.value = this.compute();
 		}
 
 		async ensureExists() {
@@ -531,7 +520,7 @@ function getNodeCachedDir() {
 			}
 		}
 
-		_compute() {
+		compute() {
 			if (process.argv.indexOf('--no-cached-data') > 0) {
 				return undefined;
 			}
@@ -569,7 +558,7 @@ function mkdirp(dir) {
 /**
  * Resolve the NLS configuration
  *
- * @return {Promise<import('./vs/base/node/languagePacks').NLSConfiguration>}
+ * @return {Promise<NLSConfiguration>}
  */
 async function resolveNlsConfiguration() {
 
@@ -589,6 +578,7 @@ async function resolveNlsConfiguration() {
 			// See above the comment about the loader and case sensitiviness
 			appLocale = appLocale.toLowerCase();
 
+			const { getNLSConfiguration } = require('./vs/base/node/languagePacks');
 			nlsConfiguration = await getNLSConfiguration(product.commit, userDataPath, metaDataFile, appLocale);
 			if (!nlsConfiguration) {
 				nlsConfiguration = { locale: appLocale, availableLanguages: {} };

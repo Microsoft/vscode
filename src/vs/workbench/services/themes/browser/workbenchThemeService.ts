@@ -692,19 +692,17 @@ export class WorkbenchThemeService implements IWorkbenchThemeService {
 
 class ThemeFileWatcher {
 
-	private inExtensionDevelopment: boolean;
 	private watchedLocation: URI | undefined;
 	private watcherDisposable: IDisposable | undefined;
 	private fileChangeListener: IDisposable | undefined;
 
-	constructor(private fileService: IFileService, environmentService: IWorkbenchEnvironmentService, private onUpdate: () => void) {
-		this.inExtensionDevelopment = !!environmentService.extensionDevelopmentLocationURI;
+	constructor(private fileService: IFileService, private environmentService: IWorkbenchEnvironmentService, private onUpdate: () => void) {
 	}
 
 	update(theme: { location?: URI, watch?: boolean; }) {
 		if (!resources.isEqual(theme.location, this.watchedLocation)) {
 			this.dispose();
-			if (theme.location && (theme.watch || this.inExtensionDevelopment)) {
+			if (theme.location && (theme.watch || this.environmentService.isExtensionDevelopment)) {
 				this.watchedLocation = theme.location;
 				this.watcherDisposable = this.fileService.watch(theme.location);
 				this.fileService.onDidFilesChange(e => {

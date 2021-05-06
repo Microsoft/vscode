@@ -9,7 +9,7 @@ import { IPickerQuickAccessItem, PickerQuickAccessProvider, TriggerAction } from
 import { matchesFuzzy } from 'vs/base/common/filters';
 import { ITerminalService } from 'vs/workbench/contrib/terminal/browser/terminal';
 import { ICommandService } from 'vs/platform/commands/common/commands';
-import { TERMINAL_COMMAND_ID } from 'vs/workbench/contrib/terminal/common/terminal';
+import { TerminalCommandId } from 'vs/workbench/contrib/terminal/common/terminal';
 import { ThemeIcon } from 'vs/platform/theme/common/themeService';
 import { killTerminalIcon, renameTerminalIcon } from 'vs/workbench/contrib/terminal/browser/terminalIcons';
 
@@ -18,21 +18,21 @@ export class TerminalQuickAccessProvider extends PickerQuickAccessProvider<IPick
 	static PREFIX = 'term ';
 
 	constructor(
-		@ITerminalService private readonly terminalService: ITerminalService,
-		@ICommandService private readonly commandService: ICommandService,
+		@ITerminalService private readonly _terminalService: ITerminalService,
+		@ICommandService private readonly _commandService: ICommandService,
 	) {
 		super(TerminalQuickAccessProvider.PREFIX, { canAcceptInBackground: true });
 	}
 
-	protected getPicks(filter: string): Array<IPickerQuickAccessItem | IQuickPickSeparator> {
+	protected _getPicks(filter: string): Array<IPickerQuickAccessItem | IQuickPickSeparator> {
 		const terminalPicks: Array<IPickerQuickAccessItem | IQuickPickSeparator> = [];
 
-		const terminalTabs = this.terminalService.terminalTabs;
-		for (let tabIndex = 0; tabIndex < terminalTabs.length; tabIndex++) {
-			const terminalTab = terminalTabs[tabIndex];
-			for (let terminalIndex = 0; terminalIndex < terminalTab.terminalInstances.length; terminalIndex++) {
-				const terminal = terminalTab.terminalInstances[terminalIndex];
-				const label = `${tabIndex + 1}.${terminalIndex + 1}: ${terminal.title}`;
+		const terminalGroups = this._terminalService.terminalGroups;
+		for (let groupIndex = 0; groupIndex < terminalGroups.length; groupIndex++) {
+			const terminalGroup = terminalGroups[groupIndex];
+			for (let terminalIndex = 0; terminalIndex < terminalGroup.terminalInstances.length; terminalIndex++) {
+				const terminal = terminalGroup.terminalInstances[terminalIndex];
+				const label = `$(${terminal.icon?.id}) ${groupIndex + 1}.${terminalIndex + 1}: ${terminal.title}`;
 
 				const highlights = matchesFuzzy(filter, label, true);
 				if (highlights) {
@@ -52,7 +52,7 @@ export class TerminalQuickAccessProvider extends PickerQuickAccessProvider<IPick
 						trigger: buttonIndex => {
 							switch (buttonIndex) {
 								case 0:
-									this.commandService.executeCommand(TERMINAL_COMMAND_ID.RENAME, terminal);
+									this._commandService.executeCommand(TerminalCommandId.Rename, terminal);
 									return TriggerAction.NO_ACTION;
 								case 1:
 									terminal.dispose(true);
@@ -62,8 +62,8 @@ export class TerminalQuickAccessProvider extends PickerQuickAccessProvider<IPick
 							return TriggerAction.NO_ACTION;
 						},
 						accept: (keyMod, event) => {
-							this.terminalService.setActiveInstance(terminal);
-							this.terminalService.showPanel(!event.inBackground);
+							this._terminalService.setActiveInstance(terminal);
+							this._terminalService.showPanel(!event.inBackground);
 						}
 					});
 				}
@@ -74,11 +74,17 @@ export class TerminalQuickAccessProvider extends PickerQuickAccessProvider<IPick
 			terminalPicks.push({ type: 'separator' });
 		}
 
-		const createTerminalLabel = localize("workbench.action.terminal.newplus", "Create New Integrated Terminal");
+		const createTerminalLabel = localize("workbench.action.terminal.newplus", "Create New Terminal");
 		terminalPicks.push({
 			label: `$(plus) ${createTerminalLabel}`,
 			ariaLabel: createTerminalLabel,
-			accept: () => this.commandService.executeCommand('workbench.action.terminal.new')
+			accept: () => this._commandService.executeCommand(TerminalCommandId.New)
+		});
+		const createWithProfileLabel = localize("workbench.action.terminal.newWithProfilePlus", "Create New Terminal With Profile");
+		terminalPicks.push({
+			label: `$(plus) ${createWithProfileLabel}`,
+			ariaLabel: createWithProfileLabel,
+			accept: () => this._commandService.executeCommand(TerminalCommandId.NewWithProfile)
 		});
 
 		return terminalPicks;

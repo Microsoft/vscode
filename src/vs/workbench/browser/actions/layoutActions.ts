@@ -4,10 +4,9 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { localize } from 'vs/nls';
-import { Registry } from 'vs/platform/registry/common/platform';
-import { Action } from 'vs/base/common/actions';
-import { SyncActionDescriptor, MenuId, MenuRegistry, registerAction2, Action2 } from 'vs/platform/actions/common/actions';
-import { IWorkbenchActionRegistry, Extensions as WorkbenchExtensions, CATEGORIES } from 'vs/workbench/common/actions';
+import Severity from 'vs/base/common/severity';
+import { MenuId, MenuRegistry, registerAction2, Action2 } from 'vs/platform/actions/common/actions';
+import { CATEGORIES } from 'vs/workbench/common/actions';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { IWorkbenchLayoutService, Parts, Position } from 'vs/workbench/services/layout/browser/layoutService';
 import { ServicesAccessor, IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
@@ -20,15 +19,13 @@ import { ContextKeyExpr, IContextKeyService } from 'vs/platform/contextkey/commo
 import { SideBarVisibleContext } from 'vs/workbench/common/viewlet';
 import { IViewDescriptorService, IViewsService, FocusedViewContext, ViewContainerLocation, IViewDescriptor, ViewContainerLocationToString } from 'vs/workbench/common/views';
 import { IQuickInputService, IQuickPickItem, IQuickPickSeparator } from 'vs/platform/quickinput/common/quickInput';
-import { INotificationService } from 'vs/platform/notification/common/notification';
+import { IDialogService } from 'vs/platform/dialogs/common/dialogs';
 import { IActivityBarService } from 'vs/workbench/services/activityBar/browser/activityBarService';
 import { IPanelService } from 'vs/workbench/services/panel/common/panelService';
 
-const registry = Registry.as<IWorkbenchActionRegistry>(WorkbenchExtensions.WorkbenchActions);
-
 // --- Close Side Bar
 
-class CloseSidebarAction extends Action2 {
+registerAction2(class extends Action2 {
 
 	constructor() {
 		super({
@@ -42,25 +39,32 @@ class CloseSidebarAction extends Action2 {
 	run(accessor: ServicesAccessor): void {
 		accessor.get(IWorkbenchLayoutService).setSideBarHidden(true);
 	}
-}
-
-registerAction2(CloseSidebarAction);
+});
 
 // --- Toggle Activity Bar
 
 export class ToggleActivityBarVisibilityAction extends Action2 {
 
 	static readonly ID = 'workbench.action.toggleActivityBarVisibility';
-	static readonly LABEL = localize('toggleActivityBar', "Toggle Activity Bar Visibility");
 
 	private static readonly activityBarVisibleKey = 'workbench.activityBar.visible';
 
 	constructor() {
 		super({
 			id: ToggleActivityBarVisibilityAction.ID,
-			title: { value: ToggleActivityBarVisibilityAction.LABEL, original: 'Toggle Activity Bar Visibility' },
+			title: {
+				value: localize('toggleActivityBar', "Toggle Activity Bar Visibility"),
+				mnemonicTitle: localize({ key: 'miShowActivityBar', comment: ['&& denotes a mnemonic'] }, "Show &&Activity Bar"),
+				original: 'Toggle Activity Bar Visibility'
+			},
 			category: CATEGORIES.View,
-			f1: true
+			f1: true,
+			toggled: ContextKeyExpr.equals('config.workbench.activityBar.visible', true),
+			menu: {
+				id: MenuId.MenubarAppearanceMenu,
+				group: '2_workbench_layout',
+				order: 4
+			}
 		});
 	}
 
@@ -77,28 +81,26 @@ export class ToggleActivityBarVisibilityAction extends Action2 {
 
 registerAction2(ToggleActivityBarVisibilityAction);
 
-MenuRegistry.appendMenuItem(MenuId.MenubarAppearanceMenu, {
-	group: '2_workbench_layout',
-	command: {
-		id: ToggleActivityBarVisibilityAction.ID,
-		title: localize({ key: 'miShowActivityBar', comment: ['&& denotes a mnemonic'] }, "Show &&Activity Bar"),
-		toggled: ContextKeyExpr.equals('config.workbench.activityBar.visible', true)
-	},
-	order: 4
-});
-
 // --- Toggle Centered Layout
 
-class ToggleCenteredLayout extends Action2 {
-
-	static readonly ID = 'workbench.action.toggleCenteredLayout';
+registerAction2(class extends Action2 {
 
 	constructor() {
 		super({
-			id: ToggleCenteredLayout.ID,
-			title: { value: localize('toggleCenteredLayout', "Toggle Centered Layout"), original: 'Toggle Centered Layout' },
+			id: 'workbench.action.toggleCenteredLayout',
+			title: {
+				value: localize('toggleCenteredLayout', "Toggle Centered Layout"),
+				mnemonicTitle: localize({ key: 'miToggleCenteredLayout', comment: ['&& denotes a mnemonic'] }, "&&Centered Layout"),
+				original: 'Toggle Centered Layout'
+			},
 			category: CATEGORIES.View,
-			f1: true
+			f1: true,
+			toggled: IsCenteredLayoutContext,
+			menu: {
+				id: MenuId.MenubarAppearanceMenu,
+				group: '1_toggle_view',
+				order: 3
+			}
 		});
 	}
 
@@ -107,51 +109,21 @@ class ToggleCenteredLayout extends Action2 {
 
 		layoutService.centerEditorLayout(!layoutService.isEditorLayoutCentered());
 	}
-}
-
-registerAction2(ToggleCenteredLayout);
-
-MenuRegistry.appendMenuItem(MenuId.MenubarAppearanceMenu, {
-	group: '1_toggle_view',
-	command: {
-		id: ToggleCenteredLayout.ID,
-		title: localize({ key: 'miToggleCenteredLayout', comment: ['&& denotes a mnemonic'] }, "&&Centered Layout"),
-		toggled: IsCenteredLayoutContext
-	},
-	order: 3
 });
 
 // --- Toggle Sidebar Position
 
-export class ToggleSidebarPositionAction extends Action {
+export class ToggleSidebarPositionAction extends Action2 {
 
 	static readonly ID = 'workbench.action.toggleSidebarPosition';
 	static readonly LABEL = localize('toggleSidebarPosition', "Toggle Side Bar Position");
 
 	private static readonly sidebarPositionConfigurationKey = 'workbench.sideBar.location';
 
-	constructor(
-		id: string,
-		label: string,
-		@IWorkbenchLayoutService private readonly layoutService: IWorkbenchLayoutService,
-		@IConfigurationService private readonly configurationService: IConfigurationService
-	) {
-		super(id, label);
-	}
-
-	run(): Promise<void> {
-		const position = this.layoutService.getSideBarPosition();
-		const newPositionValue = (position === Position.LEFT) ? 'right' : 'left';
-
-		return this.configurationService.updateValue(ToggleSidebarPositionAction.sidebarPositionConfigurationKey, newPositionValue);
-	}
-
 	static getLabel(layoutService: IWorkbenchLayoutService): string {
 		return layoutService.getSideBarPosition() === Position.LEFT ? localize('moveSidebarRight', "Move Side Bar Right") : localize('moveSidebarLeft', "Move Side Bar Left");
 	}
-}
 
-registerAction2(class extends Action2 {
 	constructor() {
 		super({
 			id: ToggleSidebarPositionAction.ID,
@@ -160,10 +132,20 @@ registerAction2(class extends Action2 {
 			f1: true
 		});
 	}
-	run(accessor: ServicesAccessor) {
-		accessor.get(IInstantiationService).createInstance(ToggleSidebarPositionAction, ToggleSidebarPositionAction.ID, ToggleSidebarPositionAction.LABEL).run();
+
+	run(accessor: ServicesAccessor): Promise<void> {
+		const layoutService = accessor.get(IWorkbenchLayoutService);
+		const configurationService = accessor.get(IConfigurationService);
+
+		const position = layoutService.getSideBarPosition();
+		const newPositionValue = (position === Position.LEFT) ? 'right' : 'left';
+
+		return configurationService.updateValue(ToggleSidebarPositionAction.sidebarPositionConfigurationKey, newPositionValue);
 	}
-});
+}
+
+registerAction2(ToggleSidebarPositionAction);
+
 MenuRegistry.appendMenuItems([{
 	id: MenuId.ViewContainerTitleContext,
 	item: {
@@ -230,35 +212,32 @@ MenuRegistry.appendMenuItem(MenuId.MenubarAppearanceMenu, {
 	order: 2
 });
 
-// --- Toggle Sidebar Visibility
+// --- Toggle Editor Visibility
 
-export class ToggleEditorVisibilityAction extends Action {
-	static readonly ID = 'workbench.action.toggleEditorVisibility';
-	static readonly LABEL = localize('toggleEditor', "Toggle Editor Area Visibility");
+registerAction2(class extends Action2 {
 
-	constructor(
-		id: string,
-		label: string,
-		@IWorkbenchLayoutService private readonly layoutService: IWorkbenchLayoutService
-	) {
-		super(id, label);
+	constructor() {
+		super({
+			id: 'workbench.action.toggleEditorVisibility',
+			title: {
+				value: localize('toggleEditor', "Toggle Editor Area Visibility"),
+				mnemonicTitle: localize({ key: 'miShowEditorArea', comment: ['&& denotes a mnemonic'] }, "Show &&Editor Area"),
+				original: 'Toggle Editor Area Visibility'
+			},
+			category: CATEGORIES.View,
+			f1: true,
+			toggled: EditorAreaVisibleContext,
+			menu: {
+				id: MenuId.MenubarAppearanceMenu,
+				group: '2_workbench_layout',
+				order: 5
+			}
+		});
 	}
 
-	async run(): Promise<void> {
-		this.layoutService.toggleMaximizedPanel();
+	run(accessor: ServicesAccessor): void {
+		accessor.get(IWorkbenchLayoutService).toggleMaximizedPanel();
 	}
-}
-
-registry.registerWorkbenchAction(SyncActionDescriptor.from(ToggleEditorVisibilityAction), 'View: Toggle Editor Area Visibility', CATEGORIES.View.value);
-
-MenuRegistry.appendMenuItem(MenuId.MenubarAppearanceMenu, {
-	group: '2_workbench_layout',
-	command: {
-		id: ToggleEditorVisibilityAction.ID,
-		title: localize({ key: 'miShowEditorArea', comment: ['&& denotes a mnemonic'] }, "Show &&Editor Area"),
-		toggled: EditorAreaVisibleContext
-	},
-	order: 5
 });
 
 MenuRegistry.appendMenuItem(MenuId.MenubarViewMenu, {
@@ -268,11 +247,15 @@ MenuRegistry.appendMenuItem(MenuId.MenubarViewMenu, {
 	order: 1
 });
 
-export const TOGGLE_SIDEBAR_VISIBILITY_ACTION_ID = 'workbench.action.toggleSidebarVisibility';
-registerAction2(class extends Action2 {
+// Toggle Sidebar Visibility
+
+class ToggleSidebarVisibilityAction extends Action2 {
+
+	static readonly ID = 'workbench.action.toggleSidebarVisibility';
+
 	constructor() {
 		super({
-			id: TOGGLE_SIDEBAR_VISIBILITY_ACTION_ID,
+			id: ToggleSidebarVisibilityAction.ID,
 			title: { value: localize('toggleSidebar', "Toggle Side Bar Visibility"), original: 'Toggle Side Bar Visibility' },
 			category: CATEGORIES.View,
 			f1: true,
@@ -282,17 +265,22 @@ registerAction2(class extends Action2 {
 			}
 		});
 	}
-	run(accessor: ServicesAccessor) {
+
+	run(accessor: ServicesAccessor): void {
 		const layoutService = accessor.get(IWorkbenchLayoutService);
+
 		layoutService.setSideBarHidden(layoutService.isVisible(Parts.SIDEBAR_PART));
 	}
-});
+}
+
+registerAction2(ToggleSidebarVisibilityAction);
+
 MenuRegistry.appendMenuItems([{
 	id: MenuId.ViewContainerTitleContext,
 	item: {
 		group: '3_workbench_layout_move',
 		command: {
-			id: TOGGLE_SIDEBAR_VISIBILITY_ACTION_ID,
+			id: ToggleSidebarVisibilityAction.ID,
 			title: localize('compositePart.hideSideBarLabel', "Hide Side Bar"),
 		},
 		when: ContextKeyExpr.and(SideBarVisibleContext, ContextKeyExpr.equals('viewContainerLocation', ViewContainerLocationToString(ViewContainerLocation.Sidebar))),
@@ -303,123 +291,127 @@ MenuRegistry.appendMenuItems([{
 	item: {
 		group: '3_workbench_layout_move',
 		command: {
-			id: TOGGLE_SIDEBAR_VISIBILITY_ACTION_ID,
+			id: ToggleSidebarVisibilityAction.ID,
 			title: localize('compositePart.hideSideBarLabel', "Hide Side Bar"),
 		},
 		when: ContextKeyExpr.and(SideBarVisibleContext, ContextKeyExpr.equals('viewLocation', ViewContainerLocationToString(ViewContainerLocation.Sidebar))),
 		order: 2
 	}
+}, {
+	id: MenuId.MenubarAppearanceMenu,
+	item: {
+		group: '2_workbench_layout',
+		command: {
+			id: ToggleSidebarVisibilityAction.ID,
+			title: localize({ key: 'miShowSidebar', comment: ['&& denotes a mnemonic'] }, "Show &&Side Bar"),
+			toggled: SideBarVisibleContext
+		},
+		order: 1
+	}
 }]);
-
-MenuRegistry.appendMenuItem(MenuId.MenubarAppearanceMenu, {
-	group: '2_workbench_layout',
-	command: {
-		id: TOGGLE_SIDEBAR_VISIBILITY_ACTION_ID,
-		title: localize({ key: 'miShowSidebar', comment: ['&& denotes a mnemonic'] }, "Show &&Side Bar"),
-		toggled: SideBarVisibleContext
-	},
-	order: 1
-});
 
 // --- Toggle Statusbar Visibility
 
-export class ToggleStatusbarVisibilityAction extends Action {
+export class ToggleStatusbarVisibilityAction extends Action2 {
 
 	static readonly ID = 'workbench.action.toggleStatusbarVisibility';
-	static readonly LABEL = localize('toggleStatusbar', "Toggle Status Bar Visibility");
 
 	private static readonly statusbarVisibleKey = 'workbench.statusBar.visible';
 
-	constructor(
-		id: string,
-		label: string,
-		@IWorkbenchLayoutService private readonly layoutService: IWorkbenchLayoutService,
-		@IConfigurationService private readonly configurationService: IConfigurationService
-	) {
-		super(id, label);
+	constructor() {
+		super({
+			id: ToggleStatusbarVisibilityAction.ID,
+			title: {
+				value: localize('toggleStatusbar', "Toggle Status Bar Visibility"),
+				mnemonicTitle: localize({ key: 'miShowStatusbar', comment: ['&& denotes a mnemonic'] }, "Show S&&tatus Bar"),
+				original: 'Toggle Status Bar Visibility'
+			},
+			category: CATEGORIES.View,
+			f1: true,
+			toggled: ContextKeyExpr.equals('config.workbench.statusBar.visible', true),
+			menu: {
+				id: MenuId.MenubarAppearanceMenu,
+				group: '2_workbench_layout',
+				order: 3
+			}
+		});
 	}
 
-	run(): Promise<void> {
-		const visibility = this.layoutService.isVisible(Parts.STATUSBAR_PART);
+	run(accessor: ServicesAccessor): Promise<void> {
+		const layoutService = accessor.get(IWorkbenchLayoutService);
+		const configurationService = accessor.get(IConfigurationService);
+
+		const visibility = layoutService.isVisible(Parts.STATUSBAR_PART);
 		const newVisibilityValue = !visibility;
 
-		return this.configurationService.updateValue(ToggleStatusbarVisibilityAction.statusbarVisibleKey, newVisibilityValue);
+		return configurationService.updateValue(ToggleStatusbarVisibilityAction.statusbarVisibleKey, newVisibilityValue);
 	}
 }
 
-registry.registerWorkbenchAction(SyncActionDescriptor.from(ToggleStatusbarVisibilityAction), 'View: Toggle Status Bar Visibility', CATEGORIES.View.value);
-
-MenuRegistry.appendMenuItem(MenuId.MenubarAppearanceMenu, {
-	group: '2_workbench_layout',
-	command: {
-		id: ToggleStatusbarVisibilityAction.ID,
-		title: localize({ key: 'miShowStatusbar', comment: ['&& denotes a mnemonic'] }, "Show S&&tatus Bar"),
-		toggled: ContextKeyExpr.equals('config.workbench.statusBar.visible', true)
-	},
-	order: 3
-});
+registerAction2(ToggleStatusbarVisibilityAction);
 
 // --- Toggle Tabs Visibility
 
-class ToggleTabsVisibilityAction extends Action {
+registerAction2(class extends Action2 {
 
-	static readonly ID = 'workbench.action.toggleTabsVisibility';
-	static readonly LABEL = localize('toggleTabs', "Toggle Tab Visibility");
-
-	private static readonly tabsVisibleKey = 'workbench.editor.showTabs';
-
-	constructor(
-		id: string,
-		label: string,
-		@IConfigurationService private readonly configurationService: IConfigurationService
-	) {
-		super(id, label);
+	constructor() {
+		super({
+			id: 'workbench.action.toggleTabsVisibility',
+			title: {
+				value: localize('toggleTabs', "Toggle Tab Visibility"),
+				original: 'Toggle Tab Visibility'
+			},
+			category: CATEGORIES.View,
+			f1: true,
+			keybinding: {
+				weight: KeybindingWeight.WorkbenchContrib,
+				primary: undefined,
+				mac: { primary: KeyMod.CtrlCmd | KeyMod.WinCtrl | KeyCode.KEY_W, },
+				linux: { primary: KeyMod.CtrlCmd | KeyMod.WinCtrl | KeyCode.KEY_W, }
+			}
+		});
 	}
 
-	run(): Promise<void> {
-		const visibility = this.configurationService.getValue<string>(ToggleTabsVisibilityAction.tabsVisibleKey);
+	run(accessor: ServicesAccessor): Promise<void> {
+		const configurationService = accessor.get(IConfigurationService);
+
+		const visibility = configurationService.getValue<string>('workbench.editor.showTabs');
 		const newVisibilityValue = !visibility;
 
-		return this.configurationService.updateValue(ToggleTabsVisibilityAction.tabsVisibleKey, newVisibilityValue);
+		return configurationService.updateValue('workbench.editor.showTabs', newVisibilityValue);
 	}
-}
-
-registry.registerWorkbenchAction(SyncActionDescriptor.from(ToggleTabsVisibilityAction, {
-	primary: undefined,
-	mac: { primary: KeyMod.CtrlCmd | KeyMod.WinCtrl | KeyCode.KEY_W, },
-	linux: { primary: KeyMod.CtrlCmd | KeyMod.WinCtrl | KeyCode.KEY_W, }
-}), 'View: Toggle Tab Visibility', CATEGORIES.View.value);
+});
 
 // --- Toggle Zen Mode
 
-class ToggleZenMode extends Action {
+registerAction2(class extends Action2 {
 
-	static readonly ID = 'workbench.action.toggleZenMode';
-	static readonly LABEL = localize('toggleZenMode', "Toggle Zen Mode");
-
-	constructor(
-		id: string,
-		label: string,
-		@IWorkbenchLayoutService private readonly layoutService: IWorkbenchLayoutService
-	) {
-		super(id, label);
+	constructor() {
+		super({
+			id: 'workbench.action.toggleZenMode',
+			title: {
+				value: localize('toggleZenMode', "Toggle Zen Mode"),
+				mnemonicTitle: localize('miToggleZenMode', "Zen Mode"),
+				original: 'Toggle Zen Mode'
+			},
+			category: CATEGORIES.View,
+			f1: true,
+			keybinding: {
+				weight: KeybindingWeight.WorkbenchContrib,
+				primary: KeyChord(KeyMod.CtrlCmd | KeyCode.KEY_K, KeyCode.KEY_Z)
+			},
+			toggled: InEditorZenModeContext,
+			menu: {
+				id: MenuId.MenubarAppearanceMenu,
+				group: '1_toggle_view',
+				order: 2
+			}
+		});
 	}
 
-	async run(): Promise<void> {
-		this.layoutService.toggleZenMode();
+	run(accessor: ServicesAccessor): void {
+		return accessor.get(IWorkbenchLayoutService).toggleZenMode();
 	}
-}
-
-registry.registerWorkbenchAction(SyncActionDescriptor.from(ToggleZenMode, { primary: KeyChord(KeyMod.CtrlCmd | KeyCode.KEY_K, KeyCode.KEY_Z) }), 'View: Toggle Zen Mode', CATEGORIES.View.value);
-
-MenuRegistry.appendMenuItem(MenuId.MenubarAppearanceMenu, {
-	group: '1_toggle_view',
-	command: {
-		id: ToggleZenMode.ID,
-		title: localize('miToggleZenMode', "Zen Mode"),
-		toggled: InEditorZenModeContext
-	},
-	order: 2
 });
 
 KeybindingsRegistry.registerCommandAndKeybindingRule({
@@ -435,85 +427,103 @@ KeybindingsRegistry.registerCommandAndKeybindingRule({
 
 // --- Toggle Menu Bar
 
-export class ToggleMenuBarAction extends Action {
-
-	static readonly ID = 'workbench.action.toggleMenuBar';
-	static readonly LABEL = localize('toggleMenuBar', "Toggle Menu Bar");
-
-	constructor(
-		id: string,
-		label: string,
-		@IWorkbenchLayoutService private readonly layoutService: IWorkbenchLayoutService
-	) {
-		super(id, label);
-	}
-
-	async run(): Promise<void> {
-		this.layoutService.toggleMenuBar();
-	}
-}
-
 if (isWindows || isLinux || isWeb) {
-	registry.registerWorkbenchAction(SyncActionDescriptor.from(ToggleMenuBarAction), 'View: Toggle Menu Bar', CATEGORIES.View.value);
+	registerAction2(class extends Action2 {
+
+		constructor() {
+			super({
+				id: 'workbench.action.toggleMenuBar',
+				title: {
+					value: localize('toggleMenuBar', "Toggle Menu Bar"),
+					mnemonicTitle: localize({ key: 'miShowMenuBar', comment: ['&& denotes a mnemonic'] }, "Show Menu &&Bar"),
+					original: 'Toggle Menu Bar'
+				},
+				category: CATEGORIES.View,
+				f1: true,
+				toggled: ContextKeyExpr.and(IsMacNativeContext.toNegated(), ContextKeyExpr.notEquals('config.window.menuBarVisibility', 'hidden'), ContextKeyExpr.notEquals('config.window.menuBarVisibility', 'toggle'), ContextKeyExpr.notEquals('config.window.menuBarVisibility', 'compact')),
+				menu: {
+					id: MenuId.MenubarAppearanceMenu,
+					group: '2_workbench_layout',
+					order: 0
+				}
+			});
+		}
+
+		run(accessor: ServicesAccessor): void {
+			return accessor.get(IWorkbenchLayoutService).toggleMenuBar();
+		}
+	});
 }
 
-MenuRegistry.appendMenuItem(MenuId.MenubarAppearanceMenu, {
-	group: '2_workbench_layout',
-	command: {
-		id: ToggleMenuBarAction.ID,
-		title: localize({ key: 'miShowMenuBar', comment: ['&& denotes a mnemonic'] }, "Show Menu &&Bar"),
-		toggled: ContextKeyExpr.and(IsMacNativeContext.toNegated(), ContextKeyExpr.notEquals('config.window.menuBarVisibility', 'hidden'), ContextKeyExpr.notEquals('config.window.menuBarVisibility', 'toggle'), ContextKeyExpr.notEquals('config.window.menuBarVisibility', 'compact'))
-	},
-	when: IsMacNativeContext.toNegated(),
-	order: 0
+// --- Reset View Locations
+
+registerAction2(class extends Action2 {
+
+	constructor() {
+		super({
+			id: 'workbench.action.resetViewLocations',
+			title: {
+				value: localize('resetViewLocations', "Reset View Locations"),
+				original: 'Reset View Locations'
+			},
+			category: CATEGORIES.View,
+			f1: true
+		});
+	}
+
+	run(accessor: ServicesAccessor): void {
+		return accessor.get(IViewDescriptorService).reset();
+	}
 });
 
-// --- Reset View Positions
+// --- Move View
 
-export class ResetViewLocationsAction extends Action {
-	static readonly ID = 'workbench.action.resetViewLocations';
-	static readonly LABEL = localize('resetViewLocations', "Reset View Locations");
+registerAction2(class extends Action2 {
 
-	constructor(
-		id: string,
-		label: string,
-		@IViewDescriptorService private viewDescriptorService: IViewDescriptorService
-	) {
-		super(id, label);
+	constructor() {
+		super({
+			id: 'workbench.action.moveView',
+			title: {
+				value: localize('moveView', "Move View"),
+				original: 'Move View'
+			},
+			category: CATEGORIES.View,
+			f1: true
+		});
 	}
 
-	async run(): Promise<void> {
-		this.viewDescriptorService.reset();
+	async run(accessor: ServicesAccessor): Promise<void> {
+		const viewDescriptorService = accessor.get(IViewDescriptorService);
+		const instantiationService = accessor.get(IInstantiationService);
+		const quickInputService = accessor.get(IQuickInputService);
+		const contextKeyService = accessor.get(IContextKeyService);
+		const activityBarService = accessor.get(IActivityBarService);
+		const panelService = accessor.get(IPanelService);
+
+		const focusedViewId = FocusedViewContext.getValue(contextKeyService);
+		let viewId: string;
+
+		if (focusedViewId && viewDescriptorService.getViewDescriptorById(focusedViewId)?.canMoveView) {
+			viewId = focusedViewId;
+		}
+
+		viewId = await this.getView(quickInputService, activityBarService, viewDescriptorService, panelService, viewId!);
+
+		if (!viewId) {
+			return;
+		}
+
+		const moveFocusedViewAction = new MoveFocusedViewAction();
+		instantiationService.invokeFunction(accessor => moveFocusedViewAction.run(accessor, viewId));
 	}
-}
 
-registry.registerWorkbenchAction(SyncActionDescriptor.from(ResetViewLocationsAction), 'View: Reset View Locations', CATEGORIES.View.value);
-
-// --- Move View with Command
-export class MoveViewAction extends Action {
-	static readonly ID = 'workbench.action.moveView';
-	static readonly LABEL = localize('moveView', "Move View");
-
-	constructor(
-		id: string,
-		label: string,
-		@IViewDescriptorService private viewDescriptorService: IViewDescriptorService,
-		@IInstantiationService private instantiationService: IInstantiationService,
-		@IQuickInputService private quickInputService: IQuickInputService,
-		@IContextKeyService private contextKeyService: IContextKeyService,
-		@IActivityBarService private activityBarService: IActivityBarService,
-		@IPanelService private panelService: IPanelService
-	) {
-		super(id, label);
-	}
-
-	private getViewItems(): Array<IQuickPickItem | IQuickPickSeparator> {
+	private getViewItems(activityBarService: IActivityBarService, viewDescriptorService: IViewDescriptorService, panelService: IPanelService): Array<IQuickPickItem | IQuickPickSeparator> {
 		const results: Array<IQuickPickItem | IQuickPickSeparator> = [];
 
-		const viewlets = this.activityBarService.getVisibleViewContainerIds();
+		const viewlets = activityBarService.getVisibleViewContainerIds();
 		viewlets.forEach(viewletId => {
-			const container = this.viewDescriptorService.getViewContainerById(viewletId)!;
-			const containerModel = this.viewDescriptorService.getViewContainerModel(container);
+			const container = viewDescriptorService.getViewContainerById(viewletId)!;
+			const containerModel = viewDescriptorService.getViewContainerModel(container);
 
 			let hasAddedView = false;
 			containerModel.visibleViewDescriptors.forEach(viewDescriptor => {
@@ -534,10 +544,10 @@ export class MoveViewAction extends Action {
 			});
 		});
 
-		const panels = this.panelService.getPinnedPanels();
+		const panels = panelService.getPinnedPanels();
 		panels.forEach(panel => {
-			const container = this.viewDescriptorService.getViewContainerById(panel.id)!;
-			const containerModel = this.viewDescriptorService.getViewContainerModel(container);
+			const container = viewDescriptorService.getViewContainerById(panel.id)!;
+			const containerModel = viewDescriptorService.getViewContainerModel(container);
 
 			let hasAddedView = false;
 			containerModel.visibleViewDescriptors.forEach(viewDescriptor => {
@@ -561,10 +571,10 @@ export class MoveViewAction extends Action {
 		return results;
 	}
 
-	private async getView(viewId?: string): Promise<string> {
-		const quickPick = this.quickInputService.createQuickPick();
+	private async getView(quickInputService: IQuickInputService, activityBarService: IActivityBarService, viewDescriptorService: IViewDescriptorService, panelService: IPanelService, viewId?: string): Promise<string> {
+		const quickPick = quickInputService.createQuickPick();
 		quickPick.placeholder = localize('moveFocusedView.selectView', "Select a View to Move");
-		quickPick.items = this.getViewItems();
+		quickPick.items = this.getViewItems(activityBarService, viewDescriptorService, panelService);
 		quickPick.selectedItems = quickPick.items.filter(item => (item as IQuickPickItem).id === viewId) as IQuickPickItem[];
 
 		return new Promise((resolve, reject) => {
@@ -584,68 +594,55 @@ export class MoveViewAction extends Action {
 			quickPick.show();
 		});
 	}
+});
 
-	async run(): Promise<void> {
-		const focusedViewId = FocusedViewContext.getValue(this.contextKeyService);
-		let viewId: string;
+// --- Move Focused View
 
-		if (focusedViewId && this.viewDescriptorService.getViewDescriptorById(focusedViewId)?.canMoveView) {
-			viewId = focusedViewId;
-		}
+class MoveFocusedViewAction extends Action2 {
 
-		viewId = await this.getView(viewId!);
-
-		if (!viewId) {
-			return;
-		}
-
-		this.instantiationService.createInstance(MoveFocusedViewAction, MoveFocusedViewAction.ID, MoveFocusedViewAction.LABEL).run(viewId);
-	}
-}
-
-registry.registerWorkbenchAction(SyncActionDescriptor.from(MoveViewAction), 'View: Move View', CATEGORIES.View.value);
-
-// --- Move Focused View with Command
-export class MoveFocusedViewAction extends Action {
-	static readonly ID = 'workbench.action.moveFocusedView';
-	static readonly LABEL = localize('moveFocusedView', "Move Focused View");
-
-	constructor(
-		id: string,
-		label: string,
-		@IViewDescriptorService private viewDescriptorService: IViewDescriptorService,
-		@IViewsService private viewsService: IViewsService,
-		@IQuickInputService private quickInputService: IQuickInputService,
-		@IContextKeyService private contextKeyService: IContextKeyService,
-		@INotificationService private notificationService: INotificationService,
-		@IActivityBarService private activityBarService: IActivityBarService,
-		@IPanelService private panelService: IPanelService
-	) {
-		super(id, label);
+	constructor() {
+		super({
+			id: 'workbench.action.moveFocusedView',
+			title: {
+				value: localize('moveFocusedView', "Move Focused View"),
+				original: 'Move Focused View'
+			},
+			category: CATEGORIES.View,
+			precondition: FocusedViewContext.notEqualsTo(''),
+			f1: true
+		});
 	}
 
-	async run(viewId: string): Promise<void> {
-		const focusedViewId = viewId || FocusedViewContext.getValue(this.contextKeyService);
+	run(accessor: ServicesAccessor, viewId?: string): void {
+		const viewDescriptorService = accessor.get(IViewDescriptorService);
+		const viewsService = accessor.get(IViewsService);
+		const quickInputService = accessor.get(IQuickInputService);
+		const contextKeyService = accessor.get(IContextKeyService);
+		const dialogService = accessor.get(IDialogService);
+		const activityBarService = accessor.get(IActivityBarService);
+		const panelService = accessor.get(IPanelService);
+
+		const focusedViewId = viewId || FocusedViewContext.getValue(contextKeyService);
 
 		if (focusedViewId === undefined || focusedViewId.trim() === '') {
-			this.notificationService.error(localize('moveFocusedView.error.noFocusedView', "There is no view currently focused."));
+			dialogService.show(Severity.Error, localize('moveFocusedView.error.noFocusedView', "There is no view currently focused."), [localize('ok', 'OK')]);
 			return;
 		}
 
-		const viewDescriptor = this.viewDescriptorService.getViewDescriptorById(focusedViewId);
+		const viewDescriptor = viewDescriptorService.getViewDescriptorById(focusedViewId);
 		if (!viewDescriptor || !viewDescriptor.canMoveView) {
-			this.notificationService.error(localize('moveFocusedView.error.nonMovableView', "The currently focused view is not movable."));
+			dialogService.show(Severity.Error, localize('moveFocusedView.error.nonMovableView', "The currently focused view is not movable."), [localize('ok', 'OK')]);
 			return;
 		}
 
-		const quickPick = this.quickInputService.createQuickPick();
+		const quickPick = quickInputService.createQuickPick();
 		quickPick.placeholder = localize('moveFocusedView.selectDestination', "Select a Destination for the View");
 		quickPick.title = localize({ key: 'moveFocusedView.title', comment: ['{0} indicates the title of the view the user has selected to move.'] }, "View: Move {0}", viewDescriptor.name);
 
 		const items: Array<IQuickPickItem | IQuickPickSeparator> = [];
-		const currentContainer = this.viewDescriptorService.getViewContainerByViewId(focusedViewId)!;
-		const currentLocation = this.viewDescriptorService.getViewLocationById(focusedViewId)!;
-		const isViewSolo = this.viewDescriptorService.getViewContainerModel(currentContainer).allViewDescriptors.length === 1;
+		const currentContainer = viewDescriptorService.getViewContainerByViewId(focusedViewId)!;
+		const currentLocation = viewDescriptorService.getViewLocationById(focusedViewId)!;
+		const isViewSolo = viewDescriptorService.getViewContainerModel(currentContainer).allViewDescriptors.length === 1;
 
 		if (!(isViewSolo && currentLocation === ViewContainerLocation.Panel)) {
 			items.push({
@@ -666,19 +663,19 @@ export class MoveFocusedViewAction extends Action {
 			label: localize('sidebar', "Side Bar")
 		});
 
-		const pinnedViewlets = this.activityBarService.getVisibleViewContainerIds();
+		const pinnedViewlets = activityBarService.getVisibleViewContainerIds();
 		items.push(...pinnedViewlets
 			.filter(viewletId => {
-				if (viewletId === this.viewDescriptorService.getViewContainerByViewId(focusedViewId)!.id) {
+				if (viewletId === viewDescriptorService.getViewContainerByViewId(focusedViewId)!.id) {
 					return false;
 				}
 
-				return !this.viewDescriptorService.getViewContainerById(viewletId)!.rejectAddedViews;
+				return !viewDescriptorService.getViewContainerById(viewletId)!.rejectAddedViews;
 			})
 			.map(viewletId => {
 				return {
 					id: viewletId,
-					label: this.viewDescriptorService.getViewContainerModel(this.viewDescriptorService.getViewContainerById(viewletId)!)!.title
+					label: viewDescriptorService.getViewContainerModel(viewDescriptorService.getViewContainerById(viewletId)!)!.title
 				};
 			}));
 
@@ -687,19 +684,19 @@ export class MoveFocusedViewAction extends Action {
 			label: localize('panel', "Panel")
 		});
 
-		const pinnedPanels = this.panelService.getPinnedPanels();
+		const pinnedPanels = panelService.getPinnedPanels();
 		items.push(...pinnedPanels
 			.filter(panel => {
-				if (panel.id === this.viewDescriptorService.getViewContainerByViewId(focusedViewId)!.id) {
+				if (panel.id === viewDescriptorService.getViewContainerByViewId(focusedViewId)!.id) {
 					return false;
 				}
 
-				return !this.viewDescriptorService.getViewContainerById(panel.id)!.rejectAddedViews;
+				return !viewDescriptorService.getViewContainerById(panel.id)!.rejectAddedViews;
 			})
 			.map(panel => {
 				return {
 					id: panel.id,
-					label: this.viewDescriptorService.getViewContainerModel(this.viewDescriptorService.getViewContainerById(panel.id)!)!.title
+					label: viewDescriptorService.getViewContainerModel(viewDescriptorService.getViewContainerById(panel.id)!)!.title
 				};
 			}));
 
@@ -709,14 +706,14 @@ export class MoveFocusedViewAction extends Action {
 			const destination = quickPick.selectedItems[0];
 
 			if (destination.id === '_.panel.newcontainer') {
-				this.viewDescriptorService.moveViewToLocation(viewDescriptor!, ViewContainerLocation.Panel);
-				this.viewsService.openView(focusedViewId, true);
+				viewDescriptorService.moveViewToLocation(viewDescriptor!, ViewContainerLocation.Panel);
+				viewsService.openView(focusedViewId, true);
 			} else if (destination.id === '_.sidebar.newcontainer') {
-				this.viewDescriptorService.moveViewToLocation(viewDescriptor!, ViewContainerLocation.Sidebar);
-				this.viewsService.openView(focusedViewId, true);
+				viewDescriptorService.moveViewToLocation(viewDescriptor!, ViewContainerLocation.Sidebar);
+				viewsService.openView(focusedViewId, true);
 			} else if (destination.id) {
-				this.viewDescriptorService.moveViewsToContainer([viewDescriptor], this.viewDescriptorService.getViewContainerById(destination.id)!);
-				this.viewsService.openView(focusedViewId, true);
+				viewDescriptorService.moveViewsToContainer([viewDescriptor], viewDescriptorService.getViewContainerById(destination.id)!);
+				viewsService.openView(focusedViewId, true);
 			}
 
 			quickPick.hide();
@@ -726,54 +723,56 @@ export class MoveFocusedViewAction extends Action {
 	}
 }
 
-registry.registerWorkbenchAction(SyncActionDescriptor.from(MoveFocusedViewAction), 'View: Move Focused View', CATEGORIES.View.value, FocusedViewContext.notEqualsTo(''));
+registerAction2(MoveFocusedViewAction);
 
-// --- Reset View Location with Command
-export class ResetFocusedViewLocationAction extends Action {
-	static readonly ID = 'workbench.action.resetFocusedViewLocation';
-	static readonly LABEL = localize('resetFocusedViewLocation', "Reset Focused View Location");
+// --- Reset Focused View Location
 
-	constructor(
-		id: string,
-		label: string,
-		@IViewDescriptorService private viewDescriptorService: IViewDescriptorService,
-		@IContextKeyService private contextKeyService: IContextKeyService,
-		@INotificationService private notificationService: INotificationService,
-		@IViewsService private viewsService: IViewsService
-	) {
-		super(id, label);
+registerAction2(class extends Action2 {
+
+	constructor() {
+		super({
+			id: 'workbench.action.resetFocusedViewLocation',
+			title: {
+				value: localize('resetFocusedViewLocation', "Reset Focused View Location"),
+				original: 'Reset Focused View Location'
+			},
+			category: CATEGORIES.View,
+			f1: true,
+			precondition: FocusedViewContext.notEqualsTo('')
+		});
 	}
 
-	async run(): Promise<void> {
-		const focusedViewId = FocusedViewContext.getValue(this.contextKeyService);
+	run(accessor: ServicesAccessor): void {
+		const viewDescriptorService = accessor.get(IViewDescriptorService);
+		const contextKeyService = accessor.get(IContextKeyService);
+		const dialogService = accessor.get(IDialogService);
+		const viewsService = accessor.get(IViewsService);
+
+		const focusedViewId = FocusedViewContext.getValue(contextKeyService);
 
 		let viewDescriptor: IViewDescriptor | null = null;
 		if (focusedViewId !== undefined && focusedViewId.trim() !== '') {
-			viewDescriptor = this.viewDescriptorService.getViewDescriptorById(focusedViewId);
+			viewDescriptor = viewDescriptorService.getViewDescriptorById(focusedViewId);
 		}
 
 		if (!viewDescriptor) {
-			this.notificationService.error(localize('resetFocusedView.error.noFocusedView', "There is no view currently focused."));
+			dialogService.show(Severity.Error, localize('resetFocusedView.error.noFocusedView', "There is no view currently focused."), [localize('ok', 'OK')]);
 			return;
 		}
 
-		const defaultContainer = this.viewDescriptorService.getDefaultContainerById(viewDescriptor.id);
-		if (!defaultContainer || defaultContainer === this.viewDescriptorService.getViewContainerByViewId(viewDescriptor.id)) {
+		const defaultContainer = viewDescriptorService.getDefaultContainerById(viewDescriptor.id);
+		if (!defaultContainer || defaultContainer === viewDescriptorService.getViewContainerByViewId(viewDescriptor.id)) {
 			return;
 		}
 
-		this.viewDescriptorService.moveViewsToContainer([viewDescriptor], defaultContainer);
-		this.viewsService.openView(viewDescriptor.id, true);
-
+		viewDescriptorService.moveViewsToContainer([viewDescriptor], defaultContainer);
+		viewsService.openView(viewDescriptor.id, true);
 	}
-}
-
-registry.registerWorkbenchAction(SyncActionDescriptor.from(ResetFocusedViewLocationAction), 'View: Reset Focused View Location', CATEGORIES.View.value, FocusedViewContext.notEqualsTo(''));
-
+});
 
 // --- Resize View
 
-export abstract class BaseResizeViewAction extends Action2 {
+abstract class BaseResizeViewAction extends Action2 {
 
 	protected static readonly RESIZE_INCREMENT = 6.5; // This is a media-size percentage
 
@@ -802,7 +801,7 @@ export abstract class BaseResizeViewAction extends Action2 {
 	}
 }
 
-export class IncreaseViewSizeAction extends BaseResizeViewAction {
+class IncreaseViewSizeAction extends BaseResizeViewAction {
 
 	constructor() {
 		super({
@@ -812,12 +811,12 @@ export class IncreaseViewSizeAction extends BaseResizeViewAction {
 		});
 	}
 
-	async run(accessor: ServicesAccessor): Promise<void> {
+	run(accessor: ServicesAccessor): void {
 		this.resizePart(BaseResizeViewAction.RESIZE_INCREMENT, BaseResizeViewAction.RESIZE_INCREMENT, accessor.get(IWorkbenchLayoutService));
 	}
 }
 
-export class IncreaseViewWidthAction extends BaseResizeViewAction {
+class IncreaseViewWidthAction extends BaseResizeViewAction {
 
 	constructor() {
 		super({
@@ -827,12 +826,12 @@ export class IncreaseViewWidthAction extends BaseResizeViewAction {
 		});
 	}
 
-	async run(accessor: ServicesAccessor): Promise<void> {
+	run(accessor: ServicesAccessor): void {
 		this.resizePart(BaseResizeViewAction.RESIZE_INCREMENT, 0, accessor.get(IWorkbenchLayoutService), Parts.EDITOR_PART);
 	}
 }
 
-export class IncreaseViewHeightAction extends BaseResizeViewAction {
+class IncreaseViewHeightAction extends BaseResizeViewAction {
 
 	constructor() {
 		super({
@@ -841,12 +840,13 @@ export class IncreaseViewHeightAction extends BaseResizeViewAction {
 			f1: true
 		});
 	}
-	async run(accessor: ServicesAccessor): Promise<void> {
+
+	run(accessor: ServicesAccessor): void {
 		this.resizePart(0, BaseResizeViewAction.RESIZE_INCREMENT, accessor.get(IWorkbenchLayoutService), Parts.EDITOR_PART);
 	}
 }
 
-export class DecreaseViewSizeAction extends BaseResizeViewAction {
+class DecreaseViewSizeAction extends BaseResizeViewAction {
 
 	constructor() {
 		super({
@@ -856,12 +856,12 @@ export class DecreaseViewSizeAction extends BaseResizeViewAction {
 		});
 	}
 
-	async run(accessor: ServicesAccessor): Promise<void> {
+	run(accessor: ServicesAccessor): void {
 		this.resizePart(-BaseResizeViewAction.RESIZE_INCREMENT, -BaseResizeViewAction.RESIZE_INCREMENT, accessor.get(IWorkbenchLayoutService));
 	}
 }
 
-export class DecreaseViewWidthAction extends BaseResizeViewAction {
+class DecreaseViewWidthAction extends BaseResizeViewAction {
 	constructor() {
 		super({
 			id: 'workbench.action.decreaseViewWidth',
@@ -870,13 +870,12 @@ export class DecreaseViewWidthAction extends BaseResizeViewAction {
 		});
 	}
 
-	async run(accessor: ServicesAccessor): Promise<void> {
+	run(accessor: ServicesAccessor): void {
 		this.resizePart(-BaseResizeViewAction.RESIZE_INCREMENT, 0, accessor.get(IWorkbenchLayoutService), Parts.EDITOR_PART);
 	}
 }
 
-
-export class DecreaseViewHeightAction extends BaseResizeViewAction {
+class DecreaseViewHeightAction extends BaseResizeViewAction {
 
 	constructor() {
 		super({
@@ -886,7 +885,7 @@ export class DecreaseViewHeightAction extends BaseResizeViewAction {
 		});
 	}
 
-	async run(accessor: ServicesAccessor): Promise<void> {
+	run(accessor: ServicesAccessor): void {
 		this.resizePart(0, -BaseResizeViewAction.RESIZE_INCREMENT, accessor.get(IWorkbenchLayoutService), Parts.EDITOR_PART);
 	}
 }

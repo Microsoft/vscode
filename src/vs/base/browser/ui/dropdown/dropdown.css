@@ -11,8 +11,29 @@
 .monaco-dropdown > .dropdown-label {
 	cursor: pointer;
 	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .monaco-dropdown > .dropdown-label > .action-label.disabled {
 	cursor: default;
+}
+
+.monaco-dropdown-with-primary {
+	display: flex !important;
+	flex-direction: row;
+	border-radius: 5px;
+}
+
+.monaco-dropdown-with-primary > .action-container > .action-label {
+	margin-right: 0;
+}
+
+.monaco-dropdown-with-primary > .dropdown-action-container > .monaco-dropdown > .dropdown-label .codicon[class*='codicon-'] {
+	font-size: 12px;
+	padding-left: 0px;
+	padding-right: 0px;
+	line-height: 16px;
+	margin-left: -4px;
 }

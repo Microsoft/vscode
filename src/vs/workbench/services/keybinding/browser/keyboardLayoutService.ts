@@ -190,7 +190,7 @@ export class BrowserKeyboardMapperFactoryBase {
 			// 	return;
 			// }
 
-			// // the keyboard layout doesn't actually match the key event or the keymap from chromium
+			// the keyboard layout doesn't actually match the key event or the keymap from chromium
 			// this._notificationService.prompt(
 			// 	Severity.Info,
 			// 	nls.localize('missing.keyboardlayout', 'Fail to find matching keyboard layout'),

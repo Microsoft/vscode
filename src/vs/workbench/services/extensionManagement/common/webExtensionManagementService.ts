@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { ExtensionType, IExtensionIdentifier, IExtensionManifest, ITranslatedScannedExtension } from 'vs/platform/extensions/common/extensions';
-import { IExtensionManagementService, ILocalExtension, InstallExtensionEvent, DidInstallExtensionEvent, DidUninstallExtensionEvent, IGalleryExtension, IReportedExtension, IGalleryMetadata, InstallOperation, INSTALL_ERROR_NOT_SUPPORTED } from 'vs/platform/extensionManagement/common/extensionManagement';
+import { IExtensionManagementService, ILocalExtension, InstallExtensionEvent, DidInstallExtensionEvent, DidUninstallExtensionEvent, IGalleryExtension, IReportedExtension, IGalleryMetadata, InstallOperation } from 'vs/platform/extensionManagement/common/extensionManagement';
 import { Event, Emitter } from 'vs/base/common/event';
 import { URI } from 'vs/base/common/uri';
 import { areSameExtensions } from 'vs/platform/extensionManagement/common/extensionManagementUtil';
@@ -47,9 +47,7 @@ export class WebExtensionManagementService extends Disposable implements IExtens
 
 	async installFromGallery(gallery: IGalleryExtension): Promise<ILocalExtension> {
 		if (!(await this.canInstall(gallery))) {
-			const error = new Error(localize('cannot be installed', "Cannot install '{0}' because this extension is not a web extension.", gallery.displayName || gallery.name));
-			error.name = INSTALL_ERROR_NOT_SUPPORTED;
-			throw error;
+			throw new Error(localize('cannot be installed', "Cannot install '{0}' because this extension is not a web extension.", gallery.displayName || gallery.name));
 		}
 		this.logService.info('Installing extension:', gallery.identifier.id);
 		this._onInstallExtension.fire({ identifier: gallery.identifier, gallery });

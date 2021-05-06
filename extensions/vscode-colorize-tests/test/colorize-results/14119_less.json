@@ -155,13 +155,13 @@
 	},
 	{
 		"c": "content",
-		"t": "source.css.less meta.property-list.css entity.name.tag.css",
+		"t": "source.css.less meta.property-list.css support.type.property-name.css",
 		"r": {
-			"dark_plus": "entity.name.tag.css: #D7BA7D",
-			"light_plus": "entity.name.tag: #800000",
-			"dark_vs": "entity.name.tag.css: #D7BA7D",
-			"light_vs": "entity.name.tag: #800000",
-			"hc_black": "entity.name.tag.css: #D7BA7D"
+			"dark_plus": "support.type.property-name: #9CDCFE",
+			"light_plus": "support.type.property-name: #FF0000",
+			"dark_vs": "support.type.property-name: #9CDCFE",
+			"light_vs": "support.type.property-name: #FF0000",
+			"hc_black": "support.type.property-name: #D4D4D4"
 		}
 	},
 	{

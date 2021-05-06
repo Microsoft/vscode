@@ -104,6 +104,7 @@ export interface ILocalExtension extends IExtension {
 	isMachineScoped: boolean;
 	publisherId: string | null;
 	publisherDisplayName: string | null;
+	installedTimestamp?: number;
 }
 
 export const enum SortBy {

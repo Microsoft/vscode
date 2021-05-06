@@ -80,14 +80,14 @@ export class OutputViewPane extends ViewPane {
 		}
 	}
 
-	focus(): void {
+	override focus(): void {
 		super.focus();
 		if (this.editorPromise) {
 			this.editorPromise.then(() => this.editor.focus());
 		}
 	}
 
-	renderBody(container: HTMLElement): void {
+	override renderBody(container: HTMLElement): void {
 		super.renderBody(container);
 		this.editor.create(container);
 		container.classList.add('output-view');
@@ -117,12 +117,12 @@ export class OutputViewPane extends ViewPane {
 		}));
 	}
 
-	layoutBody(height: number, width: number): void {
+	override layoutBody(height: number, width: number): void {
 		super.layoutBody(height, width);
 		this.editor.layout(new Dimension(width, height));
 	}
 
-	getActionViewItem(action: IAction): IActionViewItem | undefined {
+	override getActionViewItem(action: IAction): IActionViewItem | undefined {
 		if (action.id === 'workbench.output.action.switchBetweenOutputs') {
 			return this.instantiationService.createInstance(SwitchOutputActionViewItem, action);
 		}
@@ -178,15 +178,15 @@ export class OutputEditor extends AbstractTextResourceEditor {
 		super(OUTPUT_VIEW_ID, telemetryService, instantiationService, storageService, textResourceConfigurationService, themeService, editorGroupService, editorService);
 	}
 
-	getId(): string {
+	override getId(): string {
 		return OUTPUT_VIEW_ID;
 	}
 
-	getTitle(): string {
+	override getTitle(): string {
 		return nls.localize('output', "Output");
 	}
 
-	protected getConfigurationOverrides(): IEditorOptions {
+	protected override getConfigurationOverrides(): IEditorOptions {
 		const options = super.getConfigurationOverrides();
 		options.wordWrap = 'on';				// all output editors wrap
 		options.lineNumbers = 'off';			// all output editors hide line numbers
@@ -219,7 +219,7 @@ export class OutputEditor extends AbstractTextResourceEditor {
 		return channel ? nls.localize('outputViewWithInputAriaLabel', "{0}, Output panel", channel.label) : nls.localize('outputViewAriaLabel', "Output panel");
 	}
 
-	async setInput(input: EditorInput, options: EditorOptions | undefined, context: IEditorOpenContext, token: CancellationToken): Promise<void> {
+	override async setInput(input: EditorInput, options: EditorOptions | undefined, context: IEditorOpenContext, token: CancellationToken): Promise<void> {
 		const focus = !(options && options.preserveFocus);
 		if (input.matches(this.input)) {
 			return;
@@ -236,7 +236,7 @@ export class OutputEditor extends AbstractTextResourceEditor {
 		this.revealLastLine();
 	}
 
-	clearInput(): void {
+	override clearInput(): void {
 		if (this.input) {
 			// Dispose current input (Output panel is not a workbench editor)
 			this.input.dispose();
@@ -244,7 +244,7 @@ export class OutputEditor extends AbstractTextResourceEditor {
 		super.clearInput();
 	}
 
-	protected createEditor(parent: HTMLElement): void {
+	protected override createEditor(parent: HTMLElement): void {
 
 		parent.setAttribute('role', 'document');
 
@@ -281,7 +281,7 @@ class SwitchOutputActionViewItem extends SelectActionViewItem {
 		this.updateOtions();
 	}
 
-	render(container: HTMLElement): void {
+	override render(container: HTMLElement): void {
 		super.render(container);
 		container.classList.add('switch-output');
 		this._register(attachStylerCallback(this.themeService, { selectBorder }, colors => {
@@ -289,7 +289,7 @@ class SwitchOutputActionViewItem extends SelectActionViewItem {
 		}));
 	}
 
-	protected getActionContext(option: string, index: number): string {
+	protected override getActionContext(option: string, index: number): string {
 		const channel = index < this.outputChannels.length ? this.outputChannels[index] : this.logChannels[index - this.outputChannels.length - 1];
 		return channel ? channel.id : option;
 	}

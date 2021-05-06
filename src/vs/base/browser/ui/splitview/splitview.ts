@@ -1022,7 +1022,7 @@ export class SplitView<TLayoutContext = undefined> extends Disposable {
 		return undefined;
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		super.dispose();
 
 		this.viewItems.forEach(i => i.dispose());

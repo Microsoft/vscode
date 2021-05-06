@@ -8,6 +8,7 @@
   "engines": {
     "vscode": "^1.4.0"
   },
+  "icon": "images/icon.png",
   "activationEvents": [
     "onLanguage:json",
     "onLanguage:markdown",
@@ -15,13 +16,19 @@
   ],
   "main": "./out/extensionEditingMain",
   "browser": "./dist/browser/extensionEditingBrowserMain",
+  "capabilities": {
+    "virtualWorkspaces": true,
+    "untrustedWorkspaces": {
+      "supported": true
+    }
+  },
   "scripts": {
     "compile": "gulp compile-extension:extension-editing",
     "watch": "gulp watch-extension:extension-editing"
   },
   "dependencies": {
     "jsonc-parser": "^2.2.1",
-    "markdown-it": "^8.3.1",
+    "markdown-it": "^12.0.4",
     "parse5": "^3.0.2",
     "vscode-nls": "^4.1.1"
   },
@@ -62,7 +69,7 @@
   },
   "devDependencies": {
     "@types/markdown-it": "0.0.2",
-    "@types/node": "^12.19.9"
+    "@types/node": "14.x"
   },
   "repository": {
     "type": "git",

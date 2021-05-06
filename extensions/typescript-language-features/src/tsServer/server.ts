@@ -117,7 +117,7 @@ export class ProcessBasedTsServer extends Disposable implements ITypeScriptServe
 		this._process.write(serverRequest);
 	}
 
-	public dispose() {
+	public override dispose() {
 		super.dispose();
 		this._callbacks.destroy('server disposed');
 		this._pendingResponses.clear();

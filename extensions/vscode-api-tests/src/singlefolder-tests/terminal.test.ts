@@ -9,8 +9,7 @@ import { assertNoRpc } from '../utils';
 
 // Disable terminal tests:
 // - Web https://github.com/microsoft/vscode/issues/92826
-// - Remote https://github.com/microsoft/vscode/issues/96057
-((env.uiKind === UIKind.Web || typeof env.remoteName !== 'undefined') ? suite.skip : suite)('vscode API - terminal', () => {
+(env.uiKind === UIKind.Web ? suite.skip : suite)('vscode API - terminal', () => {
 	let extensionContext: ExtensionContext;
 
 	suiteSetup(async () => {
@@ -24,7 +23,9 @@ import { assertNoRpc } from '../utils';
 		// Disable exit alerts as tests may trigger then and we're not testing the notifications
 		await config.update('showExitAlert', false, ConfigurationTarget.Global);
 		// Canvas may cause problems when running in a container
-		await config.update('rendererType', 'dom', ConfigurationTarget.Global);
+		await config.update('gpuAcceleration', 'off', ConfigurationTarget.Global);
+		// Disable env var relaunch for tests to prevent terminals relaunching themselves
+		await config.update('environmentChangesRelaunch', false, ConfigurationTarget.Global);
 	});
 
 	suite('Terminal', () => {
@@ -467,7 +468,7 @@ import { assertNoRpc } from '../utils';
 			// 	const terminal = window.createTerminal({ name: 'foo', pty });
 			// });
 
-			test('should respect dimension overrides', (done) => {
+			test.skip('should respect dimension overrides', (done) => {
 				disposables.push(window.onDidOpenTerminal(term => {
 					try {
 						equal(terminal, term);
@@ -498,6 +499,41 @@ import { assertNoRpc } from '../utils';
 					onDidWrite: writeEmitter.event,
 					onDidOverrideDimensions: overrideDimensionsEmitter.event,
 					open: () => overrideDimensionsEmitter.fire({ columns: 10, rows: 5 }),
+					close: () => { }
+				};
+				const terminal = window.createTerminal({ name: 'foo', pty });
+			});
+
+			test('should change terminal name', (done) => {
+				disposables.push(window.onDidOpenTerminal(term => {
+					try {
+						equal(terminal, term);
+						equal(terminal.name, 'foo');
+					} catch (e) {
+						done(e);
+						return;
+					}
+					disposables.push(window.onDidCloseTerminal(t => {
+						try {
+							equal(terminal, t);
+							equal(terminal.name, 'bar');
+						} catch (e) {
+							done(e);
+							return;
+						}
+						done();
+					}));
+				}));
+				const changeNameEmitter = new EventEmitter<string>();
+				const closeEmitter = new EventEmitter<number | undefined>();
+				const pty: Pseudoterminal = {
+					onDidWrite: new EventEmitter<string>().event,
+					onDidChangeName: changeNameEmitter.event,
+					onDidClose: closeEmitter.event,
+					open: () => {
+						changeNameEmitter.fire('bar');
+						closeEmitter.fire(undefined);
+					},
 					close: () => { }
 				};
 				const terminal = window.createTerminal({ name: 'foo', pty });
@@ -632,7 +668,8 @@ import { assertNoRpc } from '../utils';
 			});
 		});
 
-		suite('environmentVariableCollection', () => {
+		// https://github.com/microsoft/vscode/issues/119826
+		suite.skip('environmentVariableCollection', () => {
 			test('should have collection variables apply to terminals immediately after setting', (done) => {
 				// Text to match on before passing the test
 				const expectedText = [

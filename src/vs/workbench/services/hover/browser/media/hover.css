@@ -14,6 +14,63 @@
 	max-width: 700px;
 }
 
+.monaco-workbench .workbench-hover.compact {
+	font-size: 12px;
+}
+
+.monaco-workbench .workbench-hover.compact .hover-contents {
+	padding: 2px 8px;
+}
+
+.monaco-workbench .workbench-hover-pointer {
+	position: absolute;
+	/* Must be higher than workbench hover z-index */
+	z-index: 41;
+}
+
+.monaco-workbench .workbench-hover-pointer:after {
+	content: '';
+	position: absolute;
+	width: 5px;
+	height: 5px;
+}
+
+.monaco-workbench .workbench-hover-pointer.left {
+	left: -3px;
+}
+
+.monaco-workbench .workbench-hover-pointer.left:after {
+	-moz-transform: rotate(135deg);
+	-webkit-transform: rotate(135deg);
+}
+
+.monaco-workbench .workbench-hover-pointer.right {
+	right: 3px;
+}
+
+.monaco-workbench .workbench-hover-pointer.right:after {
+	-moz-transform: rotate(315deg);
+	-webkit-transform: rotate(315deg);
+}
+
+.monaco-workbench .workbench-hover-pointer.top {
+	top: -3px;
+}
+
+.monaco-workbench .workbench-hover-pointer.top:after {
+	-moz-transform: rotate(225deg);
+	-webkit-transform: rotate(225deg);
+}
+
+.monaco-workbench .workbench-hover-pointer.bottom {
+	bottom: 3px;
+}
+
+.monaco-workbench .workbench-hover-pointer.bottom:after {
+	-moz-transform: rotate(45deg);
+	-webkit-transform: rotate(45deg);
+}
+
 .monaco-workbench .workbench-hover a {
 	color: #3794ff;
 }

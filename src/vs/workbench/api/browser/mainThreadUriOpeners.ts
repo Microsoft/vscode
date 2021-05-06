@@ -77,8 +77,8 @@ export class MainThreadUriOpeners extends Disposable implements MainThreadUriOpe
 					await this.proxy.$openUri(id, { resolvedUri: uri, sourceUri: ctx.sourceUri }, token);
 				} catch (e) {
 					if (!isPromiseCanceledError(e)) {
-						const openDefaultAction = new Action('default', localize('openerFailedUseDefault', "Open using default opener"), undefined, undefined, () => {
-							return this.openerService.open(uri, {
+						const openDefaultAction = new Action('default', localize('openerFailedUseDefault', "Open using default opener"), undefined, undefined, async () => {
+							await this.openerService.open(uri, {
 								allowTunneling: false,
 								allowContributedOpeners: defaultExternalUriOpenerId,
 							});
@@ -128,7 +128,7 @@ export class MainThreadUriOpeners extends Disposable implements MainThreadUriOpe
 		this._contributedExternalUriOpenersStore.delete(id);
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		super.dispose();
 		this._registeredOpeners.clear();
 	}

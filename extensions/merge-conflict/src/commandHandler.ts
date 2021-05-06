@@ -339,18 +339,21 @@ export default class CommandHandler implements vscode.Disposable {
 
 		let predicate: (_conflict: any) => boolean;
 		let fallback: () => interfaces.IDocumentMergeConflict;
+		let scanOrder: interfaces.IDocumentMergeConflict[];
 
 		if (direction === NavigationDirection.Forwards) {
 			predicate = (conflict) => selection.isBefore(conflict.range.start);
 			fallback = () => conflicts![0];
+			scanOrder = conflicts;
 		} else if (direction === NavigationDirection.Backwards) {
 			predicate = (conflict) => selection.isAfter(conflict.range.start);
 			fallback = () => conflicts![conflicts!.length - 1];
+			scanOrder = conflicts.slice().reverse();
 		} else {
 			throw new Error(`Unsupported direction ${direction}`);
 		}
 
-		for (const conflict of conflicts) {
+		for (const conflict of scanOrder) {
 			if (predicate(conflict) && !conflict.range.contains(selection)) {
 				return {
 					canNavigate: true,

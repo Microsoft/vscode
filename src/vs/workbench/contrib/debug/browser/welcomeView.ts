@@ -19,7 +19,7 @@ import { Registry } from 'vs/platform/registry/common/platform';
 import { IOpenerService } from 'vs/platform/opener/common/opener';
 import { WorkbenchStateContext } from 'vs/workbench/browser/contextkeys';
 import { OpenFolderAction, OpenFileAction, OpenFileFolderAction } from 'vs/workbench/browser/actions/workspaceActions';
-import { isMacintosh } from 'vs/base/common/platform';
+import { isMacintosh, isWeb } from 'vs/base/common/platform';
 import { isCodeEditor } from 'vs/editor/browser/editorBrowser';
 import { IStorageService, StorageScope, StorageTarget } from 'vs/platform/storage/common/storage';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
@@ -32,8 +32,8 @@ const CONTEXT_DEBUGGER_INTERESTED_IN_ACTIVE_EDITOR = new RawContextKey<boolean>(
 
 export class WelcomeView extends ViewPane {
 
-	static ID = 'workbench.debug.welcome';
-	static LABEL = localize('run', "Run");
+	static readonly ID = 'workbench.debug.welcome';
+	static readonly LABEL = localize('run', "Run");
 
 	private debugStartLanguageContext: IContextKey<string | undefined>;
 	private debuggerInterestedContext: IContextKey<boolean>;
@@ -100,7 +100,7 @@ export class WelcomeView extends ViewPane {
 		debugKeybindingLabel = debugKeybinding ? ` (${debugKeybinding.getLabel()})` : '';
 	}
 
-	shouldShowWelcome(): boolean {
+	override shouldShowWelcome(): boolean {
 		return true;
 	}
 }
@@ -108,7 +108,7 @@ export class WelcomeView extends ViewPane {
 const viewsRegistry = Registry.as<IViewsRegistry>(Extensions.ViewsRegistry);
 viewsRegistry.registerViewWelcomeContent(WelcomeView.ID, {
 	content: localize({ key: 'openAFileWhichCanBeDebugged', comment: ['Please do not translate the word "commmand", it is part of our internal syntax which must not change'] },
-		"[Open a file](command:{0}) which can be debugged or run.", isMacintosh ? OpenFileFolderAction.ID : OpenFileAction.ID),
+		"[Open a file](command:{0}) which can be debugged or run.", (isMacintosh && !isWeb) ? OpenFileFolderAction.ID : OpenFileAction.ID),
 	when: ContextKeyExpr.and(CONTEXT_DEBUGGERS_AVAILABLE, CONTEXT_DEBUGGER_INTERESTED_IN_ACTIVE_EDITOR.toNegated()),
 	group: ViewContentGroups.Open
 });
@@ -123,7 +123,7 @@ viewsRegistry.registerViewWelcomeContent(WelcomeView.ID, {
 
 viewsRegistry.registerViewWelcomeContent(WelcomeView.ID, {
 	content: localize({ key: 'detectThenRunAndDebug', comment: ['Please do not translate the word "commmand", it is part of our internal syntax which must not change'] },
-		"[Show](command:{0}) all automatic debug configurations.", SELECT_AND_START_ID),
+		"[Show all automatic debug configurations](command:{0}).", SELECT_AND_START_ID),
 	when: CONTEXT_DEBUGGERS_AVAILABLE,
 	group: ViewContentGroups.Debug,
 	order: 10
@@ -138,7 +138,7 @@ viewsRegistry.registerViewWelcomeContent(WelcomeView.ID, {
 
 viewsRegistry.registerViewWelcomeContent(WelcomeView.ID, {
 	content: localize({ key: 'customizeRunAndDebugOpenFolder', comment: ['Please do not translate the word "commmand", it is part of our internal syntax which must not change'] },
-		"To customize Run and Debug, [open a folder](command:{0}) and create a launch.json file.", isMacintosh ? OpenFileFolderAction.ID : OpenFolderAction.ID),
+		"To customize Run and Debug, [open a folder](command:{0}) and create a launch.json file.", (isMacintosh && !isWeb) ? OpenFileFolderAction.ID : OpenFolderAction.ID),
 	when: ContextKeyExpr.and(CONTEXT_DEBUGGERS_AVAILABLE, WorkbenchStateContext.isEqualTo('empty')),
 	group: ViewContentGroups.Debug
 });

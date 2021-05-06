@@ -36,12 +36,12 @@ suite('MarkersModel Test', () => {
 		const testObject = new TestMarkersModel([marker1, marker2, marker3, marker4]);
 		const actuals = testObject.resourceMarkers[0].markers;
 
-		assert.notEqual(actuals[0].id, actuals[1].id);
-		assert.notEqual(actuals[0].id, actuals[2].id);
-		assert.notEqual(actuals[0].id, actuals[3].id);
-		assert.notEqual(actuals[1].id, actuals[2].id);
-		assert.notEqual(actuals[1].id, actuals[3].id);
-		assert.notEqual(actuals[2].id, actuals[3].id);
+		assert.notStrictEqual(actuals[0].id, actuals[1].id);
+		assert.notStrictEqual(actuals[0].id, actuals[2].id);
+		assert.notStrictEqual(actuals[0].id, actuals[3].id);
+		assert.notStrictEqual(actuals[1].id, actuals[2].id);
+		assert.notStrictEqual(actuals[1].id, actuals[3].id);
+		assert.notStrictEqual(actuals[2].id, actuals[3].id);
 	});
 
 	test('sort palces resources with no errors at the end', function () {
@@ -55,7 +55,7 @@ suite('MarkersModel Test', () => {
 
 		const actuals = testObject.resourceMarkers;
 
-		assert.equal(5, actuals.length);
+		assert.strictEqual(5, actuals.length);
 		assert.ok(compareResource(actuals[0], 'a/res2'));
 		assert.ok(compareResource(actuals[1], 'b/res3'));
 		assert.ok(compareResource(actuals[2], 'res4'));
@@ -74,7 +74,7 @@ suite('MarkersModel Test', () => {
 
 		const actuals = testObject.resourceMarkers;
 
-		assert.equal(5, actuals.length);
+		assert.strictEqual(5, actuals.length);
 		assert.ok(compareResource(actuals[0], 'a/res1'));
 		assert.ok(compareResource(actuals[1], 'a/res2'));
 		assert.ok(compareResource(actuals[2], 'b/res3'));
@@ -102,49 +102,49 @@ suite('MarkersModel Test', () => {
 
 		const actuals = testObject.resourceMarkers[0].markers;
 
-		assert.equal(actuals[0].marker, marker6);
-		assert.equal(actuals[1].marker, marker14);
-		assert.equal(actuals[2].marker, marker7);
-		assert.equal(actuals[3].marker, marker9);
-		assert.equal(actuals[4].marker, marker11);
-		assert.equal(actuals[5].marker, marker3);
-		assert.equal(actuals[6].marker, marker15);
-		assert.equal(actuals[7].marker, marker10);
-		assert.equal(actuals[8].marker, marker2);
-		assert.equal(actuals[9].marker, marker13);
-		assert.equal(actuals[10].marker, marker1);
-		assert.equal(actuals[11].marker, marker8);
-		assert.equal(actuals[12].marker, marker5);
-		assert.equal(actuals[13].marker, marker12);
-		assert.equal(actuals[14].marker, marker4);
+		assert.strictEqual(actuals[0].marker, marker6);
+		assert.strictEqual(actuals[1].marker, marker14);
+		assert.strictEqual(actuals[2].marker, marker7);
+		assert.strictEqual(actuals[3].marker, marker9);
+		assert.strictEqual(actuals[4].marker, marker11);
+		assert.strictEqual(actuals[5].marker, marker3);
+		assert.strictEqual(actuals[6].marker, marker15);
+		assert.strictEqual(actuals[7].marker, marker10);
+		assert.strictEqual(actuals[8].marker, marker2);
+		assert.strictEqual(actuals[9].marker, marker13);
+		assert.strictEqual(actuals[10].marker, marker1);
+		assert.strictEqual(actuals[11].marker, marker8);
+		assert.strictEqual(actuals[12].marker, marker5);
+		assert.strictEqual(actuals[13].marker, marker12);
+		assert.strictEqual(actuals[14].marker, marker4);
 	});
 
 	test('toString()', () => {
 		let marker = aMarker('a/res1');
 		marker.code = '1234';
-		assert.equal(JSON.stringify({ ...marker, resource: marker.resource.path }, null, '\t'), new Marker('1', marker).toString());
+		assert.strictEqual(JSON.stringify({ ...marker, resource: marker.resource.path }, null, '\t'), new Marker('1', marker).toString());
 
 		marker = aMarker('a/res2', MarkerSeverity.Warning);
-		assert.equal(JSON.stringify({ ...marker, resource: marker.resource.path }, null, '\t'), new Marker('2', marker).toString());
+		assert.strictEqual(JSON.stringify({ ...marker, resource: marker.resource.path }, null, '\t'), new Marker('2', marker).toString());
 
 		marker = aMarker('a/res2', MarkerSeverity.Info, 1, 2, 1, 8, 'Info', '');
-		assert.equal(JSON.stringify({ ...marker, resource: marker.resource.path }, null, '\t'), new Marker('3', marker).toString());
+		assert.strictEqual(JSON.stringify({ ...marker, resource: marker.resource.path }, null, '\t'), new Marker('3', marker).toString());
 
 		marker = aMarker('a/res2', MarkerSeverity.Hint, 1, 2, 1, 8, 'Ignore message', 'Ignore');
-		assert.equal(JSON.stringify({ ...marker, resource: marker.resource.path }, null, '\t'), new Marker('4', marker).toString());
+		assert.strictEqual(JSON.stringify({ ...marker, resource: marker.resource.path }, null, '\t'), new Marker('4', marker).toString());
 
 		marker = aMarker('a/res2', MarkerSeverity.Warning, 1, 2, 1, 8, 'Warning message', '', [{ startLineNumber: 2, startColumn: 5, endLineNumber: 2, endColumn: 10, message: 'some info', resource: URI.file('a/res3') }]);
 		const testObject = new Marker('5', marker, null!);
 
 		// hack
 		(testObject as any).relatedInformation = marker.relatedInformation!.map(r => new RelatedInformation('6', marker, r));
-		assert.equal(JSON.stringify({ ...marker, resource: marker.resource.path, relatedInformation: marker.relatedInformation!.map(r => ({ ...r, resource: r.resource.path })) }, null, '\t'), testObject.toString());
+		assert.strictEqual(JSON.stringify({ ...marker, resource: marker.resource.path, relatedInformation: marker.relatedInformation!.map(r => ({ ...r, resource: r.resource.path })) }, null, '\t'), testObject.toString());
 	});
 
 	test('Markers for same-document but different fragment', function () {
 		const model = new TestMarkersModel([anErrorWithRange(1)]);
 
-		assert.equal(model.total, 1);
+		assert.strictEqual(model.total, 1);
 
 		const document = URI.parse('foo://test/path/file');
 		const frag1 = URI.parse('foo://test/path/file#1');
@@ -152,7 +152,7 @@ suite('MarkersModel Test', () => {
 
 		model.setResourceMarkers([[document, [{ ...aMarker(), resource: frag1 }, { ...aMarker(), resource: frag2 }]]]);
 
-		assert.equal(model.total, 3);
+		assert.strictEqual(model.total, 3);
 		let a = model.getResourceMarkers(document);
 		let b = model.getResourceMarkers(frag1);
 		let c = model.getResourceMarkers(frag2);
@@ -160,12 +160,12 @@ suite('MarkersModel Test', () => {
 		assert.ok(a === c);
 
 		model.setResourceMarkers([[document, [{ ...aMarker(), resource: frag2 }]]]);
-		assert.equal(model.total, 2);
+		assert.strictEqual(model.total, 2);
 	});
 
 	test('Problems are no sorted correctly #99135', function () {
 		const model = new TestMarkersModel([]);
-		assert.equal(model.total, 0);
+		assert.strictEqual(model.total, 0);
 
 		const document = URI.parse('foo://test/path/file');
 		const frag1 = URI.parse('foo://test/path/file#1');
@@ -180,10 +180,10 @@ suite('MarkersModel Test', () => {
 			{ ...aMarker(), resource: frag2 }
 		]]]);
 
-		assert.equal(model.total, 3);
+		assert.strictEqual(model.total, 3);
 		const markers = model.getResourceMarkers(document)?.markers;
-		assert.deepEqual(markers?.map(m => m.marker.severity), [MarkerSeverity.Error, MarkerSeverity.Error, MarkerSeverity.Warning]);
-		assert.deepEqual(markers?.map(m => m.marker.resource.toString()), [frag1.toString(), frag2.toString(), frag1.toString()]);
+		assert.deepStrictEqual(markers?.map(m => m.marker.severity), [MarkerSeverity.Error, MarkerSeverity.Error, MarkerSeverity.Warning]);
+		assert.deepStrictEqual(markers?.map(m => m.marker.resource.toString()), [frag1.toString(), frag2.toString(), frag1.toString()]);
 	});
 
 	function compareResource(a: ResourceMarkers, b: string): boolean {

@@ -51,14 +51,13 @@
 
 .settings-tabs-widget > .monaco-action-bar .action-item .action-label {
 	display: block;
+	padding: 0px;
+	border-radius: initial;
+	background: none !important;
 }
 
 .settings-tabs-widget > .monaco-action-bar .action-item .action-label.folder-settings {
 	display: flex;
-}
-
-.settings-tabs-widget > .monaco-action-bar .actions-container {
-	justify-content: flex-start;
 }
 
 .default-preferences-editor-container > .preferences-header-container > .default-preferences-header,

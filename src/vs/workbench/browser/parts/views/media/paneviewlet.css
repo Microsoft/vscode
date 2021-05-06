@@ -18,13 +18,14 @@
 .monaco-pane-view .pane > .pane-header > .actions.show {
 	display: initial;
 }
-.monaco-pane-view .pane > .pane-header .icon {
+
+.monaco-pane-view .pane > .pane-header > .icon {
 	display: none;
 	width: 16px;
 	height: 16px;
 }
 
-.monaco-pane-view .pane.pane.horizontal:not(.expanded) > .pane-header .icon {
+.monaco-pane-view .pane.pane.horizontal:not(.expanded) > .pane-header > .icon {
 	display: inline;
 	margin-top: 4px;
 }

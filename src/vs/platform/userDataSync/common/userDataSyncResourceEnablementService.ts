@@ -41,6 +41,10 @@ export class UserDataSyncResourceEnablementService extends Disposable implements
 		}
 	}
 
+	getResourceSyncStateVersion(resource: SyncResource): string | undefined {
+		return undefined;
+	}
+
 	private storeResourceEnablement(resourceEnablementKey: string, enabled: boolean): void {
 		this.storageService.store(resourceEnablementKey, enabled, StorageScope.GLOBAL, isWeb ? StorageTarget.USER /* sync in web */ : StorageTarget.MACHINE);
 	}

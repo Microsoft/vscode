@@ -7,10 +7,12 @@ import { CommandsRegistry } from 'vs/platform/commands/common/commands';
 import { RawContextKey, ContextKeyExpr } from 'vs/platform/contextkey/common/contextkey';
 import { KeybindingsRegistry, KeybindingWeight } from 'vs/platform/keybinding/common/keybindingsRegistry';
 import { KeyCode, KeyMod } from 'vs/base/common/keyCodes';
-import { INotificationViewItem, isNotificationViewItem } from 'vs/workbench/common/notifications';
+import { INotificationViewItem, isNotificationViewItem, NotificationsModel } from 'vs/workbench/common/notifications';
 import { MenuRegistry, MenuId } from 'vs/platform/actions/common/actions';
 import { localize } from 'vs/nls';
 import { IListService, WorkbenchList } from 'vs/platform/list/browser/listService';
+import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
+import { NotificationMetrics, NotificationMetricsClassification, notificationToMetrics } from 'vs/workbench/browser/parts/notifications/notificationsTelemetry';
 
 // Center
 export const SHOW_NOTIFICATIONS_CENTER = 'notifications.showList';
@@ -55,7 +57,7 @@ export interface INotificationsToastController {
 	hide(): void;
 }
 
-export function registerNotificationCommands(center: INotificationsCenterController, toasts: INotificationsToastController): void {
+export function registerNotificationCommands(center: INotificationsCenterController, toasts: INotificationsToastController, model: NotificationsModel): void {
 
 	function getNotificationFromContext(listService: IListService, context?: unknown): INotificationViewItem | undefined {
 		if (isNotificationViewItem(context)) {
@@ -85,7 +87,16 @@ export function registerNotificationCommands(center: INotificationsCenterControl
 		weight: KeybindingWeight.WorkbenchContrib + 50,
 		when: NotificationsCenterVisibleContext,
 		primary: KeyCode.Escape,
-		handler: accessor => center.hide()
+		handler: accessor => {
+			const telemetryService = accessor.get(ITelemetryService);
+			model.notifications.forEach(n => {
+				if (n.visible) {
+					telemetryService.publicLog2<NotificationMetrics, NotificationMetricsClassification>('notification:hide', notificationToMetrics(n.message.original, n.sourceId, n.silent));
+				}
+			});
+
+			center.hide();
+		}
 	});
 
 	// Toggle Notifications Center
@@ -159,7 +170,15 @@ export function registerNotificationCommands(center: INotificationsCenterControl
 	});
 
 	// Hide Toasts
-	CommandsRegistry.registerCommand(HIDE_NOTIFICATION_TOAST, accessor => toasts.hide());
+	CommandsRegistry.registerCommand(HIDE_NOTIFICATION_TOAST, accessor => {
+		const telemetryService = accessor.get(ITelemetryService);
+		model.notifications.forEach(n => {
+			if (n.visible) {
+				telemetryService.publicLog2<NotificationMetrics, NotificationMetricsClassification>('notification:hide', notificationToMetrics(n.message.original, n.sourceId, n.silent));
+			}
+		});
+		toasts.hide();
+	});
 
 	KeybindingsRegistry.registerKeybindingRule({
 		id: HIDE_NOTIFICATION_TOAST,

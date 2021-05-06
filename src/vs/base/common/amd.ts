@@ -3,22 +3,6 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { URI } from 'vs/base/common/uri';
-
-/**
- * @deprecated use `FileAccess.asFileUri(relativePath, requireFn).fsPath`
- */
-export function getPathFromAmdModule(requirefn: typeof require, relativePath: string): string {
-	return getUriFromAmdModule(requirefn, relativePath).fsPath;
-}
-
-/**
- * @deprecated use `FileAccess.asFileUri()` for node.js contexts or `FileAccess.asBrowserUri` for browser contexts.
- */
-export function getUriFromAmdModule(requirefn: typeof require, relativePath: string): URI {
-	return URI.parse(requirefn.toUrl(relativePath));
-}
-
 export abstract class LoaderStats {
 	abstract get amdLoad(): [string, number][];
 	abstract get amdInvoke(): [string, number][];
@@ -26,10 +10,7 @@ export abstract class LoaderStats {
 	abstract get nodeEval(): [string, number][];
 	abstract get nodeRequireTotal(): number;
 
-
 	static get(): LoaderStats {
-
-
 		const amdLoadScript = new Map<string, number>();
 		const amdInvokeFactory = new Map<string, number>();
 		const nodeRequire = new Map<string, number>();

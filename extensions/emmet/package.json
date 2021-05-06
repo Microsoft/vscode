@@ -69,97 +69,98 @@
             }
           },
           "default": {},
-          "description": "%emmetVariables%"
+          "markdownDescription": "%emmetVariables%"
         },
         "emmet.syntaxProfiles": {
           "type": "object",
           "default": {},
-          "description": "%emmetSyntaxProfiles%"
+          "markdownDescription": "%emmetSyntaxProfiles%"
         },
         "emmet.excludeLanguages": {
           "type": "array",
           "default": [
             "markdown"
           ],
-          "description": "%emmetExclude%"
+          "markdownDescription": "%emmetExclude%"
         },
         "emmet.extensionsPath": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "markdownDescription": "%emmetExtensionsPathItem%"
           },
           "default": [],
-          "description": "%emmetExtensionsPath%"
+          "markdownDescription": "%emmetExtensionsPath%"
         },
         "emmet.triggerExpansionOnTab": {
           "type": "boolean",
           "default": false,
-          "description": "%emmetTriggerExpansionOnTab%"
+          "markdownDescription": "%emmetTriggerExpansionOnTab%"
         },
         "emmet.preferences": {
           "type": "object",
           "default": {},
-          "description": "%emmetPreferences%",
+          "markdownDescription": "%emmetPreferences%",
           "properties": {
             "css.intUnit": {
               "type": "string",
               "default": "px",
-              "description": "%emmetPreferencesIntUnit%"
+              "markdownDescription": "%emmetPreferencesIntUnit%"
             },
             "css.floatUnit": {
               "type": "string",
               "default": "em",
-              "description": "%emmetPreferencesFloatUnit%"
+              "markdownDescription": "%emmetPreferencesFloatUnit%"
             },
             "css.propertyEnd": {
               "type": "string",
               "default": ";",
-              "description": "%emmetPreferencesCssAfter%"
+              "markdownDescription": "%emmetPreferencesCssAfter%"
             },
             "sass.propertyEnd": {
               "type": "string",
               "default": "",
-              "description": "%emmetPreferencesSassAfter%"
+              "markdownDescription": "%emmetPreferencesSassAfter%"
             },
             "stylus.propertyEnd": {
               "type": "string",
               "default": "",
-              "description": "%emmetPreferencesStylusAfter%"
+              "markdownDescription": "%emmetPreferencesStylusAfter%"
             },
             "css.valueSeparator": {
               "type": "string",
               "default": ": ",
-              "description": "%emmetPreferencesCssBetween%"
+              "markdownDescription": "%emmetPreferencesCssBetween%"
             },
             "sass.valueSeparator": {
               "type": "string",
               "default": ": ",
-              "description": "%emmetPreferencesSassBetween%"
+              "markdownDescription": "%emmetPreferencesSassBetween%"
             },
             "stylus.valueSeparator": {
               "type": "string",
               "default": " ",
-              "description": "%emmetPreferencesStylusBetween%"
+              "markdownDescription": "%emmetPreferencesStylusBetween%"
             },
             "bem.elementSeparator": {
               "type": "string",
               "default": "__",
-              "description": "%emmetPreferencesBemElementSeparator%"
+              "markdownDescription": "%emmetPreferencesBemElementSeparator%"
             },
             "bem.modifierSeparator": {
               "type": "string",
               "default": "_",
-              "description": "%emmetPreferencesBemModifierSeparator%"
+              "markdownDescription": "%emmetPreferencesBemModifierSeparator%"
             },
             "filter.commentBefore": {
               "type": "string",
               "default": "",
-              "description": "%emmetPreferencesFilterCommentBefore%"
+              "markdownDescription": "%emmetPreferencesFilterCommentBefore%"
             },
             "filter.commentAfter": {
               "type": "string",
               "default": "\n<!-- /[#ID][.CLASS] -->",
-              "description": "%emmetPreferencesFilterCommentAfter%"
+              "markdownDescription": "%emmetPreferencesFilterCommentAfter%"
             },
             "filter.commentTrigger": {
               "type": "array",
@@ -167,26 +168,26 @@
                 "id",
                 "class"
               ],
-              "description": "%emmetPreferencesFilterCommentTrigger%"
+              "markdownDescription": "%emmetPreferencesFilterCommentTrigger%"
             },
             "format.noIndentTags": {
               "type": "array",
               "default": [
                 "html"
               ],
-              "description": "%emmetPreferencesFormatNoIndentTags%"
+              "markdownDescription": "%emmetPreferencesFormatNoIndentTags%"
             },
             "format.forceIndentationForTags": {
               "type": "array",
               "default": [
                 "body"
               ],
-              "description": "%emmetPreferencesFormatForceIndentTags%"
+              "markdownDescription": "%emmetPreferencesFormatForceIndentTags%"
             },
             "profile.allowCompactBoolean": {
               "type": "boolean",
               "default": false,
-              "description": "%emmetPreferencesAllowCompactBoolean%"
+              "markdownDescription": "%emmetPreferencesAllowCompactBoolean%"
             },
             "css.webkitProperties": {
               "type": "string",
@@ -211,17 +212,28 @@
             "css.fuzzySearchMinScore": {
               "type": "number",
               "default": 0.3,
-              "description": "%emmetPreferencesCssFuzzySearchMinScore%"
+              "markdownDescription": "%emmetPreferencesCssFuzzySearchMinScore%"
+            },
+            "output.inlineBreak": {
+              "type": "number",
+              "default": 0,
+              "markdownDescription": "%emmetPreferencesOutputInlineBreak%"
             },
             "output.reverseAttributes": {
               "type": "boolean",
               "default": false,
-              "description": "%emmetPreferencesOutputReverseAttributes%"
+              "markdownDescription": "%emmetPreferencesOutputReverseAttributes%"
+            },
+            "output.selfClosingStyle": {
+              "type": "string",
+              "enum": ["html", "xhtml", "xml"],
+              "default": "html",
+              "markdownDescription": "%emmetPreferencesOutputSelfClosingStyle%"
             },
             "css.color.short": {
               "type": "boolean",
               "default": true,
-              "description": "%emmetPreferencesCssColorShort%"
+              "markdownDescription": "%emmetPreferencesCssColorShort%"
             }
           }
         },
@@ -432,7 +444,7 @@
     "deps": "yarn add vscode-emmet-helper"
   },
   "devDependencies": {
-    "@types/node": "^12.19.9"
+    "@types/node": "14.x"
   },
   "dependencies": {
     "@emmetio/abbreviation": "^2.2.0",
@@ -442,5 +454,11 @@
     "image-size": "^0.5.2",
     "vscode-emmet-helper": "^2.3.0",
     "vscode-languageserver-textdocument": "^1.0.1"
+  },
+  "capabilities": {
+    "virtualWorkspaces": true,
+    "untrustedWorkspaces": {
+      "supported": true
+    }
   }
 }

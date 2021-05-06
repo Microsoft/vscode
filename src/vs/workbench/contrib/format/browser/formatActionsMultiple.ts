@@ -38,6 +38,7 @@ class DefaultFormatter extends Disposable implements IWorkbenchContribution {
 	static readonly configName = 'editor.defaultFormatter';
 
 	static extensionIds: (string | null)[] = [];
+	static extensionItemLabels: string[] = [];
 	static extensionDescriptions: string[] = [];
 
 	constructor(
@@ -73,15 +74,18 @@ class DefaultFormatter extends Disposable implements IWorkbenchContribution {
 		});
 
 		DefaultFormatter.extensionIds.length = 0;
+		DefaultFormatter.extensionItemLabels.length = 0;
 		DefaultFormatter.extensionDescriptions.length = 0;
 
 		DefaultFormatter.extensionIds.push(null);
+		DefaultFormatter.extensionItemLabels.push(nls.localize('null', 'None'));
 		DefaultFormatter.extensionDescriptions.push(nls.localize('nullFormatterDescription', "None"));
 
 		for (const extension of extensions) {
 			if (extension.main || extension.browser) {
 				DefaultFormatter.extensionIds.push(extension.identifier.value);
-				DefaultFormatter.extensionDescriptions.push(extension.description || '');
+				DefaultFormatter.extensionItemLabels.push(extension.displayName ?? '');
+				DefaultFormatter.extensionDescriptions.push(extension.description ?? '');
 			}
 		}
 	}
@@ -182,6 +186,7 @@ Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration).regis
 			type: ['string', 'null'],
 			default: null,
 			enum: DefaultFormatter.extensionIds,
+			enumItemLabels: DefaultFormatter.extensionItemLabels,
 			markdownEnumDescriptions: DefaultFormatter.extensionDescriptions
 		}
 	}

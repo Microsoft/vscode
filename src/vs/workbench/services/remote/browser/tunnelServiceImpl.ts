@@ -31,7 +31,7 @@ export class TunnelService extends AbstractTunnelService {
 		return undefined;
 	}
 
-	canTunnel(uri: URI): boolean {
+	override canTunnel(uri: URI): boolean {
 		return super.canTunnel(uri) && !!this.environmentService.remoteAuthority;
 	}
 }

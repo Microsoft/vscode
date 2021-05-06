@@ -25,6 +25,7 @@ interface IConfiguration extends IWindowsConfiguration {
 	update: { mode: string; };
 	debug: { console: { wordWrap: boolean } };
 	editor: { accessibilitySupport: 'on' | 'off' | 'auto' };
+	security: { workspace: { trust: { enabled: boolean } } }
 }
 
 export class SettingsChangeRelauncher extends Disposable implements IWorkbenchContribution {
@@ -35,6 +36,7 @@ export class SettingsChangeRelauncher extends Disposable implements IWorkbenchCo
 	private clickThroughInactive: boolean | undefined;
 	private updateMode: string | undefined;
 	private accessibilitySupport: 'on' | 'off' | 'auto' | undefined;
+	private workspaceTrustEnabled: boolean | undefined;
 
 	constructor(
 		@IHostService private readonly hostService: IHostService,
@@ -89,6 +91,12 @@ export class SettingsChangeRelauncher extends Disposable implements IWorkbenchCo
 				if (this.accessibilitySupport === 'on') {
 					changed = true;
 				}
+			}
+
+			// Workspace trust
+			if (typeof config.security?.workspace.trust.enabled === 'boolean' && config.security?.workspace.trust.enabled !== this.workspaceTrustEnabled) {
+				this.workspaceTrustEnabled = config.security.workspace.trust.enabled;
+				changed = true;
 			}
 		}
 

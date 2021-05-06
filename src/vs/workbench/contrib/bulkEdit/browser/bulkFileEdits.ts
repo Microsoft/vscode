@@ -76,7 +76,7 @@ class RenameOperation implements IFileOperation {
 			return new Noop();
 		}
 
-		await this._workingCopyFileService.move(moves, this._undoRedoInfo, token);
+		await this._workingCopyFileService.move(moves, token, this._undoRedoInfo);
 		return new RenameOperation(undoes, { isUndoing: true }, this._workingCopyFileService, this._fileService);
 	}
 
@@ -125,7 +125,7 @@ class CopyOperation implements IFileOperation {
 		}
 
 		// (2) perform the actual copy and use the return stats to build undo edits
-		const stats = await this._workingCopyFileService.copy(copies, this._undoRedoInfo, token);
+		const stats = await this._workingCopyFileService.copy(copies, token, this._undoRedoInfo);
 		const undoes: DeleteEdit[] = [];
 
 		for (let i = 0; i < stats.length; i++) {
@@ -190,8 +190,8 @@ class CreateOperation implements IFileOperation {
 			return new Noop();
 		}
 
-		await this._workingCopyFileService.createFolder(folderCreates, this._undoRedoInfo, token);
-		await this._workingCopyFileService.create(fileCreates, this._undoRedoInfo, token);
+		await this._workingCopyFileService.createFolder(folderCreates, token, this._undoRedoInfo);
+		await this._workingCopyFileService.create(fileCreates, token, this._undoRedoInfo);
 
 		return this._instaService.createInstance(DeleteOperation, undoes, { isUndoing: true });
 	}
@@ -265,7 +265,7 @@ class DeleteOperation implements IFileOperation {
 			return new Noop();
 		}
 
-		await this._workingCopyFileService.delete(deletes, this._undoRedoInfo, token);
+		await this._workingCopyFileService.delete(deletes, token, this._undoRedoInfo);
 
 		if (undoes.length === 0) {
 			return new Noop();

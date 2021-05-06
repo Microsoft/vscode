@@ -3,41 +3,42 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as nls from 'vs/nls';
-import { Action } from 'vs/base/common/actions';
-import { MenuId, MenuRegistry, SyncActionDescriptor } from 'vs/platform/actions/common/actions';
+import { localize } from 'vs/nls';
+import { Action2, MenuId, registerAction2 } from 'vs/platform/actions/common/actions';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { ContextKeyExpr } from 'vs/platform/contextkey/common/contextkey';
-import { Registry } from 'vs/platform/registry/common/platform';
-import { CATEGORIES, Extensions as ActionExtensions, IWorkbenchActionRegistry } from 'vs/workbench/common/actions';
+import { CATEGORIES } from 'vs/workbench/common/actions';
+import { ServicesAccessor } from 'vs/platform/instantiation/common/instantiation';
 
-export class ToggleMinimapAction extends Action {
-	public static readonly ID = 'editor.action.toggleMinimap';
-	public static readonly LABEL = nls.localize('toggleMinimap', "Toggle Minimap");
+export class ToggleMinimapAction extends Action2 {
 
-	constructor(
-		id: string,
-		label: string,
-		@IConfigurationService private readonly _configurationService: IConfigurationService
-	) {
-		super(id, label);
+	static readonly ID = 'editor.action.toggleMinimap';
+
+	constructor() {
+		super({
+			id: ToggleMinimapAction.ID,
+			title: {
+				value: localize('toggleMinimap', "Toggle Minimap"),
+				original: 'Toggle Minimap',
+				mnemonicTitle: localize({ key: 'miShowMinimap', comment: ['&& denotes a mnemonic'] }, "Show &&Minimap")
+			},
+			category: CATEGORIES.View,
+			f1: true,
+			toggled: ContextKeyExpr.equals('config.editor.minimap.enabled', true),
+			menu: {
+				id: MenuId.MenubarViewMenu,
+				group: '5_editor',
+				order: 2
+			}
+		});
 	}
 
-	public run(): Promise<any> {
-		const newValue = !this._configurationService.getValue<boolean>('editor.minimap.enabled');
-		return this._configurationService.updateValue('editor.minimap.enabled', newValue);
+	override async run(accessor: ServicesAccessor): Promise<void> {
+		const configurationService = accessor.get(IConfigurationService);
+
+		const newValue = !configurationService.getValue<boolean>('editor.minimap.enabled');
+		return configurationService.updateValue('editor.minimap.enabled', newValue);
 	}
 }
 
-const registry = Registry.as<IWorkbenchActionRegistry>(ActionExtensions.WorkbenchActions);
-registry.registerWorkbenchAction(SyncActionDescriptor.from(ToggleMinimapAction), 'View: Toggle Minimap', CATEGORIES.View.value);
-
-MenuRegistry.appendMenuItem(MenuId.MenubarViewMenu, {
-	group: '5_editor',
-	command: {
-		id: ToggleMinimapAction.ID,
-		title: nls.localize({ key: 'miShowMinimap', comment: ['&& denotes a mnemonic'] }, "Show &&Minimap"),
-		toggled: ContextKeyExpr.equals('config.editor.minimap.enabled', true)
-	},
-	order: 2
-});
+registerAction2(ToggleMinimapAction);

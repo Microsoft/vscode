@@ -5,13 +5,12 @@
 
 import * as assert from 'assert';
 import * as path from 'vs/base/common/path';
-import { getPathFromAmdModule } from 'vs/base/common/amd';
 import * as platform from 'vs/base/common/platform';
 import { joinPath } from 'vs/base/common/resources';
 import { URI } from 'vs/base/common/uri';
 import { IFolderQuery, QueryType, IRawFileMatch } from 'vs/workbench/services/search/common/search';
 import { Engine as FileSearchEngine, FileWalker } from 'vs/workbench/services/search/node/fileSearch';
-import { flakySuite } from 'vs/base/test/node/testUtils';
+import { flakySuite, getPathFromAmdModule } from 'vs/base/test/node/testUtils';
 
 const TEST_FIXTURES = path.normalize(getPathFromAmdModule(require, './fixtures'));
 const EXAMPLES_FIXTURES = URI.file(path.join(TEST_FIXTURES, 'examples'));
@@ -46,7 +45,7 @@ flakySuite('FileSearchEngine', () => {
 			}
 		}, () => { }, (error) => {
 			assert.ok(!error);
-			assert.equal(count, 4);
+			assert.strictEqual(count, 4);
 			done();
 		});
 	});
@@ -65,7 +64,7 @@ flakySuite('FileSearchEngine', () => {
 			}
 		}, () => { }, (error) => {
 			assert.ok(!error);
-			assert.equal(count, 1);
+			assert.strictEqual(count, 1);
 			done();
 		});
 	});
@@ -84,7 +83,7 @@ flakySuite('FileSearchEngine', () => {
 			}
 		}, () => { }, (error) => {
 			assert.ok(!error);
-			assert.equal(count, 1);
+			assert.strictEqual(count, 1);
 			done();
 		});
 	});
@@ -104,7 +103,7 @@ flakySuite('FileSearchEngine', () => {
 			}
 		}, () => { }, (error, complete) => {
 			assert.ok(!error);
-			assert.equal(count, 0);
+			assert.strictEqual(count, 0);
 			assert.ok(complete.limitHit);
 			done();
 		});
@@ -125,7 +124,7 @@ flakySuite('FileSearchEngine', () => {
 			}
 		}, () => { }, (error, complete) => {
 			assert.ok(!error);
-			assert.equal(count, 0);
+			assert.strictEqual(count, 0);
 			assert.ok(!complete.limitHit);
 			done();
 		});
@@ -146,7 +145,7 @@ flakySuite('FileSearchEngine', () => {
 			}
 		}, () => { }, (error, complete) => {
 			assert.ok(!error);
-			assert.equal(count, 0);
+			assert.strictEqual(count, 0);
 			assert.ok(complete.limitHit);
 			done();
 		});
@@ -167,7 +166,7 @@ flakySuite('FileSearchEngine', () => {
 			}
 		}, () => { }, (error, complete) => {
 			assert.ok(!error);
-			assert.equal(count, 0);
+			assert.strictEqual(count, 0);
 			assert.ok(!complete.limitHit);
 			done();
 		});
@@ -187,7 +186,7 @@ flakySuite('FileSearchEngine', () => {
 			}
 		}, () => { }, (error) => {
 			assert.ok(!error);
-			assert.equal(count, 1);
+			assert.strictEqual(count, 1);
 			done();
 		});
 	});
@@ -206,7 +205,7 @@ flakySuite('FileSearchEngine', () => {
 			}
 		}, () => { }, (error) => {
 			assert.ok(!error);
-			assert.equal(count, 7);
+			assert.strictEqual(count, 7);
 			done();
 		});
 	});
@@ -225,7 +224,7 @@ flakySuite('FileSearchEngine', () => {
 			}
 		}, () => { }, (error) => {
 			assert.ok(!error);
-			assert.equal(count, 3);
+			assert.strictEqual(count, 3);
 			done();
 		});
 	});
@@ -248,7 +247,7 @@ flakySuite('FileSearchEngine', () => {
 			}
 		}, () => { }, (error, complete) => {
 			assert.ok(!error);
-			assert.equal(count, 1);
+			assert.strictEqual(count, 1);
 			done();
 		});
 	});
@@ -271,7 +270,7 @@ flakySuite('FileSearchEngine', () => {
 			}
 		}, () => { }, (error, complete) => {
 			assert.ok(!error);
-			assert.equal(count, 0);
+			assert.strictEqual(count, 0);
 			assert.ok(complete.limitHit);
 			done();
 		});
@@ -291,7 +290,7 @@ flakySuite('FileSearchEngine', () => {
 			}
 		}, () => { }, (error) => {
 			assert.ok(!error);
-			assert.equal(count, 1);
+			assert.strictEqual(count, 1);
 			done();
 		});
 	});
@@ -310,7 +309,7 @@ flakySuite('FileSearchEngine', () => {
 			}
 		}, () => { }, (error) => {
 			assert.ok(!error);
-			assert.equal(count, 14);
+			assert.strictEqual(count, 14);
 			done();
 		});
 	});
@@ -329,7 +328,7 @@ flakySuite('FileSearchEngine', () => {
 			}
 		}, () => { }, (error) => {
 			assert.ok(!error);
-			assert.equal(count, 0);
+			assert.strictEqual(count, 0);
 			done();
 		});
 	});
@@ -351,7 +350,7 @@ flakySuite('FileSearchEngine', () => {
 			res = result;
 		}, () => { }, (error) => {
 			assert.ok(!error);
-			assert.equal(count, 1);
+			assert.strictEqual(count, 1);
 			assert.strictEqual(path.basename(res.relativePath), 'site.less');
 			done();
 		});
@@ -372,7 +371,7 @@ flakySuite('FileSearchEngine', () => {
 			}
 		}, () => { }, (error) => {
 			assert.ok(!error);
-			assert.equal(count, 8);
+			assert.strictEqual(count, 8);
 			done();
 		});
 	});
@@ -391,7 +390,7 @@ flakySuite('FileSearchEngine', () => {
 			}
 		}, () => { }, (error) => {
 			assert.ok(!error);
-			assert.equal(count, 1);
+			assert.strictEqual(count, 1);
 			done();
 		});
 	});
@@ -410,7 +409,7 @@ flakySuite('FileSearchEngine', () => {
 			}
 		}, () => { }, (error) => {
 			assert.ok(!error);
-			assert.equal(count, 1);
+			assert.strictEqual(count, 1);
 			done();
 		});
 	});
@@ -430,7 +429,7 @@ flakySuite('FileSearchEngine', () => {
 			}
 		}, () => { }, (error) => {
 			assert.ok(!error);
-			assert.equal(count, 8);
+			assert.strictEqual(count, 8);
 			done();
 		});
 	});
@@ -450,7 +449,7 @@ flakySuite('FileSearchEngine', () => {
 			}
 		}, () => { }, (error) => {
 			assert.ok(!error);
-			assert.equal(count, 8);
+			assert.strictEqual(count, 8);
 			done();
 		});
 	});
@@ -470,7 +469,7 @@ flakySuite('FileSearchEngine', () => {
 			}
 		}, () => { }, (error) => {
 			assert.ok(!error);
-			assert.equal(count, 13);
+			assert.strictEqual(count, 13);
 			done();
 		});
 	});
@@ -490,7 +489,7 @@ flakySuite('FileSearchEngine', () => {
 			}
 		}, () => { }, (error) => {
 			assert.ok(!error);
-			assert.equal(count, 1);
+			assert.strictEqual(count, 1);
 			done();
 		});
 	});
@@ -524,7 +523,7 @@ flakySuite('FileSearchEngine', () => {
 			}
 		}, () => { }, (error) => {
 			assert.ok(!error);
-			assert.equal(count, 5);
+			assert.strictEqual(count, 5);
 			done();
 		});
 	});
@@ -545,8 +544,8 @@ flakySuite('FileSearchEngine', () => {
 			res = result;
 		}, () => { }, (error) => {
 			assert.ok(!error);
-			assert.equal(count, 1);
-			assert.equal(path.basename(res.relativePath), '汉语.txt');
+			assert.strictEqual(count, 1);
+			assert.strictEqual(path.basename(res.relativePath), '汉语.txt');
 			done();
 		});
 	});
@@ -565,7 +564,7 @@ flakySuite('FileSearchEngine', () => {
 			}
 		}, () => { }, (error) => {
 			assert.ok(!error);
-			assert.equal(count, 0);
+			assert.strictEqual(count, 0);
 			done();
 		});
 	});
@@ -586,8 +585,8 @@ flakySuite('FileSearchEngine', () => {
 			res = result;
 		}, () => { }, (error) => {
 			assert.ok(!error);
-			assert.equal(count, 1);
-			assert.equal(path.basename(res.relativePath), 'company.js');
+			assert.strictEqual(count, 1);
+			assert.strictEqual(path.basename(res.relativePath), 'company.js');
 			done();
 		});
 	});
@@ -637,8 +636,8 @@ flakySuite('FileSearchEngine', () => {
 			res = result;
 		}, () => { }, (error) => {
 			assert.ok(!error);
-			assert.equal(count, 1);
-			assert.equal(path.basename(res.relativePath), 'company.js');
+			assert.strictEqual(count, 1);
+			assert.strictEqual(path.basename(res.relativePath), 'company.js');
 			done();
 		});
 	});
@@ -665,8 +664,8 @@ flakySuite('FileSearchEngine', () => {
 			res = result;
 		}, () => { }, (error) => {
 			assert.ok(!error);
-			assert.equal(count, 1);
-			assert.equal(path.basename(res.relativePath), 'site.css');
+			assert.strictEqual(count, 1);
+			assert.strictEqual(path.basename(res.relativePath), 'site.css');
 			done();
 		});
 	});
@@ -691,7 +690,7 @@ flakySuite('FileSearchEngine', () => {
 			}
 		}, () => { }, (error) => {
 			assert.ok(!error);
-			assert.equal(count, 2);
+			assert.strictEqual(count, 2);
 			done();
 		});
 	});
@@ -713,7 +712,7 @@ flakySuite('FileSearchEngine', () => {
 			}
 		}, () => { }, (error) => {
 			assert.ok(!error);
-			assert.equal(count, 1);
+			assert.strictEqual(count, 1);
 			done();
 		});
 	});
@@ -732,7 +731,7 @@ flakySuite('FileWalker', () => {
 		});
 		const cmd1 = walker.spawnFindCmd(TEST_ROOT_FOLDER);
 		walker.readStdout(cmd1, 'utf8', (err1, stdout1) => {
-			assert.equal(err1, null);
+			assert.strictEqual(err1, null);
 			assert.notStrictEqual(stdout1!.split('\n').indexOf(file0), -1, stdout1);
 			assert.notStrictEqual(stdout1!.split('\n').indexOf(file1), -1, stdout1);
 
@@ -743,7 +742,7 @@ flakySuite('FileWalker', () => {
 			});
 			const cmd2 = walker.spawnFindCmd(TEST_ROOT_FOLDER);
 			walker.readStdout(cmd2, 'utf8', (err2, stdout2) => {
-				assert.equal(err2, null);
+				assert.strictEqual(err2, null);
 				assert.notStrictEqual(stdout1!.split('\n').indexOf(file0), -1, stdout1);
 				assert.strictEqual(stdout2!.split('\n').indexOf(file1), -1, stdout2);
 				done();
@@ -765,7 +764,7 @@ flakySuite('FileWalker', () => {
 		const walker = new FileWalker({ type: QueryType.File, folderQueries });
 		const cmd1 = walker.spawnFindCmd(folderQueries[0]);
 		walker.readStdout(cmd1, 'utf8', (err1, stdout1) => {
-			assert.equal(err1, null);
+			assert.strictEqual(err1, null);
 			assert(outputContains(stdout1!, file0), stdout1);
 			assert(!outputContains(stdout1!, file1), stdout1);
 			done();
@@ -780,7 +779,7 @@ flakySuite('FileWalker', () => {
 		const walker = new FileWalker({ type: QueryType.File, folderQueries: ROOT_FOLDER_QUERY, excludePattern: { '**/something': true } });
 		const cmd1 = walker.spawnFindCmd(TEST_ROOT_FOLDER);
 		walker.readStdout(cmd1, 'utf8', (err1, stdout1) => {
-			assert.equal(err1, null);
+			assert.strictEqual(err1, null);
 			assert.notStrictEqual(stdout1!.split('\n').indexOf(file0), -1, stdout1);
 			assert.notStrictEqual(stdout1!.split('\n').indexOf(file1), -1, stdout1);
 			assert.notStrictEqual(stdout1!.split('\n').indexOf(file2), -1, stdout1);
@@ -788,7 +787,7 @@ flakySuite('FileWalker', () => {
 			const walker = new FileWalker({ type: QueryType.File, folderQueries: ROOT_FOLDER_QUERY, excludePattern: { '{**/examples,**/more}': true } });
 			const cmd2 = walker.spawnFindCmd(TEST_ROOT_FOLDER);
 			walker.readStdout(cmd2, 'utf8', (err2, stdout2) => {
-				assert.equal(err2, null);
+				assert.strictEqual(err2, null);
 				assert.notStrictEqual(stdout1!.split('\n').indexOf(file0), -1, stdout1);
 				assert.strictEqual(stdout2!.split('\n').indexOf(file1), -1, stdout2);
 				assert.strictEqual(stdout2!.split('\n').indexOf(file2), -1, stdout2);
@@ -804,14 +803,14 @@ flakySuite('FileWalker', () => {
 		const walker = new FileWalker({ type: QueryType.File, folderQueries: ROOT_FOLDER_QUERY, excludePattern: { '**/examples/something': true } });
 		const cmd1 = walker.spawnFindCmd(TEST_ROOT_FOLDER);
 		walker.readStdout(cmd1, 'utf8', (err1, stdout1) => {
-			assert.equal(err1, null);
+			assert.strictEqual(err1, null);
 			assert.notStrictEqual(stdout1!.split('\n').indexOf(file0), -1, stdout1);
 			assert.notStrictEqual(stdout1!.split('\n').indexOf(file1), -1, stdout1);
 
 			const walker = new FileWalker({ type: QueryType.File, folderQueries: ROOT_FOLDER_QUERY, excludePattern: { '**/examples/subfolder': true } });
 			const cmd2 = walker.spawnFindCmd(TEST_ROOT_FOLDER);
 			walker.readStdout(cmd2, 'utf8', (err2, stdout2) => {
-				assert.equal(err2, null);
+				assert.strictEqual(err2, null);
 				assert.notStrictEqual(stdout1!.split('\n').indexOf(file0), -1, stdout1);
 				assert.strictEqual(stdout2!.split('\n').indexOf(file1), -1, stdout2);
 				done();
@@ -826,14 +825,14 @@ flakySuite('FileWalker', () => {
 		const walker = new FileWalker({ type: QueryType.File, folderQueries: ROOT_FOLDER_QUERY, excludePattern: { '**/subfolder/something': true } });
 		const cmd1 = walker.spawnFindCmd(TEST_ROOT_FOLDER);
 		walker.readStdout(cmd1, 'utf8', (err1, stdout1) => {
-			assert.equal(err1, null);
+			assert.strictEqual(err1, null);
 			assert.notStrictEqual(stdout1!.split('\n').indexOf(file0), -1, stdout1);
 			assert.notStrictEqual(stdout1!.split('\n').indexOf(file1), -1, stdout1);
 
 			const walker = new FileWalker({ type: QueryType.File, folderQueries: ROOT_FOLDER_QUERY, excludePattern: { '**/subfolder/anotherfolder': true } });
 			const cmd2 = walker.spawnFindCmd(TEST_ROOT_FOLDER);
 			walker.readStdout(cmd2, 'utf8', (err2, stdout2) => {
-				assert.equal(err2, null);
+				assert.strictEqual(err2, null);
 				assert.notStrictEqual(stdout1!.split('\n').indexOf(file0), -1, stdout1);
 				assert.strictEqual(stdout2!.split('\n').indexOf(file1), -1, stdout2);
 				done();
@@ -848,14 +847,14 @@ flakySuite('FileWalker', () => {
 		const walker = new FileWalker({ type: QueryType.File, folderQueries: ROOT_FOLDER_QUERY, excludePattern: { 'examples/something': true } });
 		const cmd1 = walker.spawnFindCmd(TEST_ROOT_FOLDER);
 		walker.readStdout(cmd1, 'utf8', (err1, stdout1) => {
-			assert.equal(err1, null);
+			assert.strictEqual(err1, null);
 			assert.notStrictEqual(stdout1!.split('\n').indexOf(file0), -1, stdout1);
 			assert.notStrictEqual(stdout1!.split('\n').indexOf(file1), -1, stdout1);
 
 			const walker = new FileWalker({ type: QueryType.File, folderQueries: ROOT_FOLDER_QUERY, excludePattern: { 'examples/subfolder': true } });
 			const cmd2 = walker.spawnFindCmd(TEST_ROOT_FOLDER);
 			walker.readStdout(cmd2, 'utf8', (err2, stdout2) => {
-				assert.equal(err2, null);
+				assert.strictEqual(err2, null);
 				assert.notStrictEqual(stdout1!.split('\n').indexOf(file0), -1, stdout1);
 				assert.strictEqual(stdout2!.split('\n').indexOf(file1), -1, stdout2);
 				done();
@@ -886,7 +885,7 @@ flakySuite('FileWalker', () => {
 		});
 		const cmd1 = walker.spawnFindCmd(TEST_ROOT_FOLDER);
 		walker.readStdout(cmd1, 'utf8', (err1, stdout1) => {
-			assert.equal(err1, null);
+			assert.strictEqual(err1, null);
 			for (const fileIn of filesIn) {
 				assert.notStrictEqual(stdout1!.split('\n').indexOf(fileIn), -1, stdout1);
 			}

@@ -77,7 +77,7 @@ export class EditorWorkerServiceImpl extends Disposable implements IEditorWorker
 		this._register(modes.CompletionProviderRegistry.register('*', new WordBasedCompletionItemProvider(this._workerManager, configurationService, this._modelService)));
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		super.dispose();
 	}
 
@@ -225,7 +225,7 @@ class WorkerManager extends Disposable {
 		this._register(this._modelService.onModelRemoved(_ => this._checkStopEmptyWorker()));
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		if (this._editorWorkerClient) {
 			this._editorWorkerClient.dispose();
 			this._editorWorkerClient = null;
@@ -292,7 +292,7 @@ class EditorModelManager extends Disposable {
 		}
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		for (let modelUrl in this._syncedModels) {
 			dispose(this._syncedModels[modelUrl]);
 		}
@@ -523,7 +523,7 @@ export class EditorWorkerClient extends Disposable {
 		});
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		super.dispose();
 		this._disposed = true;
 	}

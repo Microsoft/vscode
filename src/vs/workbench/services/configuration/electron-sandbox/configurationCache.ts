@@ -9,6 +9,7 @@ import { Schemas } from 'vs/base/common/network';
 import { FileOperationError, FileOperationResult, IFileService } from 'vs/platform/files/common/files';
 import { joinPath } from 'vs/base/common/resources';
 import { VSBuffer } from 'vs/base/common/buffer';
+import { Queue } from 'vs/base/common/async';
 
 export class ConfigurationCache implements IConfigurationCache {
 
@@ -47,6 +48,7 @@ export class ConfigurationCache implements IConfigurationCache {
 
 class CachedConfiguration {
 
+	private queue: Queue<void>;
 	private cachedConfigurationFolderResource: URI;
 	private cachedConfigurationFileResource: URI;
 
@@ -57,6 +59,7 @@ class CachedConfiguration {
 	) {
 		this.cachedConfigurationFolderResource = joinPath(cacheHome, 'CachedConfigurations', type, key);
 		this.cachedConfigurationFileResource = joinPath(this.cachedConfigurationFolderResource, type === 'workspaces' ? 'workspace.json' : 'configuration.json');
+		this.queue = new Queue<void>();
 	}
 
 	async read(): Promise<string> {
@@ -71,13 +74,15 @@ class CachedConfiguration {
 	async save(content: string): Promise<void> {
 		const created = await this.createCachedFolder();
 		if (created) {
-			await this.fileService.writeFile(this.cachedConfigurationFileResource, VSBuffer.fromString(content));
+			await this.queue.queue(async () => {
+				await this.fileService.writeFile(this.cachedConfigurationFileResource, VSBuffer.fromString(content));
+			});
 		}
 	}
 
 	async remove(): Promise<void> {
 		try {
-			await this.fileService.del(this.cachedConfigurationFolderResource, { recursive: true, useTrash: false });
+			await this.queue.queue(() => this.fileService.del(this.cachedConfigurationFolderResource, { recursive: true, useTrash: false }));
 		} catch (error) {
 			if ((<FileOperationError>error).fileOperationResult !== FileOperationResult.FILE_NOT_FOUND) {
 				throw error;

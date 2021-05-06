@@ -92,7 +92,7 @@ export class ColorDetector extends Disposable implements IEditorContribution {
 		return editor.getContribution<ColorDetector>(this.ID);
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this.stop();
 		this.removeAllDecorations();
 		super.dispose();

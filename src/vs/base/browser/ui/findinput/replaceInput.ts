@@ -382,7 +382,7 @@ export class ReplaceInput extends Widget {
 		this.domNode.style.width = newWidth + 'px';
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		super.dispose();
 	}
 }

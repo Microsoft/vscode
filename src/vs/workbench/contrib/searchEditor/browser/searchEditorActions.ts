@@ -137,12 +137,14 @@ export const openNewSearchEditor =
 
 		const seedSearchStringFromSelection = _args.location === 'new' || configurationService.getValue<IEditorOptions>('editor').find!.seedSearchStringFromSelection;
 		const args: OpenSearchEditorArgs = { query: seedSearchStringFromSelection ? selected : undefined };
-		Object.entries(_args).forEach(([name, value]) => {
+		for (const entry of Object.entries(_args)) {
+			const name = entry[0];
+			const value = entry[1];
 			if (value !== undefined) {
-				(args as any)[name as any] = (typeof value === 'string') ? configurationResolverService.resolve(lastActiveWorkspaceRoot, value) : value;
+				(args as any)[name as any] = (typeof value === 'string') ? await configurationResolverService.resolveAsync(lastActiveWorkspaceRoot, value) : value;
 			}
-		});
-		const existing = editorService.getEditors(EditorsOrder.MOST_RECENTLY_ACTIVE).find(id => id.editor.getTypeId() === SearchEditorInput.ID);
+		}
+		const existing = editorService.getEditors(EditorsOrder.MOST_RECENTLY_ACTIVE).find(id => id.editor.typeId === SearchEditorInput.ID);
 		let editor: SearchEditor;
 		if (existing && args.location === 'reuse') {
 			const input = existing.editor as SearchEditorInput;

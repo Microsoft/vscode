@@ -93,7 +93,7 @@ export class EditorStateCancellationTokenSource extends EditorKeybindingCancella
 
 	private readonly _listener = new DisposableStore();
 
-	constructor(readonly editor: IActiveCodeEditor, flags: CodeEditorStateFlag, range?: IRange, parent?: CancellationToken) {
+	constructor(editor: IActiveCodeEditor, flags: CodeEditorStateFlag, range?: IRange, parent?: CancellationToken) {
 		super(editor, parent);
 
 		if (flags & CodeEditorStateFlag.Position) {
@@ -119,7 +119,7 @@ export class EditorStateCancellationTokenSource extends EditorKeybindingCancella
 		}
 	}
 
-	dispose() {
+	override dispose() {
 		this._listener.dispose();
 		super.dispose();
 	}
@@ -137,7 +137,7 @@ export class TextModelCancellationTokenSource extends CancellationTokenSource im
 		this._listener = model.onDidChangeContent(() => this.cancel());
 	}
 
-	dispose() {
+	override dispose() {
 		this._listener.dispose();
 		super.dispose();
 	}

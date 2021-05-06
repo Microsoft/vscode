@@ -14,7 +14,7 @@ set NAMESHORT=%NAMESHORT:"=%.exe
 set CODE=".build\electron\%NAMESHORT%"
 
 :: Manage built-in extensions
-if "%1"=="--builtin" goto builtin
+if "%~1"=="--builtin" goto builtin
 
 :: Configuration
 set NODE_ENV=development

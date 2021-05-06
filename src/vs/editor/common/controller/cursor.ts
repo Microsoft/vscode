@@ -156,7 +156,7 @@ export class Cursor extends Disposable {
 		this._prevEditOperationType = EditOperationType.Other;
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		this._cursors.dispose();
 		this._autoClosedActions = dispose(this._autoClosedActions);
 		super.dispose();
@@ -620,6 +620,10 @@ export class Cursor extends Disposable {
 		this._isDoingComposition = isDoingComposition;
 	}
 
+	public getAutoClosedCharacters(): Range[] {
+		return AutoClosedAction.getAllAutoClosedCharacters(this._autoClosedActions);
+	}
+
 	public startComposition(eventsCollector: ViewModelEventsCollector): void {
 		this._selectionsWhenCompositionStarted = this.getSelections().slice(0);
 	}
@@ -628,8 +632,7 @@ export class Cursor extends Disposable {
 		this._executeEdit(() => {
 			if (source === 'keyboard') {
 				// composition finishes, let's check if we need to auto complete if necessary.
-				const autoClosedCharacters = AutoClosedAction.getAllAutoClosedCharacters(this._autoClosedActions);
-				this._executeEditOperation(TypeOperations.compositionEndWithInterceptors(this._prevEditOperationType, this.context.cursorConfig, this._model, this._selectionsWhenCompositionStarted, this.getSelections(), autoClosedCharacters));
+				this._executeEditOperation(TypeOperations.compositionEndWithInterceptors(this._prevEditOperationType, this.context.cursorConfig, this._model, this._selectionsWhenCompositionStarted, this.getSelections(), this.getAutoClosedCharacters()));
 				this._selectionsWhenCompositionStarted = null;
 			}
 		}, eventsCollector, source);
@@ -647,8 +650,7 @@ export class Cursor extends Disposable {
 					const chr = text.substr(offset, charLength);
 
 					// Here we must interpret each typed character individually
-					const autoClosedCharacters = AutoClosedAction.getAllAutoClosedCharacters(this._autoClosedActions);
-					this._executeEditOperation(TypeOperations.typeWithInterceptors(this._isDoingComposition, this._prevEditOperationType, this.context.cursorConfig, this._model, this.getSelections(), autoClosedCharacters, chr));
+					this._executeEditOperation(TypeOperations.typeWithInterceptors(this._isDoingComposition, this._prevEditOperationType, this.context.cursorConfig, this._model, this.getSelections(), this.getAutoClosedCharacters(), chr));
 
 					offset += charLength;
 				}

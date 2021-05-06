@@ -292,7 +292,7 @@ export class ModesContentHoverWidget extends Widget implements IContentWidget, I
 		}));
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		this._hoverOperation.cancel();
 		this._editor.removeContentWidget(this);
 		super.dispose();

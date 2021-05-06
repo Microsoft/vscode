@@ -3,6 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import { CancellationToken } from 'vs/base/common/cancellation';
 import { Emitter } from 'vs/base/common/event';
 import { Iterable } from 'vs/base/common/iterator';
 import { Disposable, DisposableStore, IDisposable, toDisposable } from 'vs/base/common/lifecycle';
@@ -10,7 +11,7 @@ import { createDecorator, IInstantiationService } from 'vs/platform/instantiatio
 import { IWorkspaceContextService, IWorkspaceFolder, IWorkspaceFoldersChangeEvent } from 'vs/platform/workspace/common/workspace';
 import { ExtHostTestingResource } from 'vs/workbench/api/common/extHost.protocol';
 import { IncrementalTestCollectionItem, TestsDiff } from 'vs/workbench/contrib/testing/common/testCollection';
-import { IMainThreadTestCollection, ITestService } from 'vs/workbench/contrib/testing/common/testService';
+import { IMainThreadTestCollection, ITestService, waitForAllRoots } from 'vs/workbench/contrib/testing/common/testService';
 
 export interface ITestSubscriptionFolder {
 	folder: IWorkspaceFolder;
@@ -39,6 +40,10 @@ export class TestSubscriptionListener extends Disposable {
 	constructor(public readonly subscription: TestSubscription, public readonly onDispose: () => void) {
 		super();
 		this._register(toDisposable(onDispose));
+	}
+
+	public async waitForAllRoots(token?: CancellationToken) {
+		await Promise.all(this.subscription.workspaceFolderCollections.map(([, c]) => waitForAllRoots(c, token)));
 	}
 
 	public publishFolderChange(evt: IWorkspaceFoldersChangeEvent) {

@@ -13,7 +13,10 @@
 	}
 }
 
-.codicon-sync.codicon-modifier-spin, .codicon-loading.codicon-modifier-spin, .codicon-gear.codicon-modifier-spin {
+.codicon-sync.codicon-modifier-spin,
+.codicon-loading.codicon-modifier-spin,
+.codicon-gear.codicon-modifier-spin,
+.codicon-notebook-state-executing.codicon-modifier-spin {
 	/* Use steps to throttle FPS to reduce CPU usage */
 	animation: codicon-spin 1.5s steps(30) infinite;
 }

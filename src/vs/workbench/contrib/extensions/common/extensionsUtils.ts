@@ -34,7 +34,7 @@ export class KeymapExtensions extends Disposable implements IWorkbenchContributi
 		@ITelemetryService private readonly telemetryService: ITelemetryService,
 	) {
 		super();
-		this._register(lifecycleService.onShutdown(() => this.dispose()));
+		this._register(lifecycleService.onDidShutdown(() => this.dispose()));
 		this._register(instantiationService.invokeFunction(onExtensionChanged)((identifiers => {
 			Promise.all(identifiers.map(identifier => this.checkForOtherKeymaps(identifier)))
 				.then(undefined, onUnexpectedError);

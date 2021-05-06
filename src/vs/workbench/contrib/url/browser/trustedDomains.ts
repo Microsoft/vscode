@@ -15,8 +15,6 @@ import { IAuthenticationService } from 'vs/workbench/services/authentication/bro
 import { IFileService } from 'vs/platform/files/common/files';
 import { ITextFileService } from 'vs/workbench/services/textfile/common/textfiles';
 import { IWorkspaceContextService } from 'vs/platform/workspace/common/workspace';
-import { INotificationService, Severity } from 'vs/platform/notification/common/notification';
-import { IClipboardService } from 'vs/platform/clipboard/common/clipboardService';
 
 const TRUSTED_DOMAINS_URI = URI.parse('trustedDomains:/Trusted Domains');
 
@@ -50,8 +48,6 @@ export async function configureOpenerTrustedDomainsHandler(
 	storageService: IStorageService,
 	editorService: IEditorService,
 	telemetryService: ITelemetryService,
-	notificationService: INotificationService,
-	clipboardService: IClipboardService,
 ) {
 	const parsedDomainToConfigure = URI.parse(domainToConfigure);
 	const toplevelDomainSegements = parsedDomainToConfigure.authority.split('.');
@@ -116,12 +112,10 @@ export async function configureOpenerTrustedDomainsHandler(
 		switch (pickedResult.id) {
 			case 'manage':
 				await editorService.openEditor({
-					resource: TRUSTED_DOMAINS_URI,
+					resource: TRUSTED_DOMAINS_URI.with({ fragment: resource.toString() }),
 					mode: 'jsonc',
 					options: { pinned: true }
 				});
-				notificationService.prompt(Severity.Info, localize('configuringURL', "Configuring trust for: {0}", resource.toString()),
-					[{ label: 'Copy', run: () => clipboardService.writeText(resource.toString()) }]);
 				return trustedDomains;
 			case 'trust':
 				const itemToTrust = pickedResult.toTrust;
@@ -162,14 +156,18 @@ async function getRemotes(fileService: IFileService, textFileService: ITextFileS
 	const domains = await Promise.race([
 		new Promise<string[][]>(resolve => setTimeout(() => resolve([]), 2000)),
 		Promise.all<string[]>(workspaceUris.map(async workspaceUri => {
-			const path = workspaceUri.path;
-			const uri = workspaceUri.with({ path: `${path !== '/' ? path : ''}/.git/config` });
-			const exists = await fileService.exists(uri);
-			if (!exists) {
+			try {
+				const path = workspaceUri.path;
+				const uri = workspaceUri.with({ path: `${path !== '/' ? path : ''}/.git/config` });
+				const exists = await fileService.exists(uri);
+				if (!exists) {
+					return [];
+				}
+				const gitConfig = (await (textFileService.read(uri, { acceptTextOnly: true }).catch(() => ({ value: '' })))).value;
+				return extractGitHubRemotesFromGitConfig(gitConfig);
+			} catch {
 				return [];
 			}
-			const gitConfig = (await (textFileService.read(uri, { acceptTextOnly: true }).catch(() => ({ value: '' })))).value;
-			return extractGitHubRemotesFromGitConfig(gitConfig);
 		}))]);
 
 	const set = domains.reduce((set, list) => list.reduce((set, item) => set.add(item), set), new Set<string>());

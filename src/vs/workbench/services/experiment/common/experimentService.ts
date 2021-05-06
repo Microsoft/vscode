@@ -11,7 +11,7 @@ import { IStorageService, StorageScope, StorageTarget } from 'vs/platform/storag
 import { ITelemetryData } from 'vs/base/common/actions';
 import { registerSingleton } from 'vs/platform/instantiation/common/extensions';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
-import product from 'vs/platform/product/common/product';
+import { IProductService } from 'vs/platform/product/common/productService';
 
 export const ITASExperimentService = createDecorator<ITASExperimentService>('TASExperimentService');
 
@@ -43,7 +43,10 @@ class MementoKeyValueStorage implements IKeyValueStorage {
 
 class ExperimentServiceTelemetry implements IExperimentationTelemetry {
 	private _lastAssignmentContext: string | undefined;
-	constructor(private telemetryService: ITelemetryService) { }
+	constructor(
+		private telemetryService: ITelemetryService,
+		private productService: IProductService
+	) { }
 
 	get assignmentContext(): string[] | undefined {
 		return this._lastAssignmentContext?.split(';');
@@ -52,7 +55,7 @@ class ExperimentServiceTelemetry implements IExperimentationTelemetry {
 	// __GDPR__COMMON__ "VSCode.ABExp.Features" : { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
 	// __GDPR__COMMON__ "abexp.assignmentcontext" : { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
 	setSharedProperty(name: string, value: string): void {
-		if (name === product.tasConfig?.assignmentContextTelemetryPropertyName) {
+		if (name === this.productService.tasConfig?.assignmentContextTelemetryPropertyName) {
 			this._lastAssignmentContext = value;
 		}
 
@@ -181,6 +184,9 @@ export class ExperimentService implements ITASExperimentService {
 	private tasClient: Promise<TASClient> | undefined;
 	private telemetry: ExperimentServiceTelemetry | undefined;
 	private static MEMENTO_ID = 'experiment.service.memento';
+	private networkInitialized = false;
+
+	private overrideInitDelay: Promise<void>;
 
 	private get experimentsEnabled(): boolean {
 		return this.configurationService.getValue('workbench.enableExperiments') === true;
@@ -190,14 +196,29 @@ export class ExperimentService implements ITASExperimentService {
 		@ITelemetryService private telemetryService: ITelemetryService,
 		@IStorageService private storageService: IStorageService,
 		@IConfigurationService private configurationService: IConfigurationService,
+		@IProductService private productService: IProductService
 	) {
 
-		if (product.tasConfig && this.experimentsEnabled && this.telemetryService.isOptedIn) {
+		if (productService.tasConfig && this.experimentsEnabled && this.telemetryService.isOptedIn) {
 			this.tasClient = this.setupTASClient();
 		}
+
+		// For development purposes, configure the delay until tas local tas treatment ovverrides are available
+		const overrideDelay = this.configurationService.getValue<number>('experiments.overrideDelay') ?? 0;
+		this.overrideInitDelay = new Promise(resolve => setTimeout(resolve, overrideDelay));
 	}
 
 	async getTreatment<T extends string | number | boolean>(name: string): Promise<T | undefined> {
+		// For development purposes, allow overriding tas assignments to test variants locally.
+		await this.overrideInitDelay;
+		const override = this.configurationService.getValue<T>('experiments.override.' + name);
+		if (override !== undefined) {
+			type TAASClientOverrideTreatmentData = { treatmentName: string; };
+			type TAASClientOverrideTreatmentClassification = { treatmentName: { classification: 'SystemMetaData', purpose: 'PerformanceAndHealth', }; };
+			this.telemetryService.publicLog2<TAASClientOverrideTreatmentData, TAASClientOverrideTreatmentClassification>('tasClientOverrideTreatment', { treatmentName: name, });
+			return override;
+		}
+
 		const startSetup = Date.now();
 
 		if (!this.tasClient) {
@@ -208,7 +229,13 @@ export class ExperimentService implements ITASExperimentService {
 			return undefined;
 		}
 
-		const result = (await this.tasClient).getTreatmentVariable<T>('vscode', name);
+		let result: T | undefined;
+		const client = await this.tasClient;
+		if (this.networkInitialized) {
+			result = client.getTreatmentVariable<T>('vscode', name);
+		} else {
+			result = await client.getTreatmentVariableAsync<T>('vscode', name, true);
+		}
 
 		type TAASClientReadTreatmentData = {
 			treatmentName: string;
@@ -222,7 +249,7 @@ export class ExperimentService implements ITASExperimentService {
 			readTime: { classification: 'SystemMetaData', purpose: 'PerformanceAndHealth', isMeasurement: true };
 		};
 		this.telemetryService.publicLog2<TAASClientReadTreatmentData, TAASClientReadTreatmentCalssification>('tasClientReadTreatmentComplete',
-			{ readTime: Date.now() - startSetup, treatmentName: name, treatmentValue: JSON.stringify(JSON.stringify(result)) });
+			{ readTime: Date.now() - startSetup, treatmentName: name, treatmentValue: JSON.stringify(result) });
 
 		return result;
 	}
@@ -244,20 +271,20 @@ export class ExperimentService implements ITASExperimentService {
 	private async setupTASClient(): Promise<TASClient> {
 		const startSetup = Date.now();
 		const telemetryInfo = await this.telemetryService.getTelemetryInfo();
-		const targetPopulation = telemetryInfo.msftInternal ? TargetPopulation.Internal : (product.quality === 'stable' ? TargetPopulation.Public : TargetPopulation.Insiders);
+		const targetPopulation = telemetryInfo.msftInternal ? TargetPopulation.Internal : (this.productService.quality === 'stable' ? TargetPopulation.Public : TargetPopulation.Insiders);
 		const machineId = telemetryInfo.machineId;
 		const filterProvider = new ExperimentServiceFilterProvider(
-			product.version,
-			product.nameLong,
+			this.productService.version,
+			this.productService.nameLong,
 			machineId,
 			targetPopulation
 		);
 
 		const keyValueStorage = new MementoKeyValueStorage(new Memento(ExperimentService.MEMENTO_ID, this.storageService));
 
-		this.telemetry = new ExperimentServiceTelemetry(this.telemetryService);
+		this.telemetry = new ExperimentServiceTelemetry(this.telemetryService, this.productService);
 
-		const tasConfig = product.tasConfig!;
+		const tasConfig = this.productService.tasConfig!;
 		const tasClient = new (await import('tas-client-umd')).ExperimentationService({
 			filterProviders: [filterProvider],
 			telemetry: this.telemetry,
@@ -271,7 +298,8 @@ export class ExperimentService implements ITASExperimentService {
 		});
 
 		await tasClient.initializePromise;
-		await tasClient.getTreatmentVariableAsync('vscode', 'initialize');
+
+		tasClient.initialFetch.then(() => this.networkInitialized = true);
 
 		type TAASClientSetupData = { setupTime: number; };
 		type TAASClientSetupCalssification = { setupTime: { classification: 'SystemMetaData', purpose: 'PerformanceAndHealth', isMeasurement: true }; };

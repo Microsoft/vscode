@@ -5,13 +5,13 @@
 
 import { Dimension, $, clearNode } from 'vs/base/browser/dom';
 import { Registry } from 'vs/platform/registry/common/platform';
-import { EditorInput, EditorOptions, SideBySideEditorInput, IEditorControl, IEditorPane, IEditorOpenContext } from 'vs/workbench/common/editor';
+import { EditorInput, EditorOptions, SideBySideEditorInput, IEditorControl, IEditorPane, IEditorOpenContext, EditorExtensions } from 'vs/workbench/common/editor';
 import { EditorPane } from 'vs/workbench/browser/parts/editor/editorPane';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { IThemeService } from 'vs/platform/theme/common/themeService';
 import { scrollbarShadow } from 'vs/platform/theme/common/colorRegistry';
-import { IEditorRegistry, Extensions as EditorExtensions } from 'vs/workbench/browser/editor';
+import { IEditorRegistry } from 'vs/workbench/browser/editor';
 import { CancellationToken } from 'vs/base/common/cancellation';
 import { IEditorGroup } from 'vs/workbench/services/editor/common/editorGroupsService';
 import { SplitView, Sizing, Orientation } from 'vs/base/browser/ui/splitview/splitview';
@@ -34,15 +34,15 @@ export class SideBySideEditor extends EditorPane {
 	private get maximumSecondaryHeight() { return this.secondaryEditorPane ? this.secondaryEditorPane.maximumHeight : Number.POSITIVE_INFINITY; }
 
 	// these setters need to exist because this extends from EditorPane
-	set minimumWidth(value: number) { /* noop */ }
-	set maximumWidth(value: number) { /* noop */ }
-	set minimumHeight(value: number) { /* noop */ }
-	set maximumHeight(value: number) { /* noop */ }
+	override set minimumWidth(value: number) { /* noop */ }
+	override set maximumWidth(value: number) { /* noop */ }
+	override set minimumHeight(value: number) { /* noop */ }
+	override set maximumHeight(value: number) { /* noop */ }
 
-	get minimumWidth() { return this.minimumPrimaryWidth + this.minimumSecondaryWidth; }
-	get maximumWidth() { return this.maximumPrimaryWidth + this.maximumSecondaryWidth; }
-	get minimumHeight() { return this.minimumPrimaryHeight + this.minimumSecondaryHeight; }
-	get maximumHeight() { return this.maximumPrimaryHeight + this.maximumSecondaryHeight; }
+	override get minimumWidth() { return this.minimumPrimaryWidth + this.minimumSecondaryWidth; }
+	override get maximumWidth() { return this.maximumPrimaryWidth + this.maximumSecondaryWidth; }
+	override get minimumHeight() { return this.minimumPrimaryHeight + this.minimumSecondaryHeight; }
+	override get maximumHeight() { return this.maximumPrimaryHeight + this.maximumSecondaryHeight; }
 
 	protected primaryEditorPane?: EditorPane;
 	protected secondaryEditorPane?: EditorPane;
@@ -56,7 +56,7 @@ export class SideBySideEditor extends EditorPane {
 	private onDidCreateEditors = this._register(new Emitter<{ width: number; height: number; } | undefined>());
 
 	private _onDidChangeSizeConstraints = this._register(new Relay<{ width: number; height: number; } | undefined>());
-	readonly onDidChangeSizeConstraints = Event.any(this.onDidCreateEditors.event, this._onDidChangeSizeConstraints.event);
+	override readonly onDidChangeSizeConstraints = Event.any(this.onDidCreateEditors.event, this._onDidChangeSizeConstraints.event);
 
 	constructor(
 		@ITelemetryService telemetryService: ITelemetryService,
@@ -94,20 +94,20 @@ export class SideBySideEditor extends EditorPane {
 		this.updateStyles();
 	}
 
-	async setInput(newInput: EditorInput, options: EditorOptions | undefined, context: IEditorOpenContext, token: CancellationToken): Promise<void> {
+	override async setInput(newInput: EditorInput, options: EditorOptions | undefined, context: IEditorOpenContext, token: CancellationToken): Promise<void> {
 		const oldInput = this.input as SideBySideEditorInput;
 		await super.setInput(newInput, options, context, token);
 
 		return this.updateInput(oldInput, (newInput as SideBySideEditorInput), options, context, token);
 	}
 
-	setOptions(options: EditorOptions | undefined): void {
+	override setOptions(options: EditorOptions | undefined): void {
 		if (this.primaryEditorPane) {
 			this.primaryEditorPane.setOptions(options);
 		}
 	}
 
-	protected setEditorVisible(visible: boolean, group: IEditorGroup | undefined): void {
+	protected override setEditorVisible(visible: boolean, group: IEditorGroup | undefined): void {
 		if (this.primaryEditorPane) {
 			this.primaryEditorPane.setVisible(visible, group);
 		}
@@ -119,7 +119,7 @@ export class SideBySideEditor extends EditorPane {
 		super.setEditorVisible(visible, group);
 	}
 
-	clearInput(): void {
+	override clearInput(): void {
 		if (this.primaryEditorPane) {
 			this.primaryEditorPane.clearInput();
 		}
@@ -133,7 +133,7 @@ export class SideBySideEditor extends EditorPane {
 		super.clearInput();
 	}
 
-	focus(): void {
+	override focus(): void {
 		if (this.primaryEditorPane) {
 			this.primaryEditorPane.focus();
 		}
@@ -146,7 +146,7 @@ export class SideBySideEditor extends EditorPane {
 		splitview.layout(dimension.width);
 	}
 
-	getControl(): IEditorControl | undefined {
+	override getControl(): IEditorControl | undefined {
 		if (this.primaryEditorPane) {
 			return this.primaryEditorPane.getControl();
 		}
@@ -218,7 +218,7 @@ export class SideBySideEditor extends EditorPane {
 		);
 	}
 
-	updateStyles(): void {
+	override updateStyles(): void {
 		super.updateStyles();
 
 		if (this.primaryEditorContainer) {
@@ -246,7 +246,7 @@ export class SideBySideEditor extends EditorPane {
 		}
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this.disposeEditors();
 
 		super.dispose();

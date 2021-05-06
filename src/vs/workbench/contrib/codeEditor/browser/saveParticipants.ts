@@ -272,9 +272,11 @@ class CodeActionOnSaveParticipant implements ITextFileSaveParticipant {
 			return;
 		}
 
-		if (env.reason === SaveReason.AUTO) {
+		// Do not run code actions on auto save
+		if (env.reason !== SaveReason.EXPLICIT) {
 			return undefined;
 		}
+
 		const textEditorModel = model.textEditorModel;
 
 		const settingsOverrides = { overrideIdentifier: textEditorModel.getLanguageIdentifier().language, resource: model.resource };

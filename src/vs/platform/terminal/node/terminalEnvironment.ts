@@ -5,7 +5,8 @@
 
 import * as os from 'os';
 import * as path from 'vs/base/common/path';
-import { exists } from 'vs/base/node/pfs';
+import * as process from 'vs/base/common/process';
+import * as pfs from 'vs/base/node/pfs';
 import { isString } from 'vs/base/common/types';
 import { getCaseInsensitive } from 'vs/base/common/objects';
 import { IProcessEnvironment, isWindows } from 'vs/base/common/platform';
@@ -19,7 +20,7 @@ export function getWindowsBuildNumber(): number {
 	return buildNumber;
 }
 
-export async function findExecutable(command: string, cwd?: string, paths?: string[], env: IProcessEnvironment = process.env as IProcessEnvironment): Promise<string | undefined> {
+export async function findExecutable(command: string, cwd?: string, paths?: string[], env: IProcessEnvironment = process.env as IProcessEnvironment, exists: (path: string) => Promise<boolean> = pfs.exists): Promise<string | undefined> {
 	// If we have an absolute path then we take it.
 	if (path.isAbsolute(command)) {
 		return await exists(command) ? command : undefined;

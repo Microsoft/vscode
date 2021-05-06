@@ -44,7 +44,7 @@ export class CommentsPanel extends ViewPane {
 
 	constructor(
 		options: IViewPaneOptions,
-		@IInstantiationService readonly instantiationService: IInstantiationService,
+		@IInstantiationService instantiationService: IInstantiationService,
 		@IViewDescriptorService viewDescriptorService: IViewDescriptorService,
 		@IEditorService private readonly editorService: IEditorService,
 		@IConfigurationService configurationService: IConfigurationService,
@@ -61,7 +61,7 @@ export class CommentsPanel extends ViewPane {
 		this.hasCommentsContextKey = CONTEXT_KEY_HAS_COMMENTS.bindTo(contextKeyService);
 	}
 
-	public renderBody(container: HTMLElement): void {
+	public override renderBody(container: HTMLElement): void {
 		super.renderBody(container);
 
 		container.classList.add('comments-panel');
@@ -89,7 +89,7 @@ export class CommentsPanel extends ViewPane {
 		this.renderComments();
 	}
 
-	public focus(): void {
+	public override focus(): void {
 		if (this.tree && this.tree.getHTMLElement() === document.activeElement) {
 			return;
 		}
@@ -144,7 +144,7 @@ export class CommentsPanel extends ViewPane {
 		}
 	}
 
-	public layoutBody(height: number, width: number): void {
+	public override layoutBody(height: number, width: number): void {
 		super.layoutBody(height, width);
 		this.tree.layout(height, width);
 	}
@@ -167,7 +167,7 @@ export class CommentsPanel extends ViewPane {
 		this.treeLabels = this._register(this.instantiationService.createInstance(ResourceLabels, this));
 		this.tree = this._register(this.instantiationService.createInstance(CommentsList, this.treeLabels, this.treeContainer, {
 			overrideStyles: { listBackground: this.getBackgroundColor() },
-			openOnFocus: true,
+			selectionNavigation: true,
 			accessibilityProvider: {
 				getAriaLabel(element: any): string {
 					if (element instanceof CommentsModel) {

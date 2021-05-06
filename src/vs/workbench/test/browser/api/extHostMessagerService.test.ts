@@ -11,6 +11,7 @@ import { ICommandService } from 'vs/platform/commands/common/commands';
 import { mock } from 'vs/base/test/common/mock';
 import { IDisposable, Disposable } from 'vs/base/common/lifecycle';
 import * as platform from 'vs/base/common/platform';
+import { Event } from 'vs/base/common/event';
 
 const emptyDialogService = new class implements IDialogService {
 	declare readonly _serviceBrand: undefined;
@@ -42,6 +43,8 @@ const emptyCommandService: ICommandService = {
 
 const emptyNotificationService = new class implements INotificationService {
 	declare readonly _serviceBrand: undefined;
+	onDidAddNotification: Event<INotification> = Event.None;
+	onDidRemoveNotification: Event<INotification> = Event.None;
 	notify(...args: any[]): never {
 		throw new Error('not implemented');
 	}
@@ -71,6 +74,8 @@ class EmptyNotificationService implements INotificationService {
 	constructor(private withNotify: (notification: INotification) => void) {
 	}
 
+	onDidAddNotification: Event<INotification> = Event.None;
+	onDidRemoveNotification: Event<INotification> = Event.None;
 	notify(notification: INotification): INotificationHandle {
 		this.withNotify(notification);
 
@@ -112,7 +117,7 @@ suite('ExtHostMessageService', function () {
 	suite('modal', () => {
 		test('calls dialog service', async () => {
 			const service = new MainThreadMessageService(null!, emptyNotificationService, emptyCommandService, new class extends mock<IDialogService>() {
-				show(severity: Severity, message: string, buttons: string[]) {
+				override show(severity: Severity, message: string, buttons: string[]) {
 					assert.strictEqual(severity, 1);
 					assert.strictEqual(message, 'h');
 					assert.strictEqual(buttons.length, 2);
@@ -127,7 +132,7 @@ suite('ExtHostMessageService', function () {
 
 		test('returns undefined when cancelled', async () => {
 			const service = new MainThreadMessageService(null!, emptyNotificationService, emptyCommandService, new class extends mock<IDialogService>() {
-				show() {
+				override show() {
 					return Promise.resolve({ choice: 1 });
 				}
 			} as IDialogService);
@@ -138,7 +143,7 @@ suite('ExtHostMessageService', function () {
 
 		test('hides Cancel button when not needed', async () => {
 			const service = new MainThreadMessageService(null!, emptyNotificationService, emptyCommandService, new class extends mock<IDialogService>() {
-				show(severity: Severity, message: string, buttons: string[]) {
+				override show(severity: Severity, message: string, buttons: string[]) {
 					assert.strictEqual(buttons.length, 1);
 					return Promise.resolve({ choice: 0 });
 				}

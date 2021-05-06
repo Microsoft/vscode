@@ -8,6 +8,7 @@
   "engines": {
     "vscode": "^1.41.0"
   },
+  "icon": "images/icon.png",
   "enableProposedApi": true,
   "categories": [
     "Other"
@@ -19,6 +20,12 @@
     "vscode.git"
   ],
   "main": "./out/extension.js",
+  "capabilities": {
+    "virtualWorkspaces": false,
+    "untrustedWorkspaces": {
+      "supported": true
+    }
+  },
   "contributes": {
     "commands": [
       {
@@ -63,7 +70,7 @@
     "vscode-nls": "^4.1.2"
   },
   "devDependencies": {
-    "@types/node": "^12.19.9"
+    "@types/node": "14.x"
   },
   "repository": {
     "type": "git",

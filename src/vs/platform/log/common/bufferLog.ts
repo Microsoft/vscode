@@ -82,7 +82,7 @@ export class BufferLogService extends AbstractLogger implements ILogService {
 		this._log(LogLevel.Critical, message, ...args);
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		if (this._logger) {
 			this._logger.dispose();
 		}

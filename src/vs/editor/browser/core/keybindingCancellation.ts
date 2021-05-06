@@ -81,7 +81,7 @@ export class EditorKeybindingCancellationTokenSource extends CancellationTokenSo
 		this._unregister = editor.invokeWithinContext(accessor => accessor.get(IEditorCancellationTokens).add(editor, this));
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this._unregister();
 		super.dispose();
 	}

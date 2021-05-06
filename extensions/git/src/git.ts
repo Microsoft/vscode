@@ -11,7 +11,7 @@ import * as which from 'which';
 import { EventEmitter } from 'events';
 import * as iconv from 'iconv-lite-umd';
 import * as filetype from 'file-type';
-import { assign, groupBy, IDisposable, toDisposable, dispose, mkdirp, readBytes, detectUnicodeEncoding, Encoding, onceEvent, splitInChunks, Limiter } from './util';
+import { assign, groupBy, IDisposable, toDisposable, dispose, mkdirp, readBytes, detectUnicodeEncoding, Encoding, onceEvent, splitInChunks, Limiter, Versions } from './util';
 import { CancellationToken, Progress, Uri } from 'vscode';
 import { detectEncoding } from './encoding';
 import { Ref, RefType, Branch, Remote, ForcePushMode, GitErrorCodes, LogOptions, Change, Status, CommitOptions, BranchQuery } from './api/git';
@@ -375,6 +375,10 @@ export class Git {
 		this.version = options.version;
 		this.userAgent = options.userAgent;
 		this.env = options.env || {};
+	}
+
+	compareGitVersionTo(version: string): -1 | 0 | 1 {
+		return Versions.compare(Versions.fromString(this.version), Versions.fromString(version));
 	}
 
 	open(repository: string, dotGit: string): Repository {
@@ -1638,7 +1642,7 @@ export class Repository {
 				err.gitErrorCode = GitErrorCodes.NoUserNameConfigured;
 			} else if (/Could not read from remote repository/.test(err.stderr || '')) {
 				err.gitErrorCode = GitErrorCodes.RemoteConnectionError;
-			} else if (/Pull is not possible because you have unmerged files|Cannot pull with rebase: You have unstaged changes|Your local changes to the following files would be overwritten|Please, commit your changes before you can merge/i.test(err.stderr)) {
+			} else if (/Pull(?:ing)? is not possible because you have unmerged files|Cannot pull with rebase: You have unstaged changes|Your local changes to the following files would be overwritten|Please, commit your changes before you can merge/i.test(err.stderr)) {
 				err.stderr = err.stderr.replace(/Cannot pull with rebase: You have unstaged changes/i, 'Cannot pull with rebase, you have unstaged changes');
 				err.gitErrorCode = GitErrorCodes.DirtyWorkTree;
 			} else if (/cannot lock ref|unable to update local ref/i.test(err.stderr || '')) {
@@ -1977,7 +1981,16 @@ export class Repository {
 			return this.getHEAD();
 		}
 
-		const args = ['for-each-ref', '--format=%(refname)%00%(upstream:short)%00%(upstream:track)%00%(objectname)'];
+		const args = ['for-each-ref'];
+
+		let supportsAheadBehind = true;
+		if (this._git.compareGitVersionTo('1.9.0') === -1) {
+			args.push('--format=%(refname)%00%(upstream:short)%00%(objectname)');
+			supportsAheadBehind = false;
+		} else {
+			args.push('--format=%(refname)%00%(upstream:short)%00%(objectname)%00%(upstream:track)');
+		}
+
 		if (/^refs\/(head|remotes)\//i.test(name)) {
 			args.push(name);
 		} else {
@@ -1986,7 +1999,7 @@ export class Repository {
 
 		const result = await this.exec(args);
 		const branches: Branch[] = result.stdout.trim().split('\n').map<Branch | undefined>(line => {
-			let [branchName, upstream, status, ref] = line.trim().split('\0');
+			let [branchName, upstream, ref, status] = line.trim().split('\0');
 
 			if (branchName.startsWith('refs/heads/')) {
 				branchName = branchName.substring(11);
@@ -2026,7 +2039,19 @@ export class Repository {
 		}).filter((b?: Branch): b is Branch => !!b);
 
 		if (branches.length) {
-			return branches[0];
+			const [branch] = branches;
+
+			if (!supportsAheadBehind && branch.upstream) {
+				try {
+					const result = await this.exec(['rev-list', '--left-right', '--count', `${branch.name}...${branch.upstream.remote}/${branch.upstream.name}`]);
+					const [ahead, behind] = result.stdout.trim().split('\t');
+
+					(branch as any).ahead = Number(ahead) || 0;
+					(branch as any).behind = Number(behind) || 0;
+				} catch { }
+			}
+
+			return branch;
 		}
 
 		return Promise.reject<Branch>(new Error('No such branch'));

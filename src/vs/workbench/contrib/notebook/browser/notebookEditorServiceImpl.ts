@@ -6,14 +6,14 @@
 import { ResourceMap } from 'vs/base/common/map';
 import { NotebookEditorWidget } from 'vs/workbench/contrib/notebook/browser/notebookEditorWidget';
 import { DisposableStore, IDisposable } from 'vs/base/common/lifecycle';
-import { IEditorGroupsService, IEditorGroup, GroupChangeKind, OpenEditorContext } from 'vs/workbench/services/editor/common/editorGroupsService';
+import { IEditorGroupsService, IEditorGroup, GroupChangeKind } from 'vs/workbench/services/editor/common/editorGroupsService';
 import { IInstantiationService, ServicesAccessor } from 'vs/platform/instantiation/common/instantiation';
-import { NotebookEditorInput } from 'vs/workbench/contrib/notebook/browser/notebookEditorInput';
-import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
+import { NotebookEditorInput } from 'vs/workbench/contrib/notebook/common/notebookEditorInput';
 import { IBorrowValue, INotebookEditorService } from 'vs/workbench/contrib/notebook/browser/notebookEditorService';
 import { INotebookEditor } from 'vs/workbench/contrib/notebook/browser/notebookBrowser';
 import { Emitter } from 'vs/base/common/event';
 import { INotebookDecorationRenderOptions } from 'vs/workbench/contrib/notebook/common/notebookCommon';
+import { GroupIdentifier } from 'vs/workbench/common/editor';
 
 export class NotebookEditorWidgetService implements INotebookEditorService {
 
@@ -34,13 +34,13 @@ export class NotebookEditorWidgetService implements INotebookEditorService {
 
 	constructor(
 		@IEditorGroupsService editorGroupService: IEditorGroupsService,
-		@IEditorService editorService: IEditorService,
 	) {
 
-		const groupListener = new Map<number, IDisposable>();
+		const groupListener = new Map<number, IDisposable[]>();
 		const onNewGroup = (group: IEditorGroup) => {
 			const { id } = group;
-			const listener = group.onDidGroupChange(e => {
+			const listeners: IDisposable[] = [];
+			listeners.push(group.onDidGroupChange(e => {
 				const widgets = this._borrowableEditors.get(group.id);
 				if (!widgets || e.kind !== GroupChangeKind.EDITOR_CLOSE || !(e.editor instanceof NotebookEditorInput)) {
 					return;
@@ -52,17 +52,23 @@ export class NotebookEditorWidgetService implements INotebookEditorService {
 				value.token = undefined;
 				this._disposeWidget(value.widget);
 				widgets.delete(e.editor.resource);
-			});
-			groupListener.set(id, listener);
+				value.widget = (<any>undefined); // unset the widget so that others that still hold a reference don't harm us
+			}));
+			listeners.push(group.onWillMoveEditor(e => {
+				if (e.editor instanceof NotebookEditorInput) {
+					this._freeWidget(e.editor, e.groupId, e.target);
+				}
+			}));
+			groupListener.set(id, listeners);
 		};
 		this._disposables.add(editorGroupService.onDidAddGroup(onNewGroup));
-		editorGroupService.groups.forEach(onNewGroup);
+		editorGroupService.whenReady.then(() => editorGroupService.groups.forEach(onNewGroup));
 
 		// group removed -> clean up listeners, clean up widgets
 		this._disposables.add(editorGroupService.onDidRemoveGroup(group => {
-			const listener = groupListener.get(group.id);
-			if (listener) {
-				listener.dispose();
+			const listeners = groupListener.get(group.id);
+			if (listeners) {
+				listeners.forEach(listener => listener.dispose());
 				groupListener.delete(group.id);
 			}
 			const widgets = this._borrowableEditors.get(group.id);
@@ -72,20 +78,6 @@ export class NotebookEditorWidgetService implements INotebookEditorService {
 					value.token = undefined;
 					this._disposeWidget(value.widget);
 				}
-			}
-		}));
-
-		// HACK
-		// we use the open override to spy on tab movements because that's the only
-		// way to do that...
-		this._disposables.add(editorService.overrideOpenEditor({
-			open: (input, _options, group, context) => {
-				if (input instanceof NotebookEditorInput && context === OpenEditorContext.MOVE_EDITOR) {
-					// when moving a notebook editor we release it from its current tab and we
-					// "place" it into its future slot so that the editor can pick it up from there
-					this._freeWidget(input, editorGroupService.activeGroup, group);
-				}
-				return undefined;
 			}
 		}));
 	}
@@ -105,24 +97,24 @@ export class NotebookEditorWidgetService implements INotebookEditorService {
 		domNode.remove();
 	}
 
-	private _freeWidget(input: NotebookEditorInput, source: IEditorGroup, target: IEditorGroup): void {
-		const targetWidget = this._borrowableEditors.get(target.id)?.get(input.resource);
+	private _freeWidget(input: NotebookEditorInput, sourceID: GroupIdentifier, targetID: GroupIdentifier): void {
+		const targetWidget = this._borrowableEditors.get(targetID)?.get(input.resource);
 		if (targetWidget) {
 			// not needed
 			return;
 		}
 
-		const widget = this._borrowableEditors.get(source.id)?.get(input.resource);
+		const widget = this._borrowableEditors.get(sourceID)?.get(input.resource);
 		if (!widget) {
 			throw new Error('no widget at source group');
 		}
-		this._borrowableEditors.get(source.id)?.delete(input.resource);
+		this._borrowableEditors.get(sourceID)?.delete(input.resource);
 		widget.token = undefined;
 
-		let targetMap = this._borrowableEditors.get(target.id);
+		let targetMap = this._borrowableEditors.get(targetID);
 		if (!targetMap) {
 			targetMap = new ResourceMap();
-			this._borrowableEditors.set(target.id, targetMap);
+			this._borrowableEditors.set(targetID, targetMap);
 		}
 		targetMap.set(input.resource, widget);
 	}

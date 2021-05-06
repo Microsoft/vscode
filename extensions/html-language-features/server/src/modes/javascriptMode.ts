@@ -127,7 +127,7 @@ export function getJavaScriptMode(documentRegions: LanguageModelCache<HTMLDocume
 		async doResolve(document: TextDocument, item: CompletionItem): Promise<CompletionItem> {
 			const jsDocument = jsDocuments.get(document);
 			const jsLanguageService = await host.getLanguageService(jsDocument);
-			let details = jsLanguageService.getCompletionEntryDetails(jsDocument.uri, item.data.offset, item.label, undefined, undefined, undefined);
+			let details = jsLanguageService.getCompletionEntryDetails(jsDocument.uri, item.data.offset, item.label, undefined, undefined, undefined, undefined);
 			if (details) {
 				item.detail = ts.displayPartsToString(details.displayParts);
 				item.documentation = ts.displayPartsToString(details.documentation);

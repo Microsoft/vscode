@@ -356,7 +356,7 @@ class ManualSyncTaskChannelClient extends Disposable implements IManualSyncTask 
 	private _disposed = false;
 	isDiposed() { return this._disposed; }
 
-	dispose(): void {
+	override dispose(): void {
 		this._disposed = true;
 		this.channel.call('dispose');
 	}

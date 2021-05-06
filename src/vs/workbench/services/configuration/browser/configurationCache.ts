@@ -11,7 +11,7 @@ export class ConfigurationCache implements IConfigurationCache {
 
 	needsCaching(resource: URI): boolean {
 		// Cache all non user data resources
-		return resource.scheme !== Schemas.userData;
+		return ![Schemas.file, Schemas.userData, Schemas.tmp].includes(resource.scheme);
 	}
 
 	async read(key: ConfigurationKey): Promise<string> {

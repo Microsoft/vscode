@@ -27,9 +27,9 @@ export class RelayURLService extends NativeURLService implements IURLHandler, IO
 		@IMainProcessService mainProcessService: IMainProcessService,
 		@IOpenerService openerService: IOpenerService,
 		@INativeHostService private readonly nativeHostService: INativeHostService,
-		@IProductService private readonly productService: IProductService
+		@IProductService productService: IProductService
 	) {
-		super();
+		super(productService);
 
 		this.urlService = ProxyChannel.toService<IURLService>(mainProcessService.getChannel('url'));
 
@@ -37,7 +37,7 @@ export class RelayURLService extends NativeURLService implements IURLHandler, IO
 		openerService.registerOpener(this);
 	}
 
-	create(options?: Partial<UriComponents>): URI {
+	override create(options?: Partial<UriComponents>): URI {
 		const uri = super.create(options);
 
 		let query = uri.query;
@@ -50,7 +50,7 @@ export class RelayURLService extends NativeURLService implements IURLHandler, IO
 		return uri.with({ query });
 	}
 
-	async open(resource: URI | string, options?: IRelayOpenURLOptions): Promise<boolean> {
+	override async open(resource: URI | string, options?: IRelayOpenURLOptions): Promise<boolean> {
 
 		if (!matchesScheme(resource, this.productService.urlProtocol)) {
 			return false;

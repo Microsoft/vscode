@@ -4,7 +4,7 @@
 		"If you want to provide a fix or improvement, please create a pull request against the original repository.",
 		"Once accepted there, we are happy to receive an update request."
 	],
-	"version": "https://github.com/JuliaEditorSupport/atom-language-julia/commit/8ae8d9cac742c65ae0bef1a5e2d068e2cae871bc",
+	"version": "https://github.com/JuliaEditorSupport/atom-language-julia/commit/008e02c5ec9440fa9f0ea8a891712c7238f24706",
 	"name": "Julia",
 	"scopeName": "source.julia",
 	"comment": "This grammar is used by Atom (Oniguruma), GitHub (PCRE), and VSCode (Oniguruma),\nso all regexps must be compatible with both engines.\n\nSpecs:\n- https://github.com/kkos/oniguruma/blob/master/doc/RE\n- https://www.pcre.org/current/doc/html/",
@@ -344,7 +344,7 @@
 					"name": "keyword.operator.dots.julia"
 				},
 				{
-					"match": "(?:\\$(?=.+))",
+					"match": "(?:\\$)(?=.+)",
 					"name": "keyword.operator.interpolation.julia"
 				},
 				{
@@ -834,7 +834,7 @@
 					]
 				},
 				{
-					"begin": "(?<!(?:[[:word:]_!\\p{Lu}\\p{Ll}\\p{Lt}\\p{Lm}\\p{Lo}\\p{Nl}\\p{Sc}⅀-⅄∿⊾⊿⊤⊥∂∅-∇∎∏∐∑∞∟∫-∳⋀-⋃◸-◿♯⟘⟙⟀⟁⦰-⦴⨀-⨆⨉-⨖⨛⨜𝛁𝛛𝛻𝜕𝜵𝝏𝝯𝞉𝞩𝟃ⁱ-⁾₁-₎∠-∢⦛-⦯℘℮゛-゜𝟎-𝟡]|[^\\P{Mn}\u0001-¡]|[^\\P{Mc}\u0001-¡]|[^\\P{Nd}\u0001-¡]|[^\\P{Pc}\u0001-¡]|[^\\P{Sk}\u0001-¡]|[^\\P{Me}\u0001-¡]|[^\\P{No}\u0001-¡]|[′-‷⁗]|[^\\P{So}←-⇿]))\"\"\"",
+					"begin": "\"\"\"",
 					"beginCaptures": {
 						"0": {
 							"name": "punctuation.definition.string.multiline.begin.julia"
@@ -859,7 +859,7 @@
 				},
 				{
 					"name": "string.quoted.double.julia",
-					"begin": "(?<!(?:[[:word:]_!\\p{Lu}\\p{Ll}\\p{Lt}\\p{Lm}\\p{Lo}\\p{Nl}\\p{Sc}⅀-⅄∿⊾⊿⊤⊥∂∅-∇∎∏∐∑∞∟∫-∳⋀-⋃◸-◿♯⟘⟙⟀⟁⦰-⦴⨀-⨆⨉-⨖⨛⨜𝛁𝛛𝛻𝜕𝜵𝝏𝝯𝞉𝞩𝟃ⁱ-⁾₁-₎∠-∢⦛-⦯℘℮゛-゜𝟎-𝟡]|[^\\P{Mn}\u0001-¡]|[^\\P{Mc}\u0001-¡]|[^\\P{Nd}\u0001-¡]|[^\\P{Pc}\u0001-¡]|[^\\P{Sk}\u0001-¡]|[^\\P{Me}\u0001-¡]|[^\\P{No}\u0001-¡]|[′-‷⁗]|[^\\P{So}←-⇿]))\"(?!\"\")",
+					"begin": "\"(?!\"\")",
 					"beginCaptures": {
 						"0": {
 							"name": "punctuation.definition.string.begin.julia"

@@ -311,7 +311,7 @@ function markNodes(ts, languageService, options) {
             setColor(node, 0 /* White */);
             // add to black queue
             enqueue_black(node);
-            // // move from one queue to the other
+            // move from one queue to the other
             // black_queue.push(node);
             // setColor(node, NodeColor.Black);
             return;

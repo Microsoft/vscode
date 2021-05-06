@@ -35,39 +35,6 @@
 	padding-right: 0; /* by default the icon label has a padding right and this isn't wanted when not showing tabs and not showing breadcrumbs */
 }
 
-/* Title Actions */
-
-.monaco-workbench .part.editor > .content .editor-group-container > .title .title-actions .action-label:not(span),
-.monaco-workbench .part.editor > .content .editor-group-container > .title .editor-actions .action-label:not(span) {
-	display: flex;
-	height: 35px;
-	min-width: 28px;
-	align-items: center;
-	justify-content: center;
-	background-size: 16px;
-	background-position: center center;
-	background-repeat: no-repeat;
-}
-
-.monaco-workbench.hc-black .part.editor > .content .editor-group-container > .title .title-actions .action-label,
-.monaco-workbench.hc-black .part.editor > .content .editor-group-container > .title .editor-actions .action-label:not(.codicon) {
-	line-height: initial;
-}
-
-.monaco-workbench .part.editor > .content .editor-group-container > .title .editor-actions .action-label .label,
-.monaco-workbench .part.editor > .content .editor-group-container > .title .title-actions .action-label .label {
-	display: none;
-}
-
-.monaco-workbench .part.editor > .content .editor-group-container > .title .editor-actions .action-label.codicon {
-	color: inherit;
-}
-
-.monaco-workbench .part.editor > .content .editor-group-container > .title .title-actions .action-label.disabled,
-.monaco-workbench .part.editor > .content .editor-group-container > .title .editor-actions .action-label.disabled {
-	opacity: 0.4;
-}
-
 /* Drag and Drop */
 
 .monaco-workbench .part.editor > .content .editor-group-container > .title {

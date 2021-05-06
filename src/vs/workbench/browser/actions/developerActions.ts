@@ -28,6 +28,7 @@ import { ILogService } from 'vs/platform/log/common/log';
 import { IWorkingCopyService } from 'vs/workbench/services/workingCopy/common/workingCopyService';
 import { ServicesAccessor } from 'vs/platform/instantiation/common/instantiation';
 import { CATEGORIES } from 'vs/workbench/common/actions';
+import { IWorkingCopyBackupService } from 'vs/workbench/services/workingCopy/common/workingCopyBackup';
 
 class InspectContextKeysAction extends Action2 {
 
@@ -263,15 +264,24 @@ class LogWorkingCopiesAction extends Action2 {
 		});
 	}
 
-	run(accessor: ServicesAccessor): void {
+	async run(accessor: ServicesAccessor): Promise<void> {
 		const workingCopyService = accessor.get(IWorkingCopyService);
+		const workingCopyBackupService = accessor.get(IWorkingCopyBackupService);
 		const logService = accessor.get(ILogService);
+
+		const backups = await workingCopyBackupService.getBackups();
+
 		const msg = [
-			`Dirty Working Copies:`,
-			...workingCopyService.dirtyWorkingCopies.map(workingCopy => workingCopy.resource.toString(true)),
 			``,
-			`All Working Copies:`,
-			...workingCopyService.workingCopies.map(workingCopy => workingCopy.resource.toString(true)),
+			`[Working Copies]`,
+			...(workingCopyService.workingCopies.length > 0) ?
+				workingCopyService.workingCopies.map(workingCopy => `${workingCopy.isDirty() ? '● ' : ''}${workingCopy.resource.toString(true)} (typeId: ${workingCopy.typeId || '<no typeId>'})`) :
+				['<none>'],
+			``,
+			`[Backups]`,
+			...(backups.length > 0) ?
+				backups.map(backup => `${backup.resource.toString(true)} (typeId: ${backup.typeId || '<no typeId>'})`) :
+				['<none>'],
 		];
 
 		logService.info(msg.join('\n'));

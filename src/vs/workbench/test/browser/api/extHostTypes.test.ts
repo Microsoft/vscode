@@ -8,7 +8,6 @@ import { URI } from 'vs/base/common/uri';
 import * as types from 'vs/workbench/api/common/extHostTypes';
 import { isWindows } from 'vs/base/common/platform';
 import { assertType } from 'vs/base/common/types';
-import { notebookDocumentMetadataDefaults } from 'vs/workbench/contrib/notebook/common/notebookCommon';
 
 function assertToJSON(a: any, expected: any) {
 	const raw = JSON.stringify(a);
@@ -649,58 +648,38 @@ suite('ExtHostTypes', function () {
 		assert.deepStrictEqual(md.value, '\n```html\n<img src=0 onerror="alert(1)">\n```\n');
 	});
 
-	test('NotebookMetadata - defaults', function () {
+	test('NotebookMetadata - with custom', function () {
 		const obj = new types.NotebookDocumentMetadata();
-		assert.strictEqual(obj.cellEditable, notebookDocumentMetadataDefaults.cellEditable);
-		assert.strictEqual(obj.cellHasExecutionOrder, notebookDocumentMetadataDefaults.cellHasExecutionOrder);
-		assert.strictEqual(obj.cellRunnable, notebookDocumentMetadataDefaults.cellRunnable);
-		assert.deepStrictEqual(obj.custom, notebookDocumentMetadataDefaults.custom);
-		assert.strictEqual(obj.editable, notebookDocumentMetadataDefaults.editable);
-		assert.strictEqual(obj.runState, notebookDocumentMetadataDefaults.runState);
-		assert.strictEqual(obj.runnable, notebookDocumentMetadataDefaults.runnable);
-		assert.strictEqual(obj.trusted, notebookDocumentMetadataDefaults.trusted);
-	});
-
-	test('NotebookMetadata - with', function () {
-		const obj = new types.NotebookDocumentMetadata();
-		const newObj = obj.with({ trusted: false });
+		const newObj = obj.with({ mycustom: { display: 'hello' } });
 		assert.ok(obj !== newObj);
-		const sameObj = newObj.with({ trusted: false });
-		assert.ok(newObj === sameObj);
-		assert.strictEqual(obj.trusted, true);
-		assert.strictEqual(newObj.trusted, false);
+		assert.deepStrictEqual(newObj.mycustom, { display: 'hello' });
 	});
 
 	test('NotebookCellMetadata - with', function () {
-		const obj = new types.NotebookCellMetadata(true, false, true);
+		const obj = new types.NotebookCellMetadata(true, true);
 
-		const newObj = obj.with({ statusMessage: 'hello' });
+		const newObj = obj.with({ inputCollapsed: false });
 		assert.ok(obj !== newObj);
-		assert.strictEqual(obj.statusMessage, undefined);
-		assert.strictEqual(obj.editable, true);
+		assert.strictEqual(obj.inputCollapsed, true);
 		assert.strictEqual(obj.custom, undefined);
 
-		assert.strictEqual(newObj.statusMessage, 'hello');
-		assert.strictEqual(newObj.editable, true);
+		assert.strictEqual(newObj.inputCollapsed, false);
 		assert.strictEqual(newObj.custom, undefined);
-
 	});
 
-	test('Unable to reset executionOrder of cells #116956', function () {
+	test('NotebookCellMetadata - with custom', function () {
+		const obj = new types.NotebookCellMetadata(true, true);
+		const newObj = obj.with({ inputCollapsed: false, custom: { display: 'hello' } });
+		assert.ok(obj !== newObj);
+		const sameObj = newObj.with({ inputCollapsed: false });
+		assert.ok(newObj === sameObj);
+		assert.strictEqual(obj.inputCollapsed, true);
+		assert.strictEqual(newObj.inputCollapsed, false);
+		assert.deepStrictEqual(newObj.custom, { display: 'hello' });
 
-		let obj = new types.NotebookCellMetadata();
-		assert.strictEqual(obj.executionOrder, undefined);
-
-		obj = obj.with({ executionOrder: 23 });
-		assert.strictEqual(obj.executionOrder, 23);
-
-		obj = obj.with({ executionOrder: undefined });
-		assert.strictEqual(obj.executionOrder, 23);
-
-		obj = obj.with({});
-		assert.strictEqual(obj.executionOrder, 23);
-
-		obj = obj.with({ executionOrder: null });
-		assert.strictEqual(obj.executionOrder, undefined);
+		const newCustom = newObj.with({ anotherCustom: { display: 'hello2' } });
+		assert.strictEqual(newCustom.inputCollapsed, false);
+		assert.deepStrictEqual(newCustom.mycustom, undefined);
+		assert.deepStrictEqual(newCustom.anotherCustom, { display: 'hello2' });
 	});
 });

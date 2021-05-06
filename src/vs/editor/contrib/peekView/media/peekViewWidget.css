@@ -33,6 +33,7 @@
 .monaco-editor .peekview-widget .head .peekview-title .filename {
 	overflow: hidden;
 	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .monaco-editor .peekview-widget .head .peekview-title .meta:not(:empty)::before {
@@ -53,23 +54,6 @@
 .monaco-editor .peekview-widget .head .peekview-actions > .monaco-action-bar,
 .monaco-editor .peekview-widget .head .peekview-actions > .monaco-action-bar > .actions-container {
 	height: 100%;
-}
-
-.monaco-editor .peekview-widget .head .peekview-actions > .monaco-action-bar .action-item {
-	margin-left: 4px;
-}
-
-.monaco-editor .peekview-widget .head .peekview-actions > .monaco-action-bar .action-label {
-	width: 16px;
-	height: 100%;
-	margin: 0;
-	line-height: inherit;
-	background-repeat: no-repeat;
-	background-position: center center;
-}
-
-.monaco-editor .peekview-widget .head .peekview-actions > .monaco-action-bar .action-label.codicon {
-	margin: 0;
 }
 
 .monaco-editor .peekview-widget > .body {

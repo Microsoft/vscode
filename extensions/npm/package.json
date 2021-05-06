@@ -24,11 +24,13 @@
     "minimatch": "^3.0.4",
     "request-light": "^0.4.0",
     "vscode-nls": "^4.1.1",
+    "which": "^2.0.2",
     "which-pm": "^2.0.0"
   },
   "devDependencies": {
     "@types/minimatch": "^3.0.3",
-    "@types/node": "^12.19.9"
+    "@types/node": "14.x",
+    "@types/which": "^2.0.0"
   },
   "resolutions": {
     "which-pm/load-yaml-file/**/argparse": "1.0.9"
@@ -42,6 +44,13 @@
     "workspaceContains:package.json",
     "onView:npm"
   ],
+  "capabilities": {
+    "virtualWorkspaces": false,
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "%workspaceTrust%"
+    }
+  },
   "contributes": {
     "languages": [
       {

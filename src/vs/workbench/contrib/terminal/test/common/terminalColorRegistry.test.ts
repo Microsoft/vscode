@@ -13,9 +13,9 @@ import { ColorScheme } from 'vs/platform/theme/common/theme';
 
 registerColors();
 
-let themingRegistry = Registry.as<IColorRegistry>(ThemeingExtensions.ColorContribution);
+const themingRegistry = Registry.as<IColorRegistry>(ThemeingExtensions.ColorContribution);
 function getMockTheme(type: ColorScheme): IColorTheme {
-	let theme = {
+	const theme = {
 		selector: '',
 		label: '',
 		type: type,
@@ -31,10 +31,10 @@ function getMockTheme(type: ColorScheme): IColorTheme {
 suite('Workbench - TerminalColorRegistry', () => {
 
 	test('hc colors', function () {
-		let theme = getMockTheme(ColorScheme.HIGH_CONTRAST);
-		let colors = ansiColorIdentifiers.map(colorId => Color.Format.CSS.formatHexA(theme.getColor(colorId)!, true));
+		const theme = getMockTheme(ColorScheme.HIGH_CONTRAST);
+		const colors = ansiColorIdentifiers.map(colorId => Color.Format.CSS.formatHexA(theme.getColor(colorId)!, true));
 
-		assert.deepEqual(colors, [
+		assert.deepStrictEqual(colors, [
 			'#000000',
 			'#cd0000',
 			'#00cd00',
@@ -56,10 +56,10 @@ suite('Workbench - TerminalColorRegistry', () => {
 	});
 
 	test('light colors', function () {
-		let theme = getMockTheme(ColorScheme.LIGHT);
-		let colors = ansiColorIdentifiers.map(colorId => Color.Format.CSS.formatHexA(theme.getColor(colorId)!, true));
+		const theme = getMockTheme(ColorScheme.LIGHT);
+		const colors = ansiColorIdentifiers.map(colorId => Color.Format.CSS.formatHexA(theme.getColor(colorId)!, true));
 
-		assert.deepEqual(colors, [
+		assert.deepStrictEqual(colors, [
 			'#000000',
 			'#cd3131',
 			'#00bc00',
@@ -81,10 +81,10 @@ suite('Workbench - TerminalColorRegistry', () => {
 	});
 
 	test('dark colors', function () {
-		let theme = getMockTheme(ColorScheme.DARK);
-		let colors = ansiColorIdentifiers.map(colorId => Color.Format.CSS.formatHexA(theme.getColor(colorId)!, true));
+		const theme = getMockTheme(ColorScheme.DARK);
+		const colors = ansiColorIdentifiers.map(colorId => Color.Format.CSS.formatHexA(theme.getColor(colorId)!, true));
 
-		assert.deepEqual(colors, [
+		assert.deepStrictEqual(colors, [
 			'#000000',
 			'#cd3131',
 			'#0dbc79',

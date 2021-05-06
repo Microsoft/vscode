@@ -4,17 +4,25 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { localize } from 'vs/nls';
-import { GettingStartedInputFactory, GettingStartedInput, GettingStartedPage, inGettingStartedContext } from 'vs/workbench/contrib/welcome/gettingStarted/browser/gettingStarted';
+import { GettingStartedInputSerializer, GettingStartedPage, inGettingStartedContext } from 'vs/workbench/contrib/welcome/gettingStarted/browser/gettingStarted';
 import { Registry } from 'vs/platform/registry/common/platform';
-import { Extensions as EditorInputExtensions, IEditorInputFactoryRegistry } from 'vs/workbench/common/editor';
+import { EditorExtensions, IEditorInputFactoryRegistry } from 'vs/workbench/common/editor';
 import { MenuId, registerAction2, Action2 } from 'vs/platform/actions/common/actions';
-import { ServicesAccessor } from 'vs/platform/instantiation/common/instantiation';
+import { IInstantiationService, ServicesAccessor } from 'vs/platform/instantiation/common/instantiation';
 import { ContextKeyEqualsExpr } from 'vs/platform/contextkey/common/contextkey';
 import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
 import { KeybindingWeight } from 'vs/platform/keybinding/common/keybindingsRegistry';
 import { KeyCode } from 'vs/base/common/keyCodes';
-import { EditorDescriptor, IEditorRegistry, Extensions as EditorExtensions } from 'vs/workbench/browser/editor';
+import { EditorDescriptor, IEditorRegistry } from 'vs/workbench/browser/editor';
 import { SyncDescriptor } from 'vs/platform/instantiation/common/descriptors';
+import { IGettingStartedService } from 'vs/workbench/contrib/welcome/gettingStarted/browser/gettingStartedService';
+import { GettingStartedInput } from 'vs/workbench/contrib/welcome/gettingStarted/browser/gettingStartedInput';
+import { Extensions as WorkbenchExtensions, IWorkbenchContributionsRegistry } from 'vs/workbench/common/contributions';
+import { LifecyclePhase } from 'vs/workbench/services/lifecycle/common/lifecycle';
+import { ConfigurationScope, Extensions as ConfigurationExtensions, IConfigurationRegistry } from 'vs/platform/configuration/common/configurationRegistry';
+import { workbenchConfigurationNodeBase } from 'vs/workbench/common/configuration';
+import product from 'vs/platform/product/common/product';
+
 
 export * as icons from 'vs/workbench/contrib/welcome/gettingStarted/browser/gettingStartedIcons';
 
@@ -38,7 +46,7 @@ registerAction2(class extends Action2 {
 	}
 });
 
-Registry.as<IEditorInputFactoryRegistry>(EditorInputExtensions.EditorInputFactories).registerEditorInputFactory(GettingStartedInput.ID, GettingStartedInputFactory);
+Registry.as<IEditorInputFactoryRegistry>(EditorExtensions.EditorInputFactories).registerEditorInputSerializer(GettingStartedInput.ID, GettingStartedInputSerializer);
 Registry.as<IEditorRegistry>(EditorExtensions.Editors).registerEditor(
 	EditorDescriptor.create(
 		GettingStartedPage,
@@ -128,3 +136,63 @@ registerAction2(class extends Action2 {
 		}
 	}
 });
+
+registerAction2(class extends Action2 {
+	constructor() {
+		super({
+			id: 'gettingStarted.markStepComplete',
+			title: localize('gettingStarted.markStepComplete', "Mark Step Complete"),
+			category,
+		});
+	}
+
+	run(accessor: ServicesAccessor, arg: string) {
+		if (!arg) { return; }
+		const gettingStartedService = accessor.get(IGettingStartedService);
+		gettingStartedService.progressStep(arg);
+	}
+});
+
+registerAction2(class extends Action2 {
+	constructor() {
+		super({
+			id: 'gettingStarted.markStepIncomplete',
+			title: localize('gettingStarted.markStepInomplete', "Mark Step Incomplete"),
+			category,
+		});
+	}
+
+	run(accessor: ServicesAccessor, arg: string) {
+		if (!arg) { return; }
+		const gettingStartedService = accessor.get(IGettingStartedService);
+		gettingStartedService.deprogressStep(arg);
+	}
+});
+
+class WorkbenchConfigurationContribution {
+	constructor(
+		@IInstantiationService _instantiationService: IInstantiationService,
+		@IGettingStartedService _gettingStartedService: IGettingStartedService,
+	) {
+		// Init the getting started service via DI.
+	}
+}
+
+Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench)
+	.registerWorkbenchContribution(WorkbenchConfigurationContribution, LifecyclePhase.Restored);
+
+
+const configurationRegistry = Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration);
+if (product.quality !== 'stable') {
+	configurationRegistry.registerConfiguration({
+		...workbenchConfigurationNodeBase,
+		properties: {
+			'workbench.welcomePage.experimental.extensionContributions': {
+				scope: ConfigurationScope.APPLICATION,
+				type: 'boolean',
+				default: false,
+				description: localize('workbench.welcomePage.experimental.extensionContributions', "When enabled, allow extensions to contribute items to the \"Getting Started\" and \"Start\" sections of the welcome page. Experimental, subject to breakage as api changes.")
+			}
+		}
+	});
+}

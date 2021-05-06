@@ -1062,4 +1062,11 @@ suite('TextModel.createSnapshot', () => {
 		model.dispose();
 	});
 
+	test('issue #119632: invalid range', () => {
+		const model = createTextModel('hello world!');
+		const actual = model._validateRangeRelaxedNoAllocations(new Range(<any>undefined, 0, <any>undefined, 1));
+		assert.deepStrictEqual(actual, new Range(1, 1, 1, 1));
+		model.dispose();
+	});
+
 });

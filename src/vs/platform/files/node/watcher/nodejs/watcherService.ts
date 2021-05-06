@@ -124,7 +124,7 @@ export class FileWatcher extends Disposable {
 		}
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this.isDisposed = true;
 
 		super.dispose();

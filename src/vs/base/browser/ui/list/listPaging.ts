@@ -226,6 +226,14 @@ export class PagedList<T> implements IThemable, IDisposable {
 		this.list.scrollLeft = scrollLeft;
 	}
 
+	setAnchor(index: number | undefined): void {
+		this.list.setAnchor(index);
+	}
+
+	getAnchor(): number | undefined {
+		return this.list.getAnchor();
+	}
+
 	setFocus(indexes: number[]): void {
 		this.list.setFocus(indexes);
 	}
@@ -238,12 +246,20 @@ export class PagedList<T> implements IThemable, IDisposable {
 		this.list.focusPrevious(n, loop);
 	}
 
-	focusNextPage(): void {
-		this.list.focusNextPage();
+	focusNextPage(): Promise<void> {
+		return this.list.focusNextPage();
 	}
 
-	focusPreviousPage(): void {
-		this.list.focusPreviousPage();
+	focusPreviousPage(): Promise<void> {
+		return this.list.focusPreviousPage();
+	}
+
+	focusLast(): void {
+		this.list.focusLast();
+	}
+
+	focusFirst(): void {
+		this.list.focusFirst();
 	}
 
 	getFocus(): number[] {

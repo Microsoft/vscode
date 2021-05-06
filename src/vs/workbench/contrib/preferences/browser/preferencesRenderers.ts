@@ -14,11 +14,11 @@ import { ICursorPositionChangedEvent } from 'vs/editor/common/controller/cursorE
 import { Position } from 'vs/editor/common/core/position';
 import { IRange, Range } from 'vs/editor/common/core/range';
 import * as editorCommon from 'vs/editor/common/editorCommon';
-import { IModelDeltaDecoration, TrackedRangeStickiness } from 'vs/editor/common/model';
+import { IModelDeltaDecoration, TrackedRangeStickiness, ITextModel } from 'vs/editor/common/model';
 import { ModelDecorationOptions } from 'vs/editor/common/model/textModel';
 import * as nls from 'vs/nls';
 import { ConfigurationTarget, IConfigurationService } from 'vs/platform/configuration/common/configuration';
-import { ConfigurationScope, Extensions as ConfigurationExtensions, IConfigurationPropertySchema, IConfigurationRegistry, IConfigurationNode, OVERRIDE_PROPERTY_PATTERN, overrideIdentifierFromKey } from 'vs/platform/configuration/common/configurationRegistry';
+import { ConfigurationScope, Extensions as ConfigurationExtensions, IConfigurationPropertySchema, IConfigurationRegistry, OVERRIDE_PROPERTY_PATTERN, overrideIdentifierFromKey } from 'vs/platform/configuration/common/configurationRegistry';
 import { IContextMenuService } from 'vs/platform/contextview/browser/contextView';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { Registry } from 'vs/platform/registry/common/platform';
@@ -34,6 +34,13 @@ import { EditorOption } from 'vs/editor/common/config/editorOptions';
 import { FindDecorations } from 'vs/editor/contrib/find/findDecorations';
 import { ThemeIcon } from 'vs/platform/theme/common/themeService';
 import { settingsEditIcon } from 'vs/workbench/contrib/preferences/browser/preferencesIcons';
+import { IWorkspaceTrustManagementService } from 'vs/platform/workspace/common/workspaceTrust';
+import * as modes from 'vs/editor/common/modes';
+import { CancellationToken } from 'vs/base/common/cancellation';
+import { IUriIdentityService } from 'vs/workbench/services/uriIdentity/common/uriIdentity';
+import { CodeActionKind } from 'vs/editor/contrib/codeAction/types';
+import { ResourceMap } from 'vs/base/common/map';
+import { Selection } from 'vs/editor/common/core/selection';
 
 export interface IPreferencesRenderer<T> extends IDisposable {
 	readonly preferencesModel: IPreferencesEditorModel<T>;
@@ -197,16 +204,16 @@ export class WorkspaceSettingsRenderer extends UserSettingsRenderer implements I
 		this.workspaceConfigurationRenderer = this._register(instantiationService.createInstance(WorkspaceConfigurationRenderer, editor, preferencesModel));
 	}
 
-	protected createHeader(): void {
+	protected override createHeader(): void {
 		this._register(new SettingsHeaderWidget(this.editor, '')).setMessage(nls.localize('emptyWorkspaceSettingsHeader', "Place your settings here to override the User Settings."));
 	}
 
-	setAssociatedPreferencesModel(associatedPreferencesModel: IPreferencesEditorModel<ISetting>): void {
+	override setAssociatedPreferencesModel(associatedPreferencesModel: IPreferencesEditorModel<ISetting>): void {
 		super.setAssociatedPreferencesModel(associatedPreferencesModel);
 		this.workspaceConfigurationRenderer.render(this.getAssociatedPreferencesModel());
 	}
 
-	render(): void {
+	override render(): void {
 		super.render();
 		this.workspaceConfigurationRenderer.render(this.getAssociatedPreferencesModel());
 	}
@@ -223,7 +230,7 @@ export class FolderSettingsRenderer extends UserSettingsRenderer implements IPre
 		super(editor, preferencesModel, preferencesService, configurationService, instantiationService);
 	}
 
-	protected createHeader(): void {
+	protected override createHeader(): void {
 		this._register(new SettingsHeaderWidget(this.editor, '')).setMessage(nls.localize('emptyFolderSettingsHeader', "Place your folder settings here to override those from the Workspace Settings."));
 	}
 
@@ -521,7 +528,7 @@ export class SettingsGroupTitleRenderer extends Disposable implements HiddenArea
 		this.renderDisposables.clear();
 	}
 
-	dispose() {
+	override dispose() {
 		this.disposeWidgets();
 		super.dispose();
 	}
@@ -542,7 +549,7 @@ export class HiddenAreasRenderer extends Disposable {
 		this.editor.setHiddenAreas(ranges);
 	}
 
-	dispose() {
+	override dispose() {
 		this.editor.setHiddenAreas([]);
 		super.dispose();
 	}
@@ -593,7 +600,7 @@ export class FilteredMatchesRenderer extends Disposable implements HiddenAreasPr
 		return notMatchesRanges;
 	}
 
-	dispose() {
+	override dispose() {
 		this.decorationIds = this.editor.deltaDecorations(this.decorationIds, []);
 		super.dispose();
 	}
@@ -619,7 +626,7 @@ export class HighlightMatchesRenderer extends Disposable {
 		};
 	}
 
-	dispose() {
+	override dispose() {
 		this.decorationIds = this.editor.deltaDecorations(this.decorationIds, []);
 		super.dispose();
 	}
@@ -939,20 +946,25 @@ class SettingHighlighter extends Disposable {
 	}
 }
 
-class UnsupportedSettingsRenderer extends Disposable {
+class UnsupportedSettingsRenderer extends Disposable implements modes.CodeActionProvider {
 
 	private renderingDelayer: Delayer<void> = new Delayer<void>(200);
 
+	private readonly codeActions = new ResourceMap<[Range, modes.CodeAction[]][]>(uri => this.uriIdentityService.extUri.getComparisonKey(uri));
+
 	constructor(
-		private editor: ICodeEditor,
-		private settingsEditorModel: SettingsEditorModel,
-		@IMarkerService private markerService: IMarkerService,
-		@IWorkbenchEnvironmentService private environmentService: IWorkbenchEnvironmentService,
-		@IConfigurationService private configurationService: IConfigurationService,
+		private readonly editor: ICodeEditor,
+		private readonly settingsEditorModel: SettingsEditorModel,
+		@IMarkerService private readonly markerService: IMarkerService,
+		@IWorkbenchEnvironmentService private readonly environmentService: IWorkbenchEnvironmentService,
+		@IConfigurationService private readonly configurationService: IConfigurationService,
+		@IWorkspaceTrustManagementService private readonly workspaceTrustManagementService: IWorkspaceTrustManagementService,
+		@IUriIdentityService private readonly uriIdentityService: IUriIdentityService,
 	) {
 		super();
 		this._register(this.editor.getModel()!.onDidChangeContent(() => this.delayedRender()));
 		this._register(Event.filter(this.configurationService.onDidChangeConfiguration, e => e.source === ConfigurationTarget.DEFAULT)(() => this.delayedRender()));
+		this._register(modes.CodeActionProviderRegistry.register({ pattern: settingsEditorModel.uri.path }, this));
 	}
 
 	private delayedRender(): void {
@@ -960,12 +972,29 @@ class UnsupportedSettingsRenderer extends Disposable {
 	}
 
 	public render(): void {
+		this.codeActions.clear();
 		const markerData: IMarkerData[] = this.generateMarkerData();
 		if (markerData.length) {
 			this.markerService.changeOne('UnsupportedSettingsRenderer', this.settingsEditorModel.uri, markerData);
 		} else {
 			this.markerService.remove('UnsupportedSettingsRenderer', [this.settingsEditorModel.uri]);
 		}
+	}
+
+	async provideCodeActions(model: ITextModel, range: Range | Selection, context: modes.CodeActionContext, token: CancellationToken): Promise<modes.CodeActionList> {
+		const actions: modes.CodeAction[] = [];
+		const codeActionsByRange = this.codeActions.get(model.uri);
+		if (codeActionsByRange) {
+			for (const [codeActionsRange, codeActions] of codeActionsByRange) {
+				if (codeActionsRange.containsRange(range)) {
+					actions.push(...codeActions);
+				}
+			}
+		}
+		return {
+			actions,
+			dispose: () => { }
+		};
 	}
 
 	private generateMarkerData(): IMarkerData[] {
@@ -1004,24 +1033,24 @@ class UnsupportedSettingsRenderer extends Disposable {
 		return markerData;
 	}
 
-	private handleLocalUserConfiguration(setting: ISetting, configuration: IConfigurationNode, markerData: IMarkerData[]): void {
+	private handleLocalUserConfiguration(setting: ISetting, configuration: IConfigurationPropertySchema, markerData: IMarkerData[]): void {
 		if (this.environmentService.remoteAuthority && (configuration.scope === ConfigurationScope.MACHINE || configuration.scope === ConfigurationScope.MACHINE_OVERRIDABLE)) {
 			markerData.push({
 				severity: MarkerSeverity.Hint,
 				tags: [MarkerTag.Unnecessary],
 				...setting.range,
-				message: nls.localize('unsupportedRemoteMachineSetting', "This setting cannot be applied in this window. It will be applied when you open local window.")
+				message: nls.localize('unsupportedRemoteMachineSetting', "This setting cannot be applied in this window. It will be applied when you open a local window.")
 			});
 		}
 	}
 
-	private handleRemoteUserConfiguration(setting: ISetting, configuration: IConfigurationNode, markerData: IMarkerData[]): void {
+	private handleRemoteUserConfiguration(setting: ISetting, configuration: IConfigurationPropertySchema, markerData: IMarkerData[]): void {
 		if (configuration.scope === ConfigurationScope.APPLICATION) {
 			markerData.push(this.generateUnsupportedApplicationSettingMarker(setting));
 		}
 	}
 
-	private handleWorkspaceConfiguration(setting: ISetting, configuration: IConfigurationNode, markerData: IMarkerData[]): void {
+	private handleWorkspaceConfiguration(setting: ISetting, configuration: IConfigurationPropertySchema, markerData: IMarkerData[]): void {
 		if (configuration.scope === ConfigurationScope.APPLICATION) {
 			markerData.push(this.generateUnsupportedApplicationSettingMarker(setting));
 		}
@@ -1029,9 +1058,16 @@ class UnsupportedSettingsRenderer extends Disposable {
 		if (configuration.scope === ConfigurationScope.MACHINE) {
 			markerData.push(this.generateUnsupportedMachineSettingMarker(setting));
 		}
+
+		if (!this.workspaceTrustManagementService.isWorkpaceTrusted() && configuration.restricted) {
+			const marker = this.generateUntrustedSettingMarker(setting);
+			markerData.push(marker);
+			const codeActions = this.generateUntrustedSettingCodeActions([marker]);
+			this.addCodeActions(marker, codeActions);
+		}
 	}
 
-	private handleWorkspaceFolderConfiguration(setting: ISetting, configuration: IConfigurationNode, markerData: IMarkerData[]): void {
+	private handleWorkspaceFolderConfiguration(setting: ISetting, configuration: IConfigurationPropertySchema, markerData: IMarkerData[]): void {
 		if (configuration.scope === ConfigurationScope.APPLICATION) {
 			markerData.push(this.generateUnsupportedApplicationSettingMarker(setting));
 		}
@@ -1047,6 +1083,13 @@ class UnsupportedSettingsRenderer extends Disposable {
 				...setting.range,
 				message: nls.localize('unsupportedWindowSetting', "This setting cannot be applied in this workspace. It will be applied when you open the containing workspace folder directly.")
 			});
+		}
+
+		if (!this.workspaceTrustManagementService.isWorkpaceTrusted() && configuration.restricted) {
+			const marker = this.generateUntrustedSettingMarker(setting);
+			markerData.push(marker);
+			const codeActions = this.generateUntrustedSettingCodeActions([marker]);
+			this.addCodeActions(marker, codeActions);
 		}
 	}
 
@@ -1068,8 +1111,38 @@ class UnsupportedSettingsRenderer extends Disposable {
 		};
 	}
 
-	public dispose(): void {
+	private generateUntrustedSettingMarker(setting: ISetting): IMarkerData {
+		return {
+			severity: MarkerSeverity.Warning,
+			...setting.range,
+			message: nls.localize('untrustedSetting', "This setting can only be applied in a trusted workspace.")
+		};
+	}
+
+	private generateUntrustedSettingCodeActions(diagnostics: IMarkerData[]): modes.CodeAction[] {
+		return [{
+			title: nls.localize('manage workspace trust', "Manage Workspace Trust"),
+			command: {
+				id: 'workbench.trust.manage',
+				title: nls.localize('manage workspace trust', "Manage Workspace Trust")
+			},
+			diagnostics,
+			kind: CodeActionKind.QuickFix.value
+		}];
+	}
+
+	private addCodeActions(range: IRange, codeActions: modes.CodeAction[]): void {
+		let actions = this.codeActions.get(this.settingsEditorModel.uri);
+		if (!actions) {
+			actions = [];
+			this.codeActions.set(this.settingsEditorModel.uri, actions);
+		}
+		actions.push([Range.lift(range), codeActions]);
+	}
+
+	public override dispose(): void {
 		this.markerService.remove('UnsupportedSettingsRenderer', [this.settingsEditorModel.uri]);
+		this.codeActions.clear();
 		super.dispose();
 	}
 
@@ -1139,7 +1212,7 @@ class WorkspaceConfigurationRenderer extends Disposable {
 		};
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this.markerService.remove('WorkspaceConfigurationRenderer', [this.workspaceSettingsEditorModel.uri]);
 		this.decorationIds = this.editor.deltaDecorations(this.decorationIds, []);
 		super.dispose();

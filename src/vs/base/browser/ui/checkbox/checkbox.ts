@@ -44,7 +44,7 @@ export class CheckboxActionViewItem extends BaseActionViewItem {
 	protected checkbox: Checkbox | undefined;
 	protected readonly disposables = new DisposableStore();
 
-	render(container: HTMLElement): void {
+	override render(container: HTMLElement): void {
 		this.element = container;
 
 		this.disposables.clear();
@@ -59,7 +59,7 @@ export class CheckboxActionViewItem extends BaseActionViewItem {
 		this.element.appendChild(this.checkbox.domNode);
 	}
 
-	updateEnabled(): void {
+	override updateEnabled(): void {
 		if (this.checkbox) {
 			if (this.isEnabled()) {
 				this.checkbox.enable();
@@ -69,33 +69,33 @@ export class CheckboxActionViewItem extends BaseActionViewItem {
 		}
 	}
 
-	updateChecked(): void {
+	override updateChecked(): void {
 		if (this.checkbox) {
 			this.checkbox.checked = this._action.checked;
 		}
 	}
 
-	focus(): void {
+	override focus(): void {
 		if (this.checkbox) {
 			this.checkbox.domNode.tabIndex = 0;
 			this.checkbox.focus();
 		}
 	}
 
-	blur(): void {
+	override blur(): void {
 		if (this.checkbox) {
 			this.checkbox.domNode.tabIndex = -1;
 			this.checkbox.domNode.blur();
 		}
 	}
 
-	setFocusable(focusable: boolean): void {
+	override setFocusable(focusable: boolean): void {
 		if (this.checkbox) {
 			this.checkbox.domNode.tabIndex = focusable ? 0 : -1;
 		}
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this.disposables.dispose();
 		super.dispose();
 	}

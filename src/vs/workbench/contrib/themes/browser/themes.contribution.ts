@@ -22,7 +22,6 @@ import { onUnexpectedError } from 'vs/base/common/errors';
 import { IQuickInputService, QuickPickInput } from 'vs/platform/quickinput/common/quickInput';
 import { ConfigurationTarget } from 'vs/platform/configuration/common/configuration';
 import { DEFAULT_PRODUCT_ICON_THEME_ID } from 'vs/workbench/services/themes/browser/productIconThemeData';
-import { IGettingStartedService } from 'vs/workbench/services/gettingStarted/common/gettingStartedService';
 
 export class SelectColorThemeAction extends Action {
 
@@ -35,13 +34,12 @@ export class SelectColorThemeAction extends Action {
 		@IQuickInputService private readonly quickInputService: IQuickInputService,
 		@IWorkbenchThemeService private readonly themeService: IWorkbenchThemeService,
 		@IExtensionGalleryService private readonly extensionGalleryService: IExtensionGalleryService,
-		@IGettingStartedService private readonly gettingStartedService: IGettingStartedService,
 		@IViewletService private readonly viewletService: IViewletService
 	) {
 		super(id, label);
 	}
 
-	run(): Promise<void> {
+	override run(): Promise<void> {
 		return this.themeService.getColorThemes().then(themes => {
 			const currentTheme = this.themeService.getColorTheme();
 
@@ -86,7 +84,6 @@ export class SelectColorThemeAction extends Action {
 						openExtensionViewlet(this.viewletService, `category:themes ${quickpick.value}`);
 					} else {
 						selectTheme(theme, true);
-						this.gettingStartedService.progressByEvent('themeSelected');
 					}
 					isCompleted = true;
 					quickpick.hide();
@@ -206,7 +203,7 @@ class SelectFileIconThemeAction extends AbstractIconThemeAction {
 		return this.themeService.setFileIconTheme(id, settingsTarget);
 	}
 
-	async run(): Promise<void> {
+	override async run(): Promise<void> {
 		this.pick(await this.themeService.getFileIconThemes(), this.themeService.getFileIconTheme());
 	}
 }
@@ -237,7 +234,7 @@ class SelectProductIconThemeAction extends AbstractIconThemeAction {
 		return this.themeService.setProductIconTheme(id, settingsTarget);
 	}
 
-	async run(): Promise<void> {
+	override async run(): Promise<void> {
 		this.pick(await this.themeService.getProductIconThemes(), this.themeService.getProductIconTheme());
 	}
 }
@@ -301,7 +298,7 @@ class GenerateColorThemeAction extends Action {
 		super(id, label);
 	}
 
-	run(): Promise<any> {
+	override run(): Promise<any> {
 		let theme = this.themeService.getColorTheme();
 		let colors = Registry.as<IColorRegistry>(ColorRegistryExtensions.ColorContribution).getColors();
 		let colorIds = colors.map(c => c.id).sort();

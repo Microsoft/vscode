@@ -4,7 +4,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 // all constants are const
-import { TokenEncodingConsts, TokenModifier, TokenType, VersionRequirement } from 'typescript-vscode-sh-plugin/lib/constants';
 import * as vscode from 'vscode';
 import * as Proto from '../protocol';
 import { ClientCapability, ExecConfig, ITypeScriptServiceClient, ServerResponse } from '../typescriptService';
@@ -67,13 +66,15 @@ class DocumentSemanticTokensProvider implements vscode.DocumentSemanticTokensPro
 		return this._provideSemanticTokens(document, { file, start, length }, token);
 	}
 
-	async _provideSemanticTokens(document: vscode.TextDocument, requestArg: ExperimentalProtocol.EncodedSemanticClassificationsRequestArgs, token: vscode.CancellationToken): Promise<vscode.SemanticTokens | null> {
+	async _provideSemanticTokens(document: vscode.TextDocument, requestArg: Proto.EncodedSemanticClassificationsRequestArgs, token: vscode.CancellationToken): Promise<vscode.SemanticTokens | null> {
 		const file = this.client.toOpenedFilePath(document);
 		if (!file) {
 			return null;
 		}
 
 		const versionBeforeRequest = document.version;
+
+		requestArg.format = '2020';
 
 		const response = await (this.client as ExperimentalProtocol.IExtendedTypeScriptServiceClient).execute('encodedSemanticClassifications-full', requestArg, token, {
 			cancelOnResourceChange: document.uri
@@ -148,8 +149,41 @@ function waitForDocumentChangesToEnd(document: vscode.TextDocument) {
 }
 
 
-// typescript-vscode-sh-plugin encodes type and modifiers in the classification:
+// typescript encodes type and modifiers in the classification:
 // TSClassification = (TokenType + 1) << 8 + TokenModifier
+
+declare const enum TokenType {
+	class = 0,
+	enum = 1,
+	interface = 2,
+	namespace = 3,
+	typeParameter = 4,
+	type = 5,
+	parameter = 6,
+	variable = 7,
+	enumMember = 8,
+	property = 9,
+	function = 10,
+	method = 11,
+	_ = 12
+}
+declare const enum TokenModifier {
+	declaration = 0,
+	static = 1,
+	async = 2,
+	readonly = 3,
+	defaultLibrary = 4,
+	local = 5,
+	_ = 6
+}
+declare const enum TokenEncodingConsts {
+	typeOffset = 8,
+	modifierMask = 255
+}
+declare const enum VersionRequirement {
+	major = 3,
+	minor = 7
+}
 
 function getTokenTypeFromClassification(tsClassification: number): number | undefined {
 	if (tsClassification > TokenEncodingConsts.modifierMask) {
@@ -174,7 +208,7 @@ tokenTypes[TokenType.variable] = 'variable';
 tokenTypes[TokenType.enumMember] = 'enumMember';
 tokenTypes[TokenType.property] = 'property';
 tokenTypes[TokenType.function] = 'function';
-tokenTypes[TokenType.member] = 'method';
+tokenTypes[TokenType.method] = 'method';
 
 const tokenModifiers: string[] = [];
 tokenModifiers[TokenModifier.async] = 'async';
@@ -183,14 +217,6 @@ tokenModifiers[TokenModifier.readonly] = 'readonly';
 tokenModifiers[TokenModifier.static] = 'static';
 tokenModifiers[TokenModifier.local] = 'local';
 tokenModifiers[TokenModifier.defaultLibrary] = 'defaultLibrary';
-
-// make sure token types and modifiers are complete
-if (tokenTypes.filter(t => !!t).length !== TokenType._) {
-	console.warn('typescript-vscode-sh-plugin has added new tokens types.');
-}
-if (tokenModifiers.filter(t => !!t).length !== TokenModifier._) {
-	console.warn('typescript-vscode-sh-plugin has added new tokens modifiers.');
-}
 
 // mapping for the original ExperimentalProtocol.ClassificationType from TypeScript (only used when plugin is not available)
 const tokenTypeMap: number[] = [];

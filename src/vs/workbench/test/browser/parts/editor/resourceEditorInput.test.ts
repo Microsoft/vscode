@@ -46,9 +46,9 @@ suite('Resource text editors', () => {
 
 		const model = await input.resolve();
 		assert.ok(model);
-		assert.strictEqual(model.textEditorModel.getModeId(), 'resource-input-test');
+		assert.strictEqual(model.textEditorModel?.getModeId(), 'resource-input-test');
 
 		input.setMode('text');
-		assert.strictEqual(model.textEditorModel.getModeId(), PLAINTEXT_MODE_ID);
+		assert.strictEqual(model.textEditorModel?.getModeId(), PLAINTEXT_MODE_ID);
 	});
 });

@@ -36,6 +36,7 @@ suite('History Storage', () => {
 		for (let i = 0; i < actual.files.length; i++) {
 			assertEqualURI(actual.files[i].fileUri, expected.files[i].fileUri, message);
 			assert.strictEqual(actual.files[i].label, expected.files[i].label);
+			assert.strictEqual(actual.files[i].remoteAuthority, expected.files[i].remoteAuthority);
 		}
 		assert.strictEqual(actual.workspaces.length, expected.workspaces.length, message);
 		for (let i = 0; i < actual.workspaces.length; i++) {
@@ -47,6 +48,7 @@ suite('History Storage', () => {
 				assertEqualWorkspace(actualRecent.workspace, (<IRecentWorkspace>expectedRecent).workspace, message);
 			}
 			assert.strictEqual(actualRecent.label, expectedRecent.label);
+			assert.strictEqual(actualRecent.remoteAuthority, actualRecent.remoteAuthority);
 		}
 	}
 
@@ -97,6 +99,11 @@ suite('History Storage', () => {
 			workspaces: [{ label: 'def', workspace: toWorkspace(testWSPath) }, { folderUri: testRemoteFolderURI }]
 		};
 		assertRestoring(ro, 'labels');
+		ro = {
+			files: [{ label: 'abc', remoteAuthority: 'test', fileUri: testRemoteFileURI }],
+			workspaces: [{ label: 'def', remoteAuthority: 'test', workspace: toWorkspace(testWSPath) }, { folderUri: testRemoteFolderURI, remoteAuthority: 'test' }]
+		};
+		assertRestoring(ro, 'authority');
 	});
 
 	test('open 1_33', () => {
@@ -124,6 +131,43 @@ suite('History Storage', () => {
 		let expected: IRecentlyOpened = {
 			files: [{ label: 'def', fileUri: URI.parse('file:///home/user/.config/code-oss-dev/storage.json') }],
 			workspaces: [
+				{ workspace: { id: '53b714b46ef1a2d4346568b4f591028c', configPath: URI.parse('file:///home/user/workspaces/testing/custom.code-workspace') } },
+				{ label: 'abc', folderUri: URI.parse('file:///home/user/workspaces/testing/folding') }
+			]
+		};
+
+		assertEqualRecentlyOpened(windowsState, expected, 'v1_33');
+	});
+
+	test('open 1_55', () => {
+		const v1_55 = `{
+			"entries": [
+				{
+					"folderUri": "foo://bar/23/43",
+					"remoteAuthority": "test+test"
+				},
+				{
+					"workspace": {
+						"id": "53b714b46ef1a2d4346568b4f591028c",
+						"configPath": "file:///home/user/workspaces/testing/custom.code-workspace"
+					}
+				},
+				{
+					"folderUri": "file:///home/user/workspaces/testing/folding",
+					"label": "abc"
+				},
+				{
+					"fileUri": "file:///home/user/.config/code-oss-dev/storage.json",
+					"label": "def"
+				}
+			]
+		}`;
+
+		let windowsState = restoreRecentlyOpened(JSON.parse(v1_55), new NullLogService());
+		let expected: IRecentlyOpened = {
+			files: [{ label: 'def', fileUri: URI.parse('file:///home/user/.config/code-oss-dev/storage.json') }],
+			workspaces: [
+				{ folderUri: URI.parse('foo://bar/23/43'), remoteAuthority: 'test+test' },
 				{ workspace: { id: '53b714b46ef1a2d4346568b4f591028c', configPath: URI.parse('file:///home/user/workspaces/testing/custom.code-workspace') } },
 				{ label: 'abc', folderUri: URI.parse('file:///home/user/workspaces/testing/folding') }
 			]

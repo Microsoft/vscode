@@ -109,11 +109,11 @@ class EditorEditTask extends ModelEditTask {
 		this._editor = editor;
 	}
 
-	getBeforeCursorState(): Selection[] | null {
+	override getBeforeCursorState(): Selection[] | null {
 		return this._editor.getSelections();
 	}
 
-	apply(): void {
+	override apply(): void {
 		if (this._edits.length > 0) {
 			this._edits = this._edits.sort((a, b) => Range.compareRangesUsingStarts(a.range, b.range));
 			this._editor.executeEdits('', this._edits);

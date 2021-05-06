@@ -50,6 +50,17 @@ export class DiffNestedCellViewModel extends Disposable implements IDiffNestedCe
 		this._hoveringOutput = v;
 		this._onDidChangeState.fire({ outputIsHoveredChanged: true });
 	}
+
+	private _focusOnOutput: boolean = false;
+	public get outputIsFocused(): boolean {
+		return this._focusOnOutput;
+	}
+
+	public set outputIsFocused(v: boolean) {
+		this._focusOnOutput = v;
+		this._onDidChangeState.fire({ outputIsFocusedChanged: true });
+	}
+
 	private _outputViewModels: ICellOutputViewModel[];
 
 	get outputsViewModels() {

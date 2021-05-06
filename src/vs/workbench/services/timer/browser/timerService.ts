@@ -15,6 +15,7 @@ import { IEditorService } from 'vs/workbench/services/editor/common/editorServic
 import { IAccessibilityService } from 'vs/platform/accessibility/common/accessibility';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 import { Barrier } from 'vs/base/common/async';
+import { IWorkbenchLayoutService } from 'vs/workbench/services/layout/browser/layoutService';
 
 /* __GDPR__FRAGMENT__
 	"IMemoryInfo" : {
@@ -41,22 +42,26 @@ export interface IMemoryInfo {
 		"panelId": { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth" },
 		"editorIds": { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth" },
 		"timers.ellapsedAppReady" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
+		"timers.ellapsedNlsGeneration" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
+		"timers.ellapsedLoadMainBundle" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
+		"timers.ellapsedCrashReporter" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
+		"timers.ellapsedMainServer" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
+		"timers.ellapsedWindowCreate" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
 		"timers.ellapsedWindowLoad" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
 		"timers.ellapsedWindowLoadToRequire" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
-		"timers.ellapsedExtensions" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
-		"timers.ellapsedExtensionsReady" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
-		"timers.ellapsedRequire" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
+		"timers.ellapsedWaitForWindowConfig" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
 		"timers.ellapsedStorageInit" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
-		"timers.ellapsedSharedProcesConnected" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
 		"timers.ellapsedWorkspaceServiceInit" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
+		"timers.ellapsedSharedProcesConnected" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
 		"timers.ellapsedRequiredUserDataInit" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
 		"timers.ellapsedOtherUserDataInit" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
+		"timers.ellapsedRequire" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
+		"timers.ellapsedExtensions" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
+		"timers.ellapsedExtensionsReady" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
 		"timers.ellapsedViewletRestore" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
 		"timers.ellapsedPanelRestore" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
 		"timers.ellapsedEditorRestore" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
 		"timers.ellapsedWorkbench" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
-		"timers.ellapsedNlsGeneration" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
-		"timers.ellapsedWaitForShellEnv" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth", "isMeasurement": true },
 		"platform" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth" },
 		"release" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth" },
 		"arch" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth" },
@@ -177,6 +182,54 @@ export interface IStartupMetrics {
 		readonly ellapsedLoadMainBundle?: number;
 
 		/**
+		 * The time it took to start the crash reporter.
+		 *
+		 * * Happens in the main-process
+		 * * Measured with the `willStartCrashReporter` and `didStartCrashReporter` performance marks.
+		 */
+		readonly ellapsedCrashReporter?: number;
+
+		/**
+		 * The time it took to create the main instance server.
+		 *
+		 * * Happens in the main-process
+		 * * Measured with the `willStartMainServer` and `didStartMainServer` performance marks.
+		 */
+		readonly ellapsedMainServer?: number;
+
+		/**
+		 * The time it took to create the window.
+		 *
+		 * * Happens in the main-process
+		 * * Measured with the `willCreateCodeWindow` and `didCreateCodeWindow` performance marks.
+		 */
+		readonly ellapsedWindowCreate?: number;
+
+		/**
+		 * The time it took to create the electron browser window.
+		 *
+		 * * Happens in the main-process
+		 * * Measured with the `willCreateCodeBrowserWindow` and `didCreateCodeBrowserWindow` performance marks.
+		 */
+		readonly ellapsedBrowserWindowCreate?: number;
+
+		/**
+		 * The time it took to restore and validate window state.
+		 *
+		 * * Happens in the main-process
+		 * * Measured with the `willRestoreCodeWindowState` and `didRestoreCodeWindowState` performance marks.
+		 */
+		readonly ellapsedWindowRestoreState?: number;
+
+		/**
+		 * The time it took to maximize/show the window.
+		 *
+		 * * Happens in the main-process
+		 * * Measured with the `willMaximizeCodeWindow` and `didMaximizeCodeWindow` performance marks.
+		 */
+		readonly ellapsedWindowMaximize?: number;
+
+		/**
 		 * The time it took to tell electron to open/restore a renderer (browser window).
 		 *
 		 * * Happens in the main-process
@@ -199,13 +252,13 @@ export interface IStartupMetrics {
 		readonly ellapsedWindowLoadToRequire: number;
 
 		/**
-		 * The time it took to wait for resolving the shell environment. This time the workbench
+		 * The time it took to wait for resolving the window configuration. This time the workbench
 		 * will not continue to load and be blocked entirely.
 		 *
 		 * * Happens in the renderer-process
-		 * * Measured with the `willWaitForShellEnv` and `didWaitForShellEnv` performance marks.
+		 * * Measured with the `willWaitForWindowConfig` and `didWaitForWindowConfig` performance marks.
 		 */
-		readonly ellapsedWaitForShellEnv: number;
+		readonly ellapsedWaitForWindowConfig: number;
 
 		/**
 		 * The time it took to init the storage database connection from the workbench.
@@ -295,8 +348,8 @@ export interface IStartupMetrics {
 		readonly ellapsedPanelRestore: number;
 
 		/**
-		 * The time it took to restore editors - that is text editor and complex editor likes the settings UI
-		 * or webviews (markdown preview).
+		 * The time it took to restore and fully resolve visible editors - that is text editor
+		 * and complex editor likes the settings UI or webviews (markdown preview).
 		 *
 		 * * Happens in the renderer-process
 		 * * Measured with the `willRestoreEditors` and `didRestoreEditors` performance marks.
@@ -420,10 +473,12 @@ export abstract class AbstractTimerService implements ITimerService {
 		@IEditorService private readonly _editorService: IEditorService,
 		@IAccessibilityService private readonly _accessibilityService: IAccessibilityService,
 		@ITelemetryService private readonly _telemetryService: ITelemetryService,
+		@IWorkbenchLayoutService layoutService: IWorkbenchLayoutService
 	) {
 		Promise.all([
-			this._extensionService.whenInstalledExtensionsRegistered(),
-			_lifecycleService.when(LifecyclePhase.Restored)
+			this._extensionService.whenInstalledExtensionsRegistered(), // extensions registered
+			_lifecycleService.when(LifecyclePhase.Restored),			// workbench created and parts restored
+			layoutService.whenRestored									// layout restored (including visible editors resolved)
 		]).then(() => {
 			// set perf mark from renderer
 			this.setPerformanceMarks('renderer', perf.getMarks());
@@ -510,7 +565,7 @@ export abstract class AbstractTimerService implements ITimerService {
 			windowKind: this._lifecycleService.startupKind,
 			windowCount: await this._getWindowCount(),
 			viewletId: activeViewlet?.getId(),
-			editorIds: this._editorService.visibleEditors.map(input => input.getTypeId()),
+			editorIds: this._editorService.visibleEditors.map(input => input.typeId),
 			panelId: activePanel ? activePanel.getId() : undefined,
 
 			// timers
@@ -518,10 +573,16 @@ export abstract class AbstractTimerService implements ITimerService {
 				ellapsedAppReady: initialStartup ? this._marks.getDuration('code/didStartMain', 'code/mainAppReady') : undefined,
 				ellapsedNlsGeneration: initialStartup ? this._marks.getDuration('code/willGenerateNls', 'code/didGenerateNls') : undefined,
 				ellapsedLoadMainBundle: initialStartup ? this._marks.getDuration('code/willLoadMainBundle', 'code/didLoadMainBundle') : undefined,
+				ellapsedCrashReporter: initialStartup ? this._marks.getDuration('code/willStartCrashReporter', 'code/didStartCrashReporter') : undefined,
+				ellapsedMainServer: initialStartup ? this._marks.getDuration('code/willStartMainServer', 'code/didStartMainServer') : undefined,
+				ellapsedWindowCreate: initialStartup ? this._marks.getDuration('code/willCreateCodeWindow', 'code/didCreateCodeWindow') : undefined,
+				ellapsedWindowRestoreState: initialStartup ? this._marks.getDuration('code/willRestoreCodeWindowState', 'code/didRestoreCodeWindowState') : undefined,
+				ellapsedBrowserWindowCreate: initialStartup ? this._marks.getDuration('code/willCreateCodeBrowserWindow', 'code/didCreateCodeBrowserWindow') : undefined,
+				ellapsedWindowMaximize: initialStartup ? this._marks.getDuration('code/willMaximizeCodeWindow', 'code/didMaximizeCodeWindow') : undefined,
 				ellapsedWindowLoad: initialStartup ? this._marks.getDuration('code/mainAppReady', 'code/willOpenNewWindow') : undefined,
 				ellapsedWindowLoadToRequire: this._marks.getDuration('code/willOpenNewWindow', 'code/willLoadWorkbenchMain'),
 				ellapsedRequire: this._marks.getDuration('code/willLoadWorkbenchMain', 'code/didLoadWorkbenchMain'),
-				ellapsedWaitForShellEnv: this._marks.getDuration('code/willWaitForShellEnv', 'code/didWaitForShellEnv'),
+				ellapsedWaitForWindowConfig: this._marks.getDuration('code/willWaitForWindowConfig', 'code/didWaitForWindowConfig'),
 				ellapsedStorageInit: this._marks.getDuration('code/willInitStorage', 'code/didInitStorage'),
 				ellapsedSharedProcesConnected: this._marks.getDuration('code/willConnectSharedProcess', 'code/didConnectSharedProcess'),
 				ellapsedWorkspaceServiceInit: this._marks.getDuration('code/willInitWorkspaceService', 'code/didInitWorkspaceService'),

@@ -5,17 +5,17 @@
 
 import * as assert from 'assert';
 import { EditorPane, EditorMemento } from 'vs/workbench/browser/parts/editor/editorPane';
-import { EditorInput, EditorOptions, IEditorInputFactory, IEditorInputFactoryRegistry, Extensions as EditorExtensions } from 'vs/workbench/common/editor';
+import { EditorInput, EditorOptions, IEditorInputSerializer, IEditorInputFactoryRegistry, EditorExtensions } from 'vs/workbench/common/editor';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { Registry } from 'vs/platform/registry/common/platform';
 import { SyncDescriptor } from 'vs/platform/instantiation/common/descriptors';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 import { NullTelemetryService } from 'vs/platform/telemetry/common/telemetryUtils';
-import { workbenchInstantiationService, TestEditorGroupView, TestEditorGroupsService, registerTestResourceEditor } from 'vs/workbench/test/browser/workbenchTestServices';
+import { workbenchInstantiationService, TestEditorGroupView, TestEditorGroupsService, registerTestResourceEditor, TestEditorInput } from 'vs/workbench/test/browser/workbenchTestServices';
 import { ResourceEditorInput } from 'vs/workbench/common/editor/resourceEditorInput';
 import { TestThemeService } from 'vs/platform/theme/test/common/testThemeService';
 import { URI } from 'vs/base/common/uri';
-import { IEditorRegistry, Extensions, EditorDescriptor } from 'vs/workbench/browser/editor';
+import { IEditorRegistry, EditorDescriptor } from 'vs/workbench/browser/editor';
 import { CancellationToken } from 'vs/base/common/cancellation';
 import { IEditorModel } from 'vs/platform/editor/common/editor';
 import { DisposableStore, dispose } from 'vs/base/common/lifecycle';
@@ -24,33 +24,33 @@ import { extUri } from 'vs/base/common/resources';
 
 const NullThemeService = new TestThemeService();
 
-let EditorRegistry: IEditorRegistry = Registry.as(Extensions.Editors);
+let EditorRegistry: IEditorRegistry = Registry.as(EditorExtensions.Editors);
 let EditorInputRegistry: IEditorInputFactoryRegistry = Registry.as(EditorExtensions.EditorInputFactories);
 
-export class MyEditor extends EditorPane {
+class TestEditor extends EditorPane {
 
 	constructor(@ITelemetryService telemetryService: ITelemetryService) {
-		super('MyEditor', NullTelemetryService, NullThemeService, new TestStorageService());
+		super('TestEditor', NullTelemetryService, NullThemeService, new TestStorageService());
 	}
 
-	getId(): string { return 'myEditor'; }
+	override getId(): string { return 'testEditor'; }
 	layout(): void { }
 	createEditor(): any { }
 }
 
-export class MyOtherEditor extends EditorPane {
+export class OtherTestEditor extends EditorPane {
 
 	constructor(@ITelemetryService telemetryService: ITelemetryService) {
-		super('myOtherEditor', NullTelemetryService, NullThemeService, new TestStorageService());
+		super('testOtherEditor', NullTelemetryService, NullThemeService, new TestStorageService());
 	}
 
-	getId(): string { return 'myOtherEditor'; }
+	override getId(): string { return 'testOtherEditor'; }
 
 	layout(): void { }
 	createEditor(): any { }
 }
 
-class MyInputFactory implements IEditorInputFactory {
+class TestInputSerializer implements IEditorInputSerializer {
 
 	canSerialize(editorInput: EditorInput): boolean {
 		return true;
@@ -65,42 +65,42 @@ class MyInputFactory implements IEditorInputFactory {
 	}
 }
 
-class MyInput extends EditorInput {
+class TestInput extends EditorInput {
 
 	readonly resource = undefined;
 
-	getPreferredEditorId(ids: string[]) {
+	override getPreferredEditorId(ids: string[]) {
 		return ids[1];
 	}
 
-	getTypeId(): string {
-		return '';
+	override get typeId(): string {
+		return 'testInput';
 	}
 
-	resolve(): any {
+	override resolve(): any {
 		return null;
 	}
 }
 
-class MyOtherInput extends EditorInput {
+class OtherTestInput extends EditorInput {
 
 	readonly resource = undefined;
 
-	getTypeId(): string {
-		return '';
+	override get typeId(): string {
+		return 'otherTestInput';
 	}
 
-	resolve(): any {
+	override resolve(): any {
 		return null;
 	}
 }
-class MyResourceEditorInput extends ResourceEditorInput { }
+class TestResourceEditorInput extends ResourceEditorInput { }
 
 suite('Workbench EditorPane', () => {
 
 	test('EditorPane API', async () => {
-		let e = new MyEditor(NullTelemetryService);
-		let input = new MyOtherInput();
+		let e = new TestEditor(NullTelemetryService);
+		let input = new OtherTestInput();
 		let options = new EditorOptions();
 
 		assert(!e.isVisible());
@@ -112,7 +112,7 @@ suite('Workbench EditorPane', () => {
 		e.setVisible(true, group);
 		assert(e.isVisible());
 		assert.strictEqual(e.group, group);
-		input.onDispose(() => {
+		input.onWillDispose(() => {
 			assert(false);
 		});
 		e.dispose();
@@ -124,26 +124,26 @@ suite('Workbench EditorPane', () => {
 	});
 
 	test('EditorDescriptor', () => {
-		let d = EditorDescriptor.create(MyEditor, 'id', 'name');
+		let d = EditorDescriptor.create(TestEditor, 'id', 'name');
 		assert.strictEqual(d.getId(), 'id');
 		assert.strictEqual(d.getName(), 'name');
 	});
 
 	test('Editor Registration', function () {
-		let d1 = EditorDescriptor.create(MyEditor, 'id1', 'name');
-		let d2 = EditorDescriptor.create(MyOtherEditor, 'id2', 'name');
+		let d1 = EditorDescriptor.create(TestEditor, 'id1', 'name');
+		let d2 = EditorDescriptor.create(OtherTestEditor, 'id2', 'name');
 
 		let oldEditorsCnt = EditorRegistry.getEditors().length;
 		let oldInputCnt = (<any>EditorRegistry).getEditorInputs().length;
 
-		const dispose1 = EditorRegistry.registerEditor(d1, [new SyncDescriptor(MyInput)]);
-		const dispose2 = EditorRegistry.registerEditor(d2, [new SyncDescriptor(MyInput), new SyncDescriptor(MyOtherInput)]);
+		const dispose1 = EditorRegistry.registerEditor(d1, [new SyncDescriptor(TestInput)]);
+		const dispose2 = EditorRegistry.registerEditor(d2, [new SyncDescriptor(TestInput), new SyncDescriptor(OtherTestInput)]);
 
 		assert.strictEqual(EditorRegistry.getEditors().length, oldEditorsCnt + 2);
 		assert.strictEqual((<any>EditorRegistry).getEditorInputs().length, oldInputCnt + 3);
 
-		assert.strictEqual(EditorRegistry.getEditor(new MyInput()), d2);
-		assert.strictEqual(EditorRegistry.getEditor(new MyOtherInput()), d2);
+		assert.strictEqual(EditorRegistry.getEditor(new TestInput()), d2);
+		assert.strictEqual(EditorRegistry.getEditor(new OtherTestInput()), d2);
 
 		assert.strictEqual(EditorRegistry.getEditorById('id1'), d1);
 		assert.strictEqual(EditorRegistry.getEditorById('id2'), d2);
@@ -153,17 +153,17 @@ suite('Workbench EditorPane', () => {
 	});
 
 	test('Editor Lookup favors specific class over superclass (match on specific class)', function () {
-		let d1 = EditorDescriptor.create(MyEditor, 'id1', 'name');
+		let d1 = EditorDescriptor.create(TestEditor, 'id1', 'name');
 
 		const disposables = new DisposableStore();
 
 		disposables.add(registerTestResourceEditor());
-		disposables.add(EditorRegistry.registerEditor(d1, [new SyncDescriptor(MyResourceEditorInput)]));
+		disposables.add(EditorRegistry.registerEditor(d1, [new SyncDescriptor(TestResourceEditorInput)]));
 
 		let inst = workbenchInstantiationService();
 
-		const editor = EditorRegistry.getEditor(inst.createInstance(MyResourceEditorInput, URI.file('/fake'), 'fake', '', undefined))!.instantiate(inst);
-		assert.strictEqual(editor.getId(), 'myEditor');
+		const editor = EditorRegistry.getEditor(inst.createInstance(TestResourceEditorInput, URI.file('/fake'), 'fake', '', undefined))!.instantiate(inst);
+		assert.strictEqual(editor.getId(), 'testEditor');
 
 		const otherEditor = EditorRegistry.getEditor(inst.createInstance(ResourceEditorInput, URI.file('/fake'), 'fake', '', undefined))!.instantiate(inst);
 		assert.strictEqual(otherEditor.getId(), 'workbench.editors.textResourceEditor');
@@ -177,19 +177,26 @@ suite('Workbench EditorPane', () => {
 		const disposables = new DisposableStore();
 
 		disposables.add(registerTestResourceEditor());
-		const editor = EditorRegistry.getEditor(inst.createInstance(MyResourceEditorInput, URI.file('/fake'), 'fake', '', undefined))!.instantiate(inst);
+		const editor = EditorRegistry.getEditor(inst.createInstance(TestResourceEditorInput, URI.file('/fake'), 'fake', '', undefined))!.instantiate(inst);
 
 		assert.strictEqual('workbench.editors.textResourceEditor', editor.getId());
 
 		disposables.dispose();
 	});
 
-	test('Editor Input Factory', function () {
+	test('Editor Input Serializer', function () {
+		const testInput = new TestEditorInput(URI.file('/fake'), 'testTypeId');
 		workbenchInstantiationService().invokeFunction(accessor => EditorInputRegistry.start(accessor));
-		const disposable = EditorInputRegistry.registerEditorInputFactory('myInputId', MyInputFactory);
+		const disposable = EditorInputRegistry.registerEditorInputSerializer(testInput.typeId, TestInputSerializer);
 
-		let factory = EditorInputRegistry.getEditorInputFactory('myInputId');
+		let factory = EditorInputRegistry.getEditorInputSerializer('testTypeId');
 		assert(factory);
+
+		factory = EditorInputRegistry.getEditorInputSerializer(testInput);
+		assert(factory);
+
+		// throws when registering serializer for same type
+		assert.throws(() => EditorInputRegistry.registerEditorInputSerializer(testInput.typeId, TestInputSerializer));
 
 		disposable.dispose();
 	});
@@ -304,10 +311,10 @@ suite('Workbench EditorPane', () => {
 			constructor(public resource: URI, private id = 'testEditorInputForMementoTest') {
 				super();
 			}
-			getTypeId() { return 'testEditorInputForMementoTest'; }
-			async resolve(): Promise<IEditorModel | null> { return null; }
+			override get typeId() { return 'testEditorInputForMementoTest'; }
+			override async resolve(): Promise<IEditorModel | null> { return null; }
 
-			matches(other: TestEditorInput): boolean {
+			override matches(other: TestEditorInput): boolean {
 				return other && this.id === other.id && other instanceof TestEditorInput;
 			}
 		}
@@ -342,10 +349,10 @@ suite('Workbench EditorPane', () => {
 			constructor(public resource: URI, private id = 'testEditorInputForMementoTest') {
 				super();
 			}
-			getTypeId() { return 'testEditorInputForMementoTest'; }
-			async resolve(): Promise<IEditorModel | null> { return null; }
+			override get typeId() { return 'testEditorInputForMementoTest'; }
+			override async resolve(): Promise<IEditorModel | null> { return null; }
 
-			matches(other: TestEditorInput): boolean {
+			override matches(other: TestEditorInput): boolean {
 				return other && this.id === other.id && other instanceof TestEditorInput;
 			}
 		}
@@ -386,9 +393,4 @@ suite('Workbench EditorPane', () => {
 		res = memento.loadEditorState(testGroup0, testInputB);
 		assert.ok(!res);
 	});
-
-	return {
-		MyEditor: MyEditor,
-		MyOtherEditor: MyOtherEditor
-	};
 });

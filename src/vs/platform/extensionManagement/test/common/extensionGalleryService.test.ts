@@ -19,8 +19,10 @@ import { IEnvironmentService } from 'vs/platform/environment/common/environment'
 import { mock } from 'vs/base/test/common/mock';
 
 class EnvironmentServiceMock extends mock<IEnvironmentService>() {
-	constructor(readonly serviceMachineIdResource: URI) {
+	override readonly serviceMachineIdResource: URI;
+	constructor(serviceMachineIdResource: URI) {
 		super();
+		this.serviceMachineIdResource = serviceMachineIdResource;
 	}
 }
 
@@ -43,6 +45,6 @@ suite('Extension Gallery Service', () => {
 		const headers = await resolveMarketplaceHeaders(product.version, environmentService, fileService, storageService);
 		assert.ok(isUUID(headers['X-Market-User-Id']));
 		const headers2 = await resolveMarketplaceHeaders(product.version, environmentService, fileService, storageService);
-		assert.equal(headers['X-Market-User-Id'], headers2['X-Market-User-Id']);
+		assert.strictEqual(headers['X-Market-User-Id'], headers2['X-Market-User-Id']);
 	});
 });

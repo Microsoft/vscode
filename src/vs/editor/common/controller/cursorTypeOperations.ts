@@ -957,7 +957,7 @@ export class TypeWithAutoClosingCommand extends ReplaceCommandWithOffsetCursorSt
 		this.enclosingRange = null;
 	}
 
-	public computeCursorState(model: ITextModel, helper: ICursorStateComputerData): Selection {
+	public override computeCursorState(model: ITextModel, helper: ICursorStateComputerData): Selection {
 		let inverseEditOperations = helper.getInverseEditOperations();
 		let range = inverseEditOperations[0].range;
 		this.closeCharacterRange = new Range(range.startLineNumber, range.endColumn - this._closeCharacter.length, range.endLineNumber, range.endColumn);

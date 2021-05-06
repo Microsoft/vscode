@@ -76,7 +76,7 @@ export class Selection extends Range {
 	/**
 	 * Transform to a human-readable representation.
 	 */
-	public toString(): string {
+	public override toString(): string {
 		return '[' + this.selectionStartLineNumber + ',' + this.selectionStartColumn + ' -> ' + this.positionLineNumber + ',' + this.positionColumn + ']';
 	}
 
@@ -114,7 +114,7 @@ export class Selection extends Range {
 	/**
 	 * Create a new selection with a different `positionLineNumber` and `positionColumn`.
 	 */
-	public setEndPosition(endLineNumber: number, endColumn: number): Selection {
+	public override setEndPosition(endLineNumber: number, endColumn: number): Selection {
 		if (this.getDirection() === SelectionDirection.LTR) {
 			return new Selection(this.startLineNumber, this.startColumn, endLineNumber, endColumn);
 		}
@@ -131,7 +131,7 @@ export class Selection extends Range {
 	/**
 	 * Create a new selection with a different `selectionStartLineNumber` and `selectionStartColumn`.
 	 */
-	public setStartPosition(startLineNumber: number, startColumn: number): Selection {
+	public override setStartPosition(startLineNumber: number, startColumn: number): Selection {
 		if (this.getDirection() === SelectionDirection.LTR) {
 			return new Selection(startLineNumber, startColumn, this.endLineNumber, this.endColumn);
 		}
@@ -143,7 +143,7 @@ export class Selection extends Range {
 	/**
 	 * Create a `Selection` from one or two positions
 	 */
-	public static fromPositions(start: IPosition, end: IPosition = start): Selection {
+	public static override fromPositions(start: IPosition, end: IPosition = start): Selection {
 		return new Selection(start.lineNumber, start.column, end.lineNumber, end.column);
 	}
 

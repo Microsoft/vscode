@@ -33,3 +33,28 @@ export function provideInstalledExtensionProposals(existing: string[], additiona
 	return undefined;
 }
 
+export function provideWorkspaceTrustExtensionProposals(existing: string[], range: vscode.Range): vscode.ProviderResult<vscode.CompletionItem[] | vscode.CompletionList> {
+	if (Array.isArray(existing)) {
+		const extensions = vscode.extensions.all.filter(e => e.packageJSON.main);
+		const extensionProposals = extensions.filter(e => existing.indexOf(e.id) === -1);
+		if (extensionProposals.length) {
+			return extensionProposals.map(e => {
+				const item = new vscode.CompletionItem(e.id);
+				const insertText = `"${e.id}": {\n\t"supported": false,\n\t"version": "${e.packageJSON.version}"\n}`;
+				item.kind = vscode.CompletionItemKind.Value;
+				item.insertText = insertText;
+				item.range = range;
+				item.filterText = insertText;
+				return item;
+			});
+		} else {
+			const example = new vscode.CompletionItem(localize('exampleExtension', "Example"));
+			example.insertText = '"vscode.csharp: {\n\t"supported": false,\n\t"version": "0.0.0"\n}`;"';
+			example.kind = vscode.CompletionItemKind.Value;
+			example.range = range;
+			return [example];
+		}
+	}
+
+	return undefined;
+}

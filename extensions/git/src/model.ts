@@ -284,8 +284,9 @@ export class Model implements IRemoteSourceProviderRegistry, IPushErrorHandlerRe
 
 			this.open(repository);
 			await repository.status();
-		} catch (err) {
+		} catch (ex) {
 			// noop
+			this.outputChannel.appendLine(`Opening repository for path='${path}' failed; ex=${ex}`);
 		}
 	}
 

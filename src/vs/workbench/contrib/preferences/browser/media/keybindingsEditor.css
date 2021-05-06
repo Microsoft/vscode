@@ -147,7 +147,10 @@
 
 .keybindings-editor > .keybindings-body > .keybindings-table-container .monaco-table-tr .monaco-table-td .when .monaco-inputbox {
 	line-height: normal;
-	margin-right: 10px;
+}
+
+.keybindings-editor > .keybindings-body > .keybindings-table-container .monaco-table-tr .monaco-table-td .when .monaco-inputbox input {
+	padding-left: 10px;
 }
 
 .monaco-workbench.mac .keybindings-editor > .keybindings-body > .keybindings-table-container .monaco-table-tr .monaco-table-td .when .monaco-inputbox,
@@ -188,4 +191,14 @@
 .keybindings-editor > .keybindings-body > .keybindings-table-container .monaco-table.focused .monaco-list-row.selected .monaco-table-td .highlight,
 .keybindings-editor > .keybindings-body > .keybindings-table-container .monaco-table.focused .monaco-list-row.selected.focused .monaco-table-td .highlight {
 	color: inherit;
+}
+
+.keybindings-editor .monaco-table-th,
+.keybindings-editor .monaco-table-td {
+	padding-left: 10px;
+}
+
+.keybindings-editor .monaco-table-th[data-col-index="0"],
+.keybindings-editor .monaco-table-td[data-col-index="0"] {
+	padding-left: 20px;
 }

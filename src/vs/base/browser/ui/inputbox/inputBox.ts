@@ -27,6 +27,7 @@ const $ = dom.$;
 
 export interface IInputOptions extends IInputBoxStyles {
 	readonly placeholder?: string;
+	readonly tooltip?: string;
 	readonly ariaLabel?: string;
 	readonly type?: string;
 	readonly validationOptions?: IInputValidationOptions;
@@ -95,6 +96,7 @@ export class InputBox extends Widget {
 	private options: IInputOptions;
 	private message: IMessage | null;
 	private placeholder: string;
+	private tooltip: string;
 	private ariaLabel: string;
 	private validation?: IInputValidator;
 	private state: 'idle' | 'open' | 'closed' = 'idle';
@@ -133,6 +135,7 @@ export class InputBox extends Widget {
 		mixin(this.options, defaultOpts, false);
 		this.message = null;
 		this.placeholder = this.options.placeholder || '';
+		this.tooltip = this.options.tooltip ?? (this.placeholder || '');
 		this.ariaLabel = this.options.ariaLabel || '';
 
 		this.inputBackground = this.options.inputBackground;
@@ -207,6 +210,10 @@ export class InputBox extends Widget {
 			this.setPlaceHolder(this.placeholder);
 		}
 
+		if (this.tooltip) {
+			this.setTooltip(this.tooltip);
+		}
+
 		this.oninput(this.input, () => this.onValueChange());
 		this.onblur(this.input, () => this.onBlur());
 		this.onfocus(this.input, () => this.onFocus());
@@ -235,7 +242,11 @@ export class InputBox extends Widget {
 	public setPlaceHolder(placeHolder: string): void {
 		this.placeholder = placeHolder;
 		this.input.setAttribute('placeholder', placeHolder);
-		this.input.title = placeHolder;
+	}
+
+	public setTooltip(tooltip: string): void {
+		this.tooltip = tooltip;
+		this.input.title = tooltip;
 	}
 
 	public setAriaLabel(label: string): void {
@@ -599,7 +610,7 @@ export class InputBox extends Widget {
 		}
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		this._hideMessage();
 
 		this.message = null;

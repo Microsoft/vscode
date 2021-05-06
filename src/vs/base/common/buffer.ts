@@ -235,3 +235,11 @@ export function streamToBufferReadableStream(stream: streams.ReadableStreamEvent
 export function newWriteableBufferStream(options?: streams.WriteableStreamOptions): streams.WriteableStream<VSBuffer> {
 	return streams.newWriteableStream<VSBuffer>(chunks => VSBuffer.concat(chunks), options);
 }
+
+export function prefixedBufferReadable(prefix: VSBuffer, readable: VSBufferReadable): VSBufferReadable {
+	return streams.prefixedReadable(prefix, readable, chunks => VSBuffer.concat(chunks));
+}
+
+export function prefixedBufferStream(prefix: VSBuffer, stream: VSBufferReadableStream): VSBufferReadableStream {
+	return streams.prefixedStream(prefix, stream, chunks => VSBuffer.concat(chunks));
+}

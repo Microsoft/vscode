@@ -16,7 +16,7 @@ suite('HTML Words', () => {
 		let actualRange = words.getWordAtText(value, offset, wordRegex);
 		assert(actualRange.start <= offset);
 		assert(actualRange.start + actualRange.length >= offset);
-		assert.equal(value.substr(actualRange.start, actualRange.length), expected);
+		assert.strictEqual(value.substr(actualRange.start, actualRange.length), expected);
 	}
 
 

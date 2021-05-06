@@ -56,7 +56,7 @@ export class BinaryEditorModel extends EditorModel {
 		return this.etag;
 	}
 
-	async load(): Promise<BinaryEditorModel> {
+	override async resolve(): Promise<void> {
 
 		// Make sure to resolve up to date stat for file resources
 		if (this.fileService.canHandleResource(this.resource)) {
@@ -66,7 +66,5 @@ export class BinaryEditorModel extends EditorModel {
 				this.size = stat.size;
 			}
 		}
-
-		return this;
 	}
 }

@@ -121,7 +121,7 @@ class AbcEditor extends Disposable {
 		});
 	}
 
-	public dispose() {
+	public override dispose() {
 		if (this.isDisposed) {
 			return;
 		}

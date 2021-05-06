@@ -31,7 +31,17 @@ export class QuickAccessController extends Disposable implements IQuickAccessCon
 		super();
 	}
 
+	pick(value = '', options?: IQuickAccessOptions): Promise<IQuickPickItem[] | undefined> {
+		return this.doShowOrPick(value, true, options);
+	}
+
 	show(value = '', options?: IQuickAccessOptions): void {
+		this.doShowOrPick(value, false, options);
+	}
+
+	private doShowOrPick(value: string, pick: true, options?: IQuickAccessOptions): Promise<IQuickPickItem[] | undefined>;
+	private doShowOrPick(value: string, pick: false, options?: IQuickAccessOptions): void;
+	private doShowOrPick(value: string, pick: boolean, options?: IQuickAccessOptions): Promise<IQuickPickItem[] | undefined> | void {
 
 		// Find provider for the value to show
 		const [provider, descriptor] = this.getOrInstantiateProvider(value);
@@ -99,6 +109,18 @@ export class QuickAccessController extends Disposable implements IQuickAccessCon
 			picker.ariaLabel = descriptor?.placeholder;
 		}
 
+		// Pick mode: setup a promise that can be resolved
+		// with the selected items and prevent execution
+		let pickPromise: Promise<IQuickPickItem[]> | undefined = undefined;
+		let pickResolve: Function | undefined = undefined;
+		if (pick) {
+			pickPromise = new Promise<IQuickPickItem[]>(resolve => pickResolve = resolve);
+			disposables.add(once(picker.onWillAccept)(e => {
+				e.veto();
+				picker.hide();
+			}));
+		}
+
 		// Register listeners
 		disposables.add(this.registerPickerListeners(picker, provider, descriptor, value));
 
@@ -119,12 +141,20 @@ export class QuickAccessController extends Disposable implements IQuickAccessCon
 
 			// Start to dispose once picker hides
 			disposables.dispose();
+
+			// Resolve pick promise with selected items
+			pickResolve?.(picker.selectedItems);
 		});
 
 		// Finally, show the picker. This is important because a provider
 		// may not call this and then our disposables would leak that rely
 		// on the onDidHide event.
 		picker.show();
+
+		// Pick mode: return with promise
+		if (pick) {
+			return pickPromise;
+		}
 	}
 
 	private adjustValueSelection(picker: IQuickPick<IQuickPickItem>, descriptor?: IQuickAccessProviderDescriptor, options?: IQuickAccessOptions): void {

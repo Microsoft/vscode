@@ -216,7 +216,7 @@ class LoadMoreCommand {
 	}
 }
 
-export const TimelineFollowActiveEditorContext = new RawContextKey<boolean>('timelineFollowActiveEditor', true);
+export const TimelineFollowActiveEditorContext = new RawContextKey<boolean>('timelineFollowActiveEditor', true, true);
 
 export class TimelinePane extends ViewPane {
 	static readonly TITLE = localize('timeline', "Timeline");
@@ -239,12 +239,12 @@ export class TimelinePane extends ViewPane {
 
 	constructor(
 		options: IViewPaneOptions,
-		@IKeybindingService protected keybindingService: IKeybindingService,
-		@IContextMenuService protected contextMenuService: IContextMenuService,
-		@IContextKeyService protected contextKeyService: IContextKeyService,
-		@IConfigurationService protected configurationService: IConfigurationService,
+		@IKeybindingService keybindingService: IKeybindingService,
+		@IContextMenuService contextMenuService: IContextMenuService,
+		@IContextKeyService contextKeyService: IContextKeyService,
+		@IConfigurationService configurationService: IConfigurationService,
 		@IViewDescriptorService viewDescriptorService: IViewDescriptorService,
-		@IInstantiationService protected readonly instantiationService: IInstantiationService,
+		@IInstantiationService instantiationService: IInstantiationService,
 		@IEditorService protected editorService: IEditorService,
 		@ICommandService protected commandService: ICommandService,
 		@IProgressService private readonly progressService: IProgressService,
@@ -797,12 +797,12 @@ export class TimelinePane extends ViewPane {
 		this.refresh();
 	}
 
-	focus(): void {
+	override focus(): void {
 		super.focus();
 		this.tree.domFocus();
 	}
 
-	setExpanded(expanded: boolean): boolean {
+	override setExpanded(expanded: boolean): boolean {
 		const changed = super.setExpanded(expanded);
 
 		if (changed && this.isBodyVisible()) {
@@ -816,7 +816,7 @@ export class TimelinePane extends ViewPane {
 		return changed;
 	}
 
-	setVisible(visible: boolean): void {
+	override setVisible(visible: boolean): void {
 		if (visible) {
 			this.visibilityDisposables = new DisposableStore();
 
@@ -834,18 +834,18 @@ export class TimelinePane extends ViewPane {
 		}
 	}
 
-	protected layoutBody(height: number, width: number): void {
+	protected override layoutBody(height: number, width: number): void {
 		super.layoutBody(height, width);
 		this.tree.layout(height, width);
 	}
 
-	protected renderHeaderTitle(container: HTMLElement): void {
+	protected override renderHeaderTitle(container: HTMLElement): void {
 		super.renderHeaderTitle(container, this.title);
 
 		container.classList.add('timeline-view');
 	}
 
-	protected renderBody(container: HTMLElement): void {
+	protected override renderBody(container: HTMLElement): void {
 		super.renderBody(container);
 
 		this.$container = container;
@@ -1051,13 +1051,14 @@ export class TimelineIdentityProvider implements IIdentityProvider<TreeElement> 
 
 class TimelineActionRunner extends ActionRunner {
 
-	runAction(action: IAction, { uri, item }: TimelineActionContext): Promise<any> {
+	override async runAction(action: IAction, { uri, item }: TimelineActionContext): Promise<void> {
 		if (!isTimelineItem(item)) {
 			// TODO@eamodio do we need to do anything else?
-			return action.run();
+			await action.run();
+			return;
 		}
 
-		return action.run(...[
+		await action.run(...[
 			{
 				$mid: 11,
 				handle: item.handle,

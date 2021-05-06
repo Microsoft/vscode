@@ -36,6 +36,7 @@ import { EditorResourceAccessor, IEditorPane } from 'vs/workbench/common/editor'
 import { CancellationTokenSource } from 'vs/base/common/cancellation';
 import { Event } from 'vs/base/common/event';
 import { ITreeSorter } from 'vs/base/browser/ui/tree/tree';
+import { URI } from 'vs/base/common/uri';
 
 const _ctxFollowsCursor = new RawContextKey('outlineFollowsCursor', false);
 const _ctxFilterOnType = new RawContextKey('outlineFiltersOnType', false);
@@ -117,18 +118,18 @@ export class OutlinePane extends ViewPane {
 		this._disposables.add(this._outlineViewState.onDidChange(updateContext));
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this._disposables.dispose();
 		this._editorDisposables.dispose();
 		this._editorListener.dispose();
 		super.dispose();
 	}
 
-	focus(): void {
+	override focus(): void {
 		this._tree?.domFocus();
 	}
 
-	protected renderBody(container: HTMLElement): void {
+	protected override renderBody(container: HTMLElement): void {
 		super.renderBody(container);
 
 		this._domNode = container;
@@ -157,7 +158,7 @@ export class OutlinePane extends ViewPane {
 		}));
 	}
 
-	protected layoutBody(height: number, width: number): void {
+	protected override layoutBody(height: number, width: number): void {
 		super.layoutBody(height, width);
 		this._tree?.layout(height, width);
 		this._treeDimensions = new dom.Dimension(width, height);
@@ -177,23 +178,31 @@ export class OutlinePane extends ViewPane {
 		this._message.innerText = message;
 	}
 
-	private async _handleEditorChanged(pane: IEditorPane | undefined): Promise<void> {
-		this._editorDisposables.clear();
+	private _captureViewState(resource: URI | undefined): boolean {
+		if (resource && this._tree) {
+			const oldOutline = this._tree?.getInput();
+			if (oldOutline) {
+				this._treeStates.set(`${oldOutline.outlineKind}/${resource}`, this._tree!.getViewState());
+				return true;
+			}
+		}
+		return false;
+	}
 
-		const oldOutline = this._tree?.getInput();
-		const resource = EditorResourceAccessor.getOriginalUri(pane?.input);
+	private async _handleEditorChanged(pane: IEditorPane | undefined): Promise<void> {
 
 		// persist state
-		if (oldOutline) {
-			this._treeStates.set(`${oldOutline.outlineKind}/${resource}`, this._tree!.getViewState());
-		}
+		const resource = EditorResourceAccessor.getOriginalUri(pane?.input);
+		const didCapture = this._captureViewState(resource);
+
+		this._editorDisposables.clear();
 
 		if (!pane || !this._outlineService.canCreateOutline(pane) || !resource) {
 			return this._showMessage(localize('no-editor', "The active editor cannot provide outline information."));
 		}
 
 		let loadingMessage: IDisposable | undefined;
-		if (!oldOutline) {
+		if (!didCapture) {
 			loadingMessage = new TimeoutTimer(() => {
 				this._showMessage(localize('loading', "Loading document symbols for '{0}'...", basename(resource)));
 			}, 100);
@@ -245,6 +254,7 @@ export class OutlinePane extends ViewPane {
 			if (newOutline.isEmpty) {
 				// no more elements
 				this._showMessage(localize('no-symbols', "No symbols found in document '{0}'", basename(resource)));
+				this._captureViewState(resource);
 				tree.setInput(undefined);
 
 			} else if (!tree.getInput()) {

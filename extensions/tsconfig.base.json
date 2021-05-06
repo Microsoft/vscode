@@ -1,0 +1,17 @@
+{
+	"compilerOptions": {
+		"target": "es2018",
+		"lib": [
+			"es2018"
+		],
+		"module": "commonjs",
+		"strict": true,
+		"alwaysStrict": true,
+		"noImplicitAny": true,
+		"noImplicitReturns": true,
+		"noImplicitOverride": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"forceConsistentCasingInFileNames": true
+	}
+}

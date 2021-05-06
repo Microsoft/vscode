@@ -36,6 +36,13 @@ export interface IQuickAccessController {
 	 * Open the quick access picker with the optional value prefilled.
 	 */
 	show(value?: string, options?: IQuickAccessOptions): void;
+
+	/**
+	 * Same as `show()` but instead of executing the selected pick item,
+	 * it will be returned. May return `undefined` in case no item was
+	 * picked by the user.
+	 */
+	pick(value?: string, options?: IQuickAccessOptions): Promise<IQuickPickItem[] | undefined>;
 }
 
 export enum DefaultQuickAccessFilterValue {

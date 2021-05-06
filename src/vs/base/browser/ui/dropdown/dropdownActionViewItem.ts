@@ -7,14 +7,15 @@ import 'vs/css!./dropdown';
 import { Action, IAction, IActionRunner } from 'vs/base/common/actions';
 import { IDisposable } from 'vs/base/common/lifecycle';
 import { AnchorAlignment } from 'vs/base/browser/ui/contextview/contextview';
-import { ResolvedKeybinding } from 'vs/base/common/keyCodes';
-import { append, $ } from 'vs/base/browser/dom';
+import { KeyCode, ResolvedKeybinding } from 'vs/base/common/keyCodes';
+import { append, $, addDisposableListener, EventType } from 'vs/base/browser/dom';
 import { Emitter } from 'vs/base/common/event';
 import { ActionViewItem, BaseActionViewItem, IActionViewItemOptions, IBaseActionViewItemOptions } from 'vs/base/browser/ui/actionbar/actionViewItems';
 import { IActionProvider, DropdownMenu, IDropdownMenuOptions, ILabelRenderer } from 'vs/base/browser/ui/dropdown/dropdown';
 import { IContextMenuProvider } from 'vs/base/browser/contextmenu';
 import { Codicon } from 'vs/base/common/codicons';
 import { IActionViewItemProvider } from 'vs/base/browser/ui/actionbar/actionbar';
+import { StandardKeyboardEvent } from 'vs/base/browser/keyboardEvent';
 
 export interface IKeybindingProvider {
 	(action: IAction): ResolvedKeybinding | undefined;
@@ -42,23 +43,26 @@ export class DropdownMenuActionViewItem extends BaseActionViewItem {
 	private _onDidChangeVisibility = this._register(new Emitter<boolean>());
 	readonly onDidChangeVisibility = this._onDidChangeVisibility.event;
 
+	protected override readonly options: IDropdownMenuActionViewItemOptions;
+
 	constructor(
 		action: IAction,
 		menuActionsOrProvider: readonly IAction[] | IActionProvider,
 		contextMenuProvider: IContextMenuProvider,
-		protected options: IDropdownMenuActionViewItemOptions = {}
+		options: IDropdownMenuActionViewItemOptions = Object.create(null)
 	) {
 		super(null, action, options);
 
 		this.menuActionsOrProvider = menuActionsOrProvider;
 		this.contextMenuProvider = contextMenuProvider;
+		this.options = options;
 
 		if (this.options.actionRunner) {
 			this.actionRunner = this.options.actionRunner;
 		}
 	}
 
-	render(container: HTMLElement): void {
+	override render(container: HTMLElement): void {
 		this.actionItem = container;
 
 		const labelRenderer: ILabelRenderer = (el: HTMLElement): IDisposable | null => {
@@ -123,7 +127,7 @@ export class DropdownMenuActionViewItem extends BaseActionViewItem {
 		this.updateEnabled();
 	}
 
-	setActionContext(newContext: unknown): void {
+	override setActionContext(newContext: unknown): void {
 		super.setActionContext(newContext);
 
 		if (this.dropdownMenu) {
@@ -141,7 +145,7 @@ export class DropdownMenuActionViewItem extends BaseActionViewItem {
 		}
 	}
 
-	protected updateEnabled(): void {
+	protected override updateEnabled(): void {
 		const disabled = !this.getAction().enabled;
 		this.actionItem?.classList.toggle('disabled', disabled);
 		this.element?.classList.toggle('disabled', disabled);
@@ -166,7 +170,7 @@ export class ActionWithDropdownActionViewItem extends ActionViewItem {
 		super(context, action, options);
 	}
 
-	render(container: HTMLElement): void {
+	override render(container: HTMLElement): void {
 		super.render(container);
 		if (this.element) {
 			this.element.classList.add('action-dropdown-item');
@@ -181,6 +185,36 @@ export class ActionWithDropdownActionViewItem extends ActionViewItem {
 			};
 			this.dropdownMenuActionViewItem = new DropdownMenuActionViewItem(this._register(new Action('dropdownAction', undefined)), menuActionsProvider, this.contextMenuProvider, { classNames: ['dropdown', ...Codicon.dropDownButton.classNamesArray, ...(<IActionWithDropdownActionViewItemOptions>this.options).menuActionClassNames || []] });
 			this.dropdownMenuActionViewItem.render(this.element);
+
+			this._register(addDisposableListener(this.element, EventType.KEY_DOWN, e => {
+				const event = new StandardKeyboardEvent(e);
+				let handled: boolean = false;
+				if (this.dropdownMenuActionViewItem?.isFocused() && event.equals(KeyCode.LeftArrow)) {
+					handled = true;
+					this.dropdownMenuActionViewItem?.blur();
+					this.focus();
+				} else if (this.isFocused() && event.equals(KeyCode.RightArrow)) {
+					handled = true;
+					this.blur();
+					this.dropdownMenuActionViewItem?.focus();
+				}
+				if (handled) {
+					event.preventDefault();
+					event.stopPropagation();
+				}
+			}));
 		}
 	}
+
+	override blur(): void {
+		super.blur();
+		this.dropdownMenuActionViewItem?.blur();
+	}
+
+	override setFocusable(focusable: boolean): void {
+		super.setFocusable(focusable);
+		this.dropdownMenuActionViewItem?.setFocusable(focusable);
+	}
 }
+
+

@@ -12,7 +12,7 @@ import { IWorkspacesService, isUntitledWorkspace, IWorkspaceIdentifier, hasWorks
 import { WorkspaceService } from 'vs/workbench/services/configuration/browser/configurationService';
 import { IStorageService } from 'vs/platform/storage/common/storage';
 import { IExtensionService } from 'vs/workbench/services/extensions/common/extensions';
-import { IBackupFileService } from 'vs/workbench/services/backup/common/backup';
+import { IWorkingCopyBackupService } from 'vs/workbench/services/workingCopy/common/workingCopyBackup';
 import { ICommandService } from 'vs/platform/commands/common/commands';
 import { basename } from 'vs/base/common/resources';
 import { INotificationService, Severity } from 'vs/platform/notification/common/notification';
@@ -29,12 +29,11 @@ import { AbstractWorkspaceEditingService } from 'vs/workbench/services/workspace
 import { INativeHostService } from 'vs/platform/native/electron-sandbox/native';
 import { isMacintosh } from 'vs/base/common/platform';
 import { mnemonicButtonLabel } from 'vs/base/common/labels';
-import { BackupFileService } from 'vs/workbench/services/backup/common/backupFileService';
+import { WorkingCopyBackupService } from 'vs/workbench/services/workingCopy/common/workingCopyBackupService';
 import { IUriIdentityService } from 'vs/workbench/services/uriIdentity/common/uriIdentity';
+import { IWorkspaceTrustManagementService } from 'vs/platform/workspace/common/workspaceTrust';
 
 export class NativeWorkspaceEditingService extends AbstractWorkspaceEditingService {
-
-	declare readonly _serviceBrand: undefined;
 
 	constructor(
 		@IJSONEditingService jsonEditingService: IJSONEditingService,
@@ -43,21 +42,22 @@ export class NativeWorkspaceEditingService extends AbstractWorkspaceEditingServi
 		@IConfigurationService configurationService: IConfigurationService,
 		@IStorageService private storageService: IStorageService,
 		@IExtensionService private extensionService: IExtensionService,
-		@IBackupFileService private backupFileService: IBackupFileService,
+		@IWorkingCopyBackupService private workingCopyBackupService: IWorkingCopyBackupService,
 		@INotificationService notificationService: INotificationService,
 		@ICommandService commandService: ICommandService,
 		@IFileService fileService: IFileService,
 		@ITextFileService textFileService: ITextFileService,
 		@IWorkspacesService workspacesService: IWorkspacesService,
-		@INativeWorkbenchEnvironmentService protected environmentService: INativeWorkbenchEnvironmentService,
+		@INativeWorkbenchEnvironmentService environmentService: INativeWorkbenchEnvironmentService,
 		@IFileDialogService fileDialogService: IFileDialogService,
-		@IDialogService protected dialogService: IDialogService,
+		@IDialogService dialogService: IDialogService,
 		@ILifecycleService private readonly lifecycleService: ILifecycleService,
 		@ILabelService private readonly labelService: ILabelService,
 		@IHostService hostService: IHostService,
-		@IUriIdentityService uriIdentityService: IUriIdentityService
+		@IUriIdentityService uriIdentityService: IUriIdentityService,
+		@IWorkspaceTrustManagementService workspaceTrustManagementService: IWorkspaceTrustManagementService
 	) {
-		super(jsonEditingService, contextService, configurationService, notificationService, commandService, fileService, textFileService, workspacesService, environmentService, fileDialogService, dialogService, hostService, uriIdentityService);
+		super(jsonEditingService, contextService, configurationService, notificationService, commandService, fileService, textFileService, workspacesService, environmentService, fileDialogService, dialogService, hostService, uriIdentityService, workspaceTrustManagementService);
 
 		this.registerListeners();
 	}
@@ -124,7 +124,8 @@ export class NativeWorkspaceEditingService extends AbstractWorkspaceEditingServi
 					const newWorkspaceIdentifier = await this.workspacesService.getWorkspaceIdentifier(newWorkspacePath);
 					await this.workspacesService.addRecentlyOpened([{
 						label: this.labelService.getWorkspaceLabel(newWorkspaceIdentifier, { verbose: true }),
-						workspace: newWorkspaceIdentifier
+						workspace: newWorkspaceIdentifier,
+						remoteAuthority: this.environmentService.remoteAuthority
 					}]);
 
 					// Delete the untitled one
@@ -138,7 +139,7 @@ export class NativeWorkspaceEditingService extends AbstractWorkspaceEditingServi
 		}
 	}
 
-	async isValidTargetWorkspacePath(path: URI): Promise<boolean> {
+	override async isValidTargetWorkspacePath(path: URI): Promise<boolean> {
 		const windows = await this.nativeHostService.getWindows();
 
 		// Prevent overwriting a workspace that is currently opened in another window
@@ -166,9 +167,9 @@ export class NativeWorkspaceEditingService extends AbstractWorkspaceEditingServi
 			await this.migrateStorage(result.workspace);
 
 			// Reinitialize backup service
-			if (this.backupFileService instanceof BackupFileService) {
+			if (this.workingCopyBackupService instanceof WorkingCopyBackupService) {
 				const newBackupWorkspaceHome = result.backupPath ? URI.file(result.backupPath).with({ scheme: this.environmentService.userRoamingDataHome.scheme }) : undefined;
-				this.backupFileService.reinitialize(newBackupWorkspaceHome);
+				this.workingCopyBackupService.reinitialize(newBackupWorkspaceHome);
 			}
 		}
 

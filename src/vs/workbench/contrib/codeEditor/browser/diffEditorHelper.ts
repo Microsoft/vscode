@@ -21,7 +21,7 @@ const enum WidgetState {
 
 class DiffEditorHelperContribution extends Disposable implements IDiffEditorContribution {
 
-	public static ID = 'editor.contrib.diffEditorHelper';
+	public static readonly ID = 'editor.contrib.diffEditorHelper';
 
 	private _helperWidget: FloatingClickWidget | null;
 	private _helperWidgetListener: IDisposable | null;
@@ -98,7 +98,7 @@ class DiffEditorHelperContribution extends Disposable implements IDiffEditorCont
 		}
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		super.dispose();
 	}
 }

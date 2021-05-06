@@ -22,12 +22,12 @@ export abstract class Viewlet extends PaneComposite implements IViewlet {
 
 	constructor(id: string,
 		@ITelemetryService telemetryService: ITelemetryService,
-		@IStorageService protected storageService: IStorageService,
-		@IInstantiationService protected instantiationService: IInstantiationService,
+		@IStorageService storageService: IStorageService,
+		@IInstantiationService instantiationService: IInstantiationService,
 		@IThemeService themeService: IThemeService,
-		@IContextMenuService protected contextMenuService: IContextMenuService,
-		@IExtensionService protected extensionService: IExtensionService,
-		@IWorkspaceContextService protected contextService: IWorkspaceContextService,
+		@IContextMenuService contextMenuService: IContextMenuService,
+		@IExtensionService extensionService: IExtensionService,
+		@IWorkspaceContextService contextService: IWorkspaceContextService,
 		@IWorkbenchLayoutService protected layoutService: IWorkbenchLayoutService,
 		@IConfigurationService protected configurationService: IConfigurationService
 	) {

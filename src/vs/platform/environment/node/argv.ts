@@ -83,6 +83,7 @@ export const OPTIONS: OptionDescriptions<Required<NativeParsedArgs>> = {
 
 	'locate-extension': { type: 'string[]' },
 	'extensionDevelopmentPath': { type: 'string[]' },
+	'extensionDevelopmentKind': { type: 'string[]' },
 	'extensionTestsPath': { type: 'string' },
 	'debugId': { type: 'string' },
 	'debugRenderer': { type: 'boolean' },
@@ -131,6 +132,7 @@ export const OPTIONS: OptionDescriptions<Required<NativeParsedArgs>> = {
 	'ignore-certificate-errors': { type: 'boolean' },
 	'allow-insecure-localhost': { type: 'boolean' },
 	'log-net-log': { type: 'string' },
+	'vmodule': { type: 'string' },
 	'_urls': { type: 'string[]' },
 
 	_: { type: 'string[]' } // main arguments
@@ -261,7 +263,7 @@ export function formatOptions(options: OptionDescriptions<any>, columns: number)
 }
 
 function indent(count: number): string {
-	return (<any>' ').repeat(count);
+	return ' '.repeat(count);
 }
 
 function wrapText(text: string, columns: number): string[] {
@@ -318,4 +320,3 @@ export function buildHelpMessage(productName: string, executableName: string, ve
 export function buildVersionMessage(version: string | undefined, commit: string | undefined): string {
 	return `${version || localize('unknownVersion', "Unknown version")}\n${commit || localize('unknownCommit', "Unknown commit")}\n${process.arch}`;
 }
-

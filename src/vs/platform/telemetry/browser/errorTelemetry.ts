@@ -8,7 +8,7 @@ import { globals } from 'vs/base/common/platform';
 import BaseErrorTelemetry, { ErrorEvent } from 'vs/platform/telemetry/common/errorTelemetry';
 
 export default class ErrorTelemetry extends BaseErrorTelemetry {
-	protected installErrorListeners(): void {
+	protected override installErrorListeners(): void {
 		let oldOnError: Function;
 		let that = this;
 		if (typeof globals.onerror === 'function') {

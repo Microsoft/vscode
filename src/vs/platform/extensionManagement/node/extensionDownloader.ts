@@ -16,6 +16,7 @@ import { generateUuid } from 'vs/base/common/uuid';
 import * as semver from 'vs/base/common/semver/semver';
 import { isWindows } from 'vs/base/common/platform';
 import { Promises } from 'vs/base/common/async';
+import { getErrorMessage } from 'vs/base/common/errors';
 
 const ExtensionIdVersionRegex = /^([^.]+\..+)-(\d+\.\d+\.\d+)$/;
 
@@ -45,13 +46,26 @@ export class ExtensionsDownloader extends Disposable {
 		// Download only if vsix does not exist
 		if (!await this.fileService.exists(location)) {
 			// Download to temporary location first only if vsix does not exist
-			const tempLocation = joinPath(this.extensionsDownloadDir, `.${vsixName}`);
+			const tempLocation = joinPath(this.extensionsDownloadDir, `.${generateUuid()}`);
 			if (!await this.fileService.exists(tempLocation)) {
 				await this.extensionGalleryService.download(extension, tempLocation, operation);
 			}
 
-			// Rename temp location to original
-			await this.rename(tempLocation, location, Date.now() + (2 * 60 * 1000) /* Retry for 2 minutes */);
+			try {
+				// Rename temp location to original
+				await this.rename(tempLocation, location, Date.now() + (2 * 60 * 1000) /* Retry for 2 minutes */);
+			} catch (error) {
+				try {
+					await this.fileService.del(tempLocation);
+				} catch (e) { /* ignore */ }
+				if (error.code === 'ENOTEMPTY') {
+					this.logService.info(`Rename failed because vsix was downloaded by another source. So ignoring renaming.`, extension.identifier.id);
+				} else {
+					this.logService.info(`Rename failed because of ${getErrorMessage(error)}. Deleted the vsix from downloaded location`, tempLocation.path);
+					throw error;
+				}
+			}
+
 		}
 
 		return location;

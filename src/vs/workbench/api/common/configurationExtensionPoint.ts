@@ -170,7 +170,7 @@ configurationExtPoint.setHandler((extensions, { added, removed }) => {
 		validateProperties(configuration, extension);
 
 		configuration.id = node.id || extension.description.identifier.value;
-		configuration.extensionInfo = { id: extension.description.identifier.value };
+		configuration.extensionInfo = { id: extension.description.identifier.value, restrictedConfigurations: extension.description.capabilities?.untrustedWorkspaces?.supported === 'limited' ? extension.description.capabilities?.untrustedWorkspaces.restrictedConfigurations : undefined };
 		configuration.title = configuration.title || extension.description.displayName || extension.description.identifier.value;
 		configurations.push(configuration);
 		return configurations;
@@ -181,10 +181,10 @@ configurationExtPoint.setHandler((extensions, { added, removed }) => {
 		for (let extension of added) {
 			const configurations: IConfigurationNode[] = [];
 			const value = <IConfigurationNode | IConfigurationNode[]>extension.value;
-			if (!Array.isArray(value)) {
-				configurations.push(...handleConfiguration(value, extension));
-			} else {
+			if (Array.isArray(value)) {
 				value.forEach(v => configurations.push(...handleConfiguration(v, extension)));
+			} else {
+				configurations.push(...handleConfiguration(value, extension));
 			}
 			extensionConfigurations.set(ExtensionIdentifier.toKey(extension.description.identifier), configurations);
 			addedConfigurations.push(...configurations);
@@ -213,7 +213,7 @@ function validateProperties(configuration: IConfigurationNode, extension: IExten
 			const propertyConfiguration = properties[key];
 			if (!isObject(propertyConfiguration)) {
 				delete properties[key];
-				extension.collector.error(nls.localize('invalid.property', "'configuration.property' must be an object"));
+				extension.collector.error(nls.localize('invalid.property', "configuration.properties property '{0}' must be an object", key));
 				continue;
 			}
 			if (propertyConfiguration.scope) {
@@ -320,7 +320,7 @@ jsonRegistry.registerSchema('vscode://schemas/workspaceConfig', {
 		'remoteAuthority': {
 			type: 'string',
 			doNotSuggest: true,
-			description: nls.localize('workspaceConfig.remoteAuthority', "The remote server where the workspace is located. Only used by unsaved remote workspaces."),
+			description: nls.localize('workspaceConfig.remoteAuthority', "The remote server where the workspace is located."),
 		}
 	},
 	errorMessage: nls.localize('unknownWorkspaceProperty', "Unknown workspace configuration property")

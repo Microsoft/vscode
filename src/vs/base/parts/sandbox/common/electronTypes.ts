@@ -14,6 +14,10 @@
 
 export interface MessageBoxOptions {
 	/**
+	 * Content of the message box.
+	 */
+	message: string;
+	/**
 	 * Can be `"none"`, `"info"`, `"error"`, `"question"` or `"warning"`. On Windows,
 	 * `"question"` displays the same icon as `"info"`, unless you set an icon using
 	 * the `"icon"` option. On macOS, both `"warning"` and `"error"` display the same
@@ -34,10 +38,6 @@ export interface MessageBoxOptions {
 	 * Title of the message box, some platforms will not show it.
 	 */
 	title?: string;
-	/**
-	 * Content of the message box.
-	 */
-	message: string;
 	/**
 	 * Extra information of the message.
 	 */

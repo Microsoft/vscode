@@ -6,7 +6,6 @@
 import * as nls from 'vs/nls';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { URI } from 'vs/base/common/uri';
-import { IExternalTerminalConfiguration, IExternalTerminalService } from 'vs/workbench/contrib/externalTerminal/common/externalTerminal';
 import { MenuId, MenuRegistry, IMenuItem } from 'vs/platform/actions/common/actions';
 import { ITerminalService as IIntegratedTerminalService } from 'vs/workbench/contrib/terminal/browser/terminal';
 import { ResourceContextKey } from 'vs/workbench/common/resources';
@@ -26,6 +25,7 @@ import { isWeb, isWindows } from 'vs/base/common/platform';
 import { dirname, basename } from 'vs/base/common/path';
 import { LifecyclePhase } from 'vs/workbench/services/lifecycle/common/lifecycle';
 import { Registry } from 'vs/platform/registry/common/platform';
+import { IExternalTerminalConfiguration, IExternalTerminalService } from 'vs/platform/externalTerminal/common/externalTerminal';
 
 const OPEN_IN_TERMINAL_COMMAND_ID = 'openInTerminal';
 CommandsRegistry.registerCommand({
@@ -44,11 +44,7 @@ CommandsRegistry.registerCommand({
 			// Always use integrated terminal when using a remote
 			const useIntegratedTerminal = remoteAgentService.getConnection() || configurationService.getValue<IExternalTerminalConfiguration>().terminal.explorerKind === 'integrated';
 			if (useIntegratedTerminal) {
-
-
 				// TODO: Use uri for cwd in createterminal
-
-
 				const opened: { [path: string]: boolean } = {};
 				targets.map(({ stat }) => {
 					const resource = stat!.resource;

@@ -18,7 +18,6 @@ import { IEditorService } from 'vs/workbench/services/editor/common/editorServic
 import { IClipboardService } from 'vs/platform/clipboard/common/clipboardService';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
-import { INotificationService } from 'vs/platform/notification/common/notification';
 import { IdleValue } from 'vs/base/common/async';
 import { IAuthenticationService } from 'vs/workbench/services/authentication/browser/authenticationService';
 import { IWorkspaceContextService } from 'vs/platform/workspace/common/workspace';
@@ -43,7 +42,6 @@ export class OpenerValidatorContributions implements IWorkbenchContribution {
 		@IClipboardService private readonly _clipboardService: IClipboardService,
 		@ITelemetryService private readonly _telemetryService: ITelemetryService,
 		@IInstantiationService private readonly _instantiationService: IInstantiationService,
-		@INotificationService private readonly _notificationService: INotificationService,
 		@IAuthenticationService private readonly _authenticationService: IAuthenticationService,
 		@IWorkspaceContextService private readonly _workspaceContextService: IWorkspaceContextService,
 	) {
@@ -151,8 +149,6 @@ export class OpenerValidatorContributions implements IWorkbenchContribution {
 					this._storageService,
 					this._editorService,
 					this._telemetryService,
-					this._notificationService,
-					this._clipboardService,
 				);
 				// Trust all domains
 				if (pickedDomains.indexOf('*') !== -1) {

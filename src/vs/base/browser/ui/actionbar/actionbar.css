@@ -4,16 +4,17 @@
  *--------------------------------------------------------------------------------------------*/
 
 .monaco-action-bar {
-	text-align: right;
 	white-space: nowrap;
+	height: 100%;
 }
 
 .monaco-action-bar .actions-container {
 	display: flex;
 	margin: 0 auto;
 	padding: 0;
+	height: 100%;
 	width: 100%;
-	justify-content: flex-end;
+	align-items: center;
 }
 
 .monaco-action-bar.vertical .actions-container {
@@ -21,9 +22,10 @@
 }
 
 .monaco-action-bar .action-item {
+	display: block;
+	align-items: center;
+	justify-content: center;
 	cursor: pointer;
-	display: inline-block;
-	transition: transform 50ms ease;
 	position: relative;  /* DO NOT REMOVE - this is the key to preventing the ghosting icon bug in Chrome 42 */
 }
 
@@ -31,23 +33,22 @@
 	cursor: default;
 }
 
-.monaco-action-bar.animated .action-item.active {
-	transform: scale(1.272019649, 1.272019649); /* 1.272019649 = √φ */
-}
-
 .monaco-action-bar .action-item .icon,
 .monaco-action-bar .action-item .codicon {
-	display: inline-block;
+	display: block;
 }
 
 .monaco-action-bar .action-item .codicon {
 	display: flex;
 	align-items: center;
+	width: 16px;
+	height: 16px;
 }
 
 .monaco-action-bar .action-label {
 	font-size: 11px;
-	margin-right: 4px;
+	padding: 3px;
+	border-radius: 5px;
 }
 
 .monaco-action-bar .action-item.disabled .action-label,
@@ -72,10 +73,6 @@
 	padding-top: 1px;
 	margin-left: .8em;
 	margin-right: .8em;
-}
-
-.monaco-action-bar.animated.vertical .action-item.active {
-	transform: translate(5px, 0);
 }
 
 .secondary-actions .monaco-action-bar .action-label {

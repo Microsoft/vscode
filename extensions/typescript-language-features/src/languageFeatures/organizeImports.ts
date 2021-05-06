@@ -13,7 +13,7 @@ import { Command, CommandManager } from '../commands/commandManager';
 import { conditionalRegistration, requireMinVersion, requireSomeCapability } from '../utils/dependentRegistration';
 import { DocumentSelector } from '../utils/documentSelector';
 import { TelemetryReporter } from '../utils/telemetry';
-import * as typeconverts from '../utils/typeConverters';
+import * as typeConverters from '../utils/typeConverters';
 import FileConfigurationManager from './fileConfigurationManager';
 
 const localize = nls.loadMessageBundle();
@@ -52,7 +52,7 @@ class OrganizeImportsCommand implements Command {
 			return false;
 		}
 
-		const edits = typeconverts.WorkspaceEdit.fromFileCodeEdits(this.client, response.body);
+		const edits = typeConverters.WorkspaceEdit.fromFileCodeEdits(this.client, response.body);
 		return vscode.workspace.applyEdit(edits);
 	}
 }

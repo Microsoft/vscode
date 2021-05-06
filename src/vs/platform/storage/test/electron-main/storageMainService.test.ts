@@ -17,12 +17,16 @@ import { Emitter, Event } from 'vs/base/common/event';
 import { NativeParsedArgs } from 'vs/platform/environment/common/argv';
 import { ICodeWindow } from 'vs/platform/windows/electron-main/windows';
 import { Promises } from 'vs/base/common/async';
+import product from 'vs/platform/product/common/product';
+import { IProductService } from 'vs/platform/product/common/productService';
 
 suite('StorageMainService', function () {
 
+	const productService: IProductService = { _serviceBrand: undefined, ...product };
+
 	class TestStorageMainService extends StorageMainService {
 
-		protected getStorageOptions(): IStorageMainOptions {
+		protected override getStorageOptions(): IStorageMainOptions {
 			return {
 				useInMemoryStorage: true
 			};
@@ -62,8 +66,8 @@ suite('StorageMainService', function () {
 		registerWindow(window: ICodeWindow): void { }
 		async reload(window: ICodeWindow, cli?: NativeParsedArgs): Promise<void> { }
 		async unload(window: ICodeWindow, reason: UnloadReason): Promise<boolean> { return true; }
-		relaunch(options?: { addArgs?: string[] | undefined; removeArgs?: string[] | undefined; }): void { }
-		async quit(fromUpdate?: boolean): Promise<boolean> { return true; }
+		async relaunch(options?: { addArgs?: string[] | undefined; removeArgs?: string[] | undefined; }): Promise<void> { }
+		async quit(willRestart?: boolean): Promise<boolean> { return true; }
 		async kill(code?: number): Promise<void> { }
 		async when(phase: LifecycleMainPhase): Promise<void> { }
 	}
@@ -122,14 +126,14 @@ suite('StorageMainService', function () {
 	}
 
 	test('basics (global)', function () {
-		const storageMainService = new TestStorageMainService(new NullLogService(), new NativeEnvironmentService(parseArgs(process.argv, OPTIONS)), new StorageTestLifecycleMainService());
+		const storageMainService = new TestStorageMainService(new NullLogService(), new NativeEnvironmentService(parseArgs(process.argv, OPTIONS), productService), new StorageTestLifecycleMainService());
 
 		return testStorage(storageMainService.globalStorage, true);
 	});
 
 	test('basics (workspace)', function () {
 		const workspace = { id: generateUuid() };
-		const storageMainService = new TestStorageMainService(new NullLogService(), new NativeEnvironmentService(parseArgs(process.argv, OPTIONS)), new StorageTestLifecycleMainService());
+		const storageMainService = new TestStorageMainService(new NullLogService(), new NativeEnvironmentService(parseArgs(process.argv, OPTIONS), productService), new StorageTestLifecycleMainService());
 
 		return testStorage(storageMainService.workspaceStorage(workspace), false);
 	});
@@ -137,7 +141,7 @@ suite('StorageMainService', function () {
 	test('storage closed onWillShutdown', async function () {
 		const lifecycleMainService = new StorageTestLifecycleMainService();
 		const workspace = { id: generateUuid() };
-		const storageMainService = new TestStorageMainService(new NullLogService(), new NativeEnvironmentService(parseArgs(process.argv, OPTIONS)), lifecycleMainService);
+		const storageMainService = new TestStorageMainService(new NullLogService(), new NativeEnvironmentService(parseArgs(process.argv, OPTIONS), productService), lifecycleMainService);
 
 		let workspaceStorage = storageMainService.workspaceStorage(workspace);
 		let didCloseWorkspaceStorage = false;
@@ -168,7 +172,7 @@ suite('StorageMainService', function () {
 	});
 
 	test('storage closed before init works', async function () {
-		const storageMainService = new TestStorageMainService(new NullLogService(), new NativeEnvironmentService(parseArgs(process.argv, OPTIONS)), new StorageTestLifecycleMainService());
+		const storageMainService = new TestStorageMainService(new NullLogService(), new NativeEnvironmentService(parseArgs(process.argv, OPTIONS), productService), new StorageTestLifecycleMainService());
 		const workspace = { id: generateUuid() };
 
 		let workspaceStorage = storageMainService.workspaceStorage(workspace);
@@ -191,7 +195,7 @@ suite('StorageMainService', function () {
 	});
 
 	test('storage closed before init awaits works', async function () {
-		const storageMainService = new TestStorageMainService(new NullLogService(), new NativeEnvironmentService(parseArgs(process.argv, OPTIONS)), new StorageTestLifecycleMainService());
+		const storageMainService = new TestStorageMainService(new NullLogService(), new NativeEnvironmentService(parseArgs(process.argv, OPTIONS), productService), new StorageTestLifecycleMainService());
 		const workspace = { id: generateUuid() };
 
 		let workspaceStorage = storageMainService.workspaceStorage(workspace);

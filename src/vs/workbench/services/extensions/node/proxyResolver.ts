@@ -14,7 +14,7 @@ import { ExtHostExtensionService } from 'vs/workbench/api/node/extHostExtensionS
 import { URI } from 'vs/base/common/uri';
 import { ILogService } from 'vs/platform/log/common/log';
 import { IExtensionDescription } from 'vs/platform/extensions/common/extensions';
-import { LogLevel, patches, ResolveProxyEvent, setupProxyResolution, tlsPatches } from 'vs/workbench/services/extensions/node/proxyAgent';
+import { LogLevel, createHttpPatch, ProxyResolveEvent, createProxyResolver, createTlsPatch, ProxySupportSetting } from 'vscode-proxy-agent';
 
 export function connectProxyResolver(
 	extHostWorkspace: IExtHostWorkspaceProvider,
@@ -26,7 +26,7 @@ export function connectProxyResolver(
 ) {
 	const useHostProxy = initData.environment.useHostProxy;
 	const doUseHostProxy = typeof useHostProxy === 'boolean' ? useHostProxy : !initData.remote.isRemote;
-	const resolveProxy = setupProxyResolution({
+	const resolveProxy = createProxyResolver({
 		resolveProxy: url => extHostWorkspace.resolveProxy(url),
 		getHttpProxySetting: () => configProvider.getConfiguration('http').get('proxy'),
 		log: (level, message, ...args) => {
@@ -46,7 +46,7 @@ export function connectProxyResolver(
 			}
 		},
 		getLogLevel: () => extHostLogService.getLevel(),
-		proxyResolverTelemetry: event => {
+		proxyResolveTelemetry: event => {
 			type ResolveProxyClassification = {
 				count: { classification: 'SystemMetaData', purpose: 'PerformanceAndHealth', isMeasurement: true };
 				duration: { classification: 'SystemMetaData', purpose: 'PerformanceAndHealth', isMeasurement: true };
@@ -60,7 +60,7 @@ export function connectProxyResolver(
 				envNoProxyCount: { classification: 'SystemMetaData', purpose: 'PerformanceAndHealth', isMeasurement: true };
 				results: { classification: 'SystemMetaData', purpose: 'PerformanceAndHealth' };
 			};
-			mainThreadTelemetry.$publicLog2<ResolveProxyEvent, ResolveProxyClassification>('resolveProxy', event);
+			mainThreadTelemetry.$publicLog2<ProxyResolveEvent, ResolveProxyClassification>('resolveProxy', event);
 		},
 		useHostProxy: doUseHostProxy,
 		env: process.env,
@@ -69,14 +69,14 @@ export function connectProxyResolver(
 	return configureModuleLoading(extensionService, lookup);
 }
 
-function createPatchedModules(configProvider: ExtHostConfigProvider, resolveProxy: ReturnType<typeof setupProxyResolution>) {
+function createPatchedModules(configProvider: ExtHostConfigProvider, resolveProxy: ReturnType<typeof createProxyResolver>) {
 	const proxySetting = {
 		config: configProvider.getConfiguration('http')
-			.get<string>('proxySupport') || 'off'
+			.get<ProxySupportSetting>('proxySupport') || 'off'
 	};
 	configProvider.onDidChangeConfiguration(e => {
 		proxySetting.config = configProvider.getConfiguration('http')
-			.get<string>('proxySupport') || 'off';
+			.get<ProxySupportSetting>('proxySupport') || 'off';
 	});
 	const certSetting = {
 		config: !!configProvider.getConfiguration('http')
@@ -89,20 +89,20 @@ function createPatchedModules(configProvider: ExtHostConfigProvider, resolveProx
 
 	return {
 		http: {
-			off: Object.assign({}, http, patches(http, resolveProxy, { config: 'off' }, certSetting, true)),
-			on: Object.assign({}, http, patches(http, resolveProxy, { config: 'on' }, certSetting, true)),
-			override: Object.assign({}, http, patches(http, resolveProxy, { config: 'override' }, certSetting, true)),
-			onRequest: Object.assign({}, http, patches(http, resolveProxy, proxySetting, certSetting, true)),
-			default: Object.assign(http, patches(http, resolveProxy, proxySetting, certSetting, false)) // run last
+			off: Object.assign({}, http, createHttpPatch(http, resolveProxy, { config: 'off' }, certSetting, true)),
+			on: Object.assign({}, http, createHttpPatch(http, resolveProxy, { config: 'on' }, certSetting, true)),
+			override: Object.assign({}, http, createHttpPatch(http, resolveProxy, { config: 'override' }, certSetting, true)),
+			onRequest: Object.assign({}, http, createHttpPatch(http, resolveProxy, proxySetting, certSetting, true)),
+			default: Object.assign(http, createHttpPatch(http, resolveProxy, proxySetting, certSetting, false)) // run last
 		} as Record<string, typeof http>,
 		https: {
-			off: Object.assign({}, https, patches(https, resolveProxy, { config: 'off' }, certSetting, true)),
-			on: Object.assign({}, https, patches(https, resolveProxy, { config: 'on' }, certSetting, true)),
-			override: Object.assign({}, https, patches(https, resolveProxy, { config: 'override' }, certSetting, true)),
-			onRequest: Object.assign({}, https, patches(https, resolveProxy, proxySetting, certSetting, true)),
-			default: Object.assign(https, patches(https, resolveProxy, proxySetting, certSetting, false)) // run last
+			off: Object.assign({}, https, createHttpPatch(https, resolveProxy, { config: 'off' }, certSetting, true)),
+			on: Object.assign({}, https, createHttpPatch(https, resolveProxy, { config: 'on' }, certSetting, true)),
+			override: Object.assign({}, https, createHttpPatch(https, resolveProxy, { config: 'override' }, certSetting, true)),
+			onRequest: Object.assign({}, https, createHttpPatch(https, resolveProxy, proxySetting, certSetting, true)),
+			default: Object.assign(https, createHttpPatch(https, resolveProxy, proxySetting, certSetting, false)) // run last
 		} as Record<string, typeof https>,
-		tls: Object.assign(tls, tlsPatches(tls))
+		tls: Object.assign(tls, createTlsPatch(tls))
 	};
 }
 

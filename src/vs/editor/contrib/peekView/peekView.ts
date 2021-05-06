@@ -124,7 +124,7 @@ export abstract class PeekViewWidget extends ZoneWidget {
 		objects.mixin(this.options, defaultOptions, false);
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		if (!this.disposed) {
 			this.disposed = true; // prevent consumers who dispose on onDidClose from looping
 			super.dispose();
@@ -132,7 +132,7 @@ export abstract class PeekViewWidget extends ZoneWidget {
 		}
 	}
 
-	style(styles: IPeekViewStyles): void {
+	override style(styles: IPeekViewStyles): void {
 		let options = <IPeekViewOptions>this.options;
 		if (styles.headerBackgroundColor) {
 			options.headerBackgroundColor = styles.headerBackgroundColor;
@@ -146,7 +146,7 @@ export abstract class PeekViewWidget extends ZoneWidget {
 		super.style(styles);
 	}
 
-	protected _applyStyles(): void {
+	protected override _applyStyles(): void {
 		super._applyStyles();
 		let options = <IPeekViewOptions>this.options;
 		if (this._headElement && options.headerBackgroundColor) {
@@ -219,7 +219,7 @@ export abstract class PeekViewWidget extends ZoneWidget {
 	setTitle(primaryHeading: string, secondaryHeading?: string): void {
 		if (this._primaryHeading && this._secondaryHeading) {
 			this._primaryHeading.innerText = primaryHeading;
-			this._primaryHeading.setAttribute('aria-label', primaryHeading);
+			this._primaryHeading.setAttribute('title', primaryHeading);
 			if (secondaryHeading) {
 				this._secondaryHeading.innerText = secondaryHeading;
 			} else {
@@ -241,7 +241,7 @@ export abstract class PeekViewWidget extends ZoneWidget {
 
 	protected abstract _fillBody(container: HTMLElement): void;
 
-	protected _doLayout(heightInPixel: number, widthInPixel: number): void {
+	protected override _doLayout(heightInPixel: number, widthInPixel: number): void {
 
 		if (!this._isShowing && heightInPixel < 0) {
 			// Looks like the view zone got folded away!

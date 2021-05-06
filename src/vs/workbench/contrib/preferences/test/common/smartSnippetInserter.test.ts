@@ -19,7 +19,7 @@ suite('SmartSnippetInserter', () => {
 				prepend,
 				append
 			};
-			assert.deepEqual(actual, expected);
+			assert.deepStrictEqual(actual, expected);
 		});
 		model.dispose();
 	}

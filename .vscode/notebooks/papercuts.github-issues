@@ -3,49 +3,42 @@
     "kind": 1,
     "language": "markdown",
     "value": "## Papercuts\n\nThis notebook serves as an ongoing collection of papercut issues that we encounter while dogfooding. With that in mind only promote issues that really turn you off, e.g. issues that make you want to stop using VS Code or its extensions. To mark an issue (bug, feature-request, etc.) as papercut add the labels: `papercut :drop_of_blood:`",
-    "editable": true,
-    "outputs": []
+    "editable": true
   },
   {
     "kind": 1,
     "language": "markdown",
     "value": "## All Papercuts\n\nThese are all papercut issues that we encounter while dogfooding vscode or extensions that we author.",
-    "editable": true,
-    "outputs": []
+    "editable": true
   },
   {
     "kind": 2,
     "language": "github-issues",
     "value": "repo:microsoft/vscode is:open -label:notebook label:\"papercut :drop_of_blood:\"",
-    "editable": true,
-    "outputs": []
+    "editable": true
   },
   {
     "kind": 1,
     "language": "markdown",
     "value": "## Native Notebook",
-    "editable": true,
-    "outputs": []
+    "editable": true
   },
   {
     "kind": 2,
     "language": "github-issues",
     "value": "repo:microsoft/vscode is:open label:notebook label:\"papercut :drop_of_blood:\"",
-    "editable": true,
-    "outputs": []
+    "editable": true
   },
   {
     "kind": 1,
     "language": "markdown",
     "value": "### My Papercuts",
-    "editable": true,
-    "outputs": []
+    "editable": true
   },
   {
     "kind": 2,
     "language": "github-issues",
     "value": "repo:microsoft/vscode is:open assignee:@me label:\"papercut :drop_of_blood:\"",
-    "editable": true,
-    "outputs": []
+    "editable": true
   }
 ]

@@ -28,7 +28,7 @@ export class TerminalFindWidget extends SimpleFindWidget {
 		this._findWidgetFocused = KEYBINDING_CONTEXT_TERMINAL_FIND_FOCUSED.bindTo(this._contextKeyService);
 	}
 
-	public find(previous: boolean) {
+	find(previous: boolean) {
 		const instance = this._terminalService.getActiveInstance();
 		if (instance !== null) {
 			if (previous) {
@@ -39,7 +39,7 @@ export class TerminalFindWidget extends SimpleFindWidget {
 		}
 	}
 
-	public hide() {
+	override hide() {
 		super.hide();
 		const instance = this._terminalService.getActiveInstance();
 		if (instance) {
@@ -47,7 +47,7 @@ export class TerminalFindWidget extends SimpleFindWidget {
 		}
 	}
 
-	protected onInputChanged() {
+	protected _onInputChanged() {
 		// Ignore input changes for now
 		const instance = this._terminalService.getActiveInstance();
 		if (instance !== null) {
@@ -56,7 +56,7 @@ export class TerminalFindWidget extends SimpleFindWidget {
 		return false;
 	}
 
-	protected onFocusTrackerFocus() {
+	protected _onFocusTrackerFocus() {
 		const instance = this._terminalService.getActiveInstance();
 		if (instance) {
 			instance.notifyFindWidgetFocusChanged(true);
@@ -64,7 +64,7 @@ export class TerminalFindWidget extends SimpleFindWidget {
 		this._findWidgetFocused.set(true);
 	}
 
-	protected onFocusTrackerBlur() {
+	protected _onFocusTrackerBlur() {
 		const instance = this._terminalService.getActiveInstance();
 		if (instance) {
 			instance.notifyFindWidgetFocusChanged(false);
@@ -72,15 +72,15 @@ export class TerminalFindWidget extends SimpleFindWidget {
 		this._findWidgetFocused.reset();
 	}
 
-	protected onFindInputFocusTrackerFocus() {
+	protected _onFindInputFocusTrackerFocus() {
 		this._findInputFocused.set(true);
 	}
 
-	protected onFindInputFocusTrackerBlur() {
+	protected _onFindInputFocusTrackerBlur() {
 		this._findInputFocused.reset();
 	}
 
-	public findFirst() {
+	findFirst() {
 		const instance = this._terminalService.getActiveInstance();
 		if (instance) {
 			if (instance.hasSelection()) {

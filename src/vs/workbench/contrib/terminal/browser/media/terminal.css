@@ -21,7 +21,7 @@
 	overflow: hidden;
 }
 
-.monaco-workbench .pane-body.integrated-terminal .terminal-tab {
+.monaco-workbench .pane-body.integrated-terminal .terminal-group {
 	height: 100%;
 }
 
@@ -197,3 +197,86 @@
 	padding: 0 22px 0 6px;
 }
 
+.monaco-workbench .pane-body.integrated-terminal .tabs-container {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.monaco-workbench .pane-body.integrated-terminal .tabs-widget-container {
+	height: 100%;
+	overflow: hidden;
+}
+
+.monaco-workbench .pane-body.integrated-terminal .tabs-container > .monaco-toolbar {
+	padding: 4px 0 2px;
+	margin: auto;
+}
+.monaco-workbench .pane-body.integrated-terminal .tabs-container.has-text > .monaco-toolbar {
+	padding: 4px 7px 2px;
+	margin: 0;
+}
+
+.monaco-workbench .pane-body.integrated-terminal .tabs-container.has-text > .monaco-toolbar {
+	text-align: left;
+}
+
+.monaco-workbench .pane-body.integrated-terminal .tabs-widget {
+	height: 100%;
+}
+
+.monaco-workbench .pane-body.integrated-terminal .tabs-widget .terminal-tabs-entry {
+	text-align: center;
+}
+
+.monaco-workbench .pane-body.integrated-terminal .tabs-container.has-text .tabs-widget .terminal-tabs-entry {
+	padding-left: 10px;
+	padding-right: 10px;
+	text-align: left;
+}
+
+.monaco-workbench .pane-body.integrated-terminal .tabs-container.has-text .tabs-widget .terminal-tabs-entry .monaco-icon-label::after {
+	padding-right: 0
+}
+
+.monaco-workbench .pane-body.integrated-terminal .tabs-container:not(.has-text) .terminal-tabs-entry .codicon {
+	/* Force inherit when no text is showing as the regular icon gets replaced by the status icon */
+	color: inherit;
+}
+
+.monaco-workbench .pane-body.integrated-terminal .tabs-container:not(.has-text) .monaco-icon-description-container {
+	/* The description element doesn't go away once created sometimes so force hide */
+	display: none;
+}
+
+.monaco-workbench .pane-body.integrated-terminal .tabs-widget .codicon {
+	vertical-align: text-bottom;
+}
+
+.monaco-workbench .pane-body.integrated-terminal .tabs-widget .actions {
+	display: none;
+}
+
+.monaco-workbench .pane-body.integrated-terminal .tabs-widget .actions .action-label {
+	padding: 2px;
+}
+
+.monaco-workbench .pane-body.integrated-terminal .tabs-widget .monaco-list-row:hover .actions,
+.monaco-workbench .pane-body.integrated-terminal .tabs-widget:focus-within .monaco-list-row.selected .actions,
+.monaco-workbench .pane-body.integrated-terminal .tabs-widget:focus-within .monaco-list-row.focused .actions {
+	display: block;
+}
+
+.monaco-action-bar .action-item .single-terminal-tab {
+	display: flex !important;
+	align-items: center;
+}
+
+.monaco-action-bar .action-item .single-terminal-tab .codicon:first-child {
+	margin-right: 4px;
+}
+
+.monaco-action-bar .action-item .single-terminal-tab .codicon:nth-child(2) {
+	margin-left: 4px;
+	color: inherit;
+}

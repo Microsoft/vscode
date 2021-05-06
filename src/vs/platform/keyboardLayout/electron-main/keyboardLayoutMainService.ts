@@ -5,16 +5,16 @@
 
 import * as nativeKeymap from 'native-keymap';
 import { createDecorator } from 'vs/platform/instantiation/common/instantiation';
-import { IKeyboardLayoutData, IKeyboardLayoutMainService as ICommonKeyboardLayoutMainService } from 'vs/platform/keyboardLayout/common/keyboardLayoutMainService';
+import { IKeyboardLayoutData, INativeKeyboardLayoutService } from 'vs/platform/keyboardLayout/common/keyboardLayoutService';
 import { Emitter } from 'vs/base/common/event';
 import { Disposable } from 'vs/base/common/lifecycle';
 import { ILifecycleMainService, LifecycleMainPhase } from 'vs/platform/lifecycle/electron-main/lifecycleMainService';
 
 export const IKeyboardLayoutMainService = createDecorator<IKeyboardLayoutMainService>('keyboardLayoutMainService');
 
-export interface IKeyboardLayoutMainService extends ICommonKeyboardLayoutMainService { }
+export interface IKeyboardLayoutMainService extends INativeKeyboardLayoutService { }
 
-export class KeyboardLayoutMainService extends Disposable implements ICommonKeyboardLayoutMainService {
+export class KeyboardLayoutMainService extends Disposable implements INativeKeyboardLayoutService {
 
 	declare readonly _serviceBrand: undefined;
 

@@ -8,9 +8,9 @@ import { join } from 'vs/base/common/path';
 import { tmpdir } from 'os';
 import { promises } from 'fs';
 import { rimraf, writeFile } from 'vs/base/node/pfs';
-import { getRandomTestPath } from 'vs/base/test/node/testUtils';
+import { flakySuite, getRandomTestPath } from 'vs/base/test/node/testUtils';
 
-suite('Crypto', () => {
+flakySuite('Crypto', () => {
 
 	let testDir: string;
 

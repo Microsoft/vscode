@@ -279,17 +279,6 @@ function registerEditorGroupsLayoutCommand(): void {
 	});
 }
 
-export function mergeAllGroups(editorGroupService: IEditorGroupsService): void {
-	const target = editorGroupService.activeGroup;
-	for (const group of editorGroupService.getGroups(GroupsOrder.MOST_RECENTLY_ACTIVE)) {
-		if (group === target) {
-			return; // keep target
-		}
-
-		editorGroupService.mergeGroup(group, target);
-	}
-}
-
 function registerDiffEditorCommands(): void {
 	KeybindingsRegistry.registerCommandAndKeybindingRule({
 		id: GOTO_NEXT_CHANGE,
@@ -498,8 +487,7 @@ function registerOpenEditorAPICommands(): void {
 			group = editorGroupsService.getGroup(viewColumnToEditorGroup(editorGroupsService, columnArg)) ?? editorGroupsService.activeGroup;
 		}
 
-		const input = editorService.createEditorInput({ resource: URI.revive(resource) });
-		return editorService.openEditor(input, { ...optionsArg, override: id }, group);
+		return editorService.openEditor({ resource: URI.revive(resource), options: { ...optionsArg, override: id } }, group);
 	});
 }
 
@@ -643,12 +631,14 @@ export function splitEditor(editorGroupService: IEditorGroupsService, direction:
 		editorToCopy = withNullAsUndefined(sourceGroup.activeEditor);
 	}
 
-	if (editorToCopy && (editorToCopy as EditorInput).supportsSplitEditor()) {
+	// Copy the editor to the new group, else create an empty group
+	if (editorToCopy && (editorToCopy as EditorInput).canSplit()) {
 		sourceGroup.copyEditor(editorToCopy, newGroup);
 	}
 
 	// Focus
 	newGroup.focus();
+
 }
 
 function registerSplitEditorCommands() {

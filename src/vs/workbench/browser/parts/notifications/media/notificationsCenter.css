@@ -38,3 +38,7 @@
 .monaco-workbench > .notifications-center > .notifications-center-header > .notifications-center-header-toolbar {
 	flex: 1;
 }
+
+.monaco-workbench > .notifications-center > .notifications-center-header > .notifications-center-header-toolbar .actions-container {
+	justify-content: flex-end;
+}

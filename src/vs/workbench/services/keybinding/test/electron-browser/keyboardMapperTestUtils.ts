@@ -6,7 +6,7 @@
 import * as assert from 'assert';
 import * as path from 'vs/base/common/path';
 import { promises } from 'fs';
-import { getPathFromAmdModule } from 'vs/base/common/amd';
+import { getPathFromAmdModule } from 'vs/base/test/node/testUtils';
 import { Keybinding, ResolvedKeybinding, SimpleKeybinding } from 'vs/base/common/keyCodes';
 import { ScanCodeBinding } from 'vs/base/common/scanCode';
 import { writeFile } from 'vs/base/node/pfs';

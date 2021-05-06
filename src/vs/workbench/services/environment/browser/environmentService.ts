@@ -16,6 +16,7 @@ import { memoize } from 'vs/base/common/decorators';
 import { onUnexpectedError } from 'vs/base/common/errors';
 import { parseLineAndColumnAware } from 'vs/base/common/extpath';
 import { LogLevelToString } from 'vs/platform/log/common/log';
+import { ExtensionKind } from 'vs/platform/extensions/common/extensions';
 
 class BrowserWorkbenchConfiguration implements IWindowConfiguration {
 
@@ -86,6 +87,7 @@ interface IExtensionHostDebugEnvironment {
 	debugRenderer: boolean;
 	isExtensionDevelopment: boolean;
 	extensionDevelopmentLocationURI?: URI[];
+	extensionDevelopmentKind?: ExtensionKind[];
 	extensionTestsLocationURI?: URI;
 	extensionEnabledProposedApi?: string[];
 }
@@ -107,16 +109,13 @@ export class BrowserWorkbenchEnvironmentService implements IWorkbenchEnvironment
 	get remoteAuthority(): string | undefined { return this.options.remoteAuthority; }
 
 	@memoize
-	get sessionId(): string { return this.configuration.sessionId; }
-
-	@memoize
 	get isBuilt(): boolean { return !!this.productService.commit; }
 
 	@memoize
 	get logsPath(): string { return this.options.logsPath.path; }
 
 	@memoize
-	get logLevel(): string | undefined { return this.payload?.get('logLevel') || (this.options.logLevel !== undefined ? LogLevelToString(this.options.logLevel) : undefined); }
+	get logLevel(): string | undefined { return this.payload?.get('logLevel') || (this.options.developmentOptions?.logLevel !== undefined ? LogLevelToString(this.options.developmentOptions?.logLevel) : undefined); }
 
 	@memoize
 	get logFile(): URI { return joinPath(this.options.logsPath, 'window.log'); }
@@ -193,6 +192,14 @@ export class BrowserWorkbenchEnvironmentService implements IWorkbenchEnvironment
 		return this._extensionHostDebugEnvironment.extensionDevelopmentLocationURI;
 	}
 
+	get extensionDevelopmentLocationKind(): ExtensionKind[] | undefined {
+		if (!this._extensionHostDebugEnvironment) {
+			this._extensionHostDebugEnvironment = this.resolveExtensionHostDebugEnvironment();
+		}
+
+		return this._extensionHostDebugEnvironment.extensionDevelopmentKind;
+	}
+
 	get extensionTestsLocationURI(): URI | undefined {
 		if (!this._extensionHostDebugEnvironment) {
 			this._extensionHostDebugEnvironment = this.resolveExtensionHostDebugEnvironment();
@@ -226,7 +233,7 @@ export class BrowserWorkbenchEnvironmentService implements IWorkbenchEnvironment
 
 	@memoize
 	get webviewExternalEndpoint(): string {
-		return (this.webviewEndpoint).replace('{{commit}}', this.productService.commit || '0d728c31ebdf03869d2687d9be0b017667c9ff37');
+		return (this.webviewEndpoint).replace('{{commit}}', this.productService.commit || '23a2409675bc1bde94f3532bc7c5826a6e99e4b6');
 	}
 
 	@memoize
@@ -272,16 +279,33 @@ export class BrowserWorkbenchEnvironmentService implements IWorkbenchEnvironment
 			},
 			debugRenderer: false,
 			isExtensionDevelopment: false,
-			extensionDevelopmentLocationURI: undefined
+			extensionDevelopmentLocationURI: undefined,
+			extensionDevelopmentKind: undefined
 		};
+		const developmentOptions = this.options.developmentOptions;
+		if (developmentOptions) {
+			if (developmentOptions.extensions?.length) {
+				extensionHostDebugEnvironment.extensionDevelopmentLocationURI = developmentOptions.extensions.map(e => URI.revive(e.extensionLocation));
+				extensionHostDebugEnvironment.isExtensionDevelopment = true;
+			}
+			if (developmentOptions) {
+				extensionHostDebugEnvironment.extensionTestsLocationURI = URI.revive(developmentOptions.extensionTestsPath);
+			}
+		}
 
 		// Fill in selected extra environmental properties
 		if (this.payload) {
 			for (const [key, value] of this.payload) {
 				switch (key) {
 					case 'extensionDevelopmentPath':
-						extensionHostDebugEnvironment.extensionDevelopmentLocationURI = [URI.parse(value)];
+						if (!extensionHostDebugEnvironment.extensionDevelopmentLocationURI) {
+							extensionHostDebugEnvironment.extensionDevelopmentLocationURI = [];
+						}
+						extensionHostDebugEnvironment.extensionDevelopmentLocationURI.push(URI.parse(value));
 						extensionHostDebugEnvironment.isExtensionDevelopment = true;
+						break;
+					case 'extensionDevelopmentKind':
+						extensionHostDebugEnvironment.extensionDevelopmentKind = [<ExtensionKind>value];
 						break;
 					case 'extensionTestsPath':
 						extensionHostDebugEnvironment.extensionTestsLocationURI = URI.parse(value);

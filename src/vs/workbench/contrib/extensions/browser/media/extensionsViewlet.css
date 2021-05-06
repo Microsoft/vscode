@@ -39,8 +39,13 @@
 }
 
 .extensions-viewlet > .extensions .extension-view-header .count-badge-wrapper,
+.extensions-viewlet > .extensions .extension-list-item .monaco-action-bar,
 .extensions-viewlet > .extensions .extension-view-header .monaco-action-bar {
 	margin-right: 4px;
+}
+
+.extensions-viewlet > .extensions .extension-list-item .monaco-action-bar .action-label.icon {
+	padding: 1px 2px;
 }
 
 .extensions-viewlet > .extensions .extension-view-header .monaco-action-bar .action-item > .action-label.icon.codicon {
@@ -50,6 +55,11 @@
 
 .extensions-viewlet > .extensions .extension-view-header .monaco-action-bar .action-item.disabled  {
 	display: none;
+}
+
+.extensions-viewlet > .extensions .extension-list-item .monaco-action-bar > .actions-container > .action-item.action-dropdown-item,
+.extensions-viewlet > .extensions .extension-list-item .monaco-action-bar > .actions-container > .action-item:not(.action-dropdown-item) > .extension-action {
+	margin-left: 6px;
 }
 
 .extensions-viewlet > .extensions .extensions-list.hidden,

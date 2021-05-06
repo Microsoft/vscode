@@ -20,7 +20,7 @@ import { localize } from 'vs/nls';
 import { Action, WorkbenchActionExecutedEvent, WorkbenchActionExecutedClassification } from 'vs/base/common/actions';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 import { FileAccess, Schemas } from 'vs/base/common/network';
-import { IBackupFileService } from 'vs/workbench/services/backup/common/backup';
+import { IWorkingCopyBackupService } from 'vs/workbench/services/workingCopy/common/workingCopyBackup';
 import { getInstalledExtensions, IExtensionStatus, onExtensionChanged, isKeymapExtension } from 'vs/workbench/contrib/extensions/common/extensionsUtils';
 import { IExtensionManagementService, IExtensionGalleryService, ILocalExtension } from 'vs/platform/extensionManagement/common/extensionManagement';
 import { IWorkbenchExtensionEnablementService, EnablementState } from 'vs/workbench/services/extensionManagement/common/extensionManagement';
@@ -32,7 +32,7 @@ import { registerThemingParticipant } from 'vs/platform/theme/common/themeServic
 import { focusBorder, textLinkForeground, textLinkActiveForeground, foreground, descriptionForeground, contrastBorder, activeContrastBorder } from 'vs/platform/theme/common/colorRegistry';
 import { getExtraColor } from 'vs/workbench/contrib/welcome/walkThrough/common/walkThroughUtils';
 import { IExtensionsViewPaneContainer, IExtensionsWorkbenchService, VIEWLET_ID } from 'vs/workbench/contrib/extensions/common/extensions';
-import { IEditorInputFactory, EditorInput } from 'vs/workbench/common/editor';
+import { IEditorInputSerializer, EditorInput } from 'vs/workbench/common/editor';
 import { INotificationService, Severity } from 'vs/platform/notification/common/notification';
 import { TimeoutTimer } from 'vs/base/common/async';
 import { areSameExtensions } from 'vs/platform/extensionManagement/common/extensionManagementUtil';
@@ -46,7 +46,7 @@ import { IProductService } from 'vs/platform/product/common/productService';
 import { IEditorOptions } from 'vs/platform/editor/common/editor';
 import { IWorkbenchLayoutService } from 'vs/workbench/services/layout/browser/layoutService';
 import { IViewletService } from 'vs/workbench/services/viewlet/browser/viewlet';
-import { GettingStartedInput, gettingStartedInputTypeId } from 'vs/workbench/contrib/welcome/gettingStarted/browser/gettingStarted';
+import { GettingStartedInput, gettingStartedInputTypeId } from 'vs/workbench/contrib/welcome/gettingStarted/browser/gettingStartedInput';
 import { welcomeButtonBackground, welcomeButtonHoverBackground, welcomePageBackground } from 'vs/workbench/contrib/welcome/page/browser/welcomePageColors';
 import { ITASExperimentService } from 'vs/workbench/services/experiment/common/experimentService';
 import { Registry } from 'vs/platform/registry/common/platform';
@@ -109,7 +109,7 @@ export class WelcomePageContribution implements IWorkbenchContribution {
 		@IInstantiationService private readonly instantiationService: IInstantiationService,
 		@IConfigurationService private readonly configurationService: IConfigurationService,
 		@IEditorService private readonly editorService: IEditorService,
-		@IBackupFileService private readonly backupFileService: IBackupFileService,
+		@IWorkingCopyBackupService private readonly workingCopyBackupService: IWorkingCopyBackupService,
 		@IFileService private readonly fileService: IFileService,
 		@IWorkspaceContextService private readonly contextService: IWorkspaceContextService,
 		@ILifecycleService private readonly lifecycleService: ILifecycleService,
@@ -174,7 +174,7 @@ export class WelcomePageContribution implements IWorkbenchContribution {
 	private async run() {
 		const enabled = isWelcomePageEnabled(this.configurationService, this.contextService);
 		if (enabled && this.lifecycleService.startupKind !== StartupKind.ReloadedWindow) {
-			const hasBackups = await this.backupFileService.hasBackups();
+			const hasBackups = await this.workingCopyBackupService.hasBackups();
 			if (hasBackups) { return; }
 
 			// Open the welcome even if we opened a set of default editors
@@ -228,7 +228,7 @@ export class WelcomePageContribution implements IWorkbenchContribution {
 		const editor = this.editorService.activeEditor;
 
 		// Ensure that the welcome editor won't get opened more than once
-		if (editor?.getTypeId() === startupEditorTypeID || this.editorService.editors.some(e => e.getTypeId() === startupEditorTypeID)) {
+		if (editor?.typeId === startupEditorTypeID || this.editorService.editors.some(e => e.typeId === startupEditorTypeID)) {
 			return;
 		}
 		const options: IEditorOptions = editor ? { pinned: false, index: 0 } : { pinned: false };
@@ -267,7 +267,7 @@ export class WelcomePageAction extends Action {
 		super(id, label);
 	}
 
-	public run(): Promise<void> {
+	public override run(): Promise<void> {
 		return this.instantiationService.createInstance(WelcomePage)
 			.openEditor()
 			.then(() => undefined);
@@ -416,7 +416,7 @@ class WelcomePage extends Disposable {
 
 	) {
 		super();
-		this._register(lifecycleService.onShutdown(() => this.dispose()));
+		this._register(lifecycleService.onDidShutdown(() => this.dispose()));
 
 		const recentlyOpened = this.workspacesService.getRecentlyOpened();
 		const installedExtensions = this.instantiationService.invokeFunction(getInstalledExtensions);
@@ -519,7 +519,7 @@ class WelcomePage extends Disposable {
 					id: 'openRecentFolder',
 					from: telemetryFrom
 				});
-				this.hostService.openWindow([windowOpenable], { forceNewWindow: e.ctrlKey || e.metaKey });
+				this.hostService.openWindow([windowOpenable], { forceNewWindow: e.ctrlKey || e.metaKey, remoteAuthority: recent.remoteAuthority });
 				e.preventDefault();
 				e.stopPropagation();
 			});
@@ -739,7 +739,7 @@ class WelcomePage extends Disposable {
 	}
 }
 
-export class WelcomeInputFactory implements IEditorInputFactory {
+export class WelcomeInputSerializer implements IEditorInputSerializer {
 
 	static readonly ID = welcomeInputTypeId;
 

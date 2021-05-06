@@ -16,6 +16,7 @@ import { Schemas } from 'vs/base/common/network';
 import { ExtensionIdentifier, IExtensionDescription } from 'vs/platform/extensions/common/extensions';
 import { ExtensionRuntime } from 'vs/workbench/api/common/extHostTypes';
 import { CLIServer } from 'vs/workbench/api/node/extHostCLIServer';
+import { realpathSync } from 'vs/base/node/extpath';
 
 class NodeModuleRequireInterceptor extends RequireInterceptor {
 
@@ -36,7 +37,7 @@ class NodeModuleRequireInterceptor extends RequireInterceptor {
 			}
 			return that._factories.get(request)!.load(
 				request,
-				URI.file(parent.filename),
+				URI.file(realpathSync(parent.filename)),
 				request => original.apply(this, [request, parent, isMain])
 			);
 		};

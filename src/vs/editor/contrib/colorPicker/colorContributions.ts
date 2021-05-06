@@ -26,7 +26,7 @@ export class ColorContribution extends Disposable implements IEditorContribution
 		this._register(_editor.onMouseDown((e) => this.onMouseDown(e)));
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		super.dispose();
 	}
 

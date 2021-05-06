@@ -5,7 +5,7 @@
 
 import { IDisposable, toDisposable } from 'vs/base/common/lifecycle';
 import { Event, Emitter } from 'vs/base/common/event';
-import { ISCMService, ISCMProvider, ISCMInput, ISCMRepository, IInputValidator, ISCMInputChangeEvent, SCMInputChangeReason } from './scm';
+import { ISCMService, ISCMProvider, ISCMInput, ISCMRepository, IInputValidator, ISCMInputChangeEvent, SCMInputChangeReason, InputValidationType, IInputValidation } from './scm';
 import { ILogService } from 'vs/platform/log/common/log';
 import { IContextKey, IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
 import { IStorageService, StorageScope, StorageTarget } from 'vs/platform/storage/common/storage';
@@ -48,8 +48,22 @@ class SCMInput implements ISCMInput {
 	}
 
 	private readonly _onDidChangeVisibility = new Emitter<boolean>();
-	readonly onDidChangeVisibility: Event<boolean> = this._onDidChangeVisibility
-		.event;
+	readonly onDidChangeVisibility: Event<boolean> = this._onDidChangeVisibility.event;
+
+	setFocus(): void {
+		this._onDidChangeFocus.fire();
+	}
+
+	private readonly _onDidChangeFocus = new Emitter<void>();
+	readonly onDidChangeFocus: Event<void> = this._onDidChangeFocus.event;
+
+	showValidationMessage(message: string, type: InputValidationType): void {
+		this._onDidChangeValidationMessage.fire({ message: message, type: type });
+	}
+
+	private readonly _onDidChangeValidationMessage = new Emitter<IInputValidation>();
+	readonly onDidChangeValidationMessage: Event<IInputValidation> = this._onDidChangeValidationMessage.event;
+
 
 	private _validateInput: IInputValidator = () => Promise.resolve(undefined);
 

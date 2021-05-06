@@ -47,42 +47,6 @@
 		]
 	},
 	{
-		// Reason: The license at https://git.coolaj86.com/coolaj86/atob.js/src/branch/master/LICENSE
-		// cannot be found by the OSS tool automatically.
-		"name": "atob",
-		"fullLicenseText": [
-			"The MIT License (MIT)",
-			"",
-			"Copyright (c) 2015 AJ ONeal",
-			"",
-			"Permission is hereby granted, free of charge, to any person obtaining a copy",
-			"of this software and associated documentation files (the \"Software\"), to deal",
-			"in the Software without restriction, including without limitation the rights",
-			"to use, copy, modify, merge, publish, distribute, sublicense, and/or sell",
-			"copies of the Software, and to permit persons to whom the Software is",
-			"furnished to do so, subject to the following conditions:",
-			"",
-			"The above copyright notice and this permission notice shall be included in all",
-			"copies or substantial portions of the Software.",
-			"",
-			"THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR",
-			"IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,",
-			"FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE",
-			"AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER",
-			"LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,",
-			"OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE",
-			"SOFTWARE."
-		]
-	},
-	{
-		// Reason: The license at https://github.com/microsoft/tslib/blob/master/LICENSE.txt
-		// does not include a clear Copyright statement.
-		"name": "tslib",
-		"prependLicenseText": [
-			"Copyright (c) Microsoft Corporation. All rights reserved."
-		]
-	},
-	{
 		// Reason: The license at https://github.com/rbuckton/reflect-metadata/blob/master/LICENSE
 		// does not include a clear Copyright statement (it's in https://github.com/rbuckton/reflect-metadata/blob/master/CopyrightNotice.txt).
 		"name": "reflect-metadata",
@@ -91,87 +55,8 @@
 		]
 	},
 	{
-		// Reason: The license at https://github.com/reem/rust-unreachable/blob/master/LICENSE-MIT
-		// cannot be found by the OSS tool automatically.
-		"name": "reem/rust-unreachable",
-		"fullLicenseText": [
-			"Copyright (c) 2015 The rust-unreachable Developers",
-			"",
-			"Permission is hereby granted, free of charge, to any person obtaining a copy",
-			"of this software and associated documentation files (the \"Software\"), to deal",
-			"in the Software without restriction, including without limitation the rights",
-			"to use, copy, modify, merge, publish, distribute, sublicense, and/or sell",
-			"copies of the Software, and to permit persons to whom the Software is",
-			"furnished to do so, subject to the following conditions:",
-			"",
-			"The above copyright notice and this permission notice shall be included in all",
-			"copies or substantial portions of the Software.",
-			"",
-			"THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR",
-			"IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,",
-			"FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE",
-			"AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER",
-			"LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,",
-			"OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE",
-			"SOFTWARE."
-		]
-	},
-	{
-		// Reason: The license at https://github.com/reem/rust-void/blob/master/LICENSE-MIT
-		// cannot be found by the OSS tool automatically.
-		"name": "reem/rust-void",
-		"fullLicenseText": [
-			"Copyright (c) 2015 The rust-void Developers",
-			"",
-			"Permission is hereby granted, free of charge, to any person obtaining a copy",
-			"of this software and associated documentation files (the \"Software\"), to deal",
-			"in the Software without restriction, including without limitation the rights",
-			"to use, copy, modify, merge, publish, distribute, sublicense, and/or sell",
-			"copies of the Software, and to permit persons to whom the Software is",
-			"furnished to do so, subject to the following conditions:",
-			"",
-			"The above copyright notice and this permission notice shall be included in all",
-			"copies or substantial portions of the Software.",
-			"",
-			"THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR",
-			"IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,",
-			"FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE",
-			"AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER",
-			"LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,",
-			"OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE",
-			"SOFTWARE."
-		]
-	},
-	{
-		// Reason: The license at https://github.com/mrhooray/crc-rs/blob/master/LICENSE-MIT
-		// cannot be found by the OSS tool automatically.
-		"name": "mrhooray/crc-rs",
-		"fullLicenseText": [
-			"MIT License",
-			"",
-			"Copyright (c) 2017 crc-rs Developers",
-			"",
-			"Permission is hereby granted, free of charge, to any person obtaining a copy",
-			"of this software and associated documentation files (the \"Software\"), to deal",
-			"in the Software without restriction, including without limitation the rights",
-			"to use, copy, modify, merge, publish, distribute, sublicense, and/or sell",
-			"copies of the Software, and to permit persons to whom the Software is",
-			"furnished to do so, subject to the following conditions:",
-			"",
-			"The above copyright notice and this permission notice shall be included in all",
-			"copies or substantial portions of the Software.",
-			"",
-			"THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR",
-			"IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,",
-			"FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE",
-			"AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER",
-			"LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,",
-			"OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE",
-			"SOFTWARE."
-		]
-	},
-	{
-		// Reason: The license at https://github.com/floatdrop/pinkie/blob/master/license
+		// Reason: The npm package lacks a repoURL field
+		// So the license at https://github.com/floatdrop/pinkie/blob/master/license
 		// cannot be found by the OSS tool automatically.
 		"name": "pinkie",
 		"fullLicenseText": [
@@ -205,139 +90,25 @@
 		]
 	},
 	{
-		// Reason: The license at https://github.com/justmoon/node-extend/blob/main/LICENSE
-		// cannot be found by the OSS tool automatically.
-		"name": "extend",
+		// Reason: The license cannot be found by the tool due to access controls on the repository
+		"name": "vscode-tas-client",
 		"fullLicenseText": [
-			"The MIT License (MIT)",
+			"MIT License",
+			"Copyright (c) 2020 - present Microsoft Corporation",
 			"",
-			"Copyright (c) 2014 Stefan Thomas",
-			"",
-			"Permission is hereby granted, free of charge, to any person obtaining",
-			"a copy of this software and associated documentation files (the",
-			"\"Software\"), to deal in the Software without restriction, including",
-			"without limitation the rights to use, copy, modify, merge, publish,",
-			"distribute, sublicense, and/or sell copies of the Software, and to",
-			"permit persons to whom the Software is furnished to do so, subject to",
-			"the following conditions:",
-			"",
-			"The above copyright notice and this permission notice shall be",
-			"included in all copies or substantial portions of the Software.",
-			"",
-			"THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND,",
-			"EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF",
-			"MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND",
-			"NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE",
-			"LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION",
-			"OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION",
-			"WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
-		]
-	},
-	{
-		// Reason: The license at https://github.com/retep998/winapi-rs/blob/0.3/LICENSE-MIT
-		// cannot be found by the OSS tool automatically.
-		"name": "retep998/winapi-rs",
-		"fullLicenseText": [
-			"Copyright (c) 2015-2018 The winapi-rs Developers",
-			"",
-			"Permission is hereby granted, free of charge, to any person obtaining a copy",
-			"of this software and associated documentation files (the \"Software\"), to deal",
-			"in the Software without restriction, including without limitation the rights",
-			"to use, copy, modify, merge, publish, distribute, sublicense, and/or sell",
-			"copies of the Software, and to permit persons to whom the Software is",
-			"furnished to do so, subject to the following conditions:",
-			"",
-			"The above copyright notice and this permission notice shall be included in all",
-			"copies or substantial portions of the Software.",
-			"",
-			"THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR",
-			"IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,",
-			"FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE",
-			"AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER",
-			"LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,",
-			"OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE",
-			"SOFTWARE."
-		]
-	},
-	{
-		// Reason: The license at https://github.com/digitaldesignlabs/es6-promisify/blob/main/LICENSE
-		// cannot be found by the OSS tool automatically.
-		"name": "es6-promisify",
-		"fullLicenseText": [
-			"Copyright (c) 2014 Mike Hall / Digital Design Labs",
-			"",
-			"Permission is hereby granted, free of charge, to any person obtaining a copy",
-			"of this software and associated documentation files (the \"Software\"), to deal",
-			"in the Software without restriction, including without limitation the rights",
-			"to use, copy, modify, merge, publish, distribute, sublicense, and/or sell",
-			"copies of the Software, and to permit persons to whom the Software is",
-			"furnished to do so, subject to the following conditions:",
-			"",
-			"The above copyright notice and this permission notice shall be included in all",
-			"copies or substantial portions of the Software.",
-			"",
-			"THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR",
-			"IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,",
-			"FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE",
-			"AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER",
-			"LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,",
-			"OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE",
-			"SOFTWARE."
-		]
-	},
-	{
-		// Reason: The license at https://github.com/zkat/json-parse-better-errors/blob/latest/LICENSE.md
-		// cannot be found by the OSS tool automatically.
-		"name": "json-parse-better-errors",
-		"fullLicenseText": [
-			"Copyright 2017 Kat Marchán",
-			"",
-			"Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the",
-			"\"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute,",
-			"sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following",
-			"conditions:",
+			"Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:",
 			"",
 			"The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.",
 			"",
-			"THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE",
-			"WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS",
-			"OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR",
-			"OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
+			"THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 		]
 	},
 	{
-		// Reason: The license at https://github.com/time-rs/time/blob/main/LICENSE-MIT
-		// cannot be found by the OSS tool automatically.
-		"name": "time-rs/time",
+		// Reason: The license cannot be found by the tool due to access controls on the repository
+		"name": "tas-client",
 		"fullLicenseText": [
-			"Copyright (c) 2019 Jacob Pratt",
-			"",
-			"Permission is hereby granted, free of charge, to any person obtaining a copy",
-			"of this software and associated documentation files (the \"Software\"), to deal",
-			"in the Software without restriction, including without limitation the rights",
-			"to use, copy, modify, merge, publish, distribute, sublicense, and/or sell",
-			"copies of the Software, and to permit persons to whom the Software is",
-			"furnished to do so, subject to the following conditions:",
-			"",
-			"The above copyright notice and this permission notice shall be included in all",
-			"copies or substantial portions of the Software.",
-			"",
-			"THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR",
-			"IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,",
-			"FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE",
-			"AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER",
-			"LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,",
-			"OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE",
-			"SOFTWARE."
-		]
-	},
-	{
-		// Reason: The license at https://github.com/colorjs/color-name/blob/master/LICENSE
-		// cannot be found by the OSS tool automatically.
-		"name": "color-name",
-		"fullLicenseText": [
-			"The MIT License (MIT)",
-			"Copyright (c) 2015 Dmitry Ivanov",
+			"MIT License",
+			"Copyright (c) 2020 - present Microsoft Corporation",
 			"",
 			"Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:",
 			"",
@@ -361,57 +132,55 @@
 		]
 	},
 	{
-		// Reason: The license at https://github.com/acornjs/acorn/blob/master/acorn/LICENSE
-		// cannot be found by the OSS tool automatically.
-		"name": "acorn",
-		"fullLicenseText": [
-			"MIT License",
-			"Copyright (C) 2012-2018 by various contributors (see AUTHORS)",
-			"",
-			"Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:",
-			"",
-			"The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.",
-			"",
-			"THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
-		]
-	},
-	{
-		// Reason: The license at https://github.com/acornjs/acorn/blob/master/acorn-loose/LICENSE
-		// cannot be found by the OSS tool automatically.
-		"name": "acorn-loose",
-		"fullLicenseText": [
-			"MIT License",
-			"Copyright (C) 2012-2018 by various contributors (see AUTHORS)",
-			"",
-			"Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:",
-			"",
-			"The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.",
-			"",
-			"THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
-		]
-	},
-	{
-		// Reason: The license at https://github.com/jquery/esprima/blob/master/LICENSE.BSD
-		// cannot be found by the OSS tool automatically.
-		"name": "esprima",
-		"fullLicenseText": [
-			"BSD 2-Clause \"Simplified\" License",
-			"Copyright JS Foundation and other contributors, https://js.foundation/",
-			"",
-			"Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:",
-			"  * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.",
-			"  * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.",
-			"",
-			"THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
-		]
-	},
-	{
-		// Reason: The license at https://github.com/LinusU/load-yaml-file/blob/master/readme.md
-		// cannot be found by the OSS tool automatically.
+		// Reason: Repository lacks license text.
+		// https://github.com/LinusU/load-yaml-file/blob/master/package.json declares MIT.
 		"name": "load-yaml-file",
 		"fullLicenseText": [
 			"MIT License",
 			"Copyright (C) 2012-2018 by various contributors (see AUTHORS)",
+			"",
+			"Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:",
+			"",
+			"The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.",
+			"",
+			"THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
+		]
+	},
+	{
+		// Reason: Repository lacks license text.
+		// https://github.com/othiym23/emitter-listener/blob/master/package.json declares BSD-2-Clause.
+		"name": "emitter-listener",
+		"fullLicenseText": [
+			"BSD 2-Clause \"Simplified\" License",
+			"Copyright (c) 2018, Forrest L Norvell <ogd@aoaioxxysz.net>",
+			"",
+			"Redistribution and use in source and binary forms, with or without",
+			"modification, are permitted provided that the following conditions are met:",
+			"",
+			"1. Redistributions of source code must retain the above copyright notice, this",
+			"   list of conditions and the following disclaimer.",
+			"2. Redistributions in binary form must reproduce the above copyright notice,",
+			"   this list of conditions and the following disclaimer in the documentation",
+			"   and/or other materials provided with the distribution.",
+			"",
+			"THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND",
+			"ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED",
+			"WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE",
+			"DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR",
+			"ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES",
+			"(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;",
+			"LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND",
+			"ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT",
+			"(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS",
+			"SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
+		]
+	},
+	{
+		// Reason: Repository has been deleted (package.json declares MIT).
+		"name": "vscode-js-debug-cdp-proxy-api",
+		"fullLicenseText": [
+			"MIT License",
+			"Copyright (c) Manuel Alabor",
 			"",
 			"Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:",
 			"",

@@ -181,7 +181,7 @@ export class ToolBar extends Disposable {
 		this.actionBar.clear();
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this.clear();
 		super.dispose();
 	}
@@ -202,7 +202,7 @@ class ToggleMenuAction extends Action {
 		this.toggleDropdownMenu = toggleDropdownMenu;
 	}
 
-	async run(): Promise<void> {
+	override async run(): Promise<void> {
 		this.toggleDropdownMenu();
 	}
 

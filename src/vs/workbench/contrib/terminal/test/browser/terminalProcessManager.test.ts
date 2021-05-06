@@ -8,12 +8,13 @@ import { IConfigurationService } from 'vs/platform/configuration/common/configur
 import { TerminalConfigHelper } from 'vs/workbench/contrib/terminal/browser/terminalConfigHelper';
 import { TerminalProcessManager } from 'vs/workbench/contrib/terminal/browser/terminalProcessManager';
 import { TestConfigurationService } from 'vs/platform/configuration/test/common/testConfigurationService';
-import { ITestInstantiationService, TestProductService, workbenchInstantiationService } from 'vs/workbench/test/browser/workbenchTestServices';
+import { ITestInstantiationService, TestProductService, TestTerminalProfileResolverService, workbenchInstantiationService } from 'vs/workbench/test/browser/workbenchTestServices';
 import { IProductService } from 'vs/platform/product/common/productService';
 import { IEnvironmentVariableService } from 'vs/workbench/contrib/terminal/common/environmentVariable';
 import { EnvironmentVariableService } from 'vs/workbench/contrib/terminal/common/environmentVariableService';
 import { Schemas } from 'vs/base/common/network';
 import { URI } from 'vs/base/common/uri';
+import { ITerminalProfileResolverService } from 'vs/workbench/contrib/terminal/common/terminal';
 
 suite('Workbench - TerminalProcessManager', () => {
 	let instantiationService: ITestInstantiationService;
@@ -32,6 +33,7 @@ suite('Workbench - TerminalProcessManager', () => {
 		instantiationService.stub(IConfigurationService, configurationService);
 		instantiationService.stub(IProductService, TestProductService);
 		instantiationService.stub(IEnvironmentVariableService, instantiationService.createInstance(EnvironmentVariableService));
+		instantiationService.stub(ITerminalProfileResolverService, TestTerminalProfileResolverService);
 
 		const configHelper = instantiationService.createInstance(TerminalConfigHelper);
 		manager = instantiationService.createInstance(TerminalProcessManager, 1, configHelper);

@@ -45,7 +45,7 @@ export interface IDelegate {
 	anchorAxisAlignment?: AnchorAxisAlignment; // default: vertical
 	canRelayout?: boolean; // default: true
 	onDOMEvent?(e: Event, activeElement: HTMLElement): void;
-	onHide?(data?: any): void;
+	onHide?(data?: unknown): void;
 }
 
 export interface IContextViewProvider {
@@ -324,7 +324,7 @@ export class ContextView extends Disposable {
 		this.view.style.width = 'initial';
 	}
 
-	hide(data?: any): void {
+	hide(data?: unknown): void {
 		const delegate = this.delegate;
 		this.delegate = null;
 
@@ -351,7 +351,7 @@ export class ContextView extends Disposable {
 		}
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this.hide();
 
 		super.dispose();

@@ -18,7 +18,7 @@ export abstract class ViewPart extends ViewEventHandler {
 		this._context.addEventHandler(this);
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		this._context.removeEventHandler(this);
 		super.dispose();
 	}

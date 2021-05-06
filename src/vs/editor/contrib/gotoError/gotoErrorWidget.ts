@@ -144,7 +144,7 @@ class MessageWidget {
 					this._codeLink.setAttribute('href', `${code.target.toString()}`);
 
 					this._codeLink.onclick = (e) => {
-						this._openerService.open(code.target);
+						this._openerService.open(code.target, { allowCommands: true });
 						e.preventDefault();
 						e.stopPropagation();
 					};
@@ -280,14 +280,14 @@ export class MarkerNavigationWidget extends PeekViewWidget {
 		}); // style() will trigger _applyStyles
 	}
 
-	protected _applyStyles(): void {
+	protected override _applyStyles(): void {
 		if (this._parentContainer) {
 			this._parentContainer.style.backgroundColor = this._backgroundColor ? this._backgroundColor.toString() : '';
 		}
 		super._applyStyles();
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this._callOnDispose.dispose();
 		super.dispose();
 	}
@@ -296,7 +296,7 @@ export class MarkerNavigationWidget extends PeekViewWidget {
 		this._parentContainer.focus();
 	}
 
-	protected _fillHead(container: HTMLElement): void {
+	protected override _fillHead(container: HTMLElement): void {
 		super._fillHead(container);
 
 		this._disposables.add(this._actionbarWidget!.actionRunner.onBeforeRun(e => this.editor.focus()));
@@ -308,7 +308,7 @@ export class MarkerNavigationWidget extends PeekViewWidget {
 		menu.dispose();
 	}
 
-	protected _fillTitleIcon(container: HTMLElement): void {
+	protected override _fillTitleIcon(container: HTMLElement): void {
 		this._icon = dom.append(container, dom.$(''));
 	}
 
@@ -325,7 +325,7 @@ export class MarkerNavigationWidget extends PeekViewWidget {
 		this._disposables.add(this._message);
 	}
 
-	show(): void {
+	override show(): void {
 		throw new Error('call showAtMarker');
 	}
 
@@ -369,18 +369,18 @@ export class MarkerNavigationWidget extends PeekViewWidget {
 		this._relayout();
 	}
 
-	protected _doLayoutBody(heightInPixel: number, widthInPixel: number): void {
+	protected override _doLayoutBody(heightInPixel: number, widthInPixel: number): void {
 		super._doLayoutBody(heightInPixel, widthInPixel);
 		this._heightInPixel = heightInPixel;
 		this._message.layout(heightInPixel, widthInPixel);
 		this._container.style.height = `${heightInPixel}px`;
 	}
 
-	public _onWidth(widthInPixel: number): void {
+	public override _onWidth(widthInPixel: number): void {
 		this._message.layout(this._heightInPixel, widthInPixel);
 	}
 
-	protected _relayout(): void {
+	protected override _relayout(): void {
 		super._relayout(this.computeRequiredHeight());
 	}
 

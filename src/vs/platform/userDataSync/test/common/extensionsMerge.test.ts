@@ -18,10 +18,10 @@ suite('ExtensionsMerge', () => {
 
 		const actual = merge(localExtensions, null, null, [], []);
 
-		assert.deepEqual(actual.added, []);
-		assert.deepEqual(actual.removed, []);
-		assert.deepEqual(actual.updated, []);
-		assert.deepEqual(actual.remote, localExtensions);
+		assert.deepStrictEqual(actual.added, []);
+		assert.deepStrictEqual(actual.removed, []);
+		assert.deepStrictEqual(actual.updated, []);
+		assert.deepStrictEqual(actual.remote, localExtensions);
 	});
 
 	test('merge returns local extension if remote does not exist with ignored extensions', () => {
@@ -37,10 +37,10 @@ suite('ExtensionsMerge', () => {
 
 		const actual = merge(localExtensions, null, null, [], ['a']);
 
-		assert.deepEqual(actual.added, []);
-		assert.deepEqual(actual.removed, []);
-		assert.deepEqual(actual.updated, []);
-		assert.deepEqual(actual.remote, expected);
+		assert.deepStrictEqual(actual.added, []);
+		assert.deepStrictEqual(actual.removed, []);
+		assert.deepStrictEqual(actual.updated, []);
+		assert.deepStrictEqual(actual.remote, expected);
 	});
 
 	test('merge returns local extension if remote does not exist with ignored extensions (ignore case)', () => {
@@ -56,10 +56,10 @@ suite('ExtensionsMerge', () => {
 
 		const actual = merge(localExtensions, null, null, [], ['A']);
 
-		assert.deepEqual(actual.added, []);
-		assert.deepEqual(actual.removed, []);
-		assert.deepEqual(actual.updated, []);
-		assert.deepEqual(actual.remote, expected);
+		assert.deepStrictEqual(actual.added, []);
+		assert.deepStrictEqual(actual.removed, []);
+		assert.deepStrictEqual(actual.updated, []);
+		assert.deepStrictEqual(actual.remote, expected);
 	});
 
 	test('merge returns local extension if remote does not exist with skipped extensions', () => {
@@ -79,10 +79,10 @@ suite('ExtensionsMerge', () => {
 
 		const actual = merge(localExtensions, null, null, skippedExtension, []);
 
-		assert.deepEqual(actual.added, []);
-		assert.deepEqual(actual.removed, []);
-		assert.deepEqual(actual.updated, []);
-		assert.deepEqual(actual.remote, expected);
+		assert.deepStrictEqual(actual.added, []);
+		assert.deepStrictEqual(actual.removed, []);
+		assert.deepStrictEqual(actual.updated, []);
+		assert.deepStrictEqual(actual.remote, expected);
 	});
 
 	test('merge returns local extension if remote does not exist with skipped and ignored extensions', () => {
@@ -101,10 +101,10 @@ suite('ExtensionsMerge', () => {
 
 		const actual = merge(localExtensions, null, null, skippedExtension, ['a']);
 
-		assert.deepEqual(actual.added, []);
-		assert.deepEqual(actual.removed, []);
-		assert.deepEqual(actual.updated, []);
-		assert.deepEqual(actual.remote, expected);
+		assert.deepStrictEqual(actual.added, []);
+		assert.deepStrictEqual(actual.removed, []);
+		assert.deepStrictEqual(actual.updated, []);
+		assert.deepStrictEqual(actual.remote, expected);
 	});
 
 	test('merge local and remote extensions when there is no base', () => {
@@ -125,10 +125,10 @@ suite('ExtensionsMerge', () => {
 
 		const actual = merge(localExtensions, remoteExtensions, null, [], []);
 
-		assert.deepEqual(actual.added, [{ identifier: { id: 'b', uuid: 'b' }, installed: true, version: '1.0.0' }, { identifier: { id: 'c', uuid: 'c' }, installed: true, version: '1.0.0' }]);
-		assert.deepEqual(actual.removed, []);
-		assert.deepEqual(actual.updated, []);
-		assert.deepEqual(actual.remote, expected);
+		assert.deepStrictEqual(actual.added, [{ identifier: { id: 'b', uuid: 'b' }, installed: true, version: '1.0.0' }, { identifier: { id: 'c', uuid: 'c' }, installed: true, version: '1.0.0' }]);
+		assert.deepStrictEqual(actual.removed, []);
+		assert.deepStrictEqual(actual.updated, []);
+		assert.deepStrictEqual(actual.remote, expected);
 	});
 
 	test('merge local and remote extensions when there is no base and with ignored extensions', () => {
@@ -148,10 +148,10 @@ suite('ExtensionsMerge', () => {
 
 		const actual = merge(localExtensions, remoteExtensions, null, [], ['a']);
 
-		assert.deepEqual(actual.added, [{ identifier: { id: 'b', uuid: 'b' }, installed: true, version: '1.0.0' }, { identifier: { id: 'c', uuid: 'c' }, installed: true, version: '1.0.0' }]);
-		assert.deepEqual(actual.removed, []);
-		assert.deepEqual(actual.updated, []);
-		assert.deepEqual(actual.remote, expected);
+		assert.deepStrictEqual(actual.added, [{ identifier: { id: 'b', uuid: 'b' }, installed: true, version: '1.0.0' }, { identifier: { id: 'c', uuid: 'c' }, installed: true, version: '1.0.0' }]);
+		assert.deepStrictEqual(actual.removed, []);
+		assert.deepStrictEqual(actual.updated, []);
+		assert.deepStrictEqual(actual.remote, expected);
 	});
 
 	test('merge local and remote extensions when remote is moved forwarded', () => {
@@ -170,10 +170,10 @@ suite('ExtensionsMerge', () => {
 
 		const actual = merge(localExtensions, remoteExtensions, baseExtensions, [], []);
 
-		assert.deepEqual(actual.added, [{ identifier: { id: 'b', uuid: 'b' }, installed: true, version: '1.0.0' }, { identifier: { id: 'c', uuid: 'c' }, installed: true, version: '1.0.0' }]);
-		assert.deepEqual(actual.removed, [{ id: 'a', uuid: 'a' }, { id: 'd', uuid: 'd' }]);
-		assert.deepEqual(actual.updated, []);
-		assert.equal(actual.remote, null);
+		assert.deepStrictEqual(actual.added, [{ identifier: { id: 'b', uuid: 'b' }, installed: true, version: '1.0.0' }, { identifier: { id: 'c', uuid: 'c' }, installed: true, version: '1.0.0' }]);
+		assert.deepStrictEqual(actual.removed, [{ id: 'a', uuid: 'a' }, { id: 'd', uuid: 'd' }]);
+		assert.deepStrictEqual(actual.updated, []);
+		assert.strictEqual(actual.remote, null);
 	});
 
 	test('merge local and remote extensions when remote is moved forwarded with disabled extension', () => {
@@ -193,10 +193,10 @@ suite('ExtensionsMerge', () => {
 
 		const actual = merge(localExtensions, remoteExtensions, baseExtensions, [], []);
 
-		assert.deepEqual(actual.added, [{ identifier: { id: 'b', uuid: 'b' }, installed: true, version: '1.0.0' }, { identifier: { id: 'c', uuid: 'c' }, installed: true, version: '1.0.0' }]);
-		assert.deepEqual(actual.removed, [{ id: 'a', uuid: 'a' }]);
-		assert.deepEqual(actual.updated, [{ identifier: { id: 'd', uuid: 'd' }, disabled: true, installed: true, version: '1.0.0' }]);
-		assert.equal(actual.remote, null);
+		assert.deepStrictEqual(actual.added, [{ identifier: { id: 'b', uuid: 'b' }, installed: true, version: '1.0.0' }, { identifier: { id: 'c', uuid: 'c' }, installed: true, version: '1.0.0' }]);
+		assert.deepStrictEqual(actual.removed, [{ id: 'a', uuid: 'a' }]);
+		assert.deepStrictEqual(actual.updated, [{ identifier: { id: 'd', uuid: 'd' }, disabled: true, installed: true, version: '1.0.0' }]);
+		assert.strictEqual(actual.remote, null);
 	});
 
 	test('merge local and remote extensions when remote moved forwarded with ignored extensions', () => {
@@ -215,10 +215,10 @@ suite('ExtensionsMerge', () => {
 
 		const actual = merge(localExtensions, remoteExtensions, baseExtensions, [], ['a']);
 
-		assert.deepEqual(actual.added, [{ identifier: { id: 'b', uuid: 'b' }, installed: true, version: '1.0.0' }, { identifier: { id: 'c', uuid: 'c' }, installed: true, version: '1.0.0' }]);
-		assert.deepEqual(actual.removed, [{ id: 'd', uuid: 'd' }]);
-		assert.deepEqual(actual.updated, []);
-		assert.equal(actual.remote, null);
+		assert.deepStrictEqual(actual.added, [{ identifier: { id: 'b', uuid: 'b' }, installed: true, version: '1.0.0' }, { identifier: { id: 'c', uuid: 'c' }, installed: true, version: '1.0.0' }]);
+		assert.deepStrictEqual(actual.removed, [{ id: 'd', uuid: 'd' }]);
+		assert.deepStrictEqual(actual.updated, []);
+		assert.strictEqual(actual.remote, null);
 	});
 
 	test('merge local and remote extensions when remote is moved forwarded with skipped extensions', () => {
@@ -239,10 +239,10 @@ suite('ExtensionsMerge', () => {
 
 		const actual = merge(localExtensions, remoteExtensions, baseExtensions, skippedExtensions, []);
 
-		assert.deepEqual(actual.added, [{ identifier: { id: 'b', uuid: 'b' }, installed: true, version: '1.0.0' }, { identifier: { id: 'c', uuid: 'c' }, installed: true, version: '1.0.0' }]);
-		assert.deepEqual(actual.removed, [{ id: 'd', uuid: 'd' }]);
-		assert.deepEqual(actual.updated, []);
-		assert.equal(actual.remote, null);
+		assert.deepStrictEqual(actual.added, [{ identifier: { id: 'b', uuid: 'b' }, installed: true, version: '1.0.0' }, { identifier: { id: 'c', uuid: 'c' }, installed: true, version: '1.0.0' }]);
+		assert.deepStrictEqual(actual.removed, [{ id: 'd', uuid: 'd' }]);
+		assert.deepStrictEqual(actual.updated, []);
+		assert.strictEqual(actual.remote, null);
 	});
 
 	test('merge local and remote extensions when remote is moved forwarded with skipped and ignored extensions', () => {
@@ -263,10 +263,10 @@ suite('ExtensionsMerge', () => {
 
 		const actual = merge(localExtensions, remoteExtensions, baseExtensions, skippedExtensions, ['b']);
 
-		assert.deepEqual(actual.added, [{ identifier: { id: 'c', uuid: 'c' }, installed: true, version: '1.0.0' }]);
-		assert.deepEqual(actual.removed, [{ id: 'd', uuid: 'd' }]);
-		assert.deepEqual(actual.updated, []);
-		assert.equal(actual.remote, null);
+		assert.deepStrictEqual(actual.added, [{ identifier: { id: 'c', uuid: 'c' }, installed: true, version: '1.0.0' }]);
+		assert.deepStrictEqual(actual.removed, [{ id: 'd', uuid: 'd' }]);
+		assert.deepStrictEqual(actual.updated, []);
+		assert.strictEqual(actual.remote, null);
 	});
 
 	test('merge local and remote extensions when local is moved forwarded', () => {
@@ -285,10 +285,10 @@ suite('ExtensionsMerge', () => {
 
 		const actual = merge(localExtensions, remoteExtensions, baseExtensions, [], []);
 
-		assert.deepEqual(actual.added, []);
-		assert.deepEqual(actual.removed, []);
-		assert.deepEqual(actual.updated, []);
-		assert.deepEqual(actual.remote, localExtensions);
+		assert.deepStrictEqual(actual.added, []);
+		assert.deepStrictEqual(actual.removed, []);
+		assert.deepStrictEqual(actual.updated, []);
+		assert.deepStrictEqual(actual.remote, localExtensions);
 	});
 
 	test('merge local and remote extensions when local is moved forwarded with disabled extensions', () => {
@@ -308,10 +308,10 @@ suite('ExtensionsMerge', () => {
 
 		const actual = merge(localExtensions, remoteExtensions, baseExtensions, [], []);
 
-		assert.deepEqual(actual.added, []);
-		assert.deepEqual(actual.removed, []);
-		assert.deepEqual(actual.updated, []);
-		assert.deepEqual(actual.remote, localExtensions);
+		assert.deepStrictEqual(actual.added, []);
+		assert.deepStrictEqual(actual.removed, []);
+		assert.deepStrictEqual(actual.updated, []);
+		assert.deepStrictEqual(actual.remote, localExtensions);
 	});
 
 	test('merge local and remote extensions when local is moved forwarded with ignored settings', () => {
@@ -330,10 +330,10 @@ suite('ExtensionsMerge', () => {
 
 		const actual = merge(localExtensions, remoteExtensions, baseExtensions, [], ['b']);
 
-		assert.deepEqual(actual.added, []);
-		assert.deepEqual(actual.removed, []);
-		assert.deepEqual(actual.updated, []);
-		assert.deepEqual(actual.remote, [
+		assert.deepStrictEqual(actual.added, []);
+		assert.deepStrictEqual(actual.removed, []);
+		assert.deepStrictEqual(actual.updated, []);
+		assert.deepStrictEqual(actual.remote, [
 			{ identifier: { id: 'c', uuid: 'c' }, installed: true, version: '1.0.0' },
 		]);
 	});
@@ -362,10 +362,10 @@ suite('ExtensionsMerge', () => {
 
 		const actual = merge(localExtensions, remoteExtensions, baseExtensions, skippedExtensions, []);
 
-		assert.deepEqual(actual.added, []);
-		assert.deepEqual(actual.removed, []);
-		assert.deepEqual(actual.updated, []);
-		assert.deepEqual(actual.remote, expected);
+		assert.deepStrictEqual(actual.added, []);
+		assert.deepStrictEqual(actual.removed, []);
+		assert.deepStrictEqual(actual.updated, []);
+		assert.deepStrictEqual(actual.remote, expected);
 	});
 
 	test('merge local and remote extensions when local is moved forwarded with skipped and ignored extensions', () => {
@@ -391,10 +391,10 @@ suite('ExtensionsMerge', () => {
 
 		const actual = merge(localExtensions, remoteExtensions, baseExtensions, skippedExtensions, ['c']);
 
-		assert.deepEqual(actual.added, []);
-		assert.deepEqual(actual.removed, []);
-		assert.deepEqual(actual.updated, []);
-		assert.deepEqual(actual.remote, expected);
+		assert.deepStrictEqual(actual.added, []);
+		assert.deepStrictEqual(actual.removed, []);
+		assert.deepStrictEqual(actual.updated, []);
+		assert.deepStrictEqual(actual.remote, expected);
 	});
 
 	test('merge local and remote extensions when both moved forwarded', () => {
@@ -420,10 +420,10 @@ suite('ExtensionsMerge', () => {
 
 		const actual = merge(localExtensions, remoteExtensions, baseExtensions, [], []);
 
-		assert.deepEqual(actual.added, [{ identifier: { id: 'e', uuid: 'e' }, installed: true, version: '1.0.0' }]);
-		assert.deepEqual(actual.removed, [{ id: 'a', uuid: 'a' }]);
-		assert.deepEqual(actual.updated, []);
-		assert.deepEqual(actual.remote, expected);
+		assert.deepStrictEqual(actual.added, [{ identifier: { id: 'e', uuid: 'e' }, installed: true, version: '1.0.0' }]);
+		assert.deepStrictEqual(actual.removed, [{ id: 'a', uuid: 'a' }]);
+		assert.deepStrictEqual(actual.updated, []);
+		assert.deepStrictEqual(actual.remote, expected);
 	});
 
 	test('merge local and remote extensions when both moved forwarded with ignored extensions', () => {
@@ -449,10 +449,10 @@ suite('ExtensionsMerge', () => {
 
 		const actual = merge(localExtensions, remoteExtensions, baseExtensions, [], ['a', 'e']);
 
-		assert.deepEqual(actual.added, []);
-		assert.deepEqual(actual.removed, []);
-		assert.deepEqual(actual.updated, []);
-		assert.deepEqual(actual.remote, expected);
+		assert.deepStrictEqual(actual.added, []);
+		assert.deepStrictEqual(actual.removed, []);
+		assert.deepStrictEqual(actual.updated, []);
+		assert.deepStrictEqual(actual.remote, expected);
 	});
 
 	test('merge local and remote extensions when both moved forwarded with skipped extensions', () => {
@@ -480,10 +480,10 @@ suite('ExtensionsMerge', () => {
 
 		const actual = merge(localExtensions, remoteExtensions, baseExtensions, skippedExtensions, []);
 
-		assert.deepEqual(actual.added, [{ identifier: { id: 'e', uuid: 'e' }, installed: true, version: '1.0.0' }]);
-		assert.deepEqual(actual.removed, []);
-		assert.deepEqual(actual.updated, []);
-		assert.deepEqual(actual.remote, expected);
+		assert.deepStrictEqual(actual.added, [{ identifier: { id: 'e', uuid: 'e' }, installed: true, version: '1.0.0' }]);
+		assert.deepStrictEqual(actual.removed, []);
+		assert.deepStrictEqual(actual.updated, []);
+		assert.deepStrictEqual(actual.remote, expected);
 	});
 
 	test('merge local and remote extensions when both moved forwarded with skipped and ignoredextensions', () => {
@@ -511,10 +511,10 @@ suite('ExtensionsMerge', () => {
 
 		const actual = merge(localExtensions, remoteExtensions, baseExtensions, skippedExtensions, ['e']);
 
-		assert.deepEqual(actual.added, []);
-		assert.deepEqual(actual.removed, []);
-		assert.deepEqual(actual.updated, []);
-		assert.deepEqual(actual.remote, expected);
+		assert.deepStrictEqual(actual.added, []);
+		assert.deepStrictEqual(actual.removed, []);
+		assert.deepStrictEqual(actual.updated, []);
+		assert.deepStrictEqual(actual.remote, expected);
 	});
 
 	test('merge when remote extension has no uuid and different extension id case', () => {
@@ -536,10 +536,10 @@ suite('ExtensionsMerge', () => {
 
 		const actual = merge(localExtensions, remoteExtensions, null, [], []);
 
-		assert.deepEqual(actual.added, [{ identifier: { id: 'd', uuid: 'd' }, installed: true, version: '1.0.0' }]);
-		assert.deepEqual(actual.removed, []);
-		assert.deepEqual(actual.updated, []);
-		assert.deepEqual(actual.remote, expected);
+		assert.deepStrictEqual(actual.added, [{ identifier: { id: 'd', uuid: 'd' }, installed: true, version: '1.0.0' }]);
+		assert.deepStrictEqual(actual.removed, []);
+		assert.deepStrictEqual(actual.updated, []);
+		assert.deepStrictEqual(actual.remote, expected);
 	});
 
 	test('merge when remote extension is not an installed extension', () => {
@@ -553,10 +553,10 @@ suite('ExtensionsMerge', () => {
 
 		const actual = merge(localExtensions, remoteExtensions, null, [], []);
 
-		assert.deepEqual(actual.added, []);
-		assert.deepEqual(actual.removed, []);
-		assert.deepEqual(actual.updated, []);
-		assert.deepEqual(actual.remote, null);
+		assert.deepStrictEqual(actual.added, []);
+		assert.deepStrictEqual(actual.removed, []);
+		assert.deepStrictEqual(actual.updated, []);
+		assert.deepStrictEqual(actual.remote, null);
 	});
 
 	test('merge when remote extension is not an installed extension but is an installed extension locally', () => {
@@ -569,10 +569,10 @@ suite('ExtensionsMerge', () => {
 
 		const actual = merge(localExtensions, remoteExtensions, null, [], []);
 
-		assert.deepEqual(actual.added, []);
-		assert.deepEqual(actual.removed, []);
-		assert.deepEqual(actual.updated, []);
-		assert.deepEqual(actual.remote, localExtensions);
+		assert.deepStrictEqual(actual.added, []);
+		assert.deepStrictEqual(actual.removed, []);
+		assert.deepStrictEqual(actual.updated, []);
+		assert.deepStrictEqual(actual.remote, localExtensions);
 	});
 
 	test('merge when an extension is not an installed extension remotely and does not exist locally', () => {
@@ -586,10 +586,10 @@ suite('ExtensionsMerge', () => {
 
 		const actual = merge(localExtensions, remoteExtensions, remoteExtensions, [], []);
 
-		assert.deepEqual(actual.added, []);
-		assert.deepEqual(actual.removed, []);
-		assert.deepEqual(actual.updated, []);
-		assert.deepEqual(actual.remote, null);
+		assert.deepStrictEqual(actual.added, []);
+		assert.deepStrictEqual(actual.removed, []);
+		assert.deepStrictEqual(actual.updated, []);
+		assert.deepStrictEqual(actual.remote, null);
 	});
 
 	test('merge when an extension is an installed extension remotely but not locally and updated locally', () => {
@@ -605,10 +605,10 @@ suite('ExtensionsMerge', () => {
 
 		const actual = merge(localExtensions, remoteExtensions, remoteExtensions, [], []);
 
-		assert.deepEqual(actual.added, []);
-		assert.deepEqual(actual.removed, []);
-		assert.deepEqual(actual.updated, []);
-		assert.deepEqual(actual.remote, expected);
+		assert.deepStrictEqual(actual.added, []);
+		assert.deepStrictEqual(actual.removed, []);
+		assert.deepStrictEqual(actual.updated, []);
+		assert.deepStrictEqual(actual.remote, expected);
 	});
 
 	test('merge when an extension is an installed extension remotely but not locally and updated remotely', () => {
@@ -621,10 +621,10 @@ suite('ExtensionsMerge', () => {
 
 		const actual = merge(localExtensions, remoteExtensions, localExtensions, [], []);
 
-		assert.deepEqual(actual.added, []);
-		assert.deepEqual(actual.removed, []);
-		assert.deepEqual(actual.updated, remoteExtensions);
-		assert.deepEqual(actual.remote, null);
+		assert.deepStrictEqual(actual.added, []);
+		assert.deepStrictEqual(actual.removed, []);
+		assert.deepStrictEqual(actual.updated, remoteExtensions);
+		assert.deepStrictEqual(actual.remote, null);
 	});
 
 	test('merge not installed extensions', () => {
@@ -641,10 +641,10 @@ suite('ExtensionsMerge', () => {
 
 		const actual = merge(localExtensions, remoteExtensions, null, [], []);
 
-		assert.deepEqual(actual.added, []);
-		assert.deepEqual(actual.removed, []);
-		assert.deepEqual(actual.updated, []);
-		assert.deepEqual(actual.remote, expected);
+		assert.deepStrictEqual(actual.added, []);
+		assert.deepStrictEqual(actual.removed, []);
+		assert.deepStrictEqual(actual.updated, []);
+		assert.deepStrictEqual(actual.remote, expected);
 	});
 
 });

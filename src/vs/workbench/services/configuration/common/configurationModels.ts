@@ -5,12 +5,11 @@
 
 import { equals } from 'vs/base/common/objects';
 import { toValuesTree, IConfigurationModel, IConfigurationOverrides, IConfigurationValue, IConfigurationChange } from 'vs/platform/configuration/common/configuration';
-import { Configuration as BaseConfiguration, ConfigurationModelParser, ConfigurationModel } from 'vs/platform/configuration/common/configurationModels';
+import { Configuration as BaseConfiguration, ConfigurationModelParser, ConfigurationModel, ConfigurationParseOptions } from 'vs/platform/configuration/common/configurationModels';
 import { IStoredWorkspaceFolder } from 'vs/platform/workspaces/common/workspaces';
 import { Workspace } from 'vs/platform/workspace/common/workspace';
 import { ResourceMap } from 'vs/base/common/map';
 import { URI } from 'vs/base/common/uri';
-import { WORKSPACE_SCOPES } from 'vs/workbench/services/configuration/common/configuration';
 import { OVERRIDE_PROPERTY_PATTERN, overrideIdentifierFromKey } from 'vs/platform/configuration/common/configurationRegistry';
 
 export class WorkspaceConfigurationModelParser extends ConfigurationModelParser {
@@ -22,7 +21,7 @@ export class WorkspaceConfigurationModelParser extends ConfigurationModelParser 
 
 	constructor(name: string) {
 		super(name);
-		this._settingsModelParser = new ConfigurationModelParser(name, WORKSPACE_SCOPES);
+		this._settingsModelParser = new ConfigurationModelParser(name);
 		this._launchModel = new ConfigurationModel();
 		this._tasksModel = new ConfigurationModel();
 	}
@@ -43,16 +42,20 @@ export class WorkspaceConfigurationModelParser extends ConfigurationModelParser 
 		return this._tasksModel;
 	}
 
-	reprocessWorkspaceSettings(): void {
-		this._settingsModelParser.parse();
+	reparseWorkspaceSettings(configurationParseOptions: ConfigurationParseOptions): void {
+		this._settingsModelParser.reparse(configurationParseOptions);
 	}
 
-	protected doParseRaw(raw: any): IConfigurationModel {
+	getRestrictedWorkspaceSettings(): string[] {
+		return this._settingsModelParser.restrictedConfigurations;
+	}
+
+	protected override doParseRaw(raw: any, configurationParseOptions?: ConfigurationParseOptions): IConfigurationModel {
 		this._folders = (raw['folders'] || []) as IStoredWorkspaceFolder[];
-		this._settingsModelParser.parseRaw(raw['settings']);
+		this._settingsModelParser.parseRaw(raw['settings'], configurationParseOptions);
 		this._launchModel = this.createConfigurationModelFrom(raw, 'launch');
 		this._tasksModel = this.createConfigurationModelFrom(raw, 'tasks');
-		return super.doParseRaw(raw);
+		return super.doParseRaw(raw, configurationParseOptions);
 	}
 
 	private createConfigurationModelFrom(raw: any, key: string): ConfigurationModel {
@@ -74,7 +77,7 @@ export class StandaloneConfigurationModelParser extends ConfigurationModelParser
 		super(name);
 	}
 
-	protected doParseRaw(raw: any): IConfigurationModel {
+	protected override doParseRaw(raw: any, configurationParseOptions?: ConfigurationParseOptions): IConfigurationModel {
 		const contents = toValuesTree(raw, message => console.error(`Conflict in settings file ${this._name}: ${message}`));
 		const scopedContents = Object.create(null);
 		scopedContents[this.scope] = contents;
@@ -98,15 +101,15 @@ export class Configuration extends BaseConfiguration {
 		super(defaults, localUser, remoteUser, workspaceConfiguration, folders, memoryConfiguration, memoryConfigurationByResource);
 	}
 
-	getValue(key: string | undefined, overrides: IConfigurationOverrides = {}): any {
+	override getValue(key: string | undefined, overrides: IConfigurationOverrides = {}): any {
 		return super.getValue(key, overrides, this._workspace);
 	}
 
-	inspect<C>(key: string, overrides: IConfigurationOverrides = {}): IConfigurationValue<C> {
+	override inspect<C>(key: string, overrides: IConfigurationOverrides = {}): IConfigurationValue<C> {
 		return super.inspect(key, overrides, this._workspace);
 	}
 
-	keys(): {
+	override keys(): {
 		default: string[];
 		user: string[];
 		workspace: string[];
@@ -115,7 +118,7 @@ export class Configuration extends BaseConfiguration {
 		return super.keys(this._workspace);
 	}
 
-	compareAndDeleteFolderConfiguration(folder: URI): IConfigurationChange {
+	override compareAndDeleteFolderConfiguration(folder: URI): IConfigurationChange {
 		if (this._workspace && this._workspace.folders.length > 0 && this._workspace.folders[0].uri.toString() === folder.toString()) {
 			// Do not remove workspace configuration
 			return { keys: [], overrides: [] };

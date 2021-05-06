@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Event } from 'vs/base/common/event';
-import { createDecorator } from 'vs/platform/instantiation/common/instantiation';
+import { createDecorator, refineServiceDecorator } from 'vs/platform/instantiation/common/instantiation';
 import { IExtension, IScannedExtension, ExtensionType, ITranslatedScannedExtension, IExtensionManifest } from 'vs/platform/extensions/common/extensions';
 import { IExtensionManagementService, IGalleryExtension, IExtensionIdentifier, ILocalExtension, InstallOptions } from 'vs/platform/extensionManagement/common/extensionManagement';
 import { URI } from 'vs/base/common/uri';
@@ -24,7 +24,7 @@ export interface IExtensionManagementServerService {
 	getExtensionManagementServer(extension: IExtension): IExtensionManagementServer | null;
 }
 
-export const IWorkbenchExtensionManagementService = createDecorator<IWorkbenchExtensionManagementService>('extensionManagementService');
+export const IWorkbenchExtensionManagementService = refineServiceDecorator<IExtensionManagementService, IWorkbenchExtensionManagementService>(IExtensionManagementService);
 export interface IWorkbenchExtensionManagementService extends IExtensionManagementService {
 	readonly _serviceBrand: undefined;
 	installExtensions(extensions: IGalleryExtension[], installOptions?: InstallOptions): Promise<ILocalExtension[]>;
@@ -36,6 +36,7 @@ export const enum EnablementState {
 	DisabledByTrustRequirement,
 	DisabledByExtensionKind,
 	DisabledByEnvironment,
+	DisabledByVirtualWorkspace,
 	DisabledGlobally,
 	DisabledWorkspace,
 	EnabledGlobally,
@@ -90,6 +91,12 @@ export interface IWorkbenchExtensionEnablementService {
 	 * Throws error if enablement is requested for workspace and there is no workspace
 	 */
 	setEnablement(extensions: IExtension[], state: EnablementState): Promise<boolean[]>;
+
+	/**
+	 * Updates the enablement state of the extensions that require workspace trust when
+	 * workspace trust changes.
+	 */
+	updateEnablementByWorkspaceTrustRequirement(): Promise<void>;
 }
 
 export const IWebExtensionsScannerService = createDecorator<IWebExtensionsScannerService>('IWebExtensionsScannerService');

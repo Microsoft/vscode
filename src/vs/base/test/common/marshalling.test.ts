@@ -13,10 +13,10 @@ suite('Marshalling', () => {
 		let raw = stringify(value);
 		let clone = <RegExp>parse(raw);
 
-		assert.equal(value.source, clone.source);
-		assert.equal(value.global, clone.global);
-		assert.equal(value.ignoreCase, clone.ignoreCase);
-		assert.equal(value.multiline, clone.multiline);
+		assert.strictEqual(value.source, clone.source);
+		assert.strictEqual(value.global, clone.global);
+		assert.strictEqual(value.ignoreCase, clone.ignoreCase);
+		assert.strictEqual(value.multiline, clone.multiline);
 	});
 
 	test('URI', () => {
@@ -24,15 +24,15 @@ suite('Marshalling', () => {
 		const raw = stringify(value);
 		const clone = <URI>parse(raw);
 
-		assert.equal(value.scheme, clone.scheme);
-		assert.equal(value.authority, clone.authority);
-		assert.equal(value.path, clone.path);
-		assert.equal(value.query, clone.query);
-		assert.equal(value.fragment, clone.fragment);
+		assert.strictEqual(value.scheme, clone.scheme);
+		assert.strictEqual(value.authority, clone.authority);
+		assert.strictEqual(value.path, clone.path);
+		assert.strictEqual(value.query, clone.query);
+		assert.strictEqual(value.fragment, clone.fragment);
 	});
 
 	test('Bug 16793:# in folder name => mirror models get out of sync', () => {
 		const uri1 = URI.file('C:\\C#\\file.txt');
-		assert.equal(parse(stringify(uri1)).toString(), uri1.toString());
+		assert.strictEqual(parse(stringify(uri1)).toString(), uri1.toString());
 	});
 });

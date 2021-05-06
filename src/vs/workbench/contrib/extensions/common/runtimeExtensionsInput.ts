@@ -11,6 +11,10 @@ export class RuntimeExtensionsInput extends EditorInput {
 
 	static readonly ID = 'workbench.runtimeExtensions.input';
 
+	override get typeId(): string {
+		return RuntimeExtensionsInput.ID;
+	}
+
 	static _instance: RuntimeExtensionsInput;
 	static get instance() {
 		if (!RuntimeExtensionsInput._instance || RuntimeExtensionsInput._instance.isDisposed()) {
@@ -25,19 +29,15 @@ export class RuntimeExtensionsInput extends EditorInput {
 		path: 'default'
 	});
 
-	getTypeId(): string {
-		return RuntimeExtensionsInput.ID;
-	}
-
-	getName(): string {
+	override getName(): string {
 		return nls.localize('extensionsInputName', "Running Extensions");
 	}
 
-	supportsSplitEditor(): boolean {
+	override canSplit(): boolean {
 		return false;
 	}
 
-	matches(other: unknown): boolean {
+	override matches(other: unknown): boolean {
 		return other instanceof RuntimeExtensionsInput;
 	}
 }

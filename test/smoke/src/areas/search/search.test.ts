@@ -7,6 +7,7 @@ import * as cp from 'child_process';
 import { Application } from '../../../../automation';
 
 export function setup() {
+	// https://github.com/microsoft/vscode/issues/115244
 	describe('Search', () => {
 		after(function () {
 			const app = this.app as Application;
@@ -34,8 +35,7 @@ export function setup() {
 			await app.workbench.search.hideQueryDetails();
 		});
 
-		// https://github.com/microsoft/vscode/issues/115244
-		it('dismisses result & checks for correct result number', async function () {
+		it.skip('dismisses result & checks for correct result number', async function () {
 			const app = this.app as Application;
 			await app.workbench.search.searchFor('body');
 			await app.workbench.search.removeFileMatch('app.js');
@@ -54,7 +54,7 @@ export function setup() {
 			await app.workbench.search.searchFor('ydob');
 			await app.workbench.search.setReplaceText('body');
 			await app.workbench.search.replaceFileMatch('app.js');
-			await app.workbench.search.waitForNoResultText();
+			await app.workbench.search.waitForResultText('0 results in 0 files');
 		});
 	});
 

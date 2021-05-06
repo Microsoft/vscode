@@ -28,6 +28,11 @@ export interface IWorkspaceContextService extends IWorkspaceFolderProvider {
 	readonly onDidChangeWorkspaceName: Event<void>;
 
 	/**
+	 * An event which fires before workspace folders change.
+	 */
+	readonly onWillChangeWorkspaceFolders: Event<IWorkspaceFoldersWillChangeEvent>;
+
+	/**
 	 * An event which fires on workspace folders change.
 	 */
 	readonly onDidChangeWorkspaceFolders: Event<IWorkspaceFoldersChangeEvent>;
@@ -73,6 +78,12 @@ export const enum WorkbenchState {
 	EMPTY = 1,
 	FOLDER,
 	WORKSPACE
+}
+
+export interface IWorkspaceFoldersWillChangeEvent {
+	join(promise: Promise<void>): void;
+	readonly changes: IWorkspaceFoldersChangeEvent;
+	readonly fromCache: boolean;
 }
 
 export interface IWorkspaceFoldersChangeEvent {

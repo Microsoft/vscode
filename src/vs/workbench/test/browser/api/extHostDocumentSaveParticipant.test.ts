@@ -379,7 +379,7 @@ suite('ExtHostDocumentSaveParticipant', () => {
 	test('Log failing listener', function () {
 		let didLogSomething = false;
 		let participant = new ExtHostDocumentSaveParticipant(new class extends NullLogService {
-			error(message: string | Error, ...args: any[]): void {
+			override error(message: string | Error, ...args: any[]): void {
 				didLogSomething = true;
 			}
 		}, documents, mainThreadBulkEdits);

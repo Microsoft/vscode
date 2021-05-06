@@ -45,7 +45,7 @@ export class EditorScopedQuickInputServiceImpl extends QuickInputService {
 		};
 	}
 
-	protected createController(): QuickInputController {
+	protected override createController(): QuickInputController {
 		return super.createController(this.host);
 	}
 }

@@ -5,22 +5,24 @@
 
 import * as assert from 'assert';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
-import { EncodingMode } from 'vs/workbench/common/editor';
 import { TextFileEditorModel } from 'vs/workbench/services/textfile/common/textFileEditorModel';
-import { TextFileEditorModelState, snapshotToString, isTextFileEditorModel } from 'vs/workbench/services/textfile/common/textfiles';
-import { createFileEditorInput, workbenchInstantiationService, TestServiceAccessor, TestReadonlyTextFileEditorModel } from 'vs/workbench/test/browser/workbenchTestServices';
+import { EncodingMode, TextFileEditorModelState, snapshotToString, isTextFileEditorModel } from 'vs/workbench/services/textfile/common/textfiles';
+import { createFileEditorInput, workbenchInstantiationService, TestServiceAccessor, TestReadonlyTextFileEditorModel, getLastResolvedFileStat } from 'vs/workbench/test/browser/workbenchTestServices';
 import { toResource } from 'vs/base/test/common/utils';
 import { TextFileEditorModelManager } from 'vs/workbench/services/textfile/common/textFileEditorModelManager';
 import { FileOperationResult, FileOperationError } from 'vs/platform/files/common/files';
 import { timeout } from 'vs/base/common/async';
 import { ModesRegistry } from 'vs/editor/common/modes/modesRegistry';
 import { assertIsDefined } from 'vs/base/common/types';
-import { createTextBufferFactory } from 'vs/editor/common/model/textModel';
+import { createTextBufferFactory, createTextBufferFactoryFromStream } from 'vs/editor/common/model/textModel';
+import { CancellationToken } from 'vs/base/common/cancellation';
+import { URI } from 'vs/base/common/uri';
+import { bufferToStream, VSBuffer } from 'vs/base/common/buffer';
 
 suite('Files - TextFileEditorModel', () => {
 
 	function getLastModifiedTime(model: TextFileEditorModel): number {
-		const stat = model.getStat();
+		const stat = getLastResolvedFileStat(model);
 
 		return stat ? stat.mtime : -1;
 	}
@@ -43,12 +45,12 @@ suite('Files - TextFileEditorModel', () => {
 	test('basic events', async function () {
 		const model = instantiationService.createInstance(TextFileEditorModel, toResource.call(this, '/path/index_async.txt'), 'utf8', undefined);
 
-		let onDidLoadCounter = 0;
-		model.onDidLoad(() => onDidLoadCounter++);
+		let onDidResolveCounter = 0;
+		model.onDidResolve(() => onDidResolveCounter++);
 
-		await model.load();
+		await model.resolve();
 
-		assert.strictEqual(onDidLoadCounter, 1);
+		assert.strictEqual(onDidResolveCounter, 1);
 
 		let onDidChangeContentCounter = 0;
 		model.onDidChangeContent(() => onDidChangeContentCounter++);
@@ -84,7 +86,7 @@ suite('Files - TextFileEditorModel', () => {
 	test('save', async function () {
 		const model: TextFileEditorModel = instantiationService.createInstance(TextFileEditorModel, toResource.call(this, '/path/index_async.txt'), 'utf8', undefined);
 
-		await model.load();
+		await model.resolve();
 
 		assert.strictEqual(accessor.workingCopyService.dirtyCount, 0);
 
@@ -99,7 +101,7 @@ suite('Files - TextFileEditorModel', () => {
 		assert.ok(model.hasState(TextFileEditorModelState.DIRTY));
 
 		assert.strictEqual(accessor.workingCopyService.dirtyCount, 1);
-		assert.strictEqual(accessor.workingCopyService.isDirty(model.resource), true);
+		assert.strictEqual(accessor.workingCopyService.isDirty(model.resource, model.typeId), true);
 
 		let workingCopyEvent = false;
 		accessor.workingCopyService.onDidChangeDirty(e => {
@@ -119,7 +121,7 @@ suite('Files - TextFileEditorModel', () => {
 		assert.ok(workingCopyEvent);
 
 		assert.strictEqual(accessor.workingCopyService.dirtyCount, 0);
-		assert.strictEqual(accessor.workingCopyService.isDirty(model.resource), false);
+		assert.strictEqual(accessor.workingCopyService.isDirty(model.resource, model.typeId), false);
 
 		savedEvent = false;
 
@@ -133,7 +135,7 @@ suite('Files - TextFileEditorModel', () => {
 	test('save - touching also emits saved event', async function () {
 		const model: TextFileEditorModel = instantiationService.createInstance(TextFileEditorModel, toResource.call(this, '/path/index_async.txt'), 'utf8', undefined);
 
-		await model.load();
+		await model.resolve();
 
 		let savedEvent = false;
 		model.onDidSave(() => savedEvent = true);
@@ -157,7 +159,7 @@ suite('Files - TextFileEditorModel', () => {
 	test('save - touching with error turns model dirty', async function () {
 		const model: TextFileEditorModel = instantiationService.createInstance(TextFileEditorModel, toResource.call(this, '/path/index_async.txt'), 'utf8', undefined);
 
-		await model.load();
+		await model.resolve();
 
 		let saveErrorEvent = false;
 		model.onDidSaveError(() => saveErrorEvent = true);
@@ -174,7 +176,7 @@ suite('Files - TextFileEditorModel', () => {
 			assert.ok(saveErrorEvent);
 
 			assert.strictEqual(accessor.workingCopyService.dirtyCount, 1);
-			assert.strictEqual(accessor.workingCopyService.isDirty(model.resource), true);
+			assert.strictEqual(accessor.workingCopyService.isDirty(model.resource, model.typeId), true);
 		} finally {
 			accessor.fileService.writeShouldThrowError = undefined;
 		}
@@ -191,7 +193,7 @@ suite('Files - TextFileEditorModel', () => {
 	test('save error (generic)', async function () {
 		const model: TextFileEditorModel = instantiationService.createInstance(TextFileEditorModel, toResource.call(this, '/path/index_async.txt'), 'utf8', undefined);
 
-		await model.load();
+		await model.resolve();
 
 		model.updateTextEditorModel(createTextBufferFactory('bar'));
 
@@ -210,7 +212,7 @@ suite('Files - TextFileEditorModel', () => {
 			assert.ok(saveErrorEvent);
 
 			assert.strictEqual(accessor.workingCopyService.dirtyCount, 1);
-			assert.strictEqual(accessor.workingCopyService.isDirty(model.resource), true);
+			assert.strictEqual(accessor.workingCopyService.isDirty(model.resource, model.typeId), true);
 
 			model.dispose();
 		} finally {
@@ -221,7 +223,7 @@ suite('Files - TextFileEditorModel', () => {
 	test('save error (conflict)', async function () {
 		const model: TextFileEditorModel = instantiationService.createInstance(TextFileEditorModel, toResource.call(this, '/path/index_async.txt'), 'utf8', undefined);
 
-		await model.load();
+		await model.resolve();
 
 		model.updateTextEditorModel(createTextBufferFactory('bar'));
 
@@ -240,7 +242,7 @@ suite('Files - TextFileEditorModel', () => {
 			assert.ok(saveErrorEvent);
 
 			assert.strictEqual(accessor.workingCopyService.dirtyCount, 1);
-			assert.strictEqual(accessor.workingCopyService.isDirty(model.resource), true);
+			assert.strictEqual(accessor.workingCopyService.isDirty(model.resource, model.typeId), true);
 
 			model.dispose();
 		} finally {
@@ -248,18 +250,18 @@ suite('Files - TextFileEditorModel', () => {
 		}
 	});
 
-	test('setEncoding - encode', function () {
+	test('setEncoding - encode', async function () {
 		const model: TextFileEditorModel = instantiationService.createInstance(TextFileEditorModel, toResource.call(this, '/path/index_async.txt'), 'utf8', undefined);
 
 		let encodingEvent = false;
 		model.onDidChangeEncoding(() => encodingEvent = true);
 
-		model.setEncoding('utf8', EncodingMode.Encode); // no-op
+		await model.setEncoding('utf8', EncodingMode.Encode); // no-op
 		assert.strictEqual(getLastModifiedTime(model), -1);
 
 		assert.ok(!encodingEvent);
 
-		model.setEncoding('utf16', EncodingMode.Encode);
+		await model.setEncoding('utf16', EncodingMode.Encode);
 
 		assert.ok(encodingEvent);
 
@@ -271,10 +273,22 @@ suite('Files - TextFileEditorModel', () => {
 	test('setEncoding - decode', async function () {
 		const model: TextFileEditorModel = instantiationService.createInstance(TextFileEditorModel, toResource.call(this, '/path/index_async.txt'), 'utf8', undefined);
 
-		model.setEncoding('utf16', EncodingMode.Decode);
+		await model.setEncoding('utf16', EncodingMode.Decode);
 
-		await timeout(0);
-		assert.ok(model.isResolved()); // model got loaded due to decoding
+		assert.ok(model.isResolved()); // model got resolved due to decoding
+		model.dispose();
+	});
+
+	test('setEncoding - decode dirty file saves first', async function () {
+		const model: TextFileEditorModel = instantiationService.createInstance(TextFileEditorModel, toResource.call(this, '/path/index_async.txt'), 'utf8', undefined);
+		await model.resolve();
+
+		model.updateTextEditorModel(createTextBufferFactory('bar'));
+		assert.strictEqual(model.isDirty(), true);
+
+		await model.setEncoding('utf16', EncodingMode.Decode);
+
+		assert.strictEqual(model.isDirty(), false);
 		model.dispose();
 	});
 
@@ -286,7 +300,7 @@ suite('Files - TextFileEditorModel', () => {
 
 		const model: TextFileEditorModel = instantiationService.createInstance(TextFileEditorModel, toResource.call(this, '/path/index_async.txt'), 'utf8', mode);
 
-		await model.load();
+		await model.resolve();
 
 		assert.strictEqual(model.textEditorModel!.getModeId(), mode);
 
@@ -297,47 +311,47 @@ suite('Files - TextFileEditorModel', () => {
 	test('disposes when underlying model is destroyed', async function () {
 		const model: TextFileEditorModel = instantiationService.createInstance(TextFileEditorModel, toResource.call(this, '/path/index_async.txt'), 'utf8', undefined);
 
-		await model.load();
+		await model.resolve();
 
 		model.textEditorModel!.dispose();
 		assert.ok(model.isDisposed());
 	});
 
-	test('Load does not trigger save', async function () {
+	test('Resolve does not trigger save', async function () {
 		const model = instantiationService.createInstance(TextFileEditorModel, toResource.call(this, '/path/index.txt'), 'utf8', undefined);
 		assert.ok(model.hasState(TextFileEditorModelState.SAVED));
 
 		model.onDidSave(() => assert.fail());
 		model.onDidChangeDirty(() => assert.fail());
 
-		await model.load();
+		await model.resolve();
 		assert.ok(model.isResolved());
 		model.dispose();
 		assert.ok(!accessor.modelService.getModel(model.resource));
 	});
 
-	test('Load returns dirty model as long as model is dirty', async function () {
+	test('Resolve returns dirty model as long as model is dirty', async function () {
 		const model = instantiationService.createInstance(TextFileEditorModel, toResource.call(this, '/path/index_async.txt'), 'utf8', undefined);
 
-		await model.load();
+		await model.resolve();
 		model.updateTextEditorModel(createTextBufferFactory('foo'));
 		assert.ok(model.isDirty());
 		assert.ok(model.hasState(TextFileEditorModelState.DIRTY));
 
-		await model.load();
+		await model.resolve();
 		assert.ok(model.isDirty());
 		model.dispose();
 	});
 
-	test('Load with contents', async function () {
+	test('Resolve with contents', async function () {
 		const model: TextFileEditorModel = instantiationService.createInstance(TextFileEditorModel, toResource.call(this, '/path/index_async.txt'), 'utf8', undefined);
 
-		await model.load({ contents: createTextBufferFactory('Hello World') });
+		await model.resolve({ contents: createTextBufferFactory('Hello World') });
 
 		assert.strictEqual(model.textEditorModel?.getValue(), 'Hello World');
 		assert.strictEqual(model.isDirty(), true);
 
-		await model.load({ contents: createTextBufferFactory('Hello Changes') });
+		await model.resolve({ contents: createTextBufferFactory('Hello Changes') });
 
 		assert.strictEqual(model.textEditorModel?.getValue(), 'Hello Changes');
 		assert.strictEqual(model.isDirty(), true);
@@ -365,12 +379,12 @@ suite('Files - TextFileEditorModel', () => {
 			}
 		});
 
-		await model.load();
+		await model.resolve();
 		model.updateTextEditorModel(createTextBufferFactory('foo'));
 		assert.ok(model.isDirty());
 
 		assert.strictEqual(accessor.workingCopyService.dirtyCount, 1);
-		assert.strictEqual(accessor.workingCopyService.isDirty(model.resource), true);
+		assert.strictEqual(accessor.workingCopyService.isDirty(model.resource, model.typeId), true);
 
 		await model.revert();
 		assert.strictEqual(model.isDirty(), false);
@@ -379,7 +393,7 @@ suite('Files - TextFileEditorModel', () => {
 
 		assert.ok(workingCopyEvent);
 		assert.strictEqual(accessor.workingCopyService.dirtyCount, 0);
-		assert.strictEqual(accessor.workingCopyService.isDirty(model.resource), false);
+		assert.strictEqual(accessor.workingCopyService.isDirty(model.resource, model.typeId), false);
 
 		model.dispose();
 	});
@@ -398,12 +412,12 @@ suite('Files - TextFileEditorModel', () => {
 			}
 		});
 
-		await model.load();
+		await model.resolve();
 		model.updateTextEditorModel(createTextBufferFactory('foo'));
 		assert.ok(model.isDirty());
 
 		assert.strictEqual(accessor.workingCopyService.dirtyCount, 1);
-		assert.strictEqual(accessor.workingCopyService.isDirty(model.resource), true);
+		assert.strictEqual(accessor.workingCopyService.isDirty(model.resource, model.typeId), true);
 
 		await model.revert({ soft: true });
 		assert.strictEqual(model.isDirty(), false);
@@ -412,14 +426,14 @@ suite('Files - TextFileEditorModel', () => {
 
 		assert.ok(workingCopyEvent);
 		assert.strictEqual(accessor.workingCopyService.dirtyCount, 0);
-		assert.strictEqual(accessor.workingCopyService.isDirty(model.resource), false);
+		assert.strictEqual(accessor.workingCopyService.isDirty(model.resource, model.typeId), false);
 
 		model.dispose();
 	});
 
 	test('Undo to saved state turns model non-dirty', async function () {
 		const model: TextFileEditorModel = instantiationService.createInstance(TextFileEditorModel, toResource.call(this, '/path/index_async.txt'), 'utf8', undefined);
-		await model.load();
+		await model.resolve();
 		model.updateTextEditorModel(createTextBufferFactory('Hello Text'));
 		assert.ok(model.isDirty());
 
@@ -427,17 +441,17 @@ suite('Files - TextFileEditorModel', () => {
 		assert.ok(!model.isDirty());
 	});
 
-	test('Load and undo turns model dirty', async function () {
+	test('Resolve and undo turns model dirty', async function () {
 		const model: TextFileEditorModel = instantiationService.createInstance(TextFileEditorModel, toResource.call(this, '/path/index_async.txt'), 'utf8', undefined);
-		await model.load();
+		await model.resolve();
 		accessor.fileService.setContent('Hello Change');
 
-		await model.load();
+		await model.resolve();
 		await model.textEditorModel!.undo();
 		assert.ok(model.isDirty());
 
 		assert.strictEqual(accessor.workingCopyService.dirtyCount, 1);
-		assert.strictEqual(accessor.workingCopyService.isDirty(model.resource), true);
+		assert.strictEqual(accessor.workingCopyService.isDirty(model.resource, model.typeId), true);
 	});
 
 	test('Update Dirty', async function () {
@@ -448,7 +462,7 @@ suite('Files - TextFileEditorModel', () => {
 		model.setDirty(true);
 		assert.ok(!model.isDirty()); // needs to be resolved
 
-		await model.load();
+		await model.resolve();
 		model.updateTextEditorModel(createTextBufferFactory('foo'));
 		assert.ok(model.isDirty());
 
@@ -491,7 +505,7 @@ suite('Files - TextFileEditorModel', () => {
 			saveEvent = true;
 		});
 
-		await model.load();
+		await model.resolve();
 		model.updateTextEditorModel(createTextBufferFactory('foo'));
 		assert.ok(!model.isDirty());
 
@@ -509,25 +523,25 @@ suite('Files - TextFileEditorModel', () => {
 	test('File not modified error is handled gracefully', async function () {
 		let model: TextFileEditorModel = instantiationService.createInstance(TextFileEditorModel, toResource.call(this, '/path/index_async.txt'), 'utf8', undefined);
 
-		await model.load();
+		await model.resolve();
 
 		const mtime = getLastModifiedTime(model);
 		accessor.textFileService.setReadStreamErrorOnce(new FileOperationError('error', FileOperationResult.FILE_NOT_MODIFIED_SINCE));
 
-		model = await model.load() as TextFileEditorModel;
+		await model.resolve();
 
 		assert.ok(model);
 		assert.strictEqual(getLastModifiedTime(model), mtime);
 		model.dispose();
 	});
 
-	test('Load error is handled gracefully if model already exists', async function () {
+	test('Resolve error is handled gracefully if model already exists', async function () {
 		let model: TextFileEditorModel = instantiationService.createInstance(TextFileEditorModel, toResource.call(this, '/path/index_async.txt'), 'utf8', undefined);
 
-		await model.load();
+		await model.resolve();
 		accessor.textFileService.setReadStreamErrorOnce(new FileOperationError('error', FileOperationResult.FILE_NOT_FOUND));
 
-		model = await model.load() as TextFileEditorModel;
+		await model.resolve();
 		assert.ok(model);
 		model.dispose();
 	});
@@ -541,8 +555,8 @@ suite('Files - TextFileEditorModel', () => {
 
 		model1.updateTextEditorModel(createTextBufferFactory('foo'));
 
-		const m1Mtime = assertIsDefined(model1.getStat()).mtime;
-		const m2Mtime = assertIsDefined(model2.getStat()).mtime;
+		const m1Mtime = assertIsDefined(getLastResolvedFileStat(model1)).mtime;
+		const m2Mtime = assertIsDefined(getLastResolvedFileStat(model2)).mtime;
 		assert.ok(m1Mtime > 0);
 		assert.ok(m2Mtime > 0);
 
@@ -557,8 +571,8 @@ suite('Files - TextFileEditorModel', () => {
 		await accessor.textFileService.save(toResource.call(this, '/path/index_async2.txt'));
 		assert.ok(!accessor.textFileService.isDirty(toResource.call(this, '/path/index_async.txt')));
 		assert.ok(!accessor.textFileService.isDirty(toResource.call(this, '/path/index_async2.txt')));
-		assert.ok(assertIsDefined(model1.getStat()).mtime > m1Mtime);
-		assert.ok(assertIsDefined(model2.getStat()).mtime > m2Mtime);
+		assert.ok(assertIsDefined(getLastResolvedFileStat(model1)).mtime > m1Mtime);
+		assert.ok(assertIsDefined(getLastResolvedFileStat(model2)).mtime > m2Mtime);
 
 		model1.dispose();
 		model2.dispose();
@@ -583,7 +597,7 @@ suite('Files - TextFileEditorModel', () => {
 			}
 		});
 
-		await model.load();
+		await model.resolve();
 		model.updateTextEditorModel(createTextBufferFactory('foo'));
 		assert.ok(model.isDirty());
 
@@ -610,7 +624,7 @@ suite('Files - TextFileEditorModel', () => {
 			}
 		});
 
-		await model.load();
+		await model.resolve();
 		model.updateTextEditorModel(createTextBufferFactory('foo'));
 
 		await model.save({ skipSaveParticipants: true });
@@ -640,7 +654,7 @@ suite('Files - TextFileEditorModel', () => {
 			}
 		});
 
-		await model.load();
+		await model.resolve();
 		model.updateTextEditorModel(createTextBufferFactory('foo'));
 
 		const now = Date.now();
@@ -661,7 +675,7 @@ suite('Files - TextFileEditorModel', () => {
 			}
 		});
 
-		await model.load();
+		await model.resolve();
 		model.updateTextEditorModel(createTextBufferFactory('foo'));
 
 		await model.save();
@@ -685,7 +699,7 @@ suite('Files - TextFileEditorModel', () => {
 			}
 		});
 
-		await model.load();
+		await model.resolve();
 
 		model.updateTextEditorModel(createTextBufferFactory('foo'));
 		const p1 = model.save();
@@ -744,12 +758,43 @@ suite('Files - TextFileEditorModel', () => {
 			}
 		});
 
-		await model.load();
+		await model.resolve();
 		model.updateTextEditorModel(createTextBufferFactory('foo'));
 
 		savePromise = model.save();
 		await savePromise;
 
 		participant.dispose();
+	}
+
+	test('backup and restore (simple)', async function () {
+		return testBackupAndRestore(toResource.call(this, '/path/index_async.txt'), toResource.call(this, '/path/index_async2.txt'), 'Some very small file text content.');
+	});
+
+	test('backup and restore (large, #121347)', async function () {
+		const largeContent = '국어한\n'.repeat(100000);
+		return testBackupAndRestore(toResource.call(this, '/path/index_async.txt'), toResource.call(this, '/path/index_async2.txt'), largeContent);
+	});
+
+	async function testBackupAndRestore(resourceA: URI, resourceB: URI, contents: string): Promise<void> {
+		const originalModel: TextFileEditorModel = instantiationService.createInstance(TextFileEditorModel, resourceA, 'utf8', undefined);
+		await originalModel.resolve({
+			contents: await createTextBufferFactoryFromStream(await accessor.textFileService.getDecodedStream(resourceA, bufferToStream(VSBuffer.fromString(contents))))
+		});
+
+		assert.strictEqual(originalModel.textEditorModel?.getValue(), contents);
+
+		const backup = await originalModel.backup(CancellationToken.None);
+		const modelRestoredIdentifier = { typeId: originalModel.typeId, resource: resourceB };
+		await accessor.workingCopyBackupService.backup(modelRestoredIdentifier, backup.content);
+
+		const modelRestored: TextFileEditorModel = instantiationService.createInstance(TextFileEditorModel, modelRestoredIdentifier.resource, 'utf8', undefined);
+		await modelRestored.resolve();
+
+		assert.strictEqual(modelRestored.textEditorModel?.getValue(), contents);
+		assert.strictEqual(modelRestored.isDirty(), true);
+
+		originalModel.dispose();
+		modelRestored.dispose();
 	}
 });

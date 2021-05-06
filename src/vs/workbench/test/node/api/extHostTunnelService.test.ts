@@ -4,8 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as assert from 'assert';
-import * as platform from 'vs/base/common/platform';
-import { findPorts, getSockets, loadConnectionTable, loadListeningPorts } from 'vs/workbench/api/node/extHostTunnelService';
+import { findPorts, getRootProcesses, getSockets, loadConnectionTable, loadListeningPorts, tryFindRootPorts } from 'vs/workbench/api/node/extHostTunnelService';
 
 const tcp =
 	`  sl  local_address rem_address   st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout inode
@@ -215,52 +214,68 @@ const processes: { pid: number, cwd: string, cmd: string }[] = [
 	}
 ];
 
-if (platform.isLinux) {
-	suite('ExtHostTunnelService', () => {
-		test('getSockets', function () {
-			const result = getSockets(procSockets);
-			assert.equal(result.length, 78);
-			// 4412 is the pid fo the http-server in the test data
-			assert.notEqual(result.find(value => value.pid === 4412), undefined);
-		});
+const psStdOut =
+	`4 S root         1     0  0  80   0 -   596 -       1440   2 14:41 ?        00:00:00 /bin/sh -c echo Container started ; trap "exit 0" 15; while sleep 1 & wait $!; do :; done
+4 S root        14     0  0  80   0 -   596 -        764   4 14:41 ?        00:00:00 /bin/sh
+4 S root        40     0  0  80   0 -   596 -        700   4 14:41 ?        00:00:00 /bin/sh
+4 S root       513   380  0  80   0 -  2476 -       3404   1 14:41 pts/1    00:00:00 sudo npx http-server -p 5000
+4 S root       514   513  0  80   0 - 165439 -     41380   5 14:41 pts/1    00:00:00 http-server
+0 S root      1052     1  0  80   0 -   573 -        752   5 14:43 ?        00:00:00 sleep 1
+0 S node      1056   329  0  80   0 -   596 do_wai   764  10 14:43 ?        00:00:00 /bin/sh -c ps -F -A -l | grep root
+0 S node      1058  1056  0  80   0 -   770 pipe_w   888   9 14:43 ?        00:00:00 grep root`;
 
-		test('loadConnectionTable', function () {
-			const result = loadConnectionTable(tcp);
-			assert.equal(result.length, 6);
-			assert.deepEqual(result[0], {
-				10: '1',
-				11: '0000000010173312',
-				12: '100',
-				13: '0',
-				14: '0',
-				15: '10',
-				16: '0',
-				inode: '2335214',
-				local_address: '00000000:0BBA',
-				rem_address: '00000000:0000',
-				retrnsmt: '00000000',
-				sl: '0:',
-				st: '0A',
-				timeout: '0',
-				tr: '00:00000000',
-				tx_queue: '00000000:00000000',
-				uid: '1000'
-			});
-		});
+suite('ExtHostTunnelService', () => {
+	test('getSockets', function () {
+		const result = getSockets(procSockets);
+		assert.strictEqual(Object.keys(result).length, 75);
+		// 4412 is the pid of the http-server in the test data
+		assert.notStrictEqual(Object.keys(result).find(key => result[key].pid === 4412), undefined);
+	});
 
-		test('loadListeningPorts', function () {
-			const result = loadListeningPorts(tcp, tcp6);
-			// There should be 7 based on the input data. One of them should be 3002.
-			assert.equal(result.length, 7);
-			assert.notEqual(result.find(value => value.port === 3002), undefined);
-		});
-
-		test('findPorts', async function () {
-			const result = await findPorts(tcp, tcp6, procSockets, processes);
-			assert.equal(result.length, 1);
-			assert.equal(result[0].host, '0.0.0.0');
-			assert.equal(result[0].port, 3002);
-			assert.equal(result[0].detail, 'http-server');
+	test('loadConnectionTable', function () {
+		const result = loadConnectionTable(tcp);
+		assert.strictEqual(result.length, 6);
+		assert.deepStrictEqual(result[0], {
+			10: '1',
+			11: '0000000010173312',
+			12: '100',
+			13: '0',
+			14: '0',
+			15: '10',
+			16: '0',
+			inode: '2335214',
+			local_address: '00000000:0BBA',
+			rem_address: '00000000:0000',
+			retrnsmt: '00000000',
+			sl: '0:',
+			st: '0A',
+			timeout: '0',
+			tr: '00:00000000',
+			tx_queue: '00000000:00000000',
+			uid: '1000'
 		});
 	});
-}
+
+	test('loadListeningPorts', function () {
+		const result = loadListeningPorts(tcp, tcp6);
+		// There should be 7 based on the input data. One of them should be 3002.
+		assert.strictEqual(result.length, 7);
+		assert.notStrictEqual(result.find(value => value.port === 3002), undefined);
+	});
+
+	test('tryFindRootPorts', function () {
+		const rootProcesses = getRootProcesses(psStdOut);
+		assert.strictEqual(rootProcesses.length, 6);
+		const result = tryFindRootPorts([{ socket: 1000, ip: '127.0.0.1', port: 5000 }], psStdOut, new Map());
+		assert.strictEqual(result.size, 1);
+		assert.strictEqual(result.get(5000)?.pid, 514);
+	});
+
+	test('findPorts', async function () {
+		const result = await findPorts(loadListeningPorts(tcp, tcp6), getSockets(procSockets), processes);
+		assert.strictEqual(result.length, 1);
+		assert.strictEqual(result[0].host, '0.0.0.0');
+		assert.strictEqual(result[0].port, 3002);
+		assert.strictEqual(result[0].detail, 'http-server');
+	});
+});

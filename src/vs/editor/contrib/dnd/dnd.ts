@@ -232,7 +232,7 @@ export class DragAndDropController extends Disposable implements IEditorContribu
 			target.type === MouseTargetType.GUTTER_LINE_DECORATIONS;
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		this._removeDecoration();
 		this._dragSelection = null;
 		this._mouseDown = false;

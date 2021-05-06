@@ -18,19 +18,19 @@ suite('extractRangeFromFilter', () => {
 				const base = '/some/path/file.txt';
 
 				let res = extractRangeFromFilter(`${base}${lineSep}20`);
-				assert.equal(res?.filter, base);
-				assert.equal(res?.range.startLineNumber, 20);
-				assert.equal(res?.range.startColumn, 1);
+				assert.strictEqual(res?.filter, base);
+				assert.strictEqual(res?.range.startLineNumber, 20);
+				assert.strictEqual(res?.range.startColumn, 1);
 
 				res = extractRangeFromFilter(`${base}${lineSep}20${colSep}`);
-				assert.equal(res?.filter, base);
-				assert.equal(res?.range.startLineNumber, 20);
-				assert.equal(res?.range.startColumn, 1);
+				assert.strictEqual(res?.filter, base);
+				assert.strictEqual(res?.range.startLineNumber, 20);
+				assert.strictEqual(res?.range.startColumn, 1);
 
 				res = extractRangeFromFilter(`${base}${lineSep}20${colSep}3`);
-				assert.equal(res?.filter, base);
-				assert.equal(res?.range.startLineNumber, 20);
-				assert.equal(res?.range.startColumn, 3);
+				assert.strictEqual(res?.filter, base);
+				assert.strictEqual(res?.range.startLineNumber, 20);
+				assert.strictEqual(res?.range.startColumn, 3);
 			}
 		}
 	});
@@ -38,9 +38,9 @@ suite('extractRangeFromFilter', () => {
 	test('allow space after path', async function () {
 		const res = extractRangeFromFilter('/some/path/file.txt (19,20)');
 
-		assert.equal(res?.filter, '/some/path/file.txt');
-		assert.equal(res?.range.startLineNumber, 19);
-		assert.equal(res?.range.startColumn, 20);
+		assert.strictEqual(res?.filter, '/some/path/file.txt');
+		assert.strictEqual(res?.range.startLineNumber, 19);
+		assert.strictEqual(res?.range.startColumn, 20);
 	});
 
 	test('unless', async function () {

@@ -8,7 +8,7 @@ const testRunner = require('../../../test/integration/electron/testrunner');
 
 const options: any = {
 	ui: 'tdd',
-	color: (!process.env.BUILD_ARTIFACTSTAGINGDIRECTORY && process.platform !== 'win32'),
+	color: true,
 	timeout: 60000
 };
 

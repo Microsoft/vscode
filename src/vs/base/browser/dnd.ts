@@ -42,7 +42,7 @@ export class DelayedDragHandler extends Disposable {
 		}
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		super.dispose();
 
 		this.clearDragTimeout();
@@ -89,7 +89,7 @@ export function applyDragImage(event: DragEvent, label: string | null, clazz: st
 
 export interface IDragAndDropData {
 	update(dataTransfer: DataTransfer): void;
-	getData(): any;
+	getData(): unknown;
 }
 
 export class DragAndDropData<T> implements IDragAndDropData {

@@ -3,6 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import { VSBuffer } from 'vs/base/common/buffer';
 import { Disposable, DisposableStore } from 'vs/base/common/lifecycle';
 import { Schemas } from 'vs/base/common/network';
 import { isWeb } from 'vs/base/common/platform';
@@ -13,6 +14,7 @@ import { ExtensionIdentifier } from 'vs/platform/extensions/common/extensions';
 import { IOpenerService } from 'vs/platform/opener/common/opener';
 import { IProductService } from 'vs/platform/product/common/productService';
 import * as extHostProtocol from 'vs/workbench/api/common/extHost.protocol';
+import { serializeWebviewMessage, deserializeWebviewMessage } from 'vs/workbench/api/common/extHostWebviewMessaging';
 import { Webview, WebviewContentOptions, WebviewExtensionDescription, WebviewOverlay } from 'vs/workbench/contrib/webview/browser/webview';
 
 export class MainThreadWebviews extends Disposable implements extHostProtocol.MainThreadWebviewsShape {
@@ -39,13 +41,13 @@ export class MainThreadWebviews extends Disposable implements extHostProtocol.Ma
 		this._proxy = context.getProxy(extHostProtocol.ExtHostContext.ExtHostWebviews);
 	}
 
-	public addWebview(handle: extHostProtocol.WebviewHandle, webview: WebviewOverlay): void {
+	public addWebview(handle: extHostProtocol.WebviewHandle, webview: WebviewOverlay, options: { serializeBuffersForPostMessage: boolean }): void {
 		if (this._webviews.has(handle)) {
 			throw new Error('Webview already registered');
 		}
 
 		this._webviews.set(handle, webview);
-		this.hookupWebviewEventDelegate(handle, webview);
+		this.hookupWebviewEventDelegate(handle, webview, options);
 	}
 
 	public $setHtml(handle: extHostProtocol.WebviewHandle, value: string): void {
@@ -58,17 +60,23 @@ export class MainThreadWebviews extends Disposable implements extHostProtocol.Ma
 		webview.contentOptions = reviveWebviewContentOptions(options);
 	}
 
-	public async $postMessage(handle: extHostProtocol.WebviewHandle, message: any): Promise<boolean> {
+	public async $postMessage(handle: extHostProtocol.WebviewHandle, jsonMessage: string, ...buffers: VSBuffer[]): Promise<boolean> {
 		const webview = this.getWebview(handle);
-		webview.postMessage(message);
+		const { message, arrayBuffers } = deserializeWebviewMessage(jsonMessage, buffers);
+		webview.postMessage(message, arrayBuffers);
 		return true;
 	}
 
-	private hookupWebviewEventDelegate(handle: extHostProtocol.WebviewHandle, webview: WebviewOverlay) {
+	private hookupWebviewEventDelegate(handle: extHostProtocol.WebviewHandle, webview: WebviewOverlay, options: { serializeBuffersForPostMessage: boolean }) {
 		const disposables = new DisposableStore();
 
 		disposables.add(webview.onDidClickLink((uri) => this.onDidClickLink(handle, uri)));
-		disposables.add(webview.onMessage((message: any) => { this._proxy.$onMessage(handle, message); }));
+
+		disposables.add(webview.onMessage((message) => {
+			const serialized = serializeWebviewMessage(message.message, options);
+			this._proxy.$onMessage(handle, serialized.message, ...serialized.buffers);
+		}));
+
 		disposables.add(webview.onMissingCsp((extension: ExtensionIdentifier) => this._proxy.$onMissingCsp(handle, extension.value)));
 
 		disposables.add(webview.onDidDispose(() => {
@@ -80,7 +88,7 @@ export class MainThreadWebviews extends Disposable implements extHostProtocol.Ma
 	private onDidClickLink(handle: extHostProtocol.WebviewHandle, link: string): void {
 		const webview = this.getWebview(handle);
 		if (this.isSupportedLink(webview, URI.parse(link))) {
-			this._openerService.open(link, { fromUserGesture: true, allowContributedOpeners: true });
+			this._openerService.open(link, { fromUserGesture: true, allowContributedOpeners: true, allowCommands: true });
 		}
 	}
 

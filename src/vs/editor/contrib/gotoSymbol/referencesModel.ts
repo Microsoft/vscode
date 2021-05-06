@@ -11,7 +11,7 @@ import * as strings from 'vs/base/common/strings';
 import { URI } from 'vs/base/common/uri';
 import { defaultGenerator } from 'vs/base/common/idGenerator';
 import { Range, IRange } from 'vs/editor/common/core/range';
-import { LocationLink } from 'vs/editor/common/modes';
+import { Location, LocationLink } from 'vs/editor/common/modes';
 import { ITextModelService, ITextEditorModel } from 'vs/editor/common/services/resolverService';
 import { Position } from 'vs/editor/common/core/position';
 import { IMatch } from 'vs/base/common/filters';
@@ -19,22 +19,25 @@ import { Constants } from 'vs/base/common/uint';
 import { ResourceMap } from 'vs/base/common/map';
 import { onUnexpectedError } from 'vs/base/common/errors';
 
-import { sortAndDeduplicate } from './goToSymbol';
-
 export class OneReference {
 
 	readonly id: string = defaultGenerator.nextId();
 
+	private _range?: IRange;
+
 	constructor(
 		readonly isProviderFirst: boolean,
 		readonly parent: FileReferences,
-		readonly uri: URI,
-		private _range: IRange,
+		readonly link: LocationLink,
 		private _rangeCallback: (ref: OneReference) => void
 	) { }
 
+	get uri() {
+		return this.link.uri;
+	}
+
 	get range(): IRange {
-		return this._range;
+		return this._range ?? this.link.targetSelectionRange ?? this.link.range;
 	}
 
 	set range(value: IRange) {
@@ -156,9 +159,9 @@ export class ReferencesModel implements IDisposable {
 		this._links = links;
 		this._title = title;
 
-		// grouping, sorting, and de-duplicating
+		// grouping and sorting
 		const [providersFirst] = links;
-		links = sortAndDeduplicate(links);
+		links.sort(ReferencesModel._compareReferences);
 
 		let current: FileReferences | undefined;
 		for (let link of links) {
@@ -168,15 +171,18 @@ export class ReferencesModel implements IDisposable {
 				this.groups.push(current);
 			}
 
-			const oneRef = new OneReference(
-				providersFirst === link,
-				current,
-				link.uri,
-				link.targetSelectionRange || link.range,
-				ref => this._onDidChangeReferenceRange.fire(ref)
-			);
-			this.references.push(oneRef);
-			current.children.push(oneRef);
+			// append, check for equality first!
+			if (current.children.length === 0 || ReferencesModel._compareReferences(link, current.children[current.children.length - 1]) !== 0) {
+
+				const oneRef = new OneReference(
+					providersFirst === link,
+					current,
+					link,
+					ref => this._onDidChangeReferenceRange.fire(ref)
+				);
+				this.references.push(oneRef);
+				current.children.push(oneRef);
+			}
 		}
 	}
 
@@ -284,5 +290,9 @@ export class ReferencesModel implements IDisposable {
 			}
 		}
 		return this.references[0];
+	}
+
+	private static _compareReferences(a: Location, b: Location): number {
+		return extUri.compare(a.uri, b.uri) || Range.compareRangesUsingStarts(a.range, b.range);
 	}
 }

@@ -6,7 +6,7 @@
 import { RunOnceScheduler } from 'vs/base/common/async';
 import * as dom from 'vs/base/browser/dom';
 import { IViewletViewOptions } from 'vs/workbench/browser/parts/views/viewsViewlet';
-import { IDebugService, IExpression, IScope, CONTEXT_VARIABLES_FOCUSED, IStackFrame, CONTEXT_DEBUG_PROTOCOL_VARIABLE_MENU_CONTEXT, IDataBreakpointInfoResponse, CONTEXT_BREAK_WHEN_VALUE_CHANGES_SUPPORTED, CONTEXT_VARIABLE_EVALUATE_NAME_PRESENT, VARIABLES_VIEW_ID } from 'vs/workbench/contrib/debug/common/debug';
+import { IDebugService, IExpression, IScope, CONTEXT_VARIABLES_FOCUSED, IStackFrame, CONTEXT_DEBUG_PROTOCOL_VARIABLE_MENU_CONTEXT, IDataBreakpointInfoResponse, CONTEXT_BREAK_WHEN_VALUE_CHANGES_SUPPORTED, CONTEXT_VARIABLE_EVALUATE_NAME_PRESENT, VARIABLES_VIEW_ID, CONTEXT_BREAK_WHEN_VALUE_IS_ACCESSED_SUPPORTED, CONTEXT_BREAK_WHEN_VALUE_IS_READ_SUPPORTED } from 'vs/workbench/contrib/debug/common/debug';
 import { Variable, Scope, ErrorScope, StackFrame, Expression } from 'vs/workbench/contrib/debug/common/debugModel';
 import { IContextMenuService } from 'vs/platform/contextview/browser/contextView';
 import { IKeybindingService } from 'vs/platform/keybinding/common/keybinding';
@@ -58,6 +58,8 @@ export class VariablesView extends ViewPane {
 	private menu: IMenu;
 	private debugProtocolVariableMenuContext: IContextKey<string>;
 	private breakWhenValueChangesSupported: IContextKey<boolean>;
+	private breakWhenValueIsAccessedSupported: IContextKey<boolean>;
+	private breakWhenValueIsReadSupported: IContextKey<boolean>;
 	private variableEvaluateName: IContextKey<boolean>;
 
 	constructor(
@@ -80,6 +82,8 @@ export class VariablesView extends ViewPane {
 		this._register(this.menu);
 		this.debugProtocolVariableMenuContext = CONTEXT_DEBUG_PROTOCOL_VARIABLE_MENU_CONTEXT.bindTo(contextKeyService);
 		this.breakWhenValueChangesSupported = CONTEXT_BREAK_WHEN_VALUE_CHANGES_SUPPORTED.bindTo(contextKeyService);
+		this.breakWhenValueIsAccessedSupported = CONTEXT_BREAK_WHEN_VALUE_IS_ACCESSED_SUPPORTED.bindTo(contextKeyService);
+		this.breakWhenValueIsReadSupported = CONTEXT_BREAK_WHEN_VALUE_IS_READ_SUPPORTED.bindTo(contextKeyService);
 		this.variableEvaluateName = CONTEXT_VARIABLE_EVALUATE_NAME_PRESENT.bindTo(contextKeyService);
 
 		// Use scheduler to prevent unnecessary flashing
@@ -109,7 +113,7 @@ export class VariablesView extends ViewPane {
 		}, 400);
 	}
 
-	renderBody(container: HTMLElement): void {
+	override renderBody(container: HTMLElement): void {
 		super.renderBody(container);
 
 		this.element.classList.add('debug-pane');
@@ -178,12 +182,12 @@ export class VariablesView extends ViewPane {
 		}));
 	}
 
-	layoutBody(width: number, height: number): void {
+	override layoutBody(width: number, height: number): void {
 		super.layoutBody(height, width);
 		this.tree.layout(width, height);
 	}
 
-	focus(): void {
+	override focus(): void {
 		this.tree.domFocus();
 	}
 
@@ -206,10 +210,30 @@ export class VariablesView extends ViewPane {
 			const session = this.debugService.getViewModel().focusedSession;
 			this.variableEvaluateName.set(!!variable.evaluateName);
 			this.breakWhenValueChangesSupported.reset();
+			this.breakWhenValueIsAccessedSupported.reset();
+			this.breakWhenValueIsReadSupported.reset();
 			if (session && session.capabilities.supportsDataBreakpoints) {
 				dataBreakpointInfoResponse = await session.dataBreakpointInfo(variable.name, variable.parent.reference);
 				const dataBreakpointId = dataBreakpointInfoResponse?.dataId;
-				this.breakWhenValueChangesSupported.set(!!dataBreakpointId);
+				const dataBreakpointAccessTypes = dataBreakpointInfoResponse?.accessTypes;
+				if (!dataBreakpointAccessTypes) {
+					// Assumes default behaviour: Supports breakWhenValueChanges
+					this.breakWhenValueChangesSupported.set(!!dataBreakpointId);
+				} else {
+					dataBreakpointAccessTypes.forEach(accessType => {
+						switch (accessType) {
+							case 'read':
+								this.breakWhenValueIsReadSupported.set(!!dataBreakpointId);
+								break;
+							case 'write':
+								this.breakWhenValueChangesSupported.set(!!dataBreakpointId);
+								break;
+							case 'readWrite':
+								this.breakWhenValueIsAccessedSupported.set(!!dataBreakpointId);
+								break;
+						}
+					});
+				}
 			}
 
 			const context: IVariablesContext = {
@@ -435,7 +459,29 @@ CommandsRegistry.registerCommand({
 	handler: async (accessor: ServicesAccessor) => {
 		const debugService = accessor.get(IDebugService);
 		if (dataBreakpointInfoResponse) {
-			await debugService.addDataBreakpoint(dataBreakpointInfoResponse.description, dataBreakpointInfoResponse.dataId!, !!dataBreakpointInfoResponse.canPersist, dataBreakpointInfoResponse.accessTypes);
+			await debugService.addDataBreakpoint(dataBreakpointInfoResponse.description, dataBreakpointInfoResponse.dataId!, !!dataBreakpointInfoResponse.canPersist, dataBreakpointInfoResponse.accessTypes, 'write');
+		}
+	}
+});
+
+export const BREAK_WHEN_VALUE_IS_ACCESSED_ID = 'debug.breakWhenValueIsAccessed';
+CommandsRegistry.registerCommand({
+	id: BREAK_WHEN_VALUE_IS_ACCESSED_ID,
+	handler: async (accessor: ServicesAccessor) => {
+		const debugService = accessor.get(IDebugService);
+		if (dataBreakpointInfoResponse) {
+			await debugService.addDataBreakpoint(dataBreakpointInfoResponse.description, dataBreakpointInfoResponse.dataId!, !!dataBreakpointInfoResponse.canPersist, dataBreakpointInfoResponse.accessTypes, 'readWrite');
+		}
+	}
+});
+
+export const BREAK_WHEN_VALUE_IS_READ_ID = 'debug.breakWhenValueIsRead';
+CommandsRegistry.registerCommand({
+	id: BREAK_WHEN_VALUE_IS_READ_ID,
+	handler: async (accessor: ServicesAccessor) => {
+		const debugService = accessor.get(IDebugService);
+		if (dataBreakpointInfoResponse) {
+			await debugService.addDataBreakpoint(dataBreakpointInfoResponse.description, dataBreakpointInfoResponse.dataId!, !!dataBreakpointInfoResponse.canPersist, dataBreakpointInfoResponse.accessTypes, 'read');
 		}
 	}
 });

@@ -84,7 +84,7 @@ export class SelectionClipboard extends Disposable implements IEditorContributio
 		}
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		super.dispose();
 	}
 }

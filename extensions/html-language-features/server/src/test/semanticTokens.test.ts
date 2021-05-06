@@ -40,7 +40,7 @@ async function assertTokens(lines: string[], expected: ExpectedToken[], ranges?:
 		lastLine = line;
 		lastCharacter = character;
 	}
-	assert.deepEqual(actualRanges, expected, message);
+	assert.deepStrictEqual(actualRanges, expected, message);
 }
 
 function t(startLine: number, character: number, length: number, tokenClassifiction: string): ExpectedToken {

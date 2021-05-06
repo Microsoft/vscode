@@ -54,7 +54,7 @@ export class StatusBarColorProvider extends Themable implements IWorkbenchContri
 		this._register(this.contextService.onDidChangeWorkbenchState(state => this.updateStyles()));
 	}
 
-	protected updateStyles(): void {
+	protected override updateStyles(): void {
 		super.updateStyles();
 
 		const container = assertIsDefined(this.layoutService.getContainer(Parts.STATUSBAR_PART));

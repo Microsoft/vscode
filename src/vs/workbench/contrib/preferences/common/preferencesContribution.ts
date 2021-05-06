@@ -77,7 +77,7 @@ export class PreferencesContribution implements IWorkbenchContribution {
 		// If the resource was already opened before in the group, do not prevent
 		// the opening of that resource. Otherwise we would have the same settings
 		// opened twice (https://github.com/microsoft/vscode/issues/36447)
-		if (group.isOpened(editor)) {
+		if (group.contains(editor)) {
 			return undefined;
 		}
 

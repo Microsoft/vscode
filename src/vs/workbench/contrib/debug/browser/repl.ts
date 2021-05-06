@@ -336,18 +336,6 @@ export class Repl extends ViewPane implements IHistoryNavigationWidget {
 
 			// Set the font size, font family, line height and align the twistie to be centered, and input theme color
 			this.styleElement.textContent = `
-				.repl .repl-tree .expression {
-					font-size: ${fontSize}px;
-				}
-
-				.repl .repl-tree .expression {
-					line-height: ${lineHeight};
-				}
-
-				.repl .repl-tree .monaco-tl-twistie {
-					background-position-y: calc(100% - ${fontSize * 1.4 / 2 - 8}px);
-				}
-
 				.repl .repl-input-wrapper .repl-input-chevron {
 					line-height: ${replInputLineHeight}px
 				}
@@ -357,6 +345,9 @@ export class Repl extends ViewPane implements IHistoryNavigationWidget {
 				}
 			`;
 			this.container.style.setProperty(`--vscode-repl-font-family`, fontFamily);
+			this.container.style.setProperty(`--vscode-repl-font-size`, `${fontSize}px`);
+			this.container.style.setProperty(`--vscode-repl-font-size-for-twistie`, `${fontSize * 1.4 / 2 - 8}px`);
+			this.container.style.setProperty(`--vscode-repl-line-height`, lineHeight);
 
 			this.tree.rerender();
 
@@ -454,7 +445,7 @@ export class Repl extends ViewPane implements IHistoryNavigationWidget {
 		return removeAnsiEscapeCodes(text);
 	}
 
-	protected layoutBody(height: number, width: number): void {
+	protected override layoutBody(height: number, width: number): void {
 		super.layoutBody(height, width);
 		this.dimension = new dom.Dimension(width, height);
 		const replInputHeight = Math.min(this.replInput.getContentHeight(), height);
@@ -480,11 +471,11 @@ export class Repl extends ViewPane implements IHistoryNavigationWidget {
 		return this.replInput;
 	}
 
-	focus(): void {
+	override focus(): void {
 		setTimeout(() => this.replInput.focus(), 0);
 	}
 
-	getActionViewItem(action: IAction): IActionViewItem | undefined {
+	override getActionViewItem(action: IAction): IActionViewItem | undefined {
 		if (action.id === selectReplCommandId) {
 			const session = (this.tree ? this.tree.getInput() : undefined) ?? this.debugService.getViewModel().focusedSession;
 			return this.instantiationService.createInstance(SelectReplActionViewItem, action, session);
@@ -546,7 +537,7 @@ export class Repl extends ViewPane implements IHistoryNavigationWidget {
 
 	// --- Creation
 
-	protected renderBody(parent: HTMLElement): void {
+	protected override renderBody(parent: HTMLElement): void {
 		super.renderBody(parent);
 		this.container = dom.append(parent, $('.repl'));
 		this.treeContainer = dom.append(this.container, $(`.repl-tree.${MOUSE_CURSOR_TEXT_CSS_CLASS_NAME}`));
@@ -686,7 +677,7 @@ export class Repl extends ViewPane implements IHistoryNavigationWidget {
 		this.replInput.setDecorations(DECORATION_KEY, decorations);
 	}
 
-	saveState(): void {
+	override saveState(): void {
 		const replHistory = this.history.getHistory();
 		if (replHistory.length) {
 			this.storageService.store(HISTORY_STORAGE_KEY, JSON.stringify(replHistory), StorageScope.WORKSPACE, StorageTarget.USER);
@@ -705,7 +696,7 @@ export class Repl extends ViewPane implements IHistoryNavigationWidget {
 		super.saveState();
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this.replInput.dispose();
 		if (this.replElementsChangeListener) {
 			this.replElementsChangeListener.dispose();
@@ -790,11 +781,11 @@ registerEditorAction(FilterReplAction);
 
 class SelectReplActionViewItem extends FocusSessionActionViewItem {
 
-	protected getSessions(): ReadonlyArray<IDebugSession> {
+	protected override getSessions(): ReadonlyArray<IDebugSession> {
 		return this.debugService.getModel().getSessions(true).filter(s => s.hasSeparateRepl() && !sessionsToIgnore.has(s));
 	}
 
-	protected mapFocusedSessionToSelected(focusedSession: IDebugSession): IDebugSession {
+	protected override mapFocusedSessionToSelected(focusedSession: IDebugSession): IDebugSession {
 		while (focusedSession.parentSession && !focusedSession.hasSeparateRepl()) {
 			focusedSession = focusedSession.parentSession;
 		}
@@ -852,14 +843,12 @@ registerAction2(class extends ViewAction<Repl> {
 				const stopppedChildSession = debugService.getModel().getSessions().find(s => s.parentSession === session && s.state === State.Stopped);
 				if (stopppedChildSession) {
 					session = stopppedChildSession;
-				} else {
-					await view.selectSession(session);
 				}
 			}
 			await debugService.focusStackFrame(undefined, undefined, session, true);
-		} else {
-			await view.selectSession(session);
 		}
+		// Need to select the session in the view since the focussed session might not have changed
+		await view.selectSession(session);
 	}
 });
 

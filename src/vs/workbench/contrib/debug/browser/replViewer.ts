@@ -294,7 +294,7 @@ export class ReplDelegate extends CachedListVirtualDelegate<IReplElement> {
 		super();
 	}
 
-	getHeight(element: IReplElement): number {
+	override getHeight(element: IReplElement): number {
 		const config = this.configurationService.getValue<IDebugConfiguration>('debug');
 
 		if (!config.console.wordWrap) {

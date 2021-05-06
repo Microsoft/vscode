@@ -136,7 +136,7 @@ export class Gesture extends Disposable {
 		return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || (window as Window).navigator.msMaxTouchPoints > 0;
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		if (this.handle) {
 			this.handle.dispose();
 			this.handle = null;

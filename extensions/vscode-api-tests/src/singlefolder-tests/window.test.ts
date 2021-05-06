@@ -34,20 +34,20 @@ suite('vscode API - window', () => {
 	});
 
 	// test('editor, UN-active text editor', () => {
-	// 	assert.equal(window.visibleTextEditors.length, 0);
+	// 	assert.strictEqual(window.visibleTextEditors.length, 0);
 	// 	assert.ok(window.activeTextEditor === undefined);
 	// });
 
 	test('editor, assign and check view columns', async () => {
 		const doc = await workspace.openTextDocument(join(workspace.rootPath || '', './far.js'));
 		let p1 = window.showTextDocument(doc, ViewColumn.One).then(editor => {
-			assert.equal(editor.viewColumn, ViewColumn.One);
+			assert.strictEqual(editor.viewColumn, ViewColumn.One);
 		});
 		let p2 = window.showTextDocument(doc, ViewColumn.Two).then(editor_1 => {
-			assert.equal(editor_1.viewColumn, ViewColumn.Two);
+			assert.strictEqual(editor_1.viewColumn, ViewColumn.Two);
 		});
 		let p3 = window.showTextDocument(doc, ViewColumn.Three).then(editor_2 => {
-			assert.equal(editor_2.viewColumn, ViewColumn.Three);
+			assert.strictEqual(editor_2.viewColumn, ViewColumn.Three);
 		});
 		return Promise.all([p1, p2, p3]);
 	});
@@ -60,13 +60,13 @@ suite('vscode API - window', () => {
 
 		const doc = await workspace.openTextDocument(join(workspace.rootPath || '', './far.js'));
 		await window.showTextDocument(doc, ViewColumn.One);
-		assert.equal(eventCounter, 1);
+		assert.strictEqual(eventCounter, 1);
 
 		await window.showTextDocument(doc, ViewColumn.Two);
-		assert.equal(eventCounter, 2);
+		assert.strictEqual(eventCounter, 2);
 
 		await window.showTextDocument(doc, ViewColumn.Three);
-		assert.equal(eventCounter, 3);
+		assert.strictEqual(eventCounter, 3);
 
 		reg.dispose();
 	});
@@ -138,10 +138,10 @@ suite('vscode API - window', () => {
 				return commands.executeCommand('workbench.action.moveActiveEditorGroupLeft');
 
 			}).then(() => {
-				assert.equal(actualEvents.length, 2);
+				assert.strictEqual(actualEvents.length, 2);
 
 				for (const event of actualEvents) {
-					assert.equal(event.viewColumn, event.textEditor.viewColumn);
+					assert.strictEqual(event.viewColumn, event.textEditor.viewColumn);
 				}
 
 				registration1.dispose();
@@ -157,7 +157,7 @@ suite('vscode API - window', () => {
 			return;
 		}
 
-		if (process.env['BUILD_SOURCEVERSION']) {
+		if (process.env['BUILD_SOURCEVERSION'] || process.env['CI']) {
 			this.skip();
 			return;
 		}
@@ -202,7 +202,7 @@ suite('vscode API - window', () => {
 
 		assert.ok(window.activeTextEditor);
 		assert.ok(window.activeTextEditor!.document === docB);
-		assert.equal(window.activeTextEditor!.viewColumn, ViewColumn.Two);
+		assert.strictEqual(window.activeTextEditor!.viewColumn, ViewColumn.Two);
 
 		const editor = await window.showTextDocument(docC);
 		assert.ok(
@@ -210,7 +210,7 @@ suite('vscode API - window', () => {
 			`wanted fileName:${editor.document.fileName}/viewColumn:${editor.viewColumn} but got fileName:${window.activeTextEditor!.document.fileName}/viewColumn:${window.activeTextEditor!.viewColumn}. a:${docA.fileName}, b:${docB.fileName}, c:${docC.fileName}`
 		);
 		assert.ok(window.activeTextEditor!.document === docC);
-		assert.equal(window.activeTextEditor!.viewColumn, ViewColumn.Two);
+		assert.strictEqual(window.activeTextEditor!.viewColumn, ViewColumn.Two);
 	});
 
 	test('showTextDocument ViewColumn.BESIDE', async () => {
@@ -225,12 +225,12 @@ suite('vscode API - window', () => {
 
 		assert.ok(window.activeTextEditor);
 		assert.ok(window.activeTextEditor!.document === docB);
-		assert.equal(window.activeTextEditor!.viewColumn, ViewColumn.Two);
+		assert.strictEqual(window.activeTextEditor!.viewColumn, ViewColumn.Two);
 
 		await window.showTextDocument(docC, ViewColumn.Beside);
 
 		assert.ok(window.activeTextEditor!.document === docC);
-		assert.equal(window.activeTextEditor!.viewColumn, ViewColumn.Three);
+		assert.strictEqual(window.activeTextEditor!.viewColumn, ViewColumn.Three);
 	});
 
 	test('showTextDocument ViewColumn is always defined (even when opening > ViewColumn.Nine)', async () => {
@@ -260,7 +260,7 @@ suite('vscode API - window', () => {
 
 		assert.ok(window.activeTextEditor);
 		assert.ok(window.activeTextEditor!.document === doc10);
-		assert.equal(window.activeTextEditor!.viewColumn, 10);
+		assert.strictEqual(window.activeTextEditor!.viewColumn, 10);
 	});
 
 	test('issue #27408 - showTextDocument & vscode.diff always default to ViewColumn.One', async () => {
@@ -275,12 +275,12 @@ suite('vscode API - window', () => {
 
 		assert.ok(window.activeTextEditor);
 		assert.ok(window.activeTextEditor!.document === docB);
-		assert.equal(window.activeTextEditor!.viewColumn, ViewColumn.Two);
+		assert.strictEqual(window.activeTextEditor!.viewColumn, ViewColumn.Two);
 
 		await window.showTextDocument(docC, ViewColumn.Active);
 
 		assert.ok(window.activeTextEditor!.document === docC);
-		assert.equal(window.activeTextEditor!.viewColumn, ViewColumn.Two);
+		assert.strictEqual(window.activeTextEditor!.viewColumn, ViewColumn.Two);
 	});
 
 	test('issue #5362 - Incorrect TextEditor passed by onDidChangeTextEditorSelection', (done) => {
@@ -359,7 +359,7 @@ suite('vscode API - window', () => {
 		const p = window.showInputBox(undefined, source.token);
 		source.cancel();
 		const value = await p;
-		assert.equal(value, undefined);
+		assert.strictEqual(value, undefined);
 	});
 
 	test('showInputBox - cancel early', async function () {
@@ -367,21 +367,21 @@ suite('vscode API - window', () => {
 		source.cancel();
 		const p = window.showInputBox(undefined, source.token);
 		const value = await p;
-		assert.equal(value, undefined);
+		assert.strictEqual(value, undefined);
 	});
 
 	test('showInputBox - \'\' on Enter', function () {
 		const p = window.showInputBox();
 		return Promise.all<any>([
 			commands.executeCommand('workbench.action.acceptSelectedQuickOpenItem'),
-			p.then(value => assert.equal(value, ''))
+			p.then(value => assert.strictEqual(value, ''))
 		]);
 	});
 
 	test('showInputBox - default value on Enter', function () {
 		const p = window.showInputBox({ value: 'farboo' });
 		return Promise.all<any>([
-			p.then(value => assert.equal(value, 'farboo')),
+			p.then(value => assert.strictEqual(value, 'farboo')),
 			commands.executeCommand('workbench.action.acceptSelectedQuickOpenItem'),
 		]);
 	});
@@ -390,7 +390,7 @@ suite('vscode API - window', () => {
 		const p = window.showInputBox();
 		return Promise.all<any>([
 			commands.executeCommand('workbench.action.closeQuickOpen'),
-			p.then(value => assert.equal(value, undefined))
+			p.then(value => assert.strictEqual(value, undefined))
 		]);
 	});
 
@@ -398,17 +398,17 @@ suite('vscode API - window', () => {
 		const p = window.showInputBox({ value: 'farboo' });
 		return Promise.all<any>([
 			commands.executeCommand('workbench.action.closeQuickOpen'),
-			p.then(value => assert.equal(value, undefined))
+			p.then(value => assert.strictEqual(value, undefined))
 		]);
 	});
 
 	test('showInputBox - value not empty on second try', async function () {
 		const one = window.showInputBox({ value: 'notempty' });
 		await commands.executeCommand('workbench.action.acceptSelectedQuickOpenItem');
-		assert.equal(await one, 'notempty');
+		assert.strictEqual(await one, 'notempty');
 		const two = window.showInputBox({ value: 'notempty' });
 		await commands.executeCommand('workbench.action.acceptSelectedQuickOpenItem');
-		assert.equal(await two, 'notempty');
+		assert.strictEqual(await two, 'notempty');
 	});
 
 	test('showQuickPick, accept first', async function () {
@@ -417,9 +417,9 @@ suite('vscode API - window', () => {
 		const pick = window.showQuickPick(['eins', 'zwei', 'drei'], {
 			onDidSelectItem: tracker.onDidSelectItem
 		});
-		assert.equal(await first, 'eins');
+		assert.strictEqual(await first, 'eins');
 		await commands.executeCommand('workbench.action.acceptSelectedQuickOpenItem');
-		assert.equal(await pick, 'eins');
+		assert.strictEqual(await pick, 'eins');
 		return tracker.done();
 	});
 
@@ -429,12 +429,12 @@ suite('vscode API - window', () => {
 		const pick = window.showQuickPick(['eins', 'zwei', 'drei'], {
 			onDidSelectItem: tracker.onDidSelectItem
 		});
-		assert.equal(await first, 'eins');
+		assert.strictEqual(await first, 'eins');
 		const second = tracker.nextItem();
 		await commands.executeCommand('workbench.action.quickOpenSelectNext');
-		assert.equal(await second, 'zwei');
+		assert.strictEqual(await second, 'zwei');
 		await commands.executeCommand('workbench.action.acceptSelectedQuickOpenItem');
-		assert.equal(await pick, 'zwei');
+		assert.strictEqual(await pick, 'zwei');
 		return tracker.done();
 	});
 
@@ -457,14 +457,14 @@ suite('vscode API - window', () => {
 		// console.log(`${label}: ${++i}`);
 		await commands.executeCommand('workbench.action.quickOpenSelectNext');
 		// console.log(`${label}: ${++i}`);
-		assert.equal(await first, 'eins');
+		assert.strictEqual(await first, 'eins');
 		// console.log(`${label}: ${++i}`);
 		await commands.executeCommand('workbench.action.quickPickManyToggle');
 		// console.log(`${label}: ${++i}`);
 		const second = new Promise(resolve => resolves.push(resolve));
 		await commands.executeCommand('workbench.action.quickOpenSelectNext');
 		// console.log(`${label}: ${++i}`);
-		assert.equal(await second, 'zwei');
+		assert.strictEqual(await second, 'zwei');
 		// console.log(`${label}: ${++i}`);
 		await commands.executeCommand('workbench.action.quickPickManyToggle');
 		// console.log(`${label}: ${++i}`);
@@ -503,7 +503,7 @@ suite('vscode API - window', () => {
 		const p = window.showQuickPick(['eins', 'zwei', 'drei'], undefined, source.token);
 		source.cancel();
 		return p.then(value => {
-			assert.equal(value, undefined);
+			assert.strictEqual(value, undefined);
 		});
 	});
 
@@ -512,7 +512,7 @@ suite('vscode API - window', () => {
 		source.cancel();
 		const p = window.showQuickPick(['eins', 'zwei', 'drei'], undefined, source.token);
 		return p.then(value => {
-			assert.equal(value, undefined);
+			assert.strictEqual(value, undefined);
 		});
 	});
 
@@ -522,7 +522,7 @@ suite('vscode API - window', () => {
 
 		const result = window.showQuickPick(['eins', 'zwei', 'drei'], { ignoreFocusOut: true }).then(result => {
 			source.cancel();
-			assert.equal(result, undefined);
+			assert.strictEqual(result, undefined);
 		});
 
 		window.showQuickPick(['eins', 'zwei', 'drei'], undefined, source.token);
@@ -533,7 +533,7 @@ suite('vscode API - window', () => {
 	test('showQuickPick, canceled by input', function () {
 
 		const result = window.showQuickPick(['eins', 'zwei', 'drei'], { ignoreFocusOut: true }).then(result => {
-			assert.equal(result, undefined);
+			assert.strictEqual(result, undefined);
 		});
 
 		const source = new CancellationTokenSource();
@@ -553,7 +553,7 @@ suite('vscode API - window', () => {
 		const result = window.showQuickPick(data, undefined, source.token);
 		source.cancel();
 		const value_1 = await result;
-		assert.equal(value_1, undefined);
+		assert.strictEqual(value_1, undefined);
 	});
 
 	test('showQuickPick, never resolve promise and cancel - #22453', function () {
@@ -561,7 +561,7 @@ suite('vscode API - window', () => {
 		const result = window.showQuickPick(new Promise<string[]>(_resolve => { }));
 
 		const a = result.then(value => {
-			assert.equal(value, undefined);
+			assert.strictEqual(value, undefined);
 		});
 		const b = commands.executeCommand('workbench.action.closeQuickOpen');
 		return Promise.all([a, b]);
@@ -598,7 +598,7 @@ suite('vscode API - window', () => {
 
 		await commands.executeCommand('workbench.action.acceptSelectedQuickOpenItem');
 		await commands.executeCommand('workbench.action.closeQuickOpen');
-		assert.equal(await result, undefined);
+		assert.strictEqual(await result, undefined);
 	});
 
 	function createQuickPickTracker<T extends string | QuickPickItem>() {
@@ -627,7 +627,7 @@ suite('vscode API - window', () => {
 
 				let subscription = window.onDidChangeTextEditorSelection(e => {
 					assert.ok(e.textEditor === editor);
-					assert.equal(e.kind, TextEditorSelectionChangeKind.Command);
+					assert.strictEqual(e.kind, TextEditorSelectionChangeKind.Command);
 
 					subscription.dispose();
 					resolve();

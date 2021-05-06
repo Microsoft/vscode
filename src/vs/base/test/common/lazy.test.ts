@@ -37,14 +37,14 @@ suite('Lazy', () => {
 		assert.strictEqual(outerLazy.hasValue(), false);
 		assert.strictEqual(innerLazy.hasValue(), false);
 
-		assert.deepEqual(innerLazy.getValue(), [1, 11]);
+		assert.deepStrictEqual(innerLazy.getValue(), [1, 11]);
 		assert.strictEqual(outerLazy.hasValue(), true);
 		assert.strictEqual(innerLazy.hasValue(), true);
 		assert.strictEqual(outerLazy.getValue(), 1);
 
 		// make sure we did not evaluate again
 		assert.strictEqual(outerLazy.getValue(), 1);
-		assert.deepEqual(innerLazy.getValue(), [1, 11]);
+		assert.deepStrictEqual(innerLazy.getValue(), [1, 11]);
 	});
 
 	test('map should handle error values', () => {

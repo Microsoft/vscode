@@ -45,8 +45,8 @@ export class GithubRemoteSourceProvider implements RemoteSourceProvider {
 		}
 
 		const all = await Promise.all([
+			this.getQueryRemoteSources(octokit, query),
 			this.getUserRemoteSources(octokit, query),
-			this.getQueryRemoteSources(octokit, query)
 		]);
 
 		const map = new Map<string, RemoteSource>();
@@ -76,7 +76,7 @@ export class GithubRemoteSourceProvider implements RemoteSourceProvider {
 			return [];
 		}
 
-		const raw = await octokit.search.repos({ q: query, sort: 'updated' });
+		const raw = await octokit.search.repos({ q: query, sort: 'stars' });
 		return raw.data.items.map(asRemoteSource);
 	}
 

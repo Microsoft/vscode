@@ -9,7 +9,7 @@ import { registerSingleton } from 'vs/platform/instantiation/common/extensions';
 
 export class BrowserTextFileService extends AbstractTextFileService {
 
-	protected registerListeners(): void {
+	protected override registerListeners(): void {
 		super.registerListeners();
 
 		// Lifecycle

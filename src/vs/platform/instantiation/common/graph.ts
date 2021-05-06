@@ -77,4 +77,34 @@ export class Graph<T> {
 		}
 		return data.join('\n');
 	}
+
+	/**
+	 * This is brute force and slow and **only** be used
+	 * to trouble shoot.
+	 */
+	findCycleSlow() {
+		for (let [id, node] of this._nodes) {
+			const seen = new Set<string>([id]);
+			const res = this._findCycle(node, seen);
+			if (res) {
+				return res;
+			}
+		}
+		return undefined;
+	}
+
+	private _findCycle(node: Node<T>, seen: Set<string>): string | undefined {
+		for (let [id, outgoing] of node.outgoing) {
+			if (seen.has(id)) {
+				return [...seen, id].join(' -> ');
+			}
+			seen.add(id);
+			const value = this._findCycle(outgoing, seen);
+			if (value) {
+				return value;
+			}
+			seen.delete(id);
+		}
+		return undefined;
+	}
 }

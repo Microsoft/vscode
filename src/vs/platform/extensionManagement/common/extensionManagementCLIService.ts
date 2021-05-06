@@ -10,11 +10,10 @@ import { URI } from 'vs/base/common/uri';
 import { gt } from 'vs/base/common/semver/semver';
 import { CLIOutput, IExtensionGalleryService, IExtensionManagementCLIService, IExtensionManagementService, IGalleryExtension, ILocalExtension, InstallOptions } from 'vs/platform/extensionManagement/common/extensionManagement';
 import { adoptToGalleryExtensionId, areSameExtensions, getGalleryExtensionId } from 'vs/platform/extensionManagement/common/extensionManagementUtil';
-import { ExtensionType, EXTENSION_CATEGORIES, IExtensionManifest, isLanguagePackExtension } from 'vs/platform/extensions/common/extensions';
+import { ExtensionType, EXTENSION_CATEGORIES, IExtensionManifest } from 'vs/platform/extensions/common/extensions';
 import { getBaseLabel } from 'vs/base/common/labels';
 import { CancellationToken } from 'vs/base/common/cancellation';
 import { Schemas } from 'vs/base/common/network';
-import { ILocalizationsService } from 'vs/platform/localizations/common/localizations';
 
 const notFound = (id: string) => localize('notFound', "Extension '{0}' not found.", id);
 const useId = localize('useId', "Make sure you use the full extension ID, including the publisher, e.g.: {0}", 'ms-dotnettools.csharp');
@@ -47,8 +46,7 @@ export class ExtensionManagementCLIService implements IExtensionManagementCLISer
 
 	constructor(
 		@IExtensionManagementService private readonly extensionManagementService: IExtensionManagementService,
-		@IExtensionGalleryService private readonly extensionGalleryService: IExtensionGalleryService,
-		@ILocalizationsService private readonly localizationsService: ILocalizationsService
+		@IExtensionGalleryService private readonly extensionGalleryService: IExtensionGalleryService
 	) { }
 
 	protected get location(): string | undefined {
@@ -135,7 +133,7 @@ export class ExtensionManagementCLIService implements IExtensionManagementCLISer
 		if (vsixs.length) {
 			await Promise.all(vsixs.map(async vsix => {
 				try {
-					const manifest = await this.installVSIX(vsix, force, output);
+					const manifest = await this.installVSIX(vsix, { isBuiltin: false, isMachineScoped }, force, output);
 					if (manifest) {
 						installedExtensionsManifests.push(manifest);
 					}
@@ -170,16 +168,12 @@ export class ExtensionManagementCLIService implements IExtensionManagementCLISer
 
 		}
 
-		if (installedExtensionsManifests.some(manifest => isLanguagePackExtension(manifest))) {
-			await this.updateLocalizationsCache();
-		}
-
 		if (failed.length) {
 			throw new Error(localize('installation failed', "Failed Installing Extensions: {0}", failed.join(', ')));
 		}
 	}
 
-	private async installVSIX(vsix: URI, force: boolean, output: CLIOutput): Promise<IExtensionManifest | null> {
+	private async installVSIX(vsix: URI, installOptions: InstallOptions, force: boolean, output: CLIOutput): Promise<IExtensionManifest | null> {
 
 		const manifest = await this.extensionManagementService.getManifest(vsix);
 		if (!manifest) {
@@ -189,7 +183,7 @@ export class ExtensionManagementCLIService implements IExtensionManagementCLISer
 		const valid = await this.validateVSIX(manifest, force, output);
 		if (valid) {
 			try {
-				await this.extensionManagementService.install(vsix);
+				await this.extensionManagementService.install(vsix, installOptions);
 				output.log(localize('successVsixInstall', "Extension '{0}' was successfully installed.", getBaseLabel(vsix)));
 				return manifest;
 			} catch (error) {
@@ -315,10 +309,6 @@ export class ExtensionManagementCLIService implements IExtensionManagementCLISer
 			}
 
 		}
-
-		if (uninstalledExtensions.some(e => isLanguagePackExtension(e.manifest))) {
-			await this.updateLocalizationsCache();
-		}
 	}
 
 	public async locateExtension(extensions: string[], output: CLIOutput = console): Promise<void> {
@@ -333,11 +323,6 @@ export class ExtensionManagementCLIService implements IExtensionManagementCLISer
 				}
 			});
 		});
-	}
-
-
-	private updateLocalizationsCache(): Promise<boolean> {
-		return this.localizationsService.update();
 	}
 
 	private notInstalled(id: string) {

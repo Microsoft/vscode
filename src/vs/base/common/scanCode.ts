@@ -9,6 +9,7 @@ import { KeyCode } from 'vs/base/common/keyCodes';
  * keyboardEvent.code
  */
 export const enum ScanCode {
+	DependsOnKbLayout = -1,
 	None,
 
 	Hyper,
@@ -468,11 +469,11 @@ export class ScanCodeBinding {
 
 (function () {
 	for (let i = 0; i <= ScanCode.MAX_VALUE; i++) {
-		IMMUTABLE_CODE_TO_KEY_CODE[i] = -1;
+		IMMUTABLE_CODE_TO_KEY_CODE[i] = KeyCode.DependsOnKbLayout;
 	}
 
 	for (let i = 0; i <= KeyCode.MAX_VALUE; i++) {
-		IMMUTABLE_KEY_CODE_TO_CODE[i] = -1;
+		IMMUTABLE_KEY_CODE_TO_CODE[i] = ScanCode.DependsOnKbLayout;
 	}
 
 	function define(code: ScanCode, keyCode: KeyCode): void {

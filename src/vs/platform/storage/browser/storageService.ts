@@ -94,7 +94,7 @@ export class BrowserStorageService extends AbstractStorageService {
 		throw new Error('Migrating storage is currently unsupported in Web');
 	}
 
-	protected shouldFlushWhenIdle(): boolean {
+	protected override shouldFlushWhenIdle(): boolean {
 		// this flush() will potentially cause new state to be stored
 		// since new state will only be created while the document
 		// has focus, one optimization is to not run this when the

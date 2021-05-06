@@ -593,32 +593,32 @@ class MockDebugStorage extends DebugStorage {
 		super(undefined as any, undefined as any, undefined as any);
 	}
 
-	loadBreakpoints(): Breakpoint[] {
+	override loadBreakpoints(): Breakpoint[] {
 		return [];
 	}
 
-	loadFunctionBreakpoints(): FunctionBreakpoint[] {
+	override loadFunctionBreakpoints(): FunctionBreakpoint[] {
 		return [];
 	}
 
-	loadExceptionBreakpoints(): ExceptionBreakpoint[] {
-		return [];
-
-	}
-
-	loadDataBreakpoints(): DataBreakpoint[] {
+	override loadExceptionBreakpoints(): ExceptionBreakpoint[] {
 		return [];
 
 	}
 
-	loadWatchExpressions(): Expression[] {
+	override loadDataBreakpoints(): DataBreakpoint[] {
 		return [];
 
 	}
 
-	storeWatchExpressions(_watchExpressions: (IExpression & IEvaluate)[]): void { }
+	override loadWatchExpressions(): Expression[] {
+		return [];
 
-	storeBreakpoints(_debugModel: IDebugModel): void { }
+	}
+
+	override storeWatchExpressions(_watchExpressions: (IExpression & IEvaluate)[]): void { }
+
+	override storeBreakpoints(_debugModel: IDebugModel): void { }
 }
 
 export function createMockDebugModel(): DebugModel {

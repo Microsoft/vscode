@@ -51,7 +51,6 @@ import { TestTextResourcePropertiesService, TestContextService } from 'vs/workbe
 import { IUriIdentityService } from 'vs/workbench/services/uriIdentity/common/uriIdentity';
 import { extUri } from 'vs/base/common/resources';
 import { ITextSnapshot } from 'vs/editor/common/model';
-import { VSBuffer, VSBufferReadable } from 'vs/base/common/buffer';
 import { ILifecycleService } from 'vs/workbench/services/lifecycle/common/lifecycle';
 import { IEnvironmentService } from 'vs/platform/environment/common/environment';
 
@@ -100,44 +99,44 @@ suite('MainThreadEditors', () => {
 		services.set(ILifecycleService, new TestLifecycleService());
 		services.set(IEditorGroupsService, new TestEditorGroupsService());
 		services.set(ITextFileService, new class extends mock<ITextFileService>() {
-			isDirty() { return false; }
-			files = <any>{
+			override isDirty() { return false; }
+			override files = <any>{
 				onDidSave: Event.None,
 				onDidRevert: Event.None,
 				onDidChangeDirty: Event.None
 			};
-			create(operations: { resource: URI }[]) {
+			override create(operations: { resource: URI }[]) {
 				for (const o of operations) {
 					createdResources.add(o.resource);
 				}
 				return Promise.resolve(Object.create(null));
 			}
-			async getEncodedReadable(resource: URI, value?: string | ITextSnapshot): Promise<VSBuffer | VSBufferReadable | undefined> {
+			override async getEncodedReadable(resource: URI, value?: string | ITextSnapshot): Promise<any> {
 				return undefined;
 			}
 		});
 		services.set(IWorkingCopyFileService, new class extends mock<IWorkingCopyFileService>() {
-			onDidRunWorkingCopyFileOperation = Event.None;
-			createFolder(operations: ICreateOperation[]): any {
+			override onDidRunWorkingCopyFileOperation = Event.None;
+			override createFolder(operations: ICreateOperation[]): any {
 				this.create(operations);
 			}
-			create(operations: ICreateFileOperation[]) {
+			override create(operations: ICreateFileOperation[]) {
 				for (const operation of operations) {
 					createdResources.add(operation.resource);
 				}
 				return Promise.resolve(Object.create(null));
 			}
-			move(operations: IMoveOperation[]) {
+			override move(operations: IMoveOperation[]) {
 				const { source, target } = operations[0].file;
 				movedResources.set(source, target);
 				return Promise.resolve(Object.create(null));
 			}
-			copy(operations: ICopyOperation[]) {
+			override copy(operations: ICopyOperation[]) {
 				const { source, target } = operations[0].file;
 				copiedResources.set(source, target);
 				return Promise.resolve(Object.create(null));
 			}
-			delete(operations: IDeleteOperation[]) {
+			override delete(operations: IDeleteOperation[]) {
 				for (const operation of operations) {
 					deletedResources.add(operation.resource);
 				}
@@ -145,9 +144,9 @@ suite('MainThreadEditors', () => {
 			}
 		});
 		services.set(ITextModelService, new class extends mock<ITextModelService>() {
-			createModelReference(resource: URI): Promise<IReference<IResolvedTextEditorModel>> {
+			override createModelReference(resource: URI): Promise<IReference<IResolvedTextEditorModel>> {
 				const textEditorModel = new class extends mock<IResolvedTextEditorModel>() {
-					textEditorModel = modelService.getModel(resource)!;
+					override textEditorModel = modelService.getModel(resource)!;
 				};
 				textEditorModel.isReadonly = () => false;
 				return Promise.resolve(new ImmortalReference(textEditorModel));
@@ -157,26 +156,25 @@ suite('MainThreadEditors', () => {
 
 		});
 		services.set(IPanelService, new class extends mock<IPanelService>() implements IPanelService {
-			declare readonly _serviceBrand: undefined;
-			onDidPanelOpen = Event.None;
-			onDidPanelClose = Event.None;
-			getActivePanel() {
+			override onDidPanelOpen = Event.None;
+			override onDidPanelClose = Event.None;
+			override getActivePanel() {
 				return undefined;
 			}
 		});
 		services.set(IUriIdentityService, new class extends mock<IUriIdentityService>() {
-			get extUri() { return extUri; }
+			override get extUri() { return extUri; }
 		});
 
 		const instaService = new InstantiationService(services);
 
 		const rpcProtocol = new TestRPCProtocol();
 		rpcProtocol.set(ExtHostContext.ExtHostDocuments, new class extends mock<ExtHostDocumentsShape>() {
-			$acceptModelChanged(): void {
+			override $acceptModelChanged(): void {
 			}
 		});
 		rpcProtocol.set(ExtHostContext.ExtHostDocumentsAndEditors, new class extends mock<ExtHostDocumentsAndEditorsShape>() {
-			$acceptDocumentsAndEditorsDelta(): void {
+			override $acceptDocumentsAndEditorsDelta(): void {
 			}
 		});
 

@@ -37,7 +37,7 @@ suite('Browser Telemetry - common properties', function () {
 		assert.ok('common.isNewSession' in props, 'isNewSession');
 		assert.ok('common.machineId' in props, 'machineId');
 
-		assert.equal(props['userId'], '1');
+		assert.strictEqual(props['userId'], '1');
 	});
 
 	test('mixes in additional dyanmic properties', async function () {
@@ -54,9 +54,9 @@ suite('Browser Telemetry - common properties', function () {
 		};
 
 		const props = await resolveWorkbenchCommonProperties(testStorageService, commit, version, undefined, resolveCommonTelemetryProperties);
-		assert.equal(props['userId'], '1');
+		assert.strictEqual(props['userId'], 1);
 
 		const props2 = await resolveWorkbenchCommonProperties(testStorageService, commit, version, undefined, resolveCommonTelemetryProperties);
-		assert.equal(props2['userId'], '2');
+		assert.strictEqual(props2['userId'], 2);
 	});
 });

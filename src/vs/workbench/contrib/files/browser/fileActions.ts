@@ -40,7 +40,8 @@ import { getErrorMessage } from 'vs/base/common/errors';
 import { WebFileSystemAccess, triggerDownload } from 'vs/base/browser/dom';
 import { mnemonicButtonLabel } from 'vs/base/common/labels';
 import { IFilesConfigurationService } from 'vs/workbench/services/filesConfiguration/common/filesConfigurationService';
-import { IWorkingCopyService, IWorkingCopy } from 'vs/workbench/services/workingCopy/common/workingCopyService';
+import { IWorkingCopyService } from 'vs/workbench/services/workingCopy/common/workingCopyService';
+import { IWorkingCopy } from 'vs/workbench/services/workingCopy/common/workingCopy';
 import { RunOnceWorker, sequence, timeout } from 'vs/base/common/async';
 import { IWorkingCopyFileService } from 'vs/workbench/services/workingCopy/common/workingCopyFileService';
 import { once } from 'vs/base/common/functional';
@@ -54,7 +55,6 @@ import { IUriIdentityService } from 'vs/workbench/services/uriIdentity/common/ur
 import { ResourceFileEdit } from 'vs/editor/browser/services/bulkEditService';
 import { IExplorerService } from 'vs/workbench/contrib/files/browser/files';
 import { listenStream } from 'vs/base/common/stream';
-import { EditorOverride } from 'vs/platform/editor/common/editor';
 
 export const NEW_FILE_COMMAND_ID = 'explorer.newFile';
 export const NEW_FILE_LABEL = nls.localize('newFile', "New File");
@@ -442,56 +442,26 @@ export class GlobalCompareResourcesAction extends Action {
 		label: string,
 		@IQuickInputService private readonly quickInputService: IQuickInputService,
 		@IEditorService private readonly editorService: IEditorService,
-		@INotificationService private readonly notificationService: INotificationService,
 		@ITextModelService private readonly textModelService: ITextModelService
 	) {
 		super(id, label);
 	}
 
-	async run(): Promise<void> {
+	override async run(): Promise<void> {
 		const activeInput = this.editorService.activeEditor;
 		const activeResource = EditorResourceAccessor.getOriginalUri(activeInput);
 		if (activeResource && this.textModelService.canHandleResource(activeResource)) {
-
-			// Compare with next editor that opens
-			const toDispose = this.editorService.overrideOpenEditor({
-				open: editor => {
-
-					// Only once!
-					toDispose.dispose();
-
-					// Open editor as diff
-					const resource = EditorResourceAccessor.getOriginalUri(editor);
-					if (resource && this.textModelService.canHandleResource(resource)) {
-						return {
-							override: this.editorService.openEditor({
-								leftResource: activeResource,
-								rightResource: resource,
-								options: { override: EditorOverride.DISABLED, pinned: true }
-							})
-						};
-					}
-
-					// Otherwise stay on current resource
-					this.notificationService.info(nls.localize('fileToCompareNoFile', "Please select a file to compare with."));
-					return {
-						override: this.editorService.openEditor({
-							resource: activeResource,
-							options: { override: EditorOverride.DISABLED, pinned: true }
-						})
-					};
+			const picks = await this.quickInputService.quickAccess.pick('', { itemActivation: ItemActivation.SECOND });
+			if (picks?.length === 1) {
+				const resource = (picks[0] as unknown as { resource: unknown }).resource;
+				if (URI.isUri(resource) && this.textModelService.canHandleResource(resource)) {
+					this.editorService.openEditor({
+						leftResource: activeResource,
+						rightResource: resource,
+						options: { pinned: true }
+					});
 				}
-			});
-
-			once(this.quickInputService.onHide)((async () => {
-				await timeout(0); // prevent race condition with editor
-				toDispose.dispose();
-			}));
-
-			// Bring up quick access
-			this.quickInputService.quickAccess.show('', { itemActivation: ItemActivation.SECOND });
-		} else {
-			this.notificationService.info(nls.localize('openFileToCompare', "Open a file first to compare it with another file."));
+			}
 		}
 	}
 }
@@ -508,7 +478,7 @@ export class ToggleAutoSaveAction extends Action {
 		super(id, label);
 	}
 
-	run(): Promise<void> {
+	override run(): Promise<void> {
 		return this.filesConfigurationService.toggleAutoSave();
 	}
 }
@@ -547,7 +517,7 @@ export abstract class BaseSaveAllAction extends Action {
 		}
 	}
 
-	async run(context?: unknown): Promise<void> {
+	override async run(context?: unknown): Promise<void> {
 		try {
 			await this.doRun(context);
 		} catch (error) {
@@ -561,7 +531,7 @@ export class SaveAllInGroupAction extends BaseSaveAllAction {
 	static readonly ID = 'workbench.files.action.saveAllInGroup';
 	static readonly LABEL = nls.localize('saveAllInGroup', "Save All in Group");
 
-	get class(): string {
+	override get class(): string {
 		return 'explorer-action ' + Codicon.saveAll.classNames;
 	}
 
@@ -579,7 +549,7 @@ export class CloseGroupAction extends Action {
 		super(id, label, Codicon.closeAll.classNames);
 	}
 
-	run(context?: unknown): Promise<void> {
+	override run(context?: unknown): Promise<void> {
 		return this.commandService.executeCommand(CLOSE_EDITORS_AND_GROUP_COMMAND_ID, {}, context);
 	}
 }
@@ -597,7 +567,7 @@ export class FocusFilesExplorer extends Action {
 		super(id, label);
 	}
 
-	async run(): Promise<void> {
+	override async run(): Promise<void> {
 		await this.viewletService.openViewlet(VIEWLET_ID, true);
 	}
 }
@@ -611,18 +581,15 @@ export class ShowActiveFileInExplorer extends Action {
 		id: string,
 		label: string,
 		@IEditorService private readonly editorService: IEditorService,
-		@INotificationService private readonly notificationService: INotificationService,
 		@ICommandService private readonly commandService: ICommandService
 	) {
 		super(id, label);
 	}
 
-	async run(): Promise<void> {
+	override async run(): Promise<void> {
 		const resource = EditorResourceAccessor.getOriginalUri(this.editorService.activeEditor, { supportSideBySide: SideBySideEditor.PRIMARY });
 		if (resource) {
 			this.commandService.executeCommand(REVEAL_IN_EXPLORER_COMMAND_ID, resource);
-		} else {
-			this.notificationService.info(nls.localize('openFileToShow', "Open a file first to show it in the explorer"));
 		}
 	}
 }
@@ -637,22 +604,20 @@ export class ShowOpenedFileInNewWindow extends Action {
 		label: string,
 		@IEditorService private readonly editorService: IEditorService,
 		@IHostService private readonly hostService: IHostService,
-		@INotificationService private readonly notificationService: INotificationService,
+		@IDialogService private readonly dialogService: IDialogService,
 		@IFileService private readonly fileService: IFileService
 	) {
 		super(id, label);
 	}
 
-	async run(): Promise<void> {
+	override async run(): Promise<void> {
 		const fileResource = EditorResourceAccessor.getOriginalUri(this.editorService.activeEditor, { supportSideBySide: SideBySideEditor.PRIMARY });
 		if (fileResource) {
 			if (this.fileService.canHandleResource(fileResource)) {
 				this.hostService.openWindow([{ fileUri: fileResource }], { forceNewWindow: true });
 			} else {
-				this.notificationService.info(nls.localize('openFileToShowInNewWindow.unsupportedschema', "The active editor must contain an openable resource."));
+				this.dialogService.show(Severity.Error, nls.localize('openFileToShowInNewWindow.unsupportedschema', "The active editor must contain an openable resource."), [nls.localize('ok', 'OK')]);
 			}
-		} else {
-			this.notificationService.info(nls.localize('openFileToShowInNewWindow.nofile', "Open a file first to open in new window"));
 		}
 	}
 }
@@ -755,7 +720,7 @@ export class CompareWithClipboardAction extends Action {
 		this.enabled = true;
 	}
 
-	async run(): Promise<void> {
+	override async run(): Promise<void> {
 		const resource = EditorResourceAccessor.getOriginalUri(this.editorService.activeEditor, { supportSideBySide: SideBySideEditor.PRIMARY });
 		const scheme = `clipboardCompare${CompareWithClipboardAction.SCHEME_COUNTER++}`;
 		if (resource && (this.fileService.canHandleResource(resource) || resource.scheme === Schemas.untitled)) {
@@ -778,7 +743,7 @@ export class CompareWithClipboardAction extends Action {
 		}
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		super.dispose();
 
 		dispose(this.registrationDisposal);
@@ -1015,7 +980,7 @@ const downloadFileHandler = async (accessor: ServicesAccessor) => {
 						fileBytesDownloaded: number;
 					}
 
-					async function downloadFileBuffered(resource: URI, target: WebFileSystemAccess.FileSystemWritableFileStream, operation: IDownloadOperation): Promise<void> {
+					async function downloadFileBuffered(resource: URI, target: FileSystemWritableFileStream, operation: IDownloadOperation): Promise<void> {
 						const contents = await fileService.readFileStream(resource);
 						if (cts.token.isCancellationRequested) {
 							target.close();
@@ -1055,7 +1020,7 @@ const downloadFileHandler = async (accessor: ServicesAccessor) => {
 						});
 					}
 
-					async function downloadFileUnbuffered(resource: URI, target: WebFileSystemAccess.FileSystemWritableFileStream, operation: IDownloadOperation): Promise<void> {
+					async function downloadFileUnbuffered(resource: URI, target: FileSystemWritableFileStream, operation: IDownloadOperation): Promise<void> {
 						const contents = await fileService.readFile(resource);
 						if (!cts.token.isCancellationRequested) {
 							target.write(contents.value.buffer);
@@ -1065,7 +1030,7 @@ const downloadFileHandler = async (accessor: ServicesAccessor) => {
 						target.close();
 					}
 
-					async function downloadFile(targetFolder: WebFileSystemAccess.FileSystemDirectoryHandle, file: IFileStatWithMetadata, operation: IDownloadOperation): Promise<void> {
+					async function downloadFile(targetFolder: FileSystemDirectoryHandle, file: IFileStatWithMetadata, operation: IDownloadOperation): Promise<void> {
 
 						// Report progress
 						operation.filesDownloaded++;
@@ -1085,7 +1050,7 @@ const downloadFileHandler = async (accessor: ServicesAccessor) => {
 						return downloadFileUnbuffered(file.resource, targetFileWriter, operation);
 					}
 
-					async function downloadFolder(folder: IFileStatWithMetadata, targetFolder: WebFileSystemAccess.FileSystemDirectoryHandle, operation: IDownloadOperation): Promise<void> {
+					async function downloadFolder(folder: IFileStatWithMetadata, targetFolder: FileSystemDirectoryHandle, operation: IDownloadOperation): Promise<void> {
 						if (folder.children) {
 							operation.filesTotal += (folder.children.map(child => child.isFile)).length;
 
@@ -1132,7 +1097,7 @@ const downloadFileHandler = async (accessor: ServicesAccessor) => {
 					}
 
 					try {
-						const parentFolder: WebFileSystemAccess.FileSystemDirectoryHandle = await window.showDirectoryPicker();
+						const parentFolder: FileSystemDirectoryHandle = await window.showDirectoryPicker();
 						const operation: IDownloadOperation = {
 							startTime: Date.now(),
 							progressScheduler: new RunOnceWorker<IProgressStep>(steps => { progress.report(steps[steps.length - 1]); }, 1000),
@@ -1211,6 +1176,7 @@ export const pasteFileHandler = async (accessor: ServicesAccessor) => {
 	const explorerService = accessor.get(IExplorerService);
 	const fileService = accessor.get(IFileService);
 	const notificationService = accessor.get(INotificationService);
+	const editorService = accessor.get(IEditorService);
 	const configurationService = accessor.get(IConfigurationService);
 	const uriIdentityService = accessor.get(IUriIdentityService);
 
@@ -1265,6 +1231,12 @@ export const pasteFileHandler = async (accessor: ServicesAccessor) => {
 
 			const pair = sourceTargetPairs[0];
 			await explorerService.select(pair.target);
+			if (sourceTargetPairs.length === 1) {
+				const item = explorerService.findClosest(pair.target);
+				if (item && !item.isDirectory) {
+					await editorService.openEditor({ resource: item.resource, options: { pinned: true, preserveFocus: true } });
+				}
+			}
 		}
 	} catch (e) {
 		onError(notificationService, new Error(nls.localize('fileDeleted', "The file(s) to paste have been deleted or moved since you copied them. {0}", getErrorMessage(e))));

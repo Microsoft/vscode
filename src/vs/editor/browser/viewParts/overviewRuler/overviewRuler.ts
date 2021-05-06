@@ -39,14 +39,14 @@ export class OverviewRuler extends ViewEventHandler implements IOverviewRuler {
 		this._context.addEventHandler(this);
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		this._context.removeEventHandler(this);
 		super.dispose();
 	}
 
 	// ---- begin view event handlers
 
-	public onConfigurationChanged(e: viewEvents.ViewConfigurationChangedEvent): boolean {
+	public override onConfigurationChanged(e: viewEvents.ViewConfigurationChangedEvent): boolean {
 		const options = this._context.configuration.options;
 
 		if (e.hasChanged(EditorOption.lineHeight)) {
@@ -65,18 +65,18 @@ export class OverviewRuler extends ViewEventHandler implements IOverviewRuler {
 
 		return true;
 	}
-	public onFlushed(e: viewEvents.ViewFlushedEvent): boolean {
+	public override onFlushed(e: viewEvents.ViewFlushedEvent): boolean {
 		this._render();
 		return true;
 	}
-	public onScrollChanged(e: viewEvents.ViewScrollChangedEvent): boolean {
+	public override onScrollChanged(e: viewEvents.ViewScrollChangedEvent): boolean {
 		if (e.scrollHeightChanged) {
 			this._zoneManager.setOuterHeight(e.scrollHeight);
 			this._render();
 		}
 		return true;
 	}
-	public onZonesChanged(e: viewEvents.ViewZonesChangedEvent): boolean {
+	public override onZonesChanged(e: viewEvents.ViewZonesChangedEvent): boolean {
 		this._render();
 		return true;
 	}

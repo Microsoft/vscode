@@ -24,6 +24,7 @@ import { IPreferencesService } from 'vs/workbench/services/preferences/common/pr
 import { INativeHostService } from 'vs/platform/native/electron-sandbox/native';
 import { IUriIdentityService } from 'vs/workbench/services/uriIdentity/common/uriIdentity';
 import { IExplorerService } from 'vs/workbench/contrib/files/browser/files';
+import { IProductService } from 'vs/platform/product/common/productService';
 
 /**
  * An implementation of editor for file system resources.
@@ -45,18 +46,19 @@ export class NativeTextFileEditor extends TextFileEditor {
 		@INativeHostService private readonly nativeHostService: INativeHostService,
 		@IPreferencesService private readonly preferencesService: IPreferencesService,
 		@IExplorerService explorerService: IExplorerService,
-		@IUriIdentityService uriIdentityService: IUriIdentityService
+		@IUriIdentityService uriIdentityService: IUriIdentityService,
+		@IProductService private readonly productService: IProductService
 	) {
 		super(telemetryService, fileService, viewletService, instantiationService, contextService, storageService, textResourceConfigurationService, editorService, themeService, editorGroupService, textFileService, explorerService, uriIdentityService);
 	}
 
-	protected handleSetInputError(error: Error, input: FileEditorInput, options: EditorOptions | undefined): void {
+	protected override handleSetInputError(error: Error, input: FileEditorInput, options: EditorOptions | undefined): void {
 
 		// Allow to restart with higher memory limit if the file is too large
 		if ((<FileOperationError>error).fileOperationResult === FileOperationResult.FILE_EXCEEDS_MEMORY_LIMIT) {
 			const memoryLimit = Math.max(MIN_MAX_MEMORY_SIZE_MB, +this.textResourceConfigurationService.getValue<number>(undefined, 'files.maxMemoryForLargeFilesMB') || FALLBACK_MAX_MEMORY_SIZE_MB);
 
-			throw createErrorWithActions(localize('fileTooLargeForHeapError', "To open a file of this size, you need to restart and allow it to use more memory"), {
+			throw createErrorWithActions(localize('fileTooLargeForHeapError', "To open a file of this size, you need to restart and allow {0} to use more memory", this.productService.nameShort), {
 				actions: [
 					toAction({
 						id: 'workbench.window.action.relaunchWithIncreasedMemoryLimit', label: localize('relaunchWithIncreasedMemoryLimit', "Restart with {0} MB", memoryLimit), run: () => {

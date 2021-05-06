@@ -140,7 +140,7 @@ export class KeybindingsEditorModel extends EditorModel {
 		return result;
 	}
 
-	resolve(actionLabels: Map<string, string>): Promise<EditorModel> {
+	override async resolve(actionLabels = new Map<string, string>()): Promise<void> {
 		const workbenchActionsRegistry = Registry.as<IWorkbenchActionRegistry>(ActionExtensions.WorkbenchActions);
 
 		this._keybindingItemsSortedByPrecedence = [];
@@ -158,7 +158,6 @@ export class KeybindingsEditorModel extends EditorModel {
 			this._keybindingItemsSortedByPrecedence.push(KeybindingsEditorModel.toKeybindingEntry(command, keybindingItem, workbenchActionsRegistry, actionLabels));
 		}
 		this._keybindingItems = this._keybindingItemsSortedByPrecedence.slice(0).sort((a, b) => KeybindingsEditorModel.compareKeybindingData(a, b));
-		return Promise.resolve(this);
 	}
 
 	private static getId(keybindingItem: IKeybindingItem): string {

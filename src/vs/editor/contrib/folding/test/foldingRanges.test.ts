@@ -28,11 +28,11 @@ suite('FoldingRanges', () => {
 		}
 		let model = createTextModel(lines.join('\n'));
 		let actual = computeRanges(model, false, markers, MAX_FOLDING_REGIONS);
-		assert.equal(actual.length, nRegions, 'len');
+		assert.strictEqual(actual.length, nRegions, 'len');
 		for (let i = 0; i < nRegions; i++) {
-			assert.equal(actual.getStartLineNumber(i), i + 1, 'start' + i);
-			assert.equal(actual.getEndLineNumber(i), nRegions * 2 - i, 'end' + i);
-			assert.equal(actual.getParentIndex(i), i - 1, 'parent' + i);
+			assert.strictEqual(actual.getStartLineNumber(i), i + 1, 'start' + i);
+			assert.strictEqual(actual.getEndLineNumber(i), nRegions * 2 - i, 'end' + i);
+			assert.strictEqual(actual.getParentIndex(i), i - 1, 'parent' + i);
 		}
 
 	});
@@ -62,19 +62,19 @@ suite('FoldingRanges', () => {
 			// let r3 = r(5, 6);
 			// let r4 = r(9, 10);
 
-			assert.equal(actual.findRange(1), 0, '1');
-			assert.equal(actual.findRange(2), 0, '2');
-			assert.equal(actual.findRange(3), 1, '3');
-			assert.equal(actual.findRange(4), 2, '4');
-			assert.equal(actual.findRange(5), 3, '5');
-			assert.equal(actual.findRange(6), 3, '6');
-			assert.equal(actual.findRange(7), 2, '7');
-			assert.equal(actual.findRange(8), 2, '8');
-			assert.equal(actual.findRange(9), 4, '9');
-			assert.equal(actual.findRange(10), 4, '10');
-			assert.equal(actual.findRange(11), 2, '11');
-			assert.equal(actual.findRange(12), 1, '12');
-			assert.equal(actual.findRange(13), -1, '13');
+			assert.strictEqual(actual.findRange(1), 0, '1');
+			assert.strictEqual(actual.findRange(2), 0, '2');
+			assert.strictEqual(actual.findRange(3), 1, '3');
+			assert.strictEqual(actual.findRange(4), 2, '4');
+			assert.strictEqual(actual.findRange(5), 3, '5');
+			assert.strictEqual(actual.findRange(6), 3, '6');
+			assert.strictEqual(actual.findRange(7), 2, '7');
+			assert.strictEqual(actual.findRange(8), 2, '8');
+			assert.strictEqual(actual.findRange(9), 4, '9');
+			assert.strictEqual(actual.findRange(10), 4, '10');
+			assert.strictEqual(actual.findRange(11), 2, '11');
+			assert.strictEqual(actual.findRange(12), 1, '12');
+			assert.strictEqual(actual.findRange(13), -1, '13');
 		} finally {
 			textModel.dispose();
 		}
@@ -93,12 +93,12 @@ suite('FoldingRanges', () => {
 		}
 		let model = createTextModel(lines.join('\n'));
 		let actual = computeRanges(model, false, markers, MAX_FOLDING_REGIONS);
-		assert.equal(actual.length, nRegions, 'len');
+		assert.strictEqual(actual.length, nRegions, 'len');
 		for (let i = 0; i < nRegions; i++) {
 			actual.setCollapsed(i, i % 3 === 0);
 		}
 		for (let i = 0; i < nRegions; i++) {
-			assert.equal(actual.isCollapsed(i), i % 3 === 0, 'line' + i);
+			assert.strictEqual(actual.isCollapsed(i), i % 3 === 0, 'line' + i);
 		}
 	});
 });

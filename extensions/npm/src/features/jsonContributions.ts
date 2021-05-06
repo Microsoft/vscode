@@ -29,8 +29,8 @@ export interface IJSONContribution {
 	resolveSuggestion?(resourceUri: Uri | undefined, item: CompletionItem): Thenable<CompletionItem | null> | null;
 }
 
-export function addJSONProviders(xhr: XHRRequest, canRunNPM: boolean): Disposable {
-	const contributions = [new PackageJSONContribution(xhr, canRunNPM), new BowerJSONContribution(xhr)];
+export function addJSONProviders(xhr: XHRRequest, npmCommandPath: string | undefined): Disposable {
+	const contributions = [new PackageJSONContribution(xhr, npmCommandPath), new BowerJSONContribution(xhr)];
 	const subscriptions: Disposable[] = [];
 	contributions.forEach(contribution => {
 		const selector = contribution.getDocumentSelector();
@@ -136,7 +136,7 @@ export class JSONCompletionItemProvider implements CompletionItemProvider {
 		}
 		if (collectPromise) {
 			return collectPromise.then(() => {
-				if (items.length > 0) {
+				if (items.length > 0 || isIncomplete) {
 					return new CompletionList(items, isIncomplete);
 				}
 				return null;

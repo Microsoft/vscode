@@ -23,6 +23,7 @@ import { withNullAsUndefined, assertType } from 'vs/base/common/types';
 import { ThemeIcon } from 'vs/platform/theme/common/themeService';
 import { IDisposable } from 'vs/base/common/lifecycle';
 import { KeyMod, KeyCode } from 'vs/base/common/keyCodes';
+import { ILogService } from 'vs/platform/log/common/log';
 
 
 export type ServicesAccessor = InstantiationServicesAccessor;
@@ -149,20 +150,26 @@ export abstract class Command {
  */
 export type CommandImplementation = (accessor: ServicesAccessor, args: unknown) => boolean | Promise<void>;
 
+interface ICommandImplementationRegistration {
+	priority: number;
+	name: string;
+	implementation: CommandImplementation;
+}
+
 export class MultiCommand extends Command {
 
-	private readonly _implementations: [number, CommandImplementation][] = [];
+	private readonly _implementations: ICommandImplementationRegistration[] = [];
 
 	/**
 	 * A higher priority gets to be looked at first
 	 */
-	public addImplementation(priority: number, implementation: CommandImplementation): IDisposable {
-		this._implementations.push([priority, implementation]);
-		this._implementations.sort((a, b) => b[0] - a[0]);
+	public addImplementation(priority: number, name: string, implementation: CommandImplementation): IDisposable {
+		this._implementations.push({ priority, name, implementation });
+		this._implementations.sort((a, b) => b.priority - a.priority);
 		return {
 			dispose: () => {
 				for (let i = 0; i < this._implementations.length; i++) {
-					if (this._implementations[i][1] === implementation) {
+					if (this._implementations[i].implementation === implementation) {
 						this._implementations.splice(i, 1);
 						return;
 					}
@@ -172,9 +179,11 @@ export class MultiCommand extends Command {
 	}
 
 	public runCommand(accessor: ServicesAccessor, args: any): void | Promise<void> {
+		const logService = accessor.get(ILogService);
 		for (const impl of this._implementations) {
-			const result = impl[1](accessor, args);
+			const result = impl.implementation(accessor, args);
 			if (result) {
+				logService.trace(`Command '${this.id}' was handled by '${impl.name}'.`);
 				if (typeof result === 'boolean') {
 					return;
 				}

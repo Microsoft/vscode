@@ -19,7 +19,7 @@ export function nextItemHTML(document: vscode.TextDocument, selectionStart: vsco
 	if (currentNode.type !== 'comment') {
 		// If cursor is in the tag name, select tag
 		if (currentNode.open &&
-			selectionEndOffset < currentNode.open.start + currentNode.name.length) {
+			selectionEndOffset <= currentNode.open.start + currentNode.name.length) {
 			return getSelectionFromNode(document, currentNode);
 		}
 

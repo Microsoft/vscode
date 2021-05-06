@@ -111,9 +111,9 @@ suite('linked editing', () => {
 			return new Promise<void>((resolve) => {
 				setTimeout(() => {
 					if (typeof expectedEndText === 'string') {
-						assert.equal(editor.getModel()!.getValue(), expectedEndText);
+						assert.strictEqual(editor.getModel()!.getValue(), expectedEndText);
 					} else {
-						assert.equal(editor.getModel()!.getValue(), expectedEndText.join('\n'));
+						assert.strictEqual(editor.getModel()!.getValue(), expectedEndText.join('\n'));
 					}
 					resolve();
 				}, timeout);

@@ -6,7 +6,6 @@
 import 'vs/workbench/workbench.web.main';
 import { main } from 'vs/workbench/browser/web.main';
 import { UriComponents, URI } from 'vs/base/common/uri';
-import { IFileSystemProvider, FileSystemProviderCapabilities, IFileChange, FileChangeType } from 'vs/platform/files/common/files';
 import { IWebSocketFactory, IWebSocket } from 'vs/platform/remote/browser/browserSocketFactory';
 import { IExtensionManifest } from 'vs/platform/extensions/common/extensions';
 import { IURLCallbackProvider } from 'vs/workbench/services/url/browser/urlService';
@@ -16,7 +15,7 @@ import { Event, Emitter } from 'vs/base/common/event';
 import { Disposable, IDisposable, toDisposable } from 'vs/base/common/lifecycle';
 import { IWorkspaceProvider, IWorkspace } from 'vs/workbench/services/host/browser/browserHostService';
 import { CommandsRegistry } from 'vs/platform/commands/common/commands';
-import { IProductConfiguration } from 'vs/platform/product/common/productService';
+import { IProductConfiguration } from 'vs/base/common/product';
 import { mark } from 'vs/base/common/performance';
 import { ICredentialsProvider } from 'vs/workbench/services/credentials/common/credentials';
 import { TunnelProviderFeatures } from 'vs/platform/remote/common/tunnel';
@@ -27,7 +26,7 @@ interface IResourceUriProvider {
 
 interface IStaticExtension {
 	packageJSON: IExtensionManifest;
-	extensionLocation: URI;
+	extensionLocation: UriComponents;
 	isBuiltin?: boolean;
 }
 
@@ -225,6 +224,12 @@ interface ISettingsSyncOptions {
 	readonly enabled: boolean;
 
 	/**
+	 * Version of extensions sync state.
+	 * Extensions sync state will be reset if version is provided and different from previous version.
+	 */
+	readonly extensionsSyncStateVersion?: string;
+
+	/**
 	 * Handler is being called when the user changes Settings Sync enablement.
 	 */
 	enablementHandler?(enablement: boolean): void;
@@ -314,12 +319,12 @@ interface IWorkbenchConstructionOptions {
 	/**
 	 * Add static extensions that cannot be uninstalled but only be disabled.
 	 */
-	readonly staticExtensions?: ReadonlyArray<IStaticExtension>;
+	readonly staticExtensions?: readonly IStaticExtension[];
 
 	/**
 	 * [TEMPORARY]: This will be removed soon.
 	 * Enable inlined extensions.
-	 * Defaults to false on serverful and true on serverless.
+	 * Defaults to true.
 	 */
 	readonly _enableBuiltinExtensions?: boolean;
 
@@ -398,7 +403,15 @@ interface IWorkbenchConstructionOptions {
 	//#endregion
 
 
-	//#region Diagnostics
+	//#region Development options
+
+	readonly developmentOptions?: IDevelopmentOptions;
+
+	//#endregion
+
+}
+
+interface IDevelopmentOptions {
 
 	/**
 	 * Current logging level. Default is `LogLevel.Info`.
@@ -406,11 +419,19 @@ interface IWorkbenchConstructionOptions {
 	readonly logLevel?: LogLevel;
 
 	/**
+	 * Location of a module containing extension tests to run once the workbench is open.
+	 */
+	readonly extensionTestsPath?: UriComponents;
+
+	/**
+	 * Add extensions under development.
+	 */
+	readonly extensions?: readonly IStaticExtension[];
+
+	/**
 	 * Whether to enable the smoke test driver.
 	 */
-	readonly driver?: boolean;
-
-	//#endregion
+	readonly enableSmokeTestDriver?: boolean;
 }
 
 interface IPerformanceMark {
@@ -560,12 +581,6 @@ export {
 	IWorkspace,
 	IWorkspaceProvider,
 
-	// FileSystem
-	IFileSystemProvider,
-	FileSystemProviderCapabilities,
-	IFileChange,
-	FileChangeType,
-
 	// WebSockets
 	IWebSocketFactory,
 	IWebSocket,
@@ -626,7 +641,10 @@ export {
 
 	// Env
 	IPerformanceMark,
-	env
+	env,
+
+	// Development
+	IDevelopmentOptions
 };
 
 //#endregion

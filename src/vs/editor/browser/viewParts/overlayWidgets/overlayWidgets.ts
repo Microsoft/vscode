@@ -52,7 +52,7 @@ export class ViewOverlayWidgets extends ViewPart {
 		this._domNode.setClassName('overlayWidgets');
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		super.dispose();
 		this._widgets = {};
 	}
@@ -63,7 +63,7 @@ export class ViewOverlayWidgets extends ViewPart {
 
 	// ---- begin view event handlers
 
-	public onConfigurationChanged(e: viewEvents.ViewConfigurationChangedEvent): boolean {
+	public override onConfigurationChanged(e: viewEvents.ViewConfigurationChangedEvent): boolean {
 		const options = this._context.configuration.options;
 		const layoutInfo = options.get(EditorOption.layoutInfo);
 

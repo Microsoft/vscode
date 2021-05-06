@@ -73,7 +73,7 @@ export class ResourceMap<T> {
 	}
 
 	public get values(): Iterable<T> {
-		return Array.from(this._map.values()).map(x => x.value);
+		return Array.from(this._map.values(), x => x.value);
 	}
 
 	public get entries(): Iterable<{ resource: vscode.Uri, value: T }> {

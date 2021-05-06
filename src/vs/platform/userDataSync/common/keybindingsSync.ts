@@ -258,7 +258,7 @@ export class KeybindingsSynchroniser extends AbstractJsonFileSynchroniser implem
 		return [{ resource: this.extUri.joinPath(uri, 'keybindings.json'), comparableResource }];
 	}
 
-	async resolveContent(uri: URI): Promise<string | null> {
+	override async resolveContent(uri: URI): Promise<string | null> {
 		if (this.extUri.isEqual(this.remoteResource, uri) || this.extUri.isEqual(this.localResource, uri) || this.extUri.isEqual(this.acceptedResource, uri)) {
 			return this.resolvePreviewContent(uri);
 		}

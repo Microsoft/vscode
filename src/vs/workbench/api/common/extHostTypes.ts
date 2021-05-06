@@ -7,13 +7,15 @@ import { coalesceInPlace, equals } from 'vs/base/common/arrays';
 import { illegalArgument } from 'vs/base/common/errors';
 import { IRelativePattern } from 'vs/base/common/glob';
 import { isMarkdownString, MarkdownString as BaseMarkdownString } from 'vs/base/common/htmlContent';
-import { ResourceMap } from 'vs/base/common/map';
+import { ReadonlyMapView, ResourceMap } from 'vs/base/common/map';
+import { isFalsyOrWhitespace } from 'vs/base/common/strings';
 import { isStringArray } from 'vs/base/common/types';
 import { URI } from 'vs/base/common/uri';
 import { generateUuid } from 'vs/base/common/uuid';
 import { FileSystemProviderErrorCode, markAsFileSystemProviderError } from 'vs/platform/files/common/files';
 import { RemoteAuthorityResolverErrorCode } from 'vs/platform/remote/common/remoteAuthorityResolver';
-import { CellEditType, ICellEditOperation, notebookDocumentMetadataDefaults } from 'vs/workbench/contrib/notebook/common/notebookCommon';
+import { getPrivateApiFor, ExtHostTestItemEventType, IExtHostTestItemApi } from 'vs/workbench/api/common/extHostTestingPrivateApi';
+import { CellEditType, ICellEditOperation } from 'vs/workbench/contrib/notebook/common/notebookCommon';
 import type * as vscode from 'vscode';
 
 function es5ClassCompat(target: Function): any {
@@ -419,7 +421,7 @@ export class Selection extends Range {
 		return this._anchor === this._end;
 	}
 
-	toJSON() {
+	override toJSON() {
 		return {
 			start: this.start,
 			end: this.end,
@@ -673,41 +675,40 @@ export class WorkspaceEdit implements vscode.WorkspaceEdit {
 	// --- notebook
 
 	replaceNotebookMetadata(uri: URI, value: vscode.NotebookDocumentMetadata, metadata?: vscode.WorkspaceEditEntryMetadata): void {
-		this._edits.push({ _type: FileEditType.Cell, metadata, uri, edit: { editType: CellEditType.DocumentMetadata, metadata: { ...notebookDocumentMetadataDefaults, ...value } }, notebookMetadata: value });
+		this._edits.push({ _type: FileEditType.Cell, metadata, uri, edit: { editType: CellEditType.DocumentMetadata, metadata: value }, notebookMetadata: value });
 	}
 
-	replaceNotebookCells(uri: URI, start: number, end: number, cells: vscode.NotebookCellData[], metadata?: vscode.WorkspaceEditEntryMetadata): void {
-		if (start !== end || cells.length > 0) {
-			this._edits.push({ _type: FileEditType.CellReplace, uri, index: start, count: end - start, cells, metadata });
+	replaceNotebookCells(uri: URI, range: vscode.NotebookRange, cells: vscode.NotebookCellData[], metadata?: vscode.WorkspaceEditEntryMetadata): void;
+	replaceNotebookCells(uri: URI, start: number, end: number, cells: vscode.NotebookCellData[], metadata?: vscode.WorkspaceEditEntryMetadata): void;
+	replaceNotebookCells(uri: URI, startOrRange: number | vscode.NotebookRange, endOrCells: number | vscode.NotebookCellData[], cellsOrMetadata?: vscode.NotebookCellData[] | vscode.WorkspaceEditEntryMetadata, metadata?: vscode.WorkspaceEditEntryMetadata): void {
+		let start: number | undefined;
+		let end: number | undefined;
+		let cellData: vscode.NotebookCellData[] = [];
+		let workspaceEditMetadata: vscode.WorkspaceEditEntryMetadata | undefined;
+
+		if (NotebookRange.isNotebookRange(startOrRange) && NotebookCellData.isNotebookCellDataArray(endOrCells) && !NotebookCellData.isNotebookCellDataArray(cellsOrMetadata)) {
+			start = startOrRange.start;
+			end = startOrRange.end;
+			cellData = endOrCells;
+			workspaceEditMetadata = cellsOrMetadata;
+		} else if (typeof startOrRange === 'number' && typeof endOrCells === 'number' && NotebookCellData.isNotebookCellDataArray(cellsOrMetadata)) {
+			start = startOrRange;
+			end = endOrCells;
+			cellData = cellsOrMetadata;
+			workspaceEditMetadata = metadata;
+		}
+
+		if (start === undefined || end === undefined) {
+			throw new Error('Invalid arguments');
+		}
+
+		if (start !== end || cellData.length > 0) {
+			this._edits.push({ _type: FileEditType.CellReplace, uri, index: start, count: end - start, cells: cellData, metadata: workspaceEditMetadata });
 		}
 	}
 
-	replaceNotebookCellOutput(uri: URI, index: number, outputs: vscode.NotebookCellOutput[], metadata?: vscode.WorkspaceEditEntryMetadata): void {
-		this._editNotebookCellOutput(uri, index, false, outputs, metadata);
-	}
-
-	appendNotebookCellOutput(uri: URI, index: number, outputs: vscode.NotebookCellOutput[], metadata?: vscode.WorkspaceEditEntryMetadata): void {
-		this._editNotebookCellOutput(uri, index, true, outputs, metadata);
-	}
-
-	replaceNotebookCellOutputItems(uri: URI, index: number, outputId: string, items: NotebookCellOutputItem[], metadata?: vscode.WorkspaceEditEntryMetadata): void {
-		this._editNotebookCellOutputItems(uri, index, outputId, false, items, metadata);
-	}
-
-	appendNotebookCellOutputItems(uri: URI, index: number, outputId: string, items: NotebookCellOutputItem[], metadata?: vscode.WorkspaceEditEntryMetadata): void {
-		this._editNotebookCellOutputItems(uri, index, outputId, true, items, metadata);
-	}
-
-	private _editNotebookCellOutputItems(uri: URI, index: number, id: string, append: boolean, items: vscode.NotebookCellOutputItem[], metadata: vscode.WorkspaceEditEntryMetadata | undefined): void {
-		this._edits.push({ _type: FileEditType.CellOutputItem, metadata, uri, index, outputId: id, append, newOutputItems: items });
-	}
-
-	private _editNotebookCellOutput(uri: URI, index: number, append: boolean, outputs: vscode.NotebookCellOutput[], metadata: vscode.WorkspaceEditEntryMetadata | undefined): void {
-		this._edits.push({ _type: FileEditType.CellOutput, metadata, uri, index, append, newOutputs: outputs, newMetadata: undefined });
-	}
-
 	replaceNotebookCellMetadata(uri: URI, index: number, cellMetadata: vscode.NotebookCellMetadata, metadata?: vscode.WorkspaceEditEntryMetadata): void {
-		this._edits.push({ _type: FileEditType.Cell, metadata, uri, edit: { editType: CellEditType.Metadata, index, metadata: cellMetadata } });
+		this._edits.push({ _type: FileEditType.Cell, metadata, uri, edit: { editType: CellEditType.PartialMetadata, index, metadata: cellMetadata } });
 	}
 
 	// --- text
@@ -1179,8 +1180,8 @@ export class DocumentSymbol {
 
 
 export enum CodeActionTriggerKind {
-	Automatic = 1,
-	Manual = 2,
+	Invoke = 1,
+	Automatic = 2,
 }
 
 @es5ClassCompat
@@ -1419,24 +1420,23 @@ export enum SignatureHelpTriggerKind {
 }
 
 
-export enum InlineHintKind {
+export enum InlayHintKind {
 	Other = 0,
 	Type = 1,
 	Parameter = 2,
 }
 
 @es5ClassCompat
-export class InlineHint {
+export class InlayHint {
 	text: string;
-	range: Range;
-	kind?: vscode.InlineHintKind;
-	description?: string | vscode.MarkdownString;
+	position: Position;
+	kind?: vscode.InlayHintKind;
 	whitespaceBefore?: boolean;
 	whitespaceAfter?: boolean;
 
-	constructor(text: string, range: Range, kind?: vscode.InlineHintKind) {
+	constructor(text: string, position: Position, kind?: vscode.InlayHintKind) {
 		this.text = text;
-		this.range = range;
+		this.position = position;
 		this.kind = kind;
 	}
 }
@@ -2895,7 +2895,17 @@ export enum ColorThemeKind {
 
 //#region Notebook
 
-export class NotebookCellRange {
+export class NotebookRange {
+	static isNotebookRange(thing: any): thing is vscode.NotebookRange {
+		if (thing instanceof NotebookRange) {
+			return true;
+		}
+		if (!thing) {
+			return false;
+		}
+		return typeof (<NotebookRange>thing).start === 'number'
+			&& typeof (<NotebookRange>thing).end === 'number';
+	}
 
 	private _start: number;
 	private _end: number;
@@ -2916,93 +2926,59 @@ export class NotebookCellRange {
 		if (start < 0) {
 			throw illegalArgument('start must be positive');
 		}
-		if (end < start) {
-			throw illegalArgument('end cannot be smaller than start');
+		if (end < 0) {
+			throw illegalArgument('end must be positive');
 		}
-		this._start = start;
-		this._end = end;
+		if (start <= end) {
+			this._start = start;
+			this._end = end;
+		} else {
+			this._start = end;
+			this._end = start;
+		}
+	}
+
+	with(change: { start?: number, end?: number }): NotebookRange {
+		let start = this._start;
+		let end = this._end;
+
+		if (change.start !== undefined) {
+			start = change.start;
+		}
+		if (change.end !== undefined) {
+			end = change.end;
+		}
+		if (start === this._start && end === this._end) {
+			return this;
+		}
+		return new NotebookRange(start, end);
 	}
 }
 
 export class NotebookCellMetadata {
+	readonly inputCollapsed?: boolean;
+	readonly outputCollapsed?: boolean;
+	readonly [key: string]: any;
 
-	constructor(
-		readonly editable?: boolean,
-		readonly breakpointMargin?: boolean,
-		readonly runnable?: boolean,
-		readonly hasExecutionOrder?: boolean,
-		readonly executionOrder?: number,
-		readonly runState?: NotebookCellRunState,
-		readonly runStartTime?: number,
-		readonly statusMessage?: string,
-		readonly lastRunDuration?: number,
-		readonly inputCollapsed?: boolean,
-		readonly outputCollapsed?: boolean,
-		readonly custom?: Record<string, any>,
-	) { }
+	constructor(inputCollapsed?: boolean, outputCollapsed?: boolean);
+	constructor(data: Record<string, any>);
+	constructor(inputCollapsedOrData: (boolean | undefined) | Record<string, any>, outputCollapsed?: boolean) {
+		if (typeof inputCollapsedOrData === 'object') {
+			Object.assign(this, inputCollapsedOrData);
+		} else {
+			this.inputCollapsed = inputCollapsedOrData;
+			this.outputCollapsed = outputCollapsed;
+		}
+	}
 
 	with(change: {
-		editable?: boolean | null,
-		breakpointMargin?: boolean | null,
-		runnable?: boolean | null,
-		hasExecutionOrder?: boolean | null,
-		executionOrder?: number | null,
-		runState?: NotebookCellRunState | null,
-		runStartTime?: number | null,
-		statusMessage?: string | null,
-		lastRunDuration?: number | null,
 		inputCollapsed?: boolean | null,
 		outputCollapsed?: boolean | null,
-		custom?: Record<string, any> | null,
+		[key: string]: any
 	}): NotebookCellMetadata {
 
-		let { editable, breakpointMargin, runnable, hasExecutionOrder, executionOrder, runState, runStartTime, statusMessage, lastRunDuration, inputCollapsed, outputCollapsed, custom } = change;
+		let { inputCollapsed, outputCollapsed, ...remaining } = change;
 
-		if (editable === undefined) {
-			editable = this.editable;
-		} else if (editable === null) {
-			editable = undefined;
-		}
-		if (breakpointMargin === undefined) {
-			breakpointMargin = this.breakpointMargin;
-		} else if (breakpointMargin === null) {
-			breakpointMargin = undefined;
-		}
-		if (runnable === undefined) {
-			runnable = this.runnable;
-		} else if (runnable === null) {
-			runnable = undefined;
-		}
-		if (hasExecutionOrder === undefined) {
-			hasExecutionOrder = this.hasExecutionOrder;
-		} else if (hasExecutionOrder === null) {
-			hasExecutionOrder = undefined;
-		}
-		if (executionOrder === undefined) {
-			executionOrder = this.executionOrder;
-		} else if (executionOrder === null) {
-			executionOrder = undefined;
-		}
-		if (runState === undefined) {
-			runState = this.runState;
-		} else if (runState === null) {
-			runState = undefined;
-		}
-		if (runStartTime === undefined) {
-			runStartTime = this.runStartTime;
-		} else if (runStartTime === null) {
-			runStartTime = undefined;
-		}
-		if (statusMessage === undefined) {
-			statusMessage = this.statusMessage;
-		} else if (statusMessage === null) {
-			statusMessage = undefined;
-		}
-		if (lastRunDuration === undefined) {
-			lastRunDuration = this.lastRunDuration;
-		} else if (lastRunDuration === null) {
-			lastRunDuration = undefined;
-		}
 		if (inputCollapsed === undefined) {
 			inputCollapsed = this.inputCollapsed;
 		} else if (inputCollapsed === null) {
@@ -3013,163 +2989,74 @@ export class NotebookCellMetadata {
 		} else if (outputCollapsed === null) {
 			outputCollapsed = undefined;
 		}
-		if (custom === undefined) {
-			custom = this.custom;
-		} else if (custom === null) {
-			custom = undefined;
-		}
 
-		if (editable === this.editable &&
-			breakpointMargin === this.breakpointMargin &&
-			runnable === this.runnable &&
-			hasExecutionOrder === this.hasExecutionOrder &&
-			executionOrder === this.executionOrder &&
-			runState === this.runState &&
-			runStartTime === this.runStartTime &&
-			statusMessage === this.statusMessage &&
-			lastRunDuration === this.lastRunDuration &&
-			inputCollapsed === this.inputCollapsed &&
+		if (inputCollapsed === this.inputCollapsed &&
 			outputCollapsed === this.outputCollapsed &&
-			custom === this.custom
+			Object.keys(remaining).length === 0
 		) {
 			return this;
 		}
 
 		return new NotebookCellMetadata(
-			editable,
-			breakpointMargin,
-			runnable,
-			hasExecutionOrder,
-			executionOrder,
-			runState,
-			runStartTime,
-			statusMessage,
-			lastRunDuration,
-			inputCollapsed,
-			outputCollapsed,
-			custom,
+			{
+				inputCollapsed,
+				outputCollapsed,
+				...remaining
+			}
 		);
 	}
 }
 
 export class NotebookDocumentMetadata {
+	readonly [key: string]: any;
 
-	constructor(
-		readonly editable: boolean = true,
-		readonly runnable: boolean = true,
-		readonly cellEditable: boolean = true,
-		readonly cellRunnable: boolean = true,
-		readonly cellHasExecutionOrder: boolean = true,
-		readonly custom: { [key: string]: any; } = {},
-		readonly runState: NotebookRunState = NotebookRunState.Idle,
-		readonly trusted: boolean = true,
-	) { }
+	constructor(data: Record<string, any> = {}) {
+		Object.assign(this, data);
+	}
 
 	with(change: {
-		editable?: boolean | null,
-		runnable?: boolean | null,
-		cellEditable?: boolean | null,
-		cellRunnable?: boolean | null,
-		cellHasExecutionOrder?: boolean | null,
-		custom?: { [key: string]: any; } | null,
-		runState?: NotebookRunState | null,
-		trusted?: boolean | null,
+		[key: string]: any
 	}): NotebookDocumentMetadata {
-
-		let { editable, runnable, cellEditable, cellRunnable, cellHasExecutionOrder, custom, runState, trusted } = change;
-
-		if (editable === undefined) {
-			editable = this.editable;
-		} else if (editable === null) {
-			editable = undefined;
-		}
-		if (runnable === undefined) {
-			runnable = this.runnable;
-		} else if (runnable === null) {
-			runnable = undefined;
-		}
-		if (cellEditable === undefined) {
-			cellEditable = this.cellEditable;
-		} else if (cellEditable === null) {
-			cellEditable = undefined;
-		}
-		if (cellRunnable === undefined) {
-			cellRunnable = this.cellRunnable;
-		} else if (cellRunnable === null) {
-			cellRunnable = undefined;
-		}
-		if (cellHasExecutionOrder === undefined) {
-			cellHasExecutionOrder = this.cellHasExecutionOrder;
-		} else if (cellHasExecutionOrder === null) {
-			cellHasExecutionOrder = undefined;
-		}
-		if (custom === undefined) {
-			custom = this.custom;
-		} else if (custom === null) {
-			custom = undefined;
-		}
-		if (runState === undefined) {
-			runState = this.runState;
-		} else if (runState === null) {
-			runState = undefined;
-		}
-		if (trusted === undefined) {
-			trusted = this.trusted;
-		} else if (trusted === null) {
-			trusted = undefined;
-		}
-
-		if (editable === this.editable &&
-			runnable === this.runnable &&
-			cellEditable === this.cellEditable &&
-			cellRunnable === this.cellRunnable &&
-			cellHasExecutionOrder === this.cellHasExecutionOrder &&
-			custom === this.custom &&
-			runState === this.runState &&
-			trusted === this.trusted
-		) {
-			return this;
-		}
-
-
-		return new NotebookDocumentMetadata(
-			editable,
-			runnable,
-			cellEditable,
-			cellRunnable,
-			cellHasExecutionOrder,
-			custom,
-			runState,
-			trusted
-		);
+		return new NotebookDocumentMetadata(change);
 	}
 }
 
 export class NotebookCellData {
+
+	static isNotebookCellDataArray(value: unknown): value is vscode.NotebookCellData[] {
+		return Array.isArray(value) && (<unknown[]>value).every(elem => NotebookCellData.isNotebookCellData(elem));
+	}
+
+	static isNotebookCellData(value: unknown): value is vscode.NotebookCellData {
+		// return value instanceof NotebookCellData;
+		return true;
+	}
 
 	kind: NotebookCellKind;
 	source: string;
 	language: string;
 	outputs?: NotebookCellOutput[];
 	metadata?: NotebookCellMetadata;
+	latestExecutionSummary?: vscode.NotebookCellExecutionSummary;
 
-	constructor(kind: NotebookCellKind, source: string, language: string, outputs?: NotebookCellOutput[], metadata?: NotebookCellMetadata) {
+	constructor(kind: NotebookCellKind, source: string, language: string, outputs?: NotebookCellOutput[], metadata?: NotebookCellMetadata, latestExecutionSummary?: vscode.NotebookCellExecutionSummary) {
 		this.kind = kind;
 		this.source = source;
 		this.language = language;
 		this.outputs = outputs ?? [];
 		this.metadata = metadata;
+		this.latestExecutionSummary = latestExecutionSummary;
 	}
 }
 
 export class NotebookData {
 
 	cells: NotebookCellData[];
-	metadata?: NotebookDocumentMetadata;
+	metadata: NotebookDocumentMetadata;
 
 	constructor(cells: NotebookCellData[], metadata?: NotebookDocumentMetadata) {
 		this.cells = cells;
-		this.metadata = metadata;
+		this.metadata = metadata ?? new NotebookDocumentMetadata();
 	}
 }
 
@@ -3181,17 +3068,21 @@ export class NotebookCellOutputItem {
 	}
 
 	constructor(
-		readonly mime: string,
-		readonly value: unknown, // JSON'able
-		readonly metadata?: Record<string, any>
-	) { }
+		public mime: string,
+		public value: unknown, // JSON'able
+		public metadata?: Record<string, any>
+	) {
+		if (isFalsyOrWhitespace(this.mime)) {
+			throw new Error('INVALID mime type, must not be empty or falsy');
+		}
+	}
 }
 
 export class NotebookCellOutput {
 
-	readonly outputs: NotebookCellOutputItem[];
-	readonly id: string;
-	readonly metadata?: Record<string, any>;
+	id: string;
+	outputs: NotebookCellOutputItem[];
+	metadata?: Record<string, any>;
 
 	constructor(
 		outputs: NotebookCellOutputItem[],
@@ -3214,16 +3105,10 @@ export enum NotebookCellKind {
 	Code = 2
 }
 
-export enum NotebookCellRunState {
-	Running = 1,
-	Idle = 2,
-	Success = 3,
-	Error = 4
-}
-
-export enum NotebookRunState {
-	Running = 1,
-	Idle = 2
+export enum NotebookCellExecutionState {
+	Idle = 1,
+	Pending = 2,
+	Executing = 3,
 }
 
 export enum NotebookCellStatusBarAlignment {
@@ -3238,6 +3123,32 @@ export enum NotebookEditorRevealType {
 	AtTop = 3
 }
 
+export class NotebookCellStatusBarItem {
+	constructor(
+		public text: string,
+		public alignment: NotebookCellStatusBarAlignment,
+		public command?: string | vscode.Command,
+		public tooltip?: string,
+		public priority?: number,
+		public accessibilityInformation?: vscode.AccessibilityInformation) { }
+}
+
+
+export enum NotebookControllerAffinity {
+	Default = 1,
+	Preferred = 2
+}
+
+export class NotebookKernelPreload {
+	public readonly provides: string[];
+
+	constructor(
+		public readonly uri: vscode.Uri,
+		provides: string | string[] = []
+	) {
+		this.provides = typeof provides === 'string' ? [provides] : provides;
+	}
+}
 
 //#endregion
 
@@ -3299,7 +3210,7 @@ export class LinkedEditingRanges {
 }
 
 //#region Testing
-export enum TestResult {
+export enum TestResultState {
 	Unset = 0,
 	Queued = 1,
 	Running = 2,
@@ -3316,29 +3227,116 @@ export enum TestMessageSeverity {
 	Hint = 3
 }
 
-export class TestItem implements vscode.TestItem {
-	public id!: string;
-	public location?: Location;
-	public description?: string;
-	public runnable = true;
-	public debuggable = false;
-	public children: vscode.TestItem[] = [];
+export enum TestItemStatus {
+	Pending = 0,
+	Resolved = 1,
+}
 
-	constructor(id: string, public label: string) {
-		Object.defineProperty(this, 'id', {
-			value: id,
-			enumerable: true,
-			writable: false,
+const testItemPropAccessor = <K extends keyof vscode.TestItem<never>>(
+	api: IExtHostTestItemApi,
+	key: K,
+	defaultValue: vscode.TestItem<never>[K],
+	equals: (a: vscode.TestItem<never>[K], b: vscode.TestItem<never>[K]) => boolean
+) => {
+	let value = defaultValue;
+	return {
+		enumerable: true,
+		configurable: false,
+		get() {
+			return value;
+		},
+		set(newValue: vscode.TestItem<never>[K]) {
+			if (!equals(value, newValue)) {
+				value = newValue;
+				api.bus.fire([ExtHostTestItemEventType.SetProp, key, newValue]);
+			}
+		},
+	};
+};
+
+const strictEqualComparator = <T>(a: T, b: T) => a === b;
+const rangeComparator = (a: vscode.Range | undefined, b: vscode.Range | undefined) => {
+	if (a === b) { return true; }
+	if (!a || !b) { return false; }
+	return a.isEqual(b);
+};
+
+export class TestItemImpl implements vscode.TestItem<unknown> {
+	public readonly id!: string;
+	public readonly uri!: vscode.Uri;
+	public readonly children!: ReadonlyMap<string, TestItemImpl>;
+	public readonly parent!: TestItemImpl | undefined;
+
+	public range!: vscode.Range | undefined;
+	public description!: string | undefined;
+	public runnable!: boolean;
+	public debuggable!: boolean;
+	public error!: string | vscode.MarkdownString;
+	public status!: vscode.TestItemStatus;
+
+	/** Extension-owned resolve handler */
+	public resolveHandler?: (token: vscode.CancellationToken) => void;
+
+	constructor(id: string, public label: string, uri: vscode.Uri, public data: unknown) {
+		const api = getPrivateApiFor(this);
+
+		Object.defineProperties(this, {
+			id: {
+				value: id,
+				enumerable: true,
+				writable: false,
+			},
+			uri: {
+				value: uri,
+				enumerable: true,
+				writable: false,
+			},
+			parent: {
+				enumerable: false,
+				get: () => api.parent,
+			},
+			children: {
+				value: new ReadonlyMapView(api.children),
+				enumerable: true,
+				writable: false,
+			},
+			range: testItemPropAccessor(api, 'range', undefined, rangeComparator),
+			description: testItemPropAccessor(api, 'description', undefined, strictEqualComparator),
+			runnable: testItemPropAccessor(api, 'runnable', true, strictEqualComparator),
+			debuggable: testItemPropAccessor(api, 'debuggable', true, strictEqualComparator),
+			status: testItemPropAccessor(api, 'status', TestItemStatus.Resolved, strictEqualComparator),
+			error: testItemPropAccessor(api, 'error', undefined, strictEqualComparator),
 		});
+	}
+
+	public invalidate() {
+		getPrivateApiFor(this).bus.fire([ExtHostTestItemEventType.Invalidated]);
+	}
+
+	public dispose() {
+		const api = getPrivateApiFor(this);
+		if (api.parent) {
+			getPrivateApiFor(api.parent).children.delete(this.id);
+		}
+
+		api.bus.fire([ExtHostTestItemEventType.Disposed]);
+	}
+
+	public addChild(child: vscode.TestItem<unknown>) {
+		if (!(child instanceof TestItemImpl)) {
+			throw new Error('Test child must be created through vscode.test.createTestItem()');
+		}
+
+		const api = getPrivateApiFor(this);
+		if (api.children.has(child.id)) {
+			throw new Error(`Attempted to insert a duplicate test item ID ${child.id}`);
+		}
+
+		api.children.set(child.id, child);
+		api.bus.fire([ExtHostTestItemEventType.NewChild, child]);
 	}
 }
 
-export class TestState implements vscode.TestState {
-	public messages: TestMessage[] = [];
-	public duration?: number;
-
-	constructor(public state: TestResult) { }
-}
 
 export class TestMessage implements vscode.TestMessage {
 	public severity = TestMessageSeverity.Error;
@@ -3367,5 +3365,13 @@ export enum ExternalUriOpenerPriority {
 export enum WorkspaceTrustState {
 	Untrusted = 0,
 	Trusted = 1,
-	Unknown = 2
+	Unspecified = 2
+}
+
+export enum PortAutoForwardAction {
+	Notify = 1,
+	OpenBrowser = 2,
+	OpenPreview = 3,
+	Silent = 4,
+	Ignore = 5
 }

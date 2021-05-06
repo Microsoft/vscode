@@ -247,7 +247,7 @@ export class SettingsSynchroniser extends AbstractJsonFileSynchroniser implement
 		return [{ resource: this.extUri.joinPath(uri, 'settings.json'), comparableResource }];
 	}
 
-	async resolveContent(uri: URI): Promise<string | null> {
+	override async resolveContent(uri: URI): Promise<string | null> {
 		if (this.extUri.isEqual(this.remoteResource, uri) || this.extUri.isEqual(this.localResource, uri) || this.extUri.isEqual(this.acceptedResource, uri)) {
 			return this.resolvePreviewContent(uri);
 		}
@@ -271,7 +271,7 @@ export class SettingsSynchroniser extends AbstractJsonFileSynchroniser implement
 		return null;
 	}
 
-	protected async resolvePreviewContent(resource: URI): Promise<string | null> {
+	protected override async resolvePreviewContent(resource: URI): Promise<string | null> {
 		let content = await super.resolvePreviewContent(resource);
 		if (content) {
 			const formatUtils = await this.getFormattingOptions();

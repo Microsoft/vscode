@@ -3,19 +3,21 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Disposable, DisposableStore, IDisposable } from 'vs/base/common/lifecycle';
-import { StopWatch } from 'vs/base/common/stopwatch';
+import { DisposableStore, Disposable, IDisposable } from 'vs/base/common/lifecycle';
+import { ExtHostContext, ExtHostTerminalServiceShape, MainThreadTerminalServiceShape, MainContext, IExtHostContext, TerminalLaunchConfig, ITerminalDimensionsDto, TerminalIdentifier } from 'vs/workbench/api/common/extHost.protocol';
+import { extHostNamedCustomer } from 'vs/workbench/api/common/extHostCustomers';
 import { URI } from 'vs/base/common/uri';
+import { StopWatch } from 'vs/base/common/stopwatch';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { ILogService } from 'vs/platform/log/common/log';
-import { IShellLaunchConfig, ITerminalDimensions } from 'vs/platform/terminal/common/terminal';
+import { IShellLaunchConfig, IShellLaunchConfigDto, ITerminalDimensions } from 'vs/platform/terminal/common/terminal';
 import { TerminalDataBufferer } from 'vs/platform/terminal/common/terminalDataBuffering';
-import { ExtHostContext, ExtHostTerminalServiceShape, IExtHostContext, IShellLaunchConfigDto, ITerminalDimensionsDto, MainContext, MainThreadTerminalServiceShape, TerminalIdentifier, TerminalLaunchConfig } from 'vs/workbench/api/common/extHost.protocol';
-import { extHostNamedCustomer } from 'vs/workbench/api/common/extHostCustomers';
 import { ITerminalExternalLinkProvider, ITerminalInstance, ITerminalInstanceService, ITerminalLink, ITerminalService } from 'vs/workbench/contrib/terminal/browser/terminal';
+import { TerminalProcessExtHostProxy } from 'vs/workbench/contrib/terminal/browser/terminalProcessExtHostProxy';
 import { IEnvironmentVariableService, ISerializableEnvironmentVariableCollection } from 'vs/workbench/contrib/terminal/common/environmentVariable';
 import { deserializeEnvironmentVariableCollection, serializeEnvironmentVariableCollection } from 'vs/workbench/contrib/terminal/common/environmentVariableShared';
-import { IAvailableShellsRequest, IDefaultShellAndArgsRequest, IStartExtensionTerminalRequest, ITerminalProcessExtHostProxy } from 'vs/workbench/contrib/terminal/common/terminal';
+import { IAvailableProfilesRequest as IAvailableProfilesRequest, IStartExtensionTerminalRequest, ITerminalProcessExtHostProxy, TitleEventSource } from 'vs/workbench/contrib/terminal/common/terminal';
+import { ExtensionHostKind } from 'vs/workbench/services/extensions/common/extensions';
 import { IRemoteAgentService } from 'vs/workbench/services/remote/common/remoteAgentService';
 
 @extHostNamedCustomer(MainContext.MainThreadTerminalService)
@@ -32,6 +34,7 @@ export class MainThreadTerminalService implements MainThreadTerminalServiceShape
 	private readonly _toDispose = new DisposableStore();
 	private readonly _terminalProcessProxies = new Map<number, ITerminalProcessExtHostProxy>();
 	private _dataEventTracker: TerminalDataEventTracker | undefined;
+	private _extHostKind: ExtensionHostKind;
 	/**
 	 * A single shared terminal link provider for the exthost. When an ext registers a link
 	 * provider, this is registered with the terminal on the renderer side and all links are
@@ -58,6 +61,8 @@ export class MainThreadTerminalService implements MainThreadTerminalServiceShape
 			this._onInstanceDimensionsChanged(instance);
 		}));
 
+		this._extHostKind = extHostContext.extensionHostKind;
+
 		this._toDispose.add(_terminalService.onInstanceDisposed(instance => this._onTerminalDisposed(instance)));
 		this._toDispose.add(_terminalService.onInstanceProcessIdReady(instance => this._onTerminalProcessIdReady(instance)));
 		this._toDispose.add(_terminalService.onInstanceDimensionsChanged(instance => this._onInstanceDimensionsChanged(instance)));
@@ -65,13 +70,7 @@ export class MainThreadTerminalService implements MainThreadTerminalServiceShape
 		this._toDispose.add(_terminalService.onInstanceRequestStartExtensionTerminal(e => this._onRequestStartExtensionTerminal(e)));
 		this._toDispose.add(_terminalService.onActiveInstanceChanged(instance => this._onActiveTerminalChanged(instance ? instance.instanceId : null)));
 		this._toDispose.add(_terminalService.onInstanceTitleChanged(instance => instance && this._onTitleChanged(instance.instanceId, instance.title)));
-		this._toDispose.add(_terminalService.configHelper.onWorkspacePermissionsChanged(isAllowed => this._onWorkspacePermissionsChanged(isAllowed)));
-		this._toDispose.add(_terminalService.onRequestAvailableShells(e => this._onRequestAvailableShells(e)));
-
-		// ITerminalInstanceService listeners
-		if (terminalInstanceService.onRequestDefaultShellAndArgs) {
-			this._toDispose.add(terminalInstanceService.onRequestDefaultShellAndArgs(e => this._onRequestDefaultShellAndArgs(e)));
-		}
+		this._toDispose.add(_terminalService.onRequestAvailableProfiles(e => this._onRequestAvailableProfiles(e)));
 
 		// Set initial ext host state
 		this._terminalService.terminalInstances.forEach(t => {
@@ -96,9 +95,6 @@ export class MainThreadTerminalService implements MainThreadTerminalServiceShape
 	public dispose(): void {
 		this._toDispose.dispose();
 		this._linkProvider?.dispose();
-
-		// TODO@Daniel: Should all the previously created terminals be disposed
-		// when the extension host process goes down ?
 	}
 
 	private _getTerminalId(id: TerminalIdentifier): number | undefined {
@@ -122,12 +118,16 @@ export class MainThreadTerminalService implements MainThreadTerminalServiceShape
 			executable: launchConfig.shellPath,
 			args: launchConfig.shellArgs,
 			cwd: typeof launchConfig.cwd === 'string' ? launchConfig.cwd : URI.revive(launchConfig.cwd),
+			icon: launchConfig.icon,
+			initialText: launchConfig.initialText,
 			waitOnExit: launchConfig.waitOnExit,
 			ignoreConfigurationCwd: true,
 			env: launchConfig.env,
 			strictEnv: launchConfig.strictEnv,
 			hideFromUser: launchConfig.hideFromUser,
-			isExtensionCustomPtyTerminal: launchConfig.isExtensionCustomPtyTerminal,
+			customPtyImplementation: launchConfig.isExtensionCustomPtyTerminal
+				? (id, cols, rows) => new TerminalProcessExtHostProxy(id, cols, rows, this._terminalService)
+				: undefined,
 			extHostTerminalId: extHostTerminalId,
 			isFeatureTerminal: launchConfig.isFeatureTerminal,
 			isExtensionOwnedTerminal: launchConfig.isExtensionOwnedTerminal
@@ -153,17 +153,11 @@ export class MainThreadTerminalService implements MainThreadTerminalServiceShape
 	}
 
 	public $dispose(id: TerminalIdentifier): void {
-		const terminalInstance = this._getTerminalInstance(id);
-		if (terminalInstance) {
-			terminalInstance.dispose();
-		}
+		this._getTerminalInstance(id)?.dispose();
 	}
 
 	public $sendText(id: TerminalIdentifier, text: string, addNewLine: boolean): void {
-		const terminalInstance = this._getTerminalInstance(id);
-		if (terminalInstance) {
-			terminalInstance.sendText(text, addNewLine);
-		}
+		this._getTerminalInstance(id)?.sendText(text, addNewLine);
 	}
 
 	public $startSendingDataEvents(): void {
@@ -179,10 +173,8 @@ export class MainThreadTerminalService implements MainThreadTerminalServiceShape
 	}
 
 	public $stopSendingDataEvents(): void {
-		if (this._dataEventTracker) {
-			this._dataEventTracker.dispose();
-			this._dataEventTracker = undefined;
-		}
+		this._dataEventTracker?.dispose();
+		this._dataEventTracker = undefined;
 	}
 
 	public $startLinkProvider(): void {
@@ -209,10 +201,6 @@ export class MainThreadTerminalService implements MainThreadTerminalServiceShape
 
 	private _onTitleChanged(terminalId: number, name: string): void {
 		this._proxy.$acceptTerminalTitleChange(terminalId, name);
-	}
-
-	private _onWorkspacePermissionsChanged(isAllowed: boolean): void {
-		this._proxy.$acceptWorkspacePermissionsChanged(isAllowed);
 	}
 
 	private _onTerminalDisposed(terminalInstance: ITerminalInstance): void {
@@ -272,60 +260,43 @@ export class MainThreadTerminalService implements MainThreadTerminalServiceShape
 	}
 
 	public $sendProcessTitle(terminalId: number, title: string): void {
-		const terminalProcess = this._terminalProcessProxies.get(terminalId);
-		if (terminalProcess) {
-			terminalProcess.emitTitle(title);
+		// Since title events can only come from vscode.Pseudoterminals right now, these are routed
+		// directly to the instance as API source events such that they will replace the initial
+		// `name` property provided for the Pseudoterminal. If we support showing both Api and
+		// Process titles at the same time we may want to pass this through as a Process source
+		// event.
+		const instance = this._terminalService.getInstanceFromId(terminalId);
+		if (instance) {
+			instance.setTitle(title, TitleEventSource.Api);
 		}
 	}
 
 	public $sendProcessData(terminalId: number, data: string): void {
-		const terminalProcess = this._terminalProcessProxies.get(terminalId);
-		if (terminalProcess) {
-			terminalProcess.emitData(data);
-		}
+		this._terminalProcessProxies.get(terminalId)?.emitData(data);
 	}
 
 	public $sendProcessReady(terminalId: number, pid: number, cwd: string): void {
-		const terminalProcess = this._terminalProcessProxies.get(terminalId);
-		if (terminalProcess) {
-			terminalProcess.emitReady(pid, cwd);
-		}
+		this._terminalProcessProxies.get(terminalId)?.emitReady(pid, cwd);
 	}
 
 	public $sendProcessExit(terminalId: number, exitCode: number | undefined): void {
-		const terminalProcess = this._terminalProcessProxies.get(terminalId);
-		if (terminalProcess) {
-			terminalProcess.emitExit(exitCode);
-			this._terminalProcessProxies.delete(terminalId);
-		}
+		this._terminalProcessProxies.get(terminalId)?.emitExit(exitCode);
 	}
 
 	public $sendOverrideDimensions(terminalId: number, dimensions: ITerminalDimensions | undefined): void {
-		const terminalProcess = this._terminalProcessProxies.get(terminalId);
-		if (terminalProcess) {
-			terminalProcess.emitOverrideDimensions(dimensions);
-		}
+		this._terminalProcessProxies.get(terminalId)?.emitOverrideDimensions(dimensions);
 	}
 
 	public $sendProcessInitialCwd(terminalId: number, initialCwd: string): void {
-		const terminalProcess = this._terminalProcessProxies.get(terminalId);
-		if (terminalProcess) {
-			terminalProcess.emitInitialCwd(initialCwd);
-		}
+		this._terminalProcessProxies.get(terminalId)?.emitInitialCwd(initialCwd);
 	}
 
 	public $sendProcessCwd(terminalId: number, cwd: string): void {
-		const terminalProcess = this._terminalProcessProxies.get(terminalId);
-		if (terminalProcess) {
-			terminalProcess.emitCwd(cwd);
-		}
+		this._terminalProcessProxies.get(terminalId)?.emitCwd(cwd);
 	}
 
 	public $sendResolvedLaunchConfig(terminalId: number, shellLaunchConfig: IShellLaunchConfig): void {
-		const instance = this._terminalService.getInstanceFromId(terminalId);
-		if (instance) {
-			this._getTerminalProcess(terminalId)?.emitResolvedShellLaunchConfig(shellLaunchConfig);
-		}
+		this._getTerminalProcess(terminalId)?.emitResolvedShellLaunchConfig(shellLaunchConfig);
 	}
 
 	private async _onRequestLatency(terminalId: number): Promise<void> {
@@ -346,19 +317,12 @@ export class MainThreadTerminalService implements MainThreadTerminalServiceShape
 		if (conn) {
 			return this._remoteAuthority === conn.remoteAuthority;
 		}
-		return true;
+		return this._extHostKind !== ExtensionHostKind.LocalWebWorker;
 	}
 
-	private async _onRequestAvailableShells(req: IAvailableShellsRequest): Promise<void> {
+	private async _onRequestAvailableProfiles(req: IAvailableProfilesRequest): Promise<void> {
 		if (this._isPrimaryExtHost()) {
-			req.callback(await this._proxy.$getAvailableShells());
-		}
-	}
-
-	private async _onRequestDefaultShellAndArgs(req: IDefaultShellAndArgsRequest): Promise<void> {
-		if (this._isPrimaryExtHost()) {
-			const res = await this._proxy.$getDefaultShellAndArgs(req.useAutomationShell);
-			req.callback(res.shell, res.args);
+			req.callback(await this._proxy.$getAvailableProfiles(req.configuredProfilesOnly));
 		}
 	}
 

@@ -303,7 +303,7 @@
 
 		"list.activeSelectionBackground": "#08286b",
 		// "list.activeSelectionForeground": "",
-		"quickInput.list.focusBackground": "#08286b",
+		"quickInputList.focusBackground": "#08286b",
 		"list.hoverBackground": "#061940",
 		"list.inactiveSelectionBackground": "#152037",
 		"list.dropBackground": "#041D52",
@@ -362,6 +362,8 @@
 		// "peekViewTitleLabel.foreground": "",
 		// "peekViewTitleDescription.foreground": "",
 
+		// Ports
+		"ports.iconRunningProcessForeground": "#80a2c2",
 		// Editor: Diff
 		"diffEditor.insertedTextBackground": "#31958A55",
 		// "diffEditor.insertedTextBorder": "",

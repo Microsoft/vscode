@@ -3,9 +3,10 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import * as path from 'path';
 import { spawn } from 'child_process';
 import { generateUuid } from 'vs/base/common/uuid';
-import { isWindows, platform } from 'vs/base/common/platform';
+import { IProcessEnvironment, isWindows, OS } from 'vs/base/common/platform';
 import { ILogService } from 'vs/platform/log/common/log';
 import { NativeParsedArgs } from 'vs/platform/environment/common/argv';
 import { isLaunchedFromCli } from 'vs/platform/environment/node/argvHelper';
@@ -17,7 +18,7 @@ import { getSystemShell } from 'vs/base/node/shell';
  * This should only be done when Code itself is not launched
  * from within a shell.
  */
-export async function resolveShellEnv(logService: ILogService, args: NativeParsedArgs, env: NodeJS.ProcessEnv): Promise<typeof process.env> {
+export async function resolveShellEnv(logService: ILogService, args: NativeParsedArgs, env: IProcessEnvironment): Promise<typeof process.env> {
 
 	// Skip if --force-disable-user-env
 	if (args['force-disable-user-env']) {
@@ -75,28 +76,54 @@ async function doResolveUnixShellEnv(logService: ILogService): Promise<typeof pr
 			ELECTRON_NO_ATTACH_CONSOLE: '1'
 		};
 
-		const command = `'${process.execPath}' -p '"${mark}" + JSON.stringify(process.env) + "${mark}"'`;
 		logService.trace('getUnixShellEnvironment#env', env);
-		logService.trace('getUnixShellEnvironment#spawn', command);
+		const systemShellUnix = await getSystemShell(OS, env);
+		logService.trace('getUnixShellEnvironment#shell', systemShellUnix);
 
-		const systemShellUnix = await getSystemShell(platform);
-		const child = spawn(systemShellUnix, ['-ilc', command], {
+		// handle popular non-POSIX shells
+		const name = path.basename(systemShellUnix);
+		let command: string, shellArgs: Array<string>;
+		if (/^pwsh(-preview)?$/.test(name)) {
+			// Older versions of PowerShell removes double quotes sometimes so we use "double single quotes" which is how
+			// you escape single quotes inside of a single quoted string.
+			command = `& '${process.execPath}' -p '''${mark}'' + JSON.stringify(process.env) + ''${mark}'''`;
+			shellArgs = ['-Login', '-Command'];
+		} else {
+			command = `'${process.execPath}' -p '"${mark}" + JSON.stringify(process.env) + "${mark}"'`;
+			shellArgs = ['-ilc'];
+		}
+
+		logService.trace('getUnixShellEnvironment#spawn', JSON.stringify(shellArgs), command);
+
+		const child = spawn(systemShellUnix, [...shellArgs, command], {
 			detached: true,
-			stdio: ['ignore', 'pipe', process.stderr],
+			stdio: ['ignore', 'pipe', 'pipe'],
 			env
 		});
 
+		child.on('error', err => {
+			logService.error('getUnixShellEnvironment#errorChildProcess', toErrorMessage(err));
+			resolve({});
+		});
+
 		const buffers: Buffer[] = [];
-		child.on('error', () => resolve({}));
 		child.stdout.on('data', b => buffers.push(b));
 
-		child.on('close', code => {
-			if (code !== 0) {
-				return reject(new Error('Failed to get environment'));
-			}
+		const stderr: Buffer[] = [];
+		child.stderr.on('data', b => stderr.push(b));
 
+		child.on('close', (code, signal) => {
 			const raw = Buffer.concat(buffers).toString('utf8');
 			logService.trace('getUnixShellEnvironment#raw', raw);
+
+			const stderrStr = Buffer.concat(stderr).toString('utf8');
+			if (stderrStr.trim()) {
+				logService.trace('getUnixShellEnvironment#stderr', stderrStr);
+			}
+
+			if (code || signal) {
+				return reject(new Error(`Failed to get environment (code ${code}, signal ${signal})`));
+			}
 
 			const match = regex.exec(raw);
 			const rawStripped = match ? match[1] : '{}';
@@ -122,7 +149,7 @@ async function doResolveUnixShellEnv(logService: ILogService): Promise<typeof pr
 				logService.trace('getUnixShellEnvironment#result', env);
 				resolve(env);
 			} catch (err) {
-				logService.error('getUnixShellEnvironment#error', err);
+				logService.error('getUnixShellEnvironment#errorCaught', toErrorMessage(err));
 				reject(err);
 			}
 		});

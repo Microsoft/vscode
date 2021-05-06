@@ -23,7 +23,8 @@ Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration).regis
 		'comments.openPanel': {
 			enum: ['neverOpen', 'openOnSessionStart', 'openOnSessionStartWithComments'],
 			default: 'openOnSessionStartWithComments',
-			description: nls.localize('openComments', "Controls when the comments panel should open.")
+			description: nls.localize('openComments', "Controls when the comments panel should open."),
+			restricted: false
 		}
 	}
 });

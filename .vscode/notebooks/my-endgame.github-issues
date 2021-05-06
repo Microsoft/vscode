@@ -2,253 +2,181 @@
   {
     "kind": 1,
     "language": "markdown",
-    "value": "#### Macros",
-    "editable": true,
-    "outputs": []
+    "value": "#### Macros"
   },
   {
     "kind": 2,
     "language": "github-issues",
-    "value": "$REPOS=repo:microsoft/vscode repo:microsoft/vscode-internalbacklog repo:microsoft/vscode-js-debug repo:microsoft/vscode-remote-release repo:microsoft/vscode-pull-request-github repo:microsoft/vscode-settings-sync-server\n\n$MILESTONE=milestone:\"February 2021\"\n\n$MINE=assignee:@me",
-    "editable": true,
-    "outputs": []
+    "value": "$REPOS=repo:microsoft/vscode repo:microsoft/vscode-internalbacklog repo:microsoft/vscode-js-debug repo:microsoft/vscode-remote-release repo:microsoft/vscode-pull-request-github repo:microsoft/vscode-settings-sync-server repo:microsoft/vscode-remotehub\n\n$MILESTONE=milestone:\"April 2021\"\n\n$MINE=assignee:@me"
   },
   {
     "kind": 1,
     "language": "markdown",
-    "value": "# Preparation",
-    "editable": true,
-    "outputs": []
+    "value": "# Preparation"
   },
   {
     "kind": 1,
     "language": "markdown",
-    "value": "## Open Pull Requests on the Milestone",
-    "editable": true,
-    "outputs": []
+    "value": "## Open Pull Requests on the Milestone"
   },
   {
     "kind": 2,
     "language": "github-issues",
-    "value": "$REPOS $MILESTONE $MINE is:pr is:open",
-    "editable": true,
-    "outputs": []
+    "value": "$REPOS $MILESTONE $MINE is:pr is:open"
   },
   {
     "kind": 1,
     "language": "markdown",
-    "value": "## Open Issues on the Milestone",
-    "editable": true,
-    "outputs": []
+    "value": "## Open Issues on the Milestone"
   },
   {
     "kind": 2,
     "language": "github-issues",
-    "value": "$REPOS $MILESTONE $MINE is:issue is:open -label:iteration-plan -label:endgame-plan -label:testplan-item",
-    "editable": true,
-    "outputs": []
+    "value": "$REPOS $MILESTONE $MINE is:issue is:open -label:iteration-plan -label:endgame-plan -label:testplan-item"
   },
   {
     "kind": 1,
     "language": "markdown",
-    "value": "## Feature Requests Missing Labels",
-    "editable": true,
-    "outputs": []
+    "value": "## Feature Requests Missing Labels"
   },
   {
     "kind": 2,
     "language": "github-issues",
-    "value": "$REPOS $MILESTONE $MINE is:issue is:closed label:feature-request -label:verification-needed -label:on-testplan -label:verified -label:*duplicate",
-    "editable": true,
-    "outputs": []
+    "value": "$REPOS $MILESTONE $MINE is:issue is:closed label:feature-request -label:verification-needed -label:on-testplan -label:verified -label:*duplicate"
   },
   {
     "kind": 1,
     "language": "markdown",
-    "value": "## Test Plan Items",
-    "editable": true,
-    "outputs": []
+    "value": "## Test Plan Items"
   },
   {
     "kind": 2,
     "language": "github-issues",
-    "value": "$REPOS $MILESTONE is:issue is:open author:@me label:testplan-item",
-    "editable": true,
-    "outputs": []
+    "value": "$REPOS $MILESTONE is:issue is:open author:@me label:testplan-item"
   },
   {
     "kind": 1,
     "language": "markdown",
-    "value": "## Verification Needed",
-    "editable": true,
-    "outputs": []
+    "value": "## Verification Needed"
   },
   {
     "kind": 2,
     "language": "github-issues",
-    "value": "$REPOS $MILESTONE $MINE is:issue is:closed label:feature-request label:verification-needed",
-    "editable": true,
-    "outputs": []
+    "value": "$REPOS $MILESTONE $MINE is:issue is:closed label:feature-request label:verification-needed"
   },
   {
     "kind": 1,
     "language": "markdown",
-    "value": "# Testing",
-    "editable": true,
-    "outputs": []
+    "value": "# Testing"
   },
   {
     "kind": 1,
     "language": "markdown",
-    "value": "## Test Plan Items",
-    "editable": true,
-    "outputs": []
+    "value": "## Test Plan Items"
   },
   {
     "kind": 2,
     "language": "github-issues",
-    "value": "$REPOS $MILESTONE $MINE is:issue is:open label:testplan-item",
-    "editable": true,
-    "outputs": []
+    "value": "$REPOS $MILESTONE $MINE is:issue is:open label:testplan-item"
   },
   {
     "kind": 1,
     "language": "markdown",
-    "value": "## Verification Needed",
-    "editable": true,
-    "outputs": []
+    "value": "## Verification Needed"
   },
   {
     "kind": 2,
     "language": "github-issues",
-    "value": "$REPOS $MILESTONE -$MINE is:issue is:closed -assignee:@me -label:verified -label:z-author-verified label:feature-request label:verification-needed",
-    "editable": true,
-    "outputs": []
+    "value": "$REPOS $MILESTONE -$MINE is:issue is:closed -assignee:@me -label:verified -label:z-author-verified label:feature-request label:verification-needed"
   },
   {
     "kind": 1,
     "language": "markdown",
-    "value": "# Fixing",
-    "editable": true,
-    "outputs": []
+    "value": "# Fixing"
   },
   {
     "kind": 1,
     "language": "markdown",
-    "value": "## Open Issues",
-    "editable": true,
-    "outputs": []
+    "value": "## Open Issues"
   },
   {
     "kind": 2,
     "language": "github-issues",
-    "value": "$REPOS $MILESTONE $MINE is:issue is:open -label:endgame-plan -label:testplan-item -label:iteration-plan",
-    "editable": true,
-    "outputs": []
+    "value": "$REPOS $MILESTONE $MINE is:issue is:open -label:endgame-plan -label:testplan-item -label:iteration-plan"
   },
   {
     "kind": 1,
     "language": "markdown",
-    "value": "## Open Bugs",
-    "editable": true,
-    "outputs": []
+    "value": "## Open Bugs"
   },
   {
     "kind": 2,
     "language": "github-issues",
-    "value": "$REPOS $MILESTONE $MINE is:issue is:open label:bug",
-    "editable": true,
-    "outputs": []
+    "value": "$REPOS $MILESTONE $MINE is:issue is:open label:bug"
   },
   {
     "kind": 1,
     "language": "markdown",
-    "value": "# Verification",
-    "editable": true,
-    "outputs": []
+    "value": "# Verification"
   },
   {
     "kind": 1,
     "language": "markdown",
-    "value": "## My Issues (verification-steps-needed)",
-    "editable": true,
-    "outputs": []
+    "value": "## My Issues (verification-steps-needed)"
   },
   {
     "kind": 2,
     "language": "github-issues",
-    "value": "$REPOS $MILESTONE $MINE is:issue label:bug label:verification-steps-needed",
-    "editable": true,
-    "outputs": []
+    "value": "$REPOS $MILESTONE $MINE is:issue label:bug label:verification-steps-needed"
   },
   {
     "kind": 1,
     "language": "markdown",
-    "value": "## My Issues (verification-found)",
-    "editable": true,
-    "outputs": []
+    "value": "## My Issues (verification-found)"
   },
   {
     "kind": 2,
     "language": "github-issues",
-    "value": "$REPOS $MILESTONE $MINE is:issue label:bug label:verification-found",
-    "editable": true,
-    "outputs": []
+    "value": "$REPOS $MILESTONE $MINE is:issue label:bug label:verification-found"
   },
   {
     "kind": 1,
     "language": "markdown",
-    "value": "## Issues filed by me",
-    "editable": true,
-    "outputs": []
+    "value": "## Issues filed by me"
   },
   {
     "kind": 2,
     "language": "github-issues",
-    "value": "$REPOS $MILESTONE -$MINE is:issue is:closed author:@me sort:updated-asc label:bug -label:verified -label:z-author-verified -label:on-testplan -label:*duplicate -label:duplicate -label:invalid -label:*as-designed -label:error-telemetry -label:verification-steps-needed -label:verification-found",
-    "editable": true,
-    "outputs": []
+    "value": "$REPOS $MILESTONE -$MINE is:issue is:closed author:@me sort:updated-asc label:bug -label:verified -label:z-author-verified -label:on-testplan -label:*duplicate -label:duplicate -label:invalid -label:*as-designed -label:error-telemetry -label:verification-steps-needed -label:verification-found"
   },
   {
     "kind": 1,
     "language": "markdown",
-    "value": "## Issues filed from outside team",
-    "editable": true,
-    "outputs": []
+    "value": "## Issues filed from outside team"
   },
   {
     "kind": 2,
     "language": "github-issues",
-    "value": "$REPOS $MILESTONE -$MINE is:issue is:closed sort:updated-asc label:bug -label:verified -label:z-author-verified -label:on-testplan -label:*duplicate -label:duplicate -label:invalid -label:*as-designed -label:error-telemetry -label:verification-steps-needed -label:verification-found -author:aeschli -author:alexdima -author:alexr00 -author:AmandaSilver -author:bamurtaugh -author:bpasero -author:btholt -author:chrisdias -author:chrmarti -author:Chuxel -author:connor4312 -author:dbaeumer -author:deepak1556 -author:devinvalenciano -author:digitarald -author:eamodio -author:egamma -author:fiveisprime -author:gregvanl -author:isidorn -author:ItalyPaleAle -author:JacksonKearl -author:joaomoreno -author:jrieken -author:kieferrm -author:lszomoru -author:meganrogge -author:misolori -author:mjbvz -author:ornellaalt -author:orta -author:rebornix -author:RMacfarlane -author:roblourens -author:rzhao271 -author:sana-ajani -author:sandy081 -author:sbatten -author:stevencl -author:Tyriar -author:weinand -author:TylerLeonhardt -author:lramos15",
-    "editable": true,
-    "outputs": []
+    "value": "$REPOS $MILESTONE -$MINE is:issue is:closed sort:updated-asc label:bug -label:verified -label:z-author-verified -label:on-testplan -label:*duplicate -label:duplicate -label:invalid -label:*as-designed -label:error-telemetry -label:verification-steps-needed -label:verification-found -author:aeschli -author:alexdima -author:alexr00 -author:AmandaSilver -author:bamurtaugh -author:bpasero -author:btholt -author:chrisdias -author:chrmarti -author:Chuxel -author:connor4312 -author:dbaeumer -author:deepak1556 -author:devinvalenciano -author:digitarald -author:eamodio -author:egamma -author:fiveisprime -author:gregvanl -author:isidorn -author:ItalyPaleAle -author:JacksonKearl -author:joaomoreno -author:jrieken -author:kieferrm -author:lszomoru -author:meganrogge -author:misolori -author:mjbvz -author:ornellaalt -author:orta -author:rebornix -author:RMacfarlane -author:roblourens -author:rzhao271 -author:sana-ajani -author:sandy081 -author:sbatten -author:stevencl -author:Tyriar -author:weinand -author:TylerLeonhardt -author:lramos15"
   },
   {
     "kind": 1,
     "language": "markdown",
-    "value": "## Issues filed by others",
-    "editable": true,
-    "outputs": []
+    "value": "## Issues filed by others"
   },
   {
     "kind": 2,
     "language": "github-issues",
-    "value": "$REPOS $MILESTONE -$MINE is:issue is:closed -author:@me sort:updated-asc label:bug -label:verified -label:z-author-verified -label:on-testplan -label:*duplicate -label:duplicate -label:invalid -label:*as-designed -label:error-telemetry -label:verification-steps-needed -label:verification-found",
-    "editable": true,
-    "outputs": []
+    "value": "$REPOS $MILESTONE -$MINE is:issue is:closed -author:@me sort:updated-asc label:bug -label:verified -label:z-author-verified -label:on-testplan -label:*duplicate -label:duplicate -label:invalid -label:*as-designed -label:error-telemetry -label:verification-steps-needed -label:verification-found"
   },
   {
     "kind": 1,
     "language": "markdown",
-    "value": "# Release Notes",
-    "editable": true,
-    "outputs": []
+    "value": "# Release Notes"
   },
   {
     "kind": 2,
     "language": "github-issues",
-    "value": "repo:microsoft/vscode $MILESTONE $MINE is:issue is:closed label:feature-request -label:on-release-notes",
-    "editable": true,
-    "outputs": []
+    "value": "repo:microsoft/vscode $MILESTONE $MINE is:issue is:closed label:feature-request -label:on-release-notes"
   }
 ]

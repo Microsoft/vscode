@@ -39,7 +39,7 @@ function defaultUriScheme(environmentService: IWorkbenchEnvironmentService, cont
 		return configuration.scheme;
 	}
 
-	throw new Error('Empty workspace is not supported in browser when there is no remote connection.');
+	return Schemas.file;
 }
 
 registerSingleton(IPathService, BrowserPathService, true);

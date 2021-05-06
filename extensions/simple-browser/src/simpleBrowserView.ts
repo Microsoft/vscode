@@ -72,7 +72,7 @@ export class SimpleBrowserView extends Disposable {
 		this.show(url);
 	}
 
-	public dispose() {
+	public override dispose() {
 		this._onDidDispose.fire();
 		super.dispose();
 	}
@@ -90,7 +90,6 @@ export class SimpleBrowserView extends Disposable {
 		const mainJs = this.extensionResourceUrl('media', 'index.js');
 		const mainCss = this.extensionResourceUrl('media', 'main.css');
 		const codiconsUri = this.extensionResourceUrl('media', 'codicon.css');
-		const codiconsFontUri = this.extensionResourceUrl('media', 'codicon.ttf');
 
 		return /* html */ `<!DOCTYPE html>
 			<html>
@@ -99,7 +98,7 @@ export class SimpleBrowserView extends Disposable {
 
 				<meta http-equiv="Content-Security-Policy" content="
 					default-src 'none';
-					font-src ${codiconsFontUri};
+					font-src ${this._webviewPanel.webview.cspSource};
 					style-src ${this._webviewPanel.webview.cspSource};
 					script-src 'nonce-${nonce}';
 					frame-src *;

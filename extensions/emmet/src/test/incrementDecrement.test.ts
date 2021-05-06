@@ -28,7 +28,7 @@ suite('Tests for Increment/Decrement Emmet Commands', () => {
 		return withRandomFileEditor(contents, 'txt', async (editor, doc) => {
 			editor.selections = [new Selection(1, 7, 1, 10), new Selection(2, 7, 2, 10)];
 			await incrementDecrement(1);
-			assert.equal(doc.getText(), contents.replace('123', '124').replace('999', '1000'));
+			assert.strictEqual(doc.getText(), contents.replace('123', '124').replace('999', '1000'));
 			return Promise.resolve();
 		});
 	});
@@ -37,7 +37,7 @@ suite('Tests for Increment/Decrement Emmet Commands', () => {
 		return withRandomFileEditor(contents, 'txt', async (editor, doc) => {
 			editor.selections = [new Selection(1, 7, 1, 10), new Selection(2, 7, 2, 10)];
 			await incrementDecrement(10);
-			assert.equal(doc.getText(), contents.replace('123', '133').replace('999', '1009'));
+			assert.strictEqual(doc.getText(), contents.replace('123', '133').replace('999', '1009'));
 			return Promise.resolve();
 		});
 	});
@@ -46,7 +46,7 @@ suite('Tests for Increment/Decrement Emmet Commands', () => {
 		return withRandomFileEditor(contents, 'txt', async (editor, doc) => {
 			editor.selections = [new Selection(1, 7, 1, 13), new Selection(2, 7, 2, 12)];
 			await incrementDecrement(0.1);
-			assert.equal(doc.getText(), contents.replace('123.43', '123.53').replace('999.9', '1000'));
+			assert.strictEqual(doc.getText(), contents.replace('123.43', '123.53').replace('999.9', '1000'));
 			return Promise.resolve();
 		});
 	});
@@ -55,7 +55,7 @@ suite('Tests for Increment/Decrement Emmet Commands', () => {
 		return withRandomFileEditor(contents, 'txt', async (editor, doc) => {
 			editor.selections = [new Selection(1, 7, 1, 10), new Selection(3, 7, 3, 10)];
 			await incrementDecrement(-1);
-			assert.equal(doc.getText(), contents.replace('123', '122').replace('100', '99'));
+			assert.strictEqual(doc.getText(), contents.replace('123', '122').replace('100', '99'));
 			return Promise.resolve();
 		});
 	});
@@ -64,7 +64,7 @@ suite('Tests for Increment/Decrement Emmet Commands', () => {
 		return withRandomFileEditor(contents, 'txt', async (editor, doc) => {
 			editor.selections = [new Selection(1, 7, 1, 10), new Selection(3, 7, 3, 10)];
 			await incrementDecrement(-10);
-			assert.equal(doc.getText(), contents.replace('123', '113').replace('100', '90'));
+			assert.strictEqual(doc.getText(), contents.replace('123', '113').replace('100', '90'));
 			return Promise.resolve();
 		});
 	});
@@ -73,7 +73,7 @@ suite('Tests for Increment/Decrement Emmet Commands', () => {
 		return withRandomFileEditor(contents, 'txt', async (editor, doc) => {
 			editor.selections = [new Selection(1, 7, 1, 13), new Selection(3, 7, 3, 10)];
 			await incrementDecrement(-0.1);
-			assert.equal(doc.getText(), contents.replace('123.43', '123.33').replace('100', '99.9'));
+			assert.strictEqual(doc.getText(), contents.replace('123.43', '123.33').replace('100', '99.9'));
 			return Promise.resolve();
 		});
 	});

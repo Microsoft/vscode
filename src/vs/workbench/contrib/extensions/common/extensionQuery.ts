@@ -13,7 +13,7 @@ export class Query {
 	}
 
 	static suggestions(query: string): string[] {
-		const commands = ['installed', 'outdated', 'enabled', 'disabled', 'builtin', 'recommended', 'sort', 'category', 'tag', 'ext', 'id'] as const;
+		const commands = ['installed', 'outdated', 'enabled', 'disabled', 'builtin', 'recommended', 'trustRequired', 'sort', 'category', 'tag', 'ext', 'id'] as const;
 		const subcommands = {
 			'sort': ['installs', 'rating', 'name'],
 			'category': EXTENSION_CATEGORIES.map(c => `"${c.toLowerCase()}"`),

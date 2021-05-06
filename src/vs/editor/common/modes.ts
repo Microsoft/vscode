@@ -9,7 +9,7 @@ import { Event } from 'vs/base/common/event';
 import { IMarkdownString } from 'vs/base/common/htmlContent';
 import { IDisposable } from 'vs/base/common/lifecycle';
 import { URI, UriComponents } from 'vs/base/common/uri';
-import { Position } from 'vs/editor/common/core/position';
+import { IPosition, Position } from 'vs/editor/common/core/position';
 import { IRange, Range } from 'vs/editor/common/core/range';
 import { Selection } from 'vs/editor/common/core/selection';
 import { TokenizationResult, TokenizationResult2 } from 'vs/editor/common/core/token';
@@ -699,8 +699,8 @@ export interface CodeAction {
  * @internal
  */
 export const enum CodeActionTriggerType {
-	Auto = 1,
-	Manual = 2,
+	Invoke = 1,
+	Auto = 2,
 }
 
 /**
@@ -1701,24 +1701,23 @@ export interface CodeLensProvider {
 }
 
 
-export enum InlineHintKind {
+export enum InlayHintKind {
 	Other = 0,
 	Type = 1,
 	Parameter = 2,
 }
 
-export interface InlineHint {
+export interface InlayHint {
 	text: string;
-	range: IRange;
-	kind: InlineHintKind;
-	description?: string | IMarkdownString;
+	position: IPosition;
+	kind: InlayHintKind;
 	whitespaceBefore?: boolean;
 	whitespaceAfter?: boolean;
 }
 
-export interface InlineHintsProvider {
-	onDidChangeInlineHints?: Event<void> | undefined;
-	provideInlineHints(model: model.ITextModel, range: Range, token: CancellationToken): ProviderResult<InlineHint[]>;
+export interface InlayHintsProvider {
+	onDidChangeInlayHints?: Event<void> | undefined;
+	provideInlayHints(model: model.ITextModel, range: Range, token: CancellationToken): ProviderResult<InlayHint[]>;
 }
 
 export interface SemanticTokensLegend {
@@ -1834,7 +1833,7 @@ export const CodeLensProviderRegistry = new LanguageFeatureRegistry<CodeLensProv
 /**
  * @internal
  */
-export const InlineHintsProviderRegistry = new LanguageFeatureRegistry<InlineHintsProvider>();
+export const InlayHintsProviderRegistry = new LanguageFeatureRegistry<InlayHintsProvider>();
 
 /**
  * @internal

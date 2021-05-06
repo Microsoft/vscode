@@ -14,7 +14,7 @@ import { WorkspacesManagementMainService, IStoredWorkspace, getSingleFolderWorks
 import { WORKSPACE_EXTENSION, IRawFileWorkspaceFolder, IWorkspaceFolderCreationData, IRawUriWorkspaceFolder, rewriteWorkspaceFileForNewLocation, IWorkspaceIdentifier, IStoredWorkspaceFolder } from 'vs/platform/workspaces/common/workspaces';
 import { NullLogService } from 'vs/platform/log/common/log';
 import { URI } from 'vs/base/common/uri';
-import { getRandomTestPath } from 'vs/base/test/node/testUtils';
+import { flakySuite, getRandomTestPath } from 'vs/base/test/node/testUtils';
 import { isWindows } from 'vs/base/common/platform';
 import { normalizeDriveLetter } from 'vs/base/common/labels';
 import { extUriBiasedIgnorePathCase } from 'vs/base/common/resources';
@@ -22,8 +22,10 @@ import { IDialogMainService } from 'vs/platform/dialogs/electron-main/dialogMain
 import { INativeOpenDialogOptions } from 'vs/platform/dialogs/common/dialogs';
 import { IBackupMainService, IWorkspaceBackupInfo } from 'vs/platform/backup/electron-main/backup';
 import { IEmptyWindowBackupInfo } from 'vs/platform/backup/node/backup';
+import product from 'vs/platform/product/common/product';
+import { IProductService } from 'vs/platform/product/common/productService';
 
-suite('WorkspacesManagementMainService', () => {
+flakySuite('WorkspacesManagementMainService', () => {
 
 	class TestDialogMainService implements IDialogMainService {
 
@@ -92,18 +94,20 @@ suite('WorkspacesManagementMainService', () => {
 		testDir = getRandomTestPath(tmpDir, 'vsctests', 'workspacesmanagementmainservice');
 		untitledWorkspacesHomePath = path.join(testDir, 'Workspaces');
 
+		const productService: IProductService = { _serviceBrand: undefined, ...product };
+
 		environmentMainService = new class TestEnvironmentService extends EnvironmentMainService {
 
 			constructor() {
-				super(parseArgs(process.argv, OPTIONS));
+				super(parseArgs(process.argv, OPTIONS), productService);
 			}
 
-			get untitledWorkspacesHome(): URI {
+			override get untitledWorkspacesHome(): URI {
 				return URI.file(untitledWorkspacesHomePath);
 			}
 		};
 
-		service = new WorkspacesManagementMainService(environmentMainService, new NullLogService(), new TestBackupMainService(), new TestDialogMainService());
+		service = new WorkspacesManagementMainService(environmentMainService, new NullLogService(), new TestBackupMainService(), new TestDialogMainService(), productService);
 
 		return fs.promises.mkdir(untitledWorkspacesHomePath, { recursive: true });
 	});

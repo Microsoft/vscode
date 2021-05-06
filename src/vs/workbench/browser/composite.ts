@@ -83,26 +83,26 @@ export abstract class Composite extends Component implements IComposite {
 
 	protected actionRunner: IActionRunner | undefined;
 
+	private _telemetryService: ITelemetryService;
+	protected get telemetryService(): ITelemetryService { return this._telemetryService; }
+
 	private visible: boolean;
 	private parent: HTMLElement | undefined;
 
 	constructor(
 		id: string,
-		private _telemetryService: ITelemetryService,
+		telemetryService: ITelemetryService,
 		themeService: IThemeService,
 		storageService: IStorageService
 	) {
 		super(id, themeService, storageService);
 
+		this._telemetryService = telemetryService;
 		this.visible = false;
 	}
 
 	getTitle(): string | undefined {
 		return undefined;
-	}
-
-	protected get telemetryService(): ITelemetryService {
-		return this._telemetryService;
 	}
 
 	/**
@@ -118,7 +118,7 @@ export abstract class Composite extends Component implements IComposite {
 		this.parent = parent;
 	}
 
-	updateStyles(): void {
+	override updateStyles(): void {
 		super.updateStyles();
 	}
 
@@ -161,7 +161,7 @@ export abstract class Composite extends Component implements IComposite {
 	/**
 	 * Returns an array of actions to show in the action bar of the composite.
 	 */
-	getActions(): ReadonlyArray<IAction> {
+	getActions(): readonly IAction[] {
 		return [];
 	}
 
@@ -169,14 +169,14 @@ export abstract class Composite extends Component implements IComposite {
 	 * Returns an array of actions to show in the action bar of the composite
 	 * in a less prominent way then action from getActions.
 	 */
-	getSecondaryActions(): ReadonlyArray<IAction> {
+	getSecondaryActions(): readonly IAction[] {
 		return [];
 	}
 
 	/**
 	 * Returns an array of actions to show in the context menu of the composite
 	 */
-	getContextMenuActions(): ReadonlyArray<IAction> {
+	getContextMenuActions(): readonly IAction[] {
 		return [];
 	}
 
@@ -203,7 +203,7 @@ export abstract class Composite extends Component implements IComposite {
 	 */
 	getActionRunner(): IActionRunner {
 		if (!this.actionRunner) {
-			this.actionRunner = new ActionRunner();
+			this.actionRunner = this._register(new ActionRunner());
 		}
 
 		return this.actionRunner;

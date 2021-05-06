@@ -53,8 +53,10 @@ export default class MergeConflictCodeLensProvider implements vscode.CodeLensPro
 		}
 
 		let conflicts = await this.tracker.getConflicts(document);
+		const conflictsCount = conflicts?.length ?? 0;
+		vscode.commands.executeCommand('setContext', 'mergeConflictsCount', conflictsCount);
 
-		if (!conflicts || conflicts.length === 0) {
+		if (!conflictsCount) {
 			return null;
 		}
 
@@ -99,6 +101,7 @@ export default class MergeConflictCodeLensProvider implements vscode.CodeLensPro
 	private registerCodeLensProvider() {
 		this.codeLensRegistrationHandle = vscode.languages.registerCodeLensProvider([
 			{ scheme: 'file' },
+			{ scheme: 'vscode-vfs' },
 			{ scheme: 'untitled' },
 			{ scheme: 'vscode-userdata' },
 		], this);

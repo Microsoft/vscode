@@ -115,6 +115,11 @@ export interface IStatusbarService {
 	 * Focuses the previous status bar entry. If none focused, focuses the last.
 	 */
 	focusPreviousEntry(): void;
+
+	/**
+	 *	Returns true if a status bar entry is focused.
+	 */
+	isEntryFocused(): boolean;
 }
 
 export interface IStatusbarEntryAccessor extends IDisposable {

@@ -5,7 +5,7 @@
 
 import 'mocha';
 import * as assert from 'assert';
-import { getLanguageModes, ClientCapabilities, TextDocument, SelectionRange} from '../modes/languageModes';
+import { getLanguageModes, ClientCapabilities, TextDocument, SelectionRange } from '../modes/languageModes';
 import { getSelectionRanges } from '../modes/selectionRanges';
 import { getNodeFSRequestService } from '../node/nodeFs';
 
@@ -23,7 +23,7 @@ async function assertRanges(content: string, expected: (number | string)[][]): P
 
 	const document = TextDocument.create('test://foo.html', 'html', 1, content);
 	const actualRanges = await getSelectionRanges(languageModes, document, [document.positionAt(offset)]);
-	assert.equal(actualRanges.length, 1);
+	assert.strictEqual(actualRanges.length, 1);
 	const offsetPairs: [number, string][] = [];
 	let curr: SelectionRange | undefined = actualRanges[0];
 	while (curr) {
@@ -32,7 +32,7 @@ async function assertRanges(content: string, expected: (number | string)[][]): P
 	}
 
 	message += `${JSON.stringify(offsetPairs)}\n but should give:\n${JSON.stringify(expected)}\n`;
-	assert.deepEqual(offsetPairs, expected, message);
+	assert.deepStrictEqual(offsetPairs, expected, message);
 }
 
 suite('HTML SelectionRange', () => {

@@ -128,7 +128,7 @@ export class FindOptionsWidget extends Widget implements IOverlayWidget {
 		return ` (${kb.getLabel()})`;
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		this._editor.removeOverlayWidget(this);
 		super.dispose();
 	}

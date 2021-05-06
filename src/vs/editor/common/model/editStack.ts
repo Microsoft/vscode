@@ -19,7 +19,7 @@ function uriGetComparisonKey(resource: URI): string {
 	return resource.toString();
 }
 
-class SingleModelEditStackData {
+export class SingleModelEditStackData {
 
 	public static create(model: ITextModel, beforeCursorState: Selection[] | null): SingleModelEditStackData {
 		const alternativeVersionId = model.getAlternativeVersionId();

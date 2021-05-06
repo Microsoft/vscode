@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { IChannel, IServerChannel } from 'vs/base/parts/ipc/common/ipc';
-import { LogLevel, ILogService, LogService, ILoggerService, ILogger, AbstractMessageLogger, ILoggerOptions, AdapterLogger } from 'vs/platform/log/common/log';
+import { LogLevel, ILogService, LogService, ILoggerService, ILogger, AbstractMessageLogger, ILoggerOptions, AdapterLogger, AbstractLoggerService } from 'vs/platform/log/common/log';
 import { Event } from 'vs/base/common/event';
 import { URI } from 'vs/base/common/uri';
 
@@ -113,11 +113,11 @@ export class LoggerChannel implements IServerChannel {
 	}
 }
 
-export class LoggerChannelClient implements ILoggerService {
+export class LoggerChannelClient extends AbstractLoggerService implements ILoggerService {
 
-	declare readonly _serviceBrand: undefined;
-
-	constructor(private readonly channel: IChannel) { }
+	constructor(logLevel: LogLevel, onDidChangeLogLevel: Event<LogLevel>, private readonly channel: IChannel) {
+		super(logLevel, onDidChangeLogLevel);
+	}
 
 	createConsoleMainLogger(): ILogger {
 		return new AdapterLogger({
@@ -127,8 +127,8 @@ export class LoggerChannelClient implements ILoggerService {
 		});
 	}
 
-	createLogger(file: URI, options?: ILoggerOptions): ILogger {
-		return new Logger(this.channel, file, options);
+	protected doCreateLogger(file: URI, logLevel: LogLevel, options?: ILoggerOptions): ILogger {
+		return new Logger(this.channel, file, logLevel, options);
 	}
 
 }
@@ -141,38 +141,40 @@ class Logger extends AbstractMessageLogger {
 	constructor(
 		private readonly channel: IChannel,
 		private readonly file: URI,
+		logLevel: LogLevel,
 		loggerOptions?: ILoggerOptions,
 	) {
 		super(loggerOptions?.always);
+		this.setLevel(logLevel);
 		this.channel.call('createLogger', [file, loggerOptions])
 			.then(() => {
-				this._log(this.buffer);
+				this.doLog(this.buffer);
 				this.isLoggerCreated = true;
 			});
 	}
 
 	protected log(level: LogLevel, message: string) {
-		this._log([[level, message]]);
-	}
-
-	private _log(messages: [LogLevel, string][]) {
+		const messages: [LogLevel, string][] = [[level, message]];
 		if (this.isLoggerCreated) {
-			this.channel.call('log', [this.file, messages]);
+			this.doLog(messages);
 		} else {
 			this.buffer.push(...messages);
 		}
 	}
+
+	private doLog(messages: [LogLevel, string][]) {
+		this.channel.call('log', [this.file, messages]);
+	}
 }
 
 export class FollowerLogService extends LogService implements ILogService {
-	declare readonly _serviceBrand: undefined;
 
 	constructor(private parent: LogLevelChannelClient, logService: ILogService) {
 		super(logService);
 		this._register(parent.onDidChangeLogLevel(level => logService.setLevel(level)));
 	}
 
-	setLevel(level: LogLevel): void {
+	override setLevel(level: LogLevel): void {
 		super.setLevel(level);
 
 		this.parent.setLevel(level);

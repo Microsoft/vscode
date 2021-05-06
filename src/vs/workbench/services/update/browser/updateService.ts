@@ -44,25 +44,25 @@ export class BrowserUpdateService extends Disposable implements IUpdateService {
 	) {
 		super();
 
-		this.checkForUpdates();
+		this.checkForUpdates(false);
 	}
 
 	async isLatestVersion(): Promise<boolean> {
-		const update = await this.doCheckForUpdates();
+		const update = await this.doCheckForUpdates(false);
 
 		return !!update;
 	}
 
-	async checkForUpdates(): Promise<void> {
-		await this.doCheckForUpdates();
+	async checkForUpdates(explicit: boolean): Promise<void> {
+		await this.doCheckForUpdates(explicit);
 	}
 
-	private async doCheckForUpdates(): Promise<IUpdate | null> {
+	private async doCheckForUpdates(explicit: boolean): Promise<IUpdate | null> {
 		if (this.environmentService.options && this.environmentService.options.updateProvider) {
 			const updateProvider = this.environmentService.options.updateProvider;
 
 			// State -> Checking for Updates
-			this.state = State.CheckingForUpdates(null);
+			this.state = State.CheckingForUpdates(explicit);
 
 			const update = await updateProvider.checkForUpdate();
 			if (update) {

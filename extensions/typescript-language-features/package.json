@@ -3,29 +3,39 @@
   "description": "%description%",
   "displayName": "%displayName%",
   "version": "1.0.0",
-  "icon": "icon.png",
   "author": "vscode",
   "publisher": "vscode",
   "license": "MIT",
   "aiKey": "AIF-d9b70cd4-b9f9-4d70-929b-a071c400b217",
   "enableProposedApi": true,
-  "requiresWorkspaceTrust": "onDemand",
+  "capabilities": {
+    "virtualWorkspaces": true,
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "%workspaceTrust%",
+      "restrictedConfigurations": [
+        "typescript.tsdk",
+        "typescript.tsserver.pluginPaths",
+        "typescript.npm"
+      ]
+    }
+  },
   "engines": {
     "vscode": "^1.30.0"
   },
+  "icon": "media/icon.png",
   "categories": [
     "Programming Languages"
   ],
   "dependencies": {
     "jsonc-parser": "^2.2.1",
     "semver": "5.5.1",
-    "typescript-vscode-sh-plugin": "^0.6.14",
-    "vscode-extension-telemetry": "0.1.1",
+    "typescript-vscode-sh-plugin": "^0.7.3",
+    "vscode-extension-telemetry": "0.1.7",
     "vscode-nls": "^4.1.1"
   },
   "devDependencies": {
-    "@types/node": "^12.19.9",
-    "@types/rimraf": "^2.0.4",
+    "@types/node": "14.x",
     "@types/semver": "^5.5.0"
   },
   "scripts": {
@@ -137,7 +147,7 @@
         "typescript.disableAutomaticTypeAcquisition": {
           "type": "boolean",
           "default": false,
-          "description": "%typescript.disableAutomaticTypeAcquisition%",
+          "markdownDescription": "%typescript.disableAutomaticTypeAcquisition%",
           "scope": "window",
           "tags": [
             "usesOnlineServices"
@@ -155,13 +165,13 @@
             "null"
           ],
           "default": null,
-          "description": "%typescript.npm%",
+          "markdownDescription": "%typescript.npm%",
           "scope": "machine"
         },
         "typescript.check.npmIsInstalled": {
           "type": "boolean",
           "default": true,
-          "description": "%typescript.check.npmIsInstalled%",
+          "markdownDescription": "%typescript.check.npmIsInstalled%",
           "scope": "window"
         },
         "javascript.referencesCodeLens.enabled": {
@@ -255,6 +265,24 @@
           "type": "boolean",
           "default": true,
           "description": "%configuration.suggest.includeAutomaticOptionalChainCompletions%",
+          "scope": "resource"
+        },
+        "javascript.suggest.includeCompletionsForImportStatements": {
+          "type": "boolean",
+          "default": true,
+          "description": "%configuration.suggest.includeCompletionsForImportStatements%",
+          "scope": "resource"
+        },
+        "typescript.suggest.includeCompletionsForImportStatements": {
+          "type": "boolean",
+          "default": true,
+          "description": "%configuration.suggest.includeCompletionsForImportStatements%",
+          "scope": "resource"
+        },
+        "typescript.suggest.includeCompletionsWithSnippetText": {
+          "type": "boolean",
+          "default": true,
+          "description": "%configuration.suggest.includeCompletionsWithSnippetText%",
           "scope": "resource"
         },
         "typescript.reportStyleChecksAsWarnings": {
@@ -1094,7 +1122,8 @@
           "option": {
             "type": "string"
           }
-        }
+        },
+        "when": "shellExecutionSupported"
       }
     ],
     "problemPatterns": [
@@ -1136,10 +1165,10 @@
         "background": {
           "activeOnStart": true,
           "beginsPattern": {
-            "regexp": "^\\s*(?:message TS6032:|\\[?\\D*\\d{1,2}[:.]\\d{1,2}[:.]\\d{1,2}\\D*(├\\D*\\d{1,2}\\D+┤)?(?:\\]| -)) File change detected\\. Starting incremental compilation\\.\\.\\."
+            "regexp": "^\\s*(?:message TS6032:|\\[?\\D*.{1,2}[:.].{1,2}[:.].{1,2}\\D*(├\\D*\\d{1,2}\\D+┤)?(?:\\]| -)) File change detected\\. Starting incremental compilation\\.\\.\\."
           },
           "endsPattern": {
-            "regexp": "^\\s*(?:message TS6042:|\\[?\\D*\\d{1,2}[:.]\\d{1,2}[:.]\\d{1,2}\\D*(├\\D*\\d{1,2}\\D+┤)?(?:\\]| -)) (?:Compilation complete\\.|Found \\d+ errors?\\.) Watching for file changes\\."
+            "regexp": "^\\s*(?:message TS6042:|\\[?\\D*.{1,2}[:.].{1,2}[:.].{1,2}\\D*(├\\D*\\d{1,2}\\D+┤)?(?:\\]| -)) (?:Compilation complete\\.|Found \\d+ errors?\\.) Watching for file changes\\."
           }
         }
       }

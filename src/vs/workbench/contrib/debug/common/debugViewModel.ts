@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Event, Emitter } from 'vs/base/common/event';
-import { CONTEXT_EXPRESSION_SELECTED, IViewModel, IStackFrame, IDebugSession, IThread, IExpression, CONTEXT_LOADED_SCRIPTS_SUPPORTED, CONTEXT_STEP_BACK_SUPPORTED, CONTEXT_FOCUSED_SESSION_IS_ATTACH, CONTEXT_RESTART_FRAME_SUPPORTED, CONTEXT_JUMP_TO_CURSOR_SUPPORTED, CONTEXT_STEP_INTO_TARGETS_SUPPORTED, CONTEXT_SET_VARIABLE_SUPPORTED, CONTEXT_MULTI_SESSION_DEBUG } from 'vs/workbench/contrib/debug/common/debug';
+import { CONTEXT_EXPRESSION_SELECTED, IViewModel, IStackFrame, IDebugSession, IThread, IExpression, CONTEXT_LOADED_SCRIPTS_SUPPORTED, CONTEXT_STEP_BACK_SUPPORTED, CONTEXT_FOCUSED_SESSION_IS_ATTACH, CONTEXT_RESTART_FRAME_SUPPORTED, CONTEXT_JUMP_TO_CURSOR_SUPPORTED, CONTEXT_STEP_INTO_TARGETS_SUPPORTED, CONTEXT_SET_VARIABLE_SUPPORTED, CONTEXT_MULTI_SESSION_DEBUG, CONTEXT_TERMINATE_DEBUGGEE_SUPPORTED } from 'vs/workbench/contrib/debug/common/debug';
 import { IContextKeyService, IContextKey } from 'vs/platform/contextkey/common/contextkey';
 import { isSessionAttach } from 'vs/workbench/contrib/debug/common/debugUtils';
 
@@ -29,6 +29,7 @@ export class ViewModel implements IViewModel {
 	private jumpToCursorSupported!: IContextKey<boolean>;
 	private setVariableSupported!: IContextKey<boolean>;
 	private multiSessionDebug!: IContextKey<boolean>;
+	private terminateDebuggeeSuported!: IContextKey<boolean>;
 
 	constructor(private contextKeyService: IContextKeyService) {
 		contextKeyService.bufferChangeEvents(() => {
@@ -41,6 +42,7 @@ export class ViewModel implements IViewModel {
 			this.jumpToCursorSupported = CONTEXT_JUMP_TO_CURSOR_SUPPORTED.bindTo(contextKeyService);
 			this.setVariableSupported = CONTEXT_SET_VARIABLE_SUPPORTED.bindTo(contextKeyService);
 			this.multiSessionDebug = CONTEXT_MULTI_SESSION_DEBUG.bindTo(contextKeyService);
+			this.terminateDebuggeeSuported = CONTEXT_TERMINATE_DEBUGGEE_SUPPORTED.bindTo(contextKeyService);
 		});
 	}
 
@@ -75,6 +77,7 @@ export class ViewModel implements IViewModel {
 			this.stepIntoTargetsSupported.set(session ? !!session.capabilities.supportsStepInTargetsRequest : false);
 			this.jumpToCursorSupported.set(session ? !!session.capabilities.supportsGotoTargetsRequest : false);
 			this.setVariableSupported.set(session ? !!session.capabilities.supportsSetVariable : false);
+			this.terminateDebuggeeSuported.set(session ? !!session.capabilities.supportTerminateDebuggee : false);
 			const attach = !!session && isSessionAttach(session);
 			this.focusedSessionIsAttach.set(attach);
 		});

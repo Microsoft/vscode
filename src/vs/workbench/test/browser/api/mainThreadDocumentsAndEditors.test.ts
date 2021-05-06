@@ -57,8 +57,8 @@ suite('MainThreadDocumentsAndEditors', () => {
 		modelService = new ModelServiceImpl(configService, new TestTextResourcePropertiesService(configService), new TestThemeService(), new NullLogService(), undoRedoService);
 		codeEditorService = new TestCodeEditorService();
 		textFileService = new class extends mock<ITextFileService>() {
-			isDirty() { return false; }
-			files = <any>{
+			override isDirty() { return false; }
+			override files = <any>{
 				onDidSave: Event.None,
 				onDidRevert: Event.None,
 				onDidChangeDirty: Event.None
@@ -68,14 +68,14 @@ suite('MainThreadDocumentsAndEditors', () => {
 		const editorGroupService = new TestEditorGroupsService();
 
 		const fileService = new class extends mock<IFileService>() {
-			onDidRunOperation = Event.None;
-			onDidChangeFileSystemProviderCapabilities = Event.None;
-			onDidChangeFileSystemProviderRegistrations = Event.None;
+			override onDidRunOperation = Event.None;
+			override onDidChangeFileSystemProviderCapabilities = Event.None;
+			override onDidChangeFileSystemProviderRegistrations = Event.None;
 		};
 
 		new MainThreadDocumentsAndEditors(
 			SingleProxyRPCProtocol(new class extends mock<ExtHostDocumentsAndEditorsShape>() {
-				$acceptDocumentsAndEditorsDelta(delta: IDocumentsAndEditorsDelta) { deltas.push(delta); }
+				override $acceptDocumentsAndEditorsDelta(delta: IDocumentsAndEditorsDelta) { deltas.push(delta); }
 			}),
 			modelService,
 			textFileService,
@@ -86,10 +86,9 @@ suite('MainThreadDocumentsAndEditors', () => {
 			editorGroupService,
 			null!,
 			new class extends mock<IPanelService>() implements IPanelService {
-				declare readonly _serviceBrand: undefined;
-				onDidPanelOpen = Event.None;
-				onDidPanelClose = Event.None;
-				getActivePanel() {
+				override onDidPanelOpen = Event.None;
+				override onDidPanelClose = Event.None;
+				override getActivePanel() {
 					return undefined;
 				}
 			},
@@ -97,7 +96,7 @@ suite('MainThreadDocumentsAndEditors', () => {
 			new TestWorkingCopyFileService(),
 			new UriIdentityService(fileService),
 			new class extends mock<IClipboardService>() {
-				readText() {
+				override readText() {
 					return Promise.resolve('clipboard_contents');
 				}
 			},

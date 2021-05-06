@@ -50,7 +50,7 @@ suite('Tests for Emmet: Reflect CSS Value command', () => {
 		return withRandomFileEditor(cssContents, '.css', (editor, doc) => {
 			editor.selections = [new Selection(5, 10, 5, 10)];
 			return reflectCssValue().then(() => {
-				assert.equal(doc.getText(), cssContents.replace(/\(50deg\)/g, '(20deg)'));
+				assert.strictEqual(doc.getText(), cssContents.replace(/\(50deg\)/g, '(20deg)'));
 				return Promise.resolve();
 			});
 		});
@@ -60,7 +60,7 @@ suite('Tests for Emmet: Reflect CSS Value command', () => {
 		return withRandomFileEditor(cssContents, '.css', (editor, doc) => {
 			editor.selections = [new Selection(5, 2, 5, 32)];
 			return reflectCssValue().then(() => {
-				assert.equal(doc.getText(), cssContents.replace(/\(50deg\)/g, '(20deg)'));
+				assert.strictEqual(doc.getText(), cssContents.replace(/\(50deg\)/g, '(20deg)'));
 				return Promise.resolve();
 			});
 		});
@@ -70,7 +70,7 @@ suite('Tests for Emmet: Reflect CSS Value command', () => {
 		return withRandomFileEditor(htmlContents, '.html', (editor, doc) => {
 			editor.selections = [new Selection(7, 20, 7, 20)];
 			return reflectCssValue().then(() => {
-				assert.equal(doc.getText(), htmlContents.replace(/\(50deg\)/g, '(20deg)'));
+				assert.strictEqual(doc.getText(), htmlContents.replace(/\(50deg\)/g, '(20deg)'));
 				return Promise.resolve();
 			});
 		});
@@ -80,7 +80,7 @@ suite('Tests for Emmet: Reflect CSS Value command', () => {
 		return withRandomFileEditor(htmlContents, '.html', (editor, doc) => {
 			editor.selections = [new Selection(7, 4, 7, 34)];
 			return reflectCssValue().then(() => {
-				assert.equal(doc.getText(), htmlContents.replace(/\(50deg\)/g, '(20deg)'));
+				assert.strictEqual(doc.getText(), htmlContents.replace(/\(50deg\)/g, '(20deg)'));
 				return Promise.resolve();
 			});
 		});

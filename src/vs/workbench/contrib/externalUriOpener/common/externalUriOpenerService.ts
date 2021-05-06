@@ -108,7 +108,7 @@ export class ExternalUriOpenerService extends Disposable implements IExternalUri
 		await Promise.all(Array.from(allOpeners.values()).map(async opener => {
 			let priority: modes.ExternalUriOpenerPriority;
 			try {
-				priority = await opener.canOpen(targetUri, token);
+				priority = await opener.canOpen(ctx.sourceUri, token);
 			} catch (e) {
 				this.logService.error(e);
 				return;

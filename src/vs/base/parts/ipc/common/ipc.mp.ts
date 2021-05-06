@@ -72,7 +72,7 @@ export class Client extends IPCClient implements IDisposable {
 		this.protocol = protocol;
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this.protocol.disconnect();
 	}
 }

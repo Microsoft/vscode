@@ -44,7 +44,7 @@ suite('ExtHostTextEditor', () => {
 		let applyCount = 0;
 		let editor = new ExtHostTextEditor('edt1',
 			new class extends mock<MainThreadTextEditorsShape>() {
-				$tryApplyEdits(): Promise<boolean> {
+				override $tryApplyEdits(): Promise<boolean> {
 					applyCount += 1;
 					return Promise.resolve(true);
 				}

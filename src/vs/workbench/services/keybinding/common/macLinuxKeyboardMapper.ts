@@ -49,7 +49,7 @@ export class NativeResolvedKeybinding extends BaseResolvedKeybinding<ScanCodeBin
 		if (!binding) {
 			return true;
 		}
-		if (IMMUTABLE_CODE_TO_KEY_CODE[binding.scanCode] !== -1) {
+		if (IMMUTABLE_CODE_TO_KEY_CODE[binding.scanCode] !== KeyCode.DependsOnKbLayout) {
 			return true;
 		}
 		let a = this._mapper.getAriaLabelForScanCodeBinding(binding);
@@ -327,7 +327,7 @@ class ScanCodeKeyCodeMapper {
 			}
 		}
 
-		return -1;
+		return KeyCode.DependsOnKbLayout;
 	}
 
 	private _encodeScanCodeCombo(scanCodeCombo: ScanCodeCombo): number {
@@ -419,7 +419,7 @@ export class MacLinuxKeyboardMapper implements IKeyboardMapper {
 		// Handle immutable mappings
 		for (let scanCode = ScanCode.None; scanCode < ScanCode.MAX_VALUE; scanCode++) {
 			const keyCode = IMMUTABLE_CODE_TO_KEY_CODE[scanCode];
-			if (keyCode !== -1) {
+			if (keyCode !== KeyCode.DependsOnKbLayout) {
 				_registerAllCombos(0, 0, 0, scanCode, keyCode);
 				this._scanCodeToLabel[scanCode] = KeyCodeUtils.toString(keyCode);
 
@@ -443,7 +443,7 @@ export class MacLinuxKeyboardMapper implements IKeyboardMapper {
 					if (scanCode === ScanCode.None) {
 						continue;
 					}
-					if (IMMUTABLE_CODE_TO_KEY_CODE[scanCode] !== -1) {
+					if (IMMUTABLE_CODE_TO_KEY_CODE[scanCode] !== KeyCode.DependsOnKbLayout) {
 						continue;
 					}
 
@@ -504,7 +504,7 @@ export class MacLinuxKeyboardMapper implements IKeyboardMapper {
 				if (scanCode === ScanCode.None) {
 					continue;
 				}
-				if (IMMUTABLE_CODE_TO_KEY_CODE[scanCode] !== -1) {
+				if (IMMUTABLE_CODE_TO_KEY_CODE[scanCode] !== KeyCode.DependsOnKbLayout) {
 					continue;
 				}
 
@@ -678,7 +678,7 @@ export class MacLinuxKeyboardMapper implements IKeyboardMapper {
 		result.push(`isUSStandard: ${this._isUSStandard}`);
 		result.push(`----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------`);
 		for (let scanCode = ScanCode.None; scanCode < ScanCode.MAX_VALUE; scanCode++) {
-			if (IMMUTABLE_CODE_TO_KEY_CODE[scanCode] !== -1) {
+			if (IMMUTABLE_CODE_TO_KEY_CODE[scanCode] !== KeyCode.DependsOnKbLayout) {
 				if (immutableSamples.indexOf(scanCode) === -1) {
 					continue;
 				}
@@ -703,7 +703,7 @@ export class MacLinuxKeyboardMapper implements IKeyboardMapper {
 					shiftKey: scanCodeCombo.shiftKey,
 					altKey: scanCodeCombo.altKey,
 					metaKey: false,
-					keyCode: -1,
+					keyCode: KeyCode.DependsOnKbLayout,
 					code: ScanCodeUtils.toString(scanCode)
 				});
 
@@ -852,13 +852,13 @@ export class MacLinuxKeyboardMapper implements IKeyboardMapper {
 		}
 
 		const immutableKeyCode = IMMUTABLE_CODE_TO_KEY_CODE[binding.scanCode];
-		if (immutableKeyCode !== -1) {
+		if (immutableKeyCode !== KeyCode.DependsOnKbLayout) {
 			return KeyCodeUtils.toUserSettingsUS(immutableKeyCode).toLowerCase();
 		}
 
 		// Check if this scanCode always maps to the same keyCode and back
 		let constantKeyCode: KeyCode = this._scanCodeKeyCodeMapper.guessStableKeyCode(binding.scanCode);
-		if (constantKeyCode !== -1) {
+		if (constantKeyCode !== KeyCode.DependsOnKbLayout) {
 			// Verify that this is a good key code that can be mapped back to the same scan code
 			let reverseBindings = this.simpleKeybindingToScanCodeBinding(new SimpleKeybinding(binding.ctrlKey, binding.shiftKey, binding.altKey, binding.metaKey, constantKeyCode));
 			for (let i = 0, len = reverseBindings.length; i < len; i++) {
@@ -902,7 +902,7 @@ export class MacLinuxKeyboardMapper implements IKeyboardMapper {
 		}
 
 		const immutableKeyCode = IMMUTABLE_CODE_TO_KEY_CODE[binding.scanCode];
-		if (immutableKeyCode !== -1) {
+		if (immutableKeyCode !== KeyCode.DependsOnKbLayout) {
 			return this._getElectronLabelForKeyCode(immutableKeyCode);
 		}
 
@@ -935,7 +935,7 @@ export class MacLinuxKeyboardMapper implements IKeyboardMapper {
 			return null;
 		}
 
-		if (constantKeyCode !== -1) {
+		if (constantKeyCode !== KeyCode.DependsOnKbLayout) {
 			return this._getElectronLabelForKeyCode(constantKeyCode);
 		}
 
@@ -997,7 +997,7 @@ export class MacLinuxKeyboardMapper implements IKeyboardMapper {
 			// "Dispatch" on keyCode for these key codes to workaround issues with remote desktoping software
 			// where the scan codes appear to be incorrect (see https://github.com/microsoft/vscode/issues/24107)
 			const immutableScanCode = IMMUTABLE_KEY_CODE_TO_CODE[keyCode];
-			if (immutableScanCode !== -1) {
+			if (immutableScanCode !== ScanCode.DependsOnKbLayout) {
 				code = immutableScanCode;
 			}
 
@@ -1019,7 +1019,7 @@ export class MacLinuxKeyboardMapper implements IKeyboardMapper {
 				// "Dispatch" on keyCode for all numpad keys in order for NumLock to work correctly
 				if (keyCode >= 0) {
 					const immutableScanCode = IMMUTABLE_KEY_CODE_TO_CODE[keyCode];
-					if (immutableScanCode !== -1) {
+					if (immutableScanCode !== ScanCode.DependsOnKbLayout) {
 						code = immutableScanCode;
 					}
 				}

@@ -4,7 +4,7 @@
 		"If you want to provide a fix or improvement, please create a pull request against the original repository.",
 		"Once accepted there, we are happy to receive an update request."
 	],
-	"version": "https://github.com/PowerShell/EditorSyntax/commit/d10ae29c0d3ceb248172c383a159ae43b9ccfb4d",
+	"version": "https://github.com/PowerShell/EditorSyntax/commit/c150c15cca30cafd2159e3f53514f93ccf4c5649",
 	"name": "PowerShell",
 	"scopeName": "source.powershell",
 	"patterns": [
@@ -42,7 +42,7 @@
 			"include": "#variable"
 		},
 		{
-			"include": "#interpolatedStringContent"
+			"include": "#subexpression"
 		},
 		{
 			"include": "#function"
@@ -70,13 +70,14 @@
 			"include": "#doubleQuotedStringEscapes"
 		},
 		{
-			"begin": "(?<!')'",
+			"begin": "['\\x{2018}-\\x{201B}]",
 			"beginCaptures": {
 				"0": {
 					"name": "punctuation.definition.string.begin.powershell"
 				}
 			},
-			"end": "'(?!')",
+			"end": "['\\x{2018}-\\x{201B}]",
+			"applyEndPatternLast": true,
 			"endCaptures": {
 				"0": {
 					"name": "punctuation.definition.string.end.powershell"
@@ -85,14 +86,24 @@
 			"name": "string.quoted.single.powershell",
 			"patterns": [
 				{
-					"match": "''",
+					"match": "['\\x{2018}-\\x{201B}]{2}",
 					"name": "constant.character.escape.powershell"
 				}
 			]
 		},
 		{
-			"begin": "\\@\"(?=$)",
-			"end": "^\"@",
+			"begin": "(@[\"\\x{201C}-\\x{201E}])\\s*$",
+			"beginCaptures": {
+				"1": {
+					"name": "punctuation.definition.string.begin.powershell"
+				}
+			},
+			"end": "^[\"\\x{201C}-\\x{201E}]@",
+			"endCaptures": {
+				"0": {
+					"name": "punctuation.definition.string.end.powershell"
+				}
+			},
 			"name": "string.quoted.double.heredoc.powershell",
 			"patterns": [
 				{
@@ -107,15 +118,19 @@
 			]
 		},
 		{
-			"begin": "\\@'(?=$)",
-			"end": "^'@",
-			"name": "string.quoted.single.heredoc.powershell",
-			"patterns": [
-				{
-					"match": "''",
-					"name": "constant.character.escape.powershell"
+			"begin": "(@['\\x{2018}-\\x{201B}])\\s*$",
+			"beginCaptures": {
+				"1": {
+					"name": "punctuation.definition.string.begin.powershell"
 				}
-			]
+			},
+			"end": "^['\\x{2018}-\\x{201B}]@",
+			"endCaptures": {
+				"0": {
+					"name": "punctuation.definition.string.end.powershell"
+				}
+			},
+			"name": "string.quoted.single.heredoc.powershell"
 		},
 		{
 			"include": "#numericConstant"
@@ -144,12 +159,15 @@
 			]
 		},
 		{
-			"begin": "(\\$)(\\()",
+			"begin": "((\\$))(\\()",
 			"beginCaptures": {
 				"1": {
-					"name": "punctuation.definition.variable.powershell"
+					"name": "keyword.other.substatement.powershell"
 				},
 				"2": {
+					"name": "punctuation.definition.subexpression.powershell"
+				},
+				"3": {
 					"name": "punctuation.section.group.begin.powershell"
 				}
 			},
@@ -256,9 +274,9 @@
 	],
 	"repository": {
 		"commentLine": {
-			"begin": "(?<![`\\\\-])#",
+			"begin": "(?<![`\\\\-])(#)#*",
 			"captures": {
-				"0": {
+				"1": {
 					"name": "punctuation.definition.comment.powershell"
 				}
 			},
@@ -363,7 +381,8 @@
 							"name": "keyword.operator.documentation.powershell"
 						}
 					},
-					"match": "^(?i:(?:\\s?|#)+(\\.)(COMPONENT|DESCRIPTION|EXAMPLE|EXTERNALHELP|FORWARDHELPCATEGORY|FORWARDHELPTARGETNAME|FUNCTIONALITY|INPUTS|LINK|NOTES|OUTPUTS|REMOTEHELPRUNSPACE|ROLE|SYNOPSIS))",
+					"comment": "these embedded doc keywords do not support arguments, must be the only thing on the line",
+					"match": "(?:^|\\G)(?i:\\s*(\\.)(COMPONENT|DESCRIPTION|EXAMPLE|FUNCTIONALITY|INPUTS|LINK|NOTES|OUTPUTS|ROLE|SYNOPSIS))\\s*$",
 					"name": "comment.documentation.embedded.powershell"
 				},
 				{
@@ -378,7 +397,8 @@
 							"name": "keyword.operator.documentation.powershell"
 						}
 					},
-					"match": "(?i:\\s?(\\.)(PARAMETER|FORWARDHELPTARGETNAME|FORWARDHELPCATEGORY|REMOTEHELPRUNSPACE|EXTERNALHELP)\\s+([a-z0-9-_]+))",
+					"comment": "these embedded doc keywords require arguments though the type required may be inconsistent, they may not all be able to use the same argument match",
+					"match": "(?:^|\\G)(?i:\\s*(\\.)(EXTERNALHELP|FORWARDHELP(?:CATEGORY|TARGETNAME)|PARAMETER|REMOTEHELPRUNSPACE))\\s+(.+?)\\s*$",
 					"name": "comment.documentation.embedded.powershell"
 				}
 			]
@@ -386,15 +406,11 @@
 		"doubleQuotedStringEscapes": {
 			"patterns": [
 				{
-					"match": "`[`0abefnrtv\"'$]",
+					"match": "`[`0abefnrtv'\"\\x{2018}-\\x{201E}$]",
 					"name": "constant.character.escape.powershell"
 				},
 				{
 					"include": "#unicodeEscape"
-				},
-				{
-					"match": "\"\"",
-					"name": "constant.character.escape.powershell"
 				}
 			]
 		},
@@ -434,58 +450,59 @@
 				}
 			]
 		},
-		"interpolatedStringContent": {
+		"subexpression": {
 			"begin": "\\(",
 			"beginCaptures": {
 				"0": {
 					"name": "punctuation.section.group.begin.powershell"
 				}
 			},
-			"contentName": "interpolated.simple.source.powershell",
 			"end": "\\)",
 			"endCaptures": {
 				"0": {
 					"name": "punctuation.section.group.end.powershell"
 				}
 			},
+			"name": "meta.group.simple.subexpression.powershell",
 			"patterns": [
 				{
 					"include": "$self"
-				},
-				{
-					"include": "#interpolation"
-				},
-				{
-					"include": "#interpolatedStringContent"
 				}
 			]
 		},
 		"interpolation": {
-			"begin": "(\\$)(\\()",
+			"begin": "(((\\$)))((\\())",
 			"beginCaptures": {
 				"1": {
-					"name": "punctuation.definition.variable.powershell"
+					"name": "keyword.other.substatement.powershell"
 				},
 				"2": {
+					"name": "punctuation.definition.substatement.powershell"
+				},
+				"3": {
+					"name": "punctuation.section.embedded.substatement.begin.powershell"
+				},
+				"4": {
 					"name": "punctuation.section.group.begin.powershell"
+				},
+				"5": {
+					"name": "punctuation.section.embedded.substatement.begin.powershell"
 				}
 			},
 			"contentName": "interpolated.complex.source.powershell",
-			"end": "\\)",
+			"end": "(\\))",
 			"endCaptures": {
 				"0": {
 					"name": "punctuation.section.group.end.powershell"
+				},
+				"1": {
+					"name": "punctuation.section.embedded.substatement.end.powershell"
 				}
 			},
+			"name": "meta.embedded.substatement.powershell",
 			"patterns": [
 				{
 					"include": "$self"
-				},
-				{
-					"include": "#interpolation"
-				},
-				{
-					"include": "#interpolatedStringContent"
 				}
 			]
 		},
@@ -779,7 +796,7 @@
 			"name": "meta.requires.powershell",
 			"patterns": [
 				{
-					"match": "\\-(?i:Modules|PSSnapin|RunAsAdministrator|ShellId|Version)",
+					"match": "\\-(?i:Modules|PSSnapin|RunAsAdministrator|ShellId|Version|Assembly|PSEdition)",
 					"name": "keyword.other.powershell"
 				},
 				{
@@ -971,13 +988,14 @@
 			]
 		},
 		"doubleQuotedString": {
-			"begin": "(?<!(?<!`)\")\"",
+			"begin": "[\"\\x{201C}-\\x{201E}]",
 			"beginCaptures": {
 				"0": {
 					"name": "punctuation.definition.string.begin.powershell"
 				}
 			},
-			"end": "\"(?!\")",
+			"end": "[\"\\x{201C}-\\x{201E}]",
+			"applyEndPatternLast": true,
 			"endCaptures": {
 				"0": {
 					"name": "punctuation.definition.string.end.powershell"
@@ -993,6 +1011,10 @@
 				},
 				{
 					"include": "#doubleQuotedStringEscapes"
+				},
+				{
+					"match": "[\"\\x{201C}-\\x{201E}]{2}",
+					"name": "constant.character.escape.powershell"
 				},
 				{
 					"include": "#interpolation"

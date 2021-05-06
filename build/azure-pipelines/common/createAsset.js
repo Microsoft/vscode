@@ -10,9 +10,94 @@ const azure = require("azure-storage");
 const mime = require("mime");
 const cosmos_1 = require("@azure/cosmos");
 const retry_1 = require("./retry");
-if (process.argv.length !== 6) {
-    console.error('Usage: node createAsset.js PLATFORM TYPE NAME FILE');
+if (process.argv.length !== 8) {
+    console.error('Usage: node createAsset.js PRODUCT OS ARCH TYPE NAME FILE');
     process.exit(-1);
+}
+// Contains all of the logic for mapping details to our actual product names in CosmosDB
+function getPlatform(product, os, arch, type) {
+    switch (os) {
+        case 'win32':
+            switch (product) {
+                case 'client':
+                    const asset = arch === 'ia32' ? 'win32' : `win32-${arch}`;
+                    switch (type) {
+                        case 'archive':
+                            return `${asset}-archive`;
+                        case 'setup':
+                            return asset;
+                        case 'user-setup':
+                            return `${asset}-user`;
+                        default:
+                            throw `Unrecognized: ${product} ${os} ${arch} ${type}`;
+                    }
+                case 'server':
+                    if (arch === 'arm64') {
+                        throw `Unrecognized: ${product} ${os} ${arch} ${type}`;
+                    }
+                    return arch === 'ia32' ? 'server-win32' : `server-win32-${arch}`;
+                case 'web':
+                    if (arch === 'arm64') {
+                        throw `Unrecognized: ${product} ${os} ${arch} ${type}`;
+                    }
+                    return arch === 'ia32' ? 'server-win32-web' : `server-win32-${arch}-web`;
+                default:
+                    throw `Unrecognized: ${product} ${os} ${arch} ${type}`;
+            }
+        case 'linux':
+            switch (type) {
+                case 'snap':
+                    return `linux-snap-${arch}`;
+                case 'archive-unsigned':
+                    switch (product) {
+                        case 'client':
+                            return `linux-${arch}`;
+                        case 'server':
+                            return `server-linux-${arch}`;
+                        case 'web':
+                            return arch === 'standalone' ? 'web-standalone' : `server-linux-${arch}-web`;
+                        default:
+                            throw `Unrecognized: ${product} ${os} ${arch} ${type}`;
+                    }
+                case 'deb-package':
+                    return `linux-deb-${arch}`;
+                case 'rpm-package':
+                    return `linux-rpm-${arch}`;
+                default:
+                    throw `Unrecognized: ${product} ${os} ${arch} ${type}`;
+            }
+        case 'darwin':
+            switch (product) {
+                case 'client':
+                    if (arch === 'x64') {
+                        return 'darwin';
+                    }
+                    return `darwin-${arch}`;
+                case 'server':
+                    return 'server-darwin';
+                case 'web':
+                    if (arch !== 'x64') {
+                        throw `What should the platform be?: ${product} ${os} ${arch} ${type}`;
+                    }
+                    return 'server-darwin-web';
+                default:
+                    throw `Unrecognized: ${product} ${os} ${arch} ${type}`;
+            }
+        default:
+            throw `Unrecognized: ${product} ${os} ${arch} ${type}`;
+    }
+}
+// Contains all of the logic for mapping types to our actual types in CosmosDB
+function getRealType(type) {
+    switch (type) {
+        case 'user-setup':
+            return 'setup';
+        case 'deb-package':
+        case 'rpm-package':
+            return 'package';
+        default:
+            return type;
+    }
 }
 function hashStream(hashName, stream) {
     return new Promise((c, e) => {
@@ -45,7 +130,10 @@ function getEnv(name) {
     return result;
 }
 async function main() {
-    const [, , platform, type, fileName, filePath] = process.argv;
+    const [, , product, os, arch, unprocessedType, fileName, filePath] = process.argv;
+    // getPlatform needs the unprocessedType
+    const platform = getPlatform(product, os, arch, unprocessedType);
+    const type = getRealType(unprocessedType);
     const quality = getEnv('VSCODE_QUALITY');
     const commit = getEnv('BUILD_SOURCEVERSION');
     console.log('Creating asset...');
@@ -83,7 +171,7 @@ async function main() {
     console.log('Asset:', JSON.stringify(asset, null, '  '));
     const client = new cosmos_1.CosmosClient({ endpoint: process.env['AZURE_DOCUMENTDB_ENDPOINT'], key: process.env['AZURE_DOCUMENTDB_MASTERKEY'] });
     const scripts = client.database('builds').container(quality).scripts;
-    await retry_1.retry(() => scripts.storedProcedure('createAsset').execute('', [commit, asset, true]));
+    await (0, retry_1.retry)(() => scripts.storedProcedure('createAsset').execute('', [commit, asset, true]));
 }
 main().then(() => {
     console.log('Asset successfully created');

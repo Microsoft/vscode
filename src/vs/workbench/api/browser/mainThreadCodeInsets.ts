@@ -105,7 +105,7 @@ export class MainThreadEditorInsets implements MainThreadEditorInsetsShape {
 		disposables.add(editor.onDidDispose(remove));
 		disposables.add(webviewZone);
 		disposables.add(webview);
-		disposables.add(webview.onMessage(msg => this._proxy.$onDidReceiveMessage(handle, msg)));
+		disposables.add(webview.onMessage(msg => this._proxy.$onDidReceiveMessage(handle, msg.message)));
 
 		this._insets.set(handle, webviewZone);
 	}

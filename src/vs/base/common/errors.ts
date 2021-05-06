@@ -229,11 +229,11 @@ export class ExpectedError extends Error {
 }
 
 export interface IErrorOptions {
-	actions?: ReadonlyArray<IAction>;
+	actions?: readonly IAction[];
 }
 
 export interface IErrorWithActions {
-	actions?: ReadonlyArray<IAction>;
+	actions?: readonly IAction[];
 }
 
 export function isErrorWithActions(obj: unknown): obj is IErrorWithActions {

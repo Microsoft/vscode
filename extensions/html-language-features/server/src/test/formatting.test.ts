@@ -41,7 +41,7 @@ suite('HTML Embedded Formatting', () => {
 		let result = await format(languageModes, document, range, formatOptions, undefined, { css: true, javascript: true });
 
 		let actual = TextDocument.applyEdits(document, result);
-		assert.equal(actual, expected, message);
+		assert.strictEqual(actual, expected, message);
 	}
 
 	async function assertFormatWithFixture(fixtureName: string, expectedPath: string, options?: any, formatOptions?: FormattingOptions): Promise<void> {

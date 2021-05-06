@@ -12,6 +12,11 @@
 	color: #0066BF;
 }
 
+.vs .quick-input-widget .monaco-list-row.focused .monaco-highlighted-label .highlight,
+.vs .quick-input-widget .monaco-list-row.focused .monaco-highlighted-label .highlight {
+	color: #33B6FF;
+}
+
 .vs-dark .quick-input-widget .monaco-highlighted-label .highlight,
 .vs-dark .quick-input-widget .monaco-highlighted-label .highlight {
 	color: #0097fb;
@@ -20,4 +25,27 @@
 .hc-black .quick-input-widget .monaco-highlighted-label .highlight,
 .hc-black .quick-input-widget .monaco-highlighted-label .highlight {
 	color: #F38518;
+}
+
+.monaco-keybinding > .monaco-keybinding-key {
+	background-color: rgba(221, 221, 221, 0.4);
+	border: solid 1px rgba(204, 204, 204, 0.4);
+	border-bottom-color: rgba(187, 187, 187, 0.4);
+	box-shadow: inset 0 -1px 0 rgba(187, 187, 187, 0.4);
+	color: #555;
+}
+
+.hc-black .monaco-keybinding > .monaco-keybinding-key {
+	background-color: transparent;
+	border: solid 1px rgb(111, 195, 223);
+	box-shadow: none;
+	color: #fff;
+}
+
+.vs-dark .monaco-keybinding > .monaco-keybinding-key {
+	background-color: rgba(128, 128, 128, 0.17);
+	border: solid 1px rgba(51, 51, 51, 0.6);
+	border-bottom-color: rgba(68, 68, 68, 0.6);
+	box-shadow: inset 0 -1px 0 rgba(68, 68, 68, 0.6);
+	color: #ccc;
 }

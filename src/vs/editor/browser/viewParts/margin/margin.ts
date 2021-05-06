@@ -45,7 +45,7 @@ export class Margin extends ViewPart {
 		this._domNode.appendChild(this._glyphMarginBackgroundDomNode);
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		super.dispose();
 	}
 
@@ -55,7 +55,7 @@ export class Margin extends ViewPart {
 
 	// --- begin event handlers
 
-	public onConfigurationChanged(e: viewEvents.ViewConfigurationChangedEvent): boolean {
+	public override onConfigurationChanged(e: viewEvents.ViewConfigurationChangedEvent): boolean {
 		const options = this._context.configuration.options;
 		const layoutInfo = options.get(EditorOption.layoutInfo);
 
@@ -66,7 +66,7 @@ export class Margin extends ViewPart {
 
 		return true;
 	}
-	public onScrollChanged(e: viewEvents.ViewScrollChangedEvent): boolean {
+	public override onScrollChanged(e: viewEvents.ViewScrollChangedEvent): boolean {
 		return super.onScrollChanged(e) || e.scrollTopChanged;
 	}
 

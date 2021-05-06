@@ -9,9 +9,12 @@ import { IModelService } from 'vs/editor/common/services/modelService';
 import { IModeService } from 'vs/editor/common/services/modeService';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { parseSavedSearchEditor } from 'vs/workbench/contrib/searchEditor/browser/searchEditorSerialization';
-import { IBackupFileService } from 'vs/workbench/services/backup/common/backup';
+import { IWorkingCopyBackupService } from 'vs/workbench/services/workingCopy/common/workingCopyBackup';
 import { SearchConfiguration } from './searchEditorInput';
 import { assertIsDefined } from 'vs/base/common/types';
+import { NO_TYPE_ID } from 'vs/workbench/services/workingCopy/common/workingCopy';
+import { createTextBufferFactoryFromStream } from 'vs/editor/common/model/textModel';
+import { SearchEditorScheme, SearchEditorWorkingCopyTypeId } from 'vs/workbench/contrib/searchEditor/browser/constants';
 
 
 export class SearchEditorModel {
@@ -29,14 +32,41 @@ export class SearchEditorModel {
 			{ text: string; modelUri?: never; } |
 			{ backingUri: URI; text?: never; modelUri?: never; })),
 		@IInstantiationService private readonly instantiationService: IInstantiationService,
-		@IBackupFileService readonly backupService: IBackupFileService,
+		@IWorkingCopyBackupService readonly workingCopyBackupService: IWorkingCopyBackupService,
 		@IModelService private readonly modelService: IModelService,
 		@IModeService private readonly modeService: IModeService) {
 		this.onModelResolved = new Promise<ITextModel>(resolve => this.resolveContents = resolve);
 		this.onModelResolved.then(model => this.cachedContentsModel = model);
-		this.ongoingResolve = backupService.resolve(modelUri)
-			.then(backup => modelService.getModel(modelUri) ?? (backup ? modelService.createModel(backup.value, modeService.create('search-result'), modelUri) : undefined))
-			.then(model => { if (model) { this.resolveContents(model); } });
+
+		this.ongoingResolve = (async () => {
+			let discardLegacyBackup = false;
+			let backup = await workingCopyBackupService.resolve({ resource: modelUri, typeId: SearchEditorWorkingCopyTypeId });
+			if (!backup) {
+				// TODO@bpasero remove this fallback after some releases
+				backup = await workingCopyBackupService.resolve({ resource: modelUri, typeId: NO_TYPE_ID });
+
+				if (backup && modelUri.scheme === SearchEditorScheme) {
+					discardLegacyBackup = true;
+				}
+			}
+
+			let model = modelService.getModel(modelUri);
+			if (!model && backup) {
+				const factory = await createTextBufferFactoryFromStream(backup.value);
+
+				if (discardLegacyBackup) {
+					await workingCopyBackupService.discardBackup({ resource: modelUri, typeId: NO_TYPE_ID });
+				}
+
+				model = modelService.createModel(factory, modeService.create('search-result'), modelUri);
+			}
+
+			if (model) {
+				this.resolveContents(model);
+			}
+
+			return model;
+		})();
 	}
 
 	async resolve(): Promise<ITextModel> {

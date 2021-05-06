@@ -250,7 +250,10 @@ export class Table<TRow> implements ISpliceable<TRow>, IThemable, IDisposable {
 
 		this.cachedHeight = height;
 		this.splitview.layout(width);
-		this.list.layout(height - this.virtualDelegate.headerRowHeight, width);
+
+		const listHeight = height - this.virtualDelegate.headerRowHeight;
+		this.list.getHTMLElement().style.height = `${listHeight}px`;
+		this.list.layout(listHeight, width);
 	}
 
 	toggleKeyboardNavigation(): void {
@@ -271,6 +274,14 @@ export class Table<TRow> implements ISpliceable<TRow>, IThemable, IDisposable {
 
 	domFocus(): void {
 		this.list.domFocus();
+	}
+
+	setAnchor(index: number | undefined): void {
+		this.list.setAnchor(index);
+	}
+
+	getAnchor(): number | undefined {
+		return this.list.getAnchor();
 	}
 
 	getSelectedElements(): TRow[] {
@@ -297,12 +308,12 @@ export class Table<TRow> implements ISpliceable<TRow>, IThemable, IDisposable {
 		this.list.focusPrevious(n, loop, browserEvent);
 	}
 
-	focusNextPage(browserEvent?: UIEvent): void {
-		this.list.focusNextPage(browserEvent);
+	focusNextPage(browserEvent?: UIEvent): Promise<void> {
+		return this.list.focusNextPage(browserEvent);
 	}
 
-	focusPreviousPage(browserEvent?: UIEvent): void {
-		this.list.focusPreviousPage(browserEvent);
+	focusPreviousPage(browserEvent?: UIEvent): Promise<void> {
+		return this.list.focusPreviousPage(browserEvent);
 	}
 
 	focusFirst(browserEvent?: UIEvent): void {

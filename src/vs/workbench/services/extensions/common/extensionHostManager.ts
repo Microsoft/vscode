@@ -23,6 +23,7 @@ import { VSBuffer } from 'vs/base/common/buffer';
 import { IExtensionHost, ExtensionHostKind, ActivationKind } from 'vs/workbench/services/extensions/common/extensions';
 import { ExtensionActivationReason } from 'vs/workbench/api/common/extHostExtensionActivator';
 import { CATEGORIES } from 'vs/workbench/common/actions';
+import { timeout } from 'vs/base/common/async';
 
 // Enable to see detailed message communication between window and extension host
 const LOG_EXTENSION_HOST_COMMUNICATION = false;
@@ -70,7 +71,7 @@ export class ExtensionHostManager extends Disposable {
 				return { value: this._createExtensionHostCustomers(protocol) };
 			},
 			(err) => {
-				console.error('Error received from starting extension host');
+				console.error(`Error received from starting extension host (kind: ${this.kind})`);
 				console.error(err);
 				return null;
 			}
@@ -84,7 +85,7 @@ export class ExtensionHostManager extends Disposable {
 		this._resolveAuthorityAttempt = 0;
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		if (this._extensionHost) {
 			this._extensionHost.dispose();
 		}
@@ -290,6 +291,28 @@ export class ExtensionHostManager extends Disposable {
 			return;
 		}
 		return proxy.$startExtensionHost(enabledExtensionIds);
+	}
+
+	public async extensionTestsExecute(): Promise<number> {
+		const proxy = await this._getProxy();
+		if (!proxy) {
+			throw new Error('Could not obtain Extension Host Proxy');
+		}
+		return proxy.$extensionTestsExecute();
+	}
+
+	public async extensionTestsSendExit(exitCode: number): Promise<void> {
+		const proxy = await this._getProxy();
+		if (!proxy) {
+			return;
+		}
+		// This method does not wait for the actual RPC to be confirmed
+		// It waits for the socket to drain (i.e. the message has been sent)
+		// It also times out after 5s in case drain takes too long
+		proxy.$extensionTestsExit(exitCode);
+		if (this._rpcProtocol) {
+			await Promise.race([this._rpcProtocol.drain(), timeout(5000)]);
+		}
 	}
 
 	public async deltaExtensions(toAdd: IExtensionDescription[], toRemove: ExtensionIdentifier[]): Promise<void> {

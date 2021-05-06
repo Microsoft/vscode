@@ -8,6 +8,13 @@
   "engines": {
     "vscode": "^1.5.0"
   },
+  "icon": "media/icon.png",
+  "capabilities": {
+    "virtualWorkspaces": false,
+    "untrustedWorkspaces": {
+      "supported": true
+    }
+  },
   "activationEvents": [
     "*"
   ],
@@ -29,7 +36,7 @@
     "vscode-nls": "^4.0.0"
   },
   "devDependencies": {
-    "@types/node": "^12.19.9"
+    "@types/node": "14.x"
   },
   "prettier": {
     "printWidth": 100,

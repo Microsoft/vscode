@@ -6,7 +6,7 @@
 import * as assert from 'assert';
 import { StandardTokenType } from 'vs/editor/common/modes';
 import * as fs from 'fs';
-// import { getPathFromAmdModule } from 'vs/base/common/amd';
+// import { getPathFromAmdModule } from 'vs/base/test/node/testUtils';
 // import { parse } from 'vs/editor/common/modes/tokenization/typescript';
 import { toStandardTokenType } from 'vs/editor/common/modes/supports/tokenization';
 

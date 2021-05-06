@@ -422,7 +422,7 @@ class HitTestRequest extends BareHitTestRequest {
 		}
 	}
 
-	public toString(): string {
+	public override toString(): string {
 		return `pos(${this.pos.x},${this.pos.y}), editorPos(${this.editorPos.x},${this.editorPos.y}), mouseVerticalOffset: ${this.mouseVerticalOffset}, mouseContentHorizontalOffset: ${this.mouseContentHorizontalOffset}\n\ttarget: ${this.target ? (<HTMLElement>this.target).outerHTML : null}`;
 	}
 

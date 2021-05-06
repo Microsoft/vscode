@@ -10,6 +10,10 @@ import { DomScrollableElement } from 'vs/base/browser/ui/scrollbar/scrollableEle
 
 const $ = dom.$;
 
+export const enum HoverPosition {
+	LEFT, RIGHT, BELOW, ABOVE
+}
+
 export class HoverWidget extends Disposable {
 
 	public readonly containerDomNode: HTMLElement;

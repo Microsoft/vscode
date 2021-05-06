@@ -3,56 +3,48 @@
     "kind": 1,
     "language": "markdown",
     "value": "## tl;dr: Triage Inbox\n\nAll inbox issues but not those that need more information. These issues need to be triaged, e.g assigned to a user or ask for more information",
-    "editable": true,
-    "outputs": []
+    "editable": true
   },
   {
     "kind": 2,
     "language": "github-issues",
     "value": "$inbox -label:\"needs more info\"",
-    "editable": true,
-    "outputs": []
+    "editable": true
   },
   {
     "kind": 1,
     "language": "markdown",
     "value": "##### `Config`: defines the inbox query",
-    "editable": true,
-    "outputs": []
+    "editable": true
   },
   {
     "kind": 2,
     "language": "github-issues",
     "value": "$inbox=repo:microsoft/vscode is:open no:assignee -label:feature-request -label:testplan-item -label:plan-item ",
-    "editable": true,
-    "outputs": []
+    "editable": true
   },
   {
     "kind": 1,
     "language": "markdown",
     "value": "## Inbox tracking and Issue triage",
-    "editable": true,
-    "outputs": []
+    "editable": true
   },
   {
     "kind": 1,
     "language": "markdown",
     "value": "New issues or pull requests submitted by the community are initially triaged by an [automatic classification bot](https://github.com/microsoft/vscode-github-triage-actions/tree/master/classifier-deep). Issues that the bot does not correctly triage are then triaged by a team member. The team rotates the inbox tracker on a weekly basis.\n\nA [mirror](https://github.com/JacksonKearl/testissues/issues) of the VS Code issue stream is available with details about how the bot classifies issues, including feature-area classifications and confidence ratings. Per-category confidence thresholds and feature-area ownership data is maintained in [.github/classifier.json](https://github.com/microsoft/vscode/blob/main/.github/classifier.json). \n\n💡 The bot is being run through a GitHub action that runs every 30 minutes. Give the bot the opportunity to classify an issue before doing it manually.\n\n### Inbox Tracking\n\nThe inbox tracker is responsible for the [global inbox](https://github.com/microsoft/vscode/issues?utf8=%E2%9C%93&q=is%3Aopen+no%3Aassignee+-label%3Afeature-request+-label%3Atestplan-item+-label%3Aplan-item) containing all **open issues and pull requests** that\n- are neither **feature requests** nor **test plan items** nor **plan items** and\n- have **no owner assignment**.\n\nThe **inbox tracker** may perform any step described in our [issue triaging documentation](https://github.com/microsoft/vscode/wiki/Issues-Triaging) but its main responsibility is to route issues to the actual feature area owner.\n\nFeature area owners track the **feature area inbox** containing all **open issues and pull requests** that\n- are personally assigned to them and are not assigned to any milestone\n- are labeled with their feature area label and are not assigned to any milestone.\nThis secondary triage may involve any of the steps described in our [issue triaging documentation](https://github.com/microsoft/vscode/wiki/Issues-Triaging) and results in a fully triaged or closed issue.\n\nThe [github triage extension](https://github.com/microsoft/vscode-github-triage-extension) can be used to assist with triaging — it provides a \"Command Palette\"-style list of triaging actions like assignment, labeling, and triggers for various bot actions.",
-    "editable": true,
-    "outputs": []
+    "editable": true
   },
   {
     "kind": 1,
     "language": "markdown",
     "value": "## All Inbox Items\n\nAll issues that have no assignee and that have neither **feature requests** nor **test plan items** nor **plan items**.",
-    "editable": true,
-    "outputs": []
+    "editable": true
   },
   {
     "kind": 2,
     "language": "github-issues",
     "value": "$inbox",
-    "editable": true,
-    "outputs": []
+    "editable": true
   }
 ]

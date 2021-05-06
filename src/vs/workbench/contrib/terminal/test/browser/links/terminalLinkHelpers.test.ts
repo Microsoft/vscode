@@ -15,7 +15,7 @@ suite('Workbench - Terminal Link Helpers', () => {
 				{ text: '.com/f/', width: 8 }
 			]);
 			const bufferRange = convertLinkRangeToBuffer(lines, 11, { startColumn: 4, startLineNumber: 1, endColumn: 19, endLineNumber: 1 }, 0);
-			assert.deepEqual(bufferRange, {
+			assert.deepStrictEqual(bufferRange, {
 				start: { x: 4, y: 1 },
 				end: { x: 7, y: 2 }
 			});
@@ -26,7 +26,7 @@ suite('Workbench - Terminal Link Helpers', () => {
 				{ text: 't.com/f/', width: 9 }
 			]);
 			const bufferRange = convertLinkRangeToBuffer(lines, 11, { startColumn: 4, startLineNumber: 1, endColumn: 19, endLineNumber: 1 }, 0);
-			assert.deepEqual(bufferRange, {
+			assert.deepStrictEqual(bufferRange, {
 				start: { x: 4 + 1, y: 1 },
 				end: { x: 7 + 1, y: 2 }
 			});
@@ -37,7 +37,7 @@ suite('Workbench - Terminal Link Helpers', () => {
 				{ text: 't.com/f/', width: 9 }
 			]);
 			const bufferRange = convertLinkRangeToBuffer(lines, 11, { startColumn: 4 + 1, startLineNumber: 1, endColumn: 19 + 1, endLineNumber: 1 }, 0);
-			assert.deepEqual(bufferRange, {
+			assert.deepStrictEqual(bufferRange, {
 				start: { x: 4, y: 1 },
 				end: { x: 7, y: 2 }
 			});
@@ -48,7 +48,7 @@ suite('Workbench - Terminal Link Helpers', () => {
 				{ text: '.com/文/', width: 8 }
 			]);
 			const bufferRange = convertLinkRangeToBuffer(lines, 11, { startColumn: 4, startLineNumber: 1, endColumn: 19, endLineNumber: 1 }, 0);
-			assert.deepEqual(bufferRange, {
+			assert.deepStrictEqual(bufferRange, {
 				start: { x: 4, y: 1 },
 				end: { x: 7 + 1, y: 2 }
 			});
@@ -59,7 +59,7 @@ suite('Workbench - Terminal Link Helpers', () => {
 				{ text: 't.com/文/', width: 9 }
 			]);
 			const bufferRange = convertLinkRangeToBuffer(lines, 11, { startColumn: 4, startLineNumber: 1, endColumn: 19, endLineNumber: 1 }, 0);
-			assert.deepEqual(bufferRange, {
+			assert.deepStrictEqual(bufferRange, {
 				start: { x: 4 + 1, y: 1 },
 				end: { x: 7 + 2, y: 2 }
 			});
@@ -70,7 +70,7 @@ suite('Workbench - Terminal Link Helpers', () => {
 				{ text: 't.com/文/', width: 9 }
 			]);
 			const bufferRange = convertLinkRangeToBuffer(lines, 11, { startColumn: 4 + 1, startLineNumber: 1, endColumn: 19 + 1, endLineNumber: 1 }, 0);
-			assert.deepEqual(bufferRange, {
+			assert.deepStrictEqual(bufferRange, {
 				start: { x: 4, y: 1 },
 				end: { x: 7 + 1, y: 2 }
 			});
@@ -82,7 +82,7 @@ suite('Workbench - Terminal Link Helpers', () => {
 				{ text: '.com/f/', width: 8 }
 			]);
 			const bufferRange = convertLinkRangeToBuffer(lines, 11, { startColumn: 15, startLineNumber: 1, endColumn: 30, endLineNumber: 1 }, 0);
-			assert.deepEqual(bufferRange, {
+			assert.deepStrictEqual(bufferRange, {
 				start: { x: 4, y: 2 },
 				end: { x: 7, y: 3 }
 			});
@@ -94,7 +94,7 @@ suite('Workbench - Terminal Link Helpers', () => {
 				{ text: 't.com/f/', width: 9 }
 			]);
 			const bufferRange = convertLinkRangeToBuffer(lines, 11, { startColumn: 15, startLineNumber: 1, endColumn: 30, endLineNumber: 1 }, 0);
-			assert.deepEqual(bufferRange, {
+			assert.deepStrictEqual(bufferRange, {
 				start: { x: 4 + 1, y: 2 },
 				end: { x: 7 + 1, y: 3 }
 			});
@@ -106,7 +106,7 @@ suite('Workbench - Terminal Link Helpers', () => {
 				{ text: '.com/文/', width: 8 }
 			]);
 			const bufferRange = convertLinkRangeToBuffer(lines, 11, { startColumn: 15, startLineNumber: 1, endColumn: 30, endLineNumber: 1 }, 0);
-			assert.deepEqual(bufferRange, {
+			assert.deepStrictEqual(bufferRange, {
 				start: { x: 4, y: 2 },
 				end: { x: 7 + 1, y: 3 }
 			});
@@ -118,7 +118,7 @@ suite('Workbench - Terminal Link Helpers', () => {
 				{ text: 't.com/文/', width: 9 }
 			]);
 			const bufferRange = convertLinkRangeToBuffer(lines, 11, { startColumn: 15, startLineNumber: 1, endColumn: 30, endLineNumber: 1 }, 0);
-			assert.deepEqual(bufferRange, {
+			assert.deepStrictEqual(bufferRange, {
 				start: { x: 4 + 1, y: 2 },
 				end: { x: 7 + 2, y: 3 }
 			});
@@ -131,7 +131,7 @@ suite('Workbench - Terminal Link Helpers', () => {
 			]);
 			const bufferRange = convertLinkRangeToBuffer(lines, 11, { startColumn: 15, startLineNumber: 1, endColumn: 30, endLineNumber: 1 }, 0);
 			// This test ensures that the start offset is applies to the end before it's counted
-			assert.deepEqual(bufferRange, {
+			assert.deepStrictEqual(bufferRange, {
 				start: { x: 4 + 4, y: 2 },
 				end: { x: 7 + 4, y: 3 }
 			});
@@ -145,7 +145,7 @@ suite('Workbench - Terminal Link Helpers', () => {
 			]);
 			const bufferRange = convertLinkRangeToBuffer(lines, 11, { startColumn: 15, startLineNumber: 1, endColumn: 31, endLineNumber: 1 }, 0);
 			// This test ensures that the start offset is applies to the end before it's counted
-			assert.deepEqual(bufferRange, {
+			assert.deepStrictEqual(bufferRange, {
 				start: { x: 4 + 4, y: 2 },
 				end: { x: 2, y: 4 }
 			});
@@ -157,7 +157,7 @@ const TEST_WIDE_CHAR = '文';
 const TEST_NULL_CHAR = 'C';
 
 function createBufferLineArray(lines: { text: string, width: number }[]): IBufferLine[] {
-	let result: IBufferLine[] = [];
+	const result: IBufferLine[] = [];
 	lines.forEach((l, i) => {
 		result.push(new TestBufferLine(
 			l.text,
@@ -178,9 +178,9 @@ class TestBufferLine implements IBufferLine {
 	}
 	getCell(x: number): IBufferCell | undefined {
 		// Create a fake line of cells and use that to resolve the width
-		let cells: string[] = [];
+		const cells: string[] = [];
 		let wideNullCellOffset = 0; // There is no null 0 width char after a wide char
-		let emojiOffset = 0; // Skip chars as emoji are multiple characters
+		const emojiOffset = 0; // Skip chars as emoji are multiple characters
 		for (let i = 0; i <= x - wideNullCellOffset + emojiOffset; i++) {
 			let char = this._text.charAt(i);
 			if (char === '\ud83d') {

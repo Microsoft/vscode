@@ -18,6 +18,12 @@
   "main": "./client/out/node/cssClientMain",
   "browser": "./client/dist/browser/cssClientMain",
   "enableProposedApi": true,
+  "capabilities": {
+    "virtualWorkspaces": true,
+    "untrustedWorkspaces": {
+      "supported": true
+    }
+  },
   "scripts": {
     "compile": "gulp compile-extension:css-language-features-client compile-extension:css-language-features-server",
     "watch": "gulp watch-extension:css-language-features-client watch-extension:css-language-features-server",
@@ -847,7 +853,7 @@
     "vscode-uri": "^3.0.2"
   },
   "devDependencies": {
-    "@types/node": "^12.19.9"
+    "@types/node": "14.x"
   },
   "repository": {
     "type": "git",

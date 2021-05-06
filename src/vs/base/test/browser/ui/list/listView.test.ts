@@ -31,10 +31,10 @@ suite('ListView', function () {
 		const listView = new ListView<number>(element, delegate, [renderer]);
 		listView.layout(200);
 
-		assert.equal(templatesCount, 0, 'no templates have been allocated');
+		assert.strictEqual(templatesCount, 0, 'no templates have been allocated');
 		listView.splice(0, 0, range(100));
-		assert.equal(templatesCount, 10, 'some templates have been allocated');
+		assert.strictEqual(templatesCount, 10, 'some templates have been allocated');
 		listView.dispose();
-		assert.equal(templatesCount, 0, 'all templates have been disposed');
+		assert.strictEqual(templatesCount, 0, 'all templates have been disposed');
 	});
 });

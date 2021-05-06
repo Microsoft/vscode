@@ -48,7 +48,6 @@ export function deleteFile(file: vscode.Uri): Thenable<boolean> {
 
 export function closeAllEditors(): Thenable<any> {
 	return vscode.commands.executeCommand('workbench.action.closeAllEditors');
-
 }
 
 export function withRandomFileEditor(initialContents: string, fileExtension: string = 'txt', run: (editor: vscode.TextEditor, doc: vscode.TextDocument) => Thenable<void>): Thenable<boolean> {

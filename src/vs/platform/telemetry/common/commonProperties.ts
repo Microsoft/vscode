@@ -4,14 +4,23 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { IFileService } from 'vs/platform/files/common/files';
-import { isLinuxSnap, PlatformToString, platform } from 'vs/base/common/platform';
+import { isLinuxSnap, PlatformToString, platform, Platform } from 'vs/base/common/platform';
 import { platform as nodePlatform, env } from 'vs/base/common/process';
 import { generateUuid } from 'vs/base/common/uuid';
 import { URI } from 'vs/base/common/uri';
 
+function getPlatformDetail(hostname: string): string | undefined {
+	if (platform === Platform.Linux && /^penguin(\.|$)/i.test(hostname)) {
+		return 'chromebook';
+	}
+
+	return undefined;
+}
+
 export async function resolveCommonProperties(
 	fileService: IFileService,
 	release: string,
+	hostname: string,
 	arch: string,
 	commit: string | undefined,
 	version: string | undefined,
@@ -71,6 +80,13 @@ export async function resolveCommonProperties(
 	if (isLinuxSnap) {
 		// __GDPR__COMMON__ "common.snap" : { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
 		result['common.snap'] = 'true';
+	}
+
+	const platformDetail = getPlatformDetail(hostname);
+
+	if (platformDetail) {
+		// __GDPR__COMMON__ "common.platformDetail" : { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
+		result['common.platformDetail'] = platformDetail;
 	}
 
 	try {

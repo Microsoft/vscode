@@ -5,10 +5,15 @@
 
 import type { Suite } from 'mocha';
 import { join } from 'vs/base/common/path';
+import { URI } from 'vs/base/common/uri';
 import { generateUuid } from 'vs/base/common/uuid';
 
 export function getRandomTestPath(tmpdir: string, ...segments: string[]): string {
 	return join(tmpdir, ...segments, generateUuid());
+}
+
+export function getPathFromAmdModule(requirefn: typeof require, relativePath: string): string {
+	return URI.parse(requirefn.toUrl(relativePath)).fsPath;
 }
 
 export function flakySuite(title: string, fn: (this: Suite) => void): Suite {

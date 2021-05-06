@@ -30,8 +30,7 @@
 }
 
 .monaco-hover .markdown-hover > .hover-contents:not(.code-hover-contents) hr {
-	/* This is a strange rule but it avoids https://github.com/microsoft/vscode/issues/96795, just 100vw on its own caused the actual hover width to increase */
-	min-width: calc(100% + 100vw);
+	min-width: 100%;
 }
 
 .monaco-hover p,

@@ -38,7 +38,7 @@ suite('MainThreadDiagnostics', function () {
 			},
 			markerService,
 			new class extends mock<IUriIdentityService>() {
-				asCanonicalUri(uri: URI) { return uri; }
+				override asCanonicalUri(uri: URI) { return uri; }
 			}
 		);
 

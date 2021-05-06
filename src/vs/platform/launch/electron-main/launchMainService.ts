@@ -119,10 +119,11 @@ export class LaunchMainService implements ILaunchMainService {
 		let usedWindows: ICodeWindow[] = [];
 
 		const waitMarkerFileURI = args.wait && args.waitMarkerFilePath ? URI.file(args.waitMarkerFilePath) : undefined;
+		const remoteAuthority = args.remote || undefined;
 
 		// Special case extension development
 		if (!!args.extensionDevelopmentPath) {
-			this.windowsMainService.openExtensionDevelopmentHostWindow(args.extensionDevelopmentPath, { context, cli: args, userEnv, waitMarkerFileURI });
+			this.windowsMainService.openExtensionDevelopmentHostWindow(args.extensionDevelopmentPath, { context, cli: args, userEnv, waitMarkerFileURI, remoteAuthority });
 		}
 
 		// Start without file/folder arguments
@@ -163,7 +164,8 @@ export class LaunchMainService implements ILaunchMainService {
 					userEnv,
 					forceNewWindow: true,
 					forceEmpty: true,
-					waitMarkerFileURI
+					waitMarkerFileURI,
+					remoteAuthority
 				});
 			}
 
@@ -175,7 +177,7 @@ export class LaunchMainService implements ILaunchMainService {
 
 					usedWindows = [lastActive];
 				} else {
-					usedWindows = this.windowsMainService.open({ context, cli: args, forceEmpty: true });
+					usedWindows = this.windowsMainService.open({ context, cli: args, forceEmpty: true, remoteAuthority });
 				}
 			}
 		}
@@ -193,7 +195,8 @@ export class LaunchMainService implements ILaunchMainService {
 				addMode: args.add,
 				noRecentEntry: !!args['skip-add-to-recently-opened'],
 				waitMarkerFileURI,
-				gotoLineMode: args.goto
+				gotoLineMode: args.goto,
+				remoteAuthority
 			});
 		}
 

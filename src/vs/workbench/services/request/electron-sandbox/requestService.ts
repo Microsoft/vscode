@@ -20,7 +20,7 @@ export class NativeRequestService extends RequestService {
 		super(configurationService, logService);
 	}
 
-	async resolveProxy(url: string): Promise<string | undefined> {
+	override async resolveProxy(url: string): Promise<string | undefined> {
 		return this.nativeHostService.resolveProxy(url);
 	}
 }

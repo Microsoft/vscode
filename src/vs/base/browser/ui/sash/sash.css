@@ -101,9 +101,24 @@
 	right: calc(var(--sash-size) * -1);
 }
 
-.monaco-sash {
+.monaco-sash:before {
+	content: '';
+	pointer-events: none;
+	position: absolute;
+	width: 100%;
+	height: 100%;
 	transition: background-color 0.1s ease-out;
 	background: transparent;
+}
+
+.monaco-sash.vertical:before {
+	width: var(--sash-hover-size);
+	left: calc(50% - (var(--sash-hover-size) / 2));
+}
+
+.monaco-sash.horizontal:before {
+	height: var(--sash-hover-size);
+	top: calc(50% - (var(--sash-hover-size) / 2));
 }
 
 /** Debug **/

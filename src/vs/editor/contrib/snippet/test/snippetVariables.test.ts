@@ -21,7 +21,7 @@ import { toWorkspaceFolders } from 'vs/platform/workspaces/common/workspaces';
 suite('Snippet Variables Resolver', function () {
 
 	const labelService = new class extends mock<ILabelService>() {
-		getUriLabel(uri: URI) {
+		override getUriLabel(uri: URI) {
 			return uri.fsPath;
 		}
 	};
@@ -92,7 +92,7 @@ suite('Snippet Variables Resolver', function () {
 	test('Path delimiters in code snippet variables aren\'t specific to remote OS #76840', function () {
 
 		const labelService = new class extends mock<ILabelService>() {
-			getUriLabel(uri: URI) {
+			override getUriLabel(uri: URI) {
 				return uri.fsPath.replace(/\/|\\/g, '|');
 			}
 		};
@@ -310,6 +310,7 @@ suite('Snippet Variables Resolver', function () {
 			_throw = () => { throw new Error(); };
 			onDidChangeWorkbenchState = this._throw;
 			onDidChangeWorkspaceName = this._throw;
+			onWillChangeWorkspaceFolders = this._throw;
 			onDidChangeWorkspaceFolders = this._throw;
 			getCompleteWorkspace = this._throw;
 			getWorkspace(): IWorkspace { return workspace; }
@@ -349,7 +350,7 @@ suite('Snippet Variables Resolver', function () {
 		// Mock a label service (only coded for file uris)
 		const workspaceLabelService = ((rootPath: string): ILabelService => {
 			const labelService = new class extends mock<ILabelService>() {
-				getUriLabel(uri: URI, options: { relative?: boolean } = {}) {
+				override getUriLabel(uri: URI, options: { relative?: boolean } = {}) {
 					const rootFsPath = URI.file(rootPath).fsPath + sep;
 					const fsPath = uri.fsPath;
 					if (options.relative && rootPath && fsPath.startsWith(rootFsPath)) {

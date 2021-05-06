@@ -159,6 +159,10 @@ const presentation: IJSONSchema = {
 			type: 'string',
 			description: nls.localize('JsonSchema.tasks.presentation.group', 'Controls whether the task is executed in a specific terminal group using split panes.')
 		},
+		close: {
+			type: 'boolean',
+			description: nls.localize('JsonSchema.tasks.presentation.close', 'Controls whether the terminal the task runs in is closed when the task exits.')
+		}
 	}
 };
 

@@ -131,14 +131,14 @@ export class ReplEvaluationResult extends ExpressionContainer implements IReplEl
 		super(undefined, undefined, 0, generateUuid());
 	}
 
-	async evaluateExpression(expression: string, session: IDebugSession | undefined, stackFrame: IStackFrame | undefined, context: string): Promise<boolean> {
+	override async evaluateExpression(expression: string, session: IDebugSession | undefined, stackFrame: IStackFrame | undefined, context: string): Promise<boolean> {
 		const result = await super.evaluateExpression(expression, session, stackFrame, context);
 		this._available = result;
 
 		return result;
 	}
 
-	toString(): string {
+	override toString(): string {
 		return `${this.value}`;
 	}
 }

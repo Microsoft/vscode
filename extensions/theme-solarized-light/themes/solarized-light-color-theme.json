@@ -350,7 +350,7 @@
 
 		"list.activeSelectionBackground": "#DFCA88",
 		"list.activeSelectionForeground": "#6C6C6C",
-		"quickInput.list.focusBackground": "#DFCA8866",
+		"quickInputList.focusBackground": "#DFCA8866",
 		"list.hoverBackground": "#DFCA8844",
 		"list.inactiveSelectionBackground": "#D1CBB8",
 		"list.highlightForeground": "#B58900",
@@ -465,6 +465,7 @@
 		"statusBar.noFolderBackground": "#EEE8D5",
 		// "statusBar.foreground": "",
 		"statusBarItem.remoteBackground": "#AC9D57",
+		"ports.iconRunningProcessForeground": "#2AA19899",
 		"statusBarItem.prominentBackground": "#DDD6C1",
 		"statusBarItem.prominentHoverBackground": "#DDD6C199",
 		// "statusBarItem.activeBackground": "",

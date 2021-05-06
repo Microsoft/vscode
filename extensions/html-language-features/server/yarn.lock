@@ -7,25 +7,25 @@
   resolved "https://registry.yarnpkg.com/@types/mocha/-/mocha-8.2.0.tgz#3eb56d13a1de1d347ecb1957c6860c911704bc44"
   integrity sha512-/Sge3BymXo4lKc31C8OINJgXLaw+7vL1/L1pGiBNpGrBiT8FQiaFpSYV0uhTaG4y78vcMBTMFsWaHDvuD+xGzQ==
 
-"@types/node@^12.19.9":
-  version "12.19.9"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-12.19.9.tgz#990ad687ad8b26ef6dcc34a4f69c33d40c95b679"
-  integrity sha512-yj0DOaQeUrk3nJ0bd3Y5PeDRJ6W0r+kilosLA+dzF3dola/o9hxhMSg2sFvVcA2UHS5JSOsZp4S0c1OEXc4m1Q==
+"@types/node@14.x":
+  version "14.14.43"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-14.14.43.tgz#26bcbb0595b305400e8ceaf9a127a7f905ae49c8"
+  integrity sha512-3pwDJjp1PWacPTpH0LcfhgjvurQvrZFBrC6xxjaUEZ7ifUtT32jtjPxEMMblpqd2Mvx+k8haqQJLQxolyGN/cQ==
 
-vscode-css-languageservice@^5.1.0:
-  version "5.1.0"
-  resolved "https://registry.yarnpkg.com/vscode-css-languageservice/-/vscode-css-languageservice-5.1.0.tgz#cd172d13e9e7ae23ba567c73778aee10475ff716"
-  integrity sha512-iLHd/WjRKgaZBXMNeUooHG+r0qlhJBkXa+3MpQQR6Rpm928cis/3OV2Mp1R80yAQevIMeDL32RIJfHoJCT/RRg==
+vscode-css-languageservice@^5.1.1:
+  version "5.1.1"
+  resolved "https://registry.yarnpkg.com/vscode-css-languageservice/-/vscode-css-languageservice-5.1.1.tgz#d68a22ea0b34a8356c169cafc7d32564c2ff6e87"
+  integrity sha512-QW0oe/g2y5E2AbVqY7FJNr2Q8uHiAHNSFpptI6xB8Y0KgzVKppOcIVrgmBNzXhFp9IswAwptkdqr8ExSJbqPkQ==
   dependencies:
     vscode-languageserver-textdocument "^1.0.1"
     vscode-languageserver-types "^3.16.0"
     vscode-nls "^5.0.0"
     vscode-uri "^3.0.2"
 
-vscode-html-languageservice@^4.0.1:
-  version "4.0.1"
-  resolved "https://registry.yarnpkg.com/vscode-html-languageservice/-/vscode-html-languageservice-4.0.1.tgz#6fb50fcf782937dffe0de55e12a8c43c817ec0f1"
-  integrity sha512-CZtnuQoDwZdmPLKLMC6RqFlRTw0jvZK71l53u5ZIM3hSoVKAqW33gahBVNFpC3TPFxZSx0jqEhBTLf37RUMkWg==
+vscode-html-languageservice@^4.0.3:
+  version "4.0.3"
+  resolved "https://registry.yarnpkg.com/vscode-html-languageservice/-/vscode-html-languageservice-4.0.3.tgz#3b7e7d3cfee75d47da0181dd638b5f459456a913"
+  integrity sha512-34KPIgRHVInT+TiFNmfiPFDrUAOOLuySNP2h0pMxBu1ObAbSixSqB3BMQFxIHz9hrGd3X0DEvi5YkobDxs4rWw==
   dependencies:
     vscode-languageserver-textdocument "^1.0.1"
     vscode-languageserver-types "^3.16.0"

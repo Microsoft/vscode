@@ -16,7 +16,16 @@ const showCommand = 'simpleBrowser.show';
 
 const enabledHosts = new Set<string>([
 	'localhost',
-	'127.0.0.1'
+	// localhost IPv4
+	'127.0.0.1',
+	// localhost IPv6
+	'0:0:0:0:0:0:0:1',
+	'::1',
+	// all interfaces IPv4
+	'0.0.0.0',
+	// all interfaces IPv6
+	'0:0:0:0:0:0:0:0',
+	'::'
 ]);
 
 const openerId = 'simpleBrowser.open';

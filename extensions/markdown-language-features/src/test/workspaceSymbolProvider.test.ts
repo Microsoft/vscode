@@ -18,7 +18,7 @@ suite('markdown.WorkspaceSymbolProvider', () => {
 	test('Should not return anything for empty workspace', async () => {
 		const provider = new MarkdownWorkspaceSymbolProvider(symbolProvider, new InMemoryWorkspaceMarkdownDocumentProvider([]));
 
-		assert.deepEqual(await provider.provideWorkspaceSymbols(''), []);
+		assert.deepStrictEqual(await provider.provideWorkspaceSymbols(''), []);
 	});
 
 	test('Should return symbols from workspace with one markdown file', async () => {

@@ -8,66 +8,67 @@ This project incorporates components from the projects listed below. The origina
 1.	 JuliaEditorSupport/atom-language-julia version 0.21.0 (https://github.com/JuliaEditorSupport/atom-language-julia)
 2.	atom/language-clojure version 0.22.7 (https://github.com/atom/language-clojure)
 3.	atom/language-coffee-script version 0.49.3 (https://github.com/atom/language-coffee-script)
-4.	atom/language-java version 0.32.1 (https://github.com/atom/language-java)
-5.	atom/language-sass version 0.62.1 (https://github.com/atom/language-sass)
-6.	atom/language-shellscript version 0.26.0 (https://github.com/atom/language-shellscript)
-7.	atom/language-xml version 0.35.2 (https://github.com/atom/language-xml)
-8.	better-go-syntax version 1.0.0 (https://github.com/jeff-hykin/better-go-syntax/ )
-9.	Colorsublime-Themes version 0.1.0 (https://github.com/Colorsublime/Colorsublime-Themes)
-10.	daaain/Handlebars version 1.8.0 (https://github.com/daaain/Handlebars)
-11.	davidrios/pug-tmbundle (https://github.com/davidrios/pug-tmbundle)
-12.	definitelytyped (https://github.com/DefinitelyTyped/DefinitelyTyped)
-13.	demyte/language-cshtml version 0.3.0 (https://github.com/demyte/language-cshtml)
-14.	Document Object Model version 4.0.0 (https://www.w3.org/DOM/)
-15.	dotnet/csharp-tmLanguage version 0.1.0 (https://github.com/dotnet/csharp-tmLanguage)
-16.	expand-abbreviation version 0.5.8 (https://github.com/emmetio/expand-abbreviation)
-17.	fadeevab/make.tmbundle (https://github.com/fadeevab/make.tmbundle)
-18.	freebroccolo/atom-language-swift (https://github.com/freebroccolo/atom-language-swift)
-19.	HTML 5.1 W3C Working Draft version 08 October 2015 (http://www.w3.org/TR/2015/WD-html51-20151008/)
-20.	Ikuyadeu/vscode-R version 1.3.0 (https://github.com/Ikuyadeu/vscode-R)
-21.	insane version 2.6.2 (https://github.com/bevacqua/insane)
-22.	Ionic documentation version 1.2.4 (https://github.com/ionic-team/ionic-site)
-23.	ionide/ionide-fsgrammar (https://github.com/ionide/ionide-fsgrammar)
-24.	jeff-hykin/cpp-textmate-grammar version 1.12.11 (https://github.com/jeff-hykin/cpp-textmate-grammar)
-25.	jeff-hykin/cpp-textmate-grammar version 1.15.5 (https://github.com/jeff-hykin/cpp-textmate-grammar)
-26.	js-beautify version 1.6.8 (https://github.com/beautify-web/js-beautify)
-27.	Jxck/assert version 1.0.0 (https://github.com/Jxck/assert)
-28.	language-docker (https://github.com/moby/moby)
-29.	language-less version 0.34.2 (https://github.com/atom/language-less)
-30.	language-php version 0.46.0 (https://github.com/atom/language-php)
-31.	MagicStack/MagicPython version 1.1.1 (https://github.com/MagicStack/MagicPython)
-32.	marked version 1.1.0 (https://github.com/markedjs/marked)
-33.	mdn-data version 1.1.12 (https://github.com/mdn/data)
-34.	microsoft/TypeScript-TmLanguage version 0.0.1 (https://github.com/microsoft/TypeScript-TmLanguage)
-35.	microsoft/vscode-JSON.tmLanguage (https://github.com/microsoft/vscode-JSON.tmLanguage)
-36.	microsoft/vscode-markdown-tm-grammar version 1.0.0 (https://github.com/microsoft/vscode-markdown-tm-grammar)
-37.	microsoft/vscode-mssql version 1.9.0 (https://github.com/microsoft/vscode-mssql)
-38.	mmims/language-batchfile version 0.7.5 (https://github.com/mmims/language-batchfile)
-39.	octref/language-css version 0.42.11 (https://github.com/octref/language-css)
-40.	PowerShell/EditorSyntax version 1.0.0 (https://github.com/PowerShell/EditorSyntax)
-41.	rust-syntax version 0.4.3 (https://github.com/dustypomerleau/rust-syntax)
-42.	seti-ui version 0.1.0 (https://github.com/jesseweed/seti-ui)
-43.	shaders-tmLanguage version 0.1.0 (https://github.com/tgjones/shaders-tmLanguage)
-44.	textmate/asp.vb.net.tmbundle (https://github.com/textmate/asp.vb.net.tmbundle)
-45.	textmate/c.tmbundle (https://github.com/textmate/c.tmbundle)
-46.	textmate/diff.tmbundle (https://github.com/textmate/diff.tmbundle)
-47.	textmate/git.tmbundle (https://github.com/textmate/git.tmbundle)
-48.	textmate/groovy.tmbundle (https://github.com/textmate/groovy.tmbundle)
-49.	textmate/html.tmbundle (https://github.com/textmate/html.tmbundle)
-50.	textmate/ini.tmbundle (https://github.com/textmate/ini.tmbundle)
-51.	textmate/javascript.tmbundle (https://github.com/textmate/javascript.tmbundle)
-52.	textmate/lua.tmbundle (https://github.com/textmate/lua.tmbundle)
-53.	textmate/markdown.tmbundle (https://github.com/textmate/markdown.tmbundle)
-54.	textmate/perl.tmbundle (https://github.com/textmate/perl.tmbundle)
-55.	textmate/ruby.tmbundle (https://github.com/textmate/ruby.tmbundle)
-56.	textmate/yaml.tmbundle (https://github.com/textmate/yaml.tmbundle)
-57.	TypeScript-TmLanguage version 0.1.8 (https://github.com/microsoft/TypeScript-TmLanguage)
-58.	TypeScript-TmLanguage version 1.0.0 (https://github.com/microsoft/TypeScript-TmLanguage)
-59.	Unicode version 12.0.0 (https://home.unicode.org/)
-60.	vscode-codicons version 0.0.14 (https://github.com/microsoft/vscode-codicons)
-61.	vscode-logfile-highlighter version 2.11.0 (https://github.com/emilast/vscode-logfile-highlighter)
-62.	vscode-swift version 0.0.1 (https://github.com/owensd/vscode-swift)
-63.	Web Background Synchronization (https://github.com/WICG/background-sync)
+4.	atom/language-css version 0.44.4 (https://github.com/atom/language-css)
+5.	atom/language-java version 0.32.1 (https://github.com/atom/language-java)
+6.	atom/language-sass version 0.61.4 (https://github.com/atom/language-sass)
+7.	atom/language-shellscript version 0.26.0 (https://github.com/atom/language-shellscript)
+8.	atom/language-xml version 0.35.2 (https://github.com/atom/language-xml)
+9.	better-go-syntax version 1.0.0 (https://github.com/jeff-hykin/better-go-syntax/ )
+10.	Colorsublime-Themes version 0.1.0 (https://github.com/Colorsublime/Colorsublime-Themes)
+11.	daaain/Handlebars version 1.8.0 (https://github.com/daaain/Handlebars)
+12.	davidrios/pug-tmbundle (https://github.com/davidrios/pug-tmbundle)
+13.	definitelytyped (https://github.com/DefinitelyTyped/DefinitelyTyped)
+14.	demyte/language-cshtml version 0.3.0 (https://github.com/demyte/language-cshtml)
+15.	Document Object Model version 4.0.0 (https://www.w3.org/DOM/)
+16.	dotnet/csharp-tmLanguage version 0.1.0 (https://github.com/dotnet/csharp-tmLanguage)
+17.	expand-abbreviation version 0.5.8 (https://github.com/emmetio/expand-abbreviation)
+18.	fadeevab/make.tmbundle (https://github.com/fadeevab/make.tmbundle)
+19.	freebroccolo/atom-language-swift (https://github.com/freebroccolo/atom-language-swift)
+20.	HTML 5.1 W3C Working Draft version 08 October 2015 (http://www.w3.org/TR/2015/WD-html51-20151008/)
+21.	Ikuyadeu/vscode-R version 1.3.0 (https://github.com/Ikuyadeu/vscode-R)
+22.	insane version 2.6.2 (https://github.com/bevacqua/insane)
+23.	Ionic documentation version 1.2.4 (https://github.com/ionic-team/ionic-site)
+24.	ionide/ionide-fsgrammar (https://github.com/ionide/ionide-fsgrammar)
+25.	jeff-hykin/cpp-textmate-grammar version 1.12.11 (https://github.com/jeff-hykin/cpp-textmate-grammar)
+26.	jeff-hykin/cpp-textmate-grammar version 1.15.5 (https://github.com/jeff-hykin/cpp-textmate-grammar)
+27.	js-beautify version 1.6.8 (https://github.com/beautify-web/js-beautify)
+28.	Jxck/assert version 1.0.0 (https://github.com/Jxck/assert)
+29.	language-docker (https://github.com/moby/moby)
+30.	language-less version 0.34.2 (https://github.com/atom/language-less)
+31.	language-php version 0.46.0 (https://github.com/atom/language-php)
+32.	MagicStack/MagicPython version 1.1.1 (https://github.com/MagicStack/MagicPython)
+33.	marked version 1.1.0 (https://github.com/markedjs/marked)
+34.	mdn-data version 1.1.12 (https://github.com/mdn/data)
+35.	microsoft/TypeScript-TmLanguage version 0.0.1 (https://github.com/microsoft/TypeScript-TmLanguage)
+36.	microsoft/vscode-JSON.tmLanguage (https://github.com/microsoft/vscode-JSON.tmLanguage)
+37.	microsoft/vscode-markdown-tm-grammar version 1.0.0 (https://github.com/microsoft/vscode-markdown-tm-grammar)
+38.	microsoft/vscode-mssql version 1.9.0 (https://github.com/microsoft/vscode-mssql)
+39.	mmims/language-batchfile version 0.7.5 (https://github.com/mmims/language-batchfile)
+40.	NVIDIA/cuda-cpp-grammar (https://github.com/NVIDIA/cuda-cpp-grammar)
+41.	PowerShell/EditorSyntax version 1.0.0 (https://github.com/PowerShell/EditorSyntax)
+42.	rust-syntax version 0.4.3 (https://github.com/dustypomerleau/rust-syntax)
+43.	seti-ui version 0.1.0 (https://github.com/jesseweed/seti-ui)
+44.	shaders-tmLanguage version 0.1.0 (https://github.com/tgjones/shaders-tmLanguage)
+45.	textmate/asp.vb.net.tmbundle (https://github.com/textmate/asp.vb.net.tmbundle)
+46.	textmate/c.tmbundle (https://github.com/textmate/c.tmbundle)
+47.	textmate/diff.tmbundle (https://github.com/textmate/diff.tmbundle)
+48.	textmate/git.tmbundle (https://github.com/textmate/git.tmbundle)
+49.	textmate/groovy.tmbundle (https://github.com/textmate/groovy.tmbundle)
+50.	textmate/html.tmbundle (https://github.com/textmate/html.tmbundle)
+51.	textmate/ini.tmbundle (https://github.com/textmate/ini.tmbundle)
+52.	textmate/javascript.tmbundle (https://github.com/textmate/javascript.tmbundle)
+53.	textmate/lua.tmbundle (https://github.com/textmate/lua.tmbundle)
+54.	textmate/markdown.tmbundle (https://github.com/textmate/markdown.tmbundle)
+55.	textmate/perl.tmbundle (https://github.com/textmate/perl.tmbundle)
+56.	textmate/ruby.tmbundle (https://github.com/textmate/ruby.tmbundle)
+57.	textmate/yaml.tmbundle (https://github.com/textmate/yaml.tmbundle)
+58.	TypeScript-TmLanguage version 0.1.8 (https://github.com/microsoft/TypeScript-TmLanguage)
+59.	TypeScript-TmLanguage version 1.0.0 (https://github.com/microsoft/TypeScript-TmLanguage)
+60.	Unicode version 12.0.0 (https://home.unicode.org/)
+61.	vscode-codicons version 0.0.14 (https://github.com/microsoft/vscode-codicons)
+62.	vscode-logfile-highlighter version 2.11.0 (https://github.com/emilast/vscode-logfile-highlighter)
+63.	vscode-swift version 0.0.1 (https://github.com/owensd/vscode-swift)
+64.	Web Background Synchronization (https://github.com/WICG/background-sync)
 
 
 %%  JuliaEditorSupport/atom-language-julia NOTICES AND INFORMATION BEGIN HERE
@@ -203,6 +204,42 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF atom/language-coffee-script NOTICES AND INFORMATION
+
+%% atom/language-css NOTICES AND INFORMATION BEGIN HERE
+=========================================
+Copyright (c) 2014 GitHub Inc.
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+--------------------------------------------------------------------
+
+This package was derived from a TextMate bundle located at
+https://github.com/textmate/css.tmbundle and distributed under the following
+license, located in `README.mdown`:
+
+Permission to copy, use, modify, sell and distribute this
+software is granted. This software is provided "as is" without
+express or implied warranty, and with no claim as to its
+suitability for any purpose.
+=========================================
+END OF atom/language-css NOTICES AND INFORMATION
 
 %% atom/language-java NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -1682,7 +1719,7 @@ END OF microsoft/vscode-mssql NOTICES AND INFORMATION
 =========================================
 The MIT License (MIT)
 
-Copyright (c) 2017 Michael Mims
+Copyright (c) 2021 Michael Mims
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -1704,42 +1741,19 @@ THE SOFTWARE.
 =========================================
 END OF mmims/language-batchfile NOTICES AND INFORMATION
 
-%% octref/language-css NOTICES AND INFORMATION BEGIN HERE
+%% NVIDIA/cuda-cpp-grammar NOTICES AND INFORMATION BEGIN HERE
 =========================================
 The MIT License (MIT)
 
-Copyright (c) 2014 GitHub Inc.
+Copyright 2021 NVIDIA Corporation
 
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-
-This package was derived from a TextMate bundle located at
-https://github.com/textmate/css.tmbundle and distributed under the following
-license, located in `README.mdown`:
-
-Permission to copy, use, modify, sell and distribute this
-software is granted. This software is provided "as is" without
-express or implied warranty, and with no claim as to its
-suitability for any purpose.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF octref/language-css NOTICES AND INFORMATION
+END OF NVIDIA/cuda-cpp-grammar NOTICES AND INFORMATION
 
 %% PowerShell/EditorSyntax NOTICES AND INFORMATION BEGIN HERE
 =========================================

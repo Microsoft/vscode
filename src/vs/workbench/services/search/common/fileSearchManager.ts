@@ -12,7 +12,6 @@ import { StopWatch } from 'vs/base/common/stopwatch';
 import { URI } from 'vs/base/common/uri';
 import { IFileMatch, IFileSearchProviderStats, IFolderQuery, ISearchCompleteStats, IFileQuery, QueryGlobTester, resolvePatternsForProvider } from 'vs/workbench/services/search/common/search';
 import { FileSearchProvider, FileSearchOptions } from 'vs/workbench/services/search/common/searchExtTypes';
-import { nextTick } from 'vs/base/common/process';
 
 export interface IInternalFileMatch {
 	base: URI;
@@ -105,72 +104,62 @@ class FileSearchEngine {
 		});
 	}
 
-	private searchInFolder(fq: IFolderQuery<URI>, onResult: (match: IInternalFileMatch) => void): Promise<IFileSearchProviderStats | null> {
+	private async searchInFolder(fq: IFolderQuery<URI>, onResult: (match: IInternalFileMatch) => void): Promise<IFileSearchProviderStats | null> {
 		const cancellation = new CancellationTokenSource();
-		return new Promise((resolve, reject) => {
-			const options = this.getSearchOptionsForFolder(fq);
-			const tree = this.initDirectoryTree();
+		const options = this.getSearchOptionsForFolder(fq);
+		const tree = this.initDirectoryTree();
 
-			const queryTester = new QueryGlobTester(this.config, fq);
-			const noSiblingsClauses = !queryTester.hasSiblingExcludeClauses();
+		const queryTester = new QueryGlobTester(this.config, fq);
+		const noSiblingsClauses = !queryTester.hasSiblingExcludeClauses();
 
-			let providerSW: StopWatch;
-			new Promise(_resolve => nextTick(_resolve))
-				.then(() => {
-					this.activeCancellationTokens.add(cancellation);
+		let providerSW: StopWatch;
 
-					providerSW = StopWatch.create();
-					return this.provider.provideFileSearchResults(
-						{
-							pattern: this.config.filePattern || ''
-						},
-						options,
-						cancellation.token);
-				})
-				.then(results => {
-					const providerTime = providerSW.elapsed();
-					const postProcessSW = StopWatch.create();
+		try {
+			this.activeCancellationTokens.add(cancellation);
 
-					if (this.isCanceled && !this.isLimitHit) {
-						return null;
+			providerSW = StopWatch.create();
+			const results = await this.provider.provideFileSearchResults(
+				{
+					pattern: this.config.filePattern || ''
+				},
+				options,
+				cancellation.token);
+			const providerTime = providerSW.elapsed();
+			const postProcessSW = StopWatch.create();
+
+			if (this.isCanceled && !this.isLimitHit) {
+				return null;
+			}
+
+			if (results) {
+				results.forEach(result => {
+					const relativePath = path.posix.relative(fq.folder.path, result.path);
+
+					if (noSiblingsClauses) {
+						const basename = path.basename(result.path);
+						this.matchFile(onResult, { base: fq.folder, relativePath, basename });
+
+						return;
 					}
 
-					if (results) {
-						results.forEach(result => {
-							const relativePath = path.posix.relative(fq.folder.path, result.path);
+					// TODO: Optimize siblings clauses with ripgrep here.
+					this.addDirectoryEntries(tree, fq.folder, relativePath, onResult);
+				});
+			}
 
-							if (noSiblingsClauses) {
-								const basename = path.basename(result.path);
-								this.matchFile(onResult, { base: fq.folder, relativePath, basename });
+			if (this.isCanceled && !this.isLimitHit) {
+				return null;
+			}
 
-								return;
-							}
-
-							// TODO: Optimize siblings clauses with ripgrep here.
-							this.addDirectoryEntries(tree, fq.folder, relativePath, onResult);
-						});
-					}
-
-					this.activeCancellationTokens.delete(cancellation);
-					if (this.isCanceled && !this.isLimitHit) {
-						return null;
-					}
-
-					this.matchDirectoryTree(tree, queryTester, onResult);
-					return <IFileSearchProviderStats>{
-						providerTime,
-						postProcessTime: postProcessSW.elapsed()
-					};
-				}).then(
-					stats => {
-						cancellation.dispose();
-						resolve(stats);
-					},
-					err => {
-						cancellation.dispose();
-						reject(err);
-					});
-		});
+			this.matchDirectoryTree(tree, queryTester, onResult);
+			return <IFileSearchProviderStats>{
+				providerTime,
+				postProcessTime: postProcessSW.elapsed()
+			};
+		} finally {
+			cancellation.dispose();
+			this.activeCancellationTokens.delete(cancellation);
+		}
 	}
 
 	private getSearchOptionsForFolder(fq: IFolderQuery<URI>): FileSearchOptions {

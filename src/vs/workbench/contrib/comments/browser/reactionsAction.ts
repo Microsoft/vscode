@@ -17,7 +17,7 @@ export class ToggleReactionsAction extends Action {
 		super(ToggleReactionsAction.ID, title || nls.localize('pickReactions', "Pick Reactions..."), 'toggle-reactions', true);
 		this.toggleDropdownMenu = toggleDropdownMenu;
 	}
-	run(): Promise<any> {
+	override run(): Promise<any> {
 		this.toggleDropdownMenu();
 		return Promise.resolve(true);
 	}
@@ -32,7 +32,7 @@ export class ReactionActionViewItem extends ActionViewItem {
 	constructor(action: ReactionAction) {
 		super(null, action, {});
 	}
-	updateLabel(): void {
+	override updateLabel(): void {
 		if (!this.label) {
 			return;
 		}

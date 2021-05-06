@@ -3,11 +3,14 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import { VSBuffer } from 'vs/base/common/buffer';
 import { Emitter, Event } from 'vs/base/common/event';
 import { URI } from 'vs/base/common/uri';
 import { IExtensionDescription } from 'vs/platform/extensions/common/extensions';
+import { normalizeVersion, parseVersion } from 'vs/platform/extensions/common/extensionValidator';
 import { ILogService } from 'vs/platform/log/common/log';
 import { IExtHostApiDeprecationService } from 'vs/workbench/api/common/extHostApiDeprecationService';
+import { serializeWebviewMessage, deserializeWebviewMessage } from 'vs/workbench/api/common/extHostWebviewMessaging';
 import { IExtHostWorkspace } from 'vs/workbench/api/common/extHostWorkspace';
 import { asWebviewUri, WebviewInitData } from 'vs/workbench/api/common/shared/webview';
 import type * as vscode from 'vscode';
@@ -28,6 +31,8 @@ export class ExtHostWebview implements vscode.Webview {
 	#isDisposed: boolean = false;
 	#hasCalledAsWebviewUri = false;
 
+	#serializeBuffersForPostMessage = false;
+
 	constructor(
 		handle: extHostProtocol.WebviewHandle,
 		proxy: extHostProtocol.MainThreadWebviewsShape,
@@ -43,6 +48,7 @@ export class ExtHostWebview implements vscode.Webview {
 		this.#initData = initData;
 		this.#workspace = workspace;
 		this.#extension = extension;
+		this.#serializeBuffersForPostMessage = shouldSerializeBuffersForPostMessage(extension);
 		this.#deprecationService = deprecationService;
 	}
 
@@ -104,13 +110,23 @@ export class ExtHostWebview implements vscode.Webview {
 		if (this.#isDisposed) {
 			return false;
 		}
-		return this.#proxy.$postMessage(this.#handle, message);
+		const serialized = serializeWebviewMessage(message, { serializeBuffersForPostMessage: this.#serializeBuffersForPostMessage });
+		return this.#proxy.$postMessage(this.#handle, serialized.message, ...serialized.buffers);
 	}
 
 	private assertNotDisposed() {
 		if (this.#isDisposed) {
 			throw new Error('Webview is disposed');
 		}
+	}
+}
+
+export function shouldSerializeBuffersForPostMessage(extension: IExtensionDescription): boolean {
+	try {
+		const version = normalizeVersion(parseVersion(extension.engines.vscode));
+		return !!version && version.majorBase >= 1 && version.minorBase >= 57;
+	} catch {
+		return false;
 	}
 }
 
@@ -132,10 +148,12 @@ export class ExtHostWebviews implements extHostProtocol.ExtHostWebviewsShape {
 
 	public $onMessage(
 		handle: extHostProtocol.WebviewHandle,
-		message: any
+		jsonMessage: string,
+		...buffers: VSBuffer[]
 	): void {
 		const webview = this.getWebview(handle);
 		if (webview) {
+			const { message } = deserializeWebviewMessage(jsonMessage, buffers);
 			webview._onMessageEmitter.fire(message);
 		}
 	}

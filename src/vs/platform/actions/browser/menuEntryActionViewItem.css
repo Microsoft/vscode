@@ -3,6 +3,13 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+.monaco-action-bar .action-item.menu-entry .action-label.icon {
+	width: 16px;
+	height: 16px;
+	background-repeat: no-repeat;
+	background-position: 50%;
+}
+
 .monaco-action-bar .action-item.menu-entry .action-label {
 	background-image: var(--menu-entry-icon-light);
 }

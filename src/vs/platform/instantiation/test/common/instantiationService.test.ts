@@ -55,7 +55,7 @@ interface IDependentService {
 class DependentService implements IDependentService {
 	declare readonly _serviceBrand: undefined;
 	constructor(@IService1 service: IService1) {
-		assert.equal(service.c, 1);
+		assert.strictEqual(service.c, 1);
 	}
 
 	name = 'farboo';
@@ -65,7 +65,7 @@ class Service1Consumer {
 
 	constructor(@IService1 service1: IService1) {
 		assert.ok(service1);
-		assert.equal(service1.c, 1);
+		assert.strictEqual(service1.c, 1);
 	}
 }
 
@@ -81,7 +81,7 @@ class TargetWithStaticParam {
 	constructor(v: boolean, @IService1 service1: IService1) {
 		assert.ok(v);
 		assert.ok(service1);
-		assert.equal(service1.c, 1);
+		assert.strictEqual(service1.c, 1);
 	}
 }
 
@@ -93,7 +93,7 @@ class TargetNotOptional {
 class TargetOptional {
 	constructor(@IService1 service1: IService1, @optional(IService2) service2: IService2) {
 		assert.ok(service1);
-		assert.equal(service1.c, 1);
+		assert.strictEqual(service1.c, 1);
 		assert.ok(service2 === undefined);
 	}
 }
@@ -101,16 +101,16 @@ class TargetOptional {
 class DependentServiceTarget {
 	constructor(@IDependentService d: IDependentService) {
 		assert.ok(d);
-		assert.equal(d.name, 'farboo');
+		assert.strictEqual(d.name, 'farboo');
 	}
 }
 
 class DependentServiceTarget2 {
 	constructor(@IDependentService d: IDependentService, @IService1 s: IService1) {
 		assert.ok(d);
-		assert.equal(d.name, 'farboo');
+		assert.strictEqual(d.name, 'farboo');
 		assert.ok(s);
-		assert.equal(s.c, 1);
+		assert.strictEqual(s.c, 1);
 	}
 }
 
@@ -138,9 +138,9 @@ suite('Instantiation Service', () => {
 	test('service collection, cannot overwrite', function () {
 		let collection = new ServiceCollection();
 		let result = collection.set(IService1, null!);
-		assert.equal(result, undefined);
+		assert.strictEqual(result, undefined);
 		result = collection.set(IService1, new Service1());
-		assert.equal(result, null);
+		assert.strictEqual(result, null);
 	});
 
 	test('service collection, add/has', function () {
@@ -237,7 +237,7 @@ suite('Instantiation Service', () => {
 
 			let service1 = accessor.get(IService1);
 			assert.ok(service1);
-			assert.equal(service1.c, 1);
+			assert.strictEqual(service1.c, 1);
 
 			let service2 = accessor.get(IService1);
 			assert.ok(service1 === service2);
@@ -253,7 +253,7 @@ suite('Instantiation Service', () => {
 		service.invokeFunction(accessor => {
 			let d = accessor.get(IDependentService);
 			assert.ok(d);
-			assert.equal(d.name, 'farboo');
+			assert.strictEqual(d.name, 'farboo');
 		});
 	});
 
@@ -305,12 +305,12 @@ suite('Instantiation Service', () => {
 
 		function test(accessor: ServicesAccessor) {
 			assert.ok(accessor.get(IService1) instanceof Service1);
-			assert.equal(accessor.get(IService1).c, 1);
+			assert.strictEqual(accessor.get(IService1).c, 1);
 
 			return true;
 		}
 
-		assert.equal(service.invokeFunction(test), true);
+		assert.strictEqual(service.invokeFunction(test), true);
 	});
 
 	test('Invoke - get service, optional', function () {
@@ -320,10 +320,10 @@ suite('Instantiation Service', () => {
 		function test(accessor: ServicesAccessor) {
 			assert.ok(accessor.get(IService1) instanceof Service1);
 			assert.throws(() => accessor.get(IService2));
-			assert.equal(accessor.get(IService2, optional), undefined);
+			assert.strictEqual(accessor.get(IService2, optional), undefined);
 			return true;
 		}
-		assert.equal(service.invokeFunction(test), true);
+		assert.strictEqual(service.invokeFunction(test), true);
 	});
 
 	test('Invoke - keeping accessor NOT allowed', function () {
@@ -336,12 +336,12 @@ suite('Instantiation Service', () => {
 
 		function test(accessor: ServicesAccessor) {
 			assert.ok(accessor.get(IService1) instanceof Service1);
-			assert.equal(accessor.get(IService1).c, 1);
+			assert.strictEqual(accessor.get(IService1).c, 1);
 			cached = accessor;
 			return true;
 		}
 
-		assert.equal(service.invokeFunction(test), true);
+		assert.strictEqual(service.invokeFunction(test), true);
 
 		assert.throws(() => cached.get(IService2));
 	});
@@ -379,7 +379,7 @@ suite('Instantiation Service', () => {
 		let child = service.createChild(new ServiceCollection([IService2, new Service2()]));
 		child.createInstance(Service1Consumer);
 
-		assert.equal(serviceInstanceCount, 1);
+		assert.strictEqual(serviceInstanceCount, 1);
 
 		// creating the service instance AFTER the child service
 		serviceInstanceCount = 0;
@@ -390,7 +390,7 @@ suite('Instantiation Service', () => {
 		service.createInstance(Service1Consumer);
 		child.createInstance(Service1Consumer);
 
-		assert.equal(serviceInstanceCount, 1);
+		assert.strictEqual(serviceInstanceCount, 1);
 	});
 
 	test('Remote window / integration tests is broken #105562', function () {

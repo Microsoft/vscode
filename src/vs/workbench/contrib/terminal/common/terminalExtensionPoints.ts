@@ -20,17 +20,32 @@ export interface ITerminalContributionService {
 export const ITerminalContributionService = createDecorator<ITerminalContributionService>('terminalContributionsService');
 
 export class TerminalContributionService implements ITerminalContributionService {
-	public readonly _serviceBrand = undefined;
+	declare _serviceBrand: undefined;
 
 	private _terminalTypes: ReadonlyArray<ITerminalTypeContribution> = [];
 
-	public get terminalTypes() {
+	get terminalTypes() {
 		return this._terminalTypes;
 	}
 
 	constructor() {
 		terminalsExtPoint.setHandler(contributions => {
-			this._terminalTypes = flatten(contributions.filter(c => c.description.enableProposedApi).map(c => c.value?.types ?? []));
+			this._terminalTypes = flatten(contributions.filter(c => c.description.enableProposedApi).map(c => {
+				return c.value?.types?.map(e => {
+					// TODO: Remove after adoption in js-debug
+					if (!e.icon && c.description.identifier.value === 'ms-vscode.js-debug') {
+						e.icon = '$(debug)';
+					}
+					// Only support $(id) for now, without that it should point to a path to be
+					// consistent with other icon APIs
+					if (e.icon && e.icon.startsWith('$(') && e.icon.endsWith(')')) {
+						e.icon = e.icon.substr(2, e.icon.length - 3);
+					} else {
+						e.icon = undefined;
+					}
+					return e;
+				}) || [];
+			}));
 		});
 	}
 }

@@ -4,9 +4,10 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { WebviewTag } from 'electron';
-import { Action2 } from 'vs/platform/actions/common/actions';
 import * as nls from 'vs/nls';
+import { Action2 } from 'vs/platform/actions/common/actions';
 import { ServicesAccessor } from 'vs/platform/instantiation/common/instantiation';
+import { INativeHostService } from 'vs/platform/native/electron-sandbox/native';
 import { CATEGORIES } from 'vs/workbench/common/actions';
 
 export class OpenWebviewDeveloperToolsAction extends Action2 {
@@ -21,13 +22,21 @@ export class OpenWebviewDeveloperToolsAction extends Action2 {
 	}
 
 	async run(accessor: ServicesAccessor): Promise<void> {
-		const elements = document.querySelectorAll('webview.ready');
-		for (let i = 0; i < elements.length; i++) {
+		const nativeHostService = accessor.get(INativeHostService);
+
+		const webviewElements = document.querySelectorAll('webview.ready');
+		for (const element of webviewElements) {
 			try {
-				(elements.item(i) as WebviewTag).openDevTools();
+				(element as WebviewTag).openDevTools();
 			} catch (e) {
 				console.error(e);
 			}
+		}
+
+		const iframeWebviewElements = document.querySelectorAll('iframe.webview.ready');
+		if (iframeWebviewElements.length) {
+			console.info(nls.localize('iframeWebviewAlert', "Using standard dev tools to debug iframe based webview"));
+			nativeHostService.openDevTools();
 		}
 	}
 }

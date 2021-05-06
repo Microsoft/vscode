@@ -41,7 +41,7 @@ export class GotoLineQuickAccessProvider extends AbstractGotoLineQuickAccessProv
 		return this.editorService.activeTextEditorControl;
 	}
 
-	protected gotoLocation(context: IQuickAccessTextEditorContext, options: { range: IRange, keyMods: IKeyMods, forceSideBySide?: boolean, preserveFocus?: boolean }): void {
+	protected override gotoLocation(context: IQuickAccessTextEditorContext, options: { range: IRange, keyMods: IKeyMods, forceSideBySide?: boolean, preserveFocus?: boolean }): void {
 
 		// Check for sideBySide use
 		if ((options.keyMods.alt || (this.configuration.openEditorPinned && options.keyMods.ctrlCmd) || options.forceSideBySide) && this.editorService.activeEditor) {

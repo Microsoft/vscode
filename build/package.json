@@ -24,7 +24,7 @@
     "@types/minimist": "^1.2.1",
     "@types/mkdirp": "^1.0.1",
     "@types/mocha": "^8.2.0",
-    "@types/node": "^12.19.9",
+    "@types/node": "14.x",
     "@types/p-limit": "^2.2.0",
     "@types/plist": "^3.0.2",
     "@types/pump": "^1.0.1",
@@ -52,7 +52,7 @@
     "p-limit": "^3.1.0",
     "plist": "^3.0.1",
     "source-map": "0.6.1",
-    "typescript": "^4.3.0-dev.20210305",
+    "typescript": "^4.3.0-dev.20210503",
     "vsce": "1.48.0",
     "vscode-universal": "deepak1556/universal#61454d96223b774c53cda10f72c2098c0ce02d58"
   },

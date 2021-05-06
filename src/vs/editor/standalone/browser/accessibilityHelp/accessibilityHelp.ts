@@ -177,7 +177,7 @@ class AccessibilityHelpWidget extends Widget implements IOverlayWidget {
 		this._editor.addOverlayWidget(this);
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		this._editor.removeOverlayWidget(this);
 		super.dispose();
 	}

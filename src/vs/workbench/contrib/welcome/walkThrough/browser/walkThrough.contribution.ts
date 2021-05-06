@@ -8,14 +8,14 @@ import { WalkThroughInput } from 'vs/workbench/contrib/welcome/walkThrough/brows
 import { WalkThroughPart } from 'vs/workbench/contrib/welcome/walkThrough/browser/walkThroughPart';
 import { WalkThroughArrowUp, WalkThroughArrowDown, WalkThroughPageUp, WalkThroughPageDown } from 'vs/workbench/contrib/welcome/walkThrough/browser/walkThroughActions';
 import { WalkThroughSnippetContentProvider } from 'vs/workbench/contrib/welcome/walkThrough/common/walkThroughContentProvider';
-import { EditorWalkThroughAction, EditorWalkThroughInputFactory } from 'vs/workbench/contrib/welcome/walkThrough/browser/editor/editorWalkThrough';
+import { EditorWalkThroughAction, EditorWalkThroughInputSerializer } from 'vs/workbench/contrib/welcome/walkThrough/browser/editor/editorWalkThrough';
 import { Registry } from 'vs/platform/registry/common/platform';
-import { Extensions as EditorInputExtensions, IEditorInputFactoryRegistry } from 'vs/workbench/common/editor';
+import { EditorExtensions, IEditorInputFactoryRegistry } from 'vs/workbench/common/editor';
 import { SyncDescriptor } from 'vs/platform/instantiation/common/descriptors';
 import { IWorkbenchActionRegistry, Extensions, CATEGORIES } from 'vs/workbench/common/actions';
 import { SyncActionDescriptor, MenuRegistry, MenuId } from 'vs/platform/actions/common/actions';
 import { IWorkbenchContributionsRegistry, Extensions as WorkbenchExtensions } from 'vs/workbench/common/contributions';
-import { IEditorRegistry, Extensions as EditorExtensions, EditorDescriptor } from 'vs/workbench/browser/editor';
+import { IEditorRegistry, EditorDescriptor } from 'vs/workbench/browser/editor';
 import { LifecyclePhase } from 'vs/workbench/services/lifecycle/common/lifecycle';
 import { KeybindingsRegistry } from 'vs/platform/keybinding/common/keybindingsRegistry';
 
@@ -32,7 +32,7 @@ Registry.as<IWorkbenchActionRegistry>(Extensions.WorkbenchActions)
 		SyncActionDescriptor.from(EditorWalkThroughAction),
 		'Help: Interactive Playground', CATEGORIES.Help.value);
 
-Registry.as<IEditorInputFactoryRegistry>(EditorInputExtensions.EditorInputFactories).registerEditorInputFactory(EditorWalkThroughInputFactory.ID, EditorWalkThroughInputFactory);
+Registry.as<IEditorInputFactoryRegistry>(EditorExtensions.EditorInputFactories).registerEditorInputSerializer(EditorWalkThroughInputSerializer.ID, EditorWalkThroughInputSerializer);
 
 Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench)
 	.registerWorkbenchContribution(WalkThroughSnippetContentProvider, LifecyclePhase.Starting);

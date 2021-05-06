@@ -19,7 +19,7 @@ import ErrorTelemetry from 'vs/platform/telemetry/browser/errorTelemetry';
 import { configurationTelemetry } from 'vs/platform/telemetry/common/telemetryUtils';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { IViewletService } from 'vs/workbench/services/viewlet/browser/viewlet';
-import { ITextFileService, ITextFileSaveEvent, ITextFileLoadEvent } from 'vs/workbench/services/textfile/common/textfiles';
+import { ITextFileService, ITextFileSaveEvent, ITextFileResolveEvent } from 'vs/workbench/services/textfile/common/textfiles';
 import { extname, basename, isEqual, isEqualOrParent } from 'vs/base/common/resources';
 import { URI } from 'vs/base/common/uri';
 import { Schemas } from 'vs/base/common/network';
@@ -124,14 +124,14 @@ export class TelemetryContribution extends Disposable implements IWorkbenchContr
 		this._register(configurationTelemetry(telemetryService, configurationService));
 
 		//  Files Telemetry
-		this._register(textFileService.files.onDidLoad(e => this.onTextFileModelLoaded(e)));
+		this._register(textFileService.files.onDidResolve(e => this.onTextFileModelResolved(e)));
 		this._register(textFileService.files.onDidSave(e => this.onTextFileModelSaved(e)));
 
 		// Lifecycle
-		this._register(lifecycleService.onShutdown(() => this.dispose()));
+		this._register(lifecycleService.onDidShutdown(() => this.dispose()));
 	}
 
-	private onTextFileModelLoaded(e: ITextFileLoadEvent): void {
+	private onTextFileModelResolved(e: ITextFileResolveEvent): void {
 		const settingsType = this.getTypeIfSettings(e.model.resource);
 		if (settingsType) {
 			type SettingsReadClassification = {

@@ -193,6 +193,11 @@ Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration).regis
 			markdownDescription: localize('inputFontFamily', "Controls the font for the input message. Use `default` for the workbench user interface font family, `editor` for the `#editor.fontFamily#`'s value, or a custom font family."),
 			default: 'default'
 		},
+		'scm.inputFontSize': {
+			type: 'number',
+			markdownDescription: localize('inputFontSize', "Controls the font size for the input message in pixels."),
+			default: 13
+		},
 		'scm.alwaysShowRepositories': {
 			type: 'boolean',
 			markdownDescription: localize('alwaysShowRepository', "Controls whether repositories should always be visible in the SCM view."),

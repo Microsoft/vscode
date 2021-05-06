@@ -6,7 +6,6 @@
 import * as pfs from 'vs/base/node/pfs';
 import * as os from 'os';
 import * as path from 'vs/base/common/path';
-import { env } from 'vs/base/common/process';
 
 // This is required, since parseInt("7-preview") will return 7.
 const IntRegex: RegExp = /^\d+$/;
@@ -103,17 +102,17 @@ function getProgramFilesPath(
 
 	if (!useAlternateBitness) {
 		// Just use the native system bitness
-		return env.ProgramFiles || null;
+		return process.env.ProgramFiles || null;
 	}
 
 	// We might be a 64-bit process looking for 32-bit program files
 	if (processArch === Arch.x64) {
-		return env['ProgramFiles(x86)'] || null;
+		return process.env['ProgramFiles(x86)'] || null;
 	}
 
 	// We might be a 32-bit process looking for 64-bit program files
 	if (osArch === Arch.x64) {
-		return env.ProgramW6432 || null;
+		return process.env.ProgramW6432 || null;
 	}
 
 	// We're a 32-bit process on 32-bit Windows, there is no other Program Files dir
@@ -194,12 +193,12 @@ async function findPSCoreWindowsInstallation(
 
 async function findPSCoreMsix({ findPreview }: { findPreview?: boolean } = {}): Promise<IPossiblePowerShellExe | null> {
 	// We can't proceed if there's no LOCALAPPDATA path
-	if (!env.LOCALAPPDATA) {
+	if (!process.env.LOCALAPPDATA) {
 		return null;
 	}
 
 	// Find the base directory for MSIX application exe shortcuts
-	const msixAppDir = path.join(env.LOCALAPPDATA, 'Microsoft', 'WindowsApps');
+	const msixAppDir = path.join(process.env.LOCALAPPDATA, 'Microsoft', 'WindowsApps');
 
 	if (!await pfs.SymlinkSupport.existsDirectory(msixAppDir)) {
 		return null;
@@ -230,7 +229,7 @@ function findPSCoreDotnetGlobalTool(): IPossiblePowerShellExe {
 
 function findWinPS(): IPossiblePowerShellExe | null {
 	const winPSPath = path.join(
-		env.windir!,
+		process.env.windir!,
 		processArch === Arch.x86 && osArch !== Arch.x86 ? 'SysNative' : 'System32',
 		'WindowsPowerShell', 'v1.0', 'powershell.exe');
 

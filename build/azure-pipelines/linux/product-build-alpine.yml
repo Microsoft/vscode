@@ -1,7 +1,7 @@
 steps:
   - task: NodeTool@0
     inputs:
-      versionSpec: "12.18.3"
+      versionSpec: "14.x"
 
   - task: geeklearningio.gl-vsts-tasks-yarn.yarn-installer-task.YarnInstaller@2
     inputs:
@@ -117,19 +117,37 @@ steps:
 
   - script: |
       set -e
-      AZURE_DOCUMENTDB_MASTERKEY="$(builds-docdb-key-readwrite)" \
-      AZURE_STORAGE_ACCESS_KEY_2="$(vscode-storage-key)" \
-      VSCODE_MIXIN_PASSWORD="$(github-distro-mixin-password)" \
-      ./build/azure-pipelines/linux/alpine/publish.sh
-    displayName: Publish
+      REPO="$(pwd)"
+      ROOT="$REPO/.."
+
+      PLATFORM_LINUX="linux-alpine"
+
+      # Publish Remote Extension Host
+      LEGACY_SERVER_BUILD_NAME="vscode-reh-$PLATFORM_LINUX"
+      SERVER_BUILD_NAME="vscode-server-$PLATFORM_LINUX"
+      SERVER_TARBALL_FILENAME="vscode-server-$PLATFORM_LINUX.tar.gz"
+      SERVER_TARBALL_PATH="$ROOT/$SERVER_TARBALL_FILENAME"
+
+      rm -rf $ROOT/vscode-server-*.tar.*
+      (cd $ROOT && mv $LEGACY_SERVER_BUILD_NAME $SERVER_BUILD_NAME && tar --owner=0 --group=0 -czf $SERVER_TARBALL_PATH $SERVER_BUILD_NAME)
+
+      # Publish Remote Extension Host (Web)
+      LEGACY_SERVER_BUILD_NAME="vscode-reh-web-$PLATFORM_LINUX"
+      SERVER_BUILD_NAME="vscode-server-$PLATFORM_LINUX-web"
+      SERVER_TARBALL_FILENAME="vscode-server-$PLATFORM_LINUX-web.tar.gz"
+      SERVER_TARBALL_PATH="$ROOT/$SERVER_TARBALL_FILENAME"
+
+      rm -rf $ROOT/vscode-server-*-web.tar.*
+      (cd $ROOT && mv $LEGACY_SERVER_BUILD_NAME $SERVER_BUILD_NAME && tar --owner=0 --group=0 -czf $SERVER_TARBALL_PATH $SERVER_BUILD_NAME)
+    displayName: Prepare for publish
     condition: and(succeeded(), ne(variables['VSCODE_PUBLISH'], 'false'))
 
   - publish: $(Agent.BuildDirectory)/vscode-server-linux-alpine.tar.gz
-    artifact: vscode-server-linux-alpine
+    artifact: vscode_server_linux_alpine_archive-unsigned
     displayName: Publish server archive
     condition: and(succeeded(), ne(variables['VSCODE_PUBLISH'], 'false'))
 
   - publish: $(Agent.BuildDirectory)/vscode-server-linux-alpine-web.tar.gz
-    artifact: vscode-server-linux-alpine-web
+    artifact: vscode_web_linux_alpine_archive-unsigned
     displayName: Publish web server archive
     condition: and(succeeded(), ne(variables['VSCODE_PUBLISH'], 'false'))

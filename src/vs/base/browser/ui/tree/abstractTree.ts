@@ -14,7 +14,7 @@ import { KeyCode } from 'vs/base/common/keyCodes';
 import { ITreeModel, ITreeNode, ITreeRenderer, ITreeEvent, ITreeMouseEvent, ITreeContextMenuEvent, ITreeFilter, ITreeNavigator, ICollapseStateChangeEvent, ITreeDragAndDrop, TreeDragOverBubble, TreeVisibility, TreeFilterResult, ITreeModelSpliceEvent, TreeMouseEventTarget } from 'vs/base/browser/ui/tree/tree';
 import { ISpliceable } from 'vs/base/common/sequence';
 import { IDragAndDropData, StaticDND, DragAndDropData } from 'vs/base/browser/dnd';
-import { range, equals, distinctES6 } from 'vs/base/common/arrays';
+import { range, equals, distinctES6, firstOrDefault } from 'vs/base/common/arrays';
 import { ElementsDragAndDropData } from 'vs/base/browser/ui/list/listView';
 import { domEvent } from 'vs/base/browser/event';
 import { fuzzyScore, FuzzyScore } from 'vs/base/common/filters';
@@ -29,11 +29,11 @@ import { treeItemExpandedIcon, treeFilterOnTypeOnIcon, treeFilterOnTypeOffIcon, 
 
 class TreeElementsDragAndDropData<T, TFilterData, TContext> extends ElementsDragAndDropData<T, TContext> {
 
-	set context(context: TContext | undefined) {
+	override set context(context: TContext | undefined) {
 		this.data.context = context;
 	}
 
-	get context(): TContext | undefined {
+	override get context(): TContext | undefined {
 		return this.data.context;
 	}
 
@@ -683,6 +683,7 @@ class TypeFilterController<T, TFilterData> implements IDisposable {
 		if (typeof options.filterOnType !== 'undefined') {
 			this._filterOnType = !!options.filterOnType;
 			this.filterOnTypeDomNode.checked = this._filterOnType;
+			this.updateFilterOnTypeTitleAndIcon();
 		}
 
 		if (typeof options.automaticKeyboardNavigation !== 'undefined') {
@@ -1090,7 +1091,7 @@ class TreeNodeListMouseController<T, TFilterData, TRef> extends MouseController<
 		super(list);
 	}
 
-	protected onViewPointer(e: IListMouseEvent<ITreeNode<T, TFilterData>>): void {
+	protected override onViewPointer(e: IListMouseEvent<ITreeNode<T, TFilterData>>): void {
 		if (isInputElement(e.browserEvent.target as HTMLElement) || isMonacoEditor(e.browserEvent.target as HTMLElement)) {
 			return;
 		}
@@ -1140,7 +1141,7 @@ class TreeNodeListMouseController<T, TFilterData, TRef> extends MouseController<
 		super.onViewPointer(e);
 	}
 
-	protected onDoubleClick(e: IListMouseEvent<ITreeNode<T, TFilterData>>): void {
+	protected override onDoubleClick(e: IListMouseEvent<ITreeNode<T, TFilterData>>): void {
 		const onTwistie = (e.browserEvent.target as HTMLElement).classList.contains('monaco-tl-twistie');
 
 		if (onTwistie || !this.tree.expandOnDoubleClick) {
@@ -1168,16 +1169,17 @@ class TreeNodeList<T, TFilterData, TRef> extends List<ITreeNode<T, TFilterData>>
 		renderers: IListRenderer<any /* TODO@joao */, any>[],
 		private focusTrait: Trait<T>,
 		private selectionTrait: Trait<T>,
+		private anchorTrait: Trait<T>,
 		options: ITreeNodeListOptions<T, TFilterData, TRef>
 	) {
 		super(user, container, virtualDelegate, renderers, options);
 	}
 
-	protected createMouseController(options: ITreeNodeListOptions<T, TFilterData, TRef>): MouseController<ITreeNode<T, TFilterData>> {
+	protected override createMouseController(options: ITreeNodeListOptions<T, TFilterData, TRef>): MouseController<ITreeNode<T, TFilterData>> {
 		return new TreeNodeListMouseController(this, options.tree);
 	}
 
-	splice(start: number, deleteCount: number, elements: ITreeNode<T, TFilterData>[] = []): void {
+	override splice(start: number, deleteCount: number, elements: ITreeNode<T, TFilterData>[] = []): void {
 		super.splice(start, deleteCount, elements);
 
 		if (elements.length === 0) {
@@ -1186,6 +1188,7 @@ class TreeNodeList<T, TFilterData, TRef> extends List<ITreeNode<T, TFilterData>>
 
 		const additionalFocus: number[] = [];
 		const additionalSelection: number[] = [];
+		let anchor: number | undefined;
 
 		elements.forEach((node, index) => {
 			if (this.focusTrait.has(node)) {
@@ -1194,6 +1197,10 @@ class TreeNodeList<T, TFilterData, TRef> extends List<ITreeNode<T, TFilterData>>
 
 			if (this.selectionTrait.has(node)) {
 				additionalSelection.push(start + index);
+			}
+
+			if (this.anchorTrait.has(node)) {
+				anchor = start + index;
 			}
 		});
 
@@ -1204,9 +1211,13 @@ class TreeNodeList<T, TFilterData, TRef> extends List<ITreeNode<T, TFilterData>>
 		if (additionalSelection.length > 0) {
 			super.setSelection(distinctES6([...super.getSelection(), ...additionalSelection]));
 		}
+
+		if (typeof anchor === 'number') {
+			super.setAnchor(anchor);
+		}
 	}
 
-	setFocus(indexes: number[], browserEvent?: UIEvent, fromAPI = false): void {
+	override setFocus(indexes: number[], browserEvent?: UIEvent, fromAPI = false): void {
 		super.setFocus(indexes, browserEvent);
 
 		if (!fromAPI) {
@@ -1214,11 +1225,23 @@ class TreeNodeList<T, TFilterData, TRef> extends List<ITreeNode<T, TFilterData>>
 		}
 	}
 
-	setSelection(indexes: number[], browserEvent?: UIEvent, fromAPI = false): void {
+	override setSelection(indexes: number[], browserEvent?: UIEvent, fromAPI = false): void {
 		super.setSelection(indexes, browserEvent);
 
 		if (!fromAPI) {
 			this.selectionTrait.set(indexes.map(i => this.element(i)), browserEvent);
+		}
+	}
+
+	override setAnchor(index: number | undefined, fromAPI = false): void {
+		super.setAnchor(index);
+
+		if (!fromAPI) {
+			if (typeof index === 'undefined') {
+				this.anchorTrait.set([]);
+			} else {
+				this.anchorTrait.set([this.element(index)]);
+			}
 		}
 	}
 }
@@ -1230,6 +1253,7 @@ export abstract class AbstractTree<T, TFilterData, TRef> implements IDisposable 
 	protected model: ITreeModel<T, TFilterData, TRef>;
 	private focus: Trait<T>;
 	private selection: Trait<T>;
+	private anchor: Trait<T>;
 	private eventBufferer = new EventBufferer();
 	private typeFilterController?: TypeFilterController<T, TFilterData>;
 	private focusNavigationFilter: ((node: ITreeNode<T, TFilterData>) => boolean) | undefined;
@@ -1298,7 +1322,8 @@ export abstract class AbstractTree<T, TFilterData, TRef> implements IDisposable 
 
 		this.focus = new Trait(_options.identityProvider);
 		this.selection = new Trait(_options.identityProvider);
-		this.view = new TreeNodeList(user, container, treeDelegate, this.renderers, this.focus, this.selection, { ...asListOptions(() => this.model, _options), tree: this });
+		this.anchor = new Trait(_options.identityProvider);
+		this.view = new TreeNodeList(user, container, treeDelegate, this.renderers, this.focus, this.selection, this.anchor, { ...asListOptions(() => this.model, _options), tree: this });
 
 		this.model = this.createModel(user, this.view, _options);
 		onDidChangeCollapseStateRelay.input = this.model.onDidChangeCollapseState;
@@ -1552,6 +1577,25 @@ export abstract class AbstractTree<T, TFilterData, TRef> implements IDisposable 
 		this.model.refilter();
 	}
 
+	setAnchor(element: TRef | undefined): void {
+		if (typeof element === 'undefined') {
+			return this.view.setAnchor(undefined);
+		}
+
+		const node = this.model.getNode(element);
+		this.anchor.set([node]);
+
+		const index = this.model.getListIndex(element);
+
+		if (index > -1) {
+			this.view.setAnchor(index, true);
+		}
+	}
+
+	getAnchor(): T | undefined {
+		return firstOrDefault(this.anchor.get(), undefined);
+	}
+
 	setSelection(elements: TRef[], browserEvent?: UIEvent): void {
 		const nodes = elements.map(e => this.model.getNode(e));
 		this.selection.set(nodes, browserEvent);
@@ -1580,12 +1624,12 @@ export abstract class AbstractTree<T, TFilterData, TRef> implements IDisposable 
 		this.view.focusPrevious(n, loop, browserEvent, filter);
 	}
 
-	focusNextPage(browserEvent?: UIEvent, filter = this.focusNavigationFilter): void {
-		this.view.focusNextPage(browserEvent, filter);
+	focusNextPage(browserEvent?: UIEvent, filter = this.focusNavigationFilter): Promise<void> {
+		return this.view.focusNextPage(browserEvent, filter);
 	}
 
-	focusPreviousPage(browserEvent?: UIEvent, filter = this.focusNavigationFilter): void {
-		this.view.focusPreviousPage(browserEvent, filter);
+	focusPreviousPage(browserEvent?: UIEvent, filter = this.focusNavigationFilter): Promise<void> {
+		return this.view.focusPreviousPage(browserEvent, filter);
 	}
 
 	focusLast(browserEvent?: UIEvent, filter = this.focusNavigationFilter): void {

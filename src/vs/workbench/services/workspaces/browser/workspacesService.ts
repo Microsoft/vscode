@@ -125,7 +125,7 @@ export class BrowserWorkspacesService extends Disposable implements IWorkspacesS
 
 	//#region Workspace Management
 
-	async enterWorkspace(path: URI): Promise<IEnterWorkspaceResult | null> {
+	async enterWorkspace(path: URI): Promise<IEnterWorkspaceResult | undefined> {
 		return { workspace: await this.getWorkspaceIdentifier(path) };
 	}
 

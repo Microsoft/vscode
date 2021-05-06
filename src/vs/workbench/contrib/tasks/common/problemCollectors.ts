@@ -44,7 +44,7 @@ export abstract class AbstractProblemCollector implements IDisposable {
 	private buffer: string[];
 	private bufferLength: number;
 	private openModels: IStringDictionary<boolean>;
-	private readonly modelListeners = new DisposableStore();
+	protected readonly modelListeners = new DisposableStore();
 	private tail: Promise<void> | undefined;
 
 	// [owner] -> ApplyToKind
@@ -58,7 +58,7 @@ export abstract class AbstractProblemCollector implements IDisposable {
 
 	protected _onDidStateChange: Emitter<ProblemCollectorEvent>;
 
-	constructor(problemMatchers: ProblemMatcher[], protected markerService: IMarkerService, private modelService: IModelService, fileService?: IFileService) {
+	constructor(problemMatchers: ProblemMatcher[], protected markerService: IMarkerService, protected modelService: IModelService, fileService?: IFileService) {
 		this.matchers = Object.create(null);
 		this.bufferLength = 1;
 		problemMatchers.map(elem => createLineMatcher(elem, fileService)).forEach((matcher) => {
@@ -406,6 +406,8 @@ export class WatchingProblemCollector extends AbstractProblemCollector implement
 	private currentOwner: string | undefined;
 	private currentResource: string | undefined;
 
+	private lines: string[] = [];
+
 	constructor(problemMatchers: ProblemMatcher[], markerService: IMarkerService, modelService: IModelService, fileService?: IFileService) {
 		super(problemMatchers, markerService, modelService, fileService);
 		this.problemMatchers = problemMatchers;
@@ -423,6 +425,27 @@ export class WatchingProblemCollector extends AbstractProblemCollector implement
 				});
 			}
 		});
+
+		this.modelListeners.add(this.modelService.onModelRemoved(modelEvent => {
+			let markerChanged: IDisposable | undefined =
+				Event.debounce(this.markerService.onMarkerChanged, (last: readonly URI[] | undefined, e: readonly URI[]) => {
+					return (last ?? []).concat(e);
+				}, 500)(async (markerEvent) => {
+					markerChanged?.dispose();
+					markerChanged = undefined;
+					if (!markerEvent.includes(modelEvent.uri) || (this.markerService.read({ resource: modelEvent.uri }).length !== 0)) {
+						return;
+					}
+					const oldLines = Array.from(this.lines);
+					for (const line of oldLines) {
+						await this.processLineInternal(line);
+					}
+				});
+			setTimeout(async () => {
+				markerChanged?.dispose();
+				markerChanged = undefined;
+			}, 600);
+		}));
 	}
 
 	public aboutToStart(): void {
@@ -439,6 +462,7 @@ export class WatchingProblemCollector extends AbstractProblemCollector implement
 		if (await this.tryBegin(line) || this.tryFinish(line)) {
 			return;
 		}
+		this.lines.push(line);
 		let markerMatch = this.tryFindMarker(line);
 		if (!markerMatch) {
 			return;
@@ -472,6 +496,8 @@ export class WatchingProblemCollector extends AbstractProblemCollector implement
 				}
 				this._activeBackgroundMatchers.add(background.key);
 				result = true;
+				this.lines = [];
+				this.lines.push(line);
 				this._onDidStateChange.fire(ProblemCollectorEvent.create(ProblemCollectorEventKind.BackgroundProcessingBegins));
 				this.cleanMarkerCaches();
 				this.resetCurrentResource();
@@ -498,6 +524,7 @@ export class WatchingProblemCollector extends AbstractProblemCollector implement
 					this.resetCurrentResource();
 					this._onDidStateChange.fire(ProblemCollectorEvent.create(ProblemCollectorEventKind.BackgroundProcessingEnds));
 					result = true;
+					this.lines.push(line);
 					let owner = background.matcher.owner;
 					this.cleanMarkers(owner);
 					this.cleanMarkerCaches();
@@ -519,7 +546,7 @@ export class WatchingProblemCollector extends AbstractProblemCollector implement
 		}
 	}
 
-	public done(): void {
+	public override done(): void {
 		[...this.applyToByOwner.keys()].forEach(owner => {
 			this.recordResourcesToClean(owner);
 		});

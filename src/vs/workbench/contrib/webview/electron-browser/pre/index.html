@@ -1,8 +1,49 @@
 <!DOCTYPE html>
 <html lang="en" style="width: 100%; height: 100%">
+
 <head>
-<title>Virtual Document</title>
+	<title>Virtual Document</title>
 </head>
+
 <body style="margin: 0; overflow: hidden; width: 100%; height: 100%" role="document">
+	<script async type="module">
+		import { createWebviewManager } from './main.js';
+
+		createWebviewManager({
+			...window.vscodeHost,
+			onIframeLoaded: (newFrame) => {
+				newFrame.contentWindow.onbeforeunload = () => {
+					if (window.vscodeHost.isInDevelopmentMode) { // Allow reloads while developing a webview
+						window.vscodeHost.postMessage('do-reload');
+						return false;
+					}
+					// Block navigation when not in development mode
+					console.log('prevented webview navigation');
+					return false;
+				};
+
+				// Electron 4 eats mouseup events from inside webviews
+				// https://github.com/microsoft/vscode/issues/75090
+				// Try to fix this by rebroadcasting mouse moves and mouseups so that we can
+				// emulate these on the main window
+				let isMouseDown = false;
+				newFrame.contentWindow.addEventListener('mousedown', () => {
+					isMouseDown = true;
+				});
+
+				const tryDispatchSyntheticMouseEvent = (e) => {
+					if (!isMouseDown) {
+						window.vscodeHost.postMessage('synthetic-mouse-event', { type: e.type, screenX: e.screenX, screenY: e.screenY, clientX: e.clientX, clientY: e.clientY });
+					}
+				};
+				newFrame.contentWindow.addEventListener('mouseup', e => {
+					tryDispatchSyntheticMouseEvent(e);
+					isMouseDown = false;
+				});
+				newFrame.contentWindow.addEventListener('mousemove', tryDispatchSyntheticMouseEvent);
+			},
+		});
+	</script>
 </body>
+
 </html>

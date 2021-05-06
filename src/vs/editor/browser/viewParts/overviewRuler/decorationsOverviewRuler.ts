@@ -237,7 +237,7 @@ export class DecorationsOverviewRuler extends ViewPart {
 		this._cursorPositions = [];
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		super.dispose();
 		this._tokensColorTrackerListener.dispose();
 	}
@@ -267,10 +267,10 @@ export class DecorationsOverviewRuler extends ViewPart {
 
 	// ---- begin view event handlers
 
-	public onConfigurationChanged(e: viewEvents.ViewConfigurationChangedEvent): boolean {
+	public override onConfigurationChanged(e: viewEvents.ViewConfigurationChangedEvent): boolean {
 		return this._updateSettings(false);
 	}
-	public onCursorStateChanged(e: viewEvents.ViewCursorStateChangedEvent): boolean {
+	public override onCursorStateChanged(e: viewEvents.ViewCursorStateChangedEvent): boolean {
 		this._cursorPositions = [];
 		for (let i = 0, len = e.selections.length; i < len; i++) {
 			this._cursorPositions[i] = e.selections[i].getPosition();
@@ -278,22 +278,22 @@ export class DecorationsOverviewRuler extends ViewPart {
 		this._cursorPositions.sort(Position.compare);
 		return true;
 	}
-	public onDecorationsChanged(e: viewEvents.ViewDecorationsChangedEvent): boolean {
+	public override onDecorationsChanged(e: viewEvents.ViewDecorationsChangedEvent): boolean {
 		if (e.affectsOverviewRuler) {
 			return true;
 		}
 		return false;
 	}
-	public onFlushed(e: viewEvents.ViewFlushedEvent): boolean {
+	public override onFlushed(e: viewEvents.ViewFlushedEvent): boolean {
 		return true;
 	}
-	public onScrollChanged(e: viewEvents.ViewScrollChangedEvent): boolean {
+	public override onScrollChanged(e: viewEvents.ViewScrollChangedEvent): boolean {
 		return e.scrollHeightChanged;
 	}
-	public onZonesChanged(e: viewEvents.ViewZonesChangedEvent): boolean {
+	public override onZonesChanged(e: viewEvents.ViewZonesChangedEvent): boolean {
 		return true;
 	}
-	public onThemeChanged(e: viewEvents.ViewThemeChangedEvent): boolean {
+	public override onThemeChanged(e: viewEvents.ViewThemeChangedEvent): boolean {
 		// invalidate color cache
 		this._context.model.invalidateOverviewRulerColorCache();
 		return this._updateSettings(false);

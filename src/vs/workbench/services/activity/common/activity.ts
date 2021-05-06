@@ -63,7 +63,7 @@ export class NumberBadge extends BaseBadge {
 		this.number = number;
 	}
 
-	getDescription(): string {
+	override getDescription(): string {
 		return this.descriptorFn(this.number);
 	}
 }

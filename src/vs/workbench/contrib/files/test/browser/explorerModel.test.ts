@@ -263,7 +263,7 @@ suite('Files - View Model', function () {
 		(<any>merge2)._isDirectoryResolved = true;
 		ExplorerItem.mergeLocalWithDisk(merge2, merge1);
 		assert.strictEqual(merge1.getChild('foo.html')!.name, 'foo.html');
-		assert.deepEqual(merge1.getChild('foo.html')!.parent, merge1, 'Check parent');
+		assert.deepStrictEqual(merge1.getChild('foo.html')!.parent, merge1, 'Check parent');
 
 		// Verify that merge does not replace existing children, but updates properties in that case
 		const existingChild = merge1.getChild('foo.html');

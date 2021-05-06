@@ -26,16 +26,16 @@ suite('ExtHostTreeView', function () {
 
 		onRefresh = new Emitter<{ [treeItemHandle: string]: ITreeItem }>();
 
-		async $registerTreeViewDataProvider(treeViewId: string): Promise<void> {
+		override async $registerTreeViewDataProvider(treeViewId: string): Promise<void> {
 		}
 
-		$refresh(viewId: string, itemsToRefresh: { [treeItemHandle: string]: ITreeItem }): Promise<void> {
+		override $refresh(viewId: string, itemsToRefresh: { [treeItemHandle: string]: ITreeItem }): Promise<void> {
 			return Promise.resolve(null).then(() => {
 				this.onRefresh.fire(itemsToRefresh);
 			});
 		}
 
-		$reveal(): Promise<void> {
+		override $reveal(): Promise<void> {
 			return Promise.resolve();
 		}
 

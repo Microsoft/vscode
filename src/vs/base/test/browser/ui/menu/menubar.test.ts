@@ -56,7 +56,7 @@ function validateMenuBarItem(menubar: MenuBar, menubarContainer: HTMLElement, la
 	assert(titleDiv !== null, `Title div not found for ${readableLabel} button.`);
 
 	const mnem = getMnemonicFromTitleDiv(titleDiv!);
-	assert.equal(mnem, mnemonic, 'Mnemonic not correct');
+	assert.strictEqual(mnem, mnemonic, 'Mnemonic not correct');
 }
 
 suite('Menubar', () => {

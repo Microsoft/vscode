@@ -8,13 +8,13 @@ import { escapeRegExpCharacters, isFalsyOrWhitespace } from 'vs/base/common/stri
 import { isArray, withUndefinedAsNull, isUndefinedOrNull } from 'vs/base/common/types';
 import { URI } from 'vs/base/common/uri';
 import { localize } from 'vs/nls';
-import { ConfigurationTarget, IConfigurationService, IConfigurationValue } from 'vs/platform/configuration/common/configuration';
+import { ConfigurationTarget, IConfigurationValue } from 'vs/platform/configuration/common/configuration';
 import { SettingsTarget } from 'vs/workbench/contrib/preferences/browser/preferencesWidgets';
 import { ITOCEntry, knownAcronyms, knownTermMappings, tocData } from 'vs/workbench/contrib/preferences/browser/settingsLayout';
-import { MODIFIED_SETTING_TAG } from 'vs/workbench/contrib/preferences/common/preferences';
+import { MODIFIED_SETTING_TAG, REQUIRE_TRUSTED_WORKSPACE_SETTING_TAG } from 'vs/workbench/contrib/preferences/common/preferences';
 import { IExtensionSetting, ISearchResult, ISetting, SettingValueType } from 'vs/workbench/services/preferences/common/preferences';
 import { IWorkbenchEnvironmentService } from 'vs/workbench/services/environment/common/environmentService';
-import { FOLDER_SCOPES, WORKSPACE_SCOPES, REMOTE_MACHINE_SCOPES, LOCAL_MACHINE_SCOPES } from 'vs/workbench/services/configuration/common/configuration';
+import { FOLDER_SCOPES, WORKSPACE_SCOPES, REMOTE_MACHINE_SCOPES, LOCAL_MACHINE_SCOPES, IWorkbenchConfigurationService } from 'vs/workbench/services/configuration/common/configuration';
 import { IJSONSchema } from 'vs/base/common/jsonSchema';
 import { Disposable } from 'vs/base/common/lifecycle';
 import { Emitter } from 'vs/base/common/event';
@@ -130,17 +130,22 @@ export class SettingsTreeSettingElement extends SettingsTreeElement {
 	 */
 	isConfigured = false;
 
+	/**
+	 * Whether the setting requires trusted target
+	 */
+	isUntrusted = false;
+
 	tags?: Set<string>;
 	overriddenScopeList: string[] = [];
 	description!: string;
 	valueType!: SettingValueType;
 
-	constructor(setting: ISetting, parent: SettingsTreeGroupElement, inspectResult: IInspectResult) {
+	constructor(setting: ISetting, parent: SettingsTreeGroupElement, inspectResult: IInspectResult, isWorkspaceTrusted: boolean) {
 		super(sanitizeId(parent.id + '_' + setting.key));
 		this.setting = setting;
 		this.parent = parent;
 
-		this.update(inspectResult);
+		this.update(inspectResult, isWorkspaceTrusted);
 	}
 
 	get displayCategory(): string {
@@ -165,8 +170,15 @@ export class SettingsTreeSettingElement extends SettingsTreeElement {
 		this._displayCategory = displayKeyFormat.category;
 	}
 
-	update(inspectResult: IInspectResult): void {
+	update(inspectResult: IInspectResult, isWorkspaceTrusted: boolean): void {
 		const { isConfigured, inspected, targetSelector } = inspectResult;
+
+		switch (targetSelector) {
+			case 'workspaceFolderValue':
+			case 'workspaceValue':
+				this.isUntrusted = !!this.setting.restricted && !isWorkspaceTrusted;
+				break;
+		}
 
 		const displayValue = isConfigured ? inspected[targetSelector] : inspected.defaultValue;
 		const overriddenScopeList: string[] = [];
@@ -187,7 +199,7 @@ export class SettingsTreeSettingElement extends SettingsTreeElement {
 		this.defaultValue = inspected.defaultValue;
 
 		this.isConfigured = isConfigured;
-		if (isConfigured || this.setting.tags || this.tags) {
+		if (isConfigured || this.setting.tags || this.tags || this.setting.restricted) {
 			// Don't create an empty Set for all 1000 settings, only if needed
 			this.tags = new Set<string>();
 			if (isConfigured) {
@@ -196,6 +208,10 @@ export class SettingsTreeSettingElement extends SettingsTreeElement {
 
 			if (this.setting.tags) {
 				this.setting.tags.forEach(tag => this.tags!.add(tag));
+			}
+
+			if (this.setting.restricted) {
+				this.tags.add(REQUIRE_TRUSTED_WORKSPACE_SETTING_TAG);
 			}
 		}
 
@@ -336,8 +352,10 @@ export class SettingsTreeModel {
 
 	constructor(
 		protected _viewState: ISettingsEditorViewState,
-		@IConfigurationService private readonly _configurationService: IConfigurationService
-	) { }
+		private _isWorkspaceTrusted: boolean,
+		@IWorkbenchConfigurationService private readonly _configurationService: IWorkbenchConfigurationService,
+	) {
+	}
 
 	get root(): SettingsTreeGroupElement {
 		return this._root;
@@ -357,6 +375,11 @@ export class SettingsTreeModel {
 		} else {
 			this._root = newRoot;
 		}
+	}
+
+	updateWorkspaceTrust(workspaceTrusted: boolean): void {
+		this._isWorkspaceTrusted = workspaceTrusted;
+		this.updateRequireTrustedTargetElements();
 	}
 
 	private disposeChildren(children: SettingsTreeGroupChild[]) {
@@ -382,9 +405,17 @@ export class SettingsTreeModel {
 			return;
 		}
 
-		this._treeElementsBySettingName.get(name)!.forEach(element => {
+		this.updateSettings(this._treeElementsBySettingName.get(name)!);
+	}
+
+	private updateRequireTrustedTargetElements(): void {
+		this.updateSettings(arrays.flatten([...this._treeElementsBySettingName.values()]).filter(s => s.isUntrusted));
+	}
+
+	private updateSettings(settings: SettingsTreeSettingElement[]): void {
+		settings.forEach(element => {
 			const inspectResult = inspectSetting(element.setting.key, this._viewState.settingsTarget, this._configurationService);
-			element.update(inspectResult);
+			element.update(inspectResult, this._isWorkspaceTrusted);
 		});
 	}
 
@@ -420,7 +451,7 @@ export class SettingsTreeModel {
 
 	private createSettingsTreeSettingElement(setting: ISetting, parent: SettingsTreeGroupElement): SettingsTreeSettingElement {
 		const inspectResult = inspectSetting(setting.key, this._viewState.settingsTarget, this._configurationService);
-		const element = new SettingsTreeSettingElement(setting, parent, inspectResult);
+		const element = new SettingsTreeSettingElement(setting, parent, inspectResult, this._isWorkspaceTrusted);
 
 		const nameElements = this._treeElementsBySettingName.get(setting.key) || [];
 		nameElements.push(element);
@@ -431,18 +462,29 @@ export class SettingsTreeModel {
 
 interface IInspectResult {
 	isConfigured: boolean;
-	inspected: IConfigurationValue<any>;
+	inspected: IConfigurationValue<unknown>;
 	targetSelector: 'userLocalValue' | 'userRemoteValue' | 'workspaceValue' | 'workspaceFolderValue';
 }
 
-function inspectSetting(key: string, target: SettingsTarget, configurationService: IConfigurationService): IInspectResult {
+export function inspectSetting(key: string, target: SettingsTarget, configurationService: IWorkbenchConfigurationService): IInspectResult {
 	const inspectOverrides = URI.isUri(target) ? { resource: target } : undefined;
 	const inspected = configurationService.inspect(key, inspectOverrides);
 	const targetSelector = target === ConfigurationTarget.USER_LOCAL ? 'userLocalValue' :
 		target === ConfigurationTarget.USER_REMOTE ? 'userRemoteValue' :
 			target === ConfigurationTarget.WORKSPACE ? 'workspaceValue' :
 				'workspaceFolderValue';
-	const isConfigured = typeof inspected[targetSelector] !== 'undefined';
+	let isConfigured = typeof inspected[targetSelector] !== 'undefined';
+	if (!isConfigured) {
+		if (target === ConfigurationTarget.USER_LOCAL) {
+			isConfigured = !!configurationService.restrictedSettings.userLocal?.includes(key);
+		} else if (target === ConfigurationTarget.USER_REMOTE) {
+			isConfigured = !!configurationService.restrictedSettings.userRemote?.includes(key);
+		} else if (target === ConfigurationTarget.WORKSPACE) {
+			isConfigured = !!configurationService.restrictedSettings.workspace?.includes(key);
+		} else if (target instanceof URI) {
+			isConfigured = !!configurationService.restrictedSettings.workspaceFolder?.get(target)?.includes(key);
+		}
+	}
 
 	return { isConfigured, inspected, targetSelector };
 }
@@ -590,10 +632,11 @@ export class SearchResultModel extends SettingsTreeModel {
 
 	constructor(
 		viewState: ISettingsEditorViewState,
-		@IConfigurationService configurationService: IConfigurationService,
+		isWorkspaceTrusted: boolean,
+		@IWorkbenchConfigurationService configurationService: IWorkbenchConfigurationService,
 		@IWorkbenchEnvironmentService private environmentService: IWorkbenchEnvironmentService,
 	) {
-		super(viewState, configurationService);
+		super(viewState, isWorkspaceTrusted, configurationService);
 		this.update({ id: 'searchResultModel', label: '' });
 	}
 

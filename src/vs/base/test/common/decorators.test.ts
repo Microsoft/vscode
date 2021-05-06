@@ -5,7 +5,7 @@
 
 import * as sinon from 'sinon';
 import * as assert from 'assert';
-import { memoize, createMemoizer, throttle } from 'vs/base/common/decorators';
+import { memoize, throttle } from 'vs/base/common/decorators';
 
 suite('Decorators', () => {
 	test('memoize should memoize methods', () => {
@@ -22,35 +22,35 @@ suite('Decorators', () => {
 		}
 
 		const foo = new Foo(42);
-		assert.equal(foo.count, 0);
-		assert.equal(foo.answer(), 42);
-		assert.equal(foo.count, 1);
-		assert.equal(foo.answer(), 42);
-		assert.equal(foo.count, 1);
+		assert.strictEqual(foo.count, 0);
+		assert.strictEqual(foo.answer(), 42);
+		assert.strictEqual(foo.count, 1);
+		assert.strictEqual(foo.answer(), 42);
+		assert.strictEqual(foo.count, 1);
 
 		const foo2 = new Foo(1337);
-		assert.equal(foo2.count, 0);
-		assert.equal(foo2.answer(), 1337);
-		assert.equal(foo2.count, 1);
-		assert.equal(foo2.answer(), 1337);
-		assert.equal(foo2.count, 1);
+		assert.strictEqual(foo2.count, 0);
+		assert.strictEqual(foo2.answer(), 1337);
+		assert.strictEqual(foo2.count, 1);
+		assert.strictEqual(foo2.answer(), 1337);
+		assert.strictEqual(foo2.count, 1);
 
-		assert.equal(foo.answer(), 42);
-		assert.equal(foo.count, 1);
+		assert.strictEqual(foo.answer(), 42);
+		assert.strictEqual(foo.count, 1);
 
 		const foo3 = new Foo(null);
-		assert.equal(foo3.count, 0);
-		assert.equal(foo3.answer(), null);
-		assert.equal(foo3.count, 1);
-		assert.equal(foo3.answer(), null);
-		assert.equal(foo3.count, 1);
+		assert.strictEqual(foo3.count, 0);
+		assert.strictEqual(foo3.answer(), null);
+		assert.strictEqual(foo3.count, 1);
+		assert.strictEqual(foo3.answer(), null);
+		assert.strictEqual(foo3.count, 1);
 
 		const foo4 = new Foo(undefined);
-		assert.equal(foo4.count, 0);
-		assert.equal(foo4.answer(), undefined);
-		assert.equal(foo4.count, 1);
-		assert.equal(foo4.answer(), undefined);
-		assert.equal(foo4.count, 1);
+		assert.strictEqual(foo4.count, 0);
+		assert.strictEqual(foo4.answer(), undefined);
+		assert.strictEqual(foo4.count, 1);
+		assert.strictEqual(foo4.answer(), undefined);
+		assert.strictEqual(foo4.count, 1);
 	});
 
 	test('memoize should memoize getters', () => {
@@ -67,35 +67,35 @@ suite('Decorators', () => {
 		}
 
 		const foo = new Foo(42);
-		assert.equal(foo.count, 0);
-		assert.equal(foo.answer, 42);
-		assert.equal(foo.count, 1);
-		assert.equal(foo.answer, 42);
-		assert.equal(foo.count, 1);
+		assert.strictEqual(foo.count, 0);
+		assert.strictEqual(foo.answer, 42);
+		assert.strictEqual(foo.count, 1);
+		assert.strictEqual(foo.answer, 42);
+		assert.strictEqual(foo.count, 1);
 
 		const foo2 = new Foo(1337);
-		assert.equal(foo2.count, 0);
-		assert.equal(foo2.answer, 1337);
-		assert.equal(foo2.count, 1);
-		assert.equal(foo2.answer, 1337);
-		assert.equal(foo2.count, 1);
+		assert.strictEqual(foo2.count, 0);
+		assert.strictEqual(foo2.answer, 1337);
+		assert.strictEqual(foo2.count, 1);
+		assert.strictEqual(foo2.answer, 1337);
+		assert.strictEqual(foo2.count, 1);
 
-		assert.equal(foo.answer, 42);
-		assert.equal(foo.count, 1);
+		assert.strictEqual(foo.answer, 42);
+		assert.strictEqual(foo.count, 1);
 
 		const foo3 = new Foo(null);
-		assert.equal(foo3.count, 0);
-		assert.equal(foo3.answer, null);
-		assert.equal(foo3.count, 1);
-		assert.equal(foo3.answer, null);
-		assert.equal(foo3.count, 1);
+		assert.strictEqual(foo3.count, 0);
+		assert.strictEqual(foo3.answer, null);
+		assert.strictEqual(foo3.count, 1);
+		assert.strictEqual(foo3.answer, null);
+		assert.strictEqual(foo3.count, 1);
 
 		const foo4 = new Foo(undefined);
-		assert.equal(foo4.count, 0);
-		assert.equal(foo4.answer, undefined);
-		assert.equal(foo4.count, 1);
-		assert.equal(foo4.answer, undefined);
-		assert.equal(foo4.count, 1);
+		assert.strictEqual(foo4.count, 0);
+		assert.strictEqual(foo4.answer, undefined);
+		assert.strictEqual(foo4.count, 1);
+		assert.strictEqual(foo4.answer, undefined);
+		assert.strictEqual(foo4.count, 1);
 	});
 
 	test('memoized property should not be enumerable', () => {
@@ -107,7 +107,7 @@ suite('Decorators', () => {
 		}
 
 		const foo = new Foo();
-		assert.equal(foo.answer, 42);
+		assert.strictEqual(foo.answer, 42);
 
 		assert(!Object.keys(foo).some(k => /\$memoize\$/.test(k)));
 	});
@@ -121,36 +121,14 @@ suite('Decorators', () => {
 		}
 
 		const foo = new Foo();
-		assert.equal(foo.answer, 42);
+		assert.strictEqual(foo.answer, 42);
 
 		try {
 			(foo as any)['$memoize$answer'] = 1337;
 			assert(false);
 		} catch (e) {
-			assert.equal(foo.answer, 42);
+			assert.strictEqual(foo.answer, 42);
 		}
-	});
-
-	test('memoize clear', () => {
-		const memoizer = createMemoizer();
-		let counter = 0;
-		class Foo {
-			@memoizer
-			get answer() {
-				return ++counter;
-			}
-		}
-
-		const foo = new Foo();
-		assert.equal(foo.answer, 1);
-		assert.equal(foo.answer, 1);
-		memoizer.clear();
-		assert.equal(foo.answer, 2);
-		assert.equal(foo.answer, 2);
-		memoizer.clear();
-		assert.equal(foo.answer, 3);
-		assert.equal(foo.answer, 3);
-		assert.equal(foo.answer, 3);
 	});
 
 	test('throttle', () => {
@@ -179,10 +157,10 @@ suite('Decorators', () => {
 			t.report(1);
 			t.report(2);
 			t.report(3);
-			assert.deepEqual(spy.args, [[1]]);
+			assert.deepStrictEqual(spy.args, [[1]]);
 
 			clock.tick(200);
-			assert.deepEqual(spy.args, [[1], [5]]);
+			assert.deepStrictEqual(spy.args, [[1], [5]]);
 			spy.reset();
 
 			t.report(4);
@@ -190,9 +168,9 @@ suite('Decorators', () => {
 			clock.tick(50);
 			t.report(6);
 
-			assert.deepEqual(spy.args, [[4]]);
+			assert.deepStrictEqual(spy.args, [[4]]);
 			clock.tick(60);
-			assert.deepEqual(spy.args, [[4], [11]]);
+			assert.deepStrictEqual(spy.args, [[4], [11]]);
 		} finally {
 			clock.restore();
 		}

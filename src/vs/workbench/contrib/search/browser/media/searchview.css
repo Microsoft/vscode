@@ -100,22 +100,8 @@
 }
 
 .search-view .search-widget .replace-container .monaco-action-bar {
-	margin-left: 0;
-}
-
-.search-view .search-widget .replace-container .monaco-action-bar {
 	height: 25px;
-}
-
-.search-view .search-widget .replace-container .monaco-action-bar .action-item .codicon {
-	background-repeat: no-repeat;
-	width: 25px;
-	height: 25px;
-	margin-right: 0;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	color: inherit;
+	margin-left: 4px;
 }
 
 .search-view .query-details {
@@ -170,6 +156,11 @@
 	padding: 0 22px 8px;
 }
 
+.search-view .messages .message .providerMessage {
+	display: inline-block;
+	margin-left: 4px;
+}
+
 .search-view .message p:first-child {
 	margin-top: 0px;
 	margin-bottom: 0px;
@@ -184,6 +175,7 @@
 	position: relative;
 	line-height: 22px;
 	padding: 0;
+	height: 100%;
 }
 
 .pane-body:not(.wide) .search-view .foldermatch .monaco-icon-label,
@@ -261,13 +253,12 @@
 	display: inline-block;
 }
 
-.search-view .monaco-list .monaco-list-row .monaco-action-bar .action-label {
+.search-view .monaco-list .monaco-list-row .monaco-action-bar .action-item {
 	margin-right: 0.2em;
-	margin-top: 4px;
-	background-repeat: no-repeat;
-	width: 16px;
-	height: 16px;
-	color: inherit;
+}
+
+.search-view .monaco-list .monaco-list-row .monaco-action-bar .action-label {
+	padding: 2px;
 }
 
 /* Adjusts spacing in high contrast mode so that actions are vertically centered */
@@ -301,20 +292,6 @@
 .monaco-workbench.hc-black .search-view .findInFileMatch {
 	background: none !important;
 	box-sizing: border-box;
-}
-
-.monaco-workbench .search-view a.prominent {
-	text-decoration: underline;
-}
-
-/* Theming */
-
-.monaco-workbench.vs .search-view .search-widget .toggle-replace-button:hover {
-	background-color: rgba(0, 0, 0, 0.1) !important;
-}
-
-.monaco-workbench.vs-dark .search-view .search-widget .toggle-replace-button:hover {
-	background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 /* High Contrast Theming */

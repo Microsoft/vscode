@@ -9,7 +9,7 @@ import { exists, readFile } from 'fs';
 import { join, basename } from 'vs/base/common/path';
 import { parse, ParseError, getNodeType } from 'vs/base/common/json';
 import { listProcesses } from 'vs/base/node/ps';
-import product from 'vs/platform/product/common/product';
+import { IProductService } from 'vs/platform/product/common/productService';
 import { isWindows, isLinux } from 'vs/base/common/platform';
 import { URI } from 'vs/base/common/uri';
 import { ProcessItem } from 'vs/base/common/processes';
@@ -213,7 +213,10 @@ export class DiagnosticsService implements IDiagnosticsService {
 
 	declare readonly _serviceBrand: undefined;
 
-	constructor(@ITelemetryService private readonly telemetryService: ITelemetryService) { }
+	constructor(
+		@ITelemetryService private readonly telemetryService: ITelemetryService,
+		@IProductService private readonly productService: IProductService
+	) { }
 
 	private formatMachineInfo(info: IMachineInfo): string {
 		const output: string[] = [];
@@ -227,7 +230,7 @@ export class DiagnosticsService implements IDiagnosticsService {
 
 	private formatEnvironment(info: IMainProcessInfo): string {
 		const output: string[] = [];
-		output.push(`Version:          ${product.nameShort} ${product.version} (${product.commit || 'Commit unknown'}, ${product.date || 'Date unknown'})`);
+		output.push(`Version:          ${this.productService.nameShort} ${this.productService.version} (${this.productService.commit || 'Commit unknown'}, ${this.productService.date || 'Date unknown'})`);
 		output.push(`OS Version:       ${osLib.type()} ${osLib.arch()} ${osLib.release()}`);
 		const cpus = osLib.cpus();
 		if (cpus && cpus.length > 0) {
@@ -481,7 +484,7 @@ export class DiagnosticsService implements IDiagnosticsService {
 		// Format name with indent
 		let name: string;
 		if (isRoot) {
-			name = item.pid === mainPid ? `${product.applicationName} main` : 'remote agent';
+			name = item.pid === mainPid ? `${this.productService.applicationName} main` : 'remote agent';
 		} else {
 			name = `${'  '.repeat(indent)} ${item.name}`;
 

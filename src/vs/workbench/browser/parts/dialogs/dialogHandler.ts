@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { localize } from 'vs/nls';
-import { IDialogOptions, IConfirmation, IConfirmationResult, DialogType, IShowResult, IInputResult, ICheckbox, IInput, IDialogHandler } from 'vs/platform/dialogs/common/dialogs';
+import { IDialogOptions, IConfirmation, IConfirmationResult, DialogType, IShowResult, IInputResult, ICheckbox, IInput, IDialogHandler, ICustomDialogOptions } from 'vs/platform/dialogs/common/dialogs';
 import { ILayoutService } from 'vs/platform/layout/browser/layoutService';
 import { ILogService } from 'vs/platform/log/common/log';
 import Severity from 'vs/base/common/severity';
@@ -18,6 +18,8 @@ import { IKeybindingService } from 'vs/platform/keybinding/common/keybinding';
 import { IProductService } from 'vs/platform/product/common/productService';
 import { IClipboardService } from 'vs/platform/clipboard/common/clipboardService';
 import { fromNow } from 'vs/base/common/date';
+import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
+import { MarkdownRenderer } from 'vs/editor/browser/core/markdownRenderer';
 
 export class BrowserDialogHandler implements IDialogHandler {
 
@@ -30,14 +32,19 @@ export class BrowserDialogHandler implements IDialogHandler {
 		'editor.action.clipboardPasteAction'
 	];
 
+	private readonly markdownRenderer: MarkdownRenderer;
+
 	constructor(
 		@ILogService private readonly logService: ILogService,
 		@ILayoutService private readonly layoutService: ILayoutService,
 		@IThemeService private readonly themeService: IThemeService,
 		@IKeybindingService private readonly keybindingService: IKeybindingService,
+		@IInstantiationService private readonly instantiationService: IInstantiationService,
 		@IProductService private readonly productService: IProductService,
 		@IClipboardService private readonly clipboardService: IClipboardService
-	) { }
+	) {
+		this.markdownRenderer = this.instantiationService.createInstance(MarkdownRenderer, {});
+	}
 
 	async confirm(confirmation: IConfirmation): Promise<IConfirmationResult> {
 		this.logService.trace('DialogService#confirm', confirmation.message);
@@ -67,7 +74,7 @@ export class BrowserDialogHandler implements IDialogHandler {
 	async show(severity: Severity, message: string, buttons: string[], options?: IDialogOptions): Promise<IShowResult> {
 		this.logService.trace('DialogService#show', message);
 
-		const result = await this.doShow(this.getDialogType(severity), message, buttons, options?.detail, options?.cancelId, options?.checkbox);
+		const result = await this.doShow(this.getDialogType(severity), message, buttons, options?.detail, options?.cancelId, options?.checkbox, undefined, typeof options?.custom === 'object' ? options.custom : undefined);
 
 		return {
 			choice: result.button,
@@ -75,8 +82,19 @@ export class BrowserDialogHandler implements IDialogHandler {
 		};
 	}
 
-	private async doShow(type: 'none' | 'info' | 'error' | 'question' | 'warning' | 'pending' | undefined, message: string, buttons: string[], detail?: string, cancelId?: number, checkbox?: ICheckbox, inputs?: IInput[]): Promise<IDialogResult> {
+	private async doShow(type: 'none' | 'info' | 'error' | 'question' | 'warning' | 'pending' | undefined, message: string, buttons: string[], detail?: string, cancelId?: number, checkbox?: ICheckbox, inputs?: IInput[], customOptions?: ICustomDialogOptions): Promise<IDialogResult> {
 		const dialogDisposables = new DisposableStore();
+
+		const renderBody = customOptions ? (parent: HTMLElement) => {
+			parent.classList.add(...(customOptions.classes || []));
+			(customOptions.markdownDetails || []).forEach(markdownDetail => {
+				const result = this.markdownRenderer.render(markdownDetail.markdown);
+				parent.appendChild(result.element);
+				result.element.classList.add(...(markdownDetail.classes || []));
+				dialogDisposables.add(result);
+			});
+		} : undefined;
+
 		const dialog = new Dialog(
 			this.layoutService.container,
 			message,
@@ -93,6 +111,10 @@ export class BrowserDialogHandler implements IDialogHandler {
 						}
 					}
 				},
+				renderBody,
+				icon: customOptions?.icon,
+				disableCloseAction: customOptions?.disableCloseAction,
+				buttonDetails: customOptions?.buttonDetails,
 				checkboxLabel: checkbox?.label,
 				checkboxChecked: checkbox?.checked,
 				inputs

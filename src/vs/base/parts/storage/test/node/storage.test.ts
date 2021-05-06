@@ -111,7 +111,7 @@ flakySuite('Storage Library', function () {
 
 		class TestSQLiteStorageDatabase extends SQLiteStorageDatabase {
 			private readonly _onDidChangeItemsExternal = new Emitter<IStorageItemsChangeEvent>();
-			get onDidChangeItemsExternal(): Event<IStorageItemsChangeEvent> { return this._onDidChangeItemsExternal.event; }
+			override get onDidChangeItemsExternal(): Event<IStorageItemsChangeEvent> { return this._onDidChangeItemsExternal.event; }
 
 			fireDidChangeItemsExternal(event: IStorageItemsChangeEvent): void {
 				this._onDidChangeItemsExternal.fire(event);

@@ -4,7 +4,7 @@
 		"If you want to provide a fix or improvement, please create a pull request against the original repository.",
 		"Once accepted there, we are happy to receive an update request."
 	],
-	"version": "https://github.com/textmate/ruby.tmbundle/commit/8d525dd4a0b77ae041593ff26dc883a694c648c5",
+	"version": "https://github.com/textmate/ruby.tmbundle/commit/efcb8941c701343f1b2e9fb105c678152fea6892",
 	"name": "Ruby",
 	"scopeName": "source.ruby",
 	"comment": "\n\tTODO: unresolved issues\n\n\ttext:\n\t\"p <<end\n\tprint me!\n\tend\"\n\tsymptoms:\n\tnot recognized as a heredoc\n\tsolution:\n\tthere is no way to distinguish perfectly between the << operator and the start\n\tof a heredoc. Currently, we require assignment to recognize a heredoc. More\n\trefinement is possible.\n\t• Heredocs with indented terminators (<<-) are always distinguishable, however.\n\t• Nested heredocs are not really supportable at present\n\n\ttext:\n\tprint <<-'THERE' \n\tThis is single quoted. \n\tThe above used #{Time.now} \n\tTHERE \n\tsymtoms:\n\tFrom Programming Ruby p306; should be a non-interpolated heredoc.\n\t\n    text:\n    val?(a):p(b)\n    val?'a':'b'\n    symptoms:\n    ':p' is recognized as a symbol.. its 2 things ':' and 'p'.\n    :'b' has same problem.\n    solution:\n    ternary operator rule, precedence stuff, symbol rule.\n    but also consider 'a.b?(:c)' ??\n",
@@ -444,7 +444,7 @@
 			]
 		},
 		{
-			"comment": "Needs higher precidence than regular expressions.",
+			"comment": "Needs higher precedence than regular expressions.",
 			"match": "(?<!\\()/=",
 			"name": "keyword.operator.assignment.augmented.ruby"
 		},

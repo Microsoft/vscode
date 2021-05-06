@@ -131,6 +131,11 @@
 	overflow: hidden;
 }
 
+.customview-tree .monaco-list .monaco-list-row .custom-view-tree-node-item .monaco-icon-label-container::after {
+	content: '';
+	display: block;
+}
+
 .customview-tree .monaco-list .monaco-list-row .custom-view-tree-node-item > .custom-view-tree-node-item-icon {
 	background-size: 16px;
 	background-position: left center;
@@ -138,12 +143,17 @@
 	padding-right: 6px;
 	width: 16px;
 	height: 22px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 }
 
-.customview-tree .monaco-list .monaco-list-row .custom-view-tree-node-item > .custom-view-tree-node-item-icon.codicon {
-	margin-top: 3px;
+/* makes spinning icons square */
+.customview-tree .monaco-list .monaco-list-row .custom-view-tree-node-item > .custom-view-tree-node-item-icon.codicon.codicon-modifier-spin {
+	padding-left: 6px;
+	margin-left: -6px;
 }
 
 .customview-tree .monaco-list .monaco-list-row.selected .custom-view-tree-node-item > .custom-view-tree-node-item-icon.codicon {
@@ -162,25 +172,12 @@
 	display: none;
 }
 
+.customview-tree .monaco-list .monaco-list-row .custom-view-tree-node-item .actions .action-label {
+	padding: 2px;
+}
+
 .customview-tree .monaco-list .monaco-list-row:hover .custom-view-tree-node-item .actions,
 .customview-tree .monaco-list .monaco-list-row.selected .custom-view-tree-node-item .actions,
 .customview-tree .monaco-list .monaco-list-row.focused .custom-view-tree-node-item .actions {
 	display: block;
-}
-
-.customview-tree .monaco-list .custom-view-tree-node-item .actions .action-label {
-	width: 16px;
-	height: 100%;
-	background-size: 16px;
-	background-position: 50% 50%;
-	background-repeat: no-repeat;
-}
-
-.customview-tree .monaco-list .custom-view-tree-node-item .actions .action-label.codicon {
-	line-height: 22px;
-	height: 22px;
-}
-
-.customview-tree .monaco-list .custom-view-tree-node-item .actions .action-label.codicon::before {
-	vertical-align: middle;
 }

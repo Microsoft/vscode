@@ -217,6 +217,14 @@ export interface TextSearchOptions extends SearchOptions {
 }
 
 /**
+ * Represents the severiry of a TextSearchComplete message.
+ */
+export enum TextSearchCompleteMessageType {
+	Information = 1,
+	Warning = 2,
+}
+
+/**
  * Information collected when text search is complete.
  */
 export interface TextSearchComplete {
@@ -228,6 +236,15 @@ export interface TextSearchComplete {
 	 * - If search hits an internal limit which is less than `maxResults`, this should be true.
 	 */
 	limitHit?: boolean;
+
+	/**
+	 * Additional information regarding the state of the completed search.
+	 *
+	 * Supports links in markdown syntax:
+	 * - Click to [run a command](command:workbench.action.OpenQuickPick)
+	 * - Click to [open a website](https://aka.ms)
+	 */
+	message?: { text: string, type: TextSearchCompleteMessageType } | { text: string, type: TextSearchCompleteMessageType }[];
 }
 
 /**

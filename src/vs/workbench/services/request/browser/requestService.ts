@@ -21,7 +21,7 @@ export class BrowserRequestService extends RequestService {
 		super(configurationService, logService);
 	}
 
-	async request(options: IRequestOptions, token: CancellationToken): Promise<IRequestContext> {
+	override async request(options: IRequestOptions, token: CancellationToken): Promise<IRequestContext> {
 		try {
 			const context = await super.request(options, token);
 			const connection = this.remoteAgentService.getConnection();

@@ -1,7 +1,7 @@
 steps:
   - task: NodeTool@0
     inputs:
-      versionSpec: "12.x"
+      versionSpec: "14.x"
 
   - task: geeklearningio.gl-vsts-tasks-yarn.yarn-installer-task.YarnInstaller@2
     inputs:
@@ -116,14 +116,6 @@ steps:
       AZURE_WEBVIEW_STORAGE_ACCESS_KEY="$(vscode-webview-storage-key)" \
       ./build/azure-pipelines/common/publish-webview.sh
     displayName: Publish Webview
-    condition: and(succeeded(), ne(variables['VSCODE_PUBLISH'], 'false'))
-
-  - script: |
-      set -e
-      VERSION=`node -p "require(\"./package.json\").version"`
-      AZURE_DOCUMENTDB_MASTERKEY="$(builds-docdb-key-readwrite)" \
-        node build/azure-pipelines/common/createBuild.js $VERSION
-    displayName: Create build
     condition: and(succeeded(), ne(variables['VSCODE_PUBLISH'], 'false'))
 
   # we gotta tarball everything in order to preserve file permissions

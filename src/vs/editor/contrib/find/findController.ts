@@ -139,7 +139,7 @@ export class CommonFindController extends Disposable implements IEditorContribut
 		}));
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		this.disposeModel();
 		super.dispose();
 	}
@@ -422,7 +422,7 @@ export class FindController extends CommonFindController implements IFindControl
 		this._findOptionsWidget = null;
 	}
 
-	protected async _start(opts: IFindStartOptions): Promise<void> {
+	protected override async _start(opts: IFindStartOptions): Promise<void> {
 		if (!this._widget) {
 			this._createFindWidget();
 		}
@@ -459,7 +459,7 @@ export class FindController extends CommonFindController implements IFindControl
 		}
 	}
 
-	public highlightFindOptions(ignoreWhenVisible: boolean = false): void {
+	public override highlightFindOptions(ignoreWhenVisible: boolean = false): void {
 		if (!this._widget) {
 			this._createFindWidget();
 		}

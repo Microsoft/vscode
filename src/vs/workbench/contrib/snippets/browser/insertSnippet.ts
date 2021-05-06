@@ -205,7 +205,7 @@ class InsertSnippetAction extends EditorAction {
 
 		const picker = quickInputService.createQuickPick<ISnippetPick>();
 		picker.placeholder = nls.localize('pick.placeholder', "Select a snippet");
-		picker.matchOnDescription = true;
+		picker.matchOnDetail = true;
 		picker.ignoreFocusOut = false;
 		picker.onDidTriggerItemButton(ctx => {
 			const isEnabled = snippetService.isEnabled(ctx.item.snippet);

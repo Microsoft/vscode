@@ -339,7 +339,7 @@ export class ContextKeyDefinedExpr implements IContextKeyExpression {
 
 	public readonly type = ContextKeyExprType.Defined;
 
-	protected constructor(protected readonly key: string) {
+	protected constructor(readonly key: string) {
 	}
 
 	public cmp(other: ContextKeyExpression): number {
@@ -1273,7 +1273,7 @@ export class RawContextKey<T> extends ContextKeyDefinedExpr {
 
 	private readonly _defaultValue: T | undefined;
 
-	constructor(readonly key: string, defaultValue: T | undefined, metaOrHide?: string | true | { type: string, description: string }) {
+	constructor(key: string, defaultValue: T | undefined, metaOrHide?: string | true | { type: string, description: string }) {
 		super(key);
 		this._defaultValue = defaultValue;
 

@@ -390,11 +390,11 @@ export class NotebookCellOutline implements IOutline<OutlineEntry> {
 			includeCodeCells = this._configurationService.getValue<boolean>('notebook.breadcrumbs.showCodeCells');
 		}
 
-		const selectedCellIndex = viewModel.getSelection().start;
-		const selected = viewModel.getCellByIndex(selectedCellIndex)?.handle;
+		const focusedCellIndex = viewModel.getFocus().start;
+		const focused = viewModel.cellAt(focusedCellIndex)?.handle;
 		const entries: OutlineEntry[] = [];
 
-		for (let i = 0; i < viewModel.viewCells.length; i++) {
+		for (let i = 0; i < viewModel.length; i++) {
 			const cell = viewModel.viewCells[i];
 			const isMarkdown = cell.cellKind === CellKind.Markdown;
 			if (!isMarkdown && !includeCodeCells) {
@@ -434,7 +434,7 @@ export class NotebookCellOutline implements IOutline<OutlineEntry> {
 				entries.push(new OutlineEntry(entries.length, 7, cell, preview, isMarkdown ? Codicon.markdown : Codicon.code));
 			}
 
-			if (cell.handle === selected) {
+			if (cell.handle === focused) {
 				this._activeEntry = entries[entries.length - 1];
 			}
 
@@ -518,7 +518,7 @@ export class NotebookCellOutline implements IOutline<OutlineEntry> {
 		const { viewModel } = this._editor;
 
 		if (viewModel) {
-			const cell = viewModel.getCellByIndex(viewModel.getSelection().start);
+			const cell = viewModel.cellAt(viewModel.getFocus().start);
 			if (cell) {
 				for (let entry of this._entries) {
 					newActive = entry.find(cell, []);

@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { IPtyHostProcessReplayEvent } from 'vs/platform/terminal/common/terminalProcess';
+import { IPtyHostProcessReplayEvent, ReplayEntry } from 'vs/platform/terminal/common/terminalProcess';
 
 const MAX_RECORDER_DATA_SIZE = 1024 * 1024; // 1MB
 
@@ -13,8 +13,6 @@ interface RecorderEntry {
 	data: string[];
 }
 
-export interface ReplayEntry { cols: number; rows: number; data: string; }
-
 export interface IRemoteTerminalProcessReplayEvent {
 	events: ReplayEntry[];
 }
@@ -22,14 +20,13 @@ export interface IRemoteTerminalProcessReplayEvent {
 export class TerminalRecorder {
 
 	private _entries: RecorderEntry[];
-	private _totalDataLength: number;
+	private _totalDataLength: number = 0;
 
 	constructor(cols: number, rows: number) {
 		this._entries = [{ cols, rows, data: [] }];
-		this._totalDataLength = 0;
 	}
 
-	public recordResize(cols: number, rows: number): void {
+	recordResize(cols: number, rows: number): void {
 		if (this._entries.length > 0) {
 			const lastEntry = this._entries[this._entries.length - 1];
 			if (lastEntry.data.length === 0) {
@@ -55,7 +52,7 @@ export class TerminalRecorder {
 		this._entries.push({ cols, rows, data: [] });
 	}
 
-	public recordData(data: string): void {
+	recordData(data: string): void {
 		const lastEntry = this._entries[this._entries.length - 1];
 		lastEntry.data.push(data);
 
@@ -79,7 +76,7 @@ export class TerminalRecorder {
 		}
 	}
 
-	public generateReplayEvent(): IPtyHostProcessReplayEvent {
+	generateReplayEvent(): IPtyHostProcessReplayEvent {
 		// normalize entries to one element per data array
 		this._entries.forEach((entry) => {
 			if (entry.data.length > 0) {

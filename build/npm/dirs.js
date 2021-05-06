@@ -17,7 +17,6 @@ exports.dirs = [
 	'extensions/emmet',
 	'extensions/extension-editing',
 	'extensions/git',
-	'extensions/git-ui',
 	'extensions/github',
 	'extensions/github-authentication',
 	'extensions/grunt',

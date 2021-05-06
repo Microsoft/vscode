@@ -12,6 +12,7 @@ import { Disposable } from 'vs/base/common/lifecycle';
 import { Schemas } from 'vs/base/common/network';
 import { isIOS, isMacintosh } from 'vs/base/common/platform';
 import Severity from 'vs/base/common/severity';
+import { URI } from 'vs/base/common/uri';
 import { localize } from 'vs/nls';
 import { IDialogService } from 'vs/platform/dialogs/common/dialogs';
 import { registerWindowDriver } from 'vs/platform/driver/browser/driver';
@@ -115,7 +116,7 @@ export class BrowserWindow extends Disposable {
 	private create(): void {
 
 		// Driver
-		if (this.environmentService.options?.driver) {
+		if (this.environmentService.options?.developmentOptions?.enableSmokeTestDriver) {
 			(async () => this._register(await registerWindowDriver()))();
 		}
 
@@ -138,7 +139,17 @@ export class BrowserWindow extends Disposable {
 		this.openerService.setDefaultExternalOpener({
 			openExternal: async (href: string) => {
 				if (matchesScheme(href, Schemas.http) || matchesScheme(href, Schemas.https)) {
-					windowOpenNoOpener(href);
+					const opened = windowOpenNoOpener(href);
+					if (!opened) {
+						const showResult = await this.dialogService.show(Severity.Warning, localize('unableToOpenExternal', "The browser interrupted the opening of a new tab or window. Press 'Open' to open it anyway."),
+							[localize('open', "Open"), localize('learnMore', "Learn More"), localize('cancel', "Cancel")], { cancelId: 2, detail: href });
+						if (showResult.choice === 0) {
+							windowOpenNoOpener(href);
+						}
+						if (showResult.choice === 1) {
+							await this.openerService.open(URI.parse('https://aka.ms/allow-vscode-popup'));
+						}
+					}
 				} else {
 					this.lifecycleService.withExpectedUnload(() => window.location.href = href);
 				}

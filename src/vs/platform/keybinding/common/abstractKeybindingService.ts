@@ -61,7 +61,7 @@ export abstract class AbstractKeybindingService extends Disposable implements IK
 		this._logging = false;
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		super.dispose();
 	}
 

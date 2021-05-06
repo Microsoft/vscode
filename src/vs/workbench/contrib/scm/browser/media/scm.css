@@ -93,7 +93,7 @@
 
 .scm-view .scm-provider > .actions > .monaco-toolbar > .monaco-action-bar > .actions-container  > .action-item > .action-label > .codicon {
 	font-size: 12px;
-	margin-right: 2px;
+	justify-content: center;
 }
 
 .scm-view .scm-provider > .actions > .monaco-toolbar > .monaco-action-bar > .actions-container > .action-item:last-of-type {
@@ -177,17 +177,8 @@
 	display: block;
 }
 
-.scm-view .monaco-list-row .resource > .name > .monaco-icon-label > .actions .action-label,
-.scm-view .monaco-list-row .resource-group > .actions .action-label {
-	width: 16px;
-	height: 100%;
-	color: inherit;
-	background-position: 50% 50%;
-	background-repeat: no-repeat;
-}
-
-.scm-view .monaco-list-row .resource > .name > .monaco-icon-label > .actions .action-label.codicon {
-	line-height: 22px;
+.scm-view .monaco-list-row .actions .action-label {
+	padding: 2px;
 }
 
 .scm-view .scm-input {

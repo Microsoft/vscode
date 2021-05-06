@@ -28,7 +28,7 @@ export class InstallExtensionQuickAccessProvider extends PickerQuickAccessProvid
 		super(InstallExtensionQuickAccessProvider.PREFIX);
 	}
 
-	protected getPicks(filter: string, disposables: DisposableStore, token: CancellationToken): Array<IPickerQuickAccessItem | IQuickPickSeparator> | Promise<Array<IPickerQuickAccessItem | IQuickPickSeparator>> {
+	protected _getPicks(filter: string, disposables: DisposableStore, token: CancellationToken): Array<IPickerQuickAccessItem | IQuickPickSeparator> | Promise<Array<IPickerQuickAccessItem | IQuickPickSeparator>> {
 
 		// Nothing typed
 		if (!filter) {
@@ -100,7 +100,7 @@ export class ManageExtensionsQuickAccessProvider extends PickerQuickAccessProvid
 		super(ManageExtensionsQuickAccessProvider.PREFIX);
 	}
 
-	protected getPicks(): Array<IPickerQuickAccessItem | IQuickPickSeparator> {
+	protected _getPicks(): Array<IPickerQuickAccessItem | IQuickPickSeparator> {
 		return [{
 			label: localize('manage', "Press Enter to manage your extensions."),
 			accept: () => openExtensionsViewlet(this.viewletService)

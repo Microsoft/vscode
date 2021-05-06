@@ -156,7 +156,7 @@ export class WorkbenchModeServiceImpl extends ModeServiceImpl {
 		});
 	}
 
-	protected _onReady(): Promise<boolean> {
+	protected override _onReady(): Promise<boolean> {
 		if (!this._onReadyPromise) {
 			this._onReadyPromise = Promise.resolve(
 				this._extensionService.whenInstalledExtensionsRegistered().then(() => true)

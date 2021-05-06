@@ -266,6 +266,11 @@ export interface PresentationOptions {
 	 * Controls whether the task is executed in a specific terminal group using split panes.
 	 */
 	group?: string;
+
+	/**
+	 * Controls whether the terminal that the task runs in is closed when the task completes.
+	 */
+	close?: boolean;
 }
 
 export namespace PresentationOptions {
@@ -291,6 +296,14 @@ export namespace RuntimeType {
 				return RuntimeType.CustomExecution;
 			default:
 				return RuntimeType.Process;
+		}
+	}
+	export function toString(value: RuntimeType): string {
+		switch (value) {
+			case RuntimeType.Shell: return 'shell';
+			case RuntimeType.Process: return 'process';
+			case RuntimeType.CustomExecution: return 'customExecution';
+			default: return 'process';
 		}
 	}
 }
@@ -663,14 +676,14 @@ export abstract class CommonTask {
 
 export class CustomTask extends CommonTask {
 
-	type!: '$customized'; // CUSTOMIZED_TASK_TYPE
+	override type!: '$customized'; // CUSTOMIZED_TASK_TYPE
 
 	instance: number | undefined;
 
 	/**
 	 * Indicated the source of the task (e.g. tasks.json or extension)
 	 */
-	_source: FileBasedTaskSource;
+	override _source: FileBasedTaskSource;
 
 	hasDefinedMatchers: boolean;
 
@@ -689,7 +702,7 @@ export class CustomTask extends CommonTask {
 		}
 	}
 
-	public clone(): CustomTask {
+	public override clone(): CustomTask {
 		return new CustomTask(this._id, this._source, this._label, this.type, this.command, this.hasDefinedMatchers, this.runOptions, this.configurationProperties);
 	}
 
@@ -700,7 +713,7 @@ export class CustomTask extends CommonTask {
 		return undefined;
 	}
 
-	public getDefinition(useSource: boolean = false): KeyedTaskIdentifier {
+	public override getDefinition(useSource: boolean = false): KeyedTaskIdentifier {
 		if (useSource && this._source.customizes !== undefined) {
 			return this._source.customizes;
 		} else {
@@ -740,7 +753,7 @@ export class CustomTask extends CommonTask {
 		return value instanceof CustomTask;
 	}
 
-	public getMapKey(): string {
+	public override getMapKey(): string {
 		let workspaceFolder = this._source.config.workspaceFolder;
 		return workspaceFolder ? `${workspaceFolder.uri.toString()}|${this._id}|${this.instance}` : `${this._id}|${this.instance}`;
 	}
@@ -749,11 +762,11 @@ export class CustomTask extends CommonTask {
 		return this._source.kind === TaskSourceKind.User ? USER_TASKS_GROUP_KEY : this._source.config.workspaceFolder?.uri.toString();
 	}
 
-	public getCommonTaskId(): string {
+	public override getCommonTaskId(): string {
 		return this._source.customizes ? super.getCommonTaskId() : (this.getRecentlyUsedKey() ?? super.getCommonTaskId());
 	}
 
-	public getRecentlyUsedKey(): string | undefined {
+	public override getRecentlyUsedKey(): string | undefined {
 		interface CustomKey {
 			type: string;
 			folder: string;
@@ -771,15 +784,15 @@ export class CustomTask extends CommonTask {
 		return JSON.stringify(key);
 	}
 
-	public getWorkspaceFolder(): IWorkspaceFolder | undefined {
+	public override getWorkspaceFolder(): IWorkspaceFolder | undefined {
 		return this._source.config.workspaceFolder;
 	}
 
-	public getWorkspaceFileName(): string | undefined {
+	public override getWorkspaceFileName(): string | undefined {
 		return (this._source.config.workspace && this._source.config.workspace.configuration) ? resources.basename(this._source.config.workspace.configuration) : undefined;
 	}
 
-	public getTelemetryKind(): string {
+	public override getTelemetryKind(): string {
 		if (this._source.customizes) {
 			return 'workspace>extension';
 		} else {
@@ -797,7 +810,7 @@ export class ConfiguringTask extends CommonTask {
 	/**
 	 * Indicated the source of the task (e.g. tasks.json or extension)
 	 */
-	_source: FileBasedTaskSource;
+	override _source: FileBasedTaskSource;
 
 	configures: KeyedTaskIdentifier;
 
@@ -816,15 +829,15 @@ export class ConfiguringTask extends CommonTask {
 		return object;
 	}
 
-	public getDefinition(): KeyedTaskIdentifier {
+	public override getDefinition(): KeyedTaskIdentifier {
 		return this.configures;
 	}
 
-	public getWorkspaceFileName(): string | undefined {
+	public override getWorkspaceFileName(): string | undefined {
 		return (this._source.config.workspace && this._source.config.workspace.configuration) ? resources.basename(this._source.config.workspace.configuration) : undefined;
 	}
 
-	public getWorkspaceFolder(): IWorkspaceFolder | undefined {
+	public override getWorkspaceFolder(): IWorkspaceFolder | undefined {
 		return this._source.config.workspaceFolder;
 	}
 
@@ -832,7 +845,7 @@ export class ConfiguringTask extends CommonTask {
 		return this._source.kind === TaskSourceKind.User ? USER_TASKS_GROUP_KEY : this._source.config.workspaceFolder?.uri.toString();
 	}
 
-	public getRecentlyUsedKey(): string | undefined {
+	public override getRecentlyUsedKey(): string | undefined {
 		interface CustomKey {
 			type: string;
 			folder: string;
@@ -857,7 +870,7 @@ export class ContributedTask extends CommonTask {
 	 * Indicated the source of the task (e.g. tasks.json or extension)
 	 * Set in the super constructor
 	 */
-	_source!: ExtensionTaskSource;
+	override _source!: ExtensionTaskSource;
 
 	instance: number | undefined;
 
@@ -879,11 +892,11 @@ export class ContributedTask extends CommonTask {
 		this.command = command;
 	}
 
-	public clone(): ContributedTask {
+	public override clone(): ContributedTask {
 		return new ContributedTask(this._id, this._source, this._label, this.type, this.defines, this.command, this.hasDefinedMatchers, this.runOptions, this.configurationProperties);
 	}
 
-	public getDefinition(): KeyedTaskIdentifier {
+	public override getDefinition(): KeyedTaskIdentifier {
 		return this.defines;
 	}
 
@@ -891,7 +904,7 @@ export class ContributedTask extends CommonTask {
 		return value instanceof ContributedTask;
 	}
 
-	public getMapKey(): string {
+	public override getMapKey(): string {
 		let workspaceFolder = this._source.workspaceFolder;
 		return workspaceFolder
 			? `${this._source.scope.toString()}|${workspaceFolder.uri.toString()}|${this._id}|${this.instance}`
@@ -905,7 +918,7 @@ export class ContributedTask extends CommonTask {
 		return undefined;
 	}
 
-	public getRecentlyUsedKey(): string | undefined {
+	public override getRecentlyUsedKey(): string | undefined {
 		interface ContributedKey {
 			type: string;
 			scope: number;
@@ -918,11 +931,11 @@ export class ContributedTask extends CommonTask {
 		return JSON.stringify(key);
 	}
 
-	public getWorkspaceFolder(): IWorkspaceFolder | undefined {
+	public override getWorkspaceFolder(): IWorkspaceFolder | undefined {
 		return this._source.workspaceFolder;
 	}
 
-	public getTelemetryKind(): string {
+	public override getTelemetryKind(): string {
 		return 'extension';
 	}
 
@@ -935,11 +948,11 @@ export class InMemoryTask extends CommonTask {
 	/**
 	 * Indicated the source of the task (e.g. tasks.json or extension)
 	 */
-	_source: InMemoryTaskSource;
+	override _source: InMemoryTaskSource;
 
 	instance: number | undefined;
 
-	type!: 'inMemory';
+	override type!: 'inMemory';
 
 	public constructor(id: string, source: InMemoryTaskSource, label: string, type: string,
 		runOptions: RunOptions, configurationProperties: ConfigurationProperties) {
@@ -947,7 +960,7 @@ export class InMemoryTask extends CommonTask {
 		this._source = source;
 	}
 
-	public clone(): InMemoryTask {
+	public override clone(): InMemoryTask {
 		return new InMemoryTask(this._id, this._source, this._label, this.type, this.runOptions, this.configurationProperties);
 	}
 
@@ -955,11 +968,11 @@ export class InMemoryTask extends CommonTask {
 		return value instanceof InMemoryTask;
 	}
 
-	public getTelemetryKind(): string {
+	public override getTelemetryKind(): string {
 		return 'composite';
 	}
 
-	public getMapKey(): string {
+	public override getMapKey(): string {
 		return `${this._id}|${this.instance}`;
 	}
 

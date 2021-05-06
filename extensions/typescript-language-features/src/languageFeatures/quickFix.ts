@@ -382,6 +382,7 @@ const preferredFixes = new Map<string, { readonly priority: number, readonly the
 	[fixNames.forgottenThisPropertyAccess, { priority: 2 }],
 	[fixNames.spelling, { priority: 0 }],
 	[fixNames.addMissingAwait, { priority: 2 }],
+	[fixNames.addMissingOverride, { priority: 2 }],
 	[fixNames.fixImport, { priority: 1, thereCanOnlyBeOne: true }],
 ]);
 

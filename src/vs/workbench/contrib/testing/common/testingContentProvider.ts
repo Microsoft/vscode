@@ -47,13 +47,13 @@ export class TestingContentProvider implements IWorkbenchContribution, ITextMode
 		let text: string | undefined;
 		switch (parsed.type) {
 			case TestUriType.ResultActualOutput:
-				text = test.state.messages[parsed.messageIndex]?.actualOutput;
+				text = test.tasks[parsed.taskIndex].messages[parsed.messageIndex]?.actualOutput;
 				break;
 			case TestUriType.ResultExpectedOutput:
-				text = test.state.messages[parsed.messageIndex]?.expectedOutput;
+				text = test.tasks[parsed.taskIndex].messages[parsed.messageIndex]?.expectedOutput;
 				break;
 			case TestUriType.ResultMessage:
-				text = test.state.messages[parsed.messageIndex]?.message.toString();
+				text = test.tasks[parsed.taskIndex].messages[parsed.messageIndex]?.message.toString();
 				break;
 		}
 

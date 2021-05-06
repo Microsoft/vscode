@@ -3,13 +3,10 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as nls from 'vs/nls';
-import { Action } from 'vs/base/common/actions';
-import { MenuId, MenuRegistry, SyncActionDescriptor } from 'vs/platform/actions/common/actions';
+import { localize } from 'vs/nls';
+import { Action2, MenuId, registerAction2 } from 'vs/platform/actions/common/actions';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { ContextKeyExpr } from 'vs/platform/contextkey/common/contextkey';
-import { Registry } from 'vs/platform/registry/common/platform';
-import { Extensions as ActionExtensions, IWorkbenchActionRegistry } from 'vs/workbench/common/actions';
 import { ICodeEditorService } from 'vs/editor/browser/services/codeEditorService';
 import { EditorOption } from 'vs/editor/common/config/editorOptions';
 import { ICodeEditor } from 'vs/editor/browser/editorBrowser';
@@ -17,34 +14,39 @@ import { CoreNavigationCommands } from 'vs/editor/browser/controller/coreCommand
 import { Position } from 'vs/editor/common/core/position';
 import { Selection } from 'vs/editor/common/core/selection';
 import { CursorColumns } from 'vs/editor/common/controller/cursorCommon';
+import { ServicesAccessor } from 'vs/platform/instantiation/common/instantiation';
 
-export class ToggleColumnSelectionAction extends Action {
-	public static readonly ID = 'editor.action.toggleColumnSelection';
-	public static readonly LABEL = nls.localize('toggleColumnSelection', "Toggle Column Selection Mode");
+export class ToggleColumnSelectionAction extends Action2 {
 
-	constructor(
-		id: string,
-		label: string,
-		@IConfigurationService private readonly _configurationService: IConfigurationService,
-		@ICodeEditorService private readonly _codeEditorService: ICodeEditorService
-	) {
-		super(id, label);
+	static readonly ID = 'editor.action.toggleColumnSelection';
+
+	constructor() {
+		super({
+			id: ToggleColumnSelectionAction.ID,
+			title: {
+				value: localize('toggleColumnSelection', "Toggle Column Selection Mode"),
+				mnemonicTitle: localize({ key: 'miColumnSelection', comment: ['&& denotes a mnemonic'] }, "Column &&Selection Mode"),
+				original: 'Toggle Column Selection Mode'
+			},
+			f1: true,
+			toggled: ContextKeyExpr.equals('config.editor.columnSelection', true),
+			menu: {
+				id: MenuId.MenubarSelectionMenu,
+				group: '4_config',
+				order: 2
+			}
+		});
 	}
 
-	private _getCodeEditor(): ICodeEditor | null {
-		const codeEditor = this._codeEditorService.getFocusedCodeEditor();
-		if (codeEditor) {
-			return codeEditor;
-		}
-		return this._codeEditorService.getActiveCodeEditor();
-	}
+	override async run(accessor: ServicesAccessor): Promise<void> {
+		const configurationService = accessor.get(IConfigurationService);
+		const codeEditorService = accessor.get(ICodeEditorService);
 
-	public async run(): Promise<any> {
-		const oldValue = this._configurationService.getValue<boolean>('editor.columnSelection');
-		const codeEditor = this._getCodeEditor();
-		await this._configurationService.updateValue('editor.columnSelection', !oldValue);
-		const newValue = this._configurationService.getValue<boolean>('editor.columnSelection');
-		if (!codeEditor || codeEditor !== this._getCodeEditor() || oldValue === newValue || !codeEditor.hasModel()) {
+		const oldValue = configurationService.getValue<boolean>('editor.columnSelection');
+		const codeEditor = this._getCodeEditor(codeEditorService);
+		await configurationService.updateValue('editor.columnSelection', !oldValue);
+		const newValue = configurationService.getValue<boolean>('editor.columnSelection');
+		if (!codeEditor || codeEditor !== this._getCodeEditor(codeEditorService) || oldValue === newValue || !codeEditor.hasModel()) {
 			return;
 		}
 		const viewModel = codeEditor._getViewModel();
@@ -76,17 +78,14 @@ export class ToggleColumnSelectionAction extends Action {
 			codeEditor.setSelection(new Selection(fromPosition.lineNumber, fromPosition.column, toPosition.lineNumber, toPosition.column));
 		}
 	}
+
+	private _getCodeEditor(codeEditorService: ICodeEditorService): ICodeEditor | null {
+		const codeEditor = codeEditorService.getFocusedCodeEditor();
+		if (codeEditor) {
+			return codeEditor;
+		}
+		return codeEditorService.getActiveCodeEditor();
+	}
 }
 
-const registry = Registry.as<IWorkbenchActionRegistry>(ActionExtensions.WorkbenchActions);
-registry.registerWorkbenchAction(SyncActionDescriptor.from(ToggleColumnSelectionAction), 'Toggle Column Selection Mode');
-
-MenuRegistry.appendMenuItem(MenuId.MenubarSelectionMenu, {
-	group: '4_config',
-	command: {
-		id: ToggleColumnSelectionAction.ID,
-		title: nls.localize({ key: 'miColumnSelection', comment: ['&& denotes a mnemonic'] }, "Column &&Selection Mode"),
-		toggled: ContextKeyExpr.equals('config.editor.columnSelection', true)
-	},
-	order: 2
-});
+registerAction2(ToggleColumnSelectionAction);

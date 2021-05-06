@@ -18,13 +18,31 @@ import { onUnexpectedError } from 'vs/base/common/errors';
 import { Platform, platform } from 'vs/base/common/platform';
 
 export class NodeSocket implements ISocket {
+
 	public readonly socket: Socket;
+	private readonly _errorListener: (err: any) => void;
 
 	constructor(socket: Socket) {
 		this.socket = socket;
+		this._errorListener = (err: any) => {
+			if (err) {
+				if (err.code === 'EPIPE') {
+					// An EPIPE exception at the wrong time can lead to a renderer process crash
+					// so ignore the error since the socket will fire the close event soon anyways:
+					// > https://nodejs.org/api/errors.html#errors_common_system_errors
+					// > EPIPE (Broken pipe): A write on a pipe, socket, or FIFO for which there is no
+					// > process to read the data. Commonly encountered at the net and http layers,
+					// > indicative that the remote side of the stream being written to has been closed.
+					return;
+				}
+				onUnexpectedError(err);
+			}
+		};
+		this.socket.on('error', this._errorListener);
 	}
 
 	public dispose(): void {
+		this.socket.off('error', this._errorListener);
 		this.socket.destroy();
 	}
 
@@ -62,7 +80,20 @@ export class NodeSocket implements ISocket {
 		// > However, the false return value is only advisory and the writable stream will unconditionally
 		// > accept and buffer chunk even if it has not been allowed to drain.
 		try {
-			this.socket.write(<Buffer>buffer.buffer);
+			this.socket.write(<Buffer>buffer.buffer, (err: any) => {
+				if (err) {
+					if (err.code === 'EPIPE') {
+						// An EPIPE exception at the wrong time can lead to a renderer process crash
+						// so ignore the error since the socket will fire the close event soon anyways:
+						// > https://nodejs.org/api/errors.html#errors_common_system_errors
+						// > EPIPE (Broken pipe): A write on a pipe, socket, or FIFO for which there is no
+						// > process to read the data. Commonly encountered at the net and http layers,
+						// > indicative that the remote side of the stream being written to has been closed.
+						return;
+					}
+					onUnexpectedError(err);
+				}
+			});
 		} catch (err) {
 			if (err.code === 'EPIPE') {
 				// An EPIPE exception at the wrong time can lead to a renderer process crash
@@ -235,7 +266,7 @@ export class WebSocketNodeSocket extends Disposable implements ISocket {
 		this._register(this.socket.onClose(() => this._onClose.fire()));
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		if (this._zlibDeflateFlushWaitingCount > 0) {
 			// Wait for any outstanding writes to finish before disposing
 			this._register(this._onDidZlibFlush.event(() => {
@@ -550,7 +581,7 @@ export class Server extends IPCServer {
 		this.server = server;
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		super.dispose();
 		if (this.server) {
 			this.server.close();

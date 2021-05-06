@@ -56,6 +56,7 @@ export class BreadcrumbsWidget {
 	private readonly _nodes = new Array<HTMLDivElement>();
 	private readonly _freeNodes = new Array<HTMLDivElement>();
 
+	private _enabled: boolean = true;
 	private _focusedItemIdx: number = -1;
 	private _selectedItemIdx: number = -1;
 
@@ -155,11 +156,16 @@ export class BreadcrumbsWidget {
 			content += `.monaco-breadcrumbs .monaco-breadcrumb-item.focused.selected { color: ${style.breadcrumbsFocusAndSelectionForeground}}\n`;
 		}
 		if (style.breadcrumbsHoverForeground) {
-			content += `.monaco-breadcrumbs .monaco-breadcrumb-item:hover:not(.focused):not(.selected) { color: ${style.breadcrumbsHoverForeground}}\n`;
+			content += `.monaco-breadcrumbs:not(.disabled	) .monaco-breadcrumb-item:hover:not(.focused):not(.selected) { color: ${style.breadcrumbsHoverForeground}}\n`;
 		}
 		if (this._styleElement.innerText !== content) {
 			this._styleElement.innerText = content;
 		}
+	}
+
+	setEnabled(value: boolean) {
+		this._enabled = value;
+		this._domNode.classList.toggle('disabled', !this._enabled);
 	}
 
 	domFocus(): void {
@@ -326,6 +332,9 @@ export class BreadcrumbsWidget {
 	}
 
 	private _onClick(event: IMouseEvent): void {
+		if (!this._enabled) {
+			return;
+		}
 		for (let el: HTMLElement | null = event.target; el; el = el.parentElement) {
 			let idx = this._nodes.indexOf(el as HTMLDivElement);
 			if (idx >= 0) {

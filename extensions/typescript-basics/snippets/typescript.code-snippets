@@ -282,8 +282,8 @@
 	"new Promise": {
 		"prefix": "newpromise",
 		"body": [
-			"new Promise<$1:type>((resolve, reject) => {",
-			"\t$1",
+			"new Promise<${1:void}>((resolve, reject) => {",
+			"\t$0",
 			"})"
 		],
 		"description": "Create a new Promise"

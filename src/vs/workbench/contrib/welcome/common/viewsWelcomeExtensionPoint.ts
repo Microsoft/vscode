@@ -28,6 +28,7 @@ export const ViewIdentifierMap: { [key: string]: string } = {
 	'explorer': 'workbench.explorer.emptyView',
 	'debug': 'workbench.debug.welcome',
 	'scm': 'workbench.scm',
+	'testing': 'workbench.view.testing'
 };
 
 const viewsWelcomeExtensionPointSchema = Object.freeze<IConfigurationPropertySchema>({

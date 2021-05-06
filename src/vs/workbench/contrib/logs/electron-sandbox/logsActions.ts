@@ -23,7 +23,7 @@ export class OpenLogsFolderAction extends Action {
 		super(id, label);
 	}
 
-	run(): Promise<void> {
+	override run(): Promise<void> {
 		return this.nativeHostService.showItemInFolder(URI.file(join(this.environmentService.logsPath, 'main.log')).fsPath);
 	}
 }
@@ -41,7 +41,7 @@ export class OpenExtensionLogsFolderAction extends Action {
 		super(id, label);
 	}
 
-	async run(): Promise<void> {
+	override async run(): Promise<void> {
 		const folderStat = await this.fileService.resolve(this.environmentSerice.extHostLogsPath);
 		if (folderStat.children && folderStat.children[0]) {
 			return this.nativeHostService.showItemInFolder(folderStat.children[0].resource.fsPath);

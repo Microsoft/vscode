@@ -90,7 +90,7 @@ export class LRUMemory extends Memory {
 		});
 	}
 
-	select(model: ITextModel, pos: IPosition, items: CompletionItem[]): number {
+	override select(model: ITextModel, pos: IPosition, items: CompletionItem[]): number {
 
 		if (items.length === 0) {
 			return 0;
@@ -166,7 +166,7 @@ export class PrefixMemory extends Memory {
 		});
 	}
 
-	select(model: ITextModel, pos: IPosition, items: CompletionItem[]): number {
+	override select(model: ITextModel, pos: IPosition, items: CompletionItem[]): number {
 		let { word } = model.getWordUntilPosition(pos);
 		if (!word) {
 			return super.select(model, pos, items);

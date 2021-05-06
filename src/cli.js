@@ -19,5 +19,8 @@ bootstrapNode.configurePortable(product);
 // Enable ASAR support
 bootstrap.enableASARSupport(undefined);
 
+// Signal processes that we got launched as CLI
+process.env['VSCODE_CLI'] = '1';
+
 // Load CLI through AMD loader
 require('./bootstrap-amd').load('vs/code/node/cli');

@@ -49,7 +49,7 @@ export abstract class AbstractLineHighlightOverlay extends DynamicViewOverlay {
 		this._context.addEventHandler(this);
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		this._context.removeEventHandler(this);
 		super.dispose();
 	}
@@ -77,10 +77,10 @@ export abstract class AbstractLineHighlightOverlay extends DynamicViewOverlay {
 	}
 
 	// --- begin event handlers
-	public onThemeChanged(e: viewEvents.ViewThemeChangedEvent): boolean {
+	public override onThemeChanged(e: viewEvents.ViewThemeChangedEvent): boolean {
 		return this._readFromSelections();
 	}
-	public onConfigurationChanged(e: viewEvents.ViewConfigurationChangedEvent): boolean {
+	public override onConfigurationChanged(e: viewEvents.ViewConfigurationChangedEvent): boolean {
 		const options = this._context.configuration.options;
 		const layoutInfo = options.get(EditorOption.layoutInfo);
 		this._lineHeight = options.get(EditorOption.lineHeight);
@@ -90,26 +90,26 @@ export abstract class AbstractLineHighlightOverlay extends DynamicViewOverlay {
 		this._contentWidth = layoutInfo.contentWidth;
 		return true;
 	}
-	public onCursorStateChanged(e: viewEvents.ViewCursorStateChangedEvent): boolean {
+	public override onCursorStateChanged(e: viewEvents.ViewCursorStateChangedEvent): boolean {
 		this._selections = e.selections;
 		return this._readFromSelections();
 	}
-	public onFlushed(e: viewEvents.ViewFlushedEvent): boolean {
+	public override onFlushed(e: viewEvents.ViewFlushedEvent): boolean {
 		return true;
 	}
-	public onLinesDeleted(e: viewEvents.ViewLinesDeletedEvent): boolean {
+	public override onLinesDeleted(e: viewEvents.ViewLinesDeletedEvent): boolean {
 		return true;
 	}
-	public onLinesInserted(e: viewEvents.ViewLinesInsertedEvent): boolean {
+	public override onLinesInserted(e: viewEvents.ViewLinesInsertedEvent): boolean {
 		return true;
 	}
-	public onScrollChanged(e: viewEvents.ViewScrollChangedEvent): boolean {
+	public override onScrollChanged(e: viewEvents.ViewScrollChangedEvent): boolean {
 		return e.scrollWidthChanged || e.scrollTopChanged;
 	}
-	public onZonesChanged(e: viewEvents.ViewZonesChangedEvent): boolean {
+	public override onZonesChanged(e: viewEvents.ViewZonesChangedEvent): boolean {
 		return true;
 	}
-	public onFocusChanged(e: viewEvents.ViewFocusChangedEvent): boolean {
+	public override onFocusChanged(e: viewEvents.ViewFocusChangedEvent): boolean {
 		if (!this._renderLineHighlightOnlyWhenFocus) {
 			return false;
 		}

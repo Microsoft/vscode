@@ -146,7 +146,7 @@ export class MarkersView extends ViewPane implements IMarkersView {
 		}));
 	}
 
-	public renderBody(parent: HTMLElement): void {
+	public override renderBody(parent: HTMLElement): void {
 		super.renderBody(parent);
 
 		parent.classList.add('markers-panel');
@@ -168,7 +168,7 @@ export class MarkersView extends ViewPane implements IMarkersView {
 		return Messages.MARKERS_PANEL_TITLE_PROBLEMS;
 	}
 
-	public layoutBody(height: number, width: number): void {
+	public override layoutBody(height: number, width: number): void {
 		super.layoutBody(height, width);
 		const wasSmallLayout = this.smallLayout;
 		this.smallLayout = width < 600 && height > 100;
@@ -187,7 +187,7 @@ export class MarkersView extends ViewPane implements IMarkersView {
 		this.filters.layout = new dom.Dimension(this.smallLayout ? width : width - 200, height);
 	}
 
-	public focus(): void {
+	public override focus(): void {
 		if (this.tree && this.tree.getHTMLElement() === document.activeElement) {
 			return;
 		}
@@ -405,7 +405,7 @@ export class MarkersView extends ViewPane implements IMarkersView {
 				overrideStyles: {
 					listBackground: this.getBackgroundColor()
 				},
-				openOnFocus: true
+				selectionNavigation: true
 			},
 		));
 
@@ -808,7 +808,7 @@ export class MarkersView extends ViewPane implements IMarkersView {
 		return this.tree?.getFocus()[0] || undefined;
 	}
 
-	public getActionViewItem(action: IAction): IActionViewItem | undefined {
+	public override getActionViewItem(action: IAction): IActionViewItem | undefined {
 		if (action.id === `workbench.actions.treeView.${this.id}.filter`) {
 			return this.instantiationService.createInstance(MarkersFilterActionViewItem, action, this);
 		}
@@ -864,7 +864,7 @@ export class MarkersView extends ViewPane implements IMarkersView {
 		this.telemetryService.publicLog('problems.filter', data);
 	}
 
-	saveState(): void {
+	override saveState(): void {
 		this.panelState['filter'] = this.filters.filterText;
 		this.panelState['filterHistory'] = this.filters.filterHistory;
 		this.panelState['showErrors'] = this.filters.showErrors;
@@ -877,7 +877,7 @@ export class MarkersView extends ViewPane implements IMarkersView {
 		super.saveState();
 	}
 
-	dispose() {
+	override dispose() {
 		super.dispose();
 	}
 
@@ -901,7 +901,7 @@ class MarkersTree extends WorkbenchObjectTree<MarkerElement, FilterData> {
 		super(user, container, delegate, renderers, options, contextKeyService, listService, themeService, configurationService, keybindingService, accessibilityService);
 	}
 
-	layout(height: number, width: number): void {
+	override layout(height: number, width: number): void {
 		this.container.style.height = `${height}px`;
 		super.layout(height, width);
 	}

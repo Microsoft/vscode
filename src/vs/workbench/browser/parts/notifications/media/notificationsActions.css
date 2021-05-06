@@ -3,15 +3,12 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-.monaco-workbench .notifications-list-container .notification-list-item .notification-list-item-toolbar-container .action-label,
-.monaco-workbench > .notifications-center > .notifications-center-header > .notifications-center-header-toolbar .action-label {
-	display: flex;
-	align-items: center;
-	width: 16px;
-	height: 22px;
+.monaco-workbench .notifications-list-container .notification-list-item .notification-list-item-toolbar-container .action-item,
+.monaco-workbench > .notifications-center > .notifications-center-header > .notifications-center-header-toolbar .action-item {
 	margin-right: 4px;
+}
+
+.monaco-workbench .notifications-list-container .notification-list-item .notification-list-item-toolbar-container .action-item:first-child,
+.monaco-workbench > .notifications-center > .notifications-center-header > .notifications-center-header-toolbar .action-item:first-child {
 	margin-left: 4px;
-	color: inherit;
-	background-position: center;
-	background-repeat: no-repeat;
 }

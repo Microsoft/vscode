@@ -77,7 +77,7 @@ export class UserDataSyncMergesViewPane extends TreeViewPane {
 		this.registerActions();
 	}
 
-	protected renderTreeView(container: HTMLElement): void {
+	protected override renderTreeView(container: HTMLElement): void {
 		super.renderTreeView(DOM.append(container, DOM.$('')));
 		this.createButtons(container);
 
@@ -101,7 +101,7 @@ export class UserDataSyncMergesViewPane extends TreeViewPane {
 		this._register(this.cancelButton.onDidClick(() => this.cancel()));
 	}
 
-	protected layoutTreeView(height: number, width: number): void {
+	protected override layoutTreeView(height: number, width: number): void {
 		const buttonContainerHeight = 78;
 		this.buttonsContainer.style.height = `${buttonContainerHeight}px`;
 		this.buttonsContainer.style.width = `${width}px`;
@@ -499,7 +499,7 @@ class AcceptChangesContribution extends Disposable implements IEditorContributio
 		this.acceptChangesButton = undefined;
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this.disposeAcceptChangesWidgetRenderer();
 		super.dispose();
 	}

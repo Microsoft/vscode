@@ -97,6 +97,10 @@
 	height: 35px;
 }
 
+.monaco-workbench .part.editor > .content .editor-group-container > .title > .title-actions .action-item {
+	margin-right: 4px;
+}
+
 .monaco-workbench .part.editor > .content .editor-group-container.active > .title > .title-actions {
 	opacity: 1;
 }

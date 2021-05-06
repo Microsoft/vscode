@@ -85,7 +85,7 @@ export class NotificationsListDelegate implements IListVirtualDelegate<INotifica
 		if (isNonEmptyArray(notification.actions && notification.actions.secondary)) {
 			actions++; // secondary actions
 		}
-		this.offsetHelper.style.width = `${450 /* notifications container width */ - (10 /* padding */ + 26 /* severity icon */ + (actions * 24) /* 24px per action */)}px`;
+		this.offsetHelper.style.width = `${450 /* notifications container width */ - (10 /* padding */ + 26 /* severity icon */ + (actions * (24 + 8)) /* 24px (+8px padding) per action */ - 4 /* 4px less padding for last action */)}px`;
 
 		// Render message into offset helper
 		const renderedMessage = NotificationMessageRenderer.render(notification.message);
@@ -371,7 +371,7 @@ export class NotificationTemplateRenderer extends Disposable {
 	private renderMessage(notification: INotificationViewItem): boolean {
 		clearNode(this.template.message);
 		this.template.message.appendChild(NotificationMessageRenderer.render(notification.message, {
-			callback: link => this.openerService.open(URI.parse(link)),
+			callback: link => this.openerService.open(URI.parse(link), { allowCommands: true }),
 			toDispose: this.inputDisposables
 		}));
 
@@ -444,7 +444,7 @@ export class NotificationTemplateRenderer extends Disposable {
 		if (notification.expanded && isNonEmptyArray(primaryActions)) {
 			const that = this;
 			const actionRunner: IActionRunner = new class extends ActionRunner {
-				protected async runAction(action: IAction): Promise<void> {
+				protected override async runAction(action: IAction): Promise<void> {
 					// Run action
 					that.actionRunner.run(action, notification);
 

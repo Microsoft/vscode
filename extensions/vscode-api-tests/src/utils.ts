@@ -122,7 +122,7 @@ export function assertNoRpcFromEntry(entry: [obj: any, name: string]) {
 	assert.strictEqual(proxyPaths.length, 0, proxyPaths.join('\n')); // happens...
 }
 
-export async function asPromise<T>(event: vscode.Event<T>, timeout = 5000): Promise<T> {
+export async function asPromise<T>(event: vscode.Event<T>, timeout = vscode.env.uiKind === vscode.UIKind.Desktop ? 5000 : 15000): Promise<T> {
 	return new Promise<T>((resolve, reject) => {
 
 		const handle = setTimeout(() => {

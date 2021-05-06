@@ -24,7 +24,7 @@ suite('ExtHostBulkEdits.applyWorkspaceEdit', () => {
 
 		let rpcProtocol = new TestRPCProtocol();
 		rpcProtocol.set(MainContext.MainThreadBulkEdits, new class extends mock<MainThreadBulkEditsShape>() {
-			$tryApplyWorkspaceEdit(_workspaceResourceEdits: IWorkspaceEditDto): Promise<boolean> {
+			override $tryApplyWorkspaceEdit(_workspaceResourceEdits: IWorkspaceEditDto): Promise<boolean> {
 				workspaceResourceEdits = _workspaceResourceEdits;
 				return Promise.resolve(true);
 			}

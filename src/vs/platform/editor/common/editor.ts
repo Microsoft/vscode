@@ -9,14 +9,19 @@ import { Event } from 'vs/base/common/event';
 export interface IEditorModel {
 
 	/**
-	 * Emitted when the model is disposed.
+	 * Emitted when the model is about to be disposed.
 	 */
-	readonly onDispose: Event<void>;
+	readonly onWillDispose: Event<void>;
 
 	/**
-	 * Loads the model.
+	 * Resolves the model.
 	 */
-	load(): Promise<IEditorModel>;
+	resolve(): Promise<void>;
+
+	/**
+	 * Find out if the editor model was resolved or not.
+	 */
+	isResolved(): boolean;
 
 	/**
 	 * Find out if this model has been disposed.
@@ -63,6 +68,23 @@ export interface IBaseResourceEditorInput {
 	 * looking at the scheme of the resource(s).
 	 */
 	readonly forceUntitled?: boolean;
+}
+
+/**
+ * This identifier allows to uniquely identify an editor with a
+ * resource and type identifier.
+ */
+export interface IResourceEditorInputIdentifier {
+
+	/**
+	 * The resource URI of the editor.
+	 */
+	readonly resource: URI;
+
+	/**
+	 * The type of the editor.
+	 */
+	readonly typeId: string;
 }
 
 export interface IResourceEditorInput extends IBaseResourceEditorInput {

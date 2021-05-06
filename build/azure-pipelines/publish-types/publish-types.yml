@@ -9,7 +9,7 @@ pr: none
 steps:
   - task: NodeTool@0
     inputs:
-      versionSpec: "12.18.3"
+      versionSpec: "14.x"
 
   - task: geeklearningio.gl-vsts-tasks-yarn.yarn-installer-task.YarnInstaller@2
     inputs:

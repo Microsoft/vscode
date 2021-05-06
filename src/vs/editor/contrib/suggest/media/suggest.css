@@ -306,6 +306,10 @@
 	margin-right: 4px;
 }
 
+.monaco-editor .suggest-widget .monaco-list .monaco-list-row.focused .suggest-icon {
+	color: inherit;
+}
+
 .monaco-editor .suggest-widget.no-icons .monaco-list .monaco-list-row .icon, .monaco-editor .suggest-widget.no-icons .monaco-list .monaco-list-row .suggest-icon::before {
 	display: none;
 }

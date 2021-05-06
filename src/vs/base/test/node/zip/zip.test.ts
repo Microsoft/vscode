@@ -9,9 +9,8 @@ import { tmpdir } from 'os';
 import { promises } from 'fs';
 import { extract } from 'vs/base/node/zip';
 import { rimraf, exists } from 'vs/base/node/pfs';
-import { getPathFromAmdModule } from 'vs/base/common/amd';
 import { createCancelablePromise } from 'vs/base/common/async';
-import { getRandomTestPath } from 'vs/base/test/node/testUtils';
+import { getRandomTestPath, getPathFromAmdModule } from 'vs/base/test/node/testUtils';
 
 suite('Zip', () => {
 

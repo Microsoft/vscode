@@ -50,18 +50,7 @@
 }
 
 .markers-panel-action-filter > .markers-panel-filter-controls > .monaco-action-bar .action-item .action-label.codicon.markers-filters {
-	line-height: 20px;
-	height: 20px;
-	min-width: 22px;
-	margin-left: 4px;
-}
-
-.pane-header .markers-panel-action-filter > .markers-panel-filter-controls > .monaco-action-bar .action-item .action-label.codicon.markers-filters {
-	line-height: 18px;
-	height: 18px;
-	width: 28px;
-	margin-right: 0px;
-	justify-content: center;
+	padding: 2px;
 }
 
 .panel > .title .monaco-action-bar .action-item.markers-panel-action-filter-container {
@@ -85,6 +74,7 @@
 
 .markers-panel-container .monaco-action-bar.markers-panel-filter-container {
 	margin: 10px 20px;
+	height: initial;
 }
 
 .markers-panel .markers-panel-container .message-box-container {
@@ -170,13 +160,6 @@
 	margin-left: 6px;
 }
 
-.markers-panel .monaco-tl-contents .codicon {
-	margin-right: 6px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-}
-
 .markers-panel .markers-panel-container .tree-container .monaco-tl-contents .marker-source,
 .markers-panel .markers-panel-container .tree-container .monaco-tl-contents .related-info-resource,
 .markers-panel .markers-panel-container .tree-container .monaco-tl-contents .related-info-resource-separator,
@@ -189,8 +172,12 @@
 	font-weight: bold;
 }
 
-.markers-panel .monaco-tl-contents .codicon {
+.markers-panel .monaco-tl-contents .marker-icon {
 	height: 22px;
+	margin: 0 6px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .markers-panel .monaco-tl-contents .actions .monaco-action-bar {
@@ -209,13 +196,18 @@
 	display: block;
 }
 
-.markers-panel .monaco-tl-contents .multiline-actions .action-label,
-.markers-panel .monaco-tl-contents .actions .action-label {
-	width: 16px;
+.markers-panel .monaco-tl-contents .actions,
+.markers-panel .monaco-tl-contents .multiline-actions .monaco-action-bar {
+	height: 22px;
 }
 
-.markers-panel .monaco-tl-contents .multiline-actions .action-label {
-	line-height: 22px;
+.markers-panel .monaco-tl-contents .actions .action-label,
+.markers-panel .monaco-tl-contents .multiline-actions .monaco-action-bar .action-label {
+	padding: 2px;
+}
+
+.markers-panel .monaco-tl-contents .actions .action-item {
+	margin: 0 4px;
 }
 
 .markers-panel .monaco-tl-contents .multiline-actions .action-item.disabled,

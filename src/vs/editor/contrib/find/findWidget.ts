@@ -66,8 +66,8 @@ const NLS_REPLACE_BTN_LABEL = nls.localize('label.replaceButton', "Replace");
 const NLS_REPLACE_ALL_BTN_LABEL = nls.localize('label.replaceAllButton', "Replace All");
 const NLS_TOGGLE_REPLACE_MODE_BTN_LABEL = nls.localize('label.toggleReplaceButton', "Toggle Replace mode");
 const NLS_MATCHES_COUNT_LIMIT_TITLE = nls.localize('title.matchesCountLimit', "Only the first {0} results are highlighted, but all find operations work on the entire text.", MATCHES_LIMIT);
-const NLS_MATCHES_LOCATION = nls.localize('label.matchesLocation', "{0} of {1}");
-const NLS_NO_RESULTS = nls.localize('label.noResults', "No results");
+export const NLS_MATCHES_LOCATION = nls.localize('label.matchesLocation', "{0} of {1}");
+export const NLS_NO_RESULTS = nls.localize('label.noResults', "No results");
 
 const FIND_WIDGET_INITIAL_WIDTH = 419;
 const PART_WIDTH = 275;

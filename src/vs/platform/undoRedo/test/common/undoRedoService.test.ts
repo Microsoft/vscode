@@ -133,7 +133,7 @@ suite('UndoRedoService', () => {
 		const resource1 = URI.file('test1.txt');
 		const resource2 = URI.file('test2.txt');
 		const service = createUndoRedoService(new class extends mock<IDialogService>() {
-			async show() {
+			override async show() {
 				return {
 					choice: 0 // confirm!
 				};

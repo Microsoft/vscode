@@ -9,7 +9,7 @@ import * as encoding from 'vs/workbench/services/textfile/common/encoding';
 import * as terminalEncoding from 'vs/base/node/terminalEncoding';
 import * as streams from 'vs/base/common/stream';
 import * as iconv from 'iconv-lite-umd';
-import { getPathFromAmdModule } from 'vs/base/common/amd';
+import { getPathFromAmdModule } from 'vs/base/test/node/testUtils';
 import { newWriteableBufferStream, VSBuffer, VSBufferReadableStream, streamToBufferReadableStream } from 'vs/base/common/buffer';
 import { splitLines } from 'vs/base/common/strings';
 

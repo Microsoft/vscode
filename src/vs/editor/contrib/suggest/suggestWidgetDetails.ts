@@ -345,6 +345,8 @@ export class SuggestDetailsOverlay implements IOverlayWidget {
 	}
 
 	hide(sessionEnded: boolean = false): void {
+		this._resizable.clearSashHoverState();
+
 		if (this._added) {
 			this._editor.removeOverlayWidget(this);
 			this._added = false;

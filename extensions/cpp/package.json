@@ -50,6 +50,17 @@
           "cpp"
         ],
         "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "cuda-cpp",
+        "extensions": [
+          ".cu",
+          ".cuh"
+        ],
+        "aliases": [
+          "CUDA C++"
+        ],
+        "configuration": "./language-configuration.json"
       }
     ],
     "grammars": [
@@ -71,7 +82,34 @@
       {
         "scopeName": "source.c.platform",
         "path": "./syntaxes/platform.tmLanguage.json"
+      },
+      {
+        "language": "cuda-cpp",
+        "scopeName": "source.cuda-cpp",
+        "path": "./syntaxes/cuda-cpp.tmLanguage.json"
       }
+    ],
+    "problemPatterns": [
+      {
+        "name": "nvcc-location",
+        "regexp": "^(.*)\\((\\d+)\\):\\s+(warning|error):\\s+(.*)",
+        "kind": "location",
+        "file": 1,
+        "location": 2,
+        "severity": 3,
+        "message": 4
+      }
+    ],
+    "problemMatchers": [
+        {
+            "name": "nvcc",
+            "owner": "cuda-cpp",
+            "fileLocation": [
+                "relative",
+                "${workspaceFolder}"
+            ],
+            "pattern": "$nvcc-location"
+        }
     ],
     "snippets": [
       {

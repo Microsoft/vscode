@@ -6,7 +6,7 @@
 import { Application, Quality } from '../../../../automation';
 
 export function setup() {
-	describe.skip('Localization', () => {
+	describe('Localization', () => {
 		before(async function () {
 			const app = this.app as Application;
 
@@ -20,7 +20,7 @@ export function setup() {
 			await app.restart({ extraArgs: ['--locale=DE'] });
 		});
 
-		it.skip(`starts with 'DE' locale and verifies title and viewlets text is in German`, async function () {
+		it(`starts with 'DE' locale and verifies title and viewlets text is in German`, async function () {
 			const app = this.app as Application;
 
 			if (app.quality === Quality.Dev) {

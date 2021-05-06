@@ -3,10 +3,10 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { EditorInput, EditorModel, ITextEditorModel } from 'vs/workbench/common/editor';
+import { EditorInput, EditorModel } from 'vs/workbench/common/editor';
 import { URI } from 'vs/base/common/uri';
 import { DisposableStore, IReference } from 'vs/base/common/lifecycle';
-import { ITextModelService } from 'vs/editor/common/services/resolverService';
+import { ITextEditorModel, ITextModelService } from 'vs/editor/common/services/resolverService';
 import * as marked from 'vs/base/common/marked/marked';
 import { Schemas } from 'vs/base/common/network';
 import { isEqual } from 'vs/base/common/resources';
@@ -30,7 +30,7 @@ export class WalkThroughModel extends EditorModel {
 		return this.snippetRefs.map(snippet => snippet.object);
 	}
 
-	dispose() {
+	override dispose() {
 		this.snippetRefs.forEach(ref => ref.dispose());
 		super.dispose();
 	}
@@ -62,15 +62,15 @@ export class WalkThroughInput extends EditorInput {
 		super();
 	}
 
-	getTypeId(): string {
+	override get typeId(): string {
 		return this.options.typeId;
 	}
 
-	getName(): string {
+	override getName(): string {
 		return this.options.name;
 	}
 
-	getDescription(): string {
+	override getDescription(): string {
 		return this.options.description || '';
 	}
 
@@ -78,7 +78,7 @@ export class WalkThroughInput extends EditorInput {
 		return this.options.telemetryFrom;
 	}
 
-	getTelemetryDescriptor(): { [key: string]: unknown; } {
+	override getTelemetryDescriptor(): { [key: string]: unknown; } {
 		const descriptor = super.getTelemetryDescriptor();
 		descriptor['target'] = this.getTelemetryFrom();
 		/* __GDPR__FRAGMENT__
@@ -97,7 +97,7 @@ export class WalkThroughInput extends EditorInput {
 		return this.options.layout;
 	}
 
-	resolve(): Promise<WalkThroughModel> {
+	override resolve(): Promise<WalkThroughModel> {
 		if (!this.promise) {
 			this.promise = requireToContent(this.options.resource)
 				.then(content => {
@@ -124,7 +124,7 @@ export class WalkThroughInput extends EditorInput {
 		return this.promise;
 	}
 
-	matches(otherInput: unknown): boolean {
+	override matches(otherInput: unknown): boolean {
 		if (super.matches(otherInput) === true) {
 			return true;
 		}
@@ -139,7 +139,7 @@ export class WalkThroughInput extends EditorInput {
 		return false;
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		if (this.promise) {
 			this.promise.then(model => model.dispose());
 			this.promise = null;

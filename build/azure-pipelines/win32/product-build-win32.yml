@@ -1,7 +1,7 @@
 steps:
   - task: NodeTool@0
     inputs:
-      versionSpec: "12.18.3"
+      versionSpec: "14.x"
 
   - task: geeklearningio.gl-vsts-tasks-yarn.yarn-installer-task.YarnInstaller@2
     inputs:
@@ -78,6 +78,7 @@ steps:
       . build/azure-pipelines/win32/retry.ps1
       $ErrorActionPreference = "Stop"
       $env:npm_config_arch="$(VSCODE_ARCH)"
+      $env:npm_config_build_from_source="true"
       $env:CHILD_CONCURRENCY="1"
       retry { exec { yarn --frozen-lockfile } }
     env:
@@ -179,7 +180,7 @@ steps:
       $ErrorActionPreference = "Stop"
       exec { $env:VSCODE_REMOTE_SERVER_PATH = "$(agent.builddirectory)\vscode-reh-web-win32-$(VSCODE_ARCH)"; .\resources\server\test\test-web-integration.bat --browser firefox }
     displayName: Run integration tests (Browser)
-    timeoutInMinutes: 7
+    timeoutInMinutes: 10
     condition: and(succeeded(), eq(variables['VSCODE_STEP_ON_IT'], 'false'), ne(variables['VSCODE_ARCH'], 'arm64'))
 
   - powershell: |
@@ -294,31 +295,31 @@ steps:
       $env:AZURE_STORAGE_ACCESS_KEY_2 = "$(vscode-storage-key)"
       $env:AZURE_DOCUMENTDB_MASTERKEY = "$(builds-docdb-key-readwrite)"
       $env:VSCODE_MIXIN_PASSWORD="$(github-distro-mixin-password)"
-      .\build\azure-pipelines\win32\publish.ps1
+      .\build\azure-pipelines\win32\prepare-publish.ps1
     displayName: Publish
     condition: and(succeeded(), ne(variables['VSCODE_PUBLISH'], 'false'))
 
-  - publish: $(System.DefaultWorkingDirectory)\.build\win32-$(VSCODE_ARCH)\archive\VSCode-win32-$(VSCODE_ARCH).zip
-    artifact: vscode-win32-$(VSCODE_ARCH)
+  - publish: $(System.DefaultWorkingDirectory)\.build\win32-$(VSCODE_ARCH)\archive\$(ARCHIVE_NAME)
+    artifact: vscode_client_win32_$(VSCODE_ARCH)_archive
     displayName: Publish archive
     condition: and(succeeded(), ne(variables['VSCODE_PUBLISH'], 'false'))
 
-  - publish: $(System.DefaultWorkingDirectory)\.build\win32-$(VSCODE_ARCH)\system-setup\VSCodeSetup.exe
-    artifact: vscode-win32-$(VSCODE_ARCH)-setup
+  - publish: $(System.DefaultWorkingDirectory)\.build\win32-$(VSCODE_ARCH)\system-setup\$(SYSTEM_SETUP_NAME)
+    artifact: vscode_client_win32_$(VSCODE_ARCH)_setup
     displayName: Publish system setup
     condition: and(succeeded(), ne(variables['VSCODE_PUBLISH'], 'false'))
 
-  - publish: $(System.DefaultWorkingDirectory)\.build\win32-$(VSCODE_ARCH)\user-setup\VSCodeSetup.exe
-    artifact: vscode-win32-$(VSCODE_ARCH)-user-setup
+  - publish: $(System.DefaultWorkingDirectory)\.build\win32-$(VSCODE_ARCH)\user-setup\$(USER_SETUP_NAME)
+    artifact: vscode_client_win32_$(VSCODE_ARCH)_user-setup
     displayName: Publish user setup
     condition: and(succeeded(), ne(variables['VSCODE_PUBLISH'], 'false'))
 
   - publish: $(System.DefaultWorkingDirectory)\.build\vscode-server-win32-$(VSCODE_ARCH).zip
-    artifact: vscode-server-win32-$(VSCODE_ARCH)
+    artifact: vscode_server_win32_$(VSCODE_ARCH)_archive
     displayName: Publish server archive
     condition: and(succeeded(), ne(variables['VSCODE_PUBLISH'], 'false'), ne(variables['VSCODE_ARCH'], 'arm64'))
 
   - publish: $(System.DefaultWorkingDirectory)\.build\vscode-server-win32-$(VSCODE_ARCH)-web.zip
-    artifact: vscode-server-win32-$(VSCODE_ARCH)-web
+    artifact: vscode_web_win32_$(VSCODE_ARCH)_archive
     displayName: Publish web server archive
     condition: and(succeeded(), ne(variables['VSCODE_PUBLISH'], 'false'), ne(variables['VSCODE_ARCH'], 'arm64'))

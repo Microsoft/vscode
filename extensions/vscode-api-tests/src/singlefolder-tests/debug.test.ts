@@ -13,7 +13,7 @@ suite('vscode API - debug', function () {
 	teardown(assertNoRpc);
 
 	test('breakpoints', async function () {
-		assert.equal(debug.breakpoints.length, 0);
+		assert.strictEqual(debug.breakpoints.length, 0);
 		let onDidChangeBreakpointsCounter = 0;
 		const toDispose: Disposable[] = [];
 
@@ -22,19 +22,19 @@ suite('vscode API - debug', function () {
 		}));
 
 		debug.addBreakpoints([{ id: '1', enabled: true }, { id: '2', enabled: false, condition: '2 < 5' }]);
-		assert.equal(onDidChangeBreakpointsCounter, 1);
-		assert.equal(debug.breakpoints.length, 2);
-		assert.equal(debug.breakpoints[0].id, '1');
-		assert.equal(debug.breakpoints[1].id, '2');
-		assert.equal(debug.breakpoints[1].condition, '2 < 5');
+		assert.strictEqual(onDidChangeBreakpointsCounter, 1);
+		assert.strictEqual(debug.breakpoints.length, 2);
+		assert.strictEqual(debug.breakpoints[0].id, '1');
+		assert.strictEqual(debug.breakpoints[1].id, '2');
+		assert.strictEqual(debug.breakpoints[1].condition, '2 < 5');
 
 		debug.removeBreakpoints([{ id: '1', enabled: true }]);
-		assert.equal(onDidChangeBreakpointsCounter, 2);
-		assert.equal(debug.breakpoints.length, 1);
+		assert.strictEqual(onDidChangeBreakpointsCounter, 2);
+		assert.strictEqual(debug.breakpoints.length, 1);
 
 		debug.removeBreakpoints([{ id: '2', enabled: false }]);
-		assert.equal(onDidChangeBreakpointsCounter, 3);
-		assert.equal(debug.breakpoints.length, 0);
+		assert.strictEqual(onDidChangeBreakpointsCounter, 3);
+		assert.strictEqual(debug.breakpoints.length, 0);
 
 		disposeAll(toDispose);
 	});
@@ -79,36 +79,36 @@ suite('vscode API - debug', function () {
 		const initializedPromise = new Promise<void>(resolve => initializedReceived = resolve);
 		const configurationDonePromise = new Promise<void>(resolve => configurationDoneReceived = resolve);
 		const success = await debug.startDebugging(workspace.workspaceFolders![0], 'Launch debug.js');
-		assert.equal(success, true);
+		assert.strictEqual(success, true);
 		await initializedPromise;
 		await configurationDonePromise;
 
 		await firstVariablesRetrieved;
-		assert.notEqual(debug.activeDebugSession, undefined);
-		assert.equal(stoppedEvents, 1);
+		assert.notStrictEqual(debug.activeDebugSession, undefined);
+		assert.strictEqual(stoppedEvents, 1);
 
 		const secondVariablesRetrieved = new Promise<void>(resolve => variablesReceived = resolve);
 		await commands.executeCommand('workbench.action.debug.stepOver');
 		await secondVariablesRetrieved;
-		assert.equal(stoppedEvents, 2);
+		assert.strictEqual(stoppedEvents, 2);
 		const editor = window.activeTextEditor;
-		assert.notEqual(editor, undefined);
-		assert.equal(basename(editor!.document.fileName), 'debug.js');
+		assert.notStrictEqual(editor, undefined);
+		assert.strictEqual(basename(editor!.document.fileName), 'debug.js');
 
 		const thirdVariablesRetrieved = new Promise<void>(resolve => variablesReceived = resolve);
 		await commands.executeCommand('workbench.action.debug.stepOver');
 		await thirdVariablesRetrieved;
-		assert.equal(stoppedEvents, 3);
+		assert.strictEqual(stoppedEvents, 3);
 
 		const fourthVariablesRetrieved = new Promise<void>(resolve => variablesReceived = resolve);
 		await commands.executeCommand('workbench.action.debug.stepInto');
 		await fourthVariablesRetrieved;
-		assert.equal(stoppedEvents, 4);
+		assert.strictEqual(stoppedEvents, 4);
 
 		const fifthVariablesRetrieved = new Promise<void>(resolve => variablesReceived = resolve);
 		await commands.executeCommand('workbench.action.debug.stepOut');
 		await fifthVariablesRetrieved;
-		assert.equal(stoppedEvents, 5);
+		assert.strictEqual(stoppedEvents, 5);
 
 		let sessionTerminated: () => void;
 		toDispose.push(debug.onDidTerminateDebugSession(() => {
@@ -127,6 +127,6 @@ suite('vscode API - debug', function () {
 		} catch (e) {
 			errorCount++;
 		}
-		assert.equal(errorCount, 1);
+		assert.strictEqual(errorCount, 1);
 	});
 });

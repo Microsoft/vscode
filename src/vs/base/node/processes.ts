@@ -8,6 +8,7 @@ import * as fs from 'fs';
 import * as pfs from 'vs/base/node/pfs';
 import * as cp from 'child_process';
 import * as nls from 'vs/nls';
+import * as process from 'vs/base/common/process';
 import * as Types from 'vs/base/common/types';
 import { IStringDictionary } from 'vs/base/common/collections';
 import * as Objects from 'vs/base/common/objects';
@@ -378,7 +379,7 @@ export class LineProcess extends AbstractProcess<LineData> {
 		this.stderrLineDecoder = stderrLineDecoder;
 	}
 
-	protected handleClose(data: any, cc: ValueCallback<SuccessData>, pp: ProgressCallback<LineData>, ee: ErrorCallback): void {
+	protected override handleClose(data: any, cc: ValueCallback<SuccessData>, pp: ProgressCallback<LineData>, ee: ErrorCallback): void {
 		const stdoutLine = this.stdoutLineDecoder ? this.stdoutLineDecoder.end() : null;
 		if (stdoutLine) {
 			pp({ line: stdoutLine, source: Source.stdout });

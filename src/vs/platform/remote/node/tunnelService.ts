@@ -58,7 +58,7 @@ class NodeRemoteTunnel extends Disposable implements RemoteTunnel {
 		this.tunnelRemoteHost = tunnelRemoteHost;
 	}
 
-	public async dispose(): Promise<void> {
+	public override async dispose(): Promise<void> {
 		super.dispose();
 		this._server.removeListener('listening', this._listeningListener);
 		this._server.removeListener('connection', this._connectionListener);

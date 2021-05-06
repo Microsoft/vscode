@@ -100,13 +100,13 @@
 	},
 	{
 		"c": "%",
-		"t": "source.batchfile punctuation.definition.variable.batchfile",
+		"t": "source.batchfile variable.parameter.batchfile punctuation.definition.variable.batchfile",
 		"r": {
-			"dark_plus": "default: #D4D4D4",
-			"light_plus": "default: #000000",
+			"dark_plus": "variable: #9CDCFE",
+			"light_plus": "variable: #001080",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "variable: #9CDCFE"
 		}
 	},
 	{

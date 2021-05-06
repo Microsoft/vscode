@@ -45,11 +45,11 @@ export class EmptyView extends ViewPane {
 		this._register(this.labelService.onDidChangeFormatters(() => this.refreshTitle()));
 	}
 
-	shouldShowWelcome(): boolean {
+	override shouldShowWelcome(): boolean {
 		return true;
 	}
 
-	protected renderBody(container: HTMLElement): void {
+	protected override renderBody(container: HTMLElement): void {
 		super.renderBody(container);
 
 		this._register(new DragAndDropObserver(container, {

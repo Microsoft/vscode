@@ -36,16 +36,10 @@
 .monaco-table-th,
 .monaco-table-td {
 	box-sizing: border-box;
-	padding-left: 10px;
 	flex-shrink: 0;
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
-}
-
-.monaco-table-th[data-col-index="0"],
-.monaco-table-td[data-col-index="0"] {
-	padding-left: 20px;
 }
 
 .monaco-table > .monaco-split-view2 .monaco-sash.vertical::before {

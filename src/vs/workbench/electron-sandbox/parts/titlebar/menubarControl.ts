@@ -4,8 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { localize } from 'vs/nls';
-import { URI } from 'vs/base/common/uri';
-import { IAction, Separator } from 'vs/base/common/actions';
+import { Separator } from 'vs/base/common/actions';
 import { IMenuService, MenuId, IMenu, SubmenuItemAction } from 'vs/platform/actions/common/actions';
 import { IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
 import { IWorkspacesService } from 'vs/platform/workspaces/common/workspaces';
@@ -17,7 +16,7 @@ import { IAccessibilityService } from 'vs/platform/accessibility/common/accessib
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { ILabelService } from 'vs/platform/label/common/label';
 import { IUpdateService } from 'vs/platform/update/common/update';
-import { MenubarControl } from 'vs/workbench/browser/parts/titlebar/menubarControl';
+import { IOpenRecentAction, MenubarControl } from 'vs/workbench/browser/parts/titlebar/menubarControl';
 import { IStorageService } from 'vs/platform/storage/common/storage';
 import { IMenubarData, IMenubarMenu, IMenubarKeybinding, IMenubarMenuItemSubmenu, IMenubarMenuItemAction, MenubarMenuItem } from 'vs/platform/menubar/common/menubar';
 import { IMenubarService } from 'vs/platform/menubar/electron-sandbox/menubar';
@@ -40,7 +39,7 @@ export class NativeMenubarControl extends MenubarControl {
 		@IStorageService storageService: IStorageService,
 		@INotificationService notificationService: INotificationService,
 		@IPreferencesService preferencesService: IPreferencesService,
-		@INativeWorkbenchEnvironmentService protected readonly environmentService: INativeWorkbenchEnvironmentService,
+		@INativeWorkbenchEnvironmentService environmentService: INativeWorkbenchEnvironmentService,
 		@IAccessibilityService accessibilityService: IAccessibilityService,
 		@IMenubarService private readonly menubarService: IMenubarService,
 		@IHostService hostService: IHostService,
@@ -107,6 +106,7 @@ export class NativeMenubarControl extends MenubarControl {
 
 	private populateMenuItems(menu: IMenu, menuToPopulate: IMenubarMenu, keybindings: { [id: string]: IMenubarKeybinding | undefined }) {
 		let groups = menu.getActions();
+
 		for (let group of groups) {
 			const [, actions] = group;
 
@@ -128,13 +128,16 @@ export class NativeMenubarControl extends MenubarControl {
 					const menuToDispose = this.menuService.createMenu(menuItem.item.submenu, this.contextKeyService);
 					this.populateMenuItems(menuToDispose, submenu, keybindings);
 
-					let menubarSubmenuItem: IMenubarMenuItemSubmenu = {
-						id: menuItem.id,
-						label: title,
-						submenu: submenu
-					};
+					if (submenu.items.length > 0) {
+						let menubarSubmenuItem: IMenubarMenuItemSubmenu = {
+							id: menuItem.id,
+							label: title,
+							submenu: submenu
+						};
 
-					menuToPopulate.items.push(menubarSubmenuItem);
+						menuToPopulate.items.push(menubarSubmenuItem);
+					}
+
 					menuToDispose.dispose();
 				} else {
 					if (menuItem.id === 'workbench.action.openRecent') {
@@ -168,7 +171,7 @@ export class NativeMenubarControl extends MenubarControl {
 		}
 	}
 
-	private transformOpenRecentAction(action: Separator | (IAction & { uri: URI })): MenubarMenuItem {
+	private transformOpenRecentAction(action: Separator | IOpenRecentAction): MenubarMenuItem {
 		if (action instanceof Separator) {
 			return { id: 'vscode.menubar.separator' };
 		}
@@ -176,6 +179,7 @@ export class NativeMenubarControl extends MenubarControl {
 		return {
 			id: action.id,
 			uri: action.uri,
+			remoteAuthority: action.remoteAuthority,
 			enabled: action.enabled,
 			label: action.label
 		};

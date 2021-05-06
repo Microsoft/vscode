@@ -4,12 +4,18 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Action } from 'vs/base/common/actions';
+import { flatten } from 'vs/base/common/arrays';
 import { Codicon } from 'vs/base/common/codicons';
+import { Iterable } from 'vs/base/common/iterator';
 import { KeyCode, KeyMod } from 'vs/base/common/keyCodes';
 import { isDefined } from 'vs/base/common/types';
+import { isCodeEditor } from 'vs/editor/browser/editorBrowser';
+import { Range } from 'vs/editor/common/core/range';
 import { localize } from 'vs/nls';
 import { Action2, MenuId } from 'vs/platform/actions/common/actions';
+import { ICommandService } from 'vs/platform/commands/common/commands';
 import { ContextKeyAndExpr, ContextKeyEqualsExpr, ContextKeyFalseExpr, ContextKeyTrueExpr } from 'vs/platform/contextkey/common/contextkey';
+import { IFileService } from 'vs/platform/files/common/files';
 import { ServicesAccessor } from 'vs/platform/instantiation/common/instantiation';
 import { KeybindingWeight } from 'vs/platform/keybinding/common/keybindingsRegistry';
 import { INotificationService } from 'vs/platform/notification/common/notification';
@@ -20,15 +26,21 @@ import { ExtHostTestingResource } from 'vs/workbench/api/common/extHost.protocol
 import { ViewAction } from 'vs/workbench/browser/parts/views/viewPane';
 import { FocusedViewContext } from 'vs/workbench/common/views';
 import { IExtensionsViewPaneContainer, VIEWLET_ID as EXTENSIONS_VIEWLET_ID } from 'vs/workbench/contrib/extensions/common/extensions';
+import { REVEAL_IN_EXPLORER_COMMAND_ID } from 'vs/workbench/contrib/files/browser/fileCommands';
+import { TestItemTreeElement } from 'vs/workbench/contrib/testing/browser/explorerProjections/index';
 import * as icons from 'vs/workbench/contrib/testing/browser/icons';
+import { ITestExplorerFilterState } from 'vs/workbench/contrib/testing/browser/testingExplorerFilter';
 import { TestingExplorerView, TestingExplorerViewModel } from 'vs/workbench/contrib/testing/browser/testingExplorerView';
+import { TestingOutputPeekController } from 'vs/workbench/contrib/testing/browser/testingOutputPeek';
+import { ITestingOutputTerminalService } from 'vs/workbench/contrib/testing/browser/testingOutputTerminalService';
 import { TestExplorerViewMode, TestExplorerViewSorting, Testing } from 'vs/workbench/contrib/testing/common/constants';
-import { IncrementalTestCollectionItem, InternalTestItem, TestIdWithProvider } from 'vs/workbench/contrib/testing/common/testCollection';
+import { InternalTestItem, ITestItem, TestIdPath, TestIdWithSrc } from 'vs/workbench/contrib/testing/common/testCollection';
 import { ITestingAutoRun } from 'vs/workbench/contrib/testing/common/testingAutoRun';
 import { TestingContextKeys } from 'vs/workbench/contrib/testing/common/testingContextKeys';
 import { isFailedState } from 'vs/workbench/contrib/testing/common/testingStates';
-import { ITestResult, ITestResultService } from 'vs/workbench/contrib/testing/common/testResultService';
-import { ITestService, waitForAllRoots, waitForAllTests } from 'vs/workbench/contrib/testing/common/testService';
+import { getPathForTestInResult, ITestResult } from 'vs/workbench/contrib/testing/common/testResult';
+import { ITestResultService } from 'vs/workbench/contrib/testing/common/testResultService';
+import { getAllTestsInHierarchy, getTestByPath, ITestService, waitForAllRoots } from 'vs/workbench/contrib/testing/common/testService';
 import { IWorkspaceTestCollectionService } from 'vs/workbench/contrib/testing/common/workspaceTestCollectionService';
 import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
 import { IViewletService } from 'vs/workbench/services/viewlet/browser/viewlet';
@@ -62,7 +74,7 @@ export class HideOrShowTestAction extends Action {
 	/**
 	 * @override
 	 */
-	public run() {
+	public override run() {
 		this.testService.setTestExcluded(this.testId);
 		return Promise.resolve();
 	}
@@ -70,7 +82,7 @@ export class HideOrShowTestAction extends Action {
 
 export class DebugAction extends Action {
 	constructor(
-		private readonly tests: Iterable<TestIdWithProvider>,
+		private readonly tests: Iterable<TestIdWithSrc>,
 		isRunning: boolean,
 		@ITestService private readonly testService: ITestService
 	) {
@@ -85,7 +97,7 @@ export class DebugAction extends Action {
 	/**
 	 * @override
 	 */
-	public run(): Promise<any> {
+	public override run(): Promise<any> {
 		return this.testService.runTests({
 			tests: [...this.tests],
 			debug: true,
@@ -95,7 +107,7 @@ export class DebugAction extends Action {
 
 export class RunAction extends Action {
 	constructor(
-		private readonly tests: Iterable<TestIdWithProvider>,
+		private readonly tests: Iterable<TestIdWithSrc>,
 		isRunning: boolean,
 		@ITestService private readonly testService: ITestService
 	) {
@@ -110,7 +122,7 @@ export class RunAction extends Action {
 	/**
 	 * @override
 	 */
-	public run(): Promise<any> {
+	public override run(): Promise<any> {
 		return this.testService.runTests({
 			tests: [...this.tests],
 			debug: false,
@@ -145,19 +157,19 @@ abstract class RunOrDebugSelectedAction extends ViewAction<TestingExplorerView> 
 
 	private getActionableTests(testCollection: IWorkspaceTestCollectionService, viewModel: TestingExplorerViewModel) {
 		const selected = viewModel.getSelectedTests();
-		const tests: TestIdWithProvider[] = [];
+		const tests: TestIdWithSrc[] = [];
 		if (!selected.length) {
 			for (const folder of testCollection.workspaceFolders()) {
 				for (const child of folder.getChildren()) {
 					if (this.filter(child)) {
-						tests.push({ testId: child.item.extId, providerId: child.providerId });
+						tests.push({ testId: child.item.extId, src: child.src });
 					}
 				}
 			}
 		} else {
 			for (const treeElement of selected) {
-				if (treeElement?.test && this.filter(treeElement.test)) {
-					tests.push({ testId: treeElement.test.item.extId, providerId: treeElement.test.providerId });
+				if (treeElement instanceof TestItemTreeElement && this.filter(treeElement.test)) {
+					tests.push({ testId: treeElement.test.item.extId, src: treeElement.test.src });
 				}
 			}
 		}
@@ -244,7 +256,7 @@ abstract class RunOrDebugAllAllAction extends Action2 {
 		const notifications = accessor.get(INotificationService);
 		const progress = accessor.get(IProgressService);
 
-		const tests: TestIdWithProvider[] = [];
+		const tests: TestIdWithSrc[] = [];
 		const todo = workspace.getWorkspace().folders.map(async (folder) => {
 			const ref = testService.subscribeToDiffs(ExtHostTestingResource.Workspace, folder.uri);
 			try {
@@ -252,7 +264,7 @@ abstract class RunOrDebugAllAllAction extends Action2 {
 				for (const root of ref.object.rootIds) {
 					const node = ref.object.getNodeById(root);
 					if (node && (this.debug ? node.item.debuggable : node.item.runnable)) {
-						tests.push({ testId: node.item.extId, providerId: node.providerId });
+						tests.push({ testId: node.item.extId, src: node.src });
 					}
 				}
 			} finally {
@@ -425,6 +437,30 @@ export class TestingSortByLocationAction extends ViewAction<TestingExplorerView>
 	}
 }
 
+export class ShowMostRecentOutputAction extends Action2 {
+	constructor() {
+		super({
+			id: 'testing.showMostRecentOutput',
+			title: localize('testing.showMostRecentOutput', "Show Output"),
+			f1: true,
+			category,
+			icon: Codicon.terminal,
+			menu: {
+				id: MenuId.ViewTitle,
+				order: ActionOrder.Collapse,
+				group: 'navigation',
+				when: ContextKeyEqualsExpr.create('view', Testing.ExplorerViewId)
+			}
+		});
+	}
+
+	public run(accessor: ServicesAccessor) {
+		const result = accessor.get(ITestResultService).results[0];
+		accessor.get(ITestingOutputTerminalService).open(result);
+	}
+}
+
+
 export class CollapseAllAction extends ViewAction<TestingExplorerView> {
 	constructor() {
 		super({
@@ -497,8 +533,11 @@ export class EditFocusedTest extends ViewAction<TestingExplorerView> {
 		super({
 			id: 'testing.editFocusedTest',
 			viewId: Testing.ExplorerViewId,
-			title: localize('testing.editFocusedTest', "Open Focused Test in Editor"),
+			title: localize('testing.editFocusedTest', "Go to Test"),
 			f1: false,
+			menu: {
+				id: MenuId.TestItem,
+			},
 			keybinding: {
 				weight: KeybindingWeight.EditorContrib - 10,
 				when: FocusedViewContext.isEqualTo(Testing.ExplorerViewId),
@@ -507,13 +546,62 @@ export class EditFocusedTest extends ViewAction<TestingExplorerView> {
 		});
 	}
 
+	public override async run(accessor: ServicesAccessor, test?: ITestItem, preserveFocus?: boolean) {
+		if (test) {
+			await this.runForTest(accessor, test, preserveFocus);
+		} else {
+			await super.run(accessor);
+		}
+	}
+
 	/**
 	 * @override
 	 */
-	public runInView(_accessor: ServicesAccessor, view: TestingExplorerView) {
+	public runInView(accessor: ServicesAccessor, view: TestingExplorerView) {
 		const selected = view.viewModel.tree.getFocus().find(isDefined);
-		if (selected) {
-			view.viewModel.openEditorForItem(selected, false);
+		if (selected instanceof TestItemTreeElement) {
+			this.runForTest(accessor, selected.test.item, false);
+		}
+	}
+
+	/**
+	 * @override
+	 */
+	private async runForTest(accessor: ServicesAccessor, test: ITestItem, preserveFocus = true) {
+		const commandService = accessor.get(ICommandService);
+		const fileService = accessor.get(IFileService);
+		const editorService = accessor.get(IEditorService);
+
+		accessor.get(ITestExplorerFilterState).reveal.value = [test.extId];
+
+		let isFile = true;
+		try {
+			if (!(await fileService.resolve(test.uri)).isFile) {
+				isFile = false;
+			}
+		} catch {
+			// ignored
+		}
+
+		if (!isFile) {
+			await commandService.executeCommand(REVEAL_IN_EXPLORER_COMMAND_ID, test.uri);
+			return;
+		}
+
+		const pane = await editorService.openEditor({
+			resource: test.uri,
+			options: {
+				selection: test.range
+					? { startColumn: test.range.startColumn, startLineNumber: test.range.startLineNumber }
+					: undefined,
+				preserveFocus,
+			},
+		});
+
+		// if the user selected a failed test and now they didn't, hide the peek
+		const control = pane?.getControl();
+		if (isCodeEditor(control)) {
+			TestingOutputPeekController.get(control).removePeek();
 		}
 	}
 }
@@ -578,7 +666,7 @@ abstract class RunOrDebugAtCursor extends Action2 {
 		let bestNode: InternalTestItem | undefined;
 
 		try {
-			await showDiscoveringWhile(accessor.get(IProgressService), waitForAllTests(collection.object));
+			await showDiscoveringWhile(accessor.get(IProgressService), getAllTestsInHierarchy(collection.object));
 
 			const queue: [depth: number, nodes: Iterable<string>][] = [[0, collection.object.rootIds]];
 			while (queue.length > 0) {
@@ -586,7 +674,7 @@ abstract class RunOrDebugAtCursor extends Action2 {
 				for (const id of candidates) {
 					const candidate = collection.object.getNodeById(id);
 					if (candidate) {
-						if (depth > bestDepth && this.filter(candidate) && candidate.item.location?.range.containsPosition(position)) {
+						if (depth > bestDepth && this.filter(candidate) && candidate.item.range && Range.containsPosition(candidate.item.range, position)) {
 							bestDepth = depth;
 							bestNode = candidate;
 						}
@@ -626,7 +714,7 @@ export class RunAtCursor extends RunOrDebugAtCursor {
 	protected runTest(service: ITestService, internalTest: InternalTestItem): Promise<ITestResult> {
 		return service.runTests({
 			debug: false,
-			tests: [{ testId: internalTest.item.extId, providerId: internalTest.providerId }],
+			tests: [{ testId: internalTest.item.extId, src: internalTest.src }],
 		});
 	}
 }
@@ -648,7 +736,7 @@ export class DebugAtCursor extends RunOrDebugAtCursor {
 	protected runTest(service: ITestService, internalTest: InternalTestItem): Promise<ITestResult> {
 		return service.runTests({
 			debug: true,
-			tests: [{ testId: internalTest.item.extId, providerId: internalTest.providerId }],
+			tests: [{ testId: internalTest.item.extId, src: internalTest.src }],
 		});
 	}
 }
@@ -668,33 +756,16 @@ abstract class RunOrDebugCurrentFile extends Action2 {
 		const testService = accessor.get(ITestService);
 		const collection = testService.subscribeToDiffs(ExtHostTestingResource.TextDocument, model.uri);
 
-		// the gather function builds the first nodes in the tree who have a
-		// location in the file. Ideally we could just request to run the roots,
-		// but in the case where they're polyfilled from a workspace heirarchy,
-		// the "root" test actually refers to the workspace root.
-		const expectedUri = model.uri.toString();
-		const tests: IncrementalTestCollectionItem[] = [];
-		const gather = (testIds: Iterable<string>) => {
-			for (const id of testIds) {
-				const node = collection.object.getNodeById(id);
-				if (!node) {
-					// no-op
-				} else if (node.item.location?.uri.toString() === expectedUri) {
-					if (this.filter(node)) {
-						tests.push(node);
-					}
-				} else if (node.children) {
-					gather(node.children);
-				}
-			}
-		};
-
 		try {
-			await showDiscoveringWhile(accessor.get(IProgressService), waitForAllTests(collection.object));
-			gather(collection.object.rootIds);
+			await waitForAllRoots(collection.object);
 
-			if (tests.length) {
-				await this.runTest(testService, tests);
+			const roots = [...collection.object.rootIds]
+				.map(r => collection.object.getNodeById(r))
+				.filter(isDefined)
+				.filter(n => this.filter(n));
+
+			if (roots.length) {
+				await this.runTest(testService, roots);
 			}
 		} finally {
 			collection.dispose();
@@ -723,7 +794,7 @@ export class RunCurrentFile extends RunOrDebugCurrentFile {
 	protected runTest(service: ITestService, internalTests: InternalTestItem[]): Promise<ITestResult> {
 		return service.runTests({
 			debug: false,
-			tests: internalTests.map(t => ({ testId: t.item.extId, providerId: t.providerId })),
+			tests: internalTests.map(t => ({ testId: t.item.extId, src: t.src })),
 		});
 	}
 }
@@ -745,92 +816,84 @@ export class DebugCurrentFile extends RunOrDebugCurrentFile {
 	protected runTest(service: ITestService, internalTests: InternalTestItem[]): Promise<ITestResult> {
 		return service.runTests({
 			debug: true,
-			tests: internalTests.map(t => ({ testId: t.item.extId, providerId: t.providerId }))
+			tests: internalTests.map(t => ({ testId: t.item.extId, src: t.src }))
 		});
 	}
 }
 
-abstract class RunOrDebugTestResults extends Action2 {
+abstract class RunOrDebugExtsById extends Action2 {
 	/**
 	 * @override
 	 */
 	public async run(accessor: ServicesAccessor) {
 		const testService = accessor.get(ITestService);
-		const extIds = this.getTestExtIdsToRun(accessor);
-		if (extIds.size === 0) {
+		const paths = [...this.getTestExtIdsToRun(accessor)];
+		if (paths.length === 0) {
 			return;
 		}
 
 		const workspaceTests = accessor.get(IWorkspaceTestCollectionService).subscribeToWorkspaceTests();
 
 		try {
-			const todo = Promise.all(workspaceTests.workspaceFolderCollections.map(([, c]) => waitForAllTests(c)));
-			await showDiscoveringWhile(accessor.get(IProgressService), todo);
+			const todo = Promise.all(workspaceTests.workspaceFolderCollections.map(
+				([, c]) => Promise.all(paths.map(p => getTestByPath(c, p))),
+			));
 
-			const toRun: InternalTestItem[] = [];
-			for (const [, collection] of workspaceTests.workspaceFolderCollections) {
-				for (const node of collection.all) {
-					if (extIds.has(node.item.extId) && this.filter(node)) {
-						toRun.push(node);
-						extIds.delete(node.item.extId);
-					}
-				}
-			}
-
-			if (toRun.length) {
-				await this.runTest(testService, toRun);
+			const tests = flatten(await showDiscoveringWhile(accessor.get(IProgressService), todo)).filter(isDefined);
+			if (tests.length) {
+				await this.runTest(testService, tests);
 			}
 		} finally {
 			workspaceTests.dispose();
 		}
 	}
 
-	protected abstract getTestExtIdsToRun(accessor: ServicesAccessor): Set<string>;
+	protected abstract getTestExtIdsToRun(accessor: ServicesAccessor): Iterable<TestIdPath>;
 
 	protected abstract filter(node: InternalTestItem): boolean;
 
 	protected abstract runTest(service: ITestService, node: InternalTestItem[]): Promise<ITestResult>;
 }
 
-abstract class RunOrDebugFailedTests extends RunOrDebugTestResults {
+abstract class RunOrDebugFailedTests extends RunOrDebugExtsById {
 	/**
 	 * @inheritdoc
 	 */
-	protected getTestExtIdsToRun(accessor: ServicesAccessor): Set<string> {
+	protected getTestExtIdsToRun(accessor: ServicesAccessor): Iterable<TestIdPath> {
 		const { results } = accessor.get(ITestResultService);
-		const extIds = new Set<string>();
+		const paths = new Set<string>();
+		const sep = '$$TEST SEP$$';
 		for (let i = results.length - 1; i >= 0; i--) {
-			for (const test of results[i].tests) {
-				if (isFailedState(test.state.state)) {
-					extIds.add(test.item.extId);
+			const resultSet = results[i];
+			for (const test of resultSet.tests) {
+				const path = getPathForTestInResult(test, resultSet).join(sep);
+				if (isFailedState(test.ownComputedState)) {
+					paths.add(path);
 				} else {
-					extIds.delete(test.item.extId);
+					paths.delete(path);
 				}
 			}
 		}
 
-		return extIds;
+		return Iterable.map(paths, p => p.split(sep));
 	}
 }
 
-abstract class RunOrDebugLastRun extends RunOrDebugTestResults {
+abstract class RunOrDebugLastRun extends RunOrDebugExtsById {
 	/**
 	 * @inheritdoc
 	 */
-	protected getTestExtIdsToRun(accessor: ServicesAccessor): Set<string> {
+	protected *getTestExtIdsToRun(accessor: ServicesAccessor): Iterable<TestIdPath> {
 		const lastResult = accessor.get(ITestResultService).results[0];
-		const extIds = new Set<string>();
 		if (!lastResult) {
-			return extIds;
+			return;
 		}
 
 		for (const test of lastResult.tests) {
 			if (test.direct) {
-				extIds.add(test.item.extId);
+				yield getPathForTestInResult(test, lastResult);
 			}
 		}
-
-		return extIds;
 	}
 }
 
@@ -838,7 +901,7 @@ export class ReRunFailedTests extends RunOrDebugFailedTests {
 	constructor() {
 		super({
 			id: 'testing.reRunFailTests',
-			title: localize('testing.reRunFailTests', "Re-run Failed Tests"),
+			title: localize('testing.reRunFailTests', "Rerun Failed Tests"),
 			f1: true,
 			category,
 		});
@@ -851,7 +914,7 @@ export class ReRunFailedTests extends RunOrDebugFailedTests {
 	protected runTest(service: ITestService, internalTests: InternalTestItem[]): Promise<ITestResult> {
 		return service.runTests({
 			debug: false,
-			tests: internalTests.map(t => ({ testId: t.item.extId, providerId: t.providerId })),
+			tests: internalTests.map(t => ({ testId: t.item.extId, src: t.src })),
 		});
 	}
 }
@@ -873,7 +936,7 @@ export class DebugFailedTests extends RunOrDebugFailedTests {
 	protected runTest(service: ITestService, internalTests: InternalTestItem[]): Promise<ITestResult> {
 		return service.runTests({
 			debug: true,
-			tests: internalTests.map(t => ({ testId: t.item.extId, providerId: t.providerId })),
+			tests: internalTests.map(t => ({ testId: t.item.extId, src: t.src })),
 		});
 	}
 }
@@ -882,7 +945,7 @@ export class ReRunLastRun extends RunOrDebugLastRun {
 	constructor() {
 		super({
 			id: 'testing.reRunLastRun',
-			title: localize('testing.reRunLastRun', "Re-run Last Run"),
+			title: localize('testing.reRunLastRun', "Rerun Last Run"),
 			f1: true,
 			category,
 		});
@@ -895,7 +958,7 @@ export class ReRunLastRun extends RunOrDebugLastRun {
 	protected runTest(service: ITestService, internalTests: InternalTestItem[]): Promise<ITestResult> {
 		return service.runTests({
 			debug: false,
-			tests: internalTests.map(t => ({ testId: t.item.extId, providerId: t.providerId })),
+			tests: internalTests.map(t => ({ testId: t.item.extId, src: t.src })),
 		});
 	}
 }
@@ -917,7 +980,7 @@ export class DebugLastRun extends RunOrDebugLastRun {
 	protected runTest(service: ITestService, internalTests: InternalTestItem[]): Promise<ITestResult> {
 		return service.runTests({
 			debug: true,
-			tests: internalTests.map(t => ({ testId: t.item.extId, providerId: t.providerId })),
+			tests: internalTests.map(t => ({ testId: t.item.extId, src: t.src })),
 		});
 	}
 }

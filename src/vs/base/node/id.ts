@@ -56,8 +56,9 @@ export const virtualMachineHint: { value(): number } = new class {
 
 			const interfaces = networkInterfaces();
 			for (let name in interfaces) {
-				if (Object.prototype.hasOwnProperty.call(interfaces, name)) {
-					for (const { mac, internal } of interfaces[name]) {
+				const networkInterface = interfaces[name];
+				if (networkInterface) {
+					for (const { mac, internal } of networkInterface) {
 						if (!internal) {
 							interfaceCount += 1;
 							if (this._isVirtualMachineMacAdress(mac.toUpperCase())) {

@@ -18,7 +18,7 @@ function linkNotAllowedByRules(link: string, rules: string[]) {
 
 suite('GitHub remote extraction', () => {
 	test('All known formats', () => {
-		assert.deepEqual(
+		assert.deepStrictEqual(
 			extractGitHubRemotesFromGitConfig(
 				`
 [remote "1"]

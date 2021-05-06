@@ -89,7 +89,7 @@ export function assertEditorContents(editor: vscode.TextEditor, expectedDocConte
 
 	if (cursorIndex >= 0) {
 		const expectedCursorPos = editor.document.positionAt(cursorIndex);
-		assert.deepEqual(
+		assert.deepStrictEqual(
 			{ line: editor.selection.active.line, character: editor.selection.active.line },
 			{ line: expectedCursorPos.line, character: expectedCursorPos.line },
 			'Cursor position'

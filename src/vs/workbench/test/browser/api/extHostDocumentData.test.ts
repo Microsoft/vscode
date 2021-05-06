@@ -50,7 +50,7 @@ suite('ExtHostDocumentData', () => {
 	test('save, when disposed', function () {
 		let saved: URI;
 		let data = new ExtHostDocumentData(new class extends mock<MainThreadDocumentsShape>() {
-			$trySaveDocument(uri: URI) {
+			override $trySaveDocument(uri: URI) {
 				assert.ok(!saved);
 				saved = uri;
 				return Promise.resolve(true);
@@ -365,16 +365,16 @@ suite('ExtHostDocumentData updates line mapping', () => {
 		let line = 0, character = 0, previousIsCarriageReturn = false;
 		for (let offset = 0; offset <= allText.length; offset++) {
 			// The position coordinate system cannot express the position between \r and \n
-			const position = new Position(line, character + (previousIsCarriageReturn ? -1 : 0));
+			const position: Position = new Position(line, character + (previousIsCarriageReturn ? -1 : 0));
 
 			if (direction === AssertDocumentLineMappingDirection.OffsetToPosition) {
 				let actualPosition = doc.document.positionAt(offset);
-				assert.equal(positionToStr(actualPosition), positionToStr(position), 'positionAt mismatch for offset ' + offset);
+				assert.strictEqual(positionToStr(actualPosition), positionToStr(position), 'positionAt mismatch for offset ' + offset);
 			} else {
 				// The position coordinate system cannot express the position between \r and \n
-				let expectedOffset = offset + (previousIsCarriageReturn ? -1 : 0);
+				let expectedOffset: number = offset + (previousIsCarriageReturn ? -1 : 0);
 				let actualOffset = doc.document.offsetAt(position);
-				assert.equal(actualOffset, expectedOffset, 'offsetAt mismatch for position ' + positionToStr(position));
+				assert.strictEqual(actualOffset, expectedOffset, 'offsetAt mismatch for position ' + positionToStr(position));
 			}
 
 			if (allText.charAt(offset) === '\n') {

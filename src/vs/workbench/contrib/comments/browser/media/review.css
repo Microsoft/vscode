@@ -110,10 +110,6 @@
 	min-height: 25px;
 }
 
-.monaco-editor .review-widget .body .review-comment .review-comment-contents .comment-reactions .monaco-action-bar .actions-container {
-	justify-content: flex-start;
-}
-
 .monaco-editor .review-widget .body .review-comment .review-comment-contents .comment-reactions .action-item .action-label {
 	padding: 1px 4px;
 	white-space: pre;

@@ -524,7 +524,7 @@ export class TextAreaInput extends Disposable {
 		});
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		super.dispose();
 		if (this._selectionChangeListener) {
 			this._selectionChangeListener.dispose();

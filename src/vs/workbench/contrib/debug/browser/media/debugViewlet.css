@@ -28,12 +28,8 @@
 .monaco-workbench .part > .title > .title-actions .start-debug-action-item {
 	display: flex;
 	align-items: center;
-	font-size: 11px;
-	margin-right: 0.3em;
-	height: 20px;
 	line-height: 20px;
 	flex-shrink: 1;
-	margin-top: 7px;
 }
 
 .monaco-workbench.mac .part > .title > .title-actions .start-debug-action-item {
@@ -43,7 +39,6 @@
 .monaco-workbench .part > .title > .title-actions .start-debug-action-item .codicon {
 	line-height: inherit;
 	flex-shrink: 0;
-	transition: transform 50ms ease;
 }
 
 .monaco-workbench .monaco-action-bar .start-debug-action-item .configuration .monaco-select-box {
@@ -64,10 +59,6 @@
 	opacity: 0.7;
 	font-style: italic;
 	cursor: initial;
-}
-
-.monaco-workbench .part > .title > .title-actions .start-debug-action-item .codicon.active {
-	transform: scale(1.272019649, 1.272019649);
 }
 
 /* Debug viewlet trees */
@@ -93,13 +84,7 @@
 
 /* Call stack */
 
-.debug-pane.expanded .debug-call-stack-title,
-.debug-pane.vertical .debug-call-stack-title {
-	display: flex;
-	width: 100%;
-}
-
-.debug-pane .debug-call-stack-title > .state-message {
+.debug-pane .call-stack-state-message {
 	flex: 1;
 	text-align: right;
 	text-overflow: ellipsis;
@@ -108,7 +93,7 @@
 	margin: 0px 10px;
 }
 
-.debug-pane .debug-call-stack-title > .state-message > .label {
+.debug-pane .call-stack-state-message > .label {
 	border-radius: 3px;
 	padding: 1px 2px;
 	font-size: 9px;
@@ -155,19 +140,13 @@
 	display: initial;
 }
 
+.debug-pane .monaco-list-row .monaco-action-bar .action-label {
+	padding: 2px;
+}
+
 .debug-pane .session .codicon {
 	line-height: 22px;
 	margin-right: 2px;
-}
-
-.monaco-workbench .debug-pane .monaco-action-bar .action-item > .action-label {
-	width: 16px;
-	height: 100%;
-	line-height: 22px;
-	margin-right: 8px;
-	background-size: 16px;
-	background-position: center center;
-	background-repeat: no-repeat;
 }
 
 .debug-pane .debug-call-stack .stack-frame {
@@ -319,6 +298,7 @@
 	justify-content: center;
 }
 
+.debug-pane .debug-breakpoints .breakpoint > .access-type,
 .debug-pane .debug-breakpoints .breakpoint > .file-path,
 .debug-pane .debug-breakpoints .breakpoint > .condition {
 	opacity: 0.7;

@@ -2,17 +2,17 @@
 # yarn lockfile v1
 
 
-"@emmetio/abbreviation@^2.2.0", "@emmetio/abbreviation@^2.2.1":
-  version "2.2.1"
-  resolved "https://registry.yarnpkg.com/@emmetio/abbreviation/-/abbreviation-2.2.1.tgz#d9458fe1f09fe042f019c48aa681165ba613a48d"
-  integrity sha512-uUNwNgbH0JPlrdXhy8VQbNPLLG7abMvOaLVMblx22i68Rl9r+2N235ALgIYFUty1yXC9DkVw6xMbz/D4QVARcQ==
+"@emmetio/abbreviation@^2.2.0", "@emmetio/abbreviation@^2.2.2":
+  version "2.2.2"
+  resolved "https://registry.yarnpkg.com/@emmetio/abbreviation/-/abbreviation-2.2.2.tgz#746762fd9e7a8c2ea604f580c62e3cfe250e6989"
+  integrity sha512-TtE/dBnkTCct8+LntkqVrwqQao6EnPAs1YN3cUgxOxTaBlesBCY37ROUAVZrRlG64GNnVShdl/b70RfAI3w5lw==
   dependencies:
     "@emmetio/scanner" "^1.0.0"
 
-"@emmetio/css-abbreviation@^2.1.2":
-  version "2.1.2"
-  resolved "https://registry.yarnpkg.com/@emmetio/css-abbreviation/-/css-abbreviation-2.1.2.tgz#4a5d96f2576dd827a2c1a060374ffa8a5408cc1c"
-  integrity sha512-CvYTzJltVpLqJaCZ1Qn97LVAKsl2Uwl2fzir1EX/WuMY3xWxgc3BWRCheL6k65km6GyDrLVl6RhrrNb/pxOiAQ==
+"@emmetio/css-abbreviation@^2.1.4":
+  version "2.1.4"
+  resolved "https://registry.yarnpkg.com/@emmetio/css-abbreviation/-/css-abbreviation-2.1.4.tgz#90362e8a1122ce3b76f6c3157907d30182f53f54"
+  integrity sha512-qk9L60Y+uRtM5CPbB0y+QNl/1XKE09mSO+AhhSauIfr2YOx/ta3NJw2d8RtCFxgzHeRqFRr8jgyzThbu+MZ4Uw==
   dependencies:
     "@emmetio/scanner" "^1.0.0"
 
@@ -53,18 +53,18 @@
   resolved "https://registry.yarnpkg.com/@emmetio/stream-reader/-/stream-reader-2.2.0.tgz#46cffea119a0a003312a21c2d9b5628cb5fcd442"
   integrity sha1-Rs/+oRmgoAMxKiHC2bVijLX81EI=
 
-"@types/node@^12.19.9":
-  version "12.20.4"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-12.20.4.tgz#73687043dd00fcb6962c60fbf499553a24d6bdf2"
-  integrity sha512-xRCgeE0Q4pT5UZ189TJ3SpYuX/QGl6QIAOAIeDSbAVAd2gX1NxSZup4jNVK7cxIeP8KDSbJgcckun495isP1jQ==
+"@types/node@14.x":
+  version "14.14.43"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-14.14.43.tgz#26bcbb0595b305400e8ceaf9a127a7f905ae49c8"
+  integrity sha512-3pwDJjp1PWacPTpH0LcfhgjvurQvrZFBrC6xxjaUEZ7ifUtT32jtjPxEMMblpqd2Mvx+k8haqQJLQxolyGN/cQ==
 
 emmet@^2.3.0:
-  version "2.3.2"
-  resolved "https://registry.yarnpkg.com/emmet/-/emmet-2.3.2.tgz#3f855ab240f17e5d5feead0fb04f2f83c5d8dede"
-  integrity sha512-PRHGy5RfLp7+WBgoNq0QYtjSbbG1g28PtnN8McPhlEMoPwZWBDftVIz4vDNUNvQFSBtekuYZxB7J0vLgodZxFw==
+  version "2.3.4"
+  resolved "https://registry.yarnpkg.com/emmet/-/emmet-2.3.4.tgz#5ba0d7a5569a68c7697dfa890c772e4f3179d123"
+  integrity sha512-3IqSwmO+N2ZGeuhDyhV/TIOJFUbkChi53bcasSNRE7Yd+4eorbbYz4e53TpMECt38NtYkZNupQCZRlwdAYA42A==
   dependencies:
-    "@emmetio/abbreviation" "^2.2.1"
-    "@emmetio/css-abbreviation" "^2.1.2"
+    "@emmetio/abbreviation" "^2.2.2"
+    "@emmetio/css-abbreviation" "^2.1.4"
 
 image-size@^0.5.2:
   version "0.5.5"
@@ -77,9 +77,9 @@ jsonc-parser@^2.3.0:
   integrity sha512-H8jvkz1O50L3dMZCsLqiuB2tA7muqbSg1AtGEkN0leAqGjsUzDJir3Zwr02BhqdcITPg3ei3mZ+HjMocAknhhg==
 
 vscode-emmet-helper@^2.3.0:
-  version "2.4.0"
-  resolved "https://registry.yarnpkg.com/vscode-emmet-helper/-/vscode-emmet-helper-2.4.0.tgz#12f82fd05fb1df11ef7e78f85df63724de54a05b"
-  integrity sha512-aMbUL3oHBWM/Ux/C035a6KKLgIV8+GNGuu1b7ztuHXM6VmrdFFLNI5+tfFjfYQ3GBpD+Q7ZQU7CX/JaGlBbBiA==
+  version "2.6.2"
+  resolved "https://registry.yarnpkg.com/vscode-emmet-helper/-/vscode-emmet-helper-2.6.2.tgz#777b471a7851ba0ca8e4151533be7f92511f39b0"
+  integrity sha512-SkL1WjZZsA+bfTo52QH4PgqXCQAJSqzOmJtAY3rOl17MKbY6iJhVv2T26PshjmUnHoXnXMNa7PcLMCS75RsQDQ==
   dependencies:
     emmet "^2.3.0"
     jsonc-parser "^2.3.0"

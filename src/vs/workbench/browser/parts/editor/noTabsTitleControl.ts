@@ -50,7 +50,7 @@ export class NoTabsTitleControl extends TitleControl {
 		this._register(addDisposableListener(this.editorLabel.element, EventType.CLICK, e => this.onTitleLabelClick(e)));
 
 		// Breadcrumbs
-		this.createBreadcrumbsControl(labelContainer, { showFileIcons: false, showSymbolIcons: true, showDecorationColors: false, breadcrumbsBackground: () => Color.transparent });
+		this.createBreadcrumbsControl(labelContainer, { showFileIcons: false, showSymbolIcons: true, showDecorationColors: false, breadcrumbsBackground: () => Color.transparent, showPlaceholder: false });
 		titleContainer.classList.toggle('breadcrumbs', Boolean(this.breadcrumbsControl));
 		this._register(toDisposable(() => titleContainer.classList.remove('breadcrumbs'))); // important to remove because the container is a shared dom node
 
@@ -195,7 +195,7 @@ export class NoTabsTitleControl extends TitleControl {
 		}
 	}
 
-	updateStyles(): void {
+	override updateStyles(): void {
 		this.redraw();
 	}
 
@@ -321,7 +321,7 @@ export class NoTabsTitleControl extends TitleControl {
 		}
 	}
 
-	protected prepareEditorActions(editorActions: IToolbarActions): { primaryEditorActions: IAction[], secondaryEditorActions: IAction[] } {
+	protected override prepareEditorActions(editorActions: IToolbarActions): { primaryEditorActions: IAction[], secondaryEditorActions: IAction[] } {
 		const isGroupActive = this.accessor.activeGroup === this.group;
 
 		// Group active: show all actions

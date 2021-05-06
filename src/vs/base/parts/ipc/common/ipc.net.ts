@@ -252,7 +252,7 @@ class ProtocolReader extends Disposable {
 		return this._incomingData.read(this._incomingData.byteLength);
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		this._isDisposed = true;
 		super.dispose();
 	}
@@ -412,7 +412,7 @@ export class Client<TContext = string> extends IPCClient<TContext> {
 		super(protocol, id, ipcLogger);
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		super.dispose();
 		const socket = this.protocol.getSocket();
 		this.protocol.sendDisconnect();

@@ -90,7 +90,7 @@ export class StatusBarAction extends Action {
 		this.tooltip = command.tooltip || '';
 	}
 
-	run(): Promise<void> {
+	override run(): Promise<void> {
 		return this.commandService.executeCommand(this.command.id, ...(this.command.arguments || []));
 	}
 }
@@ -101,7 +101,7 @@ class StatusBarActionViewItem extends ActionViewItem {
 		super(null, action, {});
 	}
 
-	updateLabel(): void {
+	override updateLabel(): void {
 		if (this.options.label && this.label) {
 			reset(this.label, ...renderLabelWithIcons(this.getAction().label));
 		}

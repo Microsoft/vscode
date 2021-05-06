@@ -43,8 +43,8 @@ export class SCMRepositoriesViewPane extends ViewPane {
 		options: IViewPaneOptions,
 		@ISCMService protected scmService: ISCMService,
 		@ISCMViewService protected scmViewService: ISCMViewService,
-		@IKeybindingService protected keybindingService: IKeybindingService,
-		@IContextMenuService protected contextMenuService: IContextMenuService,
+		@IKeybindingService keybindingService: IKeybindingService,
+		@IContextMenuService contextMenuService: IContextMenuService,
 		@IInstantiationService instantiationService: IInstantiationService,
 		@IViewDescriptorService viewDescriptorService: IViewDescriptorService,
 		@IContextKeyService contextKeyService: IContextKeyService,
@@ -56,7 +56,7 @@ export class SCMRepositoriesViewPane extends ViewPane {
 		super(options, keybindingService, contextMenuService, configurationService, contextKeyService, viewDescriptorService, instantiationService, openerService, themeService, telemetryService);
 	}
 
-	protected renderBody(container: HTMLElement): void {
+	protected override renderBody(container: HTMLElement): void {
 		super.renderBody(container);
 
 		const listContainer = append(container, $('.scm-view.scm-repositories-view'));
@@ -120,11 +120,11 @@ export class SCMRepositoriesViewPane extends ViewPane {
 		this.updateBodySize();
 	}
 
-	focus(): void {
+	override focus(): void {
 		this.list.domFocus();
 	}
 
-	protected layoutBody(height: number, width: number): void {
+	protected override layoutBody(height: number, width: number): void {
 		super.layoutBody(height, width);
 		this.list.layout(height, width);
 	}

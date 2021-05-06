@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 import 'mocha';
 import * as assert from 'assert';
-import { URI }  from 'vscode-uri';
+import { URI } from 'vscode-uri';
 import { resolve } from 'path';
 import { TextDocument, DocumentLink } from 'vscode-languageserver-types';
 import { WorkspaceFolder } from 'vscode-languageserver-protocol';
@@ -26,10 +26,10 @@ suite('Links', () => {
 			return document.offsetAt(link.range.start) === expected.offset;
 		});
 
-		assert.equal(matches.length, 1, `${expected.offset} should only existing once: Actual: ${links.map(l => document.offsetAt(l.range.start)).join(', ')}`);
+		assert.strictEqual(matches.length, 1, `${expected.offset} should only existing once: Actual: ${links.map(l => document.offsetAt(l.range.start)).join(', ')}`);
 		let match = matches[0];
-		assert.equal(document.getText(match.range), expected.value);
-		assert.equal(match.target, expected.target);
+		assert.strictEqual(document.getText(match.range), expected.value);
+		assert.strictEqual(match.target, expected.target);
 	};
 
 	async function assertLinks(value: string, expected: ItemDescription[], testUri: string, workspaceFolders?: WorkspaceFolder[], lang: string = 'css'): Promise<void> {
@@ -47,7 +47,7 @@ suite('Links', () => {
 		const stylesheet = cssLanguageService.parseStylesheet(document);
 		let links = await cssLanguageService.findDocumentLinks2(document, stylesheet, context)!;
 
-		assert.equal(links.length, expected.length);
+		assert.strictEqual(links.length, expected.length);
 
 		for (let item of expected) {
 			assertLink(links, item, document);

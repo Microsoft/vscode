@@ -163,7 +163,7 @@ export abstract class AbstractFileDialogService implements IFileDialogService {
 			}
 
 			if (stat.isDirectory || options.forceNewWindow || preferNewWindow) {
-				return this.hostService.openWindow([toOpen], { forceNewWindow: options.forceNewWindow });
+				return this.hostService.openWindow([toOpen], { forceNewWindow: options.forceNewWindow, remoteAuthority: options.remoteAuthority });
 			} else {
 				return this.openerService.open(uri, { fromUserGesture: true, editorOptions: { pinned: true } });
 			}
@@ -180,7 +180,7 @@ export abstract class AbstractFileDialogService implements IFileDialogService {
 			this.workspacesService.addRecentlyOpened([{ fileUri: uri, label: this.labelService.getUriLabel(uri) }]);
 
 			if (options.forceNewWindow || preferNewWindow) {
-				return this.hostService.openWindow([{ fileUri: uri }], { forceNewWindow: options.forceNewWindow });
+				return this.hostService.openWindow([{ fileUri: uri }], { forceNewWindow: options.forceNewWindow, remoteAuthority: options.remoteAuthority });
 			} else {
 				return this.openerService.open(uri, { fromUserGesture: true, editorOptions: { pinned: true } });
 			}
@@ -193,7 +193,7 @@ export abstract class AbstractFileDialogService implements IFileDialogService {
 
 		const uri = await this.pickResource({ canSelectFiles: false, canSelectFolders: true, canSelectMany: false, defaultUri: options.defaultUri, title, availableFileSystems });
 		if (uri) {
-			return this.hostService.openWindow([{ folderUri: uri }], { forceNewWindow: options.forceNewWindow });
+			return this.hostService.openWindow([{ folderUri: uri }], { forceNewWindow: options.forceNewWindow, remoteAuthority: options.remoteAuthority });
 		}
 	}
 
@@ -204,7 +204,7 @@ export abstract class AbstractFileDialogService implements IFileDialogService {
 
 		const uri = await this.pickResource({ canSelectFiles: true, canSelectFolders: false, canSelectMany: false, defaultUri: options.defaultUri, title, filters, availableFileSystems });
 		if (uri) {
-			return this.hostService.openWindow([{ workspaceUri: uri }], { forceNewWindow: options.forceNewWindow });
+			return this.hostService.openWindow([{ workspaceUri: uri }], { forceNewWindow: options.forceNewWindow, remoteAuthority: options.remoteAuthority });
 		}
 	}
 

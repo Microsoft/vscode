@@ -7,7 +7,7 @@ import { URI } from 'vs/base/common/uri';
 import { basename, join, } from 'vs/base/common/path';
 import { IProductService } from 'vs/platform/product/common/productService';
 import { INativeEnvironmentService } from 'vs/platform/environment/common/environment';
-import { process } from 'vs/base/parts/sandbox/electron-sandbox/globals';
+import { env } from 'vs/base/common/process';
 import { IFileService } from 'vs/platform/files/common/files';
 import { isWindows } from 'vs/base/common/platform';
 import { isNonEmptyArray } from 'vs/base/common/arrays';
@@ -40,7 +40,7 @@ const lastPromptedMediumImpExeTimeStorageKey = 'extensionTips/lastPromptedMedium
 
 export class ExtensionTipsService extends BaseExtensionTipsService {
 
-	_serviceBrand: any;
+	override _serviceBrand: any;
 
 	private readonly highImportanceExecutableTips: Map<string, IExeBasedExtensionTips> = new Map<string, IExeBasedExtensionTips>();
 	private readonly mediumImportanceExecutableTips: Map<string, IExeBasedExtensionTips> = new Map<string, IExeBasedExtensionTips>();
@@ -101,13 +101,13 @@ export class ExtensionTipsService extends BaseExtensionTipsService {
 		});
 	}
 
-	async getImportantExecutableBasedTips(): Promise<IExecutableBasedExtensionTip[]> {
+	override async getImportantExecutableBasedTips(): Promise<IExecutableBasedExtensionTip[]> {
 		const highImportanceExeTips = await this.getValidExecutableBasedExtensionTips(this.highImportanceExecutableTips);
 		const mediumImportanceExeTips = await this.getValidExecutableBasedExtensionTips(this.mediumImportanceExecutableTips);
 		return [...highImportanceExeTips, ...mediumImportanceExeTips];
 	}
 
-	getOtherExecutableBasedTips(): Promise<IExecutableBasedExtensionTip[]> {
+	override getOtherExecutableBasedTips(): Promise<IExecutableBasedExtensionTip[]> {
 		return this.getValidExecutableBasedExtensionTips(this.allOtherExecutableTips);
 	}
 
@@ -294,11 +294,11 @@ export class ExtensionTipsService extends BaseExtensionTipsService {
 			const exePaths: string[] = [];
 			if (isWindows) {
 				if (extensionTip.windowsPath) {
-					exePaths.push(extensionTip.windowsPath.replace('%USERPROFILE%', process.env['USERPROFILE']!)
-						.replace('%ProgramFiles(x86)%', process.env['ProgramFiles(x86)']!)
-						.replace('%ProgramFiles%', process.env['ProgramFiles']!)
-						.replace('%APPDATA%', process.env['APPDATA']!)
-						.replace('%WINDIR%', process.env['WINDIR']!));
+					exePaths.push(extensionTip.windowsPath.replace('%USERPROFILE%', env['USERPROFILE']!)
+						.replace('%ProgramFiles(x86)%', env['ProgramFiles(x86)']!)
+						.replace('%ProgramFiles%', env['ProgramFiles']!)
+						.replace('%APPDATA%', env['APPDATA']!)
+						.replace('%WINDIR%', env['WINDIR']!));
 				}
 			} else {
 				exePaths.push(join('/usr/local/bin', exeName));

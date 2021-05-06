@@ -200,13 +200,13 @@ export class Text extends Marker {
 	constructor(public value: string) {
 		super();
 	}
-	toString() {
+	override toString() {
 		return this.value;
 	}
 	toTextmateString(): string {
 		return Text.escape(this.value);
 	}
-	len(): number {
+	override len(): number {
 		return this.value.length;
 	}
 	clone(): Text {
@@ -279,7 +279,7 @@ export class Choice extends Marker {
 
 	readonly options: Text[] = [];
 
-	appendChild(marker: Marker): this {
+	override appendChild(marker: Marker): this {
 		if (marker instanceof Text) {
 			marker.parent = this;
 			this.options.push(marker);
@@ -287,7 +287,7 @@ export class Choice extends Marker {
 		return this;
 	}
 
-	toString() {
+	override toString() {
 		return this.options[0].value;
 	}
 
@@ -297,7 +297,7 @@ export class Choice extends Marker {
 			.join(',');
 	}
 
-	len(): number {
+	override len(): number {
 		return this.options[0].len();
 	}
 
@@ -341,7 +341,7 @@ export class Transform extends Marker {
 		return ret;
 	}
 
-	toString(): string {
+	override toString(): string {
 		return '';
 	}
 
@@ -388,11 +388,11 @@ export class FormatString extends Marker {
 	}
 
 	private _toPascalCase(value: string): string {
-		const match = value.match(/[a-z]+/gi);
+		const match = value.match(/[a-z0-9]+/gi);
 		if (!match) {
 			return value;
 		}
-		return match.map(function (word) {
+		return match.map(word => {
 			return word.charAt(0).toUpperCase()
 				+ word.substr(1).toLowerCase();
 		})
@@ -555,12 +555,12 @@ export class TextmateSnippet extends Marker {
 		return this;
 	}
 
-	appendChild(child: Marker) {
+	override appendChild(child: Marker) {
 		this._placeholders = undefined;
 		return super.appendChild(child);
 	}
 
-	replace(child: Marker, others: Marker[]): void {
+	override replace(child: Marker, others: Marker[]): void {
 		this._placeholders = undefined;
 		return super.replace(child, others);
 	}

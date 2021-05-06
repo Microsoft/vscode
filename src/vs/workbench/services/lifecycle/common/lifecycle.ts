@@ -92,23 +92,29 @@ export const enum LifecyclePhase {
 
 	/**
 	 * The first phase signals that we are about to startup getting ready.
+	 *
+	 * Note: doing work in this phase blocks an editor from showing to
+	 * the user, so please rather consider to use `Restored` phase.
 	 */
 	Starting = 1,
 
 	/**
-	 * Services are ready and the view is about to restore its state.
+	 * Services are ready and the window is about to restore its UI state.
+	 *
+	 * Note: doing work in this phase blocks an editor from showing to
+	 * the user, so please rather consider to use `Restored` phase.
 	 */
 	Ready = 2,
 
 	/**
-	 * Views, panels and editors have restored. For editors this means, that
-	 * they show their contents fully.
+	 * Views, panels and editors have restored. Editors are given a bit of
+	 * time to restore their contents.
 	 */
 	Restored = 3,
 
 	/**
 	 * The last phase after views, panels and editors have restored and
-	 * some time has passed (few seconds).
+	 * some time has passed (2-5 seconds).
 	 */
 	Eventually = 4
 }
@@ -149,9 +155,10 @@ export interface ILifecycleService {
 	readonly onBeforeShutdown: Event<BeforeShutdownEvent>;
 
 	/**
-	 * Fired when no client is preventing the shutdown from happening (from onBeforeShutdown).
-	 * Can be used to save UI state even if that is long running through the WillShutdownEvent#join()
-	 * method.
+	 * Fired when no client is preventing the shutdown from happening (from `onBeforeShutdown`).
+	 *
+	 * This event can be joined with a long running operation via `WillShutdownEvent#join()` to
+	 * handle long running shutdown operations.
 	 *
 	 * The event carries a shutdown reason that indicates how the shutdown was triggered.
 	 */
@@ -159,9 +166,11 @@ export interface ILifecycleService {
 
 	/**
 	 * Fired when the shutdown is about to happen after long running shutdown operations
-	 * have finished (from onWillShutdown). This is the right place to dispose resources.
+	 * have finished (from `onWillShutdown`).
+	 *
+	 * This event should be used to dispose resources.
 	 */
-	readonly onShutdown: Event<void>;
+	readonly onDidShutdown: Event<void>;
 
 	/**
 	 * Returns a promise that resolves when a certain lifecycle phase
@@ -185,7 +194,7 @@ export const NullLifecycleService: ILifecycleService = {
 
 	onBeforeShutdown: Event.None,
 	onWillShutdown: Event.None,
-	onShutdown: Event.None,
+	onDidShutdown: Event.None,
 
 	phase: LifecyclePhase.Restored,
 	startupKind: StartupKind.NewWindow,

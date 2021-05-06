@@ -45,8 +45,10 @@ suite('git smoke test', function () {
 		cp.execSync('git init', { cwd });
 		cp.execSync('git config user.name testuser', { cwd });
 		cp.execSync('git config user.email monacotools@microsoft.com', { cwd });
+		cp.execSync('git config commit.gpgsign false', { cwd });
 		cp.execSync('git add .', { cwd });
 		cp.execSync('git commit -m "initial commit"', { cwd });
+		cp.execSync('git branch -m main', { cwd });
 
 		// make sure git is activated
 		const ext = extensions.getExtension<GitExtension>('vscode.git');
@@ -57,8 +59,8 @@ suite('git smoke test', function () {
 			await eventToPromise(git.onDidOpenRepository);
 		}
 
-		assert.equal(git.repositories.length, 1);
-		assert.equal(fs.realpathSync(git.repositories[0].rootUri.fsPath), cwd);
+		assert.strictEqual(git.repositories.length, 1);
+		assert.strictEqual(fs.realpathSync(git.repositories[0].rootUri.fsPath), cwd);
 
 		repository = git.repositories[0];
 	});
@@ -70,7 +72,7 @@ suite('git smoke test', function () {
 		await type(appjs, ' world');
 		await appjs.save();
 		await repository.status();
-		assert.equal(repository.state.workingTreeChanges.length, 1);
+		assert.strictEqual(repository.state.workingTreeChanges.length, 1);
 		repository.state.workingTreeChanges.some(r => r.uri.path === appjs.uri.path && r.status === Status.MODIFIED);
 
 		fs.writeFileSync(file('newfile.txt'), '');
@@ -78,7 +80,7 @@ suite('git smoke test', function () {
 		await type(newfile, 'hey there');
 		await newfile.save();
 		await repository.status();
-		assert.equal(repository.state.workingTreeChanges.length, 2);
+		assert.strictEqual(repository.state.workingTreeChanges.length, 2);
 		repository.state.workingTreeChanges.some(r => r.uri.path === appjs.uri.path && r.status === Status.MODIFIED);
 		repository.state.workingTreeChanges.some(r => r.uri.path === newfile.uri.path && r.status === Status.UNTRACKED);
 	});
@@ -88,7 +90,7 @@ suite('git smoke test', function () {
 		await commands.executeCommand('git.openChange', appjs);
 
 		assert(window.activeTextEditor);
-		assert.equal(window.activeTextEditor!.document.uri.path, appjs.path);
+		assert.strictEqual(window.activeTextEditor!.document.uri.path, appjs.path);
 
 		// TODO: how do we really know this is a diff editor?
 	});
@@ -98,13 +100,13 @@ suite('git smoke test', function () {
 		const newfile = uri('newfile.txt');
 
 		await commands.executeCommand('git.stage', appjs);
-		assert.equal(repository.state.workingTreeChanges.length, 1);
+		assert.strictEqual(repository.state.workingTreeChanges.length, 1);
 		repository.state.workingTreeChanges.some(r => r.uri.path === newfile.path && r.status === Status.UNTRACKED);
-		assert.equal(repository.state.indexChanges.length, 1);
+		assert.strictEqual(repository.state.indexChanges.length, 1);
 		repository.state.indexChanges.some(r => r.uri.path === appjs.path && r.status === Status.INDEX_MODIFIED);
 
 		await commands.executeCommand('git.unstage', appjs);
-		assert.equal(repository.state.workingTreeChanges.length, 2);
+		assert.strictEqual(repository.state.workingTreeChanges.length, 2);
 		repository.state.workingTreeChanges.some(r => r.uri.path === appjs.path && r.status === Status.MODIFIED);
 		repository.state.workingTreeChanges.some(r => r.uri.path === newfile.path && r.status === Status.UNTRACKED);
 	});
@@ -115,16 +117,16 @@ suite('git smoke test', function () {
 
 		await commands.executeCommand('git.stage', appjs);
 		await repository.commit('second commit');
-		assert.equal(repository.state.workingTreeChanges.length, 1);
+		assert.strictEqual(repository.state.workingTreeChanges.length, 1);
 		repository.state.workingTreeChanges.some(r => r.uri.path === newfile.path && r.status === Status.UNTRACKED);
-		assert.equal(repository.state.indexChanges.length, 0);
+		assert.strictEqual(repository.state.indexChanges.length, 0);
 
 		await commands.executeCommand('git.stageAll', appjs);
 		await repository.commit('third commit');
-		assert.equal(repository.state.workingTreeChanges.length, 0);
-		assert.equal(repository.state.indexChanges.length, 0);
+		assert.strictEqual(repository.state.workingTreeChanges.length, 0);
+		assert.strictEqual(repository.state.indexChanges.length, 0);
 	});
-		
+
 	test('rename/delete conflict', async function () {
 		cp.execSync('git branch test', { cwd });
 		cp.execSync('git checkout test', { cwd });
@@ -133,16 +135,16 @@ suite('git smoke test', function () {
 		cp.execSync('git add .', { cwd });
 
 		await repository.commit('commit on test');
-		cp.execSync('git checkout master', { cwd });
+		cp.execSync('git checkout main', { cwd });
 
 		fs.renameSync(file('app.js'), file('rename.js'));
 		cp.execSync('git add .', { cwd });
-		await repository.commit('commit on master');
+		await repository.commit('commit on main');
 
 		try {
 			cp.execSync('git merge test', { cwd });
 		} catch (e) { }
-		
+
 		setTimeout(() => {
 			commands.executeCommand('workbench.scm.focus');
 		}, 2e3);

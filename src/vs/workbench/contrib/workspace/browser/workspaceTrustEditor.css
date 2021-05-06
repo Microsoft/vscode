@@ -6,103 +6,250 @@
 .monaco-icon-label.file-icon.workspacetrusteditor-name-file-icon.ext-file-icon.tab-label::before {
 	font-family: 'codicon';
 	content: '\eb53';
+	background-image: none;
+	font-size: 150%;
 }
 
-.workspace-trust-editor.settings-editor {
+.workspace-trust-editor {
 	max-width: 1000px;
 	padding-top: 11px;
-	padding-left: 15px;
-	padding-right: 15px;
 	margin: auto;
+	height: calc(100% - 11px);
 }
 
-.workspace-trust-editor.settings-editor > .workspace-trust-header {
+.workspace-trust-editor:focus {
+	outline: none !important;
+}
+
+.workspace-trust-editor > .workspace-trust-header {
 	padding: 14px;
-	border: solid 1px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
 }
 
-.workspace-trust-editor.settings-editor .workspace-trust-header .workspace-trust-title {
+.workspace-trust-editor .workspace-trust-header .workspace-trust-title {
 	font-size: 24px;
 	font-weight: 600;
 	line-height: 32px;
 	padding: 10px 0px;
+	display: flex;
 }
 
-.workspace-trust-editor.settings-editor .workspace-trust-header .workspace-trust-description {
+.workspace-trust-editor .workspace-trust-header .workspace-trust-title .workspace-trust-title-icon {
+	font-size: 32px;
+	margin-right: 8px;
+}
+
+.workspace-trust-editor .workspace-trust-header .workspace-trust-title .workspace-trust-title-icon {
+	color: var(--workspace-trust-selected-state-color) !important;
+}
+
+.workspace-trust-editor .workspace-trust-header .workspace-trust-description {
 	cursor: default;
 	user-select: text;
+	max-width: 600px;
 }
 
-/** Buttons Container */
-.workspace-trust-editor.settings-editor .workspace-trust-header .workspace-trust-buttons-row {
-	display: flex;
-	align-items: center;
-	justify-content: flex-end;
-	padding: 20px 0 10px 0;
-	overflow: hidden; /* buttons row should never overflow */
-	white-space: nowrap;
+.workspace-trust-editor .workspace-trust-section-title {
+	font-weight: 600;
+	font-size: 18px;
+	padding-bottom: 5px;
 }
 
-/** Buttons */
-.workspace-trust-editor.settings-editor .workspace-trust-header .workspace-trust-buttons-row .workspace-trust-buttons {
-	display: flex;
-	overflow: hidden;
-}
-
-.workspace-trust-editor.settings-editor .workspace-trust-header .workspace-trust-buttons-row .workspace-trust-buttons .monaco-button {
-	width: fit-content;
-	width: -moz-fit-content;
-	padding: 5px 10px;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	margin: 4px 5px; /* allows button focus outline to be visible */
-	outline-offset: 2px !important;
-}
-
-.monaco-workbench.vs .workspace-trust-editor.settings-editor > .workspace-trust-header.workspace-trust-unknown {
-	border-color: #cccccc;
-}
-
-.monaco-workbench.vs-dark .workspace-trust-editor.settings-editor > .workspace-trust-header.workspace-trust-unknown {
-	border-color: #3c3c3c;
-}
-
-.monaco-workbench.vs .workspace-trust-editor.settings-editor > .workspace-trust-header.workspace-trust-untrusted,
-.monaco-workbench.vs-dark .workspace-trust-editor.settings-editor > .workspace-trust-header.workspace-trust-untrusted {
-	border-color: #FF0000;
-}
-
-.monaco-workbench.vs .workspace-trust-editor.settings-editor > .workspace-trust-header.workspace-trust-trusted,
-.monaco-workbench.vs-dark .workspace-trust-editor.settings-editor > .workspace-trust-header.workspace-trust-trusted {
-	border-color: #327E36;
-}
-
-/** Features List */
-.workspace-trust-editor.settings-editor > .workspace-trust-features-list {
-	padding: 14px;
-	cursor: default;
-	user-select: text;
-}
-
-.workspace-trust-editor.settings-editor > .workspace-trust-features-list  .workspace-trust-extensions-list-header {
+.workspace-trust-editor .workspace-trust-subsection-title {
 	font-size: 16px;
 	font-weight: 600;
 	line-height: 32px;
 }
 
+.workspace-trust-editor .workspace-trust-editor-body {
+	height: 100%;
+}
+
+/** Features List */
+.workspace-trust-editor .workspace-trust-features {
+	padding: 14px;
+	cursor: default;
+	user-select: text;
+	display: flex;
+	flex-direction: row;
+	flex-flow: wrap;
+	justify-content: space-evenly;
+}
+
+.workspace-trust-editor .workspace-trust-features .workspace-trust-limitations {
+	min-height: 315px;
+}
+
+.workspace-trust-editor.trusted .workspace-trust-features .workspace-trust-limitations.trusted {
+	border-width: 2px;
+	border-color: var(--workspace-trust-selected-state-color) !important;
+}
+
+.workspace-trust-editor.untrusted .workspace-trust-features .workspace-trust-limitations.untrusted {
+	border-width: 2px;
+	border-color: var(--workspace-trust-selected-state-color) !important;
+}
+
+.workspace-trust-editor .workspace-trust-features .workspace-trust-limitations ul {
+	list-style: none;
+	padding-inline-start: 0px;
+}
+
+.workspace-trust-editor .workspace-trust-features .workspace-trust-limitations li {
+	display: flex;
+	padding-bottom: 10px;
+}
+
+.workspace-trust-editor .workspace-trust-features .workspace-trust-limitations .list-item-icon {
+	padding-right: 5px;
+	line-height: 24px;
+}
+
+.workspace-trust-editor .workspace-trust-features .workspace-trust-limitations.trusted .list-item-icon {
+	color: var(--workspace-trust-trusted-color) !important;
+	font-size: 18px;
+}
+
+.workspace-trust-editor .workspace-trust-features .workspace-trust-limitations.untrusted .list-item-icon {
+	color: var(--workspace-trust-untrusted-color) !important;
+	font-size: 20px;
+}
+
+.workspace-trust-editor .workspace-trust-features .workspace-trust-limitations .list-item-text {
+	font-size: 16px;
+	line-height: 24px;
+}
+
+.workspace-trust-editor .workspace-trust-features .workspace-trust-limitations-header {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.workspace-trust-editor .workspace-trust-features .workspace-trust-limitations-header .workspace-trust-limitations-title {
+	font-size: 16px;
+	font-weight: 600;
+	line-height: 24px;
+	padding: 10px 0px;
+	display: flex;
+}
+
+.workspace-trust-editor .workspace-trust-features .workspace-trust-limitations-header .workspace-trust-limitations-title .workspace-trust-title-icon {
+	font-size: 24px;
+	margin-right: 8px;
+	display: none;
+}
+
+.workspace-trust-editor.trusted .workspace-trust-features .workspace-trust-limitations.trusted .workspace-trust-limitations-header .workspace-trust-limitations-title .workspace-trust-title-icon {
+	display: unset;
+	color: var(--workspace-trust-selected-state-color) !important;
+}
+
+.workspace-trust-editor.untrusted .workspace-trust-features .workspace-trust-limitations.untrusted .workspace-trust-limitations-header .workspace-trust-limitations-title .workspace-trust-title-icon {
+	display: unset;
+	color: var(--workspace-trust-selected-state-color) !important;
+}
+
+.workspace-trust-editor .workspace-trust-features .workspace-trust-untrusted-description {
+	font-style: italic;
+	padding-bottom: 10px;
+}
+
+/** Buttons Container */
+.workspace-trust-editor .workspace-trust-features .workspace-trust-buttons-row {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 5px 0 10px 0;
+	overflow: hidden; /* buttons row should never overflow */
+	white-space: nowrap;
+	margin-top: auto;
+}
+
+/** Buttons */
+.workspace-trust-editor .workspace-trust-features .workspace-trust-buttons-row .workspace-trust-buttons {
+	display: flex;
+	overflow: hidden;
+}
+
+.workspace-trust-editor .workspace-trust-features .workspace-trust-buttons-row .workspace-trust-buttons .monaco-button {
+	width: fit-content;
+	width: -moz-fit-content;
+	padding: 5px 10px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	outline-offset: 2px !important;
+}
+
+.workspace-trust-editor .workspace-trust-features .workspace-trust-buttons-row .workspace-trust-buttons > .monaco-button,
+.workspace-trust-editor .workspace-trust-features .workspace-trust-buttons-row .workspace-trust-buttons > .monaco-button-dropdown {
+	margin: 4px 5px; /* allows button focus outline to be visible */
+}
+
+.workspace-trust-editor .workspace-trust-features .workspace-trust-buttons-row .workspace-trust-buttons .monaco-button-dropdown .monaco-dropdown-button {
+	padding: 5px;
+}
+
+.workspace-trust-limitations {
+	width: 50%;
+	max-width: 350px;
+	min-width: 250px;
+	flex: 1;
+}
+
 /** Settings */
-.workspace-trust-editor.settings-editor > .settings-body > .settings-tree-container .shadow.top {
+.workspace-trust-editor .workspace-trust-settings .workspace-trust-section-title {
+	padding: 14px;
+}
+
+.workspace-trust-editor .settings-editor .settings-body {
+	margin-top: 0;
+}
+
+.workspace-trust-editor .settings-editor .settings-body .settings-tree-container .shadow.top {
 	left: initial;
 	margin-left: initial;
 	max-width: initial;
 }
 
-.workspace-trust-editor.settings-editor > .settings-body .settings-tree-container .monaco-list-row .monaco-tl-contents {
+.workspace-trust-editor .settings-editor .settings-body .settings-tree-container .monaco-list-rows {
+	background: unset;
+}
+
+.workspace-trust-editor .settings-editor .settings-body .settings-tree-container .monaco-list-row .monaco-tl-contents {
 	padding-left: 0;
 	padding-right: 0;
 }
 
-.workspace-trust-editor.settings-editor > .settings-body .settings-tree-container .monaco-list-row .monaco-tl-contents .setting-list-edit-row > .setting-list-valueInput {
+.workspace-trust-editor .settings-editor .settings-body .settings-tree-container .monaco-list-row .monaco-tl-contents .setting-list-edit-row > .setting-list-valueInput {
 	width: 100%;
 	max-width: 100%;
+}
+
+.workspace-trust-editor .settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-object-widget .setting-list-object-key,
+.workspace-trust-editor .settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-list .setting-list-object-widget .setting-list-object-input-key {
+	margin-left: 4px;
+	min-width: 20%;
+}
+
+.workspace-trust-intro-dialog {
+	min-width: min(50vw, 500px);
+	padding-right: 24px;
+}
+
+.workspace-trust-intro-dialog .workspace-trust-dialog-image-row p {
+	display: flex;
+	align-items: center;
+}
+
+.workspace-trust-intro-dialog .workspace-trust-dialog-image-row.badge-row img {
+	max-height: 40px;
+	padding-right: 10px;
+}
+
+.workspace-trust-intro-dialog .workspace-trust-dialog-image-row.status-bar img {
+	max-height: 32px;
+	padding-right: 10px;
 }

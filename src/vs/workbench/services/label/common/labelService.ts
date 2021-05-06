@@ -99,7 +99,7 @@ export class LabelService extends Disposable implements ILabelService {
 
 	private formatters: ResourceLabelFormatter[] = [];
 
-	private readonly _onDidChangeFormatters = this._register(new Emitter<IFormatterChangeEvent>());
+	private readonly _onDidChangeFormatters = this._register(new Emitter<IFormatterChangeEvent>({ leakWarningThreshold: 400 }));
 	readonly onDidChangeFormatters = this._onDidChangeFormatters.event;
 
 	constructor(

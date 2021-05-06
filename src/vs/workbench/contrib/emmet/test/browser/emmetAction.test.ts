@@ -8,24 +8,6 @@ import { withTestCodeEditor } from 'vs/editor/test/browser/testCodeEditor';
 import * as assert from 'assert';
 import { LanguageId, LanguageIdentifier } from 'vs/editor/common/modes';
 
-//
-// To run the emmet tests only change .vscode/launch.json
-// {
-// 	"name": "Stacks Tests",
-// 	"type": "node",
-// 	"request": "launch",
-// 	"program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
-// 	"stopOnEntry": false,
-// 	"args": [
-// 		"--timeout",
-// 		"999999",
-// 		"--colors",
-// 		"-g",
-// 		"Stacks"   <<<--- Emmet
-// 	],
-// Select the 'Stacks Tests' launch config and F5
-//
-
 class MockGrammarContributions implements IGrammarContributions {
 	private scopeName: string;
 
@@ -44,10 +26,11 @@ suite('Emmet', () => {
 		withTestCodeEditor([], {}, (editor) => {
 
 			function testIsEnabled(mode: string, scopeName: string, expectedLanguage?: string, expectedParentLanguage?: string) {
-				const languageIdentifier = new LanguageIdentifier(mode, 73);
+				const customLanguageId: LanguageId = 73;
+				const languageIdentifier = new LanguageIdentifier(mode, customLanguageId);
 				const languageIdentifierResolver: ILanguageIdentifierResolver = {
 					getLanguageIdentifier: (languageId: LanguageId) => {
-						if (languageId === 73) {
+						if (languageId === customLanguageId) {
 							return languageIdentifier;
 						}
 						throw new Error('Unexpected');
@@ -64,8 +47,8 @@ suite('Emmet', () => {
 					assert.fail('langOutput not found');
 				}
 
-				assert.equal(langOutput.language, expectedLanguage);
-				assert.equal(langOutput.parentMode, expectedParentLanguage);
+				assert.strictEqual(langOutput.language, expectedLanguage);
+				assert.strictEqual(langOutput.parentMode, expectedParentLanguage);
 			}
 
 			// syntaxes mapped using the scope name of the grammar

@@ -33,4 +33,5 @@ jobs:
         with:
           languages: typescript
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+          typescriptVersion: 0.6.0-next.8
         continue-on-error: true

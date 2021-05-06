@@ -110,7 +110,7 @@ export class RPCProtocol extends Disposable implements IRPCProtocol {
 		this._protocol.onMessage((msg) => this._receiveOneMessage(msg));
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		this._isDisposed = true;
 
 		// Release all outstanding promises with a canceled error

@@ -207,7 +207,7 @@ export class CodeActionModel extends Disposable {
 		this._update();
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		if (this.#isDisposed) {
 			return;
 		}
@@ -247,7 +247,7 @@ export class CodeActionModel extends Disposable {
 				}
 
 				const actions = createCancelablePromise(token => getCodeActions(model, trigger.selection, trigger.trigger, Progress.None, token));
-				if (trigger.trigger.type === CodeActionTriggerType.Manual) {
+				if (trigger.trigger.type === CodeActionTriggerType.Invoke) {
 					this._progressService?.showWhile(actions, 250);
 				}
 

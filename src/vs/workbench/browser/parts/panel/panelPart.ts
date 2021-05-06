@@ -37,6 +37,7 @@ import { ViewContainer, IViewDescriptorService, IViewContainerModel, ViewContain
 import { IPaneComposite } from 'vs/workbench/common/panecomposite';
 import { Before2D, CompositeDragAndDropObserver, ICompositeDragAndDrop, toggleDropEffect } from 'vs/workbench/browser/dnd';
 import { IActivity } from 'vs/workbench/common/activity';
+import { HoverPosition } from 'vs/base/browser/ui/hover/hoverWidget';
 
 interface ICachedPanel {
 	id: string;
@@ -148,6 +149,10 @@ export class PanelPart extends CompositePart<Panel> implements IPanelService {
 		this.compositeBar = this._register(this.instantiationService.createInstance(CompositeBar, this.getCachedPanels(), {
 			icon: false,
 			orientation: ActionsOrientation.HORIZONTAL,
+			activityHoverOptions: {
+				position: () => this.layoutService.getPanelPosition() === Position.BOTTOM && !this.layoutService.isPanelMaximized() ? HoverPosition.ABOVE : HoverPosition.BELOW,
+				delay: () => 0
+			},
 			openComposite: compositeId => this.openPanel(compositeId, true).then(panel => panel || null),
 			getActivityAction: compositeId => this.getCompositeActions(compositeId).activityAction,
 			getCompositePinnedAction: compositeId => this.getCompositeActions(compositeId).pinnedAction,
@@ -415,7 +420,7 @@ export class PanelPart extends CompositePart<Panel> implements IPanelService {
 		this.layoutEmptyMessage();
 	}
 
-	create(parent: HTMLElement): void {
+	override create(parent: HTMLElement): void {
 		this.element = parent;
 
 		super.create(parent);
@@ -468,7 +473,7 @@ export class PanelPart extends CompositePart<Panel> implements IPanelService {
 		}));
 	}
 
-	updateStyles(): void {
+	override updateStyles(): void {
 		super.updateStyles();
 
 		const container = assertIsDefined(this.getContainer());
@@ -562,7 +567,7 @@ export class PanelPart extends CompositePart<Panel> implements IPanelService {
 		this.hideActiveComposite();
 	}
 
-	protected createTitleLabel(parent: HTMLElement): ICompositeTitleLabel {
+	protected override createTitleLabel(parent: HTMLElement): ICompositeTitleLabel {
 		const titleArea = this.compositeBar.create(parent);
 		titleArea.classList.add('panel-switcher-container');
 
@@ -579,7 +584,7 @@ export class PanelPart extends CompositePart<Panel> implements IPanelService {
 		};
 	}
 
-	layout(width: number, height: number): void {
+	override layout(width: number, height: number): void {
 		if (!this.layoutService.isVisible(Parts.PANEL_PART)) {
 			return;
 		}
@@ -646,7 +651,7 @@ export class PanelPart extends CompositePart<Panel> implements IPanelService {
 		return compositeActions;
 	}
 
-	protected removeComposite(compositeId: string): boolean {
+	protected override removeComposite(compositeId: string): boolean {
 		if (super.removeComposite(compositeId)) {
 			this.compositeBar.removeComposite(compositeId);
 			const compositeActions = this.compositeActions.get(compositeId);
@@ -857,16 +862,15 @@ registerThemingParticipant((theme, collector) => {
 	if (outline) {
 		collector.addRule(`
 			.monaco-workbench .part.panel > .title > .panel-switcher-container > .monaco-action-bar .action-item.checked .action-label,
-			.monaco-workbench .part.panel > .title > .panel-switcher-container > .monaco-action-bar .action-item .action-label:hover {
+			.monaco-workbench .part.panel > .title > .panel-switcher-container > .monaco-action-bar .action-item:hover .action-label {
 				outline-color: ${outline};
 				outline-width: 1px;
 				outline-style: solid;
 				border-bottom: none;
-				padding-bottom: 0;
-				outline-offset: 1px;
+				outline-offset: -2px;
 			}
 
-			.monaco-workbench .part.panel > .title > .panel-switcher-container > .monaco-action-bar .action-item:not(.checked) .action-label:hover {
+			.monaco-workbench .part.panel > .title > .panel-switcher-container > .monaco-action-bar .action-item:not(.checked):hover .action-label {
 				outline-style: dashed;
 			}
 		`);

@@ -89,7 +89,7 @@ export class UrlFinder extends Disposable {
 		}
 	}
 
-	dispose() {
+	override dispose() {
 		super.dispose();
 		const listeners = this.listeners.values();
 		for (const listener of listeners) {

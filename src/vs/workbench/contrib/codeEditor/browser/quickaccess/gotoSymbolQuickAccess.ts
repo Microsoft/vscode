@@ -67,7 +67,7 @@ export class GotoSymbolQuickAccessProvider extends AbstractGotoSymbolQuickAccess
 		return this.editorService.activeTextEditorControl;
 	}
 
-	protected gotoLocation(context: IQuickAccessTextEditorContext, options: { range: IRange, keyMods: IKeyMods, forceSideBySide?: boolean, preserveFocus?: boolean }): void {
+	protected override gotoLocation(context: IQuickAccessTextEditorContext, options: { range: IRange, keyMods: IKeyMods, forceSideBySide?: boolean, preserveFocus?: boolean }): void {
 
 		// Check for sideBySide use
 		if ((options.keyMods.alt || (this.configuration.openEditorPinned && options.keyMods.ctrlCmd) || options.forceSideBySide) && this.editorService.activeEditor) {
@@ -110,17 +110,17 @@ export class GotoSymbolQuickAccessProvider extends AbstractGotoSymbolQuickAccess
 		return this.doGetSymbolPicks(this.getDocumentSymbols(model, token), prepareQuery(filter), options, token);
 	}
 
-	addDecorations(editor: IEditor, range: IRange): void {
+	override addDecorations(editor: IEditor, range: IRange): void {
 		super.addDecorations(editor, range);
 	}
 
-	clearDecorations(editor: IEditor): void {
+	override clearDecorations(editor: IEditor): void {
 		super.clearDecorations(editor);
 	}
 
 	//#endregion
 
-	protected provideWithoutTextEditor(picker: IQuickPick<IGotoSymbolQuickPickItem>): IDisposable {
+	protected override provideWithoutTextEditor(picker: IQuickPick<IGotoSymbolQuickPickItem>): IDisposable {
 		if (this.canPickWithOutlineService()) {
 			return this.doGetOutlinePicks(picker);
 		}

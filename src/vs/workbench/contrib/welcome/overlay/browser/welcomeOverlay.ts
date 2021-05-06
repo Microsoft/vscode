@@ -122,7 +122,7 @@ export class WelcomeOverlayAction extends Action {
 		super(id, label);
 	}
 
-	public run(): Promise<void> {
+	public override run(): Promise<void> {
 		if (!welcomeOverlay) {
 			welcomeOverlay = this.instantiationService.createInstance(WelcomeOverlay);
 		}
@@ -143,7 +143,7 @@ export class HideWelcomeOverlayAction extends Action {
 		super(id, label);
 	}
 
-	public run(): Promise<void> {
+	public override run(): Promise<void> {
 		if (welcomeOverlay) {
 			welcomeOverlay.hide();
 		}

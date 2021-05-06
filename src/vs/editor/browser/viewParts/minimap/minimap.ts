@@ -759,7 +759,7 @@ export class Minimap extends ViewPart implements IMinimapModel {
 		this._actual = new InnerMinimap(context.theme, this);
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		this._actual.dispose();
 		super.dispose();
 	}
@@ -781,27 +781,27 @@ export class Minimap extends ViewPart implements IMinimapModel {
 
 	// ---- begin view event handlers
 
-	public onConfigurationChanged(e: viewEvents.ViewConfigurationChangedEvent): boolean {
+	public override onConfigurationChanged(e: viewEvents.ViewConfigurationChangedEvent): boolean {
 		return this._onOptionsMaybeChanged();
 	}
-	public onCursorStateChanged(e: viewEvents.ViewCursorStateChangedEvent): boolean {
+	public override onCursorStateChanged(e: viewEvents.ViewCursorStateChangedEvent): boolean {
 		this._selections = e.selections;
 		this._minimapSelections = null;
 		return this._actual.onSelectionChanged();
 	}
-	public onDecorationsChanged(e: viewEvents.ViewDecorationsChangedEvent): boolean {
+	public override onDecorationsChanged(e: viewEvents.ViewDecorationsChangedEvent): boolean {
 		if (e.affectsMinimap) {
 			return this._actual.onDecorationsChanged();
 		}
 		return false;
 	}
-	public onFlushed(e: viewEvents.ViewFlushedEvent): boolean {
+	public override onFlushed(e: viewEvents.ViewFlushedEvent): boolean {
 		if (this._samplingState) {
 			this._shouldCheckSampling = true;
 		}
 		return this._actual.onFlushed();
 	}
-	public onLinesChanged(e: viewEvents.ViewLinesChangedEvent): boolean {
+	public override onLinesChanged(e: viewEvents.ViewLinesChangedEvent): boolean {
 		if (this._samplingState) {
 			const minimapLineRange = this._samplingState.modelLineRangeToMinimapLineRange(e.fromLineNumber, e.toLineNumber);
 			if (minimapLineRange) {
@@ -813,7 +813,7 @@ export class Minimap extends ViewPart implements IMinimapModel {
 			return this._actual.onLinesChanged(e.fromLineNumber, e.toLineNumber);
 		}
 	}
-	public onLinesDeleted(e: viewEvents.ViewLinesDeletedEvent): boolean {
+	public override onLinesDeleted(e: viewEvents.ViewLinesDeletedEvent): boolean {
 		if (this._samplingState) {
 			const [changeStartIndex, changeEndIndex] = this._samplingState.onLinesDeleted(e);
 			if (changeStartIndex <= changeEndIndex) {
@@ -825,7 +825,7 @@ export class Minimap extends ViewPart implements IMinimapModel {
 			return this._actual.onLinesDeleted(e.fromLineNumber, e.toLineNumber);
 		}
 	}
-	public onLinesInserted(e: viewEvents.ViewLinesInsertedEvent): boolean {
+	public override onLinesInserted(e: viewEvents.ViewLinesInsertedEvent): boolean {
 		if (this._samplingState) {
 			this._samplingState.onLinesInserted(e);
 			this._shouldCheckSampling = true;
@@ -834,16 +834,16 @@ export class Minimap extends ViewPart implements IMinimapModel {
 			return this._actual.onLinesInserted(e.fromLineNumber, e.toLineNumber);
 		}
 	}
-	public onScrollChanged(e: viewEvents.ViewScrollChangedEvent): boolean {
+	public override onScrollChanged(e: viewEvents.ViewScrollChangedEvent): boolean {
 		return this._actual.onScrollChanged();
 	}
-	public onThemeChanged(e: viewEvents.ViewThemeChangedEvent): boolean {
+	public override onThemeChanged(e: viewEvents.ViewThemeChangedEvent): boolean {
 		this._context.model.invalidateMinimapColorCache();
 		this._actual.onThemeChanged();
 		this._onOptionsMaybeChanged();
 		return true;
 	}
-	public onTokensChanged(e: viewEvents.ViewTokensChangedEvent): boolean {
+	public override onTokensChanged(e: viewEvents.ViewTokensChangedEvent): boolean {
 		if (this._samplingState) {
 			let ranges: { fromLineNumber: number; toLineNumber: number; }[] = [];
 			for (const range of e.ranges) {
@@ -861,11 +861,11 @@ export class Minimap extends ViewPart implements IMinimapModel {
 			return this._actual.onTokensChanged(e.ranges);
 		}
 	}
-	public onTokensColorsChanged(e: viewEvents.ViewTokensColorsChangedEvent): boolean {
+	public override onTokensColorsChanged(e: viewEvents.ViewTokensColorsChangedEvent): boolean {
 		this._onOptionsMaybeChanged();
 		return this._actual.onTokensColorsChanged();
 	}
-	public onZonesChanged(e: viewEvents.ViewZonesChangedEvent): boolean {
+	public override onZonesChanged(e: viewEvents.ViewZonesChangedEvent): boolean {
 		return this._actual.onZonesChanged();
 	}
 
@@ -1211,7 +1211,7 @@ class InnerMinimap extends Disposable {
 		this._model.setScrollTop(scrollTop);
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		this._mouseDownListener.dispose();
 		this._sliderMouseMoveMonitor.dispose();
 		this._sliderMouseDownListener.dispose();

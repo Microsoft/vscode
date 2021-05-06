@@ -20,7 +20,7 @@ export class ResourceNotebookCellEdit extends ResourceEdit {
 		readonly resource: URI,
 		readonly cellEdit: ICellEditOperation,
 		readonly versionId?: number,
-		readonly metadata?: WorkspaceEditMetadata
+		metadata?: WorkspaceEditMetadata
 	) {
 		super(metadata);
 	}

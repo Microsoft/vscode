@@ -17,11 +17,11 @@ suite('Preferences Validation', () => {
 		}
 
 		public accepts(input: string) {
-			assert.equal(this.validator(input), '', `Expected ${JSON.stringify(this.settings)} to accept \`${input}\`. Got ${this.validator(input)}.`);
+			assert.strictEqual(this.validator(input), '', `Expected ${JSON.stringify(this.settings)} to accept \`${input}\`. Got ${this.validator(input)}.`);
 		}
 
 		public rejects(input: string) {
-			assert.notEqual(this.validator(input), '', `Expected ${JSON.stringify(this.settings)} to reject \`${input}\`.`);
+			assert.notStrictEqual(this.validator(input), '', `Expected ${JSON.stringify(this.settings)} to reject \`${input}\`.`);
 			return {
 				withMessage:
 					(message: string) => {
@@ -259,11 +259,11 @@ suite('Preferences Validation', () => {
 		}
 
 		public accepts(input: string[]) {
-			assert.equal(this.validator(input), '', `Expected ${JSON.stringify(this.settings)} to accept \`${JSON.stringify(input)}\`. Got ${this.validator(input)}.`);
+			assert.strictEqual(this.validator(input), '', `Expected ${JSON.stringify(this.settings)} to accept \`${JSON.stringify(input)}\`. Got ${this.validator(input)}.`);
 		}
 
 		public rejects(input: any[]) {
-			assert.notEqual(this.validator(input), '', `Expected ${JSON.stringify(this.settings)} to reject \`${JSON.stringify(input)}\`.`);
+			assert.notStrictEqual(this.validator(input), '', `Expected ${JSON.stringify(this.settings)} to reject \`${JSON.stringify(input)}\`.`);
 			return {
 				withMessage:
 					(message: string) => {

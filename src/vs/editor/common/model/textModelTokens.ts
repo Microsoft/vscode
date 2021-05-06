@@ -246,7 +246,7 @@ export class TextModelTokenization extends Disposable {
 		this._resetTokenizationState();
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		this._isDisposed = true;
 		super.dispose();
 	}

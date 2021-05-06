@@ -5,14 +5,7 @@
 
 const vscode = acquireVsCodeApi();
 
-vscode.postMessage({
-	type: 'custom_renderer_initialize',
-	payload: {
-		firstMessage: true
-	}
-});
-
-const notebook = acquireNotebookRendererApi('notebookCoreTestRenderer');
+const notebook = acquireNotebookRendererApi();
 
 notebook.onDidCreateOutput(({ element, mimeType }) => {
 	const div = document.createElement('div');

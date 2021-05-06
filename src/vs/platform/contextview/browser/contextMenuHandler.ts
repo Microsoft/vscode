@@ -18,6 +18,7 @@ import { EventType, $, isHTMLElement } from 'vs/base/browser/dom';
 import { attachMenuStyler } from 'vs/platform/theme/common/styler';
 import { domEvent } from 'vs/base/browser/event';
 import { StandardMouseEvent } from 'vs/base/browser/mouseEvent';
+import { isPromiseCanceledError } from 'vs/base/common/errors';
 
 export interface IContextMenuHandlerOptions {
 	blockMouse: boolean;
@@ -145,9 +146,7 @@ export class ContextMenuHandler {
 	}
 
 	private onActionRun(e: IRunEvent): void {
-		if (this.telemetryService) {
-			this.telemetryService.publicLog2<WorkbenchActionExecutedEvent, WorkbenchActionExecutedClassification>('workbenchActionExecuted', { id: e.action.id, from: 'contextMenu' });
-		}
+		this.telemetryService.publicLog2<WorkbenchActionExecutedEvent, WorkbenchActionExecutedClassification>('workbenchActionExecuted', { id: e.action.id, from: 'contextMenu' });
 
 		this.contextViewService.hideContextView(false);
 
@@ -158,7 +157,7 @@ export class ContextMenuHandler {
 	}
 
 	private onDidActionRun(e: IRunEvent): void {
-		if (e.error) {
+		if (e.error && !isPromiseCanceledError(e.error)) {
 			this.notificationService.error(e.error);
 		}
 	}

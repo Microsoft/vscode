@@ -727,7 +727,7 @@ class ManualSyncTask extends Disposable implements IManualSyncTask {
 		this.synchronizingResources = [];
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this.reset();
 		this.isDisposed = true;
 	}

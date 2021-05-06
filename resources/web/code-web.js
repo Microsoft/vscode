@@ -226,12 +226,14 @@ const requestHandler = (req, res) => {
 	const parsedUrl = url.parse(req.url, true);
 	const pathname = parsedUrl.pathname;
 
+	res.setHeader('Access-Control-Allow-Origin', '*');
+
 	try {
-		if (pathname === '/favicon.ico') {
+		if (/(\/static)?\/favicon\.ico/.test(pathname)) {
 			// favicon
 			return serveFile(req, res, path.join(APP_ROOT, 'resources', 'win32', 'code.ico'));
 		}
-		if (pathname === '/manifest.json') {
+		if (/(\/static)?\/manifest\.json/.test(pathname)) {
 			// manifest
 			res.writeHead(200, { 'Content-Type': 'application/json' });
 			return res.end(JSON.stringify({
@@ -259,6 +261,9 @@ const requestHandler = (req, res) => {
 		} else if (pathname === '/fetch-callback') {
 			// callback fetch support
 			return handleFetchCallback(req, res, parsedUrl);
+		} else if (pathname === '/builtin') {
+			// builtin extnesions JSON
+			return handleBuiltInExtensions(req, res, parsedUrl);
 		}
 
 		return serveError(req, res, 404, 'Not found.');
@@ -299,6 +304,17 @@ function addCORSReplyHeader(req) {
 		return false;
 	}
 	return (ALLOWED_CORS_ORIGINS.indexOf(req.headers['origin']) >= 0);
+}
+
+/**
+ * @param {import('http').IncomingMessage} req
+ * @param {import('http').ServerResponse} res
+ * @param {import('url').UrlWithParsedQuery} parsedUrl
+ */
+async function handleBuiltInExtensions(req, res, parsedUrl) {
+	const { extensions } = await builtInExtensionsPromise;
+	res.writeHead(200, { 'Content-Type': 'application/json' });
+	return res.end(JSON.stringify(extensions));
 }
 
 /**

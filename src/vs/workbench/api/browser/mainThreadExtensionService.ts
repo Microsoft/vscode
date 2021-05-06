@@ -7,7 +7,7 @@ import { SerializedError } from 'vs/base/common/errors';
 import Severity from 'vs/base/common/severity';
 import { extHostNamedCustomer } from 'vs/workbench/api/common/extHostCustomers';
 import { IExtHostContext, MainContext, MainThreadExtensionServiceShape } from 'vs/workbench/api/common/extHost.protocol';
-import { IExtensionService, ExtensionActivationError, ExtensionHostKind } from 'vs/workbench/services/extensions/common/extensions';
+import { IExtensionService, ExtensionHostKind, MissingExtensionDependency } from 'vs/workbench/services/extensions/common/extensions';
 import { ExtensionIdentifier, IExtensionDescription } from 'vs/platform/extensions/common/extensions';
 import { INotificationService } from 'vs/platform/notification/common/notification';
 import { localize } from 'vs/nls';
@@ -15,11 +15,12 @@ import { Action } from 'vs/base/common/actions';
 import { IWorkbenchExtensionEnablementService, EnablementState } from 'vs/workbench/services/extensionManagement/common/extensionManagement';
 import { areSameExtensions } from 'vs/platform/extensionManagement/common/extensionManagementUtil';
 import { IHostService } from 'vs/workbench/services/host/browser/host';
-import { IExtensionsWorkbenchService } from 'vs/workbench/contrib/extensions/common/extensions';
+import { IExtension, IExtensionsWorkbenchService } from 'vs/workbench/contrib/extensions/common/extensions';
 import { CancellationToken } from 'vs/base/common/cancellation';
 import { ILocalExtension } from 'vs/platform/extensionManagement/common/extensionManagement';
 import { ExtensionActivationReason } from 'vs/workbench/api/common/extHostExtensionActivator';
 import { ITimerService } from 'vs/workbench/services/timer/browser/timerService';
+import { IWorkbenchEnvironmentService } from 'vs/workbench/services/environment/common/environmentService';
 
 @extHostNamedCustomer(MainContext.MainThreadExtensionService)
 export class MainThreadExtensionService implements MainThreadExtensionServiceShape {
@@ -34,6 +35,7 @@ export class MainThreadExtensionService implements MainThreadExtensionServiceSha
 		@IHostService private readonly _hostService: IHostService,
 		@IWorkbenchExtensionEnablementService private readonly _extensionEnablementService: IWorkbenchExtensionEnablementService,
 		@ITimerService private readonly _timerService: ITimerService,
+		@IWorkbenchEnvironmentService protected readonly _environmentService: IWorkbenchEnvironmentService,
 	) {
 		this._extensionHostKind = extHostContext.extensionHostKind;
 	}
@@ -59,25 +61,36 @@ export class MainThreadExtensionService implements MainThreadExtensionServiceSha
 		console.error(`[${extensionId}]${error.message}`);
 		console.error(error.stack);
 	}
-	async $onExtensionActivationError(extensionId: ExtensionIdentifier, activationError: ExtensionActivationError): Promise<void> {
-		if (typeof activationError === 'string') {
-			this._extensionService._logOrShowMessage(Severity.Error, activationError);
-		} else {
-			this._handleMissingDependency(extensionId, activationError.dependency);
-		}
-	}
+	async $onExtensionActivationError(extensionId: ExtensionIdentifier, data: SerializedError, missingExtensionDependency: MissingExtensionDependency | null): Promise<void> {
+		const error = new Error();
+		error.name = data.name;
+		error.message = data.message;
+		error.stack = data.stack;
 
-	private async _handleMissingDependency(extensionId: ExtensionIdentifier, missingDependency: string): Promise<void> {
-		const extension = await this._extensionService.getExtension(extensionId.value);
-		if (extension) {
-			const local = await this._extensionsWorkbenchService.queryLocal();
-			const installedDependency = local.filter(i => areSameExtensions(i.identifier, { id: missingDependency }))[0];
-			if (installedDependency) {
-				await this._handleMissingInstalledDependency(extension, installedDependency.local!);
-			} else {
-				await this._handleMissingNotInstalledDependency(extension, missingDependency);
+		this._extensionService._onDidActivateExtensionError(extensionId, error);
+
+		if (missingExtensionDependency) {
+			const extension = await this._extensionService.getExtension(extensionId.value);
+			if (extension) {
+				const local = await this._extensionsWorkbenchService.queryLocal();
+				const installedDependency = local.filter(i => areSameExtensions(i.identifier, { id: missingExtensionDependency.dependency }))[0];
+				if (installedDependency) {
+					await this._handleMissingInstalledDependency(extension, installedDependency.local!);
+					return;
+				} else {
+					await this._handleMissingNotInstalledDependency(extension, missingExtensionDependency.dependency);
+					return;
+				}
 			}
 		}
+
+		const isDev = !this._environmentService.isBuilt || this._environmentService.isExtensionDevelopment;
+		if (isDev) {
+			this._notificationService.error(error);
+			return;
+		}
+
+		console.error(error.message);
 	}
 
 	private async _handleMissingInstalledDependency(extension: IExtensionDescription, missingInstalledDependency: ILocalExtension): Promise<void> {
@@ -106,24 +119,24 @@ export class MainThreadExtensionService implements MainThreadExtensionServiceSha
 
 	private async _handleMissingNotInstalledDependency(extension: IExtensionDescription, missingDependency: string): Promise<void> {
 		const extName = extension.displayName || extension.name;
-		const dependencyExtension = (await this._extensionsWorkbenchService.queryGallery({ names: [missingDependency] }, CancellationToken.None)).firstPage[0];
+		let dependencyExtension: IExtension | null = null;
+		try {
+			dependencyExtension = (await this._extensionsWorkbenchService.queryGallery({ names: [missingDependency] }, CancellationToken.None)).firstPage[0];
+		} catch (err) {
+		}
 		if (dependencyExtension) {
 			this._notificationService.notify({
 				severity: Severity.Error,
 				message: localize('uninstalledDep', "Cannot activate the '{0}' extension because it depends on the '{1}' extension, which is not installed. Would you like to install the extension and reload the window?", extName, dependencyExtension.displayName),
 				actions: {
 					primary: [new Action('install', localize('install missing dep', "Install and Reload"), '', true,
-						() => this._extensionsWorkbenchService.install(dependencyExtension)
+						() => this._extensionsWorkbenchService.install(dependencyExtension!)
 							.then(() => this._hostService.reload(), e => this._notificationService.error(e)))]
 				}
 			});
 		} else {
-			this._notificationService.error(localize('unknownDep', "Cannot activate the '{0}' extension because it depends on an unknown '{1}' extension .", extName, missingDependency));
+			this._notificationService.error(localize('unknownDep', "Cannot activate the '{0}' extension because it depends on an unknown '{1}' extension.", extName, missingDependency));
 		}
-	}
-
-	async $onExtensionHostExit(code: number): Promise<void> {
-		this._extensionService._onExtensionHostExit(code);
 	}
 
 	async $setPerformanceMarks(marks: PerformanceMark[]): Promise<void> {

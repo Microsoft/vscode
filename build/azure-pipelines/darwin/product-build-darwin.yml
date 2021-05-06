@@ -1,7 +1,7 @@
 steps:
   - task: NodeTool@0
     inputs:
-      versionSpec: "12.18.3"
+      versionSpec: "14.x"
 
   - task: AzureKeyVault@1
     displayName: "Azure Key Vault: Get Secrets"
@@ -22,6 +22,8 @@ steps:
     displayName: Extract compilation output
     condition: and(succeeded(), ne(variables['VSCODE_ARCH'], 'universal'))
 
+  # Set up the credentials to retrieve distro repo and setup git persona
+  # to create a merge commit for when we merge distro into oss
   - script: |
       set -e
       cat << EOF > ~/.netrc
@@ -81,6 +83,7 @@ steps:
       set -e
       export npm_config_arch=$(VSCODE_ARCH)
       export npm_config_node_gyp=$(which node-gyp)
+      export npm_config_build_from_source=true
       export SDKROOT=/Applications/Xcode_12.2.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.0.sdk
 
       for i in {1..3}; do # try 3 times, for Terrapin
@@ -105,30 +108,7 @@ steps:
     condition: and(succeeded(), ne(variables.NODE_MODULES_RESTORED, 'true'))
     displayName: Create node_modules archive
 
-  - script: |
-      set -e
-      export npm_config_arch=$(VSCODE_ARCH)
-      export npm_config_node_gyp=$(which node-gyp)
-      export npm_config_build_from_source=true
-      export SDKROOT=/Applications/Xcode_12.2.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.0.sdk
-      ls /Applications/Xcode_12.2.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/
-      yarn electron-rebuild
-      # remove once https://github.com/prebuild/prebuild-install/pull/140 is merged and found in keytar
-      cd ./node_modules/keytar
-      node-gyp rebuild
-    displayName: Rebuild native modules for ARM64
-    condition: and(succeeded(), eq(variables['VSCODE_ARCH'], 'arm64'))
-
-  - download: current
-    artifact: vscode-darwin-x64
-    displayName: Download x64 artifact
-    condition: and(succeeded(), eq(variables['VSCODE_ARCH'], 'universal'))
-
-  - download: current
-    artifact: vscode-darwin-arm64
-    displayName: Download arm64 artifact
-    condition: and(succeeded(), eq(variables['VSCODE_ARCH'], 'universal'))
-
+  # This script brings in the right resources (images, icons, etc) based on the quality (insiders, stable, exploration)
   - script: |
       set -e
       node build/azure-pipelines/mixin
@@ -138,7 +118,7 @@ steps:
       set -e
       VSCODE_MIXIN_PASSWORD="$(github-distro-mixin-password)" \
         yarn gulp vscode-darwin-$(VSCODE_ARCH)-min-ci
-    displayName: Build
+    displayName: Build client
     condition: and(succeeded(), ne(variables['VSCODE_ARCH'], 'universal'))
 
   - script: |
@@ -152,19 +132,34 @@ steps:
 
   - script: |
       set -e
-      unzip $(Pipeline.Workspace)/vscode-darwin-x64/VSCode-darwin-x64.zip -d $(agent.builddirectory)/vscode-x64
-      unzip $(Pipeline.Workspace)/vscode-darwin-arm64/VSCode-darwin-arm64.zip -d $(agent.builddirectory)/vscode-arm64
-      DEBUG=* node build/darwin/create-universal-app.js
-    displayName: Create Universal App
-    condition: and(succeeded(), eq(variables['VSCODE_ARCH'], 'universal'))
-
-  - script: |
-      set -e
       VSCODE_MIXIN_PASSWORD="$(github-distro-mixin-password)" \
         yarn npm-run-all -lp "electron $(VSCODE_ARCH)" "playwright-install"
     displayName: Download Electron and Playwright
     condition: and(succeeded(), ne(variables['VSCODE_ARCH'], 'universal'), eq(variables['VSCODE_STEP_ON_IT'], 'false'))
 
+  - download: current
+    artifact: unsigned_vscode_client_darwin_x64_archive
+    displayName: Download x64 artifact
+    condition: and(succeeded(), eq(variables['VSCODE_ARCH'], 'universal'))
+
+  - download: current
+    artifact: unsigned_vscode_client_darwin_arm64_archive
+    displayName: Download arm64 artifact
+    condition: and(succeeded(), eq(variables['VSCODE_ARCH'], 'universal'))
+
+  - script: |
+      set -e
+      cp $(Pipeline.Workspace)/unsigned_vscode_client_darwin_x64_archive/VSCode-darwin-x64.zip $(agent.builddirectory)/VSCode-darwin-x64.zip
+      cp $(Pipeline.Workspace)/unsigned_vscode_client_darwin_arm64_archive/VSCode-darwin-arm64.zip $(agent.builddirectory)/VSCode-darwin-arm64.zip
+      unzip $(agent.builddirectory)/VSCode-darwin-x64.zip -d $(agent.builddirectory)/VSCode-darwin-x64
+      unzip $(agent.builddirectory)/VSCode-darwin-arm64.zip -d $(agent.builddirectory)/VSCode-darwin-arm64
+      DEBUG=* node build/darwin/create-universal-app.js
+    displayName: Create Universal App
+    condition: and(succeeded(), eq(variables['VSCODE_ARCH'], 'universal'))
+
+  # Setting hardened entitlements is a requirement for:
+  # * Apple notarization
+  # * Running tests on Big Sur (because Big Sur has additional security precautions)
   - script: |
       set -e
       security create-keychain -p pwd $(agent.tempdirectory)/buildagent.keychain
@@ -173,9 +168,8 @@ steps:
       echo "$(macos-developer-certificate)" | base64 -D > $(agent.tempdirectory)/cert.p12
       security import $(agent.tempdirectory)/cert.p12 -k $(agent.tempdirectory)/buildagent.keychain -P "$(macos-developer-certificate-key)" -T /usr/bin/codesign
       security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k pwd $(agent.tempdirectory)/buildagent.keychain
-      VSCODE_ARCH="$(VSCODE_ARCH)" DEBUG=electron-osx-sign* node build/darwin/sign.js
+      VSCODE_ARCH=$(VSCODE_ARCH) DEBUG=electron-osx-sign* node build/darwin/sign.js
     displayName: Set Hardened Entitlements
-    condition: and(succeeded(), ne(variables['VSCODE_PUBLISH'], 'false'))
 
   - script: |
       set -e
@@ -216,7 +210,7 @@ steps:
       VSCODE_REMOTE_SERVER_PATH="$(agent.builddirectory)/vscode-reh-web-darwin" \
       ./resources/server/test/test-web-integration.sh --browser webkit
     displayName: Run integration tests (Browser)
-    timeoutInMinutes: 7
+    timeoutInMinutes: 10
     condition: and(succeeded(), eq(variables['VSCODE_ARCH'], 'x64'), eq(variables['VSCODE_STEP_ON_IT'], 'false'))
 
   - script: |
@@ -284,100 +278,29 @@ steps:
     displayName: Archive build
     condition: and(succeeded(), ne(variables['VSCODE_PUBLISH'], 'false'))
 
-  - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@1
-    inputs:
-      ConnectedServiceName: "ESRP CodeSign"
-      FolderPath: "$(agent.builddirectory)"
-      Pattern: "VSCode-darwin-$(VSCODE_ARCH).zip"
-      signConfigType: inlineSignParams
-      inlineOperation: |
-        [
-          {
-            "keyCode": "CP-401337-Apple",
-            "operationSetCode": "MacAppDeveloperSign",
-            "parameters": [
-              {
-                "parameterName": "Hardening",
-                "parameterValue": "--options=runtime"
-              }
-            ],
-            "toolName": "sign",
-            "toolVersion": "1.0"
-          }
-        ]
-      SessionTimeout: 60
-    displayName: Codesign
-    condition: and(succeeded(), ne(variables['VSCODE_PUBLISH'], 'false'))
-
-  - script: |
-      zip -d $(agent.builddirectory)/VSCode-darwin-$(VSCODE_ARCH).zip "*.pkg"
-    displayName: Clean
-    condition: and(succeeded(), ne(variables['VSCODE_PUBLISH'], 'false'))
-
-  - script: |
-      APP_ROOT=$(agent.builddirectory)/VSCode-darwin-$(VSCODE_ARCH)
-      APP_NAME="`ls $APP_ROOT | head -n 1`"
-      BUNDLE_IDENTIFIER=$(node -p "require(\"$APP_ROOT/$APP_NAME/Contents/Resources/app/product.json\").darwinBundleIdentifier")
-      echo "##vso[task.setvariable variable=BundleIdentifier]$BUNDLE_IDENTIFIER"
-    displayName: Export bundle identifier
-    condition: and(succeeded(), ne(variables['VSCODE_PUBLISH'], 'false'))
-
-  - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@1
-    inputs:
-      ConnectedServiceName: "ESRP CodeSign"
-      FolderPath: "$(agent.builddirectory)"
-      Pattern: "VSCode-darwin-$(VSCODE_ARCH).zip"
-      signConfigType: inlineSignParams
-      inlineOperation: |
-        [
-          {
-            "keyCode": "CP-401337-Apple",
-            "operationSetCode": "MacAppNotarize",
-            "parameters": [
-              {
-                "parameterName": "BundleId",
-                "parameterValue": "$(BundleIdentifier)"
-              }
-            ],
-            "toolName": "sign",
-            "toolVersion": "1.0"
-          }
-        ]
-      SessionTimeout: 60
-    displayName: Notarization
-    condition: and(succeeded(), ne(variables['VSCODE_PUBLISH'], 'false'))
-
   - script: |
       set -e
-      APP_ROOT=$(agent.builddirectory)/VSCode-darwin-$(VSCODE_ARCH)
-      APP_NAME="`ls $APP_ROOT | head -n 1`"
-      "$APP_ROOT/$APP_NAME/Contents/Resources/app/bin/code" --export-default-configuration=.build
-    displayName: Verify start after signing (export configuration)
-    condition: and(succeeded(), ne(variables['VSCODE_ARCH'], 'arm64'), ne(variables['VSCODE_PUBLISH'], 'false'))
 
-  - script: |
-      set -e
-      VSCODE_MIXIN_PASSWORD="$(github-distro-mixin-password)" \
-      AZURE_DOCUMENTDB_MASTERKEY="$(builds-docdb-key-readwrite)" \
-      AZURE_STORAGE_ACCESS_KEY="$(ticino-storage-key)" \
-      AZURE_STORAGE_ACCESS_KEY_2="$(vscode-storage-key)" \
-      VSCODE_ARCH="$(VSCODE_ARCH)" \
-      ./build/azure-pipelines/darwin/publish.sh
-    displayName: Publish
-    condition: and(succeeded(), ne(variables['VSCODE_PUBLISH'], 'false'))
+      # package Remote Extension Host
+      pushd .. && mv vscode-reh-darwin vscode-server-darwin && zip -Xry vscode-server-darwin.zip vscode-server-darwin && popd
+
+      # package Remote Extension Host (Web)
+      pushd .. && mv vscode-reh-web-darwin vscode-server-darwin-web && zip -Xry vscode-server-darwin-web.zip vscode-server-darwin-web && popd
+    displayName: Prepare to publish servers
+    condition: and(succeeded(), eq(variables['VSCODE_ARCH'], 'x64'), ne(variables['VSCODE_PUBLISH'], 'false'))
 
   - publish: $(Agent.BuildDirectory)/VSCode-darwin-$(VSCODE_ARCH).zip
-    artifact: vscode-darwin-$(VSCODE_ARCH)
-    displayName: Publish archive
+    artifact: unsigned_vscode_client_darwin_$(VSCODE_ARCH)_archive
+    displayName: Publish client archive
     condition: and(succeeded(), ne(variables['VSCODE_PUBLISH'], 'false'))
 
   - publish: $(Agent.BuildDirectory)/vscode-server-darwin.zip
-    artifact: vscode-server-darwin-$(VSCODE_ARCH)
+    artifact: vscode_server_darwin_$(VSCODE_ARCH)_archive-unsigned
     displayName: Publish server archive
     condition: and(succeeded(), eq(variables['VSCODE_ARCH'], 'x64'), ne(variables['VSCODE_PUBLISH'], 'false'))
 
   - publish: $(Agent.BuildDirectory)/vscode-server-darwin-web.zip
-    artifact: vscode-server-darwin-$(VSCODE_ARCH)-web
+    artifact: vscode_web_darwin_$(VSCODE_ARCH)_archive-unsigned
     displayName: Publish web server archive
     condition: and(succeeded(), eq(variables['VSCODE_ARCH'], 'x64'), ne(variables['VSCODE_PUBLISH'], 'false'))
 

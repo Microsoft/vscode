@@ -146,7 +146,7 @@ export class ReplFilterActionViewItem extends BaseActionViewItem {
 		this._register(toDisposable(() => this.delayedFilterUpdate.cancel()));
 	}
 
-	render(container: HTMLElement): void {
+	override render(container: HTMLElement): void {
 		this.container = container;
 		this.container.classList.add('repl-panel-filter-container');
 
@@ -157,19 +157,19 @@ export class ReplFilterActionViewItem extends BaseActionViewItem {
 		this.updateClass();
 	}
 
-	focus(): void {
+	override focus(): void {
 		if (this.filterInputBox) {
 			this.filterInputBox.focus();
 		}
 	}
 
-	blur(): void {
+	override blur(): void {
 		if (this.filterInputBox) {
 			this.filterInputBox.blur();
 		}
 	}
 
-	setFocusable(): void {
+	override setFocusable(): void {
 		// noop input elements are focusable by default
 	}
 
@@ -177,7 +177,7 @@ export class ReplFilterActionViewItem extends BaseActionViewItem {
 		return this.filterInputBox.getHistory();
 	}
 
-	get trapsArrowNavigation(): boolean {
+	override get trapsArrowNavigation(): boolean {
 		return true;
 	}
 

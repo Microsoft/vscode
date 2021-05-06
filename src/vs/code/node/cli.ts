@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { homedir } from 'os';
-import { constants, existsSync, statSync, unlinkSync, chmodSync, truncateSync, readFileSync } from 'fs';
+import { existsSync, statSync, unlinkSync, chmodSync, truncateSync, readFileSync } from 'fs';
 import { spawn, ChildProcess, SpawnOptions } from 'child_process';
 import { buildHelpMessage, buildVersionMessage, OPTIONS } from 'vs/platform/environment/node/argv';
 import { NativeParsedArgs } from 'vs/platform/environment/common/argv';
@@ -13,8 +13,9 @@ import { createWaitMarkerFile } from 'vs/platform/environment/node/wait';
 import product from 'vs/platform/product/common/product';
 import { isAbsolute, join } from 'vs/base/common/path';
 import { whenDeleted, writeFileSync } from 'vs/base/node/pfs';
-import { findFreePort, randomPort } from 'vs/base/node/ports';
-import { isWindows, isLinux } from 'vs/base/common/platform';
+import { findFreePort } from 'vs/base/node/ports';
+import { randomPort } from 'vs/base/common/ports';
+import { isWindows, IProcessEnvironment } from 'vs/base/common/platform';
 import type { ProfilingSession, Target } from 'v8-inspect-profiler';
 import { isString } from 'vs/base/common/types';
 import { hasStdinWithoutTty, stdinDataListener, getStdinFilePath, readFromStdin } from 'vs/platform/environment/node/stdin';
@@ -23,7 +24,6 @@ function shouldSpawnCliProcess(argv: NativeParsedArgs): boolean {
 	return !!argv['install-source']
 		|| !!argv['list-extensions']
 		|| !!argv['install-extension']
-		|| !!argv['install-builtin-extension']
 		|| !!argv['uninstall-extension']
 		|| !!argv['locate-extension']
 		|| !!argv['telemetry'];
@@ -84,8 +84,8 @@ export async function main(argv: string[]): Promise<any> {
 			let restoreMode = false;
 			if (!!args['file-chmod']) {
 				targetMode = statSync(target).mode;
-				if (!(targetMode & constants.S_IWUSR)) {
-					chmodSync(target, targetMode | constants.S_IWUSR);
+				if (!(targetMode & 0o200 /* File mode indicating writable by owner */)) {
+					chmodSync(target, targetMode | 0o200);
 					restoreMode = true;
 				}
 			}
@@ -117,9 +117,8 @@ export async function main(argv: string[]): Promise<any> {
 
 	// Just Code
 	else {
-		const env: NodeJS.ProcessEnv = {
+		const env: IProcessEnvironment = {
 			...process.env,
-			'VSCODE_CLI': '1', // this will signal Code that it was spawned from this module
 			'ELECTRON_NO_ATTACH_CONSOLE': '1'
 		};
 
@@ -318,10 +317,6 @@ export async function main(argv: string[]): Promise<any> {
 
 		if (!verbose) {
 			options['stdio'] = 'ignore';
-		}
-
-		if (isLinux) {
-			addArg(argv, '--no-sandbox'); // Electron 6 introduces a chrome-sandbox that requires root to run. This can fail. Disable sandbox via --no-sandbox
 		}
 
 		const child = spawn(process.execPath, argv.slice(2), options);

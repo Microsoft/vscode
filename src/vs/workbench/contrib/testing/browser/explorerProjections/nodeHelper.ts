@@ -4,12 +4,11 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { IIdentityProvider } from 'vs/base/browser/ui/list/list';
-import { ICompressedTreeElement } from 'vs/base/browser/ui/tree/compressedObjectTreeModel';
 import { ObjectTree } from 'vs/base/browser/ui/tree/objectTree';
 import { ITreeElement } from 'vs/base/browser/ui/tree/tree';
-import { ITestTreeElement } from 'vs/workbench/contrib/testing/browser/explorerProjections';
+import { IActionableTestTreeElement, TestExplorerTreeElement, TestItemTreeElement, TestTreeWorkspaceFolder } from 'vs/workbench/contrib/testing/browser/explorerProjections/index';
 
-export const testIdentityProvider: IIdentityProvider<ITestTreeElement> = {
+export const testIdentityProvider: IIdentityProvider<TestItemTreeElement> = {
 	getId(element) {
 		return element.treeId;
 	}
@@ -20,9 +19,9 @@ export const testIdentityProvider: IIdentityProvider<ITestTreeElement> = {
  * useful to remove nodes that are queued to be updated or rendered, who will
  * be rendered by a call to setChildren.
  */
-export const pruneNodesWithParentsNotInTree = <T extends ITestTreeElement>(nodes: Set<T | null>, tree: ObjectTree<ITestTreeElement, any>) => {
+export const pruneNodesWithParentsNotInTree = <T extends TestItemTreeElement>(nodes: Set<T | null>, tree: ObjectTree<TestExplorerTreeElement, any>) => {
 	for (const node of nodes) {
-		if (node && node.parentItem && !tree.hasElement(node.parentItem)) {
+		if (node && node.parent && !tree.hasElement(node.parent)) {
 			nodes.delete(node);
 		}
 	}
@@ -35,8 +34,8 @@ export const pruneNodesWithParentsNotInTree = <T extends ITestTreeElement>(nodes
  * This is used for omitting test provider nodes if there's only a single
  * test provider in the workspace (the common case)
  */
-export const peersHaveChildren = (node: ITestTreeElement, roots: () => Iterable<ITestTreeElement>) => {
-	for (const child of node.parentItem ? node.parentItem.children : roots()) {
+export const peersHaveChildren = (node: IActionableTestTreeElement, roots: () => Iterable<IActionableTestTreeElement>) => {
+	for (const child of node.parent ? node.parent.children : roots()) {
 		if (child !== node && child.children.size) {
 			return true;
 		}
@@ -52,10 +51,12 @@ export const enum NodeRenderDirective {
 	Concat
 }
 
-export type NodeRenderFn<T> = (n: T, recurse: (items: Iterable<T>) => Iterable<ITreeElement<ITestTreeElement>>) =>
-	ITreeElement<ITestTreeElement> | NodeRenderDirective;
+export type NodeRenderFn = (
+	n: TestExplorerTreeElement,
+	recurse: (items: Iterable<TestExplorerTreeElement>) => Iterable<ITreeElement<TestExplorerTreeElement>>,
+) => ITreeElement<TestExplorerTreeElement> | NodeRenderDirective;
 
-const pruneNodesNotInTree = <T extends ITestTreeElement>(nodes: Set<T | null>, tree: ObjectTree<ITestTreeElement, any>) => {
+const pruneNodesNotInTree = (nodes: Set<TestExplorerTreeElement | null>, tree: ObjectTree<TestExplorerTreeElement, any>) => {
 	for (const node of nodes) {
 		if (node && !tree.hasElement(node)) {
 			nodes.delete(node);
@@ -66,27 +67,23 @@ const pruneNodesNotInTree = <T extends ITestTreeElement>(nodes: Set<T | null>, t
 /**
  * Helper to gather and bulk-apply tree updates.
  */
-export class NodeChangeList<T extends ITestTreeElement & { children: Iterable<T>; parentItem: T | null; }> {
+export class NodeChangeList<T extends (TestItemTreeElement | TestTreeWorkspaceFolder)> {
 	private changedParents = new Set<T | null>();
-	private updatedNodes = new Set<T>();
-	private omittedNodes = new WeakSet<T>();
+	private updatedNodes = new Set<TestExplorerTreeElement>();
+	private omittedNodes = new WeakSet<TestExplorerTreeElement>();
 	private isFirstApply = true;
 
-	public updated(node: T) {
+	public updated(node: TestExplorerTreeElement) {
 		this.updatedNodes.add(node);
 	}
 
-	public removed(node: T) {
-		this.added(node);
-	}
-
-	public added(node: T) {
+	public addedOrRemoved(node: TestExplorerTreeElement) {
 		this.changedParents.add(this.getNearestNotOmittedParent(node));
 	}
 
 	public applyTo(
-		tree: ObjectTree<ITestTreeElement, any>,
-		renderNode: NodeRenderFn<T>,
+		tree: ObjectTree<TestExplorerTreeElement, any>,
+		renderNode: NodeRenderFn,
 		roots: () => Iterable<T>,
 	) {
 		pruneNodesNotInTree(this.changedParents, tree);
@@ -97,7 +94,7 @@ export class NodeChangeList<T extends ITestTreeElement & { children: Iterable<T>
 
 		for (let parent of this.changedParents) {
 			while (parent && typeof renderNode(parent, () => []) !== 'object') {
-				parent = parent.parentItem;
+				parent = parent.parent as T | null;
 			}
 
 			if (parent === null || tree.hasElement(parent)) {
@@ -119,24 +116,26 @@ export class NodeChangeList<T extends ITestTreeElement & { children: Iterable<T>
 		this.updatedNodes.clear();
 	}
 
-	private getNearestNotOmittedParent(node: T | null) {
-		let parent = node && node.parentItem;
+	private getNearestNotOmittedParent(node: TestExplorerTreeElement | null) {
+		let parent = node && node.parent;
 		while (parent && this.omittedNodes.has(parent)) {
-			parent = parent.parentItem;
+			parent = parent.parent;
 		}
 
-		return parent;
+		return parent as T;
 	}
 
-	private *renderNodeList(renderNode: NodeRenderFn<T>, nodes: Iterable<T>): Iterable<ICompressedTreeElement<ITestTreeElement>> {
+	private *renderNodeList(renderNode: NodeRenderFn, nodes: Iterable<TestExplorerTreeElement>): Iterable<ITreeElement<TestExplorerTreeElement>> {
 		for (const node of nodes) {
 			const rendered = renderNode(node, this.renderNodeList.bind(this, renderNode));
 			if (rendered === NodeRenderDirective.Omit) {
 				this.omittedNodes.add(node);
 			} else if (rendered === NodeRenderDirective.Concat) {
 				this.omittedNodes.add(node);
-				for (const nested of this.renderNodeList(renderNode, node.children)) {
-					yield nested;
+				if ('children' in node) {
+					for (const nested of this.renderNodeList(renderNode, node.children)) {
+						yield nested;
+					}
 				}
 			} else {
 				this.omittedNodes.delete(node);

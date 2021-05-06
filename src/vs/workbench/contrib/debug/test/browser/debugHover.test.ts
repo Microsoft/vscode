@@ -18,7 +18,7 @@ suite('Debug - Hover', () => {
 		let stackFrame: StackFrame;
 
 		const thread = new class extends Thread {
-			public getCallStack(): StackFrame[] {
+			public override getCallStack(): StackFrame[] {
 				return [stackFrame];
 			}
 		}(session, 'mockthread', 1);
@@ -31,7 +31,7 @@ suite('Debug - Hover', () => {
 
 		let scope: Scope;
 		stackFrame = new class extends StackFrame {
-			getScopes(): Promise<IScope[]> {
+			override getScopes(): Promise<IScope[]> {
 				return Promise.resolve([scope]);
 			}
 		}(thread, 1, firstSource, 'app.js', 'normal', { startLineNumber: 1, startColumn: 1, endLineNumber: 1, endColumn: 10 }, 1, true);
@@ -40,13 +40,13 @@ suite('Debug - Hover', () => {
 		let variableA: Variable;
 		let variableB: Variable;
 		scope = new class extends Scope {
-			getChildren(): Promise<IExpression[]> {
+			override getChildren(): Promise<IExpression[]> {
 				return Promise.resolve([variableA]);
 			}
 		}(stackFrame, 1, 'local', 1, false, 10, 10);
 
 		variableA = new class extends Variable {
-			getChildren(): Promise<IExpression[]> {
+			override getChildren(): Promise<IExpression[]> {
 				return Promise.resolve([variableB]);
 			}
 		}(session, 1, scope, 2, 'A', 'A', undefined!, 0, 0, {}, 'string');

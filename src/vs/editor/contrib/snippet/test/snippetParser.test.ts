@@ -10,88 +10,88 @@ suite('SnippetParser', () => {
 	test('Scanner', () => {
 
 		const scanner = new Scanner();
-		assert.equal(scanner.next().type, TokenType.EOF);
+		assert.strictEqual(scanner.next().type, TokenType.EOF);
 
 		scanner.text('abc');
-		assert.equal(scanner.next().type, TokenType.VariableName);
-		assert.equal(scanner.next().type, TokenType.EOF);
+		assert.strictEqual(scanner.next().type, TokenType.VariableName);
+		assert.strictEqual(scanner.next().type, TokenType.EOF);
 
 		scanner.text('{{abc}}');
-		assert.equal(scanner.next().type, TokenType.CurlyOpen);
-		assert.equal(scanner.next().type, TokenType.CurlyOpen);
-		assert.equal(scanner.next().type, TokenType.VariableName);
-		assert.equal(scanner.next().type, TokenType.CurlyClose);
-		assert.equal(scanner.next().type, TokenType.CurlyClose);
-		assert.equal(scanner.next().type, TokenType.EOF);
+		assert.strictEqual(scanner.next().type, TokenType.CurlyOpen);
+		assert.strictEqual(scanner.next().type, TokenType.CurlyOpen);
+		assert.strictEqual(scanner.next().type, TokenType.VariableName);
+		assert.strictEqual(scanner.next().type, TokenType.CurlyClose);
+		assert.strictEqual(scanner.next().type, TokenType.CurlyClose);
+		assert.strictEqual(scanner.next().type, TokenType.EOF);
 
 		scanner.text('abc() ');
-		assert.equal(scanner.next().type, TokenType.VariableName);
-		assert.equal(scanner.next().type, TokenType.Format);
-		assert.equal(scanner.next().type, TokenType.EOF);
+		assert.strictEqual(scanner.next().type, TokenType.VariableName);
+		assert.strictEqual(scanner.next().type, TokenType.Format);
+		assert.strictEqual(scanner.next().type, TokenType.EOF);
 
 		scanner.text('abc 123');
-		assert.equal(scanner.next().type, TokenType.VariableName);
-		assert.equal(scanner.next().type, TokenType.Format);
-		assert.equal(scanner.next().type, TokenType.Int);
-		assert.equal(scanner.next().type, TokenType.EOF);
+		assert.strictEqual(scanner.next().type, TokenType.VariableName);
+		assert.strictEqual(scanner.next().type, TokenType.Format);
+		assert.strictEqual(scanner.next().type, TokenType.Int);
+		assert.strictEqual(scanner.next().type, TokenType.EOF);
 
 		scanner.text('$foo');
-		assert.equal(scanner.next().type, TokenType.Dollar);
-		assert.equal(scanner.next().type, TokenType.VariableName);
-		assert.equal(scanner.next().type, TokenType.EOF);
+		assert.strictEqual(scanner.next().type, TokenType.Dollar);
+		assert.strictEqual(scanner.next().type, TokenType.VariableName);
+		assert.strictEqual(scanner.next().type, TokenType.EOF);
 
 		scanner.text('$foo_bar');
-		assert.equal(scanner.next().type, TokenType.Dollar);
-		assert.equal(scanner.next().type, TokenType.VariableName);
-		assert.equal(scanner.next().type, TokenType.EOF);
+		assert.strictEqual(scanner.next().type, TokenType.Dollar);
+		assert.strictEqual(scanner.next().type, TokenType.VariableName);
+		assert.strictEqual(scanner.next().type, TokenType.EOF);
 
 		scanner.text('$foo-bar');
-		assert.equal(scanner.next().type, TokenType.Dollar);
-		assert.equal(scanner.next().type, TokenType.VariableName);
-		assert.equal(scanner.next().type, TokenType.Dash);
-		assert.equal(scanner.next().type, TokenType.VariableName);
-		assert.equal(scanner.next().type, TokenType.EOF);
+		assert.strictEqual(scanner.next().type, TokenType.Dollar);
+		assert.strictEqual(scanner.next().type, TokenType.VariableName);
+		assert.strictEqual(scanner.next().type, TokenType.Dash);
+		assert.strictEqual(scanner.next().type, TokenType.VariableName);
+		assert.strictEqual(scanner.next().type, TokenType.EOF);
 
 		scanner.text('${foo}');
-		assert.equal(scanner.next().type, TokenType.Dollar);
-		assert.equal(scanner.next().type, TokenType.CurlyOpen);
-		assert.equal(scanner.next().type, TokenType.VariableName);
-		assert.equal(scanner.next().type, TokenType.CurlyClose);
-		assert.equal(scanner.next().type, TokenType.EOF);
+		assert.strictEqual(scanner.next().type, TokenType.Dollar);
+		assert.strictEqual(scanner.next().type, TokenType.CurlyOpen);
+		assert.strictEqual(scanner.next().type, TokenType.VariableName);
+		assert.strictEqual(scanner.next().type, TokenType.CurlyClose);
+		assert.strictEqual(scanner.next().type, TokenType.EOF);
 
 		scanner.text('${1223:foo}');
-		assert.equal(scanner.next().type, TokenType.Dollar);
-		assert.equal(scanner.next().type, TokenType.CurlyOpen);
-		assert.equal(scanner.next().type, TokenType.Int);
-		assert.equal(scanner.next().type, TokenType.Colon);
-		assert.equal(scanner.next().type, TokenType.VariableName);
-		assert.equal(scanner.next().type, TokenType.CurlyClose);
-		assert.equal(scanner.next().type, TokenType.EOF);
+		assert.strictEqual(scanner.next().type, TokenType.Dollar);
+		assert.strictEqual(scanner.next().type, TokenType.CurlyOpen);
+		assert.strictEqual(scanner.next().type, TokenType.Int);
+		assert.strictEqual(scanner.next().type, TokenType.Colon);
+		assert.strictEqual(scanner.next().type, TokenType.VariableName);
+		assert.strictEqual(scanner.next().type, TokenType.CurlyClose);
+		assert.strictEqual(scanner.next().type, TokenType.EOF);
 
 		scanner.text('\\${}');
-		assert.equal(scanner.next().type, TokenType.Backslash);
-		assert.equal(scanner.next().type, TokenType.Dollar);
-		assert.equal(scanner.next().type, TokenType.CurlyOpen);
-		assert.equal(scanner.next().type, TokenType.CurlyClose);
+		assert.strictEqual(scanner.next().type, TokenType.Backslash);
+		assert.strictEqual(scanner.next().type, TokenType.Dollar);
+		assert.strictEqual(scanner.next().type, TokenType.CurlyOpen);
+		assert.strictEqual(scanner.next().type, TokenType.CurlyClose);
 
 		scanner.text('${foo/regex/format/option}');
-		assert.equal(scanner.next().type, TokenType.Dollar);
-		assert.equal(scanner.next().type, TokenType.CurlyOpen);
-		assert.equal(scanner.next().type, TokenType.VariableName);
-		assert.equal(scanner.next().type, TokenType.Forwardslash);
-		assert.equal(scanner.next().type, TokenType.VariableName);
-		assert.equal(scanner.next().type, TokenType.Forwardslash);
-		assert.equal(scanner.next().type, TokenType.VariableName);
-		assert.equal(scanner.next().type, TokenType.Forwardslash);
-		assert.equal(scanner.next().type, TokenType.VariableName);
-		assert.equal(scanner.next().type, TokenType.CurlyClose);
-		assert.equal(scanner.next().type, TokenType.EOF);
+		assert.strictEqual(scanner.next().type, TokenType.Dollar);
+		assert.strictEqual(scanner.next().type, TokenType.CurlyOpen);
+		assert.strictEqual(scanner.next().type, TokenType.VariableName);
+		assert.strictEqual(scanner.next().type, TokenType.Forwardslash);
+		assert.strictEqual(scanner.next().type, TokenType.VariableName);
+		assert.strictEqual(scanner.next().type, TokenType.Forwardslash);
+		assert.strictEqual(scanner.next().type, TokenType.VariableName);
+		assert.strictEqual(scanner.next().type, TokenType.Forwardslash);
+		assert.strictEqual(scanner.next().type, TokenType.VariableName);
+		assert.strictEqual(scanner.next().type, TokenType.CurlyClose);
+		assert.strictEqual(scanner.next().type, TokenType.EOF);
 	});
 
 	function assertText(value: string, expected: string) {
 		const p = new SnippetParser();
 		const actual = p.text(value);
-		assert.equal(actual, expected);
+		assert.strictEqual(actual, expected);
 	}
 
 	function assertMarker(input: TextmateSnippet | Marker[] | string, ...ctors: Function[]) {
@@ -109,8 +109,8 @@ suite('SnippetParser', () => {
 			let ctor = ctors.pop()!;
 			assert.ok(m instanceof ctor);
 		}
-		assert.equal(marker.length, ctors.length);
-		assert.equal(marker.length, 0);
+		assert.strictEqual(marker.length, ctors.length);
+		assert.strictEqual(marker.length, 0);
 	}
 
 	function assertTextAndMarker(value: string, escaped: string, ...ctors: Function[]) {
@@ -120,7 +120,7 @@ suite('SnippetParser', () => {
 
 	function assertEscaped(value: string, expected: string) {
 		const actual = SnippetParser.escape(value);
-		assert.equal(actual, expected);
+		assert.strictEqual(actual, expected);
 	}
 
 	test('Parser, escaped', function () {
@@ -167,11 +167,11 @@ suite('SnippetParser', () => {
 		let [, placeholder] = new SnippetParser().parse('foo${1:bar\\}${2:foo}}').children;
 		let { children } = (<Placeholder>placeholder);
 
-		assert.equal((<Placeholder>placeholder).index, '1');
+		assert.strictEqual((<Placeholder>placeholder).index, 1);
 		assert.ok(children[0] instanceof Text);
-		assert.equal(children[0].toString(), 'bar}');
+		assert.strictEqual(children[0].toString(), 'bar}');
 		assert.ok(children[1] instanceof Placeholder);
-		assert.equal(children[1].toString(), 'foo');
+		assert.strictEqual(children[1].toString(), 'foo');
 	});
 
 	test('Parser, placeholder', () => {
@@ -278,7 +278,7 @@ suite('SnippetParser', () => {
 		assertMarker(snippet, Placeholder);
 		const expected = [Placeholder, Text, Text, Text];
 		snippet.walk(marker => {
-			assert.equal(marker, expected.shift());
+			assert.strictEqual(marker, expected.shift());
 			return true;
 		});
 	});
@@ -292,7 +292,7 @@ suite('SnippetParser', () => {
 		function assertTextsnippetString(input: string, expected: string): void {
 			const snippet = new SnippetParser().parse(input);
 			const actual = snippet.toTextmateString();
-			assert.equal(actual, expected);
+			assert.strictEqual(actual, expected);
 		}
 
 		assertTextsnippetString('$1', '$1');
@@ -316,8 +316,8 @@ suite('SnippetParser', () => {
 				assert.ok(marker1 instanceof Object.getPrototypeOf(marker2).constructor);
 				assert.ok(marker2 instanceof Object.getPrototypeOf(marker1).constructor);
 
-				assert.equal(marker1.children.length, marker2.children.length);
-				assert.equal(marker1.toString(), marker2.toString());
+				assert.strictEqual(marker1.children.length, marker2.children.length);
+				assert.strictEqual(marker1.toString(), marker2.toString());
 
 				for (let i = 0; i < marker1.children.length; i++) {
 					checkCheckChildren(marker1.children[i], marker2.children[i]);
@@ -340,10 +340,10 @@ suite('SnippetParser', () => {
 	test('Parser, choise marker', () => {
 		const { placeholders } = new SnippetParser().parse('${1|one,two,three|}');
 
-		assert.equal(placeholders.length, 1);
+		assert.strictEqual(placeholders.length, 1);
 		assert.ok(placeholders[0].choice instanceof Choice);
 		assert.ok(placeholders[0].children[0] instanceof Choice);
-		assert.equal((<Choice>placeholders[0].children[0]).options.length, 3);
+		assert.strictEqual((<Choice>placeholders[0].children[0]).options.length, 3);
 
 		assertText('${1|one,two,three|}', 'one');
 		assertText('\\${1|one,two,three|}', '${1|one,two,three|}');
@@ -354,7 +354,7 @@ suite('SnippetParser', () => {
 	test('Backslash character escape in choice tabstop doesn\'t work #58494', function () {
 
 		const { placeholders } = new SnippetParser().parse('${1|\\,,},$,\\|,\\\\|}');
-		assert.equal(placeholders.length, 1);
+		assert.strictEqual(placeholders.length, 1);
 		assert.ok(placeholders[0].choice instanceof Choice);
 	});
 
@@ -372,27 +372,26 @@ suite('SnippetParser', () => {
 	test('Parser, real world', () => {
 		let marker = new SnippetParser().parse('console.warn(${1: $TM_SELECTED_TEXT })').children;
 
-		assert.equal(marker[0].toString(), 'console.warn(');
+		assert.strictEqual(marker[0].toString(), 'console.warn(');
 		assert.ok(marker[1] instanceof Placeholder);
-		assert.equal(marker[2].toString(), ')');
+		assert.strictEqual(marker[2].toString(), ')');
 
 		const placeholder = <Placeholder>marker[1];
-		assert.equal(placeholder, false);
-		assert.equal(placeholder.index, '1');
-		assert.equal(placeholder.children.length, 3);
+		assert.strictEqual(placeholder.index, 1);
+		assert.strictEqual(placeholder.children.length, 3);
 		assert.ok(placeholder.children[0] instanceof Text);
 		assert.ok(placeholder.children[1] instanceof Variable);
 		assert.ok(placeholder.children[2] instanceof Text);
-		assert.equal(placeholder.children[0].toString(), ' ');
-		assert.equal(placeholder.children[1].toString(), '');
-		assert.equal(placeholder.children[2].toString(), ' ');
+		assert.strictEqual(placeholder.children[0].toString(), ' ');
+		assert.strictEqual(placeholder.children[1].toString(), '');
+		assert.strictEqual(placeholder.children[2].toString(), ' ');
 
 		const nestedVariable = <Variable>placeholder.children[1];
-		assert.equal(nestedVariable.name, 'TM_SELECTED_TEXT');
-		assert.equal(nestedVariable.children.length, 0);
+		assert.strictEqual(nestedVariable.name, 'TM_SELECTED_TEXT');
+		assert.strictEqual(nestedVariable.children.length, 0);
 
 		marker = new SnippetParser().parse('$TM_SELECTED_TEXT').children;
-		assert.equal(marker.length, 1);
+		assert.strictEqual(marker.length, 1);
 		assert.ok(marker[0] instanceof Variable);
 	});
 
@@ -401,66 +400,68 @@ suite('SnippetParser', () => {
 
 		//${1:name}
 		assert.ok(children[0] instanceof Placeholder);
-		assert.equal(children[0].children.length, 1);
-		assert.equal(children[0].children[0].toString(), 'name');
-		assert.equal((<Placeholder>children[0]).transform, undefined);
+		assert.strictEqual(children[0].children.length, 1);
+		assert.strictEqual(children[0].children[0].toString(), 'name');
+		assert.strictEqual((<Placeholder>children[0]).transform, undefined);
 
 		// :
 		assert.ok(children[1] instanceof Text);
-		assert.equal(children[1].toString(), ' : ');
+		assert.strictEqual(children[1].toString(), ' : ');
 
 		//${2:type}
 		assert.ok(children[2] instanceof Placeholder);
-		assert.equal(children[2].children.length, 1);
-		assert.equal(children[2].children[0].toString(), 'type');
+		assert.strictEqual(children[2].children.length, 1);
+		assert.strictEqual(children[2].children[0].toString(), 'type');
 
 		//${3/\\s:=(.*)/${1:+ :=}${1}/}
 		assert.ok(children[3] instanceof Placeholder);
-		assert.equal(children[3].children.length, 0);
-		assert.notEqual((<Placeholder>children[3]).transform, undefined);
+		assert.strictEqual(children[3].children.length, 0);
+		assert.notStrictEqual((<Placeholder>children[3]).transform, undefined);
 		let transform = (<Placeholder>children[3]).transform!;
-		assert.equal(transform.regexp, '/\\s:=(.*)/');
-		assert.equal(transform.children.length, 2);
+		assert.deepStrictEqual(transform.regexp, /\s:=(.*)/);
+		assert.strictEqual(transform.children.length, 2);
 		assert.ok(transform.children[0] instanceof FormatString);
-		assert.equal((<FormatString>transform.children[0]).index, 1);
-		assert.equal((<FormatString>transform.children[0]).ifValue, ' :=');
+		assert.strictEqual((<FormatString>transform.children[0]).index, 1);
+		assert.strictEqual((<FormatString>transform.children[0]).ifValue, ' :=');
 		assert.ok(transform.children[1] instanceof FormatString);
-		assert.equal((<FormatString>transform.children[1]).index, 1);
+		assert.strictEqual((<FormatString>transform.children[1]).index, 1);
 		assert.ok(children[4] instanceof Text);
-		assert.equal(children[4].toString(), ';\n');
+		assert.strictEqual(children[4].toString(), ';\n');
 
 	});
 
+	// TODO @jrieken making this strictEqul causes circular json conversion errors
 	test('Parser, default placeholder values', () => {
 
 		assertMarker('errorContext: `${1:err}`, error: $1', Text, Placeholder, Text, Placeholder);
 
 		const [, p1, , p2] = new SnippetParser().parse('errorContext: `${1:err}`, error:$1').children;
 
-		assert.equal((<Placeholder>p1).index, '1');
-		assert.equal((<Placeholder>p1).children.length, '1');
-		assert.equal((<Text>(<Placeholder>p1).children[0]), 'err');
+		assert.strictEqual((<Placeholder>p1).index, 1);
+		assert.strictEqual((<Placeholder>p1).children.length, 1);
+		assert.strictEqual((<Text>(<Placeholder>p1).children[0]).toString(), 'err');
 
-		assert.equal((<Placeholder>p2).index, '1');
-		assert.equal((<Placeholder>p2).children.length, '1');
-		assert.equal((<Text>(<Placeholder>p2).children[0]), 'err');
+		assert.strictEqual((<Placeholder>p2).index, 1);
+		assert.strictEqual((<Placeholder>p2).children.length, 1);
+		assert.strictEqual((<Text>(<Placeholder>p2).children[0]).toString(), 'err');
 	});
 
+	// TODO @jrieken making this strictEqul causes circular json conversion errors
 	test('Parser, default placeholder values and one transform', () => {
 
 		assertMarker('errorContext: `${1:err}`, error: ${1/err/ok/}', Text, Placeholder, Text, Placeholder);
 
 		const [, p3, , p4] = new SnippetParser().parse('errorContext: `${1:err}`, error:${1/err/ok/}').children;
 
-		assert.equal((<Placeholder>p3).index, '1');
-		assert.equal((<Placeholder>p3).children.length, '1');
-		assert.equal((<Text>(<Placeholder>p3).children[0]), 'err');
-		assert.equal((<Placeholder>p3).transform, undefined);
+		assert.strictEqual((<Placeholder>p3).index, 1);
+		assert.strictEqual((<Placeholder>p3).children.length, 1);
+		assert.strictEqual((<Text>(<Placeholder>p3).children[0]).toString(), 'err');
+		assert.strictEqual((<Placeholder>p3).transform, undefined);
 
-		assert.equal((<Placeholder>p4).index, '1');
-		assert.equal((<Placeholder>p4).children.length, '1');
-		assert.equal((<Text>(<Placeholder>p4).children[0]), 'err');
-		assert.notEqual((<Placeholder>p4).transform, undefined);
+		assert.strictEqual((<Placeholder>p4).index, 1);
+		assert.strictEqual((<Placeholder>p4).children.length, 1);
+		assert.strictEqual((<Text>(<Placeholder>p4).children[0]).toString(), 'err');
+		assert.notStrictEqual((<Placeholder>p4).transform, undefined);
 	});
 
 	test('Repeated snippet placeholder should always inherit, #31040', function () {
@@ -472,15 +473,15 @@ suite('SnippetParser', () => {
 
 	test('backspace esapce in TM only, #16212', () => {
 		const actual = new SnippetParser().text('Foo \\\\${abc}bar');
-		assert.equal(actual, 'Foo \\bar');
+		assert.strictEqual(actual, 'Foo \\bar');
 	});
 
 	test('colon as variable/placeholder value, #16717', () => {
 		let actual = new SnippetParser().text('${TM_SELECTED_TEXT:foo:bar}');
-		assert.equal(actual, 'foo:bar');
+		assert.strictEqual(actual, 'foo:bar');
 
 		actual = new SnippetParser().text('${1:foo:bar}');
-		assert.equal(actual, 'foo:bar');
+		assert.strictEqual(actual, 'foo:bar');
 	});
 
 	test('incomplete placeholder', () => {
@@ -493,10 +494,10 @@ suite('SnippetParser', () => {
 			const snippet = new SnippetParser().parse(template, true);
 			snippet.walk(m => {
 				const expected = lengths.shift();
-				assert.equal(m.len(), expected);
+				assert.strictEqual(m.len(), expected);
 				return true;
 			});
-			assert.equal(lengths.length, 0);
+			assert.strictEqual(lengths.length, 0);
 		}
 
 		assertLen('text$0', 4, 0);
@@ -511,17 +512,17 @@ suite('SnippetParser', () => {
 	test('parser, parent node', function () {
 		let snippet = new SnippetParser().parse('This ${1:is ${2:nested}}$0', true);
 
-		assert.equal(snippet.placeholders.length, 3);
+		assert.strictEqual(snippet.placeholders.length, 3);
 		let [first, second] = snippet.placeholders;
-		assert.equal(first.index, '1');
-		assert.equal(second.index, '2');
+		assert.strictEqual(first.index, 1);
+		assert.strictEqual(second.index, 2);
 		assert.ok(second.parent === first);
 		assert.ok(first.parent === snippet);
 
 		snippet = new SnippetParser().parse('${VAR:default${1:value}}$0', true);
-		assert.equal(snippet.placeholders.length, 2);
+		assert.strictEqual(snippet.placeholders.length, 2);
 		[first] = snippet.placeholders;
-		assert.equal(first.index, '1');
+		assert.strictEqual(first.index, 1);
 
 		assert.ok(snippet.children[0] instanceof Variable);
 		assert.ok(first.parent === snippet.children[0]);
@@ -537,76 +538,76 @@ suite('SnippetParser', () => {
 
 	test('TextmateSnippet#offset', () => {
 		let snippet = new SnippetParser().parse('te$1xt', true);
-		assert.equal(snippet.offset(snippet.children[0]), 0);
-		assert.equal(snippet.offset(snippet.children[1]), 2);
-		assert.equal(snippet.offset(snippet.children[2]), 2);
+		assert.strictEqual(snippet.offset(snippet.children[0]), 0);
+		assert.strictEqual(snippet.offset(snippet.children[1]), 2);
+		assert.strictEqual(snippet.offset(snippet.children[2]), 2);
 
 		snippet = new SnippetParser().parse('${TM_SELECTED_TEXT:def}', true);
-		assert.equal(snippet.offset(snippet.children[0]), 0);
-		assert.equal(snippet.offset((<Variable>snippet.children[0]).children[0]), 0);
+		assert.strictEqual(snippet.offset(snippet.children[0]), 0);
+		assert.strictEqual(snippet.offset((<Variable>snippet.children[0]).children[0]), 0);
 
 		// forgein marker
-		assert.equal(snippet.offset(new Text('foo')), -1);
+		assert.strictEqual(snippet.offset(new Text('foo')), -1);
 	});
 
 	test('TextmateSnippet#placeholder', () => {
 		let snippet = new SnippetParser().parse('te$1xt$0', true);
 		let placeholders = snippet.placeholders;
-		assert.equal(placeholders.length, 2);
+		assert.strictEqual(placeholders.length, 2);
 
 		snippet = new SnippetParser().parse('te$1xt$1$0', true);
 		placeholders = snippet.placeholders;
-		assert.equal(placeholders.length, 3);
+		assert.strictEqual(placeholders.length, 3);
 
 
 		snippet = new SnippetParser().parse('te$1xt$2$0', true);
 		placeholders = snippet.placeholders;
-		assert.equal(placeholders.length, 3);
+		assert.strictEqual(placeholders.length, 3);
 
 		snippet = new SnippetParser().parse('${1:bar${2:foo}bar}$0', true);
 		placeholders = snippet.placeholders;
-		assert.equal(placeholders.length, 3);
+		assert.strictEqual(placeholders.length, 3);
 	});
 
 	test('TextmateSnippet#replace 1/2', function () {
 		let snippet = new SnippetParser().parse('aaa${1:bbb${2:ccc}}$0', true);
 
-		assert.equal(snippet.placeholders.length, 3);
+		assert.strictEqual(snippet.placeholders.length, 3);
 		const [, second] = snippet.placeholders;
-		assert.equal(second.index, '2');
+		assert.strictEqual(second.index, 2);
 
 		const enclosing = snippet.enclosingPlaceholders(second);
-		assert.equal(enclosing.length, 1);
-		assert.equal(enclosing[0].index, '1');
+		assert.strictEqual(enclosing.length, 1);
+		assert.strictEqual(enclosing[0].index, 1);
 
 		let nested = new SnippetParser().parse('ddd$1eee$0', true);
 		snippet.replace(second, nested.children);
 
-		assert.equal(snippet.toString(), 'aaabbbdddeee');
-		assert.equal(snippet.placeholders.length, 4);
-		assert.equal(snippet.placeholders[0].index, '1');
-		assert.equal(snippet.placeholders[1].index, '1');
-		assert.equal(snippet.placeholders[2].index, '0');
-		assert.equal(snippet.placeholders[3].index, '0');
+		assert.strictEqual(snippet.toString(), 'aaabbbdddeee');
+		assert.strictEqual(snippet.placeholders.length, 4);
+		assert.strictEqual(snippet.placeholders[0].index, 1);
+		assert.strictEqual(snippet.placeholders[1].index, 1);
+		assert.strictEqual(snippet.placeholders[2].index, 0);
+		assert.strictEqual(snippet.placeholders[3].index, 0);
 
 		const newEnclosing = snippet.enclosingPlaceholders(snippet.placeholders[1]);
 		assert.ok(newEnclosing[0] === snippet.placeholders[0]);
-		assert.equal(newEnclosing.length, 1);
-		assert.equal(newEnclosing[0].index, '1');
+		assert.strictEqual(newEnclosing.length, 1);
+		assert.strictEqual(newEnclosing[0].index, 1);
 	});
 
 	test('TextmateSnippet#replace 2/2', function () {
 		let snippet = new SnippetParser().parse('aaa${1:bbb${2:ccc}}$0', true);
 
-		assert.equal(snippet.placeholders.length, 3);
+		assert.strictEqual(snippet.placeholders.length, 3);
 		const [, second] = snippet.placeholders;
-		assert.equal(second.index, '2');
+		assert.strictEqual(second.index, 2);
 
 		let nested = new SnippetParser().parse('dddeee$0', true);
 		snippet.replace(second, nested.children);
 
-		assert.equal(snippet.toString(), 'aaabbbdddeee');
-		assert.equal(snippet.placeholders.length, 3);
+		assert.strictEqual(snippet.toString(), 'aaabbbdddeee');
+		assert.strictEqual(snippet.placeholders.length, 3);
 	});
 
 	test('Snippet order for placeholders, #28185', function () {
@@ -614,7 +615,7 @@ suite('SnippetParser', () => {
 		const _10 = new Placeholder(10);
 		const _2 = new Placeholder(2);
 
-		assert.equal(Placeholder.compareByIndex(_10, _2), 1);
+		assert.strictEqual(Placeholder.compareByIndex(_10, _2), 1);
 	});
 
 	test('Maximum call stack size exceeded, #28983', function () {
@@ -649,32 +650,33 @@ suite('SnippetParser', () => {
 	test('Transform -> FormatString#resolve', function () {
 
 		// shorthand functions
-		assert.equal(new FormatString(1, 'upcase').resolve('foo'), 'FOO');
-		assert.equal(new FormatString(1, 'downcase').resolve('FOO'), 'foo');
-		assert.equal(new FormatString(1, 'capitalize').resolve('bar'), 'Bar');
-		assert.equal(new FormatString(1, 'capitalize').resolve('bar no repeat'), 'Bar no repeat');
-		assert.equal(new FormatString(1, 'pascalcase').resolve('bar-foo'), 'BarFoo');
-		assert.equal(new FormatString(1, 'notKnown').resolve('input'), 'input');
+		assert.strictEqual(new FormatString(1, 'upcase').resolve('foo'), 'FOO');
+		assert.strictEqual(new FormatString(1, 'downcase').resolve('FOO'), 'foo');
+		assert.strictEqual(new FormatString(1, 'capitalize').resolve('bar'), 'Bar');
+		assert.strictEqual(new FormatString(1, 'capitalize').resolve('bar no repeat'), 'Bar no repeat');
+		assert.strictEqual(new FormatString(1, 'pascalcase').resolve('bar-foo'), 'BarFoo');
+		assert.strictEqual(new FormatString(1, 'pascalcase').resolve('bar-42-foo'), 'Bar42Foo');
+		assert.strictEqual(new FormatString(1, 'notKnown').resolve('input'), 'input');
 
 		// if
-		assert.equal(new FormatString(1, undefined, 'foo', undefined).resolve(undefined), '');
-		assert.equal(new FormatString(1, undefined, 'foo', undefined).resolve(''), '');
-		assert.equal(new FormatString(1, undefined, 'foo', undefined).resolve('bar'), 'foo');
+		assert.strictEqual(new FormatString(1, undefined, 'foo', undefined).resolve(undefined), '');
+		assert.strictEqual(new FormatString(1, undefined, 'foo', undefined).resolve(''), '');
+		assert.strictEqual(new FormatString(1, undefined, 'foo', undefined).resolve('bar'), 'foo');
 
 		// else
-		assert.equal(new FormatString(1, undefined, undefined, 'foo').resolve(undefined), 'foo');
-		assert.equal(new FormatString(1, undefined, undefined, 'foo').resolve(''), 'foo');
-		assert.equal(new FormatString(1, undefined, undefined, 'foo').resolve('bar'), 'bar');
+		assert.strictEqual(new FormatString(1, undefined, undefined, 'foo').resolve(undefined), 'foo');
+		assert.strictEqual(new FormatString(1, undefined, undefined, 'foo').resolve(''), 'foo');
+		assert.strictEqual(new FormatString(1, undefined, undefined, 'foo').resolve('bar'), 'bar');
 
 		// if-else
-		assert.equal(new FormatString(1, undefined, 'bar', 'foo').resolve(undefined), 'foo');
-		assert.equal(new FormatString(1, undefined, 'bar', 'foo').resolve(''), 'foo');
-		assert.equal(new FormatString(1, undefined, 'bar', 'foo').resolve('baz'), 'bar');
+		assert.strictEqual(new FormatString(1, undefined, 'bar', 'foo').resolve(undefined), 'foo');
+		assert.strictEqual(new FormatString(1, undefined, 'bar', 'foo').resolve(''), 'foo');
+		assert.strictEqual(new FormatString(1, undefined, 'bar', 'foo').resolve('baz'), 'bar');
 	});
 
 	test('Snippet variable transformation doesn\'t work if regex is complicated and snippet body contains \'$$\' #55627', function () {
 		const snippet = new SnippetParser().parse('const fileName = "${TM_FILENAME/(.*)\\..+$/$1/}"');
-		assert.equal(snippet.toTextmateString(), 'const fileName = "${TM_FILENAME/(.*)\\..+$/${1}/}"');
+		assert.strictEqual(snippet.toTextmateString(), 'const fileName = "${TM_FILENAME/(.*)\\..+$/${1}/}"');
 	});
 
 	test('[BUG] HTML attribute suggestions: Snippet session does not have end-position set, #33147', function () {
@@ -682,9 +684,9 @@ suite('SnippetParser', () => {
 		const { placeholders } = new SnippetParser().parse('src="$1"', true);
 		const [first, second] = placeholders;
 
-		assert.equal(placeholders.length, 2);
-		assert.equal(first.index, 1);
-		assert.equal(second.index, 0);
+		assert.strictEqual(placeholders.length, 2);
+		assert.strictEqual(first.index, 1);
+		assert.strictEqual(second.index, 0);
 
 	});
 
@@ -695,10 +697,10 @@ suite('SnippetParser', () => {
 		transform.appendChild(new FormatString(2, 'upcase'));
 		transform.regexp = /^(.)|-(.)/g;
 
-		assert.equal(transform.resolve('my-file-name'), 'MyFileName');
+		assert.strictEqual(transform.resolve('my-file-name'), 'MyFileName');
 
 		const clone = transform.clone();
-		assert.equal(clone.resolve('my-file-name'), 'MyFileName');
+		assert.strictEqual(clone.resolve('my-file-name'), 'MyFileName');
 	});
 
 	test('problem with snippets regex #40570', function () {
@@ -711,7 +713,7 @@ suite('SnippetParser', () => {
 		let transform = new Transform();
 		transform.appendChild(new Text('bar'));
 		transform.regexp = new RegExp('foo', 'gi');
-		assert.equal(transform.toTextmateString(), '/foo/bar/ig');
+		assert.strictEqual(transform.toTextmateString(), '/foo/bar/ig');
 	});
 
 	test('Snippet parser freeze #53144', function () {
@@ -725,7 +727,7 @@ suite('SnippetParser', () => {
 
 	test('Mirroring sequence of nested placeholders not selected properly on backjumping #58736', function () {
 		let snippet = new SnippetParser().parse('${3:nest1 ${1:nest2 ${2:nest3}}} $3');
-		assert.equal(snippet.children.length, 3);
+		assert.strictEqual(snippet.children.length, 3);
 		assert.ok(snippet.children[0] instanceof Placeholder);
 		assert.ok(snippet.children[1] instanceof Text);
 		assert.ok(snippet.children[2] instanceof Placeholder);
@@ -759,25 +761,25 @@ suite('SnippetParser', () => {
 
 		let snippet = new SnippetParser().parse('${TM_DIRECTORY/(.+)/${1:+import { hello \\} from world}/}');
 		let variable = <Variable>snippet.children[0];
-		assert.equal(snippet.children.length, 1);
+		assert.strictEqual(snippet.children.length, 1);
 		assert.ok(variable instanceof Variable);
 		assert.ok(variable.transform);
-		assert.equal(variable.transform!.children.length, 1);
+		assert.strictEqual(variable.transform!.children.length, 1);
 		assert.ok(variable.transform!.children[0] instanceof FormatString);
-		assert.equal((<FormatString>variable.transform!.children[0]).ifValue, 'import { hello } from world');
-		assert.equal((<FormatString>variable.transform!.children[0]).elseValue, undefined);
+		assert.strictEqual((<FormatString>variable.transform!.children[0]).ifValue, 'import { hello } from world');
+		assert.strictEqual((<FormatString>variable.transform!.children[0]).elseValue, undefined);
 	});
 
 	test('Snippet escape backslashes inside conditional insertion variable replacement #80394', function () {
 
 		let snippet = new SnippetParser().parse('${CURRENT_YEAR/(.+)/${1:+\\\\}/}');
 		let variable = <Variable>snippet.children[0];
-		assert.equal(snippet.children.length, 1);
+		assert.strictEqual(snippet.children.length, 1);
 		assert.ok(variable instanceof Variable);
 		assert.ok(variable.transform);
-		assert.equal(variable.transform!.children.length, 1);
+		assert.strictEqual(variable.transform!.children.length, 1);
 		assert.ok(variable.transform!.children[0] instanceof FormatString);
-		assert.equal((<FormatString>variable.transform!.children[0]).ifValue, '\\');
-		assert.equal((<FormatString>variable.transform!.children[0]).elseValue, undefined);
+		assert.strictEqual((<FormatString>variable.transform!.children[0]).ifValue, '\\');
+		assert.strictEqual((<FormatString>variable.transform!.children[0]).elseValue, undefined);
 	});
 });

@@ -52,7 +52,7 @@ export class ElementSizeObserver extends Disposable {
 		this.measureReferenceDomElement(false, dimension);
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		this.stopObserving();
 		super.dispose();
 	}

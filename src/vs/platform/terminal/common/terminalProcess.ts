@@ -7,15 +7,6 @@ import { UriComponents } from 'vs/base/common/uri';
 import { IRawTerminalTabLayoutInfo, ITerminalEnvironment, ITerminalTabLayoutInfoById } from 'vs/platform/terminal/common/terminal';
 import { ISerializableEnvironmentVariableCollection } from 'vs/platform/terminal/common/environmentVariable';
 
-export interface IShellLaunchConfigDto {
-	name?: string;
-	executable?: string;
-	args?: string[] | string;
-	cwd?: string | UriComponents;
-	env?: { [key: string]: string | null; };
-	hideFromUser?: boolean;
-}
-
 export interface ISingleTerminalConfiguration<T> {
 	userValue: T | undefined;
 	value: T | undefined;
@@ -35,7 +26,6 @@ export interface ICompleteTerminalConfiguration {
 	'terminal.integrated.env.windows': ISingleTerminalConfiguration<ITerminalEnvironment>;
 	'terminal.integrated.env.osx': ISingleTerminalConfiguration<ITerminalEnvironment>;
 	'terminal.integrated.env.linux': ISingleTerminalConfiguration<ITerminalEnvironment>;
-	'terminal.integrated.inheritEnv': boolean;
 	'terminal.integrated.cwd': string;
 	'terminal.integrated.detectLocale': 'auto' | 'off' | 'on';
 }
@@ -57,7 +47,7 @@ export interface IGetTerminalLayoutInfoArgs {
 	workspaceId: string;
 }
 
-export interface IPtyHostDescriptionDto {
+export interface IProcessDetails {
 	id: number;
 	pid: number;
 	title: string;
@@ -65,9 +55,10 @@ export interface IPtyHostDescriptionDto {
 	workspaceId: string;
 	workspaceName: string;
 	isOrphan: boolean;
+	icon: string | undefined;
 }
 
-export type ITerminalTabLayoutInfoDto = IRawTerminalTabLayoutInfo<IPtyHostDescriptionDto>;
+export type ITerminalTabLayoutInfoDto = IRawTerminalTabLayoutInfo<IProcessDetails>;
 
 export interface ReplayEntry { cols: number; rows: number; data: string; }
 export interface IPtyHostProcessReplayEvent {

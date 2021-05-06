@@ -51,13 +51,13 @@ suite('MainThreadCommands', function () {
 		const commands = new MainThreadCommands(
 			SingleProxyRPCProtocol(null),
 			new class extends mock<ICommandService>() {
-				executeCommand<T>(id: string): Promise<T | undefined> {
+				override executeCommand<T>(id: string): Promise<T | undefined> {
 					runs.push(id);
 					return Promise.resolve(undefined);
 				}
 			},
 			new class extends mock<IExtensionService>() {
-				activateByEvent(id: string) {
+				override activateByEvent(id: string) {
 					activations.push(id);
 					return Promise.resolve();
 				}

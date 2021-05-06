@@ -12,6 +12,8 @@ import { illegalArgument } from 'vs/base/common/errors';
  * But these are "more general", as they should work across browsers & OS`s.
  */
 export const enum KeyCode {
+	DependsOnKbLayout = -1,
+
 	/**
 	 * Placed first to cover the 0 value of the enum.
 	 */

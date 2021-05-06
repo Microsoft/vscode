@@ -22,7 +22,7 @@ suite('Hidden Range Model', () => {
 	}
 
 	function assertRanges(actual: IRange[], expectedRegions: ExpectedRange[], message?: string) {
-		assert.deepEqual(actual.map(r => ({ startLineNumber: r.startLineNumber, endLineNumber: r.endLineNumber })), expectedRegions, message);
+		assert.deepStrictEqual(actual.map(r => ({ startLineNumber: r.startLineNumber, endLineNumber: r.endLineNumber })), expectedRegions, message);
 	}
 
 	test('hasRanges', () => {
@@ -42,7 +42,7 @@ suite('Hidden Range Model', () => {
 		let foldingModel = new FoldingModel(textModel, new TestDecorationProvider(textModel));
 		let hiddenRangeModel = new HiddenRangeModel(foldingModel);
 
-		assert.equal(hiddenRangeModel.hasRanges(), false);
+		assert.strictEqual(hiddenRangeModel.hasRanges(), false);
 
 		let ranges = computeRanges(textModel, false, undefined);
 		foldingModel.update(ranges);
@@ -50,46 +50,46 @@ suite('Hidden Range Model', () => {
 		foldingModel.toggleCollapseState([foldingModel.getRegionAtLine(1)!, foldingModel.getRegionAtLine(6)!]);
 		assertRanges(hiddenRangeModel.hiddenRanges, [r(2, 3), r(7, 7)]);
 
-		assert.equal(hiddenRangeModel.hasRanges(), true);
-		assert.equal(hiddenRangeModel.isHidden(1), false);
-		assert.equal(hiddenRangeModel.isHidden(2), true);
-		assert.equal(hiddenRangeModel.isHidden(3), true);
-		assert.equal(hiddenRangeModel.isHidden(4), false);
-		assert.equal(hiddenRangeModel.isHidden(5), false);
-		assert.equal(hiddenRangeModel.isHidden(6), false);
-		assert.equal(hiddenRangeModel.isHidden(7), true);
-		assert.equal(hiddenRangeModel.isHidden(8), false);
-		assert.equal(hiddenRangeModel.isHidden(9), false);
-		assert.equal(hiddenRangeModel.isHidden(10), false);
+		assert.strictEqual(hiddenRangeModel.hasRanges(), true);
+		assert.strictEqual(hiddenRangeModel.isHidden(1), false);
+		assert.strictEqual(hiddenRangeModel.isHidden(2), true);
+		assert.strictEqual(hiddenRangeModel.isHidden(3), true);
+		assert.strictEqual(hiddenRangeModel.isHidden(4), false);
+		assert.strictEqual(hiddenRangeModel.isHidden(5), false);
+		assert.strictEqual(hiddenRangeModel.isHidden(6), false);
+		assert.strictEqual(hiddenRangeModel.isHidden(7), true);
+		assert.strictEqual(hiddenRangeModel.isHidden(8), false);
+		assert.strictEqual(hiddenRangeModel.isHidden(9), false);
+		assert.strictEqual(hiddenRangeModel.isHidden(10), false);
 
 		foldingModel.toggleCollapseState([foldingModel.getRegionAtLine(4)!]);
 		assertRanges(hiddenRangeModel.hiddenRanges, [r(2, 3), r(5, 9)]);
 
-		assert.equal(hiddenRangeModel.hasRanges(), true);
-		assert.equal(hiddenRangeModel.isHidden(1), false);
-		assert.equal(hiddenRangeModel.isHidden(2), true);
-		assert.equal(hiddenRangeModel.isHidden(3), true);
-		assert.equal(hiddenRangeModel.isHidden(4), false);
-		assert.equal(hiddenRangeModel.isHidden(5), true);
-		assert.equal(hiddenRangeModel.isHidden(6), true);
-		assert.equal(hiddenRangeModel.isHidden(7), true);
-		assert.equal(hiddenRangeModel.isHidden(8), true);
-		assert.equal(hiddenRangeModel.isHidden(9), true);
-		assert.equal(hiddenRangeModel.isHidden(10), false);
+		assert.strictEqual(hiddenRangeModel.hasRanges(), true);
+		assert.strictEqual(hiddenRangeModel.isHidden(1), false);
+		assert.strictEqual(hiddenRangeModel.isHidden(2), true);
+		assert.strictEqual(hiddenRangeModel.isHidden(3), true);
+		assert.strictEqual(hiddenRangeModel.isHidden(4), false);
+		assert.strictEqual(hiddenRangeModel.isHidden(5), true);
+		assert.strictEqual(hiddenRangeModel.isHidden(6), true);
+		assert.strictEqual(hiddenRangeModel.isHidden(7), true);
+		assert.strictEqual(hiddenRangeModel.isHidden(8), true);
+		assert.strictEqual(hiddenRangeModel.isHidden(9), true);
+		assert.strictEqual(hiddenRangeModel.isHidden(10), false);
 
 		foldingModel.toggleCollapseState([foldingModel.getRegionAtLine(1)!, foldingModel.getRegionAtLine(6)!, foldingModel.getRegionAtLine(4)!]);
 		assertRanges(hiddenRangeModel.hiddenRanges, []);
-		assert.equal(hiddenRangeModel.hasRanges(), false);
-		assert.equal(hiddenRangeModel.isHidden(1), false);
-		assert.equal(hiddenRangeModel.isHidden(2), false);
-		assert.equal(hiddenRangeModel.isHidden(3), false);
-		assert.equal(hiddenRangeModel.isHidden(4), false);
-		assert.equal(hiddenRangeModel.isHidden(5), false);
-		assert.equal(hiddenRangeModel.isHidden(6), false);
-		assert.equal(hiddenRangeModel.isHidden(7), false);
-		assert.equal(hiddenRangeModel.isHidden(8), false);
-		assert.equal(hiddenRangeModel.isHidden(9), false);
-		assert.equal(hiddenRangeModel.isHidden(10), false);
+		assert.strictEqual(hiddenRangeModel.hasRanges(), false);
+		assert.strictEqual(hiddenRangeModel.isHidden(1), false);
+		assert.strictEqual(hiddenRangeModel.isHidden(2), false);
+		assert.strictEqual(hiddenRangeModel.isHidden(3), false);
+		assert.strictEqual(hiddenRangeModel.isHidden(4), false);
+		assert.strictEqual(hiddenRangeModel.isHidden(5), false);
+		assert.strictEqual(hiddenRangeModel.isHidden(6), false);
+		assert.strictEqual(hiddenRangeModel.isHidden(7), false);
+		assert.strictEqual(hiddenRangeModel.isHidden(8), false);
+		assert.strictEqual(hiddenRangeModel.isHidden(9), false);
+		assert.strictEqual(hiddenRangeModel.isHidden(10), false);
 
 	});
 

@@ -9,7 +9,8 @@ import { TrackedRangeStickiness } from 'vs/editor/common/model';
 import { FoldingRegion, FoldingRegions } from 'vs/editor/contrib/folding/foldingRanges';
 import { IFoldingRangeData, sanitizeRanges } from 'vs/editor/contrib/folding/syntaxRangeProvider';
 import { CellViewModel, NotebookViewModel } from 'vs/workbench/contrib/notebook/browser/viewModel/notebookViewModel';
-import { CellKind, cellRangesToIndexes, ICellRange } from 'vs/workbench/contrib/notebook/common/notebookCommon';
+import { CellKind } from 'vs/workbench/contrib/notebook/common/notebookCommon';
+import { cellRangesToIndexes, ICellRange } from 'vs/workbench/contrib/notebook/common/notebookRange';
 
 type RegionFilter = (r: FoldingRegion) => boolean;
 type RegionFilterWithLevel = (r: FoldingRegion, level: number) => boolean;

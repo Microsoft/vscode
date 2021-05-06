@@ -532,7 +532,7 @@ export class PreferencesService extends Disposable implements IPreferencesServic
 		return null;
 	}
 
-	private createSettingsIfNotExists(target: ConfigurationTarget, resource: URI): Promise<void> {
+	private async createSettingsIfNotExists(target: ConfigurationTarget, resource: URI): Promise<void> {
 		if (this.contextService.getWorkbenchState() === WorkbenchState.WORKSPACE && target === ConfigurationTarget.WORKSPACE) {
 			const workspaceConfig = this.contextService.getWorkspace().configuration;
 			if (!workspaceConfig) {
@@ -547,19 +547,25 @@ export class PreferencesService extends Disposable implements IPreferencesServic
 					return undefined;
 				});
 		}
-		return this.createIfNotExists(resource, emptyEditableSettingsContent).then(() => { });
+		await this.createIfNotExists(resource, emptyEditableSettingsContent).then(() => { });
 	}
 
-	private createIfNotExists(resource: URI, contents: string): Promise<any> {
-		return this.textFileService.read(resource, { acceptTextOnly: true }).then(undefined, error => {
+	private async createIfNotExists(resource: URI, contents: string): Promise<void> {
+		try {
+			await this.textFileService.read(resource, { acceptTextOnly: true });
+		} catch (error) {
 			if ((<FileOperationError>error).fileOperationResult === FileOperationResult.FILE_NOT_FOUND) {
-				return this.textFileService.write(resource, contents).then(undefined, error => {
-					return Promise.reject(new Error(nls.localize('fail.createSettings', "Unable to create '{0}' ({1}).", this.labelService.getUriLabel(resource, { relative: true }), getErrorMessage(error))));
-				});
+				try {
+					await this.textFileService.write(resource, contents);
+					return;
+				} catch (error2) {
+					throw new Error(nls.localize('fail.createSettings', "Unable to create '{0}' ({1}).", this.labelService.getUriLabel(resource, { relative: true }), getErrorMessage(error2)));
+				}
+			} else {
+				throw error;
 			}
 
-			return Promise.reject(error);
-		});
+		}
 	}
 
 	private getMostCommonlyUsedSettings(): string[] {
@@ -644,7 +650,7 @@ export class PreferencesService extends Disposable implements IPreferencesServic
 		return position;
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		this._onDispose.fire();
 		super.dispose();
 	}

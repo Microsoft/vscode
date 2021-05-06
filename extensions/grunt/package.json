@@ -20,12 +20,18 @@
     "vscode-nls": "^4.0.0"
   },
   "devDependencies": {
-    "@types/node": "^12.19.9"
+    "@types/node": "14.x"
   },
   "main": "./out/main",
   "activationEvents": [
     "onCommand:workbench.action.tasks.runTask"
   ],
+  "capabilities": {
+    "virtualWorkspaces": false,
+    "untrustedWorkspaces": {
+      "supported": true
+    }
+  },
   "contributes": {
     "configuration": {
       "id": "grunt",
@@ -63,7 +69,8 @@
             "type": "string",
             "description": "%grunt.taskDefinition.file.description%"
           }
-        }
+        },
+        "when": "shellExecutionSupported"
       }
     ]
   },

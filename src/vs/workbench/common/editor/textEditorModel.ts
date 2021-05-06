@@ -4,7 +4,8 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { ITextModel, ITextBufferFactory, ITextSnapshot, ModelConstants } from 'vs/editor/common/model';
-import { EditorModel, IModeSupport } from 'vs/workbench/common/editor';
+import { EditorModel } from 'vs/workbench/common/editor';
+import { IModeSupport } from 'vs/workbench/services/textfile/common/textfiles';
 import { URI } from 'vs/base/common/uri';
 import { ITextEditorModel, IResolvedTextEditorModel } from 'vs/editor/common/services/resolverService';
 import { IModeService, ILanguageSelection } from 'vs/editor/common/services/modeService';
@@ -167,11 +168,11 @@ export class BaseTextEditorModel extends EditorModel implements ITextEditorModel
 		return this.textEditorModel.createSnapshot(true /* preserve BOM */);
 	}
 
-	isResolved(): this is IResolvedTextEditorModel {
+	override isResolved(): this is IResolvedTextEditorModel {
 		return !!this.textEditorModelHandle;
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this.modelDisposeListener.dispose(); // dispose this first because it will trigger another dispose() otherwise
 
 		if (this.textEditorModelHandle && this.createdEditorModel) {

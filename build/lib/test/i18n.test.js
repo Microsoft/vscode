@@ -21,20 +21,20 @@ suite('XLF Parser Tests', () => {
     });
     test('XLF to keys & messages conversion', () => {
         i18n.XLF.parse(sampleTranslatedXlf).then(function (resolvedFiles) {
-            assert.deepEqual(resolvedFiles[0].messages, translatedMessages);
+            assert.deepStrictEqual(resolvedFiles[0].messages, translatedMessages);
             assert.strictEqual(resolvedFiles[0].originalFilePath, originalFilePath);
         });
     });
     test('JSON file source path to Transifex resource match', () => {
         const editorProject = 'vscode-editor', workbenchProject = 'vscode-workbench';
         const platform = { name: 'vs/platform', project: editorProject }, editorContrib = { name: 'vs/editor/contrib', project: editorProject }, editor = { name: 'vs/editor', project: editorProject }, base = { name: 'vs/base', project: editorProject }, code = { name: 'vs/code', project: workbenchProject }, workbenchParts = { name: 'vs/workbench/contrib/html', project: workbenchProject }, workbenchServices = { name: 'vs/workbench/services/textfile', project: workbenchProject }, workbench = { name: 'vs/workbench', project: workbenchProject };
-        assert.deepEqual(i18n.getResource('vs/platform/actions/browser/menusExtensionPoint'), platform);
-        assert.deepEqual(i18n.getResource('vs/editor/contrib/clipboard/browser/clipboard'), editorContrib);
-        assert.deepEqual(i18n.getResource('vs/editor/common/modes/modesRegistry'), editor);
-        assert.deepEqual(i18n.getResource('vs/base/common/errorMessage'), base);
-        assert.deepEqual(i18n.getResource('vs/code/electron-main/window'), code);
-        assert.deepEqual(i18n.getResource('vs/workbench/contrib/html/browser/webview'), workbenchParts);
-        assert.deepEqual(i18n.getResource('vs/workbench/services/textfile/node/testFileService'), workbenchServices);
-        assert.deepEqual(i18n.getResource('vs/workbench/browser/parts/panel/panelActions'), workbench);
+        assert.deepStrictEqual(i18n.getResource('vs/platform/actions/browser/menusExtensionPoint'), platform);
+        assert.deepStrictEqual(i18n.getResource('vs/editor/contrib/clipboard/browser/clipboard'), editorContrib);
+        assert.deepStrictEqual(i18n.getResource('vs/editor/common/modes/modesRegistry'), editor);
+        assert.deepStrictEqual(i18n.getResource('vs/base/common/errorMessage'), base);
+        assert.deepStrictEqual(i18n.getResource('vs/code/electron-main/window'), code);
+        assert.deepStrictEqual(i18n.getResource('vs/workbench/contrib/html/browser/webview'), workbenchParts);
+        assert.deepStrictEqual(i18n.getResource('vs/workbench/services/textfile/node/testFileService'), workbenchServices);
+        assert.deepStrictEqual(i18n.getResource('vs/workbench/browser/parts/panel/panelActions'), workbench);
     });
 });

@@ -4,39 +4,46 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { clamp } from 'vs/base/common/numbers';
-import { createStyleSheet } from 'vs/base/browser/dom';
-import { setGlobalSashSize } from 'vs/base/browser/ui/sash/sash';
+import { setGlobalSashSize, setGlobalHoverDelay } from 'vs/base/browser/ui/sash/sash';
 import { Event } from 'vs/base/common/event';
-import { Disposable, toDisposable } from 'vs/base/common/lifecycle';
+import { DisposableStore, IDisposable } from 'vs/base/common/lifecycle';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { IWorkbenchContribution } from 'vs/workbench/common/contributions';
 
-export const minSize = 4;
+export const minSize = 1;
 export const maxSize = 20; // see also https://ux.stackexchange.com/questions/39023/what-is-the-optimum-button-size-of-touch-screen-applications
 
-export class SashSizeController extends Disposable implements IWorkbenchContribution {
-	private readonly configurationName = 'workbench.sash.size';
-	private stylesheet: HTMLStyleElement;
+export class SashSettingsController implements IWorkbenchContribution, IDisposable {
+
+	private readonly disposables = new DisposableStore();
 
 	constructor(
 		@IConfigurationService private readonly configurationService: IConfigurationService
 	) {
-		super();
+		const onDidChangeSize = Event.filter(configurationService.onDidChangeConfiguration, e => e.affectsConfiguration('workbench.sash.size'));
+		onDidChangeSize(this.onDidChangeSize, this, this.disposables);
+		this.onDidChangeSize();
 
-		this.stylesheet = createStyleSheet();
-		this._register(toDisposable(() => this.stylesheet.remove()));
-
-		const onDidChangeSizeConfiguration = Event.filter(configurationService.onDidChangeConfiguration, e => e.affectsConfiguration(this.configurationName));
-		this._register(onDidChangeSizeConfiguration(this.onDidChangeSizeConfiguration, this));
-		this.onDidChangeSizeConfiguration();
+		const onDidChangeHoverDelay = Event.filter(configurationService.onDidChangeConfiguration, e => e.affectsConfiguration('workbench.sash.hoverDelay'));
+		onDidChangeHoverDelay(this.onDidChangeHoverDelay, this, this.disposables);
+		this.onDidChangeHoverDelay();
 	}
 
-	private onDidChangeSizeConfiguration(): void {
-		const size = clamp(this.configurationService.getValue<number>(this.configurationName) ?? minSize, minSize, maxSize);
+	private onDidChangeSize(): void {
+		const configuredSize = this.configurationService.getValue<number>('workbench.sash.size');
+		const size = clamp(configuredSize, 4, 20);
+		const hoverSize = clamp(configuredSize, 1, 8);
 
 		document.documentElement.style.setProperty('--sash-size', size + 'px');
-
-		// Update behavor
+		document.documentElement.style.setProperty('--sash-hover-size', hoverSize + 'px');
 		setGlobalSashSize(size);
+	}
+
+	private onDidChangeHoverDelay(): void {
+		setGlobalHoverDelay(this.configurationService.getValue<number>('workbench.sash.hoverDelay'));
+	}
+
+	dispose(): void {
+		this.disposables.dispose();
 	}
 }

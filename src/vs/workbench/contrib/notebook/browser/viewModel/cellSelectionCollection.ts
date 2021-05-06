@@ -5,7 +5,7 @@
 
 import { Emitter, Event } from 'vs/base/common/event';
 import { Disposable } from 'vs/base/common/lifecycle';
-import { ICellRange } from 'vs/workbench/contrib/notebook/common/notebookCommon';
+import { ICellRange } from 'vs/workbench/contrib/notebook/common/notebookRange';
 
 function rangesEqual(a: ICellRange[], b: ICellRange[]) {
 	if (a.length !== b.length) {
@@ -32,7 +32,7 @@ export class NotebookCellSelectionCollection extends Disposable {
 
 	private _primary: ICellRange | null = null;
 
-	private _selections: ICellRange[] = [{ start: 0, end: 0 }];
+	private _selections: ICellRange[] = [];
 
 	get selections(): ICellRange[] {
 		return this._selections;
@@ -42,36 +42,17 @@ export class NotebookCellSelectionCollection extends Disposable {
 		return this._selections[0];
 	}
 
+	get focus(): ICellRange {
+		return this._primary ?? { start: 0, end: 0 };
+	}
+
 	setState(primary: ICellRange | null, selections: ICellRange[], forceEventEmit: boolean, source: 'view' | 'model') {
-		if (primary !== null) {
-			const primaryRange = primary;
-			// TODO@rebornix deal with overlap
-			const newSelections = [primaryRange, ...selections.filter(selection => !(selection.start === primaryRange.start && selection.end === primaryRange.end)).sort((a, b) => a.start - b.start)];
+		const changed = primary !== this._primary || !rangesEqual(this._selections, selections);
 
-			const changed = primary !== this._primary || !rangesEqual(this._selections, newSelections);
-			this._primary = primary;
-			this._selections = newSelections;
-
-			if (!this._selections.length) {
-				this._selections.push({ start: 0, end: 0 });
-			}
-
-			if (changed || forceEventEmit) {
-				this._onDidChangeSelection.fire(source);
-			}
-		} else {
-			const changed = primary !== this._primary || !rangesEqual(this._selections, selections);
-
-			this._primary = primary;
-			this._selections = selections;
-
-			if (!this._selections.length) {
-				this._selections.push({ start: 0, end: 0 });
-			}
-
-			if (changed || forceEventEmit) {
-				this._onDidChangeSelection.fire(source);
-			}
+		this._primary = primary;
+		this._selections = selections;
+		if (changed || forceEventEmit) {
+			this._onDidChangeSelection.fire(source);
 		}
 	}
 

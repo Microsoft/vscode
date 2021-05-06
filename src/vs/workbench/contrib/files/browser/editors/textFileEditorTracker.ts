@@ -14,6 +14,9 @@ import { IEditorService } from 'vs/workbench/services/editor/common/editorServic
 import { RunOnceWorker } from 'vs/base/common/async';
 import { ICodeEditorService } from 'vs/editor/browser/services/codeEditorService';
 import { IFilesConfigurationService, AutoSaveMode } from 'vs/workbench/services/filesConfiguration/common/filesConfigurationService';
+import { FILE_EDITOR_INPUT_ID } from 'vs/workbench/contrib/files/common/files';
+import { Schemas } from 'vs/base/common/network';
+import { UntitledTextEditorInput } from 'vs/workbench/services/untitled/common/untitledTextEditorInput';
 
 export class TextFileEditorTracker extends Disposable implements IWorkbenchContribution {
 
@@ -41,7 +44,7 @@ export class TextFileEditorTracker extends Disposable implements IWorkbenchContr
 		this._register(this.hostService.onDidChangeFocus(hasFocus => hasFocus ? this.reloadVisibleTextFileEditors() : undefined));
 
 		// Lifecycle
-		this.lifecycleService.onShutdown(() => this.dispose());
+		this.lifecycleService.onDidShutdown(() => this.dispose());
 	}
 
 	//#region Text File: Ensure every dirty text and untitled file is opened in an editor
@@ -65,7 +68,7 @@ export class TextFileEditorTracker extends Disposable implements IWorkbenchContr
 				return false;
 			}
 
-			if (this.editorService.isOpen({ resource })) {
+			if (this.editorService.isOpened({ resource, typeId: resource.scheme === Schemas.untitled ? UntitledTextEditorInput.ID : FILE_EDITOR_INPUT_ID })) {
 				return false; // model must not be opened already as file
 			}
 

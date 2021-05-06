@@ -132,7 +132,7 @@ export class TextAreaHandler extends ViewPart {
 		this.textArea.setAttribute('aria-haspopup', 'false');
 		this.textArea.setAttribute('aria-autocomplete', 'both');
 
-		if (platform.isWeb && options.get(EditorOption.readOnly)) {
+		if (options.get(EditorOption.domReadOnly) && options.get(EditorOption.readOnly)) {
 			this.textArea.setAttribute('readonly', 'true');
 		}
 
@@ -330,7 +330,7 @@ export class TextAreaHandler extends ViewPart {
 		}));
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		super.dispose();
 	}
 
@@ -416,8 +416,8 @@ export class TextAreaHandler extends ViewPart {
 		this._accessibilitySupport = options.get(EditorOption.accessibilitySupport);
 		const accessibilityPageSize = options.get(EditorOption.accessibilityPageSize);
 		if (this._accessibilitySupport === AccessibilitySupport.Enabled && accessibilityPageSize === EditorOptions.accessibilityPageSize.defaultValue) {
-			// If a screen reader is attached and the default value is not set we shuold automatically increase the page size to 1000 for a better experience
-			this._accessibilityPageSize = 2000;
+			// If a screen reader is attached and the default value is not set we shuold automatically increase the page size to 500 for a better experience
+			this._accessibilityPageSize = 500;
 		} else {
 			this._accessibilityPageSize = accessibilityPageSize;
 		}
@@ -425,7 +425,7 @@ export class TextAreaHandler extends ViewPart {
 
 	// --- begin event handlers
 
-	public onConfigurationChanged(e: viewEvents.ViewConfigurationChangedEvent): boolean {
+	public override onConfigurationChanged(e: viewEvents.ViewConfigurationChangedEvent): boolean {
 		const options = this._context.configuration.options;
 		const layoutInfo = options.get(EditorOption.layoutInfo);
 
@@ -440,8 +440,8 @@ export class TextAreaHandler extends ViewPart {
 		this.textArea.setAttribute('aria-label', this._getAriaLabel(options));
 		this.textArea.setAttribute('tabindex', String(options.get(EditorOption.tabIndex)));
 
-		if (platform.isWeb && e.hasChanged(EditorOption.readOnly)) {
-			if (options.get(EditorOption.readOnly)) {
+		if (e.hasChanged(EditorOption.domReadOnly) || e.hasChanged(EditorOption.readOnly)) {
+			if (options.get(EditorOption.domReadOnly) && options.get(EditorOption.readOnly)) {
 				this.textArea.setAttribute('readonly', 'true');
 			} else {
 				this.textArea.removeAttribute('readonly');
@@ -454,34 +454,34 @@ export class TextAreaHandler extends ViewPart {
 
 		return true;
 	}
-	public onCursorStateChanged(e: viewEvents.ViewCursorStateChangedEvent): boolean {
+	public override onCursorStateChanged(e: viewEvents.ViewCursorStateChangedEvent): boolean {
 		this._selections = e.selections.slice(0);
 		this._modelSelections = e.modelSelections.slice(0);
 		this._textAreaInput.writeScreenReaderContent('selection changed');
 		return true;
 	}
-	public onDecorationsChanged(e: viewEvents.ViewDecorationsChangedEvent): boolean {
+	public override onDecorationsChanged(e: viewEvents.ViewDecorationsChangedEvent): boolean {
 		// true for inline decorations that can end up relayouting text
 		return true;
 	}
-	public onFlushed(e: viewEvents.ViewFlushedEvent): boolean {
+	public override onFlushed(e: viewEvents.ViewFlushedEvent): boolean {
 		return true;
 	}
-	public onLinesChanged(e: viewEvents.ViewLinesChangedEvent): boolean {
+	public override onLinesChanged(e: viewEvents.ViewLinesChangedEvent): boolean {
 		return true;
 	}
-	public onLinesDeleted(e: viewEvents.ViewLinesDeletedEvent): boolean {
+	public override onLinesDeleted(e: viewEvents.ViewLinesDeletedEvent): boolean {
 		return true;
 	}
-	public onLinesInserted(e: viewEvents.ViewLinesInsertedEvent): boolean {
+	public override onLinesInserted(e: viewEvents.ViewLinesInsertedEvent): boolean {
 		return true;
 	}
-	public onScrollChanged(e: viewEvents.ViewScrollChangedEvent): boolean {
+	public override onScrollChanged(e: viewEvents.ViewScrollChangedEvent): boolean {
 		this._scrollLeft = e.scrollLeft;
 		this._scrollTop = e.scrollTop;
 		return true;
 	}
-	public onZonesChanged(e: viewEvents.ViewZonesChangedEvent): boolean {
+	public override onZonesChanged(e: viewEvents.ViewZonesChangedEvent): boolean {
 		return true;
 	}
 

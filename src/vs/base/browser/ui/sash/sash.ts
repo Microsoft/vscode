@@ -81,6 +81,13 @@ export function setGlobalSashSize(size: number): void {
 	onDidChangeGlobalSize.fire(size);
 }
 
+let globalHoverDelay = 300;
+const onDidChangeHoverDelay = new Emitter<number>();
+export function setGlobalHoverDelay(size: number): void {
+	globalHoverDelay = size;
+	onDidChangeHoverDelay.fire(size);
+}
+
 export class Sash extends Disposable {
 
 	private el: HTMLElement;
@@ -88,7 +95,8 @@ export class Sash extends Disposable {
 	private hidden: boolean;
 	private orientation!: Orientation;
 	private size: number;
-	private hoverDelayer = this._register(new Delayer(300));
+	private hoverDelay = globalHoverDelay;
+	private hoverDelayer = this._register(new Delayer(this.hoverDelay));
 
 	private _state: SashState = SashState.Enabled;
 	get state(): SashState { return this._state; }
@@ -203,7 +211,7 @@ export class Sash extends Disposable {
 		this._register(domEvent(this.el, 'mouseleave')(() => Sash.onMouseLeave(this)));
 
 		this._register(Gesture.addTarget(this.el));
-		this._register(domEvent(this.el, EventType.Start)(this.onTouchStart, this));
+		this._register(domEvent(this.el, EventType.Start)(e => this.onTouchStart(e as GestureEvent), this));
 
 		if (typeof options.size === 'number') {
 			this.size = options.size;
@@ -220,6 +228,8 @@ export class Sash extends Disposable {
 				this.layout();
 			}));
 		}
+
+		this._register(onDidChangeHoverDelay.event(delay => this.hoverDelay = delay));
 
 		this.hidden = false;
 		this.layoutProvider = layoutProvider;
@@ -403,7 +413,7 @@ export class Sash extends Disposable {
 			sash.hoverDelayer.cancel();
 			sash.el.classList.add('hover');
 		} else {
-			sash.hoverDelayer.trigger(() => sash.el.classList.add('hover'));
+			sash.hoverDelayer.trigger(() => sash.el.classList.add('hover'), sash.hoverDelay).then(undefined, () => { });
 		}
 
 		if (!fromLinkedSash && sash.linkedSash) {
@@ -418,6 +428,10 @@ export class Sash extends Disposable {
 		if (!fromLinkedSash && sash.linkedSash) {
 			Sash.onMouseLeave(sash.linkedSash, true);
 		}
+	}
+
+	clearSashHoverState(): void {
+		Sash.onMouseLeave(this);
 	}
 
 	layout(): void {
@@ -474,7 +488,7 @@ export class Sash extends Disposable {
 		return undefined;
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		super.dispose();
 		this.el.remove();
 	}

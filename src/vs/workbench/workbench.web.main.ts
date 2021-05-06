@@ -56,9 +56,10 @@ import 'vs/workbench/services/extensionResourceLoader/browser/extensionResourceL
 import 'vs/workbench/services/path/browser/pathService';
 import 'vs/workbench/services/themes/browser/browserHostColorSchemeService';
 import 'vs/workbench/services/encryption/browser/encryptionService';
-import 'vs/workbench/services/backup/browser/backupFileService';
+import 'vs/workbench/services/workingCopy/browser/workingCopyBackupService';
 import 'vs/workbench/services/remote/browser/tunnelServiceImpl';
 import 'vs/workbench/services/userDataSync/browser/userDataAutoSyncEnablementService';
+import 'vs/workbench/services/files/browser/elevatedFileService';
 
 import { registerSingleton } from 'vs/platform/instantiation/common/extensions';
 import { IAccessibilityService } from 'vs/platform/accessibility/common/accessibility';
@@ -79,6 +80,8 @@ import { UserDataSyncService } from 'vs/platform/userDataSync/common/userDataSyn
 import { IUserDataSyncAccountService, UserDataSyncAccountService } from 'vs/platform/userDataSync/common/userDataSyncAccount';
 import { UserDataAutoSyncService } from 'vs/platform/userDataSync/common/userDataAutoSyncService';
 import { AccessibilityService } from 'vs/platform/accessibility/common/accessibilityService';
+import { ICustomEndpointTelemetryService } from 'vs/platform/telemetry/common/telemetry';
+import { NullEndpointTelemetryService } from 'vs/platform/telemetry/common/telemetryUtils';
 import { ITitleService } from 'vs/workbench/services/title/common/titleService';
 import { TitlebarPart } from 'vs/workbench/browser/parts/titlebar/titlebarPart';
 import { ITimerService, TimerService } from 'vs/workbench/services/timer/browser/timerService';
@@ -100,6 +103,7 @@ registerSingleton(ITitleService, TitlebarPart);
 registerSingleton(IExtensionTipsService, ExtensionTipsService);
 registerSingleton(ITimerService, TimerService);
 registerSingleton(IConfigurationResolverService, ConfigurationResolverService, true);
+registerSingleton(ICustomEndpointTelemetryService, NullEndpointTelemetryService, true);
 
 //#endregion
 
@@ -111,9 +115,6 @@ import 'vs/workbench/contrib/output/common/outputChannelModelService';
 
 // Explorer
 import 'vs/workbench/contrib/files/browser/files.web.contribution';
-
-// Backup
-import 'vs/workbench/contrib/backup/browser/backup.web.contribution';
 
 // Preferences
 import 'vs/workbench/contrib/preferences/browser/keyboardLayoutPicker';
@@ -129,6 +130,7 @@ import 'vs/workbench/contrib/extensions/browser/extensions.web.contribution';
 
 // Terminal
 import 'vs/workbench/contrib/terminal/browser/terminal.web.contribution';
+import 'vs/workbench/contrib/externalTerminal/browser/externalTerminal.contribution';
 import 'vs/workbench/contrib/terminal/browser/terminalInstanceService';
 
 // Tasks

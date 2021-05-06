@@ -52,8 +52,8 @@ suite('vscode API - commands', () => {
 		await commands.executeCommand('t1', 'start');
 		registration.dispose();
 		assert.ok(args!);
-		assert.equal(args!.length, 1);
-		assert.equal(args![0], 'start');
+		assert.strictEqual(args!.length, 1);
+		assert.strictEqual(args![0], 'start');
 	});
 
 	test('editorCommand with extra args', function () {
@@ -68,7 +68,7 @@ suite('vscode API - commands', () => {
 				return commands.executeCommand('t1', 12345, commands);
 			}).then(() => {
 				assert.ok(args);
-				assert.equal(args.length, 4);
+				assert.strictEqual(args.length, 4);
 				assert.ok(args[2] === 12345);
 				assert.ok(args[3] === commands);
 				registration.dispose();

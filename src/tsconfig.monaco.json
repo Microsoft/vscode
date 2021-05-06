@@ -2,9 +2,7 @@
 	"extends": "./tsconfig.base.json",
 	"compilerOptions": {
 		"noEmit": true,
-		"types": [
-			"trusted-types"
-		],
+		"types": ["trusted-types"],
 		"paths": {},
 		"module": "amd",
 		"moduleResolution": "classic",
@@ -27,6 +25,7 @@
 		"vs/platform/*/browser/*"
 	],
 	"exclude": [
-		"node_modules/*"
+		"node_modules/*",
+		"vs/platform/files/browser/htmlFileSystemProvider.ts"
 	]
 }

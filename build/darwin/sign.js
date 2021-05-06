@@ -5,7 +5,9 @@
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
 const codesign = require("electron-osx-sign");
+const fs = require("fs-extra");
 const path = require("path");
+const plist = require("plist");
 const util = require("../lib/util");
 const product = require("../../product.json");
 async function main() {
@@ -25,6 +27,7 @@ async function main() {
     const helperAppBaseName = product.nameShort;
     const gpuHelperAppName = helperAppBaseName + ' Helper (GPU).app';
     const rendererHelperAppName = helperAppBaseName + ' Helper (Renderer).app';
+    const infoPlistPath = path.resolve(appRoot, appName, 'Contents', 'Info.plist');
     const defaultOpts = {
         app: path.join(appRoot, appName),
         platform: 'darwin',
@@ -46,6 +49,14 @@ async function main() {
         } });
     const gpuHelperOpts = Object.assign(Object.assign({}, defaultOpts), { app: path.join(appFrameworkPath, gpuHelperAppName), entitlements: path.join(baseDir, 'azure-pipelines', 'darwin', 'helper-gpu-entitlements.plist'), 'entitlements-inherit': path.join(baseDir, 'azure-pipelines', 'darwin', 'helper-gpu-entitlements.plist') });
     const rendererHelperOpts = Object.assign(Object.assign({}, defaultOpts), { app: path.join(appFrameworkPath, rendererHelperAppName), entitlements: path.join(baseDir, 'azure-pipelines', 'darwin', 'helper-renderer-entitlements.plist'), 'entitlements-inherit': path.join(baseDir, 'azure-pipelines', 'darwin', 'helper-renderer-entitlements.plist') });
+    let infoPlistString = await fs.readFile(infoPlistPath, 'utf8');
+    let infoPlistJson = plist.parse(infoPlistString);
+    Object.assign(infoPlistJson, {
+        NSAppleEventsUsageDescription: 'An application in Visual Studio Code wants to use AppleScript.',
+        NSMicrophoneUsageDescription: 'An application in Visual Studio Code wants to use the Microphone.',
+        NSCameraUsageDescription: 'An application in Visual Studio Code wants to use the Camera.'
+    });
+    await fs.writeFile(infoPlistPath, plist.build(infoPlistJson), 'utf8');
     await codesign.signAsync(gpuHelperOpts);
     await codesign.signAsync(rendererHelperOpts);
     await codesign.signAsync(appOpts);

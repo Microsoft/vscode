@@ -52,6 +52,21 @@ export interface ITelemetryService {
 	isOptedIn: boolean;
 }
 
+export interface ITelemetryEndpoint {
+	id: string;
+	aiKey: string;
+	sendErrorTelemetry: boolean;
+}
+
+export const ICustomEndpointTelemetryService = createDecorator<ICustomEndpointTelemetryService>('customEndpointTelemetryService');
+
+export interface ICustomEndpointTelemetryService {
+	readonly _serviceBrand: undefined;
+
+	publicLog(endpoint: ITelemetryEndpoint, eventName: string, data?: ITelemetryData): Promise<void>;
+	publicLogError(endpoint: ITelemetryEndpoint, errorEventName: string, data?: ITelemetryData): Promise<void>;
+}
+
 // Keys
 export const instanceStorageKey = 'telemetry.instanceId';
 export const currentSessionDateStorageKey = 'telemetry.currentSessionDate';

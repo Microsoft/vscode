@@ -83,7 +83,7 @@ export class GlyphHoverWidget extends Widget implements IOverlayWidget {
 		return null;
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		this._editor.removeOverlayWidget(this);
 		super.dispose();
 	}

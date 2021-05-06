@@ -14,6 +14,6 @@
 	"state.passed": "Passed",
 	"state.passedWithDuration": "Passed in {0}",
 
-	"config.enableCodeLens": "Whether code lens on test cases and suites should be visible",
+	"config.enableCodeLens": "Whether CodeLens on test cases and suites should be visible.",
 	"config.enableProblemDiagnostics": "Whether test failures should be reported in the 'problems' view and show as errors in the editor."
 }

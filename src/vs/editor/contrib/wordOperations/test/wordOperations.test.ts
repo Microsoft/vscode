@@ -746,7 +746,10 @@ suite('WordOperations', () => {
 		const mode = new TestMode();
 		const model = createTextModel('a ""', undefined, languageId);
 
-		withTestCodeEditor(null, { model }, (editor, _) => {
+		withTestCodeEditor(null, {
+			model,
+			autoClosingDelete: 'always'
+		}, (editor, _) => {
 			editor.setPosition(new Position(1, 4));
 			deleteWordLeft(editor); assert.strictEqual(model.getLineContent(1), 'a ');
 		});

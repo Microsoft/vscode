@@ -133,13 +133,13 @@ export class MouseHandler extends ViewEventHandler {
 		this._context.addEventHandler(this);
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		this._context.removeEventHandler(this);
 		super.dispose();
 	}
 
 	// --- begin event handlers
-	public onConfigurationChanged(e: viewEvents.ViewConfigurationChangedEvent): boolean {
+	public override onConfigurationChanged(e: viewEvents.ViewConfigurationChangedEvent): boolean {
 		if (e.hasChanged(EditorOption.layoutInfo)) {
 			// layout change
 			const height = this._context.configuration.options.get(EditorOption.layoutInfo).height;
@@ -150,14 +150,14 @@ export class MouseHandler extends ViewEventHandler {
 		}
 		return false;
 	}
-	public onCursorStateChanged(e: viewEvents.ViewCursorStateChangedEvent): boolean {
+	public override onCursorStateChanged(e: viewEvents.ViewCursorStateChangedEvent): boolean {
 		this._mouseDownOperation.onCursorStateChanged(e);
 		return false;
 	}
-	public onFocusChanged(e: viewEvents.ViewFocusChangedEvent): boolean {
+	public override onFocusChanged(e: viewEvents.ViewFocusChangedEvent): boolean {
 		return false;
 	}
-	public onScrollChanged(e: viewEvents.ViewScrollChangedEvent): boolean {
+	public override onScrollChanged(e: viewEvents.ViewScrollChangedEvent): boolean {
 		this._mouseDownOperation.onScrollChanged();
 		return false;
 	}
@@ -311,7 +311,7 @@ class MouseDownOperation extends Disposable {
 		this._lastMouseEvent = null;
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		super.dispose();
 	}
 

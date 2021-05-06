@@ -9,7 +9,8 @@
 		"sideBarTitle.foreground": "#FFFFFF",
 		"selection.background": "#008000",
 		"editor.selectionBackground": "#FFFFFF",
-		"statusBarItem.remoteBackground": "#00000000"
+		"statusBarItem.remoteBackground": "#00000000",
+		"ports.iconRunningProcessForeground": "#FFFFFF"
 	},
 	"tokenColors": [
 		{
@@ -441,7 +442,7 @@
 			"name": "HC Search Editor context line override",
 			"scope": "meta.resultLinePrefix.contextLinePrefix.search",
 			"settings": {
-				"foreground": "#CBEDCB",
+				"foreground": "#CBEDCB"
 			}
 		}
 	],
@@ -450,6 +451,6 @@
 		"newOperator": "#FFFFFF",
 		"stringLiteral": "#ce9178",
 		"customLiteral": "#DCDCAA",
-		"numberLiteral": "#b5cea8",
+		"numberLiteral": "#b5cea8"
 	}
 }

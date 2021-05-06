@@ -17,6 +17,7 @@ import { BrowserDialogHandler } from 'vs/workbench/browser/parts/dialogs/dialogH
 import { DialogService } from 'vs/workbench/services/dialogs/common/dialogService';
 import { LifecyclePhase } from 'vs/workbench/services/lifecycle/common/lifecycle';
 import { Disposable } from 'vs/base/common/lifecycle';
+import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 
 export class DialogHandlerContribution extends Disposable implements IWorkbenchContribution {
 	private readonly model: IDialogsModel;
@@ -30,12 +31,13 @@ export class DialogHandlerContribution extends Disposable implements IWorkbenchC
 		@ILayoutService layoutService: ILayoutService,
 		@IThemeService themeService: IThemeService,
 		@IKeybindingService keybindingService: IKeybindingService,
+		@IInstantiationService instantiationService: IInstantiationService,
 		@IProductService productService: IProductService,
 		@IClipboardService clipboardService: IClipboardService
 	) {
 		super();
 
-		this.impl = new BrowserDialogHandler(logService, layoutService, themeService, keybindingService, productService, clipboardService);
+		this.impl = new BrowserDialogHandler(logService, layoutService, themeService, keybindingService, instantiationService, productService, clipboardService);
 
 		this.model = (this.dialogService as DialogService).model;
 

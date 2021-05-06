@@ -5,26 +5,27 @@
 
 import { isWindows, isMacintosh, setImmediate, globals, INodeProcess } from 'vs/base/common/platform';
 
+let safeProcess: INodeProcess & { nextTick: (callback: (...args: any[]) => void) => void; };
 declare const process: INodeProcess;
 
-let safeProcess: INodeProcess;
-
-// Native node.js environment
-if (typeof process !== 'undefined') {
-	safeProcess = process;
+// Native sandbox environment
+if (typeof globals.vscode !== 'undefined') {
+	const sandboxProcess: INodeProcess = globals.vscode.process;
+	safeProcess = {
+		get platform() { return sandboxProcess.platform; },
+		get env() { return sandboxProcess.env; },
+		cwd() { return sandboxProcess.cwd(); },
+		nextTick(callback: (...args: any[]) => void): void { return setImmediate(callback); }
+	};
 }
 
-// Native sandbox environment
-else if (typeof globals.vscode !== 'undefined') {
+// Native node.js environment
+else if (typeof process !== 'undefined') {
 	safeProcess = {
-
-		// Supported
-		get platform(): 'win32' | 'linux' | 'darwin' { return globals.vscode.process.platform; },
-		get env() { return globals.vscode.process.env; },
-		nextTick(callback: (...args: any[]) => void): void { return setImmediate(callback); },
-
-		// Unsupported
-		cwd(): string { return globals.vscode.process.env['VSCODE_CWD'] || globals.vscode.process.execPath.substr(0, globals.vscode.process.execPath.lastIndexOf(globals.vscode.process.platform === 'win32' ? '\\' : '/')); }
+		get platform() { return process.platform; },
+		get env() { return process.env; },
+		cwd() { return process.env['VSCODE_CWD'] || process.cwd(); },
+		nextTick(callback: (...args: any[]) => void): void { return process.nextTick!(callback); }
 	};
 }
 
@@ -33,16 +34,39 @@ else {
 	safeProcess = {
 
 		// Supported
-		get platform(): 'win32' | 'linux' | 'darwin' { return isWindows ? 'win32' : isMacintosh ? 'darwin' : 'linux'; },
+		get platform() { return isWindows ? 'win32' : isMacintosh ? 'darwin' : 'linux'; },
 		nextTick(callback: (...args: any[]) => void): void { return setImmediate(callback); },
 
 		// Unsupported
 		get env() { return Object.create(null); },
-		cwd(): string { return '/'; }
+		cwd() { return '/'; }
 	};
 }
 
+/**
+ * Provides safe access to the `cwd` property in node.js, sandboxed or web
+ * environments.
+ *
+ * Note: in web, this property is hardcoded to be `/`.
+ */
 export const cwd = safeProcess.cwd;
+
+/**
+ * Provides safe access to the `env` property in node.js, sandboxed or web
+ * environments.
+ *
+ * Note: in web, this property is hardcoded to be `{}`.
+ */
 export const env = safeProcess.env;
+
+/**
+ * Provides safe access to the `platform` property in node.js, sandboxed or web
+ * environments.
+ */
 export const platform = safeProcess.platform;
+
+/**
+ * Provides safe access to the `nextTick` method in node.js, sandboxed or web
+ * environments.
+ */
 export const nextTick = safeProcess.nextTick;

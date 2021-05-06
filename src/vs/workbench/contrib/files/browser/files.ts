@@ -6,7 +6,7 @@
 import { URI, UriComponents } from 'vs/base/common/uri';
 import { IListService } from 'vs/platform/list/browser/listService';
 import { OpenEditor, SortOrder } from 'vs/workbench/contrib/files/common/files';
-import { EditorResourceAccessor, SideBySideEditor, IEditorIdentifier, EditorInput, IEditorInputFactory } from 'vs/workbench/common/editor';
+import { EditorResourceAccessor, SideBySideEditor, IEditorIdentifier, EditorInput, IEditorInputSerializer } from 'vs/workbench/common/editor';
 import { List } from 'vs/base/browser/ui/list/listWidget';
 import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
 import { ExplorerItem } from 'vs/workbench/contrib/files/common/explorerModel';
@@ -29,14 +29,14 @@ interface ISerializedFileEditorInput {
 	modeId?: string;
 }
 
-export class FileEditorInputFactory implements IEditorInputFactory {
+export class FileEditorInputSerializer implements IEditorInputSerializer {
 
 	canSerialize(editorInput: EditorInput): boolean {
 		return true;
 	}
 
 	serialize(editorInput: EditorInput): string {
-		const fileEditorInput = <FileEditorInput>editorInput;
+		const fileEditorInput = editorInput as FileEditorInput;
 		const resource = fileEditorInput.resource;
 		const preferredResource = fileEditorInput.preferredResource;
 		const serializedFileEditorInput: ISerializedFileEditorInput = {
@@ -52,7 +52,7 @@ export class FileEditorInputFactory implements IEditorInputFactory {
 	}
 
 	deserialize(instantiationService: IInstantiationService, serializedEditorInput: string): FileEditorInput {
-		return instantiationService.invokeFunction<FileEditorInput>(accessor => {
+		return instantiationService.invokeFunction(accessor => {
 			const serializedFileEditorInput: ISerializedFileEditorInput = JSON.parse(serializedEditorInput);
 			const resource = URI.revive(serializedFileEditorInput.resourceJSON);
 			const preferredResource = URI.revive(serializedFileEditorInput.preferredResourceJSON);
@@ -84,6 +84,7 @@ export interface IExplorerService {
 	// If undefined is passed checks if any element is currently being edited.
 	isEditable(stat: ExplorerItem | undefined): boolean;
 	findClosest(resource: URI): ExplorerItem | null;
+	findClosestRoot(resource: URI): ExplorerItem | null;
 	refresh(): Promise<void>;
 	setToCopy(stats: ExplorerItem[], cut: boolean): Promise<void>;
 	isCut(stat: ExplorerItem): boolean;

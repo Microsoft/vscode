@@ -224,7 +224,7 @@ export const serializeSearchResultForEditor =
 				: localize('noResults', "No Results"),
 		];
 		if (limitHit) {
-			info.push(localize('searchMaxResultsWarning', "The result set only contains a subset of all matches. Please be more specific in your search to narrow down the results."));
+			info.push(localize('searchMaxResultsWarning', "The result set only contains a subset of all matches. Be more specific in your search to narrow down the results."));
 		}
 		info.push('');
 

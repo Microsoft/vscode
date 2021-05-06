@@ -112,7 +112,7 @@ class CSSBasedConfiguration extends Disposable {
 		this._evictUntrustedReadingsTimeout = -1;
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		if (this._evictUntrustedReadingsTimeout !== -1) {
 			clearTimeout(this._evictUntrustedReadingsTimeout);
 			this._evictUntrustedReadingsTimeout = -1;
@@ -353,11 +353,11 @@ export class Configuration extends CommonEditorConfiguration {
 		this._recomputeOptions();
 	}
 
-	public observeReferenceElement(dimension?: IDimension): void {
+	public override observeReferenceElement(dimension?: IDimension): void {
 		this._elementSizeObserver.observe(dimension);
 	}
 
-	public updatePixelRatio(): void {
+	public override updatePixelRatio(): void {
 		this._recomputeOptions();
 	}
 

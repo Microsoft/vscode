@@ -838,12 +838,8 @@ export class LcsDiff {
 			let modifiedStop = 0;
 			if (i > 0) {
 				const prevChange = changes[i - 1];
-				if (prevChange.originalLength > 0) {
-					originalStop = prevChange.originalStart + prevChange.originalLength;
-				}
-				if (prevChange.modifiedLength > 0) {
-					modifiedStop = prevChange.modifiedStart + prevChange.modifiedLength;
-				}
+				originalStop = prevChange.originalStart + prevChange.originalLength;
+				modifiedStop = prevChange.modifiedStart + prevChange.modifiedLength;
 			}
 
 			const checkOriginal = change.originalLength > 0;
@@ -868,7 +864,11 @@ export class LcsDiff {
 					break;
 				}
 
-				const score = this._boundaryScore(originalStart, change.originalLength, modifiedStart, change.modifiedLength);
+				const touchingPreviousChange = (originalStart === originalStop && modifiedStart === modifiedStop);
+				const score = (
+					(touchingPreviousChange ? 5 : 0)
+					+ this._boundaryScore(originalStart, change.originalLength, modifiedStart, change.modifiedLength)
+				);
 
 				if (score > bestScore) {
 					bestScore = score;
@@ -878,6 +878,14 @@ export class LcsDiff {
 
 			change.originalStart -= bestDelta;
 			change.modifiedStart -= bestDelta;
+
+			const mergedChangeArr: Array<DiffChange | null> = [null];
+			if (i > 0 && this.ChangesOverlap(changes[i - 1], changes[i], mergedChangeArr)) {
+				changes[i - 1] = mergedChangeArr[0]!;
+				changes.splice(i, 1);
+				i++;
+				continue;
+			}
 		}
 
 		// There could be multiple longest common substrings.

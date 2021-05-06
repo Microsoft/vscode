@@ -43,7 +43,7 @@ function code() {
 	export ELECTRON_ENABLE_LOGGING=1
 
 	# Launch Code
-	exec "$CODE" . --no-sandbox "$@"
+	exec "$CODE" . "$@"
 }
 
 function code-wsl()

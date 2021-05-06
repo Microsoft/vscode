@@ -29,7 +29,7 @@ class TagClosing extends Disposable {
 			this._disposables);
 	}
 
-	public dispose() {
+	public override dispose() {
 		super.dispose();
 		this._disposed = true;
 

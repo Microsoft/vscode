@@ -73,4 +73,5 @@ export const MODIFIED_SETTING_TAG = 'modified';
 export const EXTENSION_SETTING_TAG = 'ext:';
 export const FEATURE_SETTING_TAG = 'feature:';
 export const ID_SETTING_TAG = 'id:';
+export const REQUIRE_TRUSTED_WORKSPACE_SETTING_TAG = 'requireTrustedWorkspace';
 export const KEYBOARD_LAYOUT_OPEN_PICKER = 'workbench.action.openKeyboardLayoutPicker';

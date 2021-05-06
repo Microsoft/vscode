@@ -4,7 +4,7 @@
 		"If you want to provide a fix or improvement, please create a pull request against the original repository.",
 		"Once accepted there, we are happy to receive an update request."
 	],
-	"version": "https://github.com/textmate/swift.tmbundle/commit/2ee3d7c63f7dd2c769167278b48e3716d1b60b26",
+	"version": "https://github.com/textmate/swift.tmbundle/commit/8c7672d74c1baa4e6944a05ac6c57a623532f18b",
 	"name": "Swift",
 	"scopeName": "source.swift",
 	"comment": "See swift.tmbundle/grammar-test.swift for test cases.",
@@ -1280,7 +1280,7 @@
 					"name": "meta.import.swift",
 					"patterns": [
 						{
-							"begin": "\\G(?!;|$|//|/\\*)(?:(typealias|struct|class|enum|protocol|var|func)\\s+)?",
+							"begin": "\\G(?!;|$|//|/\\*)(?:(typealias|struct|class|actor|enum|protocol|var|func)\\s+)?",
 							"beginCaptures": {
 								"1": {
 									"name": "storage.modifier.swift"
@@ -1908,7 +1908,7 @@
 				"type": {
 					"patterns": [
 						{
-							"begin": "\\b(class(?!\\s+(?:func|var|let)\\b)|struct)\\s+((?<q>`?)[\\p{L}_][\\p{L}_\\p{N}\\p{M}]*(\\k<q>))",
+							"begin": "\\b(class(?!\\s+(?:func|var|let)\\b)|struct|actor)\\s+((?<q>`?)[\\p{L}_][\\p{L}_\\p{N}\\p{M}]*(\\k<q>))",
 							"beginCaptures": {
 								"1": {
 									"name": "storage.type.$1.swift"
@@ -2337,7 +2337,7 @@
 			],
 			"repository": {
 				"availability-condition": {
-					"begin": "\\B(#available)(\\()",
+					"begin": "\\B(#(?:un)?available)(\\()",
 					"beginCaptures": {
 						"1": {
 							"name": "support.function.availability-condition.swift"
@@ -2645,7 +2645,7 @@
 					"name": "keyword.other.declaration-specifier.swift"
 				},
 				{
-					"match": "(?<!\\.)\\b(class|enum|extension|precedencegroup|protocol|struct)\\b",
+					"match": "(?<!\\.)\\b(class|enum|extension|precedencegroup|protocol|struct|actor)\\b",
 					"name": "storage.type.$1.swift"
 				},
 				{

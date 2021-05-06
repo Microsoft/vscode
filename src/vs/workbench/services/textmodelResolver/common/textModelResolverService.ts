@@ -9,8 +9,8 @@ import { ITextModel } from 'vs/editor/common/model';
 import { IDisposable, toDisposable, IReference, ReferenceCollection, Disposable } from 'vs/base/common/lifecycle';
 import { IModelService } from 'vs/editor/common/services/modelService';
 import { ResourceEditorModel } from 'vs/workbench/common/editor/resourceEditorModel';
-import { ITextFileService, TextFileLoadReason } from 'vs/workbench/services/textfile/common/textfiles';
-import * as network from 'vs/base/common/network';
+import { ITextFileService, TextFileResolveReason } from 'vs/workbench/services/textfile/common/textfiles';
+import { Schemas } from 'vs/base/common/network';
 import { ITextModelService, ITextModelContentProvider, ITextEditorModel, IResolvedTextEditorModel } from 'vs/editor/common/services/resolverService';
 import { TextFileEditorModel } from 'vs/workbench/services/textfile/common/textFileEditorModel';
 import { IFileService } from 'vs/platform/files/common/files';
@@ -44,7 +44,7 @@ class ResourceModelCollection extends ReferenceCollection<Promise<ITextEditorMod
 
 		// inMemory Schema: go through model service cache
 		const resource = URI.parse(key);
-		if (resource.scheme === network.Schemas.inMemory) {
+		if (resource.scheme === Schemas.inMemory) {
 			const cachedModel = this.modelService.getModel(resource);
 			if (!cachedModel) {
 				throw new Error(`Unable to resolve inMemory resource ${key}`);
@@ -54,13 +54,13 @@ class ResourceModelCollection extends ReferenceCollection<Promise<ITextEditorMod
 		}
 
 		// Untitled Schema: go through untitled text service
-		if (resource.scheme === network.Schemas.untitled) {
+		if (resource.scheme === Schemas.untitled) {
 			return this.textFileService.untitled.resolve({ untitledResource: resource });
 		}
 
 		// File or remote file: go through text file service
 		if (this.fileService.canHandleResource(resource)) {
-			return this.textFileService.files.resolve(resource, { reason: TextFileLoadReason.REFERENCE });
+			return this.textFileService.files.resolve(resource, { reason: TextFileResolveReason.REFERENCE });
 		}
 
 		// Virtual documents
@@ -84,7 +84,7 @@ class ResourceModelCollection extends ReferenceCollection<Promise<ITextEditorMod
 
 		// untitled and inMemory are bound to a different lifecycle
 		const resource = URI.parse(key);
-		if (resource.scheme === network.Schemas.untitled || resource.scheme === network.Schemas.inMemory) {
+		if (resource.scheme === Schemas.untitled || resource.scheme === Schemas.inMemory) {
 			return;
 		}
 
@@ -215,7 +215,7 @@ export class TextModelResolverService extends Disposable implements ITextModelSe
 	}
 
 	canHandleResource(resource: URI): boolean {
-		if (this.fileService.canHandleResource(resource) || resource.scheme === network.Schemas.untitled || resource.scheme === network.Schemas.inMemory) {
+		if (this.fileService.canHandleResource(resource) || resource.scheme === Schemas.untitled || resource.scheme === Schemas.inMemory) {
 			return true; // we handle file://, untitled:// and inMemory:// automatically
 		}
 

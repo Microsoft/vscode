@@ -28,6 +28,8 @@ namespace NotebookRendererContribution {
 	export const displayName = 'displayName';
 	export const mimeTypes = 'mimeTypes';
 	export const entrypoint = 'entrypoint';
+	export const hardDependencies = 'dependencies';
+	export const optionalDependencies = 'optionalDependencies';
 }
 
 export interface INotebookRendererContribution {
@@ -36,18 +38,24 @@ export interface INotebookRendererContribution {
 	readonly [NotebookRendererContribution.displayName]: string;
 	readonly [NotebookRendererContribution.mimeTypes]?: readonly string[];
 	readonly [NotebookRendererContribution.entrypoint]: string;
+	readonly [NotebookRendererContribution.hardDependencies]: readonly string[];
+	readonly [NotebookRendererContribution.optionalDependencies]: readonly string[];
 }
 
-enum NotebookMarkdownRendererContribution {
+enum NotebookMarkupRendererContribution {
 	id = 'id',
 	displayName = 'displayName',
 	entrypoint = 'entrypoint',
+	dependsOn = 'dependsOn',
+	mimeTypes = 'mimeTypes',
 }
 
-export interface INotebookMarkdownRendererContribution {
-	readonly [NotebookMarkdownRendererContribution.id]?: string;
-	readonly [NotebookMarkdownRendererContribution.displayName]: string;
-	readonly [NotebookMarkdownRendererContribution.entrypoint]: string;
+export interface INotebookMarkupRendererContribution {
+	readonly [NotebookMarkupRendererContribution.id]?: string;
+	readonly [NotebookMarkupRendererContribution.displayName]: string;
+	readonly [NotebookMarkupRendererContribution.entrypoint]: string;
+	readonly [NotebookMarkupRendererContribution.dependsOn]: string | undefined;
+	readonly [NotebookMarkupRendererContribution.mimeTypes]: string[] | undefined;
 }
 
 const notebookProviderContribution: IJSONSchema = {
@@ -141,32 +149,53 @@ const notebookRendererContribution: IJSONSchema = {
 				type: 'string',
 				description: nls.localize('contributes.notebook.renderer.entrypoint', 'File to load in the webview to render the extension.'),
 			},
+			[NotebookRendererContribution.hardDependencies]: {
+				type: 'array',
+				uniqueItems: true,
+				items: { type: 'string' },
+				markdownDescription: nls.localize('contributes.notebook.renderer.hardDependencies', 'List of kernel dependencies the renderer requires. If any of the dependencies are present in the `NotebookKernel.preloads`, the renderer can be used.'),
+			},
+			[NotebookRendererContribution.optionalDependencies]: {
+				type: 'array',
+				uniqueItems: true,
+				items: { type: 'string' },
+				markdownDescription: nls.localize('contributes.notebook.renderer.optionalDependencies', 'List of soft kernel dependencies the renderer can make use of. If any of the dependencies are present in the `NotebookKernel.preloads`, the renderer will be preferred over renderers that don\'t interact with the kernel.'),
+			},
 		}
 	}
 };
-const notebookMarkdownRendererContribution: IJSONSchema = {
+const notebookMarkupRendererContribution: IJSONSchema = {
 	description: nls.localize('contributes.notebook.markdownRenderer', 'Contributes a renderer for markdown cells in notebooks.'),
 	type: 'array',
 	defaultSnippets: [{ body: [{ id: '', displayName: '', entrypoint: '' }] }],
 	items: {
 		type: 'object',
 		required: [
-			NotebookMarkdownRendererContribution.id,
-			NotebookMarkdownRendererContribution.displayName,
-			NotebookMarkdownRendererContribution.entrypoint,
+			NotebookMarkupRendererContribution.id,
+			NotebookMarkupRendererContribution.displayName,
+			NotebookMarkupRendererContribution.entrypoint,
 		],
 		properties: {
-			[NotebookMarkdownRendererContribution.id]: {
+			[NotebookMarkupRendererContribution.id]: {
 				type: 'string',
 				description: nls.localize('contributes.notebook.markdownRenderer.id', 'Unique identifier of the notebook markdown renderer.'),
 			},
-			[NotebookMarkdownRendererContribution.displayName]: {
+			[NotebookMarkupRendererContribution.displayName]: {
 				type: 'string',
 				description: nls.localize('contributes.notebook.markdownRenderer.displayName', 'Human readable name of the notebook markdown renderer.'),
 			},
-			[NotebookMarkdownRendererContribution.entrypoint]: {
+			[NotebookMarkupRendererContribution.entrypoint]: {
 				type: 'string',
 				description: nls.localize('contributes.notebook.markdownRenderer.entrypoint', 'File to load in the webview to render the extension.'),
+			},
+			[NotebookMarkupRendererContribution.mimeTypes]: {
+				type: 'array',
+				items: { type: 'string' },
+				description: nls.localize('contributes.notebook.markdownRenderer.mimeTypes', 'The mime type that the renderer handles.'),
+			},
+			[NotebookMarkupRendererContribution.dependsOn]: {
+				type: 'string',
+				description: nls.localize('contributes.notebook.markdownRenderer.dependsOn', 'If specified, this renderer augments another renderer instead of providing full rendering.'),
 			},
 		}
 	}
@@ -184,8 +213,8 @@ export const notebookRendererExtensionPoint = ExtensionsRegistry.registerExtensi
 		jsonSchema: notebookRendererContribution
 	});
 
-export const notebookMarkdownRendererExtensionPoint = ExtensionsRegistry.registerExtensionPoint<INotebookMarkdownRendererContribution[]>(
+export const notebookMarkupRendererExtensionPoint = ExtensionsRegistry.registerExtensionPoint<INotebookMarkupRendererContribution[]>(
 	{
-		extensionPoint: 'notebookMarkdownRenderer',
-		jsonSchema: notebookMarkdownRendererContribution
+		extensionPoint: 'notebookMarkupRenderers',
+		jsonSchema: notebookMarkupRendererContribution
 	});

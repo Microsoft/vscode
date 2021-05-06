@@ -28,5 +28,4 @@ export class MockMode extends Disposable implements IMode {
 export class StaticLanguageSelector implements ILanguageSelection {
 	readonly onDidChange: Event<LanguageIdentifier> = Event.None;
 	constructor(public readonly languageIdentifier: LanguageIdentifier) { }
-	public dispose(): void { }
 }

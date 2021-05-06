@@ -26,6 +26,12 @@
     "onCommand:imagePreview.zoomIn",
     "onCommand:imagePreview.zoomOut"
   ],
+  "capabilities": {
+    "virtualWorkspaces": true,
+    "untrustedWorkspaces": {
+      "supported": true
+    }
+  },
   "contributes": {
     "customEditors": [
       {
@@ -75,7 +81,7 @@
     "watch-web": "npx webpack-cli --config extension-browser.webpack.config --mode none --watch --info-verbosity verbose"
   },
   "dependencies": {
-    "vscode-extension-telemetry": "0.1.1",
+    "vscode-extension-telemetry": "0.1.7",
     "vscode-nls": "^4.0.0"
   },
   "repository": {

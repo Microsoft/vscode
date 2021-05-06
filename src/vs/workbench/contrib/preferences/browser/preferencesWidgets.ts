@@ -29,7 +29,7 @@ import { Schemas } from 'vs/base/common/network';
 import { activeContrastBorder, badgeBackground, badgeForeground, contrastBorder, focusBorder } from 'vs/platform/theme/common/colorRegistry';
 import { attachInputBoxStyler, attachStylerCallback } from 'vs/platform/theme/common/styler';
 import { ICssStyleCollector, IColorTheme, IThemeService, registerThemingParticipant, ThemeIcon } from 'vs/platform/theme/common/themeService';
-import { IWorkspaceContextService, IWorkspaceFolder, WorkbenchState } from 'vs/platform/workspace/common/workspace';
+import { isWorkspaceFolder, IWorkspaceContextService, IWorkspaceFolder, WorkbenchState } from 'vs/platform/workspace/common/workspace';
 import { PANEL_ACTIVE_TITLE_BORDER, PANEL_ACTIVE_TITLE_FOREGROUND, PANEL_INACTIVE_TITLE_FOREGROUND } from 'vs/workbench/common/theme';
 import { IWorkbenchEnvironmentService } from 'vs/workbench/services/environment/common/environmentService';
 import { ISettingsGroup, IPreferencesService } from 'vs/workbench/services/preferences/common/preferences';
@@ -97,7 +97,7 @@ export class SettingsHeaderWidget extends Widget implements IViewZone {
 		}
 	}
 
-	dispose() {
+	override dispose() {
 		this.editor.changeViewZones(accessor => {
 			accessor.removeZone(this.id);
 		});
@@ -110,7 +110,7 @@ export class DefaultSettingsHeaderWidget extends SettingsHeaderWidget {
 	private _onClick = this._register(new Emitter<void>());
 	readonly onClick: Event<void> = this._onClick.event;
 
-	protected create() {
+	protected override create() {
 		super.create();
 
 		this.toggleMessage(true);
@@ -302,7 +302,7 @@ export class SettingsGroupTitleWidget extends Widget implements IViewZone {
 		return false;
 	}
 
-	dispose() {
+	override dispose() {
 		this.editor.changeViewZones(accessor => {
 			accessor.removeZone(this.id);
 		});
@@ -352,7 +352,7 @@ export class FolderSettingsActionViewItem extends BaseActionViewItem {
 		this.update();
 	}
 
-	render(container: HTMLElement): void {
+	override render(container: HTMLElement): void {
 		this.element = container;
 
 		this.container = container;
@@ -383,7 +383,7 @@ export class FolderSettingsActionViewItem extends BaseActionViewItem {
 		}
 	}
 
-	onClick(event: DOM.EventLike): void {
+	override onClick(event: DOM.EventLike): void {
 		DOM.EventHelper.stop(event, true);
 		if (!this.folder || this._action.checked) {
 			this.showMenu();
@@ -392,11 +392,11 @@ export class FolderSettingsActionViewItem extends BaseActionViewItem {
 		}
 	}
 
-	protected updateEnabled(): void {
+	protected override updateEnabled(): void {
 		this.update();
 	}
 
-	protected updateChecked(): void {
+	protected override updateChecked(): void {
 		this.update();
 	}
 
@@ -539,8 +539,9 @@ export class SettingsTargetsWidget extends Widget {
 
 		this.workspaceSettings = new Action('workspaceSettings', localize('workspaceSettings', "Workspace"), '.settings-tab', false, () => this.updateTarget(ConfigurationTarget.WORKSPACE));
 
-		const folderSettingsAction = new Action('folderSettings', localize('folderSettings', "Folder"), '.settings-tab', false,
-			(folder: IWorkspaceFolder | null) => this.updateTarget(folder ? folder.uri : ConfigurationTarget.USER_LOCAL));
+		const folderSettingsAction = new Action('folderSettings', localize('folderSettings', "Folder"), '.settings-tab', false, async folder => {
+			this.updateTarget(isWorkspaceFolder(folder) ? folder.uri : ConfigurationTarget.USER_LOCAL);
+		});
 		this.folderSettings = this.instantiationService.createInstance(FolderSettingsActionViewItem, folderSettingsAction);
 
 		this.update();
@@ -752,7 +753,7 @@ export class SearchWidget extends Widget {
 		return this.inputBox.value = value;
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		if (this.options.focusKey) {
 			this.options.focusKey.set(false);
 		}
@@ -819,7 +820,7 @@ export class EditPreferenceWidget<T> extends Disposable {
 		return this._editPreferenceDecoration.length > 0;
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this.hide();
 		super.dispose();
 	}

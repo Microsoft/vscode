@@ -535,7 +535,7 @@ export class MainThreadComments extends Disposable implements MainThreadComments
 		this._commentService.updateComments(providerId, event);
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		super.dispose();
 		this._workspaceProviders.forEach(value => dispose(value));
 		this._workspaceProviders.clear();

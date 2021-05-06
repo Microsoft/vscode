@@ -14,15 +14,20 @@ cson-parser@^1.3.3:
   dependencies:
     coffee-script "^1.10.0"
 
+esbuild@^0.11.12:
+  version "0.11.12"
+  resolved "https://registry.yarnpkg.com/esbuild/-/esbuild-0.11.12.tgz#8cbe15bcb44212624c3e77c896a835f74dc71c3c"
+  integrity sha512-c8cso/1RwVj+fbDvLtUgSG4ZJQ0y9Zdrl6Ot/GAjyy4pdMCHaFnDMts5gqFnWRPLajWtEnI+3hlET4R9fVoZng==
+
 fast-plist@0.1.2:
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/fast-plist/-/fast-plist-0.1.2.tgz#a45aff345196006d406ca6cdcd05f69051ef35b8"
   integrity sha1-pFr/NFGWAG1AbKbNzQX2kFHvNbg=
 
-typescript@4.2.3:
-  version "4.2.3"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.2.3.tgz#39062d8019912d43726298f09493d598048c1ce3"
-  integrity sha512-qOcYwxaByStAWrBf4x0fibwZvMRG+r4cQoTjbPtUlrWjBHbmCAww1i448U0GJ+3cNNEtebDteo/cHOR3xJ4wEw==
+typescript@4.3.0-dev.20210505:
+  version "4.3.0-dev.20210505"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.3.0-dev.20210505.tgz#e07b21e12e1768ee3a3dab04b0264da4d10a8d96"
+  integrity sha512-nwD0tapmG8DX8GLBeDCEYqiYjj5hMUB4eXiw7Z4MYkjlAD1VQ0gJAaf7BKkGRU5PpuDFGYH+elqgJckggKVW/A==
 
 vscode-grammar-updater@^1.0.3:
   version "1.0.3"

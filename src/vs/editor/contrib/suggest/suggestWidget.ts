@@ -21,7 +21,7 @@ import { Context as SuggestContext, CompletionItem } from './suggest';
 import { CompletionModel } from './completionModel';
 import { attachListStyler } from 'vs/platform/theme/common/styler';
 import { IThemeService, IColorTheme, registerThemingParticipant } from 'vs/platform/theme/common/themeService';
-import { registerColor, editorWidgetBackground, quickInputListFocusBackground, activeContrastBorder, listHighlightForeground, editorForeground, editorWidgetBorder, focusBorder, textLinkForeground, textCodeBlockBackground } from 'vs/platform/theme/common/colorRegistry';
+import { registerColor, editorWidgetBackground, quickInputListFocusBackground, activeContrastBorder, listHighlightForeground, editorForeground, editorWidgetBorder, focusBorder, textLinkForeground, textCodeBlockBackground, quickInputListFocusForeground, listFocusHighlightForeground } from 'vs/platform/theme/common/colorRegistry';
 import { IStorageService, StorageScope, StorageTarget } from 'vs/platform/storage/common/storage';
 import { TimeoutTimer, CancelablePromise, createCancelablePromise, disposableTimeout } from 'vs/base/common/async';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
@@ -40,8 +40,10 @@ import { clamp } from 'vs/base/common/numbers';
 export const editorSuggestWidgetBackground = registerColor('editorSuggestWidget.background', { dark: editorWidgetBackground, light: editorWidgetBackground, hc: editorWidgetBackground }, nls.localize('editorSuggestWidgetBackground', 'Background color of the suggest widget.'));
 export const editorSuggestWidgetBorder = registerColor('editorSuggestWidget.border', { dark: editorWidgetBorder, light: editorWidgetBorder, hc: editorWidgetBorder }, nls.localize('editorSuggestWidgetBorder', 'Border color of the suggest widget.'));
 export const editorSuggestWidgetForeground = registerColor('editorSuggestWidget.foreground', { dark: editorForeground, light: editorForeground, hc: editorForeground }, nls.localize('editorSuggestWidgetForeground', 'Foreground color of the suggest widget.'));
+export const editorSuggestWidgetSelectedForeground = registerColor('editorSuggestWidget.selectedForeground', { dark: quickInputListFocusForeground, light: quickInputListFocusForeground, hc: quickInputListFocusForeground }, nls.localize('editorSuggestWidgetSelectedForeground', 'Foreground color of the selected entry in the suggest widget.'));
 export const editorSuggestWidgetSelectedBackground = registerColor('editorSuggestWidget.selectedBackground', { dark: quickInputListFocusBackground, light: quickInputListFocusBackground, hc: quickInputListFocusBackground }, nls.localize('editorSuggestWidgetSelectedBackground', 'Background color of the selected entry in the suggest widget.'));
 export const editorSuggestWidgetHighlightForeground = registerColor('editorSuggestWidget.highlightForeground', { dark: listHighlightForeground, light: listHighlightForeground, hc: listHighlightForeground }, nls.localize('editorSuggestWidgetHighlightForeground', 'Color of the match highlights in the suggest widget.'));
+export const editorSuggestWidgetHighlightFocusForeground = registerColor('editorSuggestWidget.focusHighlightForeground', { dark: listFocusHighlightForeground, light: listFocusHighlightForeground, hc: listFocusHighlightForeground }, nls.localize('editorSuggestWidgetFocusHighlightForeground', 'Color of the match highlights in the suggest widget when an item is focused.'));
 
 const enum State {
 	Hidden,
@@ -440,6 +442,7 @@ export class SuggestWidget implements IDisposable {
 				this._contentWidget.hide();
 				this._ctxSuggestWidgetVisible.reset();
 				this._ctxSuggestWidgetMultipleSuggestions.reset();
+				this._showTimeout.cancel();
 				this.element.domNode.classList.remove('visible');
 				this._list.splice(0, this._list.length);
 				this._focusedItem = undefined;
@@ -708,6 +711,7 @@ export class SuggestWidget implements IDisposable {
 		this._loadingTimeout?.dispose();
 		this._setState(State.Hidden);
 		this._onDidHide.fire(this);
+		this.element.clearSashHoverState();
 
 		// ensure that a reasonable widget height is persisted so that
 		// accidential "resize-to-single-items" cases aren't happening
@@ -970,9 +974,20 @@ registerThemingParticipant((theme, collector) => {
 	if (matchHighlight) {
 		collector.addRule(`.monaco-editor .suggest-widget .monaco-list .monaco-list-row .monaco-highlighted-label .highlight { color: ${matchHighlight}; }`);
 	}
+
+	const matchHighlightFocus = theme.getColor(editorSuggestWidgetHighlightFocusForeground);
+	if (matchHighlight) {
+		collector.addRule(`.monaco-editor .suggest-widget .monaco-list .monaco-list-row.focused .monaco-highlighted-label .highlight { color: ${matchHighlightFocus}; }`);
+	}
+
 	const foreground = theme.getColor(editorSuggestWidgetForeground);
 	if (foreground) {
 		collector.addRule(`.monaco-editor .suggest-widget, .monaco-editor .suggest-details { color: ${foreground}; }`);
+	}
+
+	const selectedForeground = theme.getColor(editorSuggestWidgetSelectedForeground);
+	if (selectedForeground) {
+		collector.addRule(`.monaco-editor .suggest-widget .monaco-list .monaco-list-row.focused { color: ${selectedForeground}; }`);
 	}
 
 	const link = theme.getColor(textLinkForeground);

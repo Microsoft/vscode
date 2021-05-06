@@ -17,6 +17,9 @@ import { ITelemetryData } from 'vs/platform/telemetry/common/telemetry';
 import { Event } from 'vs/base/common/event';
 import * as paths from 'vs/base/common/path';
 import { isPromiseCanceledError } from 'vs/base/common/errors';
+import { TextSearchCompleteMessageType } from 'vs/workbench/services/search/common/searchExtTypes';
+
+export { TextSearchCompleteMessageType };
 
 export const VIEWLET_ID = 'workbench.view.search';
 export const PANEL_ID = 'workbench.panel.search';
@@ -205,6 +208,7 @@ export function isProgressMessage(p: ISearchProgressItem | ISerializedSearchProg
 
 export interface ISearchCompleteStats {
 	limitHit?: boolean;
+	messages: { text: string, type: TextSearchCompleteMessageType }[];
 	stats?: IFileSearchStats | ITextSearchStats;
 }
 
@@ -504,11 +508,13 @@ export interface ISearchEngine<T> {
 export interface ISerializedSearchSuccess {
 	type: 'success';
 	limitHit: boolean;
+	messages: { text: string, type: TextSearchCompleteMessageType }[];
 	stats?: IFileSearchStats | ITextSearchStats;
 }
 
 export interface ISearchEngineSuccess {
 	limitHit: boolean;
+	messages: { text: string, type: TextSearchCompleteMessageType }[];
 	stats: ISearchEngineStats;
 }
 

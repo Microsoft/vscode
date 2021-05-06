@@ -15,6 +15,10 @@
 	padding: 0 5px;
 }
 
+.monaco-action-bar .action-dropdown-item > .monaco-dropdown .action-label {
+	padding: 0;
+}
+
 .monaco-action-bar .action-item .action-label.extension-action.label {
 	outline-offset: 1px;
 }
@@ -22,13 +26,16 @@
 .monaco-action-bar .action-item .action-label.extension-action.text,
 .monaco-action-bar .action-item .action-label.extension-action.label,
 .monaco-action-bar .action-dropdown-item .action-label.extension-action.label {
+	width: auto;
+	height: auto;
 	line-height: 14px;
-	margin-top: 2px;
 }
 
-.monaco-action-bar .action-item .action-label.extension-action.icon {
-	padding: 0 2px;
-	width: 16px;
+.monaco-action-bar .action-item:not(.disabled) .action-label.extension-action.text,
+.monaco-action-bar .action-item:not(.disabled) .action-label.extension-action.label,
+.monaco-action-bar .action-item .action-label.extension-action.icon,
+.monaco-action-bar .action-dropdown-item .action-label.extension-action.label {
+	margin-top: 2px; /* margin for outline */
 }
 
 .monaco-action-bar .action-item .action-label.extension-action.multiserver.install:after,

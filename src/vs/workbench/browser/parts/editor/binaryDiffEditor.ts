@@ -17,7 +17,7 @@ import { IStorageService } from 'vs/platform/storage/common/storage';
  */
 export class BinaryResourceDiffEditor extends SideBySideEditor {
 
-	static readonly ID = BINARY_DIFF_EDITOR_ID;
+	static override readonly ID = BINARY_DIFF_EDITOR_ID;
 
 	constructor(
 		@ITelemetryService telemetryService: ITelemetryService,

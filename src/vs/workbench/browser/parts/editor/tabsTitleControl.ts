@@ -6,7 +6,8 @@
 import 'vs/css!./media/tabstitlecontrol';
 import { isMacintosh, isWindows } from 'vs/base/common/platform';
 import { shorten } from 'vs/base/common/labels';
-import { EditorResourceAccessor, GroupIdentifier, IEditorInput, Verbosity, EditorCommandsContextActionRunner, IEditorPartOptions, SideBySideEditor, computeEditorAriaLabel } from 'vs/workbench/common/editor';
+import { EditorResourceAccessor, GroupIdentifier, IEditorInput, Verbosity, EditorCommandsContextActionRunner, IEditorPartOptions, SideBySideEditor } from 'vs/workbench/common/editor';
+import { computeEditorAriaLabel } from 'vs/workbench/browser/editor';
 import { StandardKeyboardEvent } from 'vs/base/browser/keyboardEvent';
 import { EventType as TouchEventType, GestureEvent, Gesture } from 'vs/base/browser/touch';
 import { KeyCode } from 'vs/base/common/keyCodes';
@@ -166,7 +167,7 @@ export class TabsTitleControl extends TitleControl {
 		const breadcrumbsContainer = document.createElement('div');
 		breadcrumbsContainer.classList.add('tabs-breadcrumbs');
 		this.titleContainer.appendChild(breadcrumbsContainer);
-		this.createBreadcrumbsControl(breadcrumbsContainer, { showFileIcons: true, showSymbolIcons: true, showDecorationColors: false, breadcrumbsBackground: breadcrumbsBackground });
+		this.createBreadcrumbsControl(breadcrumbsContainer, { showFileIcons: true, showSymbolIcons: true, showDecorationColors: false, showPlaceholder: true, breadcrumbsBackground: breadcrumbsBackground });
 	}
 
 	private createTabsScrollbar(scrollable: HTMLElement): ScrollableElement {
@@ -378,7 +379,7 @@ export class TabsTitleControl extends TitleControl {
 		this.layout(this.dimensions);
 	}
 
-	protected updateEditorActionsToolbar(): void {
+	protected override updateEditorActionsToolbar(): void {
 		super.updateEditorActionsToolbar();
 
 		// Changing the actions in the toolbar can have an impact on the size of the
@@ -409,14 +410,8 @@ export class TabsTitleControl extends TitleControl {
 	}
 
 	closeEditors(editors: IEditorInput[]): void {
-
 		// Cleanup closed editors
 		this.handleClosedEditors();
-
-		// Update Breadcrumbs when last editor closed
-		if (this.group.count === 0) {
-			this.breadcrumbsControl?.update();
-		}
 	}
 
 	private handleClosedEditors(): void {
@@ -454,6 +449,8 @@ export class TabsTitleControl extends TitleControl {
 			this.tabActionBars = [];
 
 			this.clearEditorActionsToolbar();
+
+			this.breadcrumbsControl?.update();
 		}
 	}
 
@@ -570,7 +567,7 @@ export class TabsTitleControl extends TitleControl {
 		}
 	}
 
-	updateStyles(): void {
+	override updateStyles(): void {
 		this.redraw();
 	}
 
@@ -1771,7 +1768,7 @@ export class TabsTitleControl extends TitleControl {
 		return !isCopy || source === this.group.id;
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		super.dispose();
 
 		this.tabDisposables = dispose(this.tabDisposables);

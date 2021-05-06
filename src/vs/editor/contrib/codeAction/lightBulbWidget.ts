@@ -126,7 +126,7 @@ export class LightBulbWidget extends Disposable implements IContentWidget {
 		this._register(this._keybindingService.onDidUpdateKeybindings(this._updateLightBulbTitleAndIcon, this));
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		super.dispose();
 		this._editor.removeContentWidget(this);
 	}

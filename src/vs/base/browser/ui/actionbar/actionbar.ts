@@ -15,7 +15,7 @@ import { IActionViewItemOptions, ActionViewItem, BaseActionViewItem } from 'vs/b
 
 export interface IActionViewItem extends IDisposable {
 	actionRunner: IActionRunner;
-	setActionContext(context: any): void;
+	setActionContext(context: unknown): void;
 	render(element: HTMLElement): void;
 	isEnabled(): boolean;
 	focus(fromRight?: boolean): void; // TODO@isidorn what is this?
@@ -38,7 +38,7 @@ export interface ActionTrigger {
 
 export interface IActionBarOptions {
 	readonly orientation?: ActionsOrientation;
-	readonly context?: any;
+	readonly context?: unknown;
 	readonly actionViewItemProvider?: IActionViewItemProvider;
 	readonly actionRunner?: IActionRunner;
 	readonly ariaLabel?: string;
@@ -264,11 +264,11 @@ export class ActionBar extends Disposable implements IActionRunner {
 		}
 	}
 
-	get context(): any {
+	get context(): unknown {
 		return this._context;
 	}
 
-	set context(context: any) {
+	set context(context: unknown) {
 		this._context = context;
 		this.viewItems.forEach(i => i.setActionContext(context));
 	}
@@ -525,11 +525,11 @@ export class ActionBar extends Disposable implements IActionRunner {
 		}
 	}
 
-	run(action: IAction, context?: unknown): Promise<void> {
-		return this._actionRunner.run(action, context);
+	async run(action: IAction, context?: unknown): Promise<void> {
+		await this._actionRunner.run(action, context);
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		dispose(this.viewItems);
 		this.viewItems = [];
 

@@ -28,7 +28,7 @@ exports.config = {
     version: util.getElectronVersion(),
     productAppName: product.nameLong,
     companyName: 'Microsoft Corporation',
-    copyright: 'Copyright (C) 2019 Microsoft. All rights reserved',
+    copyright: 'Copyright (C) 2021 Microsoft. All rights reserved',
     darwinIcon: 'resources/darwin/code.icns',
     darwinBundleIdentifier: product.darwinBundleIdentifier,
     darwinApplicationCategoryType: 'public.app-category.developer-tools',

@@ -77,20 +77,20 @@ suite('DataTree', function () {
 		tree.setInput(root);
 
 		let navigator = tree.navigate();
-		assert.equal(navigator.next()!.value, 0);
-		assert.equal(navigator.next()!.value, 10);
-		assert.equal(navigator.next()!.value, 11);
-		assert.equal(navigator.next()!.value, 12);
-		assert.equal(navigator.next()!.value, 1);
-		assert.equal(navigator.next()!.value, 2);
-		assert.equal(navigator.next()!, null);
+		assert.strictEqual(navigator.next()!.value, 0);
+		assert.strictEqual(navigator.next()!.value, 10);
+		assert.strictEqual(navigator.next()!.value, 11);
+		assert.strictEqual(navigator.next()!.value, 12);
+		assert.strictEqual(navigator.next()!.value, 1);
+		assert.strictEqual(navigator.next()!.value, 2);
+		assert.strictEqual(navigator.next()!, null);
 
 		tree.collapse(root.children![0]);
 		navigator = tree.navigate();
-		assert.equal(navigator.next()!.value, 0);
-		assert.equal(navigator.next()!.value, 1);
-		assert.equal(navigator.next()!.value, 2);
-		assert.equal(navigator.next()!, null);
+		assert.strictEqual(navigator.next()!.value, 0);
+		assert.strictEqual(navigator.next()!.value, 1);
+		assert.strictEqual(navigator.next()!.value, 2);
+		assert.strictEqual(navigator.next()!, null);
 
 		tree.setSelection([root.children![1]]);
 		tree.setFocus([root.children![2]]);
@@ -98,36 +98,36 @@ suite('DataTree', function () {
 		tree.setInput(empty);
 		tree.setInput(root);
 		navigator = tree.navigate();
-		assert.equal(navigator.next()!.value, 0);
-		assert.equal(navigator.next()!.value, 10);
-		assert.equal(navigator.next()!.value, 11);
-		assert.equal(navigator.next()!.value, 12);
-		assert.equal(navigator.next()!.value, 1);
-		assert.equal(navigator.next()!.value, 2);
-		assert.equal(navigator.next()!, null);
+		assert.strictEqual(navigator.next()!.value, 0);
+		assert.strictEqual(navigator.next()!.value, 10);
+		assert.strictEqual(navigator.next()!.value, 11);
+		assert.strictEqual(navigator.next()!.value, 12);
+		assert.strictEqual(navigator.next()!.value, 1);
+		assert.strictEqual(navigator.next()!.value, 2);
+		assert.strictEqual(navigator.next()!, null);
 
-		assert.deepEqual(tree.getSelection(), []);
-		assert.deepEqual(tree.getFocus(), []);
+		assert.deepStrictEqual(tree.getSelection(), []);
+		assert.deepStrictEqual(tree.getFocus(), []);
 	});
 
 	test('view state can be preserved', () => {
 		tree.setInput(root);
 
 		let navigator = tree.navigate();
-		assert.equal(navigator.next()!.value, 0);
-		assert.equal(navigator.next()!.value, 10);
-		assert.equal(navigator.next()!.value, 11);
-		assert.equal(navigator.next()!.value, 12);
-		assert.equal(navigator.next()!.value, 1);
-		assert.equal(navigator.next()!.value, 2);
-		assert.equal(navigator.next()!, null);
+		assert.strictEqual(navigator.next()!.value, 0);
+		assert.strictEqual(navigator.next()!.value, 10);
+		assert.strictEqual(navigator.next()!.value, 11);
+		assert.strictEqual(navigator.next()!.value, 12);
+		assert.strictEqual(navigator.next()!.value, 1);
+		assert.strictEqual(navigator.next()!.value, 2);
+		assert.strictEqual(navigator.next()!, null);
 
 		tree.collapse(root.children![0]);
 		navigator = tree.navigate();
-		assert.equal(navigator.next()!.value, 0);
-		assert.equal(navigator.next()!.value, 1);
-		assert.equal(navigator.next()!.value, 2);
-		assert.equal(navigator.next()!, null);
+		assert.strictEqual(navigator.next()!.value, 0);
+		assert.strictEqual(navigator.next()!.value, 1);
+		assert.strictEqual(navigator.next()!.value, 2);
+		assert.strictEqual(navigator.next()!, null);
 
 		tree.setSelection([root.children![1]]);
 		tree.setFocus([root.children![2]]);
@@ -137,12 +137,12 @@ suite('DataTree', function () {
 		tree.setInput(empty);
 		tree.setInput(root, viewState);
 		navigator = tree.navigate();
-		assert.equal(navigator.next()!.value, 0);
-		assert.equal(navigator.next()!.value, 1);
-		assert.equal(navigator.next()!.value, 2);
-		assert.equal(navigator.next()!, null);
+		assert.strictEqual(navigator.next()!.value, 0);
+		assert.strictEqual(navigator.next()!.value, 1);
+		assert.strictEqual(navigator.next()!.value, 2);
+		assert.strictEqual(navigator.next()!, null);
 
-		assert.deepEqual(tree.getSelection(), [root.children![1]]);
-		assert.deepEqual(tree.getFocus(), [root.children![2]]);
+		assert.deepStrictEqual(tree.getSelection(), [root.children![1]]);
+		assert.deepStrictEqual(tree.getFocus(), [root.children![2]]);
 	});
 });

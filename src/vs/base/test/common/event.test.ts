@@ -644,7 +644,7 @@ suite('Event utils', () => {
 			emitter.fire(1);
 			emitter.fire(2);
 			emitter.fire(3);
-			assert.deepEqual(result, []);
+			assert.deepStrictEqual(result, [] as number[]);
 
 			const listener = bufferedEvent(num => result.push(num));
 			assert.deepStrictEqual(result, [1, 2, 3]);
@@ -666,7 +666,7 @@ suite('Event utils', () => {
 			emitter.fire(1);
 			emitter.fire(2);
 			emitter.fire(3);
-			assert.deepEqual(result, []);
+			assert.deepStrictEqual(result, [] as number[]);
 
 			const listener = bufferedEvent(num => result.push(num));
 			assert.deepStrictEqual(result, []);
@@ -688,7 +688,7 @@ suite('Event utils', () => {
 			emitter.fire(1);
 			emitter.fire(2);
 			emitter.fire(3);
-			assert.deepEqual(result, []);
+			assert.deepStrictEqual(result, [] as number[]);
 
 			bufferedEvent(num => result.push(num));
 			assert.deepStrictEqual(result, [-2, -1, 0, 1, 2, 3]);

@@ -25,7 +25,7 @@ suite('TokenizationSupport2Adapter', () => {
 		constructor() {
 			super(null!, null!);
 		}
-		public match(languageId: LanguageId, token: string): number {
+		public override match(languageId: LanguageId, token: string): number {
 			return (
 				((this.counter++) << MetadataConsts.FOREGROUND_OFFSET)
 				| (languageId << MetadataConsts.LANGUAGEID_OFFSET)

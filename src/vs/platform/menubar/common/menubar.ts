@@ -31,10 +31,11 @@ export interface IMenubarMenuItemAction {
 	enabled?: boolean; // Assumed true if missing
 }
 
-export interface IMenubarMenuUriItemAction {
+export interface IMenubarMenuRecentItemAction {
 	id: string;
 	label: string;
 	uri: URI;
+	remoteAuthority?: string;
 	enabled?: boolean;
 }
 
@@ -48,7 +49,7 @@ export interface IMenubarMenuItemSeparator {
 	id: 'vscode.menubar.separator';
 }
 
-export type MenubarMenuItem = IMenubarMenuItemAction | IMenubarMenuItemSubmenu | IMenubarMenuItemSeparator | IMenubarMenuUriItemAction;
+export type MenubarMenuItem = IMenubarMenuItemAction | IMenubarMenuItemSubmenu | IMenubarMenuItemSeparator | IMenubarMenuRecentItemAction;
 
 export function isMenubarMenuItemSubmenu(menuItem: MenubarMenuItem): menuItem is IMenubarMenuItemSubmenu {
 	return (<IMenubarMenuItemSubmenu>menuItem).submenu !== undefined;
@@ -58,10 +59,10 @@ export function isMenubarMenuItemSeparator(menuItem: MenubarMenuItem): menuItem 
 	return (<IMenubarMenuItemSeparator>menuItem).id === 'vscode.menubar.separator';
 }
 
-export function isMenubarMenuItemUriAction(menuItem: MenubarMenuItem): menuItem is IMenubarMenuUriItemAction {
-	return (<IMenubarMenuUriItemAction>menuItem).uri !== undefined;
+export function isMenubarMenuItemRecentAction(menuItem: MenubarMenuItem): menuItem is IMenubarMenuRecentItemAction {
+	return (<IMenubarMenuRecentItemAction>menuItem).uri !== undefined;
 }
 
 export function isMenubarMenuItemAction(menuItem: MenubarMenuItem): menuItem is IMenubarMenuItemAction {
-	return !isMenubarMenuItemSubmenu(menuItem) && !isMenubarMenuItemSeparator(menuItem) && !isMenubarMenuItemUriAction(menuItem);
+	return !isMenubarMenuItemSubmenu(menuItem) && !isMenubarMenuItemSeparator(menuItem) && !isMenubarMenuItemRecentAction(menuItem);
 }

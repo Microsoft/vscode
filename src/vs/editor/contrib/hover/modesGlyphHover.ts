@@ -117,7 +117,7 @@ export class ModesGlyphHoverWidget extends GlyphHoverWidget {
 
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		this._hoverOperation.cancel();
 		super.dispose();
 	}
@@ -147,7 +147,7 @@ export class ModesGlyphHoverWidget extends GlyphHoverWidget {
 		this._hoverOperation.start(HoverStartMode.Delayed);
 	}
 
-	public hide(): void {
+	public override hide(): void {
 		this._lastLineNumber = -1;
 		this._hoverOperation.cancel();
 		super.hide();

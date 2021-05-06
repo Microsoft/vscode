@@ -78,7 +78,8 @@ suite('IndexedDB File Service', function () {
 		disposables.add(userdataFileProvider);
 	};
 
-	setup(async () => {
+	setup(async function () {
+		this.timeout(15000);
 		await reload();
 	});
 

@@ -58,7 +58,7 @@ suite('PreferencesService', () => {
 class TestEditorService2 extends TestEditorService {
 	lastOpenEditorOptions: any;
 
-	async openEditor(editor: any, optionsOrGroup?: any): Promise<any | undefined> {
+	override async openEditor(editor: any, optionsOrGroup?: any): Promise<any | undefined> {
 		this.lastOpenEditorOptions = optionsOrGroup;
 		return undefined;
 	}

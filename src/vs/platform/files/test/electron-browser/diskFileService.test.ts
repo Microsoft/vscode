@@ -8,9 +8,8 @@ import { tmpdir } from 'os';
 import { FileService } from 'vs/platform/files/common/fileService';
 import { Schemas } from 'vs/base/common/network';
 import { DiskFileSystemProvider } from 'vs/platform/files/node/diskFileSystemProvider';
-import { flakySuite, getRandomTestPath } from 'vs/base/test/node/testUtils';
+import { flakySuite, getRandomTestPath, getPathFromAmdModule } from 'vs/base/test/node/testUtils';
 import { join, basename, dirname, posix } from 'vs/base/common/path';
-import { getPathFromAmdModule } from 'vs/base/common/amd';
 import { copy, rimraf, rimrafSync } from 'vs/base/node/pfs';
 import { URI } from 'vs/base/common/uri';
 import { existsSync, statSync, readdirSync, readFileSync, writeFileSync, renameSync, unlinkSync, mkdirSync, createReadStream, promises } from 'fs';
@@ -59,13 +58,14 @@ export class TestDiskFileSystemProvider extends DiskFileSystemProvider {
 	private smallStatSize: boolean = false;
 
 	private _testCapabilities!: FileSystemProviderCapabilities;
-	get capabilities(): FileSystemProviderCapabilities {
+	override get capabilities(): FileSystemProviderCapabilities {
 		if (!this._testCapabilities) {
 			this._testCapabilities =
 				FileSystemProviderCapabilities.FileReadWrite |
 				FileSystemProviderCapabilities.FileOpenReadWriteClose |
 				FileSystemProviderCapabilities.FileReadStream |
 				FileSystemProviderCapabilities.Trash |
+				FileSystemProviderCapabilities.FileWriteUnlock |
 				FileSystemProviderCapabilities.FileFolderCopy;
 
 			if (isLinux) {
@@ -76,7 +76,7 @@ export class TestDiskFileSystemProvider extends DiskFileSystemProvider {
 		return this._testCapabilities;
 	}
 
-	set capabilities(capabilities: FileSystemProviderCapabilities) {
+	override set capabilities(capabilities: FileSystemProviderCapabilities) {
 		this._testCapabilities = capabilities;
 	}
 
@@ -88,7 +88,7 @@ export class TestDiskFileSystemProvider extends DiskFileSystemProvider {
 		this.smallStatSize = enabled;
 	}
 
-	async stat(resource: URI): Promise<IStat> {
+	override async stat(resource: URI): Promise<IStat> {
 		const res = await super.stat(resource);
 
 		if (this.invalidStatSize) {
@@ -100,7 +100,7 @@ export class TestDiskFileSystemProvider extends DiskFileSystemProvider {
 		return res;
 	}
 
-	async read(fd: number, pos: number, data: Uint8Array, offset: number, length: number): Promise<number> {
+	override async read(fd: number, pos: number, data: Uint8Array, offset: number, length: number): Promise<number> {
 		const bytesRead = await super.read(fd, pos, data, offset, length);
 
 		this.totalBytesRead += bytesRead;
@@ -108,7 +108,7 @@ export class TestDiskFileSystemProvider extends DiskFileSystemProvider {
 		return bytesRead;
 	}
 
-	async readFile(resource: URI): Promise<Uint8Array> {
+	override async readFile(resource: URI): Promise<Uint8Array> {
 		const res = await super.readFile(resource);
 
 		this.totalBytesRead += res.byteLength;
@@ -1899,6 +1899,63 @@ flakySuite('Disk File Service', function () {
 		assert.strictEqual(readFileSync(resource.fsPath).toString(), content);
 	});
 
+	test('writeFile - locked files and unlocking', async () => {
+		setCapabilities(fileProvider, FileSystemProviderCapabilities.FileReadWrite | FileSystemProviderCapabilities.FileWriteUnlock);
+
+		return testLockedFiles(false);
+	});
+
+	test('writeFile (stream) - locked files and unlocking', async () => {
+		setCapabilities(fileProvider, FileSystemProviderCapabilities.FileOpenReadWriteClose | FileSystemProviderCapabilities.FileWriteUnlock);
+
+		return testLockedFiles(false);
+	});
+
+	test('writeFile - locked files and unlocking throws error when missing capability', async () => {
+		setCapabilities(fileProvider, FileSystemProviderCapabilities.FileReadWrite);
+
+		return testLockedFiles(true);
+	});
+
+	test('writeFile (stream) - locked files and unlocking throws error when missing capability', async () => {
+		setCapabilities(fileProvider, FileSystemProviderCapabilities.FileOpenReadWriteClose);
+
+		return testLockedFiles(true);
+	});
+
+	async function testLockedFiles(expectError: boolean) {
+		const lockedFile = URI.file(join(testDir, 'my-locked-file'));
+
+		await service.writeFile(lockedFile, VSBuffer.fromString('Locked File'));
+
+		const stats = await promises.stat(lockedFile.fsPath);
+		await promises.chmod(lockedFile.fsPath, stats.mode & ~0o200);
+
+		let error;
+		const newContent = 'Updates to locked file';
+		try {
+			await service.writeFile(lockedFile, VSBuffer.fromString(newContent));
+		} catch (e) {
+			error = e;
+		}
+
+		assert.ok(error);
+		error = undefined;
+
+		if (expectError) {
+			try {
+				await service.writeFile(lockedFile, VSBuffer.fromString(newContent), { unlock: true });
+			} catch (e) {
+				error = e;
+			}
+
+			assert.ok(error);
+		} else {
+			await service.writeFile(lockedFile, VSBuffer.fromString(newContent), { unlock: true });
+			assert.strictEqual(readFileSync(lockedFile.fsPath).toString(), newContent);
+		}
+	}
+
 	test('writeFile (error when folder is encountered)', async () => {
 		const resource = URI.file(testDir);
 
@@ -2296,7 +2353,7 @@ flakySuite('Disk File Service', function () {
 		const resource = URI.file(join(testDir, 'lorem.txt'));
 
 		const buffer = VSBuffer.alloc(1024);
-		const fdWrite = await fileProvider.open(resource, { create: true });
+		const fdWrite = await fileProvider.open(resource, { create: true, unlock: false });
 		const fdRead = await fileProvider.open(resource, { create: false });
 
 		let posInFileWrite = 0;

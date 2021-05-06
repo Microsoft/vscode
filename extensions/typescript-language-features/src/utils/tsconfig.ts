@@ -28,7 +28,7 @@ export function inferredProjectCompilerOptions(
 ): Proto.ExternalProjectCompilerOptions {
 	const projectConfig: Proto.ExternalProjectCompilerOptions = {
 		module: 'commonjs' as Proto.ModuleKind,
-		target: 'es2016' as Proto.ScriptTarget,
+		target: 'es2020' as Proto.ScriptTarget,
 		jsx: 'preserve' as Proto.JsxEmit,
 	};
 

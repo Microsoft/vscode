@@ -86,6 +86,8 @@ variables:
     value: ${{ eq(parameters.ENABLE_TERRAPIN, true) }}
   - name: VSCODE_QUALITY
     value: ${{ parameters.VSCODE_QUALITY }}
+  - name: VSCODE_RELEASE
+    value: ${{ parameters.VSCODE_RELEASE }}
   - name: VSCODE_BUILD_STAGE_WINDOWS
     value: ${{ or(eq(parameters.VSCODE_BUILD_WIN32, true), eq(parameters.VSCODE_BUILD_WIN32_32BIT, true), eq(parameters.VSCODE_BUILD_WIN32_ARM64, true)) }}
   - name: VSCODE_BUILD_STAGE_LINUX
@@ -254,6 +256,15 @@ stages:
               VSCODE_ARCH: x64
             steps:
               - template: darwin/product-build-darwin.yml
+          - ${{ if ne(variables['VSCODE_PUBLISH'], 'false') }}:
+            - job: macOSSign
+              dependsOn:
+                - macOS
+              timeoutInMinutes: 90
+              variables:
+                VSCODE_ARCH: x64
+              steps:
+                - template: darwin/product-build-darwin-sign.yml
 
         - ${{ if and(eq(variables['VSCODE_CIBUILD'], false), eq(parameters.VSCODE_BUILD_MACOS_ARM64, true)) }}:
           - job: macOSARM64
@@ -262,6 +273,15 @@ stages:
               VSCODE_ARCH: arm64
             steps:
               - template: darwin/product-build-darwin.yml
+          - ${{ if ne(variables['VSCODE_PUBLISH'], 'false') }}:
+            - job: macOSARM64Sign
+              dependsOn:
+                - macOSARM64
+              timeoutInMinutes: 90
+              variables:
+                VSCODE_ARCH: arm64
+              steps:
+                - template: darwin/product-build-darwin-sign.yml
 
         - ${{ if eq(variables['VSCODE_BUILD_MACOS_UNIVERSAL'], true) }}:
           - job: macOSUniversal
@@ -273,38 +293,28 @@ stages:
               VSCODE_ARCH: universal
             steps:
               - template: darwin/product-build-darwin.yml
+          - ${{ if ne(variables['VSCODE_PUBLISH'], 'false') }}:
+            - job: macOSUniversalSign
+              dependsOn:
+                - macOSUniversal
+              timeoutInMinutes: 90
+              variables:
+                VSCODE_ARCH: universal
+              steps:
+                - template: darwin/product-build-darwin-sign.yml
 
-  - ${{ if and(eq(variables['VSCODE_PUBLISH'], true), eq(parameters.VSCODE_COMPILE_ONLY, false)) }}:
-    - stage: Mooncake
+  - ${{ if and(eq(parameters.VSCODE_COMPILE_ONLY, false), ne(variables['VSCODE_PUBLISH'], 'false')) }}:
+    - stage: Publish
       dependsOn:
-        - ${{ if eq(variables['VSCODE_BUILD_STAGE_WINDOWS'], true) }}:
-          - Windows
-        - ${{ if eq(variables['VSCODE_BUILD_STAGE_LINUX'], true) }}:
-          - Linux
-        - ${{ if eq(variables['VSCODE_BUILD_STAGE_MACOS'], true) }}:
-          - macOS
-      condition: succeededOrFailed()
+        - Compile
       pool:
         vmImage: "Ubuntu-18.04"
+      variables:
+        - name: BUILDS_API_URL
+          value: $(System.CollectionUri)$(System.TeamProject)/_apis/build/builds/$(Build.BuildId)/
       jobs:
-        - job: SyncMooncake
-          displayName: Sync Mooncake
+        - job: PublishBuild
+          timeoutInMinutes: 180
+          displayName: Publish Build
           steps:
-            - template: sync-mooncake.yml
-
-  - ${{ if and(eq(parameters.VSCODE_COMPILE_ONLY, false), or(eq(parameters.VSCODE_RELEASE, true), and(in(parameters.VSCODE_QUALITY, 'insider', 'exploration'), eq(variables['VSCODE_SCHEDULEDBUILD'], true)))) }}:
-    - stage: Release
-      dependsOn:
-        - ${{ if eq(variables['VSCODE_BUILD_STAGE_WINDOWS'], true) }}:
-          - Windows
-        - ${{ if eq(variables['VSCODE_BUILD_STAGE_LINUX'], true) }}:
-          - Linux
-        - ${{ if eq(variables['VSCODE_BUILD_STAGE_MACOS'], true) }}:
-          - macOS
-      pool:
-        vmImage: "Ubuntu-18.04"
-      jobs:
-        - job: ReleaseBuild
-          displayName: Release Build
-          steps:
-            - template: release.yml
+            - template: product-publish.yml

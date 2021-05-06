@@ -75,19 +75,19 @@ class NullContext extends Context {
 		super(-1, null);
 	}
 
-	public setValue(key: string, value: any): boolean {
+	public override setValue(key: string, value: any): boolean {
 		return false;
 	}
 
-	public removeValue(key: string): boolean {
+	public override removeValue(key: string): boolean {
 		return false;
 	}
 
-	public getValue<T>(key: string): T | undefined {
+	public override getValue<T>(key: string): T | undefined {
 		return undefined;
 	}
 
-	collectAllValues(): { [key: string]: any; } {
+	override collectAllValues(): { [key: string]: any; } {
 		return Object.create(null);
 	}
 }
@@ -137,7 +137,7 @@ class ConfigAwareContextValuesContainer extends Context {
 		this._listener.dispose();
 	}
 
-	getValue(key: string): any {
+	override getValue(key: string): any {
 
 		if (key.indexOf(ConfigAwareContextValuesContainer._keyPrefix) !== 0) {
 			return super.getValue(key);
@@ -168,15 +168,15 @@ class ConfigAwareContextValuesContainer extends Context {
 		return value;
 	}
 
-	setValue(key: string, value: any): boolean {
+	override setValue(key: string, value: any): boolean {
 		return super.setValue(key, value);
 	}
 
-	removeValue(key: string): boolean {
+	override removeValue(key: string): boolean {
 		return super.removeValue(key);
 	}
 
-	collectAllValues(): { [key: string]: any; } {
+	override collectAllValues(): { [key: string]: any; } {
 		const result: { [key: string]: any } = Object.create(null);
 		this._values.forEach((value, index) => result[index] = value);
 		return { ...result, ...super.collectAllValues() };

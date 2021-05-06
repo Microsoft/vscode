@@ -33,6 +33,11 @@ export interface IWebviewService {
 	readonly activeWebview: Webview | undefined;
 
 	/**
+	 * Fired when the currently focused webview changes.
+	 */
+	readonly onDidChangeActiveWebview: Event<Webview | undefined>;
+
+	/**
 	 * Create a basic webview dom element.
 	 */
 	createWebviewElement(
@@ -70,10 +75,12 @@ export interface WebviewOptions {
 	readonly enableFindWidget?: boolean;
 	readonly tryRestoreScrollPosition?: boolean;
 	readonly retainContextWhenHidden?: boolean;
+	readonly serviceWorkerFetchIgnoreSubdomain?: boolean;
 	transformCssVariables?(styles: Readonly<WebviewStyles>): Readonly<WebviewStyles>;
 }
 
 export interface WebviewContentOptions {
+	readonly useRootAuthority?: boolean;
 	readonly allowMultipleAPIAcquire?: boolean;
 	readonly allowScripts?: boolean;
 	readonly allowWebUSB?: boolean;
@@ -103,6 +110,11 @@ export interface IDataLinkClickEvent {
 	downloadName?: string;
 }
 
+export interface WebviewMessageReceivedEvent {
+	readonly message: any;
+	readonly transfer?: readonly ArrayBuffer[];
+}
+
 export interface Webview extends IDisposable {
 
 	readonly id: string;
@@ -125,10 +137,10 @@ export interface Webview extends IDisposable {
 	readonly onDidWheel: Event<IMouseWheelEvent>;
 	readonly onDidUpdateState: Event<string | undefined>;
 	readonly onDidReload: Event<void>;
-	readonly onMessage: Event<any>;
+	readonly onMessage: Event<WebviewMessageReceivedEvent>;
 	readonly onMissingCsp: Event<ExtensionIdentifier>;
 
-	postMessage(data: any): void;
+	postMessage(message: any, transfer?: readonly ArrayBuffer[]): void;
 
 	focus(): void;
 	reload(): void;
@@ -146,6 +158,8 @@ export interface Webview extends IDisposable {
 
 	windowDidDragStart(): void;
 	windowDidDragEnd(): void;
+
+	setContextKeyService(scopedContextKeyService: IContextKeyService): void;
 }
 
 /**
@@ -164,8 +178,6 @@ export interface WebviewOverlay extends Webview {
 
 	claim(owner: any, scopedContextKeyService: IContextKeyService | undefined): void;
 	release(owner: any): void;
-
-	getInnerWebview(): Webview | undefined;
 
 	layoutWebviewOverElement(element: HTMLElement, dimension?: Dimension): void;
 }

@@ -23,7 +23,7 @@ suite('vscode API - languages', () => {
 	}
 
 	function assertEqualRange(actual: vscode.Range, expected: vscode.Range, message?: string) {
-		assert.equal(rangeToString(actual), rangeToString(expected), message);
+		assert.strictEqual(rangeToString(actual), rangeToString(expected), message);
 	}
 
 	test('setTextDocumentLanguage -> close/open event', async function () {
@@ -36,8 +36,8 @@ suite('vscode API - languages', () => {
 		let close = new Promise<void>(resolve => {
 			disposables.push(vscode.workspace.onDidCloseTextDocument(e => {
 				if (e === doc) {
-					assert.equal(doc.languageId, langIdNow);
-					assert.equal(clock, 0);
+					assert.strictEqual(doc.languageId, langIdNow);
+					assert.strictEqual(clock, 0);
 					clock += 1;
 					resolve();
 				}
@@ -46,8 +46,8 @@ suite('vscode API - languages', () => {
 		let open = new Promise<void>(resolve => {
 			disposables.push(vscode.workspace.onDidOpenTextDocument(e => {
 				if (e === doc) { // same instance!
-					assert.equal(doc.languageId, 'json');
-					assert.equal(clock, 1);
+					assert.strictEqual(doc.languageId, 'json');
+					assert.strictEqual(clock, 1);
 					clock += 1;
 					resolve();
 				}
@@ -55,8 +55,8 @@ suite('vscode API - languages', () => {
 		});
 		let change = vscode.languages.setTextDocumentLanguage(doc, 'json');
 		await Promise.all([change, close, open]);
-		assert.equal(clock, 2);
-		assert.equal(doc.languageId, 'json');
+		assert.strictEqual(clock, 2);
+		assert.strictEqual(doc.languageId, 'json');
 		disposables.forEach(disposable => disposable.dispose());
 		disposables.length = 0;
 	});
@@ -82,7 +82,7 @@ suite('vscode API - languages', () => {
 		col2.set(uri, [new vscode.Diagnostic(new vscode.Range(0, 0, 0, 12), 'error1')]);
 
 		let diag = vscode.languages.getDiagnostics(uri);
-		assert.equal(diag.length, 2);
+		assert.strictEqual(diag.length, 2);
 
 		let tuples = vscode.languages.getDiagnostics();
 		let found = false;
@@ -111,13 +111,13 @@ suite('vscode API - languages', () => {
 		vscode.languages.registerDocumentLinkProvider({ language: 'java', scheme: testFs.scheme }, linkProvider);
 
 		const links = await vscode.commands.executeCommand<vscode.DocumentLink[]>('vscode.executeLinkProvider', doc.uri);
-		assert.equal(2, links && links.length);
+		assert.strictEqual(2, links && links.length);
 		let [link1, link2] = links!.sort((l1, l2) => l1.range.start.compareTo(l2.range.start));
 
-		assert.equal(target.toString(), link1.target && link1.target.toString());
+		assert.strictEqual(target.toString(), link1.target && link1.target.toString());
 		assertEqualRange(range, link1.range);
 
-		assert.equal('http://a.com/', link2.target && link2.target.toString());
+		assert.strictEqual('http://a.com/', link2.target && link2.target.toString());
 		assertEqualRange(new vscode.Range(new vscode.Position(0, 13), new vscode.Position(0, 25)), link2.range);
 	});
 
@@ -139,7 +139,7 @@ suite('vscode API - languages', () => {
 		let r1 = vscode.languages.registerCodeActionsProvider({ pattern: '*.far', scheme: 'ttt' }, {
 			provideCodeActions(_document, _range, ctx): vscode.Command[] {
 
-				assert.equal(ctx.diagnostics.length, 2);
+				assert.strictEqual(ctx.diagnostics.length, 2);
 				let [first, second] = ctx.diagnostics;
 				assert.ok(first === diag1);
 				assert.ok(second === diag2);

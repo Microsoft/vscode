@@ -22,8 +22,9 @@
 	text-decoration: none !important;
 }
 
+.monaco-button.disabled:focus,
 .monaco-button.disabled {
-	opacity: 0.4;
+	opacity: 0.4 !important;
 	cursor: default;
 }
 
@@ -34,8 +35,21 @@
 
 .monaco-button-dropdown {
 	display: flex;
+	cursor: pointer;
 }
 
 .monaco-button-dropdown > .monaco-dropdown-button {
 	margin-left: 1px;
+}
+
+.monaco-description-button {
+	flex-direction: column;
+}
+
+.monaco-description-button .monaco-button-label {
+	font-weight: 500;
+}
+
+.monaco-description-button .monaco-button-description {
+	font-style: italic;
 }

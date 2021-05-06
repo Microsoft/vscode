@@ -12,15 +12,15 @@ function assertKinds(text: string, ...kinds: SyntaxKind[]): void {
 	let scanner = createScanner(text);
 	let kind: SyntaxKind;
 	while ((kind = scanner.scan()) !== SyntaxKind.EOF) {
-		assert.equal(kind, kinds.shift());
+		assert.strictEqual(kind, kinds.shift());
 	}
-	assert.equal(kinds.length, 0);
+	assert.strictEqual(kinds.length, 0);
 }
 function assertScanError(text: string, expectedKind: SyntaxKind, scanError: ScanError): void {
 	let scanner = createScanner(text);
 	scanner.scan();
-	assert.equal(scanner.getToken(), expectedKind);
-	assert.equal(scanner.getTokenError(), scanError);
+	assert.strictEqual(scanner.getToken(), expectedKind);
+	assert.strictEqual(scanner.getTokenError(), scanError);
 }
 
 function assertValidParse(input: string, expected: any, options?: ParseOptions): void {
@@ -30,7 +30,7 @@ function assertValidParse(input: string, expected: any, options?: ParseOptions):
 	if (errors.length !== 0) {
 		assert(false, getParseErrorMessage(errors[0].error));
 	}
-	assert.deepEqual(actual, expected);
+	assert.deepStrictEqual(actual, expected);
 }
 
 function assertInvalidParse(input: string, expected: any, options?: ParseOptions): void {
@@ -38,18 +38,18 @@ function assertInvalidParse(input: string, expected: any, options?: ParseOptions
 	let actual = parse(input, errors, options);
 
 	assert(errors.length > 0);
-	assert.deepEqual(actual, expected);
+	assert.deepStrictEqual(actual, expected);
 }
 
 function assertTree(input: string, expected: any, expectedErrors: number[] = [], options?: ParseOptions): void {
 	let errors: ParseError[] = [];
 	let actual = parseTree(input, errors, options);
 
-	assert.deepEqual(errors.map(e => e.error, expected), expectedErrors);
+	assert.deepStrictEqual(errors.map(e => e.error, expected), expectedErrors);
 	let checkParent = (node: Node) => {
 		if (node.children) {
 			for (let child of node.children) {
-				assert.equal(node, child.parent);
+				assert.strictEqual(node, child.parent);
 				delete (<any>child).parent; // delete to avoid recursion in deep equal
 				checkParent(child);
 			}
@@ -57,7 +57,7 @@ function assertTree(input: string, expected: any, expectedErrors: number[] = [],
 	};
 	checkParent(actual);
 
-	assert.deepEqual(actual, expected);
+	assert.deepStrictEqual(actual, expected);
 }
 
 suite('JSON', () => {

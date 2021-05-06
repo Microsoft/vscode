@@ -45,19 +45,19 @@ suite('SuggestController', function () {
 			[IStorageService, new InMemoryStorageService()],
 			[IKeybindingService, new MockKeybindingService()],
 			[IEditorWorkerService, new class extends mock<IEditorWorkerService>() {
-				computeWordRanges() {
+				override computeWordRanges() {
 					return Promise.resolve({});
 				}
 			}],
 			[ISuggestMemoryService, new class extends mock<ISuggestMemoryService>() {
-				memorize(): void { }
-				select(): number { return 0; }
+				override memorize(): void { }
+				override select(): number { return 0; }
 			}],
 			[IMenuService, new class extends mock<IMenuService>() {
-				createMenu() {
+				override createMenu() {
 					return new class extends mock<IMenu>() {
-						onDidChange = Event.None;
-						dispose() { }
+						override onDidChange = Event.None;
+						override dispose() { }
 					};
 				}
 			}]
@@ -105,7 +105,7 @@ suite('SuggestController', function () {
 		controller.acceptSelectedSuggestion(false, false);
 		await p2;
 
-		assert.equal(editor.getValue(), '    let name = foo');
+		assert.strictEqual(editor.getValue(), '    let name = foo');
 	});
 
 	test('use additionalTextEdits sync when possible', async function () {
@@ -144,7 +144,7 @@ suite('SuggestController', function () {
 		await p2;
 
 		// insertText happens sync!
-		assert.equal(editor.getValue(), 'I came synchello\nhallohello');
+		assert.strictEqual(editor.getValue(), 'I came synchello\nhallohello');
 	});
 
 	test('resolve additionalTextEdits async when needed', async function () {
@@ -187,16 +187,16 @@ suite('SuggestController', function () {
 		await p2;
 
 		// insertText happens sync!
-		assert.equal(editor.getValue(), 'hello\nhallohello');
-		assert.equal(resolveCallCount, 1);
+		assert.strictEqual(editor.getValue(), 'hello\nhallohello');
+		assert.strictEqual(resolveCallCount, 1);
 
 		// additional edits happened after a litte wait
 		await timeout(20);
-		assert.equal(editor.getValue(), 'I came latehello\nhallohello');
+		assert.strictEqual(editor.getValue(), 'I came latehello\nhallohello');
 
 		// single undo stop
 		editor.getModel()?.undo();
-		assert.equal(editor.getValue(), 'hello\nhallo');
+		assert.strictEqual(editor.getValue(), 'hello\nhallo');
 	});
 
 	test('resolve additionalTextEdits async when needed (typing)', async function () {
@@ -239,18 +239,18 @@ suite('SuggestController', function () {
 		await p2;
 
 		// insertText happens sync!
-		assert.equal(editor.getValue(), 'hello\nhallohello');
-		assert.equal(resolveCallCount, 1);
+		assert.strictEqual(editor.getValue(), 'hello\nhallohello');
+		assert.strictEqual(resolveCallCount, 1);
 
 		// additional edits happened after a litte wait
 		assert.ok(editor.getSelection()?.equalsSelection(new Selection(2, 11, 2, 11)));
 		editor.trigger('test', 'type', { text: 'TYPING' });
 
-		assert.equal(editor.getValue(), 'hello\nhallohelloTYPING');
+		assert.strictEqual(editor.getValue(), 'hello\nhallohelloTYPING');
 
 		resolve();
 		await timeout(10);
-		assert.equal(editor.getValue(), 'I came latehello\nhallohelloTYPING');
+		assert.strictEqual(editor.getValue(), 'I came latehello\nhallohelloTYPING');
 		assert.ok(editor.getSelection()?.equalsSelection(new Selection(2, 17, 2, 17)));
 	});
 
@@ -295,12 +295,12 @@ suite('SuggestController', function () {
 		await p2;
 
 		// insertText happens sync!
-		assert.equal(editor.getValue(), 'hello');
-		assert.equal(resolveCallCount, 1);
+		assert.strictEqual(editor.getValue(), 'hello');
+		assert.strictEqual(resolveCallCount, 1);
 
 		resolve();
 		await timeout(10);
-		assert.equal(editor.getValue(), 'hello');
+		assert.strictEqual(editor.getValue(), 'hello');
 	});
 
 	// additional edit come late and are AFTER the position at which the user typed -> cancelled
@@ -344,18 +344,18 @@ suite('SuggestController', function () {
 		await p2;
 
 		// insertText happens sync!
-		assert.equal(editor.getValue(), 'hello\nhallohello');
-		assert.equal(resolveCallCount, 1);
+		assert.strictEqual(editor.getValue(), 'hello\nhallohello');
+		assert.strictEqual(resolveCallCount, 1);
 
 		// additional edits happened after a litte wait
 		editor.setSelection(new Selection(1, 1, 1, 1));
 		editor.trigger('test', 'type', { text: 'TYPING' });
 
-		assert.equal(editor.getValue(), 'TYPINGhello\nhallohello');
+		assert.strictEqual(editor.getValue(), 'TYPINGhello\nhallohello');
 
 		resolve();
 		await timeout(10);
-		assert.equal(editor.getValue(), 'TYPINGhello\nhallohello');
+		assert.strictEqual(editor.getValue(), 'TYPINGhello\nhallohello');
 		assert.ok(editor.getSelection()?.equalsSelection(new Selection(1, 7, 1, 7)));
 	});
 
@@ -402,7 +402,7 @@ suite('SuggestController', function () {
 		await p2;
 
 		// insertText happens sync!
-		assert.equal(editor.getValue(), 'helloabc');
+		assert.strictEqual(editor.getValue(), 'helloabc');
 
 		// next
 		controller.acceptNextSuggestion();
@@ -413,6 +413,6 @@ suite('SuggestController', function () {
 		await timeout(10);
 
 		// next suggestion used
-		assert.equal(editor.getValue(), 'halloabc');
+		assert.strictEqual(editor.getValue(), 'halloabc');
 	});
 });

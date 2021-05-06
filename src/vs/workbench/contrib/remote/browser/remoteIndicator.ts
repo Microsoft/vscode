@@ -8,7 +8,7 @@ import { STATUS_BAR_HOST_NAME_BACKGROUND, STATUS_BAR_HOST_NAME_FOREGROUND } from
 import { themeColorFromId } from 'vs/platform/theme/common/themeService';
 import { IRemoteAgentService } from 'vs/workbench/services/remote/common/remoteAgentService';
 import { Disposable, dispose } from 'vs/base/common/lifecycle';
-import { MenuId, IMenuService, MenuItemAction, IMenu, MenuRegistry, registerAction2, Action2 } from 'vs/platform/actions/common/actions';
+import { MenuId, IMenuService, MenuItemAction, MenuRegistry, registerAction2, Action2, SubmenuItemAction } from 'vs/platform/actions/common/actions';
 import { IWorkbenchContribution } from 'vs/workbench/common/contributions';
 import { StatusbarAlignment, IStatusbarService, IStatusbarEntryAccessor, IStatusbarEntry } from 'vs/workbench/services/statusbar/common/statusbar';
 import { ILabelService } from 'vs/platform/label/common/label';
@@ -24,7 +24,14 @@ import { IHostService } from 'vs/workbench/services/host/browser/host';
 import { isWeb } from 'vs/base/common/platform';
 import { once } from 'vs/base/common/functional';
 import { truncate } from 'vs/base/common/strings';
+import { IWorkspaceContextService } from 'vs/platform/workspace/common/workspace';
+import { getVirtualWorkspaceLocation } from 'vs/platform/remote/common/remoteHosts';
+import { getCodiconAriaLabel } from 'vs/base/common/codicons';
+import { ILogService } from 'vs/platform/log/common/log';
+import { ReloadWindowAction } from 'vs/workbench/browser/actions/windowActions';
 
+
+type ActionGroup = [string, Array<MenuItemAction | SubmenuItemAction>];
 export class RemoteStatusIndicator extends Disposable implements IWorkbenchContribution {
 
 	private static readonly REMOTE_ACTIONS_COMMAND_ID = 'workbench.action.remote.showMenu';
@@ -35,12 +42,16 @@ export class RemoteStatusIndicator extends Disposable implements IWorkbenchContr
 
 	private remoteStatusEntry: IStatusbarEntryAccessor | undefined;
 
-	private readonly remoteMenu = this._register(this.menuService.createMenu(MenuId.StatusBarWindowIndicatorMenu, this.contextKeyService));
-	private hasRemoteActions = false;
+	private readonly legacyIndicatorMenu = this._register(this.menuService.createMenu(MenuId.StatusBarWindowIndicatorMenu, this.contextKeyService)); // to be removed once migration completed
+	private readonly remoteIndicatorMenu = this._register(this.menuService.createMenu(MenuId.StatusBarRemoteIndicatorMenu, this.contextKeyService));
+
+	private remoteMenuActionsGroups: ActionGroup[] | undefined;
 
 	private readonly remoteAuthority = this.environmentService.remoteAuthority;
 	private connectionState: 'initializing' | 'connected' | 'reconnecting' | 'disconnected' | undefined = undefined;
 	private readonly connectionStateContextKey = new RawContextKey<'' | 'initializing' | 'disconnected' | 'connected'>('remoteConnectionState', '').bindTo(this.contextKeyService);
+
+	private loggedInvalidGroupNames: { [group: string]: boolean } = Object.create(null);
 
 	constructor(
 		@IStatusbarService private readonly statusbarService: IStatusbarService,
@@ -53,7 +64,9 @@ export class RemoteStatusIndicator extends Disposable implements IWorkbenchContr
 		@IExtensionService private readonly extensionService: IExtensionService,
 		@IRemoteAgentService private readonly remoteAgentService: IRemoteAgentService,
 		@IRemoteAuthorityResolverService private readonly remoteAuthorityResolverService: IRemoteAuthorityResolverService,
-		@IHostService private readonly hostService: IHostService
+		@IHostService private readonly hostService: IHostService,
+		@IWorkspaceContextService private readonly workspaceContextService: IWorkspaceContextService,
+		@ILogService private readonly logService: ILogService
 	) {
 		super();
 
@@ -84,7 +97,7 @@ export class RemoteStatusIndicator extends Disposable implements IWorkbenchContr
 					f1: true,
 				});
 			}
-			run = () => that.showRemoteMenu(that.remoteMenu);
+			run = () => that.showRemoteMenu();
 		});
 
 		// Close Remote Connection
@@ -98,7 +111,7 @@ export class RemoteStatusIndicator extends Disposable implements IWorkbenchContr
 						f1: true
 					});
 				}
-				run = () => that.remoteAuthority && that.hostService.openWindow({ forceReuseWindow: true });
+				run = () => that.remoteAuthority && that.hostService.openWindow({ forceReuseWindow: true, remoteAuthority: null });
 			});
 
 			MenuRegistry.appendMenuItem(MenuId.MenubarFileMenu, {
@@ -115,7 +128,13 @@ export class RemoteStatusIndicator extends Disposable implements IWorkbenchContr
 	private registerListeners(): void {
 
 		// Menu changes
-		this._register(this.remoteMenu.onDidChange(() => this.updateRemoteActions()));
+		const updateRemoteActions = () => {
+			this.remoteMenuActionsGroups = undefined;
+			this.updateRemoteStatusIndicator();
+		};
+
+		this._register(this.legacyIndicatorMenu.onDidChange(updateRemoteActions));
+		this._register(this.remoteIndicatorMenu.onDidChange(updateRemoteActions));
 
 		// Update indicator when formatter changes as it may have an impact on the remote label
 		this._register(this.labelService.onDidChangeFormatters(() => this.updateRemoteStatusIndicator()));
@@ -146,6 +165,8 @@ export class RemoteStatusIndicator extends Disposable implements IWorkbenchContr
 					}
 				}));
 			}
+		} else {
+			this._register(this.workspaceContextService.onDidChangeWorkbenchState(() => this.updateRemoteStatusIndicator()));
 		}
 	}
 
@@ -185,25 +206,35 @@ export class RemoteStatusIndicator extends Disposable implements IWorkbenchContr
 		}
 	}
 
-	private updateRemoteActions() {
-		const newHasWindowActions = this.remoteMenu.getActions().length > 0;
-		if (newHasWindowActions !== this.hasRemoteActions) {
-			this.hasRemoteActions = newHasWindowActions;
-
-			this.updateRemoteStatusIndicator();
+	private validatedGroup(group: string) {
+		if (!group.match(/^(remote|virtualfs)_(\d\d)_(([a-z][a-z0-9+\-.]*)_(.*))$/)) {
+			if (!this.loggedInvalidGroupNames[group]) {
+				this.loggedInvalidGroupNames[group] = true;
+				this.logService.warn(`Invalid group name used in "statusBar/remoteIndicator" menu contribution: ${group}. Entries ignored. Expected format: 'remote_$ORDER_$REMOTENAME_$GROUPING or 'virtualfs_$ORDER_$FILESCHEME_$GROUPING.`);
+			}
+			return false;
 		}
+		return true;
+	}
+
+	private getRemoteMenuActions(doNotUseCache?: boolean): ActionGroup[] {
+		if (!this.remoteMenuActionsGroups || doNotUseCache) {
+			this.remoteMenuActionsGroups = this.remoteIndicatorMenu.getActions().filter(a => this.validatedGroup(a[0])).concat(this.legacyIndicatorMenu.getActions());
+		}
+		return this.remoteMenuActionsGroups;
 	}
 
 	private updateRemoteStatusIndicator(): void {
 
-		// Remote indicator: show if provided via options
+		// Remote Indicator: show if provided via options
 		const remoteIndicator = this.environmentService.options?.windowIndicator;
 		if (remoteIndicator) {
 			this.renderRemoteStatusIndicator(truncate(remoteIndicator.label, RemoteStatusIndicator.REMOTE_STATUS_LABEL_MAX_LENGTH), remoteIndicator.tooltip, remoteIndicator.command);
+			return;
 		}
 
 		// Remote Authority: show connection state
-		else if (this.remoteAuthority) {
+		if (this.remoteAuthority) {
 			const hostLabel = this.labelService.getHostLabel(Schemas.vscodeRemote, this.remoteAuthority) || this.remoteAuthority;
 			switch (this.connectionState) {
 				case 'initializing':
@@ -218,30 +249,47 @@ export class RemoteStatusIndicator extends Disposable implements IWorkbenchContr
 				default:
 					this.renderRemoteStatusIndicator(`$(remote) ${truncate(hostLabel, RemoteStatusIndicator.REMOTE_STATUS_LABEL_MAX_LENGTH)}`, nls.localize('host.tooltip', "Editing on {0}", hostLabel));
 			}
+			return;
 		}
 
-		// Remote Extensions Installed: offer the indicator to show actions
-		else if (this.remoteMenu.getActions().length > 0) {
+		// Workspace with label: indicate editing source
+		const workspaceLabel = this.getWorkspaceLabel();
+		if (workspaceLabel) {
+			this.renderRemoteStatusIndicator(`$(remote) ${truncate(workspaceLabel, RemoteStatusIndicator.REMOTE_STATUS_LABEL_MAX_LENGTH)}`, nls.localize('workspace.tooltip', "Editing on {0}", workspaceLabel));
+			return;
+		}
+
+		// Remote actions: offer menu
+		if (this.getRemoteMenuActions().length > 0) {
 			this.renderRemoteStatusIndicator(`$(remote)`, nls.localize('noHost.tooltip', "Open a Remote Window"));
+			return;
 		}
 
 		// No Remote Extensions: hide status indicator
-		else {
-			dispose(this.remoteStatusEntry);
-			this.remoteStatusEntry = undefined;
+		dispose(this.remoteStatusEntry);
+		this.remoteStatusEntry = undefined;
+	}
+
+	private getWorkspaceLabel() {
+		const workspace = this.workspaceContextService.getWorkspace();
+		const workspaceLocation = getVirtualWorkspaceLocation(workspace);
+		if (workspaceLocation) {
+			return this.labelService.getHostLabel(workspaceLocation.scheme, workspaceLocation.authority);
 		}
+		return undefined;
 	}
 
 	private renderRemoteStatusIndicator(text: string, tooltip?: string, command?: string, showProgress?: boolean): void {
 		const name = nls.localize('remoteHost', "Remote Host");
-		if (typeof command !== 'string' && this.remoteMenu.getActions().length > 0) {
+		if (typeof command !== 'string' && this.getRemoteMenuActions().length > 0) {
 			command = RemoteStatusIndicator.REMOTE_ACTIONS_COMMAND_ID;
 		}
 
+		const ariaLabel = getCodiconAriaLabel(text);
 		const properties: IStatusbarEntry = {
 			backgroundColor: themeColorFromId(STATUS_BAR_HOST_NAME_BACKGROUND),
 			color: themeColorFromId(STATUS_BAR_HOST_NAME_FOREGROUND),
-			ariaLabel: name,
+			ariaLabel,
 			text,
 			showProgress,
 			tooltip,
@@ -255,24 +303,34 @@ export class RemoteStatusIndicator extends Disposable implements IWorkbenchContr
 		}
 	}
 
-	private showRemoteMenu(menu: IMenu) {
-		const computeItems = () => {
-			const actions = menu.getActions();
-			const items: (IQuickPickItem
-				| IQuickPickSeparator)[] = [];
-			for (let actionGroup of actions) {
-				if (items.length) {
-					items.push({ type: 'separator' });
-				}
+	private showRemoteMenu() {
+		const getCategoryLabel = (action: MenuItemAction) => {
+			if (action.item.category) {
+				return typeof action.item.category === 'string' ? action.item.category : action.item.category.value;
+			}
+			return undefined;
+		};
 
+		const computeItems = () => {
+			const actionGroups = this.getRemoteMenuActions(true);
+
+			const items: (IQuickPickItem | IQuickPickSeparator)[] = [];
+
+			let lastCategoryName: string | undefined = undefined;
+
+			for (let actionGroup of actionGroups) {
+				let hasGroupCategory = false;
 				for (let action of actionGroup[1]) {
 					if (action instanceof MenuItemAction) {
-						let label = typeof action.item.title === 'string' ? action.item.title : action.item.title.value;
-						if (action.item.category) {
-							const category = typeof action.item.category === 'string' ? action.item.category : action.item.category.value;
-							label = nls.localize('cat.title', "{0}: {1}", category, label);
+						if (!hasGroupCategory) {
+							const category = getCategoryLabel(action);
+							if (category !== lastCategoryName) {
+								items.push({ type: 'separator', label: category });
+								lastCategoryName = category;
+							}
+							hasGroupCategory = true;
 						}
-
+						let label = typeof action.item.title === 'string' ? action.item.title : action.item.title.value;
 						items.push({
 							type: 'item',
 							id: action.item.id,
@@ -292,12 +350,21 @@ export class RemoteStatusIndicator extends Disposable implements IWorkbenchContr
 					id: RemoteStatusIndicator.CLOSE_REMOTE_COMMAND_ID,
 					label: nls.localize('closeRemote.title', 'Close Remote Connection')
 				});
+
+				if (this.connectionState === 'disconnected') {
+					items.push({
+						type: 'item',
+						id: ReloadWindowAction.ID,
+						label: nls.localize('reloadWindow', 'Reload Window')
+					});
+				}
 			}
 			return items;
 		};
 
 		const quickPick = this.quickInputService.createQuickPick();
 		quickPick.items = computeItems();
+		quickPick.sortByLabel = false;
 		quickPick.canSelectMany = false;
 		once(quickPick.onDidAccept)((_ => {
 			const selectedItems = quickPick.selectedItems;
@@ -307,8 +374,12 @@ export class RemoteStatusIndicator extends Disposable implements IWorkbenchContr
 
 			quickPick.hide();
 		}));
+
 		// refresh the items when actions change
-		const itemUpdater = menu.onDidChange(() => quickPick.items = computeItems());
+		const legacyItemUpdater = this.legacyIndicatorMenu.onDidChange(() => quickPick.items = computeItems());
+		quickPick.onDidHide(legacyItemUpdater.dispose);
+
+		const itemUpdater = this.remoteIndicatorMenu.onDidChange(() => quickPick.items = computeItems());
 		quickPick.onDidHide(itemUpdater.dispose);
 
 		quickPick.show();

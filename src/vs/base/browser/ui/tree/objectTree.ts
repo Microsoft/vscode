@@ -38,9 +38,9 @@ export interface IObjectTreeSetChildrenOptions<T> {
 
 export class ObjectTree<T extends NonNullable<any>, TFilterData = void> extends AbstractTree<T | null, TFilterData, T | null> {
 
-	protected model!: IObjectTreeModel<T, TFilterData>;
+	protected override model!: IObjectTreeModel<T, TFilterData>;
 
-	get onDidChangeCollapseState(): Event<ICollapseStateChangeEvent<T | null, TFilterData>> { return this.model.onDidChangeCollapseState; }
+	override get onDidChangeCollapseState(): Event<ICollapseStateChangeEvent<T | null, TFilterData>> { return this.model.onDidChangeCollapseState; }
 
 	constructor(
 		user: string,
@@ -194,7 +194,7 @@ export interface ICompressibleObjectTreeOptionsUpdate extends IAbstractTreeOptio
 
 export class CompressibleObjectTree<T extends NonNullable<any>, TFilterData = void> extends ObjectTree<T, TFilterData> implements ICompressedTreeNodeProvider<T, TFilterData> {
 
-	protected model!: CompressibleObjectTreeModel<T, TFilterData>;
+	protected override model!: CompressibleObjectTreeModel<T, TFilterData>;
 
 	constructor(
 		user: string,
@@ -208,15 +208,15 @@ export class CompressibleObjectTree<T extends NonNullable<any>, TFilterData = vo
 		super(user, container, delegate, compressibleRenderers, asObjectTreeOptions<T, TFilterData>(compressedTreeNodeProvider, options));
 	}
 
-	setChildren(element: T | null, children: Iterable<ICompressedTreeElement<T>> = Iterable.empty(), options?: IObjectTreeSetChildrenOptions<T>): void {
+	override setChildren(element: T | null, children: Iterable<ICompressedTreeElement<T>> = Iterable.empty(), options?: IObjectTreeSetChildrenOptions<T>): void {
 		this.model.setChildren(element, children, options);
 	}
 
-	protected createModel(user: string, view: IList<ITreeNode<T, TFilterData>>, options: ICompressibleObjectTreeOptions<T, TFilterData>): ITreeModel<T | null, TFilterData, T | null> {
+	protected override createModel(user: string, view: IList<ITreeNode<T, TFilterData>>, options: ICompressibleObjectTreeOptions<T, TFilterData>): ITreeModel<T | null, TFilterData, T | null> {
 		return new CompressibleObjectTreeModel(user, view, options);
 	}
 
-	updateOptions(optionsUpdate: ICompressibleObjectTreeOptionsUpdate = {}): void {
+	override updateOptions(optionsUpdate: ICompressibleObjectTreeOptionsUpdate = {}): void {
 		super.updateOptions(optionsUpdate);
 
 		if (typeof optionsUpdate.compressionEnabled !== 'undefined') {

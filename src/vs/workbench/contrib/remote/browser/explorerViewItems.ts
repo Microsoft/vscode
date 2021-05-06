@@ -76,14 +76,14 @@ export class SwitchRemoteViewItem extends SelectActionViewItem {
 		return index;
 	}
 
-	render(container: HTMLElement) {
+	override render(container: HTMLElement) {
 		if (this.optionsItems.length > 1) {
 			super.render(container);
 			container.classList.add('switch-remote');
 		}
 	}
 
-	protected getActionContext(_: string, index: number): any {
+	protected override getActionContext(_: string, index: number): any {
 		return this.optionsItems[index];
 	}
 

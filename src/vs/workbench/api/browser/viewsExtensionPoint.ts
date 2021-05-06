@@ -133,7 +133,7 @@ const viewDescriptor: IJSONSchema = {
 			type: 'string'
 		},
 		contextualTitle: {
-			description: localize('vscode.extension.contributes.view.contextualTitle', "Human-readable context for when the view is moved out of its original location. By default, the view's container name will be used. Will be shown"),
+			description: localize('vscode.extension.contributes.view.contextualTitle', "Human-readable context for when the view is moved out of its original location. By default, the view's container name will be used."),
 			type: 'string'
 		},
 		visibility: {
@@ -304,8 +304,8 @@ class ViewsExtensionHandler implements IWorkbenchContribution {
 		const removedExtensions: Set<string> = extensionPoints.reduce((result, e) => { result.add(ExtensionIdentifier.toKey(e.description.identifier)); return result; }, new Set<string>());
 		for (const viewContainer of viewContainersRegistry.all) {
 			if (viewContainer.extensionId && removedExtensions.has(ExtensionIdentifier.toKey(viewContainer.extensionId))) {
-				// move only those views that do not belong to the removed extension
-				const views = this.viewsRegistry.getViews(viewContainer).filter(view => !removedExtensions.has(ExtensionIdentifier.toKey((view as ICustomViewDescriptor).extensionId)));
+				// move all views in this container into default view container
+				const views = this.viewsRegistry.getViews(viewContainer);
 				if (views.length) {
 					this.viewsRegistry.moveViews(views, this.getDefaultViewContainer());
 				}

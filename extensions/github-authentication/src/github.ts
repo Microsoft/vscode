@@ -9,7 +9,7 @@ import { Keychain } from './common/keychain';
 import { GitHubServer, NETWORK_ERROR } from './githubServer';
 import Logger from './common/logger';
 import { arrayEquals } from './common/utils';
-import TelemetryReporter from 'vscode-extension-telemetry';
+import { ExperimentationTelemetry } from './experimentationService';
 
 export const onDidChangeSessions = new vscode.EventEmitter<vscode.AuthenticationProviderAuthenticationSessionsChangeEvent>();
 
@@ -30,7 +30,7 @@ export class GitHubAuthenticationProvider {
 
 	private _keychain: Keychain;
 
-	constructor(context: vscode.ExtensionContext, telemetryReporter: TelemetryReporter) {
+	constructor(context: vscode.ExtensionContext, telemetryReporter: ExperimentationTelemetry) {
 		this._keychain = new Keychain(context);
 		this._githubServer = new GitHubServer(telemetryReporter);
 	}

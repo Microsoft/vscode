@@ -7,8 +7,8 @@ import { AppInsightsAppender } from 'vs/platform/telemetry/node/appInsightsAppen
 import { TelemetryClient, Contracts } from 'applicationinsights';
 
 class AppInsightsMock extends TelemetryClient {
-	public config: any;
-	public channel: any;
+	public override config: any;
+	public override channel: any;
 	public events: Contracts.EventTelemetry[] = [];
 	public IsTrackingPageView: boolean = false;
 	public exceptions: any[] = [];
@@ -17,11 +17,11 @@ class AppInsightsMock extends TelemetryClient {
 		super('testKey');
 	}
 
-	public trackEvent(event: any) {
+	public override trackEvent(event: any) {
 		this.events.push(event);
 	}
 
-	public flush(options: any): void {
+	public override flush(options: any): void {
 		// called on dispose
 	}
 }
@@ -44,20 +44,20 @@ suite('AIAdapter', () => {
 	test('Simple event', () => {
 		adapter.log('testEvent');
 
-		assert.equal(appInsightsMock.events.length, 1);
-		assert.equal(appInsightsMock.events[0].name, `${prefix}/testEvent`);
+		assert.strictEqual(appInsightsMock.events.length, 1);
+		assert.strictEqual(appInsightsMock.events[0].name, `${prefix}/testEvent`);
 	});
 
 	test('addional data', () => {
 		adapter = new AppInsightsAppender(prefix, { first: '1st', second: 2, third: true }, () => appInsightsMock);
 		adapter.log('testEvent');
 
-		assert.equal(appInsightsMock.events.length, 1);
+		assert.strictEqual(appInsightsMock.events.length, 1);
 		let [first] = appInsightsMock.events;
-		assert.equal(first.name, `${prefix}/testEvent`);
-		assert.equal(first.properties!['first'], '1st');
-		assert.equal(first.measurements!['second'], '2');
-		assert.equal(first.measurements!['third'], 1);
+		assert.strictEqual(first.name, `${prefix}/testEvent`);
+		assert.strictEqual(first.properties!['first'], '1st');
+		assert.strictEqual(first.measurements!['second'], 2);
+		assert.strictEqual(first.measurements!['third'], 1);
 	});
 
 	test('property limits', () => {
@@ -78,7 +78,7 @@ suite('AIAdapter', () => {
 		data['reallyLongPropertyValue'] = reallyLongPropertyValue;
 		adapter.log('testEvent', data);
 
-		assert.equal(appInsightsMock.events.length, 1);
+		assert.strictEqual(appInsightsMock.events.length, 1);
 
 		for (let prop in appInsightsMock.events[0].properties!) {
 			assert(prop.length < 150);
@@ -90,14 +90,14 @@ suite('AIAdapter', () => {
 		let date = new Date();
 		adapter.log('testEvent', { favoriteDate: date, likeRed: false, likeBlue: true, favoriteNumber: 1, favoriteColor: 'blue', favoriteCars: ['bmw', 'audi', 'ford'] });
 
-		assert.equal(appInsightsMock.events.length, 1);
-		assert.equal(appInsightsMock.events[0].name, `${prefix}/testEvent`);
-		assert.equal(appInsightsMock.events[0].properties!['favoriteColor'], 'blue');
-		assert.equal(appInsightsMock.events[0].measurements!['likeRed'], 0);
-		assert.equal(appInsightsMock.events[0].measurements!['likeBlue'], 1);
-		assert.equal(appInsightsMock.events[0].properties!['favoriteDate'], date.toISOString());
-		assert.equal(appInsightsMock.events[0].properties!['favoriteCars'], JSON.stringify(['bmw', 'audi', 'ford']));
-		assert.equal(appInsightsMock.events[0].measurements!['favoriteNumber'], 1);
+		assert.strictEqual(appInsightsMock.events.length, 1);
+		assert.strictEqual(appInsightsMock.events[0].name, `${prefix}/testEvent`);
+		assert.strictEqual(appInsightsMock.events[0].properties!['favoriteColor'], 'blue');
+		assert.strictEqual(appInsightsMock.events[0].measurements!['likeRed'], 0);
+		assert.strictEqual(appInsightsMock.events[0].measurements!['likeBlue'], 1);
+		assert.strictEqual(appInsightsMock.events[0].properties!['favoriteDate'], date.toISOString());
+		assert.strictEqual(appInsightsMock.events[0].properties!['favoriteCars'], JSON.stringify(['bmw', 'audi', 'ford']));
+		assert.strictEqual(appInsightsMock.events[0].measurements!['favoriteNumber'], 1);
 	});
 
 	test('Nested data', () => {
@@ -119,15 +119,15 @@ suite('AIAdapter', () => {
 			}
 		});
 
-		assert.equal(appInsightsMock.events.length, 1);
-		assert.equal(appInsightsMock.events[0].name, `${prefix}/testEvent`);
+		assert.strictEqual(appInsightsMock.events.length, 1);
+		assert.strictEqual(appInsightsMock.events[0].name, `${prefix}/testEvent`);
 
-		assert.equal(appInsightsMock.events[0].properties!['window.title'], 'some title');
-		assert.equal(appInsightsMock.events[0].measurements!['window.measurements.width'], 100);
-		assert.equal(appInsightsMock.events[0].measurements!['window.measurements.height'], 200);
+		assert.strictEqual(appInsightsMock.events[0].properties!['window.title'], 'some title');
+		assert.strictEqual(appInsightsMock.events[0].measurements!['window.measurements.width'], 100);
+		assert.strictEqual(appInsightsMock.events[0].measurements!['window.measurements.height'], 200);
 
-		assert.equal(appInsightsMock.events[0].properties!['nestedObj.nestedObj2.nestedObj3'], JSON.stringify({ 'testProperty': 'test' }));
-		assert.equal(appInsightsMock.events[0].measurements!['nestedObj.testMeasurement'], 1);
+		assert.strictEqual(appInsightsMock.events[0].properties!['nestedObj.nestedObj2.nestedObj3'], JSON.stringify({ 'testProperty': 'test' }));
+		assert.strictEqual(appInsightsMock.events[0].measurements!['nestedObj.testMeasurement'], 1);
 	});
 
 });

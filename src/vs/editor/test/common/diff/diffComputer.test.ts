@@ -886,4 +886,34 @@ suite('Editor Diff - DiffComputer', () => {
 		];
 		assertDiff(original, modified, expected, false, false, false);
 	});
+
+	test('issue #119051: gives preference to fewer diff hunks', () => {
+		const original = [
+			'1',
+			'',
+			'',
+			'2',
+			'',
+		];
+		const modified = [
+			'1',
+			'',
+			'1.5',
+			'',
+			'',
+			'2',
+			'',
+			'3',
+			'',
+		];
+		const expected = [
+			createLineChange(
+				2, 0, 3, 4
+			),
+			createLineChange(
+				5, 0, 8, 9
+			)
+		];
+		assertDiff(original, modified, expected, false, false, false);
+	});
 });

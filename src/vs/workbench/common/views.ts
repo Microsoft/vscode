@@ -634,6 +634,8 @@ export interface ITreeView extends IDisposable {
 
 	canSelectMany: boolean;
 
+	canDragAndDrop: boolean;
+
 	message?: string;
 
 	title: string;
@@ -810,7 +812,7 @@ export interface ITreeViewDataProvider {
 	readonly isTreeEmpty?: boolean;
 	onDidChangeEmpty?: Event<void>;
 	getChildren(element?: ITreeItem): Promise<ITreeItem[]>;
-
+	setParent?(elements: ITreeItem[], newParent: ITreeItem): Promise<void>;
 }
 
 export interface IEditableData {

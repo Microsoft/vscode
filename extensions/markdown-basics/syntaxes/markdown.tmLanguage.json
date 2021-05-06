@@ -4,7 +4,7 @@
 		"If you want to provide a fix or improvement, please create a pull request against the original repository.",
 		"Once accepted there, we are happy to receive an update request."
 	],
-	"version": "https://github.com/microsoft/vscode-markdown-tm-grammar/commit/7019b191c3ee38b6c345f3a2a843f223eb92ca1e",
+	"version": "https://github.com/microsoft/vscode-markdown-tm-grammar/commit/399ff6f608a7bef3f68713be23cdcb4c6d475804",
 	"name": "Markdown",
 	"scopeName": "text.html.markdown",
 	"patterns": [
@@ -1975,7 +1975,15 @@
 									"name": "punctuation.definition.heading.markdown"
 								},
 								"2": {
-									"name": "entity.name.section.markdown"
+									"name": "entity.name.section.markdown",
+									"patterns": [
+										{
+											"include": "#inline"
+										},
+										{
+											"include": "text.html.derivative"
+										}
+									]
 								},
 								"3": {
 									"name": "punctuation.definition.heading.markdown"
@@ -1990,7 +1998,15 @@
 									"name": "punctuation.definition.heading.markdown"
 								},
 								"2": {
-									"name": "entity.name.section.markdown"
+									"name": "entity.name.section.markdown",
+									"patterns": [
+										{
+											"include": "#inline"
+										},
+										{
+											"include": "text.html.derivative"
+										}
+									]
 								},
 								"3": {
 									"name": "punctuation.definition.heading.markdown"
@@ -2005,7 +2021,15 @@
 									"name": "punctuation.definition.heading.markdown"
 								},
 								"2": {
-									"name": "entity.name.section.markdown"
+									"name": "entity.name.section.markdown",
+									"patterns": [
+										{
+											"include": "#inline"
+										},
+										{
+											"include": "text.html.derivative"
+										}
+									]
 								},
 								"3": {
 									"name": "punctuation.definition.heading.markdown"
@@ -2020,7 +2044,15 @@
 									"name": "punctuation.definition.heading.markdown"
 								},
 								"2": {
-									"name": "entity.name.section.markdown"
+									"name": "entity.name.section.markdown",
+									"patterns": [
+										{
+											"include": "#inline"
+										},
+										{
+											"include": "text.html.derivative"
+										}
+									]
 								},
 								"3": {
 									"name": "punctuation.definition.heading.markdown"
@@ -2035,7 +2067,15 @@
 									"name": "punctuation.definition.heading.markdown"
 								},
 								"2": {
-									"name": "entity.name.section.markdown"
+									"name": "entity.name.section.markdown",
+									"patterns": [
+										{
+											"include": "#inline"
+										},
+										{
+											"include": "text.html.derivative"
+										}
+									]
 								},
 								"3": {
 									"name": "punctuation.definition.heading.markdown"
@@ -2050,7 +2090,15 @@
 									"name": "punctuation.definition.heading.markdown"
 								},
 								"2": {
-									"name": "entity.name.section.markdown"
+									"name": "entity.name.section.markdown",
+									"patterns": [
+										{
+											"include": "#inline"
+										},
+										{
+											"include": "text.html.derivative"
+										}
+									]
 								},
 								"3": {
 									"name": "punctuation.definition.heading.markdown"

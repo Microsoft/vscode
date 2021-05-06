@@ -8,7 +8,7 @@ import * as nls from 'vs/nls';
 import { Action, IAction, Separator } from 'vs/base/common/actions';
 import { EditorPane } from 'vs/workbench/browser/parts/editor/editorPane';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
-import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
+import { IInstantiationService, ServicesAccessor } from 'vs/platform/instantiation/common/instantiation';
 import { IExtensionsWorkbenchService, IExtension } from 'vs/workbench/contrib/extensions/common/extensions';
 import { IThemeService } from 'vs/platform/theme/common/themeService';
 import { IExtensionService, IExtensionsStatus, IExtensionHostProfile } from 'vs/workbench/services/extensions/common/extensions';
@@ -36,6 +36,8 @@ import { domEvent } from 'vs/base/browser/event';
 import { IListAccessibilityProvider } from 'vs/base/browser/ui/list/listWidget';
 import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
 import { RuntimeExtensionsInput } from 'vs/workbench/contrib/extensions/common/runtimeExtensionsInput';
+import { Action2 } from 'vs/platform/actions/common/actions';
+import { CATEGORIES } from 'vs/workbench/common/actions';
 
 interface IExtensionProfileInformation {
 	/**
@@ -137,7 +139,7 @@ export abstract class AbstractRuntimeExtensionsEditor extends EditorPane {
 		for (let i = 0, len = extensionsDescriptions.length; i < len; i++) {
 			const extensionDescription = extensionsDescriptions[i];
 
-			let profileInfo: IExtensionProfileInformation | null = null;
+			let extProfileInfo: IExtensionProfileInformation | null = null;
 			if (profileInfo) {
 				let extensionSegments = segments[ExtensionIdentifier.toKey(extensionDescription.identifier)] || [];
 				let extensionTotalTime = 0;
@@ -146,7 +148,7 @@ export abstract class AbstractRuntimeExtensionsEditor extends EditorPane {
 					const endTime = extensionSegments[2 * j + 1];
 					extensionTotalTime += (endTime - startTime);
 				}
-				profileInfo = {
+				extProfileInfo = {
 					segments: extensionSegments,
 					totalTime: extensionTotalTime
 				};
@@ -157,7 +159,7 @@ export abstract class AbstractRuntimeExtensionsEditor extends EditorPane {
 				description: extensionDescription,
 				marketplaceInfo: marketplaceMap[ExtensionIdentifier.toKey(extensionDescription.identifier)],
 				status: statusMap[extensionDescription.identifier.value],
-				profileInfo: profileInfo || undefined,
+				profileInfo: extProfileInfo || undefined,
 				unresponsiveProfile: this._getUnresponsiveProfile(extensionDescription.identifier)
 			};
 		}
@@ -466,18 +468,18 @@ export abstract class AbstractRuntimeExtensionsEditor extends EditorPane {
 	protected abstract _createProfileAction(): Action | null;
 }
 
-export class ShowRuntimeExtensionsAction extends Action {
-	static readonly ID = 'workbench.action.showRuntimeExtensions';
-	static readonly LABEL = nls.localize('showRuntimeExtensions', "Show Running Extensions");
+export class ShowRuntimeExtensionsAction extends Action2 {
 
-	constructor(
-		id: string, label: string,
-		@IEditorService private readonly _editorService: IEditorService
-	) {
-		super(id, label);
+	constructor() {
+		super({
+			id: 'workbench.action.showRuntimeExtensions',
+			title: { value: nls.localize('showRuntimeExtensions', "Show Running Extensions"), original: 'Show Running Extensions' },
+			category: CATEGORIES.Developer,
+			f1: true
+		});
 	}
 
-	public async run(e?: any): Promise<any> {
-		await this._editorService.openEditor(RuntimeExtensionsInput.instance, { revealIfOpened: true, pinned: true });
+	async run(accessor: ServicesAccessor): Promise<void> {
+		await accessor.get(IEditorService).openEditor(RuntimeExtensionsInput.instance, { revealIfOpened: true, pinned: true });
 	}
 }

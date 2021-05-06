@@ -4,10 +4,9 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as assert from 'assert';
-import { getPathFromAmdModule } from 'vs/base/common/amd';
 import * as path from 'vs/base/common/path';
 import { URI } from 'vs/base/common/uri';
-import { flakySuite } from 'vs/base/test/node/testUtils';
+import { flakySuite, getPathFromAmdModule } from 'vs/base/test/node/testUtils';
 import { IFileQuery, IFolderQuery, ISerializedSearchProgressItem, isProgressMessage, QueryType } from 'vs/workbench/services/search/common/search';
 import { SearchService } from 'vs/workbench/services/search/node/rawSearchService';
 
@@ -39,7 +38,7 @@ async function doSearchTest(query: IFileQuery, expectedResultCount: number | Fun
 		}
 	});
 
-	assert.equal(results.length, expectedResultCount, `rg ${results.length} !== ${expectedResultCount}`);
+	assert.strictEqual(results.length, expectedResultCount, `rg ${results.length} !== ${expectedResultCount}`);
 }
 
 flakySuite('FileSearch-integration', function () {

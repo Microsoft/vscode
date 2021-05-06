@@ -18,7 +18,7 @@ export class LineDecoder {
 	private stringDecoder: sd.StringDecoder;
 	private remaining: string | null;
 
-	constructor(encoding: string = 'utf8') {
+	constructor(encoding: BufferEncoding = 'utf8') {
 		this.stringDecoder = new sd.StringDecoder(encoding);
 		this.remaining = null;
 	}

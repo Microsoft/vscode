@@ -44,7 +44,7 @@ export class IPadShowKeyboard extends Disposable implements IEditorContribution 
 		}
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		super.dispose();
 		if (this.widget) {
 			this.widget.dispose();
@@ -77,7 +77,7 @@ class ShowKeyboardWidget extends Disposable implements IOverlayWidget {
 		this.editor.addOverlayWidget(this);
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		this.editor.removeOverlayWidget(this);
 		super.dispose();
 	}

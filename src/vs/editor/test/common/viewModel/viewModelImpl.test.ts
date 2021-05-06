@@ -66,7 +66,7 @@ suite('ViewModel', () => {
 
 			viewLineCount.push(viewModel.getLineCount());
 			viewModel.addViewEventHandler(new class extends ViewEventHandler {
-				handleEvents(events: ViewEvent[]): void {
+				override handleEvents(events: ViewEvent[]): void {
 					// Access the view model
 					viewLineCount.push(viewModel.getLineCount());
 				}

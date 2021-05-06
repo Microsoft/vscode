@@ -8,11 +8,12 @@ import { IInstantiationService } from 'vs/platform/instantiation/common/instanti
 import { ICustomEditorInputFactory, IEditorInput } from 'vs/workbench/common/editor';
 import { CustomEditorInput } from 'vs/workbench/contrib/customEditor/browser/customEditorInput';
 import { IWebviewService, WebviewContentOptions, WebviewContentPurpose, WebviewExtensionDescription, WebviewOptions } from 'vs/workbench/contrib/webview/browser/webview';
-import { SerializedWebviewOptions, DeserializedWebview, reviveWebviewExtensionDescription, SerializedWebview, WebviewEditorInputFactory, restoreWebviewContentOptions, restoreWebviewOptions } from 'vs/workbench/contrib/webviewPanel/browser/webviewEditorInputFactory';
+import { SerializedWebviewOptions, DeserializedWebview, reviveWebviewExtensionDescription, SerializedWebview, WebviewEditorInputSerializer, restoreWebviewContentOptions, restoreWebviewOptions } from 'vs/workbench/contrib/webviewPanel/browser/webviewEditorInputSerializer';
 import { IWebviewWorkbenchService } from 'vs/workbench/contrib/webviewPanel/browser/webviewWorkbenchService';
-import { IBackupFileService } from 'vs/workbench/services/backup/common/backup';
+import { IWorkingCopyBackupService } from 'vs/workbench/services/workingCopy/common/workingCopyBackup';
+import { IWorkingCopyBackupMeta, NO_TYPE_ID } from 'vs/workbench/services/workingCopy/common/workingCopy';
 
-export interface CustomDocumentBackupData {
+export interface CustomDocumentBackupData extends IWorkingCopyBackupMeta {
 	readonly viewType: string;
 	readonly editorResource: UriComponents;
 	backupId: string;
@@ -43,9 +44,9 @@ interface DeserializedCustomEditor extends DeserializedWebview {
 }
 
 
-export class CustomEditorInputFactory extends WebviewEditorInputFactory {
+export class CustomEditorInputSerializer extends WebviewEditorInputSerializer {
 
-	public static readonly ID = CustomEditorInput.typeId;
+	public static override readonly ID = CustomEditorInput.typeId;
 
 	public constructor(
 		@IWebviewWorkbenchService webviewWorkbenchService: IWebviewWorkbenchService,
@@ -55,7 +56,7 @@ export class CustomEditorInputFactory extends WebviewEditorInputFactory {
 		super(webviewWorkbenchService);
 	}
 
-	public serialize(input: CustomEditorInput): string | undefined {
+	public override serialize(input: CustomEditorInput): string | undefined {
 		const dirty = input.isDirty();
 		const data: SerializedCustomEditor = {
 			...this.toJson(input),
@@ -71,7 +72,7 @@ export class CustomEditorInputFactory extends WebviewEditorInputFactory {
 		}
 	}
 
-	protected fromJson(data: SerializedCustomEditor): DeserializedCustomEditor {
+	protected override fromJson(data: SerializedCustomEditor): DeserializedCustomEditor {
 		return {
 			...super.fromJson(data),
 			editorResource: URI.from(data.editorResource),
@@ -79,7 +80,7 @@ export class CustomEditorInputFactory extends WebviewEditorInputFactory {
 		};
 	}
 
-	public deserialize(
+	public override deserialize(
 		_instantiationService: IInstantiationService,
 		serializedEditorInput: string
 	): CustomEditorInput {
@@ -107,9 +108,9 @@ export const customEditorInputFactory = new class implements ICustomEditorInputF
 	public createCustomEditorInput(resource: URI, instantiationService: IInstantiationService): Promise<IEditorInput> {
 		return instantiationService.invokeFunction(async accessor => {
 			const webviewService = accessor.get<IWebviewService>(IWebviewService);
-			const backupFileService = accessor.get<IBackupFileService>(IBackupFileService);
+			const workingCopyBackupService = accessor.get<IWorkingCopyBackupService>(IWorkingCopyBackupService);
 
-			const backup = await backupFileService.resolve<CustomDocumentBackupData>(resource);
+			const backup = await workingCopyBackupService.resolve<CustomDocumentBackupData>({ resource, typeId: NO_TYPE_ID });
 			if (!backup?.meta) {
 				throw new Error(`No backup found for custom editor: ${resource}`);
 			}

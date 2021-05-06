@@ -22,7 +22,7 @@ import { InstallLocalExtensionsInRemoteAction, InstallRemoteExtensionsInLocalAct
 import { IExtensionManagementService } from 'vs/platform/extensionManagement/common/extensionManagement';
 import { IWorkbenchExtensionEnablementService, IExtensionManagementServerService, IExtensionManagementServer } from 'vs/workbench/services/extensionManagement/common/extensionManagement';
 import { ExtensionsInput } from 'vs/workbench/contrib/extensions/common/extensionsInput';
-import { ExtensionsListView, EnabledExtensionsView, DisabledExtensionsView, RecommendedExtensionsView, WorkspaceRecommendedExtensionsView, BuiltInFeatureExtensionsView, BuiltInThemesExtensionsView, BuiltInProgrammingLanguageExtensionsView, ServerInstalledExtensionsView, DefaultRecommendedExtensionsView } from 'vs/workbench/contrib/extensions/browser/extensionsViews';
+import { ExtensionsListView, EnabledExtensionsView, DisabledExtensionsView, RecommendedExtensionsView, WorkspaceRecommendedExtensionsView, BuiltInFeatureExtensionsView, BuiltInThemesExtensionsView, BuiltInProgrammingLanguageExtensionsView, ServerInstalledExtensionsView, DefaultRecommendedExtensionsView, TrustRequiredOnStartExtensionsView, TrustRequiredOnDemandExtensionsView } from 'vs/workbench/contrib/extensions/browser/extensionsViews';
 import { IProgressService, ProgressLocation } from 'vs/platform/progress/common/progress';
 import { IEditorGroupsService } from 'vs/workbench/services/editor/common/editorGroupsService';
 import Severity from 'vs/base/common/severity';
@@ -59,6 +59,7 @@ import { ICommandService } from 'vs/platform/commands/common/commands';
 import { isWeb } from 'vs/base/common/platform';
 import { installLocalInRemoteIcon } from 'vs/workbench/contrib/extensions/browser/extensionsIcons';
 import { registerAction2, Action2, MenuId } from 'vs/platform/actions/common/actions';
+import { IWorkspaceTrustManagementService } from 'vs/platform/workspace/common/workspaceTrust';
 
 const SearchMarketplaceExtensionsContext = new RawContextKey<boolean>('searchMarketplaceExtensions', false);
 const SearchIntalledExtensionsContext = new RawContextKey<boolean>('searchInstalledExtensions', false);
@@ -69,6 +70,8 @@ const HasInstalledExtensionsContext = new RawContextKey<boolean>('hasInstalledEx
 const HasInstalledWebExtensionsContext = new RawContextKey<boolean>('hasInstalledWebExtensions', false);
 const BuiltInExtensionsContext = new RawContextKey<boolean>('builtInExtensions', false);
 const SearchBuiltInExtensionsContext = new RawContextKey<boolean>('searchBuiltInExtensions', false);
+const TrustRequiredExtensionsContext = new RawContextKey<boolean>('trustRequiredExtensions', false);
+const SearchTrustRequiredExtensionsContext = new RawContextKey<boolean>('searchTrustRequiredExtensions', false);
 const RecommendedExtensionsContext = new RawContextKey<boolean>('recommendedExtensions', false);
 
 export class ExtensionsViewletViewsContribution implements IWorkbenchContribution {
@@ -99,6 +102,9 @@ export class ExtensionsViewletViewsContribution implements IWorkbenchContributio
 
 		/* Built-in extensions views */
 		viewDescriptors.push(...this.createBuiltinExtensionsViewDescriptors());
+
+		/* Trust Required extensions views */
+		viewDescriptors.push(...this.createTrustRequiredExtensionsViewDescriptors());
 
 		Registry.as<IViewsRegistry>(Extensions.ViewsRegistry).registerViews(viewDescriptors, this.container);
 	}
@@ -337,6 +343,16 @@ export class ExtensionsViewletViewsContribution implements IWorkbenchContributio
 			when: ContextKeyExpr.and(ContextKeyExpr.has('searchBuiltInExtensions')),
 		});
 
+		/*
+		 * View used for searching trustRequired extensions
+		 */
+		viewDescriptors.push({
+			id: 'workbench.views.extensions.searchTrustRequired',
+			name: localize('trustRequired', "Trust Required"),
+			ctorDescriptor: new SyncDescriptor(ExtensionsListView, [{}]),
+			when: ContextKeyExpr.and(ContextKeyExpr.has('searchTrustRequiredExtensions')),
+		});
+
 		return viewDescriptors;
 	}
 
@@ -389,6 +405,26 @@ export class ExtensionsViewletViewsContribution implements IWorkbenchContributio
 		return viewDescriptors;
 	}
 
+	private createTrustRequiredExtensionsViewDescriptors(): IViewDescriptor[] {
+		const viewDescriptors: IViewDescriptor[] = [];
+
+		viewDescriptors.push({
+			id: 'workbench.views.extensions.trustRequiredOnStartExtensions',
+			name: localize('trustRequiredOnStartExtensions', "Trust Required To Enable"),
+			ctorDescriptor: new SyncDescriptor(TrustRequiredOnStartExtensionsView, [{}]),
+			when: ContextKeyExpr.has('trustRequiredExtensions'),
+		});
+
+		viewDescriptors.push({
+			id: 'workbench.views.extensions.trustRequiredOnDemandExtensions',
+			name: localize('trustRequiredOnDemandExtensions', "Trust Required For Features"),
+			ctorDescriptor: new SyncDescriptor(TrustRequiredOnDemandExtensionsView, [{}]),
+			when: ContextKeyExpr.has('trustRequiredExtensions'),
+		});
+
+		return viewDescriptors;
+	}
+
 }
 
 export class ExtensionsViewPaneContainer extends ViewPaneContainer implements IExtensionsViewPaneContainer {
@@ -404,6 +440,8 @@ export class ExtensionsViewPaneContainer extends ViewPaneContainer implements IE
 	private hasInstalledWebExtensionsContextKey: IContextKey<boolean>;
 	private builtInExtensionsContextKey: IContextKey<boolean>;
 	private searchBuiltInExtensionsContextKey: IContextKey<boolean>;
+	private trustRequiredExtensionsContextKey: IContextKey<boolean>;
+	private searchTrustRequiredExtensionsContextKey: IContextKey<boolean>;
 	private recommendedExtensionsContextKey: IContextKey<boolean>;
 
 	private searchDelayer: Delayer<void>;
@@ -421,6 +459,7 @@ export class ExtensionsViewPaneContainer extends ViewPaneContainer implements IE
 		@IExtensionManagementServerService private readonly extensionManagementServerService: IExtensionManagementServerService,
 		@INotificationService private readonly notificationService: INotificationService,
 		@IViewletService private readonly viewletService: IViewletService,
+		@IWorkspaceTrustManagementService private readonly workspaceTrustService: IWorkspaceTrustManagementService,
 		@IThemeService themeService: IThemeService,
 		@IConfigurationService configurationService: IConfigurationService,
 		@IStorageService storageService: IStorageService,
@@ -439,6 +478,8 @@ export class ExtensionsViewPaneContainer extends ViewPaneContainer implements IE
 		this.sortByContextKey = ExtensionsSortByContext.bindTo(contextKeyService);
 		this.searchMarketplaceExtensionsContextKey = SearchMarketplaceExtensionsContext.bindTo(contextKeyService);
 		this.searchInstalledExtensionsContextKey = SearchIntalledExtensionsContext.bindTo(contextKeyService);
+		this.trustRequiredExtensionsContextKey = TrustRequiredExtensionsContext.bindTo(contextKeyService);
+		this.searchTrustRequiredExtensionsContextKey = SearchTrustRequiredExtensionsContext.bindTo(contextKeyService);
 		this.searchOutdatedExtensionsContextKey = SearchOutdatedExtensionsContext.bindTo(contextKeyService);
 		this.searchEnabledExtensionsContextKey = SearchEnabledExtensionsContext.bindTo(contextKeyService);
 		this.searchDisabledExtensionsContextKey = SearchDisabledExtensionsContext.bindTo(contextKeyService);
@@ -465,7 +506,7 @@ export class ExtensionsViewPaneContainer extends ViewPaneContainer implements IE
 		return this.searchBox?.getValue();
 	}
 
-	create(parent: HTMLElement): void {
+	override create(parent: HTMLElement): void {
 		parent.classList.add('extensions-viewlet');
 		this.root = parent;
 
@@ -476,7 +517,7 @@ export class ExtensionsViewPaneContainer extends ViewPaneContainer implements IE
 
 		const header = append(this.root, $('.header'));
 		const placeholder = localize('searchExtensions', "Search Extensions in Marketplace");
-		const searchValue = this.searchViewletState['query.value'] ? this.searchViewletState['query.value'] : '';
+		const searchValue = this.searchViewletState['query.value'] ? this.searchViewletState['query.value'] : (this.workspaceTrustService.isWorkpaceTrusted() ? '' : '@trustRequired');
 
 		this.searchBox = this._register(this.instantiationService.createInstance(SuggestEnabledInput, `${VIEWLET_ID}.searchbox`, header, {
 			triggerCharacters: ['@'],
@@ -555,13 +596,13 @@ export class ExtensionsViewPaneContainer extends ViewPaneContainer implements IE
 		super.create(append(this.root, $('.extensions')));
 	}
 
-	focus(): void {
+	override focus(): void {
 		if (this.searchBox) {
 			this.searchBox.focus();
 		}
 	}
 
-	layout(dimension: Dimension): void {
+	override layout(dimension: Dimension): void {
 		if (this.root) {
 			this.root.classList.toggle('narrow', dimension.width <= 300);
 		}
@@ -571,7 +612,7 @@ export class ExtensionsViewPaneContainer extends ViewPaneContainer implements IE
 		super.layout(new Dimension(dimension.width, dimension.height - 41));
 	}
 
-	getOptimalWidth(): number {
+	override getOptimalWidth(): number {
 		return 400;
 	}
 
@@ -612,7 +653,7 @@ export class ExtensionsViewPaneContainer extends ViewPaneContainer implements IE
 			: '';
 	}
 
-	saveState(): void {
+	override saveState(): void {
 		const value = this.searchBox ? this.searchBox.getValue() : '';
 		if (ExtensionsListView.isLocalExtensionsQuery(value)) {
 			this.searchViewletState['query.value'] = value;
@@ -630,6 +671,8 @@ export class ExtensionsViewPaneContainer extends ViewPaneContainer implements IE
 		this.searchEnabledExtensionsContextKey.set(ExtensionsListView.isEnabledExtensionsQuery(value));
 		this.searchDisabledExtensionsContextKey.set(ExtensionsListView.isDisabledExtensionsQuery(value));
 		this.searchBuiltInExtensionsContextKey.set(ExtensionsListView.isSearchBuiltInExtensionsQuery(value));
+		this.trustRequiredExtensionsContextKey.set(ExtensionsListView.isTrustRequiredExtensionsQuery(value));
+		this.searchTrustRequiredExtensionsContextKey.set(ExtensionsListView.isSearchTrustRequiredExtensionsQuery(value));
 		this.builtInExtensionsContextKey.set(ExtensionsListView.isBuiltInExtensionsQuery(value));
 		this.recommendedExtensionsContextKey.set(isRecommendedExtensionsQuery);
 		this.searchMarketplaceExtensionsContextKey.set(!!value && !ExtensionsListView.isLocalExtensionsQuery(value) && !isRecommendedExtensionsQuery);
@@ -642,7 +685,7 @@ export class ExtensionsViewPaneContainer extends ViewPaneContainer implements IE
 		))).then(() => undefined);
 	}
 
-	protected onDidAddViewDescriptors(added: IAddedViewDescriptorRef[]): ViewPane[] {
+	protected override onDidAddViewDescriptors(added: IAddedViewDescriptorRef[]): ViewPane[] {
 		const addedViews = super.onDidAddViewDescriptors(added);
 		this.progress(Promise.all(addedViews.map(addedView =>
 			(<ExtensionsListView>addedView).show(this.normalizedQuery())

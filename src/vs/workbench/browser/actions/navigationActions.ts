@@ -32,7 +32,7 @@ abstract class BaseNavigationAction extends Action {
 		super(id, label);
 	}
 
-	async run(): Promise<boolean | IViewlet | IPanel> {
+	override async run(): Promise<void> {
 		const isEditorFocus = this.layoutService.hasFocus(Parts.EDITOR_PART);
 		const isPanelFocus = this.layoutService.hasFocus(Parts.PANEL_PART);
 		const isSidebarFocus = this.layoutService.hasFocus(Parts.SIDEBAR_PART);
@@ -41,7 +41,7 @@ abstract class BaseNavigationAction extends Action {
 		if (isEditorFocus) {
 			const didNavigate = this.navigateAcrossEditorGroup(this.toGroupDirection(this.direction));
 			if (didNavigate) {
-				return true;
+				return;
 			}
 
 			neighborPart = this.layoutService.getVisibleNeighborPart(Parts.EDITOR_PART, this.direction);
@@ -56,18 +56,12 @@ abstract class BaseNavigationAction extends Action {
 		}
 
 		if (neighborPart === Parts.EDITOR_PART) {
-			return this.navigateToEditorGroup(this.direction === Direction.Right ? GroupLocation.FIRST : GroupLocation.LAST);
+			this.navigateToEditorGroup(this.direction === Direction.Right ? GroupLocation.FIRST : GroupLocation.LAST);
+		} else if (neighborPart === Parts.SIDEBAR_PART) {
+			this.navigateToSidebar();
+		} else if (neighborPart === Parts.PANEL_PART) {
+			this.navigateToPanel();
 		}
-
-		if (neighborPart === Parts.SIDEBAR_PART) {
-			return this.navigateToSidebar();
-		}
-
-		if (neighborPart === Parts.PANEL_PART) {
-			return this.navigateToPanel();
-		}
-
-		return false;
 	}
 
 	private async navigateToPanel(): Promise<IPanel | boolean> {
@@ -240,7 +234,7 @@ export class FocusNextPart extends Action {
 		super(id, label);
 	}
 
-	async run(): Promise<void> {
+	override async run(): Promise<void> {
 		focusNextOrPreviousPart(this.layoutService, this.editorService, true);
 	}
 }
@@ -258,7 +252,7 @@ export class FocusPreviousPart extends Action {
 		super(id, label);
 	}
 
-	async run(): Promise<void> {
+	override async run(): Promise<void> {
 		focusNextOrPreviousPart(this.layoutService, this.editorService, false);
 	}
 }

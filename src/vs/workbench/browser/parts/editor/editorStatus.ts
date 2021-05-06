@@ -13,7 +13,7 @@ import { URI } from 'vs/base/common/uri';
 import { Action, WorkbenchActionExecutedClassification, WorkbenchActionExecutedEvent } from 'vs/base/common/actions';
 import { Language } from 'vs/base/common/platform';
 import { UntitledTextEditorInput } from 'vs/workbench/services/untitled/common/untitledTextEditorInput';
-import { IFileEditorInput, EncodingMode, IEncodingSupport, EditorResourceAccessor, SideBySideEditorInput, IEditorPane, IEditorInput, SideBySideEditor, IModeSupport } from 'vs/workbench/common/editor';
+import { IFileEditorInput, EditorResourceAccessor, SideBySideEditorInput, IEditorPane, IEditorInput, SideBySideEditor } from 'vs/workbench/common/editor';
 import { Disposable, MutableDisposable, DisposableStore } from 'vs/base/common/lifecycle';
 import { IEditorAction } from 'vs/editor/common/editorCommon';
 import { EndOfLineSequence } from 'vs/editor/common/model';
@@ -31,7 +31,7 @@ import { Selection } from 'vs/editor/common/core/selection';
 import { TabFocus } from 'vs/editor/common/config/commonEditorConfig';
 import { ICommandService, CommandsRegistry } from 'vs/platform/commands/common/commands';
 import { IExtensionGalleryService } from 'vs/platform/extensionManagement/common/extensionManagement';
-import { ITextFileService } from 'vs/workbench/services/textfile/common/textfiles';
+import { EncodingMode, IEncodingSupport, IModeSupport, ITextFileService } from 'vs/workbench/services/textfile/common/textfiles';
 import { SUPPORTED_ENCODINGS } from 'vs/workbench/services/textfile/common/encoding';
 import { ICursorPositionChangedEvent } from 'vs/editor/common/controller/cursorEvents';
 import { ConfigurationChangedEvent, IEditorOptions, EditorOption } from 'vs/editor/common/config/editorOptions';
@@ -43,7 +43,7 @@ import { Schemas } from 'vs/base/common/network';
 import { IPreferencesService } from 'vs/workbench/services/preferences/common/preferences';
 import { IQuickInputService, IQuickPickItem, QuickPickInput } from 'vs/platform/quickinput/common/quickInput';
 import { getIconClassesForModeId } from 'vs/editor/common/services/getIconClasses';
-import { timeout } from 'vs/base/common/async';
+import { Promises, timeout } from 'vs/base/common/async';
 import { INotificationHandle, INotificationService, Severity } from 'vs/platform/notification/common/notification';
 import { Event } from 'vs/base/common/event';
 import { IAccessibilityService, AccessibilitySupport } from 'vs/platform/accessibility/common/accessibility';
@@ -61,8 +61,8 @@ class SideBySideEditorEncodingSupport implements IEncodingSupport {
 		return this.primary.getEncoding(); // always report from modified (right hand) side
 	}
 
-	setEncoding(encoding: string, mode: EncodingMode): void {
-		[this.primary, this.secondary].forEach(editor => editor.setEncoding(encoding, mode));
+	async setEncoding(encoding: string, mode: EncodingMode): Promise<void> {
+		await Promises.settled([this.primary, this.secondary].map(editor => editor.setEncoding(encoding, mode)));
 	}
 }
 
@@ -976,7 +976,7 @@ class ShowCurrentMarkerInStatusbarContribution extends Disposable {
 		return this.markers.find(marker => Range.containsPosition(marker, position)) || null;
 	}
 
-	private onMarkerChanged(changedResources: ReadonlyArray<URI>): void {
+	private onMarkerChanged(changedResources: readonly URI[]): void {
 		if (!this.editor) {
 			return;
 		}
@@ -1044,7 +1044,7 @@ export class ShowLanguageExtensionsAction extends Action {
 		this.enabled = galleryService.isEnabled();
 	}
 
-	async run(): Promise<void> {
+	override async run(): Promise<void> {
 		await this.commandService.executeCommand('workbench.extensions.action.showExtensionsForLanguage', this.fileExtension);
 	}
 }
@@ -1069,7 +1069,7 @@ export class ChangeModeAction extends Action {
 		super(actionId, actionLabel);
 	}
 
-	async run(event: any, data: ITelemetryData): Promise<void> {
+	override async run(event: unknown, data?: ITelemetryData): Promise<void> {
 		const activeTextEditorControl = getCodeEditor(this.editorService.activeTextEditorControl);
 		if (!activeTextEditorControl) {
 			await this.quickInputService.pick([{ label: localize('noEditor', "No text editor active at this time") }]);
@@ -1094,7 +1094,7 @@ export class ChangeModeAction extends Action {
 
 		// All languages are valid picks
 		const languages = this.modeService.getRegisteredLanguageNames();
-		const picks: QuickPickInput[] = languages.sort().map((lang, index) => {
+		const picks: QuickPickInput[] = languages.sort().map(lang => {
 			const modeId = this.modeService.getModeIdForLanguageName(lang.toLowerCase()) || 'unknown';
 			const extensions = this.modeService.getExtensions(lang).join(' ');
 			let description: string;
@@ -1263,7 +1263,7 @@ export class ChangeEOLAction extends Action {
 		super(actionId, actionLabel);
 	}
 
-	async run(): Promise<void> {
+	override async run(): Promise<void> {
 		const activeTextEditorControl = getCodeEditor(this.editorService.activeTextEditorControl);
 		if (!activeTextEditorControl) {
 			await this.quickInputService.pick([{ label: localize('noEditor', "No text editor active at this time") }]);
@@ -1316,7 +1316,7 @@ export class ChangeEncodingAction extends Action {
 		super(actionId, actionLabel);
 	}
 
-	async run(): Promise<void> {
+	override async run(): Promise<void> {
 		const activeTextEditorControl = getCodeEditor(this.editorService.activeTextEditorControl);
 		if (!activeTextEditorControl) {
 			await this.quickInputService.pick([{ label: localize('noEditor', "No text editor active at this time") }]);
@@ -1434,7 +1434,7 @@ export class ChangeEncodingAction extends Action {
 
 		const activeEncodingSupport = toEditorWithEncodingSupport(this.editorService.activeEditorPane.input);
 		if (typeof encoding.id !== 'undefined' && activeEncodingSupport && activeEncodingSupport.getEncoding() !== encoding.id) {
-			activeEncodingSupport.setEncoding(encoding.id, isReopenWithEncoding ? EncodingMode.Decode : EncodingMode.Encode); // Set new encoding
+			await activeEncodingSupport.setEncoding(encoding.id, isReopenWithEncoding ? EncodingMode.Decode : EncodingMode.Encode); // Set new encoding
 		}
 
 		activeTextEditorControl.focus();

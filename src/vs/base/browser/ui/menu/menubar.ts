@@ -422,7 +422,7 @@ export class MenuBar extends Disposable {
 		}
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		super.dispose();
 
 		this.menuCache.forEach(menuBarMenu => {

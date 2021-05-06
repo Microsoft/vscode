@@ -20,7 +20,7 @@ import files from 'vs/workbench/services/textfile/test/browser/fixtures/files';
 import createSuite from 'vs/workbench/services/textfile/test/common/textFileService.io.test';
 import { isWeb } from 'vs/base/common/platform';
 import { IWorkingCopyFileService, WorkingCopyFileService } from 'vs/workbench/services/workingCopy/common/workingCopyFileService';
-import { TestWorkingCopyService } from 'vs/workbench/test/common/workbenchTestServices';
+import { WorkingCopyService } from 'vs/workbench/services/workingCopy/common/workingCopyService';
 import { UriIdentityService } from 'vs/workbench/services/uriIdentity/common/uriIdentityService';
 
 // optimization: we don't need to run this suite in native environment,
@@ -48,7 +48,7 @@ if (isWeb) {
 				const collection = new ServiceCollection();
 				collection.set(IFileService, fileService);
 
-				collection.set(IWorkingCopyFileService, new WorkingCopyFileService(fileService, new TestWorkingCopyService(), instantiationService, new UriIdentityService(fileService)));
+				collection.set(IWorkingCopyFileService, new WorkingCopyFileService(fileService, new WorkingCopyService(), instantiationService, new UriIdentityService(fileService)));
 
 				service = instantiationService.createChild(collection).createInstance(TestBrowserTextFileServiceWithEncodingOverrides);
 
@@ -57,7 +57,7 @@ if (isWeb) {
 					await fileProvider.writeFile(
 						URI.file(join(testDir, fileName)),
 						files[fileName],
-						{ create: true, overwrite: false }
+						{ create: true, overwrite: false, unlock: false }
 					);
 				}
 

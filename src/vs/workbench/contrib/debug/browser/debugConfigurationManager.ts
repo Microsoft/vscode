@@ -83,10 +83,11 @@ export class ConfigurationManager implements IConfigurationManager {
 		const previousSelectedLaunch = this.launches.find(l => l.uri.toString() === previousSelectedRoot);
 		const previousSelectedName = this.storageService.get(DEBUG_SELECTED_CONFIG_NAME_KEY, StorageScope.WORKSPACE);
 		this.debugConfigurationTypeContext = CONTEXT_DEBUG_CONFIGURATION_TYPE.bindTo(contextKeyService);
+		const dynamicConfig = previousSelectedType ? { type: previousSelectedType } : undefined;
 		if (previousSelectedLaunch && previousSelectedLaunch.getConfigurationNames().length) {
-			this.selectConfiguration(previousSelectedLaunch, previousSelectedName, undefined, { type: previousSelectedType });
+			this.selectConfiguration(previousSelectedLaunch, previousSelectedName, undefined, dynamicConfig);
 		} else if (this.launches.length > 0) {
-			this.selectConfiguration(undefined, previousSelectedName, undefined, { type: previousSelectedType });
+			this.selectConfiguration(undefined, previousSelectedName, undefined, dynamicConfig);
 		}
 	}
 
@@ -382,7 +383,7 @@ export class ConfigurationManager implements IConfigurationManager {
 				const providers = (await this.getDynamicProviders()).filter(p => p.type === type);
 				this.getSelectedConfig = async () => {
 					const activatedProviders = await Promise.all(providers.map(p => p.getProvider()));
-					const provider = activatedProviders.find(p => p && p.type === type);
+					const provider = activatedProviders.length > 0 ? activatedProviders[0] : undefined;
 					if (provider && launch && launch.workspace) {
 						const token = new CancellationTokenSource();
 						const dynamicConfigs = await provider.provideDebugConfigurations!(launch.workspace.uri, token.token);
@@ -410,8 +411,15 @@ export class ConfigurationManager implements IConfigurationManager {
 			this.setSelectedLaunchName(nameToSet);
 		}
 
+		if (!config && launch && this.selectedName) {
+			config = launch.getConfiguration(this.selectedName);
+			type = config?.type;
+		}
+
 		this.selectedType = dynamicConfig?.type || config?.type;
-		this.storageService.store(DEBUG_SELECTED_TYPE, this.selectedType, StorageScope.WORKSPACE, StorageTarget.MACHINE);
+		// Only store the selected type if we are having a dynamic configuration. Otherwise restoring this configuration from storage might be misindentified as a dynamic configuration
+		this.storageService.store(DEBUG_SELECTED_TYPE, dynamicConfig ? this.selectedType : undefined, StorageScope.WORKSPACE, StorageTarget.MACHINE);
+
 		if (type) {
 			this.debugConfigurationTypeContext.set(type);
 		} else {
@@ -508,7 +516,7 @@ abstract class AbstractLaunch {
 
 	async getInitialConfigurationContent(folderUri?: uri, type?: string, token?: CancellationToken): Promise<string> {
 		let content = '';
-		const adapter = await this.adapterManager.guessDebugger(type);
+		const adapter = await this.adapterManager.guessDebugger(true, type);
 		if (adapter) {
 			const initialConfigs = await this.configurationManager.provideDebugConfigurations(folderUri, adapter.type, token || CancellationToken.None);
 			content = await adapter.getInitialConfigurationContent(initialConfigs);
@@ -680,7 +688,7 @@ class UserLaunch extends AbstractLaunch implements ILaunch {
 		return nls.localize('user settings', "user settings");
 	}
 
-	get hidden(): boolean {
+	override get hidden(): boolean {
 		return true;
 	}
 

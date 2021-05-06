@@ -55,7 +55,7 @@ class TextMateWorkerModel extends MirrorTextModel {
 		this._resetTokenization();
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		this._isDisposed = true;
 		super.dispose();
 	}
@@ -65,7 +65,7 @@ class TextMateWorkerModel extends MirrorTextModel {
 		this._resetTokenization();
 	}
 
-	onEvents(e: IModelChangedEvent): void {
+	override onEvents(e: IModelChangedEvent): void {
 		super.onEvents(e);
 		for (let i = 0; i < e.changes.length; i++) {
 			const change = e.changes[i];

@@ -369,6 +369,21 @@ export function setCollapseStateAtLevel(foldingModel: FoldingModel, foldLevel: n
 }
 
 /**
+ * Folds or unfolds all regions, except if they contain or are contained by a region of one of the blocked lines.
+ * @param doCollapse Whether to collapse or expand
+ * @param blockedLineNumbers the location of regions to not collapse or expand
+ */
+export function setCollapseStateForRest(foldingModel: FoldingModel, doCollapse: boolean, blockedLineNumbers: number[]): void {
+	let filteredRegions: FoldingRegion[] = [];
+	for (let lineNumber of blockedLineNumbers) {
+		filteredRegions.push(foldingModel.getAllRegionsAtLine(lineNumber, undefined)[0]);
+	}
+	let filter = (region: FoldingRegion) => filteredRegions.every((filteredRegion) => !filteredRegion.containedBy(region) && !region.containedBy(filteredRegion)) && region.isCollapsed !== doCollapse;
+	let toToggle = foldingModel.getRegionsInside(null, filter);
+	foldingModel.toggleCollapseState(toToggle);
+}
+
+/**
  * Folds all regions for which the lines start with a given regex
  * @param foldingModel the folding model
  */

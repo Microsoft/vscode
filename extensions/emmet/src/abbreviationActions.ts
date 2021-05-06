@@ -205,7 +205,7 @@ export async function wrapWithAbbreviation(args: any): Promise<boolean> {
 	let inPreviewMode = false;
 	async function makeChanges(inputAbbreviation: string | undefined, previewChanges: boolean): Promise<boolean> {
 		const isAbbreviationValid = !!inputAbbreviation && !!inputAbbreviation.trim() && helper.isAbbreviationValid(syntax, inputAbbreviation);
-		const extractedResults = isAbbreviationValid ? helper.extractAbbreviationFromText(inputAbbreviation!) : undefined;
+		const extractedResults = isAbbreviationValid ? helper.extractAbbreviationFromText(inputAbbreviation!, syntax) : undefined;
 		if (!extractedResults) {
 			if (inPreviewMode) {
 				inPreviewMode = false;
@@ -311,12 +311,12 @@ export function expandEmmetAbbreviation(args: any): Thenable<boolean | undefined
 	let allAbbreviationsSame: boolean = true;
 	const helper = getEmmetHelper();
 
-	const getAbbreviation = (document: vscode.TextDocument, selection: vscode.Selection, position: vscode.Position, syntax: string): [vscode.Range | null, string, string] => {
+	const getAbbreviation = (document: vscode.TextDocument, selection: vscode.Selection, position: vscode.Position, syntax: string): [vscode.Range | null, string, string | undefined] => {
 		position = document.validatePosition(position);
 		let rangeToReplace: vscode.Range = selection;
 		let abbr = document.getText(rangeToReplace);
 		if (!rangeToReplace.isEmpty) {
-			const extractedResults = helper.extractAbbreviationFromText(abbr);
+			const extractedResults = helper.extractAbbreviationFromText(abbr, syntax);
 			if (extractedResults) {
 				return [rangeToReplace, extractedResults.abbreviation, extractedResults.filter];
 			}
@@ -377,6 +377,11 @@ export function expandEmmetAbbreviation(args: any): Thenable<boolean | undefined
 		if (!helper.isAbbreviationValid(syntax, abbreviation)) {
 			return;
 		}
+		if (isStyleSheet(syntax) && abbreviation.endsWith(':')) {
+			// Fix for https://github.com/Microsoft/vscode/issues/1623
+			return;
+		}
+
 		const offset = editor.document.offsetAt(position);
 		let currentNode = getFlatNode(getRootNode(), offset, true);
 		let validateLocation = true;
@@ -660,6 +665,8 @@ function expandAbbr(input: ExpandAbbreviationInput): string | undefined {
 	const expandOptions = helper.getExpandOptions(input.syntax, getEmmetConfiguration(input.syntax), input.filter);
 
 	if (input.textToWrap) {
+		// escape ${ sections, fixes #122231
+		input.textToWrap = input.textToWrap.map(e => e.replace(/\$\{/g, '\\\$\{'));
 		if (input.filter && input.filter.includes('t')) {
 			input.textToWrap = input.textToWrap.map(line => {
 				return line.replace(trimRegex, '').trim();

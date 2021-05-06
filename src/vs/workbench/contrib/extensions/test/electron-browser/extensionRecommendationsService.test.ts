@@ -261,7 +261,7 @@ suite('ExtensionRecommendationsService Test', () => {
 		prompted = false;
 
 		class TestNotificationService2 extends TestNotificationService {
-			public prompt(severity: Severity, message: string, choices: IPromptChoice[], options?: IPromptOptions) {
+			public override prompt(severity: Severity, message: string, choices: IPromptChoice[], options?: IPromptOptions) {
 				prompted = true;
 				promptedEmitter.fire();
 				return super.prompt(severity, message, choices, options);
@@ -313,7 +313,7 @@ suite('ExtensionRecommendationsService Test', () => {
 		return setUpFolderWorkspace('myFolder', recommendations).then(() => {
 			testObject = instantiationService.createInstance(ExtensionRecommendationsService);
 			return testObject.activationPromise.then(() => {
-				assert.equal(Object.keys(testObject.getAllRecommendationsWithReason()).length, recommendations.length);
+				assert.strictEqual(Object.keys(testObject.getAllRecommendationsWithReason()).length, recommendations.length);
 				assert.ok(!prompted);
 			});
 		});
@@ -325,7 +325,7 @@ suite('ExtensionRecommendationsService Test', () => {
 			assert.ok(!prompted);
 
 			return testObject.getWorkspaceRecommendations().then(() => {
-				assert.equal(Object.keys(testObject.getAllRecommendationsWithReason()).length, 0);
+				assert.strictEqual(Object.keys(testObject.getAllRecommendationsWithReason()).length, 0);
 				assert.ok(!prompted);
 			});
 		});
@@ -340,7 +340,7 @@ suite('ExtensionRecommendationsService Test', () => {
 	});
 
 	test('ExtensionRecommendationsService: No Prompt for valid workspace recommendations during extension development', () => {
-		instantiationService.stub(IEnvironmentService, { extensionDevelopmentLocationURI: [URI.file('/folder/file')] });
+		instantiationService.stub(IEnvironmentService, { extensionDevelopmentLocationURI: [URI.file('/folder/file')], isExtensionDevelopment: true });
 		return testNoPromptOrRecommendationsForValidRecommendations(mockTestData.validRecommendedExtensions);
 	});
 
@@ -354,9 +354,9 @@ suite('ExtensionRecommendationsService Test', () => {
 
 		await Event.toPromise(promptedEmitter.event);
 		const recommendations = Object.keys(testObject.getAllRecommendationsWithReason());
-		assert.equal(recommendations.length, mockTestData.validRecommendedExtensions.length);
+		assert.strictEqual(recommendations.length, mockTestData.validRecommendedExtensions.length);
 		mockTestData.validRecommendedExtensions.forEach(x => {
-			assert.equal(recommendations.indexOf(x.toLowerCase()) > -1, true);
+			assert.strictEqual(recommendations.indexOf(x.toLowerCase()) > -1, true);
 		});
 
 	});
@@ -517,7 +517,7 @@ suite('ExtensionRecommendationsService Test', () => {
 			testObject = instantiationService.createInstance(ExtensionRecommendationsService);
 			return testObject.activationPromise.then(() => {
 				const recommendations = testObject.getFileBasedRecommendations();
-				assert.equal(recommendations.length, 2);
+				assert.strictEqual(recommendations.length, 2);
 				assert.ok(recommendations.some(extensionId => extensionId === 'ms-dotnettools.csharp')); // stored recommendation that exists in product.extensionTips
 				assert.ok(recommendations.some(extensionId => extensionId === 'ms-python.python')); // stored recommendation that exists in product.extensionImportantTips
 				assert.ok(recommendations.every(extensionId => extensionId !== 'ms-vscode.vscode-typescript-tslint-plugin')); // stored recommendation that is no longer in neither product.extensionTips nor product.extensionImportantTips
@@ -536,7 +536,7 @@ suite('ExtensionRecommendationsService Test', () => {
 			testObject = instantiationService.createInstance(ExtensionRecommendationsService);
 			return testObject.activationPromise.then(() => {
 				const recommendations = testObject.getFileBasedRecommendations();
-				assert.equal(recommendations.length, 2);
+				assert.strictEqual(recommendations.length, 2);
 				assert.ok(recommendations.some(extensionId => extensionId === 'ms-dotnettools.csharp')); // stored recommendation that exists in product.extensionTips
 				assert.ok(recommendations.some(extensionId => extensionId === 'ms-python.python')); // stored recommendation that exists in product.extensionImportantTips
 				assert.ok(recommendations.every(extensionId => extensionId !== 'ms-vscode.vscode-typescript-tslint-plugin')); // stored recommendation that is no longer in neither product.extensionTips nor product.extensionImportantTips

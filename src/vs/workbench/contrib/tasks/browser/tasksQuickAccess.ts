@@ -39,7 +39,7 @@ export class TasksQuickAccessProvider extends PickerQuickAccessProvider<IPickerQ
 		this.activationPromise = extensionService.activateByEvent('onCommand:workbench.action.tasks.runTask');
 	}
 
-	protected async getPicks(filter: string, disposables: DisposableStore, token: CancellationToken): Promise<Array<IPickerQuickAccessItem | IQuickPickSeparator>> {
+	protected async _getPicks(filter: string, disposables: DisposableStore, token: CancellationToken): Promise<Array<IPickerQuickAccessItem | IQuickPickSeparator>> {
 		// always await extensions
 		await this.activationPromise;
 

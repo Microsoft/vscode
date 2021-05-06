@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Action } from 'vs/base/common/actions';
-import { isPromiseCanceledError } from 'vs/base/common/errors';
+import { getErrorMessage, isPromiseCanceledError } from 'vs/base/common/errors';
 import { Event } from 'vs/base/common/event';
 import { Disposable, DisposableStore, dispose, MutableDisposable, toDisposable, IDisposable } from 'vs/base/common/lifecycle';
 import { isEqual, basename } from 'vs/base/common/resources';
@@ -510,8 +510,10 @@ export class UserDataSyncWorkbenchContribution extends Disposable implements IWo
 						this.notificationService.error(localize('auth failed', "Error while turning on Settings Sync: Authentication failed."));
 						return;
 				}
+				this.notificationService.error(localize('turn on failed with user data sync error', "Error while turning on Settings Sync. Please check [logs]({0}) for more details.", `command:${SHOW_SYNC_LOG_COMMAND_ID}`));
+			} else {
+				this.notificationService.error(localize({ key: 'turn on failed', comment: ['Substitution is for error reason'] }, "Error while turning on Settings Sync. {0}", getErrorMessage(e)));
 			}
-			this.notificationService.error(localize('turn on failed', "Error while turning on Settings Sync. Please check [logs]({0}) for more details.", `command:${SHOW_SYNC_LOG_COMMAND_ID}`));
 		}
 	}
 
@@ -1331,7 +1333,7 @@ class AcceptChangesContribution extends Disposable implements IEditorContributio
 		this.acceptChangesButton = undefined;
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this.disposeAcceptChangesWidgetRenderer();
 		super.dispose();
 	}

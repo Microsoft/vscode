@@ -213,6 +213,7 @@ export interface IViewModel extends ICursorSimpleModel {
 	getCursorStates(): CursorState[];
 	setCursorStates(source: string | null | undefined, reason: CursorChangeReason, states: PartialCursorState[] | null): void;
 	getCursorColumnSelectData(): IColumnSelectData;
+	getCursorAutoClosedCharacters(): Range[];
 	setCursorColumnSelectData(columnSelectData: IColumnSelectData): void;
 	getPrevEditOperationType(): EditOperationType;
 	setPrevEditOperationType(type: EditOperationType): void;

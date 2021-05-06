@@ -105,12 +105,12 @@ suite.skip('TextSearch performance (integration)', () => {
 			function onComplete(): void {
 				try {
 					const allEvents = telemetryService.events.map(e => JSON.stringify(e)).join('\n');
-					assert.equal(telemetryService.events.length, 3, 'Expected 3 telemetry events, got:\n' + allEvents);
+					assert.strictEqual(telemetryService.events.length, 3, 'Expected 3 telemetry events, got:\n' + allEvents);
 
 					const [firstRenderEvent, resultsShownEvent, resultsFinishedEvent] = telemetryService.events;
-					assert.equal(firstRenderEvent.name, 'searchResultsFirstRender');
-					assert.equal(resultsShownEvent.name, 'searchResultsShown');
-					assert.equal(resultsFinishedEvent.name, 'searchResultsFinished');
+					assert.strictEqual(firstRenderEvent.name, 'searchResultsFirstRender');
+					assert.strictEqual(resultsShownEvent.name, 'searchResultsShown');
+					assert.strictEqual(resultsFinishedEvent.name, 'searchResultsFinished');
 
 					telemetryService.events = [];
 

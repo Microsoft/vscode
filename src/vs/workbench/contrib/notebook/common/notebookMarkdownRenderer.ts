@@ -6,9 +6,9 @@
 import { joinPath } from 'vs/base/common/resources';
 import { URI } from 'vs/base/common/uri';
 import { ExtensionIdentifier, IExtensionDescription } from 'vs/platform/extensions/common/extensions';
-import { INotebookMarkdownRendererInfo } from 'vs/workbench/contrib/notebook/common/notebookCommon';
+import { INotebookMarkupRendererInfo } from 'vs/workbench/contrib/notebook/common/notebookCommon';
 
-export class NotebookMarkdownRendererInfo implements INotebookMarkdownRendererInfo {
+export class NotebookMarkupRendererInfo implements INotebookMarkupRendererInfo {
 
 	readonly id: string;
 	readonly entrypoint: URI;
@@ -16,12 +16,16 @@ export class NotebookMarkdownRendererInfo implements INotebookMarkdownRendererIn
 	readonly extensionLocation: URI;
 	readonly extensionId: ExtensionIdentifier;
 	readonly extensionIsBuiltin: boolean;
+	readonly dependsOn: string | undefined;
+	readonly mimeTypes: readonly string[] | undefined;
 
 	constructor(descriptor: {
 		readonly id: string;
 		readonly displayName: string;
 		readonly entrypoint: string;
 		readonly extension: IExtensionDescription;
+		readonly mimeTypes: readonly string[] | undefined,
+		readonly dependsOn: string | undefined,
 	}) {
 		this.id = descriptor.id;
 		this.extensionId = descriptor.extension.identifier;
@@ -29,5 +33,7 @@ export class NotebookMarkdownRendererInfo implements INotebookMarkdownRendererIn
 		this.entrypoint = joinPath(this.extensionLocation, descriptor.entrypoint);
 		this.displayName = descriptor.displayName;
 		this.extensionIsBuiltin = descriptor.extension.isBuiltin;
+		this.dependsOn = descriptor.dependsOn;
+		this.mimeTypes = descriptor.mimeTypes;
 	}
 }

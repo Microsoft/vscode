@@ -4,6 +4,7 @@
 		"moduleResolution": "node",
 		"experimentalDecorators": true,
 		"noImplicitReturns": true,
+		"noImplicitOverride": true,
 		"noUnusedLocals": true,
 		"allowUnreachableCode": false,
 		"strict": true,

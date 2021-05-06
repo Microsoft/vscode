@@ -8,6 +8,7 @@
   "engines": {
     "vscode": "^1.41.0"
   },
+  "icon": "images/icon.png",
   "enableProposedApi": true,
   "categories": [
     "Other"
@@ -20,6 +21,12 @@
   "activationEvents": [
     "onAuthenticationRequest:github"
   ],
+  "capabilities": {
+    "virtualWorkspaces": true,
+    "untrustedWorkspaces": {
+      "supported": true
+    }
+  },
   "contributes": {
     "commands": [
       {
@@ -55,11 +62,12 @@
   "dependencies": {
     "node-fetch": "2.6.1",
     "uuid": "8.1.0",
-    "vscode-extension-telemetry": "0.1.1",
-    "vscode-nls": "^4.1.2"
+    "vscode-extension-telemetry": "0.1.7",
+    "vscode-nls": "^4.1.2",
+    "vscode-tas-client": "^0.1.22"
   },
   "devDependencies": {
-    "@types/node": "^12.19.9",
+    "@types/node": "14.x",
     "@types/node-fetch": "^2.5.7",
     "@types/uuid": "8.0.0"
   },

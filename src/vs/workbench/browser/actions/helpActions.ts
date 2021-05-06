@@ -9,7 +9,7 @@ import { isMacintosh, isLinux, language } from 'vs/base/common/platform';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 import { IOpenerService } from 'vs/platform/opener/common/opener';
 import { URI } from 'vs/base/common/uri';
-import { MenuId, Action2, registerAction2, MenuRegistry } from 'vs/platform/actions/common/actions';
+import { MenuId, Action2, registerAction2 } from 'vs/platform/actions/common/actions';
 import { KeyChord, KeyMod, KeyCode } from 'vs/base/common/keyCodes';
 import { IProductService } from 'vs/platform/product/common/productService';
 import { ServicesAccessor } from 'vs/platform/instantiation/common/instantiation';
@@ -24,13 +24,22 @@ class KeybindingsReferenceAction extends Action2 {
 	constructor() {
 		super({
 			id: KeybindingsReferenceAction.ID,
-			title: { value: localize('keybindingsReference', "Keyboard Shortcuts Reference"), original: 'Keyboard Shortcuts Reference' },
+			title: {
+				value: localize('keybindingsReference', "Keyboard Shortcuts Reference"),
+				mnemonicTitle: localize({ key: 'miKeyboardShortcuts', comment: ['&& denotes a mnemonic'] }, "&&Keyboard Shortcuts Reference"),
+				original: 'Keyboard Shortcuts Reference'
+			},
 			category: CATEGORIES.Help,
 			f1: true,
 			keybinding: {
 				weight: KeybindingWeight.WorkbenchContrib,
 				when: null,
 				primary: KeyChord(KeyMod.CtrlCmd | KeyCode.KEY_K, KeyMod.CtrlCmd | KeyCode.KEY_R)
+			},
+			menu: {
+				id: MenuId.MenubarHelpMenu,
+				group: '2_reference',
+				order: 1
 			}
 		});
 	}
@@ -46,30 +55,6 @@ class KeybindingsReferenceAction extends Action2 {
 	}
 }
 
-class OpenDocumentationUrlAction extends Action2 {
-
-	static readonly ID = 'workbench.action.openDocumentationUrl';
-	static readonly AVAILABLE = !!product.documentationUrl;
-
-	constructor() {
-		super({
-			id: OpenDocumentationUrlAction.ID,
-			title: { value: localize('openDocumentationUrl', "Documentation"), original: 'Documentation' },
-			category: CATEGORIES.Help,
-			f1: true
-		});
-	}
-
-	run(accessor: ServicesAccessor): void {
-		const productService = accessor.get(IProductService);
-		const openerService = accessor.get(IOpenerService);
-
-		if (productService.documentationUrl) {
-			openerService.open(URI.parse(productService.documentationUrl));
-		}
-	}
-}
-
 class OpenIntroductoryVideosUrlAction extends Action2 {
 
 	static readonly ID = 'workbench.action.openIntroductoryVideosUrl';
@@ -78,9 +63,18 @@ class OpenIntroductoryVideosUrlAction extends Action2 {
 	constructor() {
 		super({
 			id: OpenIntroductoryVideosUrlAction.ID,
-			title: { value: localize('openIntroductoryVideosUrl', "Introductory Videos"), original: 'Introductory Videos' },
+			title: {
+				value: localize('openIntroductoryVideosUrl', "Introductory Videos"),
+				mnemonicTitle: localize({ key: 'miIntroductoryVideos', comment: ['&& denotes a mnemonic'] }, "Introductory &&Videos"),
+				original: 'Introductory Videos'
+			},
 			category: CATEGORIES.Help,
-			f1: true
+			f1: true,
+			menu: {
+				id: MenuId.MenubarHelpMenu,
+				group: '2_reference',
+				order: 2
+			}
 		});
 	}
 
@@ -102,9 +96,18 @@ class OpenTipsAndTricksUrlAction extends Action2 {
 	constructor() {
 		super({
 			id: OpenTipsAndTricksUrlAction.ID,
-			title: { value: localize('openTipsAndTricksUrl', "Tips and Tricks"), original: 'Tips and Tricks' },
+			title: {
+				value: localize('openTipsAndTricksUrl', "Tips and Tricks"),
+				mnemonicTitle: localize({ key: 'miTipsAndTricks', comment: ['&& denotes a mnemonic'] }, "Tips and Tri&&cks"),
+				original: 'Tips and Tricks'
+			},
 			category: CATEGORIES.Help,
-			f1: true
+			f1: true,
+			menu: {
+				id: MenuId.MenubarHelpMenu,
+				group: '2_reference',
+				order: 3
+			}
 		});
 	}
 
@@ -114,6 +117,39 @@ class OpenTipsAndTricksUrlAction extends Action2 {
 
 		if (productService.tipsAndTricksUrl) {
 			openerService.open(URI.parse(productService.tipsAndTricksUrl));
+		}
+	}
+}
+
+class OpenDocumentationUrlAction extends Action2 {
+
+	static readonly ID = 'workbench.action.openDocumentationUrl';
+	static readonly AVAILABLE = !!product.documentationUrl;
+
+	constructor() {
+		super({
+			id: OpenDocumentationUrlAction.ID,
+			title: {
+				value: localize('openDocumentationUrl', "Documentation"),
+				mnemonicTitle: localize({ key: 'miDocumentation', comment: ['&& denotes a mnemonic'] }, "&&Documentation"),
+				original: 'Documentation'
+			},
+			category: CATEGORIES.Help,
+			f1: true,
+			menu: {
+				id: MenuId.MenubarHelpMenu,
+				group: '1_welcome',
+				order: 3
+			}
+		});
+	}
+
+	run(accessor: ServicesAccessor): void {
+		const productService = accessor.get(IProductService);
+		const openerService = accessor.get(IOpenerService);
+
+		if (productService.documentationUrl) {
+			openerService.open(URI.parse(productService.documentationUrl));
 		}
 	}
 }
@@ -151,9 +187,18 @@ class OpenTwitterUrlAction extends Action2 {
 	constructor() {
 		super({
 			id: OpenTwitterUrlAction.ID,
-			title: { value: localize('openTwitterUrl', "Join Us on Twitter"), original: 'Join Us on Twitter' },
+			title: {
+				value: localize('openTwitterUrl', "Join Us on Twitter"),
+				mnemonicTitle: localize({ key: 'miTwitter', comment: ['&& denotes a mnemonic'] }, "&&Join Us on Twitter"),
+				original: 'Join Us on Twitter'
+			},
 			category: CATEGORIES.Help,
-			f1: true
+			f1: true,
+			menu: {
+				id: MenuId.MenubarHelpMenu,
+				group: '3_feedback',
+				order: 1
+			}
 		});
 	}
 
@@ -175,9 +220,18 @@ class OpenRequestFeatureUrlAction extends Action2 {
 	constructor() {
 		super({
 			id: OpenRequestFeatureUrlAction.ID,
-			title: { value: localize('openUserVoiceUrl', "Search Feature Requests"), original: 'Search Feature Requests' },
+			title: {
+				value: localize('openUserVoiceUrl', "Search Feature Requests"),
+				mnemonicTitle: localize({ key: 'miUserVoice', comment: ['&& denotes a mnemonic'] }, "&&Search Feature Requests"),
+				original: 'Search Feature Requests'
+			},
 			category: CATEGORIES.Help,
-			f1: true
+			f1: true,
+			menu: {
+				id: MenuId.MenubarHelpMenu,
+				group: '3_feedback',
+				order: 2
+			}
 		});
 	}
 
@@ -199,9 +253,18 @@ class OpenLicenseUrlAction extends Action2 {
 	constructor() {
 		super({
 			id: OpenLicenseUrlAction.ID,
-			title: { value: localize('openLicenseUrl', "View License"), original: 'View License' },
+			title: {
+				value: localize('openLicenseUrl', "View License"),
+				mnemonicTitle: localize({ key: 'miLicense', comment: ['&& denotes a mnemonic'] }, "View &&License"),
+				original: 'View License'
+			},
 			category: CATEGORIES.Help,
-			f1: true
+			f1: true,
+			menu: {
+				id: MenuId.MenubarHelpMenu,
+				group: '4_legal',
+				order: 1
+			}
 		});
 	}
 
@@ -228,9 +291,18 @@ class OpenPrivacyStatementUrlAction extends Action2 {
 	constructor() {
 		super({
 			id: OpenPrivacyStatementUrlAction.ID,
-			title: { value: localize('openPrivacyStatement', "Privacy Statement"), original: 'Privacy Statement' },
+			title: {
+				value: localize('openPrivacyStatement', "Privacy Statement"),
+				mnemonicTitle: localize({ key: 'miPrivacyStatement', comment: ['&& denotes a mnemonic'] }, "Privac&&y Statement"),
+				original: 'Privacy Statement'
+			},
 			category: CATEGORIES.Help,
-			f1: true
+			f1: true,
+			menu: {
+				id: MenuId.MenubarHelpMenu,
+				group: '4_legal',
+				order: 2
+			}
 		});
 	}
 
@@ -255,16 +327,16 @@ if (KeybindingsReferenceAction.AVAILABLE) {
 	registerAction2(KeybindingsReferenceAction);
 }
 
-if (OpenDocumentationUrlAction.AVAILABLE) {
-	registerAction2(OpenDocumentationUrlAction);
-}
-
 if (OpenIntroductoryVideosUrlAction.AVAILABLE) {
 	registerAction2(OpenIntroductoryVideosUrlAction);
 }
 
 if (OpenTipsAndTricksUrlAction.AVAILABLE) {
 	registerAction2(OpenTipsAndTricksUrlAction);
+}
+
+if (OpenDocumentationUrlAction.AVAILABLE) {
+	registerAction2(OpenDocumentationUrlAction);
 }
 
 if (OpenNewsletterSignupUrlAction.AVAILABLE) {
@@ -285,99 +357,4 @@ if (OpenLicenseUrlAction.AVAILABLE) {
 
 if (OpenPrivacyStatementUrlAction.AVAILABE) {
 	registerAction2(OpenPrivacyStatementUrlAction);
-}
-
-// --- Menu Registration
-
-// Help
-
-if (OpenDocumentationUrlAction.AVAILABLE) {
-	MenuRegistry.appendMenuItem(MenuId.MenubarHelpMenu, {
-		group: '1_welcome',
-		command: {
-			id: OpenDocumentationUrlAction.ID,
-			title: localize({ key: 'miDocumentation', comment: ['&& denotes a mnemonic'] }, "&&Documentation")
-		},
-		order: 3
-	});
-}
-
-// Reference
-if (KeybindingsReferenceAction.AVAILABLE) {
-	MenuRegistry.appendMenuItem(MenuId.MenubarHelpMenu, {
-		group: '2_reference',
-		command: {
-			id: KeybindingsReferenceAction.ID,
-			title: localize({ key: 'miKeyboardShortcuts', comment: ['&& denotes a mnemonic'] }, "&&Keyboard Shortcuts Reference")
-		},
-		order: 1
-	});
-}
-
-if (OpenIntroductoryVideosUrlAction.AVAILABLE) {
-	MenuRegistry.appendMenuItem(MenuId.MenubarHelpMenu, {
-		group: '2_reference',
-		command: {
-			id: OpenIntroductoryVideosUrlAction.ID,
-			title: localize({ key: 'miIntroductoryVideos', comment: ['&& denotes a mnemonic'] }, "Introductory &&Videos")
-		},
-		order: 2
-	});
-}
-
-if (OpenTipsAndTricksUrlAction.AVAILABLE) {
-	MenuRegistry.appendMenuItem(MenuId.MenubarHelpMenu, {
-		group: '2_reference',
-		command: {
-			id: OpenTipsAndTricksUrlAction.ID,
-			title: localize({ key: 'miTipsAndTricks', comment: ['&& denotes a mnemonic'] }, "Tips and Tri&&cks")
-		},
-		order: 3
-	});
-}
-
-// Feedback
-if (OpenTwitterUrlAction.AVAILABLE) {
-	MenuRegistry.appendMenuItem(MenuId.MenubarHelpMenu, {
-		group: '3_feedback',
-		command: {
-			id: OpenTwitterUrlAction.ID,
-			title: localize({ key: 'miTwitter', comment: ['&& denotes a mnemonic'] }, "&&Join Us on Twitter")
-		},
-		order: 1
-	});
-}
-
-if (OpenRequestFeatureUrlAction.AVAILABLE) {
-	MenuRegistry.appendMenuItem(MenuId.MenubarHelpMenu, {
-		group: '3_feedback',
-		command: {
-			id: OpenRequestFeatureUrlAction.ID,
-			title: localize({ key: 'miUserVoice', comment: ['&& denotes a mnemonic'] }, "&&Search Feature Requests")
-		},
-		order: 2
-	});
-}
-
-// Legal
-if (OpenLicenseUrlAction.AVAILABLE) {
-	MenuRegistry.appendMenuItem(MenuId.MenubarHelpMenu, {
-		group: '4_legal',
-		command: {
-			id: OpenLicenseUrlAction.ID,
-			title: localize({ key: 'miLicense', comment: ['&& denotes a mnemonic'] }, "View &&License")
-		},
-		order: 1
-	});
-}
-
-if (OpenPrivacyStatementUrlAction.AVAILABE) {
-	MenuRegistry.appendMenuItem(MenuId.MenubarHelpMenu, {
-		group: '4_legal',
-		command: {
-			id: OpenPrivacyStatementUrlAction.ID,
-			title: localize({ key: 'miPrivacyStatement', comment: ['&& denotes a mnemonic'] }, "Privac&&y Statement")
-		},
-		order: 2
-	});
 }

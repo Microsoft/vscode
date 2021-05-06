@@ -24,10 +24,10 @@ suite('Completions', () => {
 			return completion.label === expected.label;
 		});
 
-		assert.equal(matches.length, 1, `${expected.label} should only existing once: Actual: ${completions.items.map(c => c.label).join(', ')}`);
+		assert.strictEqual(matches.length, 1, `${expected.label} should only existing once: Actual: ${completions.items.map(c => c.label).join(', ')}`);
 		let match = matches[0];
 		if (expected.resultText && TextEdit.is(match.textEdit)) {
-			assert.equal(TextDocument.applyEdits(document, [match.textEdit]), expected.resultText);
+			assert.strictEqual(TextDocument.applyEdits(document, [match.textEdit]), expected.resultText);
 		}
 	};
 
@@ -50,7 +50,7 @@ suite('Completions', () => {
 		let list = await cssLanguageService.doComplete2(document, position, stylesheet, context);
 
 		if (expected.count) {
-			assert.equal(list.items.length, expected.count);
+			assert.strictEqual(list.items.length, expected.count);
 		}
 		if (expected.items) {
 			for (let item of expected.items) {

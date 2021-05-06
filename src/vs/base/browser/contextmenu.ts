@@ -20,7 +20,7 @@ export interface IContextMenuDelegate {
 	getActions(): readonly IAction[];
 	getCheckedActionsRepresentation?(action: IAction): 'radio' | 'checkbox';
 	getActionViewItem?(action: IAction): IActionViewItem | undefined;
-	getActionsContext?(event?: IContextMenuEvent): any;
+	getActionsContext?(event?: IContextMenuEvent): unknown;
 	getKeyBinding?(action: IAction): ResolvedKeybinding | undefined;
 	getMenuClassName?(): string;
 	onHide?(didCancel: boolean): void;

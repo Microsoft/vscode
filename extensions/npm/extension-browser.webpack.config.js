@@ -18,6 +18,7 @@ module.exports = withBrowserDefaults({
 		filename: 'npmBrowserMain.js'
 	},
 	node: {
-		'child_process': 'empty'
+		'child_process': 'empty',
+		'which': 'empty'
 	}
 });

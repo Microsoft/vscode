@@ -25,20 +25,18 @@ export class DiffEditorModel extends EditorModel {
 		this._modifiedModel = modifiedModel;
 	}
 
-	async load(): Promise<EditorModel> {
+	override async resolve(): Promise<void> {
 		await Promise.all([
-			this._originalModel?.load(),
-			this._modifiedModel?.load()
+			this._originalModel?.resolve(),
+			this._modifiedModel?.resolve()
 		]);
-
-		return this;
 	}
 
-	isResolved(): boolean {
-		return this.originalModel instanceof EditorModel && this.originalModel.isResolved() && this.modifiedModel instanceof EditorModel && this.modifiedModel.isResolved();
+	override isResolved(): boolean {
+		return !!(this.originalModel?.isResolved() && this.modifiedModel?.isResolved());
 	}
 
-	dispose(): void {
+	override dispose(): void {
 
 		// Do not propagate the dispose() call to the two models inside. We never created the two models
 		// (original and modified) so we can not dispose them without sideeffects. Rather rely on the

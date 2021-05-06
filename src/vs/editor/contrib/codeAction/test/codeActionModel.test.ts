@@ -65,7 +65,7 @@ suite('CodeActionModel', () => {
 
 			e.actions.then(fixes => {
 				model.dispose();
-				assert.equal(fixes.validActions.length, 1);
+				assert.strictEqual(fixes.validActions.length, 1);
 				done();
 			}, done);
 		}));
@@ -101,11 +101,11 @@ suite('CodeActionModel', () => {
 			disposables.add(model.onDidChangeState((e: CodeActionsState.State) => {
 				assertType(e.type === CodeActionsState.Type.Triggered);
 
-				assert.equal(e.trigger.type, modes.CodeActionTriggerType.Auto);
+				assert.strictEqual(e.trigger.type, modes.CodeActionTriggerType.Auto);
 				assert.ok(e.actions);
 				e.actions.then(fixes => {
 					model.dispose();
-					assert.equal(fixes.validActions.length, 1);
+					assert.strictEqual(fixes.validActions.length, 1);
 					resolve(undefined);
 				}, reject);
 			}));
@@ -139,13 +139,14 @@ suite('CodeActionModel', () => {
 			disposables.add(model.onDidChangeState((e: CodeActionsState.State) => {
 				assertType(e.type === CodeActionsState.Type.Triggered);
 
-				assert.equal(e.trigger.type, modes.CodeActionTriggerType.Auto);
+				assert.strictEqual(e.trigger.type, modes.CodeActionTriggerType.Auto);
 				const selection = <Selection>e.rangeOrSelection;
-				assert.deepEqual(selection.selectionStartLineNumber, 1);
-				assert.deepEqual(selection.selectionStartColumn, 1);
-				assert.deepEqual(selection.endLineNumber, 4);
-				assert.deepEqual(selection.endColumn, 1);
-				assert.deepEqual(e.position, { lineNumber: 3, column: 1 });
+				assert.strictEqual(selection.selectionStartLineNumber, 1);
+				assert.strictEqual(selection.selectionStartColumn, 1);
+				assert.strictEqual(selection.endLineNumber, 4);
+				assert.strictEqual(selection.endColumn, 1);
+				assert.strictEqual(e.position.lineNumber, 3);
+				assert.strictEqual(e.position.column, 1);
 				model.dispose();
 				resolve(undefined);
 			}, 5));
@@ -164,7 +165,7 @@ suite('CodeActionModel', () => {
 		disposables.add(model.onDidChangeState((e: CodeActionsState.State) => {
 			assertType(e.type === CodeActionsState.Type.Triggered);
 
-			assert.equal(e.trigger.type, modes.CodeActionTriggerType.Auto);
+			assert.strictEqual(e.trigger.type, modes.CodeActionTriggerType.Auto);
 			++triggerCount;
 
 			// give time for second trigger before completing test

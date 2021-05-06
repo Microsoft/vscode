@@ -439,7 +439,7 @@ export class FileMatch extends Disposable implements IFileMatch {
 		this._fileStat = stat;
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this.setSelectedMatch(null);
 		this.unbindModel();
 		this._onDispose.fire();
@@ -630,7 +630,7 @@ export class FolderMatch extends Disposable {
 		this._unDisposedFileMatches.clear();
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this.disposeMatches();
 		this._onDispose.fire();
 		super.dispose();
@@ -649,7 +649,7 @@ export class FolderMatchWithResource extends FolderMatch {
 		super(_resource, _id, _index, _query, _parent, _searchModel, replaceService, instantiationService);
 	}
 
-	get resource(): URI {
+	override get resource(): URI {
 		return this._resource!;
 	}
 }
@@ -971,7 +971,7 @@ export class SearchResult extends Disposable {
 		this._rangeHighlightDecorations.removeHighlightRange();
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this.disposePastResults();
 		this.disposeMatches();
 		this._rangeHighlightDecorations.dispose();
@@ -1142,7 +1142,7 @@ export class SearchModel extends Disposable {
 		if (errors.isPromiseCanceledError(e)) {
 			this.onSearchCompleted(
 				this.searchCancelledForNewSearch
-					? { exit: SearchCompletionExitCode.NewSearchStarted, results: [] }
+					? { exit: SearchCompletionExitCode.NewSearchStarted, results: [], messages: [] }
 					: null,
 				duration);
 			this.searchCancelledForNewSearch = false;
@@ -1173,7 +1173,7 @@ export class SearchModel extends Disposable {
 		return false;
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this.cancelSearch();
 		this.searchResult.dispose();
 		super.dispose();

@@ -124,7 +124,7 @@ export class QuickFixController extends Disposable implements IEditorContributio
 
 		MessageController.get(this._editor).closeMessage();
 		const triggerPosition = this._editor.getPosition();
-		this._trigger({ type: CodeActionTriggerType.Manual, filter, autoApply, context: { notAvailableMessage, position: triggerPosition } });
+		this._trigger({ type: CodeActionTriggerType.Invoke, filter, autoApply, context: { notAvailableMessage, position: triggerPosition } });
 	}
 
 	private _trigger(trigger: CodeActionTrigger) {

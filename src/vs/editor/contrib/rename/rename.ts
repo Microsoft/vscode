@@ -281,7 +281,7 @@ export class RenameAction extends EditorAction {
 		});
 	}
 
-	runCommand(accessor: ServicesAccessor, args: [URI, IPosition]): void | Promise<void> {
+	override runCommand(accessor: ServicesAccessor, args: [URI, IPosition]): void | Promise<void> {
 		const editorService = accessor.get(ICodeEditorService);
 		const [uri, pos] = Array.isArray(args) && args || [undefined, undefined];
 

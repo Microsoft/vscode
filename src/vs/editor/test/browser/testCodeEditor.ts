@@ -36,10 +36,10 @@ export interface ITestCodeEditor extends IActiveCodeEditor {
 export class TestCodeEditor extends CodeEditorWidget implements ICodeEditor {
 
 	//#region testing overrides
-	protected _createConfiguration(options: Readonly<IEditorConstructionOptions>): IConfiguration {
+	protected override _createConfiguration(options: Readonly<IEditorConstructionOptions>): IConfiguration {
 		return new TestConfiguration(options);
 	}
-	protected _createView(viewModel: ViewModel): [View, boolean] {
+	protected override _createView(viewModel: ViewModel): [View, boolean] {
 		// Never create a view
 		return [null! as View, false];
 	}
@@ -47,7 +47,7 @@ export class TestCodeEditor extends CodeEditorWidget implements ICodeEditor {
 	public setHasTextFocus(hasTextFocus: boolean): void {
 		this._hasTextFocus = hasTextFocus;
 	}
-	public hasTextFocus(): boolean {
+	public override hasTextFocus(): boolean {
 		return this._hasTextFocus;
 	}
 	//#endregion
@@ -64,7 +64,7 @@ export class TestCodeEditor extends CodeEditorWidget implements ICodeEditor {
 }
 
 class TestCodeEditorWithAutoModelDisposal extends TestCodeEditor {
-	public dispose() {
+	public override dispose() {
 		super.dispose();
 		if (this._modelData) {
 			this._modelData.model.dispose();

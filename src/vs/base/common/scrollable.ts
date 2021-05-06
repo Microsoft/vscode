@@ -223,7 +223,7 @@ export class Scrollable extends Disposable {
 		this._smoothScrolling = null;
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		if (this._smoothScrolling) {
 			this._smoothScrolling.dispose();
 			this._smoothScrolling = null;

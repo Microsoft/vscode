@@ -31,6 +31,7 @@
 	text-overflow: ellipsis;
 	overflow: hidden;
 	flex-wrap: nowrap;
+	height: 22px;
 }
 
 .ports-view .monaco-list .monaco-list-row .ports-view-actionbar-cell .monaco-inputbox {
@@ -43,11 +44,26 @@
 	margin-top: -40px;
 }
 
+.ports-view .monaco-list .monaco-list-row .ports-view-actionbar-cell .ports-view-actionbar-cell-localaddress:hover {
+	text-decoration: underline;
+}
+
+.ports-view .monaco-table-th {
+	padding-left: 10px;
+}
+
+.ports-view .monaco-table-th[data-col-index="0"],
+.ports-view .monaco-table-td[data-col-index="0"] {
+	padding-left: 10px;
+}
+
 .ports-view .monaco-list .monaco-list-row .ports-view-actionbar-cell .monaco-button {
 	width: initial;
 	padding: 2px 14px;
 	line-height: 1.4em;
 	margin-top: 4px;
+	margin-bottom: 3px;
+	margin-left: 3px;
 }
 
 .ports-view .monaco-list .monaco-list-row .ports-view-actionbar-cell > .ports-view-actionbar-cell-icon.codicon {
@@ -83,13 +99,5 @@
 	background-size: 16px;
 	background-position: 50% 50%;
 	background-repeat: no-repeat;
-}
-
-.ports-view .monaco-list .ports-view-actionbar-cell .actions .action-label.codicon {
-	line-height: 22px;
-	height: 22px;
-}
-
-.ports-view .monaco-list .ports-view-actionbar-cell .actions .action-label.codicon::before {
-	vertical-align: middle;
+	padding: 2px;
 }

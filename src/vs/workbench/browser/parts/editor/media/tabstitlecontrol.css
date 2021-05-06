@@ -281,6 +281,7 @@
 
 .monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.sizing-shrink > .monaco-icon-label > .monaco-icon-label-container {
 	text-overflow: clip;
+	flex: none;
 }
 
 .monaco-workbench.hc-black .part.editor > .content .editor-group-container > .title .tabs-container > .tab.sizing-shrink > .monaco-icon-label > .monaco-icon-label-container {
@@ -292,6 +293,10 @@
 .monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab > .tab-actions {
 	margin-top: auto;
 	margin-bottom: auto;
+	width: 28px;
+}
+
+.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab > .tab-actions > .monaco-action-bar {
 	width: 28px;
 }
 
@@ -321,9 +326,16 @@
 	opacity: 1;
 }
 
+.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab > .tab-actions .actions-container {
+	justify-content: center;
+}
+
 .monaco-workbench .part.editor > .content .editor-group-container.active > .title .tabs-container > .tab > .tab-actions .action-label.codicon {
 	color: inherit;
 	font-size: 16px;
+	padding: 2px;
+	width: 16px;
+	height: 16px;
 }
 
 .monaco-workbench .part.editor > .content .editor-group-container.active > .title .tabs-container > .tab.sticky.dirty > .tab-actions .action-label:not(:hover)::before,
@@ -346,13 +358,6 @@
 
 .monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab > .tab-actions .action-label {
 	opacity: 0;
-	display: block;
-	height: 16px;
-	width: 16px;
-	background-size: 16px;
-	background-position: center center;
-	background-repeat: no-repeat;
-	margin-right: 0.5em;
 }
 
 /* Tab Actions: Off */
@@ -428,6 +433,10 @@
 	flex: initial;
 	padding: 0 8px 0 4px;
 	height: 35px;
+}
+
+.monaco-workbench .part.editor > .content .editor-group-container > .title .editor-actions .action-item {
+	margin-right: 4px;
 }
 
 .monaco-workbench .part.editor > .content .editor-group-container > .title > .tabs-and-actions-container.wrapping .editor-actions {

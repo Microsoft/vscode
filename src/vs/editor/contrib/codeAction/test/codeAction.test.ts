@@ -127,9 +127,9 @@ suite('CodeAction', () => {
 			new CodeActionItem(testData.tsLint.abc, provider)
 		];
 
-		const { validActions: actions } = await getCodeActions(model, new Range(1, 1, 2, 1), { type: modes.CodeActionTriggerType.Manual }, Progress.None, CancellationToken.None);
-		assert.equal(actions.length, 6);
-		assert.deepEqual(actions, expected);
+		const { validActions: actions } = await getCodeActions(model, new Range(1, 1, 2, 1), { type: modes.CodeActionTriggerType.Invoke }, Progress.None, CancellationToken.None);
+		assert.strictEqual(actions.length, 6);
+		assert.deepStrictEqual(actions, expected);
 	});
 
 	test('getCodeActions should filter by scope', async function () {
@@ -143,20 +143,20 @@ suite('CodeAction', () => {
 
 		{
 			const { validActions: actions } = await getCodeActions(model, new Range(1, 1, 2, 1), { type: modes.CodeActionTriggerType.Auto, filter: { include: new CodeActionKind('a') } }, Progress.None, CancellationToken.None);
-			assert.equal(actions.length, 2);
+			assert.strictEqual(actions.length, 2);
 			assert.strictEqual(actions[0].action.title, 'a');
 			assert.strictEqual(actions[1].action.title, 'a.b');
 		}
 
 		{
 			const { validActions: actions } = await getCodeActions(model, new Range(1, 1, 2, 1), { type: modes.CodeActionTriggerType.Auto, filter: { include: new CodeActionKind('a.b') } }, Progress.None, CancellationToken.None);
-			assert.equal(actions.length, 1);
+			assert.strictEqual(actions.length, 1);
 			assert.strictEqual(actions[0].action.title, 'a.b');
 		}
 
 		{
 			const { validActions: actions } = await getCodeActions(model, new Range(1, 1, 2, 1), { type: modes.CodeActionTriggerType.Auto, filter: { include: new CodeActionKind('a.b.c') } }, Progress.None, CancellationToken.None);
-			assert.equal(actions.length, 0);
+			assert.strictEqual(actions.length, 0);
 		}
 	});
 
@@ -175,7 +175,7 @@ suite('CodeAction', () => {
 		disposables.add(modes.CodeActionProviderRegistry.register('fooLang', provider));
 
 		const { validActions: actions } = await getCodeActions(model, new Range(1, 1, 2, 1), { type: modes.CodeActionTriggerType.Auto, filter: { include: new CodeActionKind('a') } }, Progress.None, CancellationToken.None);
-		assert.equal(actions.length, 1);
+		assert.strictEqual(actions.length, 1);
 		assert.strictEqual(actions[0].action.title, 'a');
 	});
 
@@ -189,13 +189,13 @@ suite('CodeAction', () => {
 
 		{
 			const { validActions: actions } = await getCodeActions(model, new Range(1, 1, 2, 1), { type: modes.CodeActionTriggerType.Auto }, Progress.None, CancellationToken.None);
-			assert.equal(actions.length, 1);
+			assert.strictEqual(actions.length, 1);
 			assert.strictEqual(actions[0].action.title, 'b');
 		}
 
 		{
 			const { validActions: actions } = await getCodeActions(model, new Range(1, 1, 2, 1), { type: modes.CodeActionTriggerType.Auto, filter: { include: CodeActionKind.Source, includeSourceActions: true } }, Progress.None, CancellationToken.None);
-			assert.equal(actions.length, 1);
+			assert.strictEqual(actions.length, 1);
 			assert.strictEqual(actions[0].action.title, 'a');
 		}
 	});
@@ -217,7 +217,7 @@ suite('CodeAction', () => {
 					includeSourceActions: true,
 				}
 			}, Progress.None, CancellationToken.None);
-			assert.equal(actions.length, 1);
+			assert.strictEqual(actions.length, 1);
 			assert.strictEqual(actions[0].action.title, 'b');
 		}
 	});
@@ -254,7 +254,7 @@ suite('CodeAction', () => {
 				}
 			}, Progress.None, CancellationToken.None);
 			assert.strictEqual(didInvoke, false);
-			assert.equal(actions.length, 1);
+			assert.strictEqual(actions.length, 1);
 			assert.strictEqual(actions[0].action.title, 'a');
 		}
 	});

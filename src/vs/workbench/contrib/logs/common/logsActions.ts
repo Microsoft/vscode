@@ -25,7 +25,7 @@ export class SetLogLevelAction extends Action {
 		super(id, label);
 	}
 
-	run(): Promise<void> {
+	override run(): Promise<void> {
 		const current = this.logService.getLevel();
 		const entries = [
 			{ label: nls.localize('trace', "Trace"), level: LogLevel.Trace, description: this.getDescription(LogLevel.Trace, current) },
@@ -72,7 +72,7 @@ export class OpenWindowSessionLogFileAction extends Action {
 		super(id, label);
 	}
 
-	async run(): Promise<void> {
+	override async run(): Promise<void> {
 		const sessionResult = await this.quickInputService.pick(
 			this.getSessions().then(sessions => sessions.map((s, index) => (<IQuickPickItem>{
 				id: s.toString(),

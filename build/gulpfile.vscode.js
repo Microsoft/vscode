@@ -58,9 +58,9 @@ const vscodeResources = [
 	'out-build/vs/base/common/performance.js',
 	'out-build/vs/base/node/languagePacks.js',
 	'out-build/vs/base/node/{stdForkStart.js,terminateProcess.sh,cpuUsage.sh,ps.sh}',
-	'out-build/vs/base/node/userDataPath.js',
 	'out-build/vs/base/browser/ui/codicons/codicon/**',
 	'out-build/vs/base/parts/sandbox/electron-browser/preload.js',
+	'out-build/vs/platform/environment/node/userDataPath.js',
 	'out-build/vs/workbench/browser/media/*-theme.css',
 	'out-build/vs/workbench/contrib/debug/**/*.json',
 	'out-build/vs/workbench/contrib/externalTerminal/**/*.scpt',
@@ -223,7 +223,7 @@ function packageTask(platform, arch, sourceFolderName, destinationFolderName, op
 		const dependenciesSrc = _.flatten(productionDependencies.map(d => path.relative(root, d.path)).map(d => [`${d}/**`, `!${d}/**/{test,tests}/**`]));
 
 		const deps = gulp.src(dependenciesSrc, { base: '.', dot: true })
-			.pipe(filter(['**', `!**/${config.version}/**`, '!**/bin/darwin-arm64-85/**', '!**/package-lock.json', '!**/yarn.lock', '!**/*.js.map']))
+			.pipe(filter(['**', `!**/${config.version}/**`, '!**/bin/darwin-arm64-87/**', '!**/package-lock.json', '!**/yarn.lock', '!**/*.js.map']))
 			.pipe(util.cleanNodeModules(path.join(__dirname, '.moduleignore')))
 			.pipe(jsFilter)
 			.pipe(util.rewriteSourceMappingURL(sourceMappingURLBase))

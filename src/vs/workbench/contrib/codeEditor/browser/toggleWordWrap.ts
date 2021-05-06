@@ -5,24 +5,29 @@
 
 import * as nls from 'vs/nls';
 import { KeyCode, KeyMod } from 'vs/base/common/keyCodes';
-import { Disposable } from 'vs/base/common/lifecycle';
-import { URI } from 'vs/base/common/uri';
-import { ICodeEditor } from 'vs/editor/browser/editorBrowser';
+import { Disposable, DisposableStore } from 'vs/base/common/lifecycle';
+import { IActiveCodeEditor, ICodeEditor } from 'vs/editor/browser/editorBrowser';
 import { EditorAction, ServicesAccessor, registerEditorAction, registerEditorContribution } from 'vs/editor/browser/editorExtensions';
 import { ICodeEditorService } from 'vs/editor/browser/services/codeEditorService';
 import { EditorOption } from 'vs/editor/common/config/editorOptions';
 import { IEditorContribution } from 'vs/editor/common/editorCommon';
 import { ITextModel } from 'vs/editor/common/model';
 import { MenuId, MenuRegistry } from 'vs/platform/actions/common/actions';
-import { ContextKeyExpr, IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
+import { ContextKeyExpr, IContextKey, IContextKeyService, RawContextKey } from 'vs/platform/contextkey/common/contextkey';
 import { KeybindingWeight } from 'vs/platform/keybinding/common/keybindingsRegistry';
 import { DefaultSettingsEditorContribution } from 'vs/workbench/contrib/preferences/browser/preferencesEditor';
 import { EditorContextKeys } from 'vs/editor/common/editorContextKeys';
 import { Codicon } from 'vs/base/common/codicons';
+import { Registry } from 'vs/platform/registry/common/platform';
+import { IWorkbenchContribution, IWorkbenchContributionsRegistry, Extensions } from 'vs/workbench/common/contributions';
+import { LifecyclePhase } from 'vs/workbench/services/lifecycle/common/lifecycle';
+import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
 
 const transientWordWrapState = 'transientWordWrapState';
 const isWordWrapMinifiedKey = 'isWordWrapMinified';
 const isDominatedByLongLinesKey = 'isDominatedByLongLines';
+const CAN_TOGGLE_WORD_WRAP = new RawContextKey<boolean>('canToggleWordWrap', false, true);
+const EDITOR_WORD_WRAP = new RawContextKey<boolean>('editorWordWrap', false, nls.localize('editorWordWrap', 'Whether the editor is currently using word wrapping.'));
 
 /**
  * State written/read by the toggle word wrap action and associated with a particular model.
@@ -63,20 +68,12 @@ class ToggleWordWrapAction extends EditorAction {
 	}
 
 	public run(accessor: ServicesAccessor, editor: ICodeEditor): void {
-		if (editor.getContribution(DefaultSettingsEditorContribution.ID)) {
-			// in the settings editor...
-			return;
-		}
-		if (!editor.hasModel()) {
+		if (!canToggleWordWrap(editor)) {
 			return;
 		}
 
 		const codeEditorService = accessor.get(ICodeEditorService);
 		const model = editor.getModel();
-
-		if (!canToggleWordWrap(model.uri)) {
-			return;
-		}
 
 		// Read the current state
 		const transientState = readTransientState(model, codeEditorService);
@@ -137,25 +134,11 @@ class ToggleWordWrapController extends Disposable implements IEditorContribution
 		}));
 
 		const ensureWordWrapSettings = () => {
-			if (this._editor.getContribution(DefaultSettingsEditorContribution.ID)) {
-				// in the settings editor...
-				return;
-			}
-			if (this._editor.isSimpleWidget) {
-				// in a simple widget...
-				return;
-			}
-			// Ensure correct word wrap settings
-			const newModel = this._editor.getModel();
-			if (!newModel) {
+			if (!canToggleWordWrap(this._editor)) {
 				return;
 			}
 
-			if (!canToggleWordWrap(newModel.uri)) {
-				return;
-			}
-
-			const transientState = readTransientState(newModel, this._codeEditorService);
+			const transientState = readTransientState(this._editor.getModel(), this._codeEditorService);
 
 			// Apply the state
 			try {
@@ -175,13 +158,89 @@ class ToggleWordWrapController extends Disposable implements IEditorContribution
 	}
 }
 
-function canToggleWordWrap(uri: URI): boolean {
-	if (!uri) {
+function canToggleWordWrap(editor: ICodeEditor | null): editor is IActiveCodeEditor {
+	if (!editor) {
 		return false;
 	}
-	return (uri.scheme !== 'output');
+	if (editor.getContribution(DefaultSettingsEditorContribution.ID)) {
+		// in the settings editor...
+		return false;
+	}
+	if (editor.isSimpleWidget) {
+		// in a simple widget...
+		return false;
+	}
+	// Ensure correct word wrap settings
+	const model = editor.getModel();
+	if (!model) {
+		return false;
+	}
+	if (model.uri.scheme === 'output') {
+		// in output editor
+		return false;
+	}
+	return true;
 }
 
+class EditorWordWrapContextKeyTracker implements IWorkbenchContribution {
+
+	private readonly _canToggleWordWrap: IContextKey<boolean>;
+	private readonly _editorWordWrap: IContextKey<boolean>;
+	private _activeEditor: ICodeEditor | null;
+	private readonly _activeEditorListener: DisposableStore;
+
+	constructor(
+		@IEditorService private readonly _editorService: IEditorService,
+		@ICodeEditorService private readonly _codeEditorService: ICodeEditorService,
+		@IContextKeyService private readonly _contextService: IContextKeyService,
+	) {
+		window.addEventListener('focus', () => this._update(), true);
+		window.addEventListener('blur', () => this._update(), true);
+		this._editorService.onDidActiveEditorChange(() => this._update());
+		this._canToggleWordWrap = CAN_TOGGLE_WORD_WRAP.bindTo(this._contextService);
+		this._editorWordWrap = EDITOR_WORD_WRAP.bindTo(this._contextService);
+		this._activeEditor = null;
+		this._activeEditorListener = new DisposableStore();
+		this._update();
+	}
+
+	private _update(): void {
+		const activeEditor = this._codeEditorService.getFocusedCodeEditor() || this._codeEditorService.getActiveCodeEditor();
+		if (this._activeEditor === activeEditor) {
+			// no change
+			return;
+		}
+		this._activeEditorListener.clear();
+		this._activeEditor = activeEditor;
+
+		if (activeEditor) {
+			this._activeEditorListener.add(activeEditor.onDidChangeModel(() => this._updateFromCodeEditor()));
+			this._activeEditorListener.add(activeEditor.onDidChangeConfiguration((e) => {
+				if (e.hasChanged(EditorOption.wrappingInfo)) {
+					this._updateFromCodeEditor();
+				}
+			}));
+			this._updateFromCodeEditor();
+		}
+	}
+
+	private _updateFromCodeEditor(): void {
+		if (!canToggleWordWrap(this._activeEditor)) {
+			return this._setValues(false, false);
+		} else {
+			const wrappingInfo = this._activeEditor.getOption(EditorOption.wrappingInfo);
+			this._setValues(true, wrappingInfo.wrappingColumn !== -1);
+		}
+	}
+
+	private _setValues(canToggleWordWrap: boolean, isWordWrap: boolean): void {
+		this._canToggleWordWrap.set(canToggleWordWrap);
+		this._editorWordWrap.set(isWordWrap);
+	}
+}
+
+const workbenchRegistry = Registry.as<IWorkbenchContributionsRegistry>(Extensions.Workbench);
+workbenchRegistry.registerWorkbenchContribution(EditorWordWrapContextKeyTracker, LifecyclePhase.Ready);
 
 registerEditorContribution(ToggleWordWrapController.ID, ToggleWordWrapController);
 
@@ -221,7 +280,9 @@ MenuRegistry.appendMenuItem(MenuId.MenubarViewMenu, {
 	group: '5_editor',
 	command: {
 		id: TOGGLE_WORD_WRAP_ID,
-		title: nls.localize({ key: 'miToggleWordWrap', comment: ['&& denotes a mnemonic'] }, "Toggle &&Word Wrap")
+		title: nls.localize({ key: 'miToggleWordWrap', comment: ['&& denotes a mnemonic'] }, "&&Word Wrap"),
+		toggled: EDITOR_WORD_WRAP,
+		precondition: CAN_TOGGLE_WORD_WRAP
 	},
 	order: 1
 });

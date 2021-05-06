@@ -5,7 +5,7 @@
 
 import { localize } from 'vs/nls';
 import { coalesce } from 'vs/base/common/arrays';
-import { IStateService } from 'vs/platform/state/node/state';
+import { IStateMainService } from 'vs/platform/state/electron-main/state';
 import { app, JumpListCategory, JumpListItem } from 'electron';
 import { ILogService } from 'vs/platform/log/common/log';
 import { normalizeDriveLetter, splitName } from 'vs/base/common/labels';
@@ -17,7 +17,6 @@ import { ThrottledDelayer } from 'vs/base/common/async';
 import { originalFSPath, basename, extUriBiasedIgnorePathCase } from 'vs/base/common/resources';
 import { URI } from 'vs/base/common/uri';
 import { Schemas } from 'vs/base/common/network';
-import { IEnvironmentMainService } from 'vs/platform/environment/electron-main/environmentMainService';
 import { exists } from 'vs/base/node/pfs';
 import { ILifecycleMainService, LifecycleMainPhase } from 'vs/platform/lifecycle/electron-main/lifecycleMainService';
 import { createDecorator } from 'vs/platform/instantiation/common/instantiation';
@@ -63,10 +62,9 @@ export class WorkspacesHistoryMainService extends Disposable implements IWorkspa
 	private readonly macOSRecentDocumentsUpdater = this._register(new ThrottledDelayer<void>(800));
 
 	constructor(
-		@IStateService private readonly stateService: IStateService,
+		@IStateMainService private readonly stateMainService: IStateMainService,
 		@ILogService private readonly logService: ILogService,
 		@IWorkspacesManagementMainService private readonly workspacesManagementMainService: IWorkspacesManagementMainService,
-		@IEnvironmentMainService private readonly environmentMainService: IEnvironmentMainService,
 		@ILifecycleMainService private readonly lifecycleMainService: ILifecycleMainService
 	) {
 		super();
@@ -293,7 +291,7 @@ export class WorkspacesHistoryMainService extends Disposable implements IWorkspa
 	}
 
 	private getRecentlyOpenedFromStorage(): IRecentlyOpened {
-		const storedRecents = this.stateService.getItem<RecentlyOpenedStorageData>(WorkspacesHistoryMainService.recentlyOpenedStorageKey);
+		const storedRecents = this.stateMainService.getItem<RecentlyOpenedStorageData>(WorkspacesHistoryMainService.recentlyOpenedStorageKey);
 
 		return restoreRecentlyOpened(storedRecents, this.logService);
 	}
@@ -301,7 +299,7 @@ export class WorkspacesHistoryMainService extends Disposable implements IWorkspa
 	private saveRecentlyOpened(recent: IRecentlyOpened): void {
 		const serialized = toStoreData(recent);
 
-		this.stateService.setItem(WorkspacesHistoryMainService.recentlyOpenedStorageKey, serialized);
+		this.stateMainService.setItem(WorkspacesHistoryMainService.recentlyOpenedStorageKey, serialized);
 	}
 
 	updateWindowsJumpList(): void {
@@ -393,16 +391,19 @@ export class WorkspacesHistoryMainService extends Disposable implements IWorkspa
 	}
 
 	private getWindowsJumpListLabel(workspace: IWorkspaceIdentifier | URI, recentLabel: string | undefined): { title: string; description: string } {
+
+		// Prefer recent label
 		if (recentLabel) {
 			return { title: splitName(recentLabel).name, description: recentLabel };
 		}
+
 		// Single Folder
 		if (URI.isUri(workspace)) {
 			return { title: basename(workspace), description: renderJumpListPathDescription(workspace) };
 		}
 
 		// Workspace: Untitled
-		if (extUriBiasedIgnorePathCase.isEqualOrParent(workspace.configPath, this.environmentMainService.userHome)) {
+		if (this.workspacesManagementMainService.isUntitledWorkspace(workspace)) {
 			return { title: localize('untitledWorkspace', "Untitled (Workspace)"), description: '' };
 		}
 

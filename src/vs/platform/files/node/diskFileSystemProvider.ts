@@ -6,7 +6,7 @@
 import { open, close, read, write, fdatasync, Stats, promises } from 'fs';
 import { promisify } from 'util';
 import { IDisposable, Disposable, toDisposable, dispose, combinedDisposable } from 'vs/base/common/lifecycle';
-import { FileSystemProviderCapabilities, IFileChange, IWatchOptions, IStat, FileType, FileDeleteOptions, FileOverwriteOptions, FileWriteOptions, FileOpenOptions, FileSystemProviderErrorCode, createFileSystemProviderError, FileSystemProviderError, IFileSystemProviderWithFileReadWriteCapability, IFileSystemProviderWithFileReadStreamCapability, IFileSystemProviderWithOpenReadWriteCloseCapability, FileReadStreamOptions, IFileSystemProviderWithFileFolderCopyCapability } from 'vs/platform/files/common/files';
+import { FileSystemProviderCapabilities, IFileChange, IWatchOptions, IStat, FileType, FileDeleteOptions, FileOverwriteOptions, FileWriteOptions, FileOpenOptions, FileSystemProviderErrorCode, createFileSystemProviderError, FileSystemProviderError, IFileSystemProviderWithFileReadWriteCapability, IFileSystemProviderWithFileReadStreamCapability, IFileSystemProviderWithOpenReadWriteCloseCapability, FileReadStreamOptions, IFileSystemProviderWithFileFolderCopyCapability, isFileOpenForWriteOptions } from 'vs/platform/files/common/files';
 import { URI } from 'vs/base/common/uri';
 import { Event, Emitter } from 'vs/base/common/event';
 import { isLinux, isWindows } from 'vs/base/common/platform';
@@ -47,7 +47,7 @@ export class DiskFileSystemProvider extends Disposable implements
 	private readonly BUFFER_SIZE = this.options?.bufferSize || 64 * 1024;
 
 	constructor(
-		private readonly logService: ILogService,
+		protected readonly logService: ILogService,
 		private readonly options?: IDiskFileSystemProviderOptions
 	) {
 		super();
@@ -64,7 +64,8 @@ export class DiskFileSystemProvider extends Disposable implements
 				FileSystemProviderCapabilities.FileReadWrite |
 				FileSystemProviderCapabilities.FileOpenReadWriteClose |
 				FileSystemProviderCapabilities.FileReadStream |
-				FileSystemProviderCapabilities.FileFolderCopy;
+				FileSystemProviderCapabilities.FileFolderCopy |
+				FileSystemProviderCapabilities.FileWriteUnlock;
 
 			if (isLinux) {
 				this._capabilities |= FileSystemProviderCapabilities.PathCaseSensitive;
@@ -188,12 +189,12 @@ export class DiskFileSystemProvider extends Disposable implements
 			}
 
 			// Open
-			handle = await this.open(resource, { create: true });
+			handle = await this.open(resource, { create: true, unlock: opts.unlock });
 
 			// Write content at once
 			await this.write(handle, 0, content, 0, content.byteLength);
 		} catch (error) {
-			throw this.toFileSystemProviderError(error);
+			throw await this.toFileSystemProviderWriteError(resource, error);
 		} finally {
 			if (typeof handle === 'number') {
 				await this.close(handle);
@@ -203,15 +204,28 @@ export class DiskFileSystemProvider extends Disposable implements
 
 	private readonly mapHandleToPos: Map<number, number> = new Map();
 
-	private readonly writeHandles: Set<number> = new Set();
+	private readonly writeHandles = new Map<number, URI>();
 	private canFlush: boolean = true;
 
 	async open(resource: URI, opts: FileOpenOptions): Promise<number> {
 		try {
 			const filePath = this.toFilePath(resource);
 
+			// Determine wether to unlock the file (write only)
+			if (isFileOpenForWriteOptions(opts) && opts.unlock) {
+				try {
+					const { stat } = await SymlinkSupport.stat(filePath);
+					if (!(stat.mode & 0o200 /* File mode indicating writable by owner */)) {
+						await promises.chmod(filePath, stat.mode | 0o200);
+					}
+				} catch (error) {
+					this.logService.trace(error); // ignore any errors here and try to just write
+				}
+			}
+
+			// Determine file flags for opening (read vs write)
 			let flags: string | undefined = undefined;
-			if (opts.create) {
+			if (isFileOpenForWriteOptions(opts)) {
 				if (isWindows) {
 					try {
 						// On Windows and if the file exists, we use a different strategy of saving the file
@@ -252,13 +266,17 @@ export class DiskFileSystemProvider extends Disposable implements
 			this.mapHandleToPos.set(handle, 0);
 
 			// remember that this handle was used for writing
-			if (opts.create) {
-				this.writeHandles.add(handle);
+			if (isFileOpenForWriteOptions(opts)) {
+				this.writeHandles.set(handle, resource);
 			}
 
 			return handle;
 		} catch (error) {
-			throw this.toFileSystemProviderError(error);
+			if (isFileOpenForWriteOptions(opts)) {
+				throw await this.toFileSystemProviderWriteError(resource, error);
+			} else {
+				throw this.toFileSystemProviderError(error);
+			}
 		}
 	}
 
@@ -388,7 +406,7 @@ export class DiskFileSystemProvider extends Disposable implements
 
 			return bytesWritten;
 		} catch (error) {
-			throw this.toFileSystemProviderError(error);
+			throw await this.toFileSystemProviderWriteError(this.writeHandles.get(fd), error);
 		} finally {
 			this.updatePos(fd, normalizedPos, bytesWritten);
 		}
@@ -524,7 +542,7 @@ export class DiskFileSystemProvider extends Disposable implements
 			return this.watchRecursive(resource, opts.excludes);
 		}
 
-		return this.watchNonRecursive(resource); // TODO@bpasero ideally the same watcher can be used in both cases
+		return this.watchNonRecursive(resource);
 	}
 
 	private watchRecursive(resource: URI, excludes: string[]): IDisposable {
@@ -690,9 +708,29 @@ export class DiskFileSystemProvider extends Disposable implements
 		return createFileSystemProviderError(error, code);
 	}
 
+	private async toFileSystemProviderWriteError(resource: URI | undefined, error: NodeJS.ErrnoException): Promise<FileSystemProviderError> {
+		let fileSystemProviderWriteError = this.toFileSystemProviderError(error);
+
+		// If the write error signals permission issues, we try
+		// to read the file's mode to see if the file is write
+		// locked.
+		if (resource && fileSystemProviderWriteError.code === FileSystemProviderErrorCode.NoPermissions) {
+			try {
+				const { stat } = await SymlinkSupport.stat(this.toFilePath(resource));
+				if (!(stat.mode & 0o200 /* File mode indicating writable by owner */)) {
+					fileSystemProviderWriteError = createFileSystemProviderError(error, FileSystemProviderErrorCode.FileWriteLocked);
+				}
+			} catch (error) {
+				this.logService.trace(error); // ignore - return original error
+			}
+		}
+
+		return fileSystemProviderWriteError;
+	}
+
 	//#endregion
 
-	dispose(): void {
+	override dispose(): void {
 		super.dispose();
 
 		dispose(this.recursiveWatcher);

@@ -5,7 +5,7 @@
 
 /*eslint-env mocha*/
 
-(function() {
+(function () {
 	const fs = require('fs');
 	const originals = {};
 	let logging = false;
@@ -21,7 +21,7 @@
 	};
 
 	function createSpy(element, cnt) {
-		return function(...args) {
+		return function (...args) {
 			if (logging) {
 				console.log(`calling ${element}: ` + args.slice(0, cnt).join(',') + (withStacks ? (`\n` + new Error().stack.split('\n').slice(2).join('\n')) : ''));
 			}
@@ -213,12 +213,37 @@ function serializeError(err) {
 	return {
 		message: err.message,
 		stack: err.stack,
-		actual: err.actual,
-		expected: err.expected,
+		actual: safeStringify({ value: err.actual }),
+		expected: safeStringify({ value: err.expected }),
 		uncaught: err.uncaught,
 		showDiff: err.showDiff,
 		inspect: typeof err.inspect === 'function' ? err.inspect() : ''
 	};
+}
+
+function safeStringify(obj) {
+	const seen = new Set();
+	return JSON.stringify(obj, (key, value) => {
+		if (isObject(value) || Array.isArray(value)) {
+			if (seen.has(value)) {
+				return '[Circular]';
+			} else {
+				seen.add(value);
+			}
+		}
+		return value;
+	});
+}
+
+function isObject(obj) {
+	// The method can't do a type cast since there are type (like strings) which
+	// are subclasses of any put not positvely matched by the function. Hence type
+	// narrowing results in wrong results.
+	return typeof obj === 'object'
+		&& obj !== null
+		&& !Array.isArray(obj)
+		&& !(obj instanceof RegExp)
+		&& !(obj instanceof Date);
 }
 
 class IPCReporter {
@@ -239,6 +264,10 @@ class IPCReporter {
 }
 
 function runTests(opts) {
+	// this *must* come before loadTests, or it doesn't work.
+	if (opts.timeout !== undefined) {
+		mocha.timeout(opts.timeout);
+	}
 
 	return loadTests(opts).then(() => {
 

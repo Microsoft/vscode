@@ -47,23 +47,23 @@ export class ExtHostOutputChannelBackedByFile extends AbstractExtHostOutputChann
 		this._appender = appender;
 	}
 
-	append(value: string): void {
+	override append(value: string): void {
 		super.append(value);
 		this._appender.append(value);
 		this._onDidAppend.fire();
 	}
 
-	update(): void {
+	override update(): void {
 		this._appender.flush();
 		super.update();
 	}
 
-	show(columnOrPreserveFocus?: vscode.ViewColumn | boolean, preserveFocus?: boolean): void {
+	override show(columnOrPreserveFocus?: vscode.ViewColumn | boolean, preserveFocus?: boolean): void {
 		this._appender.flush();
 		super.show(columnOrPreserveFocus, preserveFocus);
 	}
 
-	clear(): void {
+	override clear(): void {
 		this._appender.flush();
 		super.clear();
 	}
@@ -85,7 +85,7 @@ export class ExtHostOutputService2 extends ExtHostOutputService {
 		this._logsLocation = initData.logsLocation;
 	}
 
-	$setVisibleChannel(channelId: string): void {
+	override $setVisibleChannel(channelId: string): void {
 		if (channelId) {
 			const channel = this._channels.get(channelId);
 			if (channel) {
@@ -94,7 +94,7 @@ export class ExtHostOutputService2 extends ExtHostOutputService {
 		}
 	}
 
-	createOutputChannel(name: string): vscode.OutputChannel {
+	override createOutputChannel(name: string): vscode.OutputChannel {
 		name = name.trim();
 		if (!name) {
 			throw new Error('illegal argument `name`. must not be falsy');

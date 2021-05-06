@@ -4,7 +4,7 @@
 		"If you want to provide a fix or improvement, please create a pull request against the original repository.",
 		"Once accepted there, we are happy to receive an update request."
 	],
-	"version": "https://github.com/textmate/perl.tmbundle/commit/80826abe75250286c2a1a07958e50e8551d3f50c",
+	"version": "https://github.com/textmate/perl.tmbundle/commit/a85927a902d6e5d7805f56a653f324d34dfad53a",
 	"name": "Perl",
 	"scopeName": "source.perl",
 	"comment": "\n\tTODO:\tInclude RegExp syntax\n",
@@ -917,685 +917,7 @@
 			"name": "keyword.operator.comparison.perl"
 		},
 		{
-			"begin": "(((<<) *\"HTML\"))(.*)\\n?",
-			"captures": {
-				"1": {
-					"name": "punctuation.definition.string.perl"
-				},
-				"2": {
-					"name": "string.unquoted.heredoc.doublequote.perl"
-				},
-				"3": {
-					"name": "punctuation.definition.heredoc.perl"
-				},
-				"4": {
-					"patterns": [
-						{
-							"include": "$self"
-						}
-					]
-				}
-			},
-			"contentName": "text.html.embedded.perl",
-			"end": "(^HTML$)",
-			"patterns": [
-				{
-					"include": "#escaped_char"
-				},
-				{
-					"include": "#variable"
-				},
-				{
-					"include": "text.html.basic"
-				}
-			]
-		},
-		{
-			"begin": "(((<<) *\"XML\"))(.*)\\n?",
-			"captures": {
-				"1": {
-					"name": "punctuation.definition.string.perl"
-				},
-				"2": {
-					"name": "string.unquoted.heredoc.doublequote.perl"
-				},
-				"3": {
-					"name": "punctuation.definition.heredoc.perl"
-				},
-				"4": {
-					"patterns": [
-						{
-							"include": "$self"
-						}
-					]
-				}
-			},
-			"contentName": "text.xml.embedded.perl",
-			"end": "(^XML$)",
-			"patterns": [
-				{
-					"include": "#escaped_char"
-				},
-				{
-					"include": "#variable"
-				},
-				{
-					"include": "text.xml"
-				}
-			]
-		},
-		{
-			"begin": "(((<<) *\"CSS\"))(.*)\\n?",
-			"captures": {
-				"1": {
-					"name": "punctuation.definition.string.perl"
-				},
-				"2": {
-					"name": "string.unquoted.heredoc.doublequote.perl"
-				},
-				"3": {
-					"name": "punctuation.definition.heredoc.perl"
-				},
-				"4": {
-					"patterns": [
-						{
-							"include": "$self"
-						}
-					]
-				}
-			},
-			"contentName": "text.css.embedded.perl",
-			"end": "(^CSS$)",
-			"patterns": [
-				{
-					"include": "#escaped_char"
-				},
-				{
-					"include": "#variable"
-				},
-				{
-					"include": "source.css"
-				}
-			]
-		},
-		{
-			"begin": "(((<<) *\"JAVASCRIPT\"))(.*)\\n?",
-			"captures": {
-				"1": {
-					"name": "punctuation.definition.string.perl"
-				},
-				"2": {
-					"name": "string.unquoted.heredoc.doublequote.perl"
-				},
-				"3": {
-					"name": "punctuation.definition.heredoc.perl"
-				},
-				"4": {
-					"patterns": [
-						{
-							"include": "$self"
-						}
-					]
-				}
-			},
-			"contentName": "text.js.embedded.perl",
-			"end": "(^JAVASCRIPT$)",
-			"patterns": [
-				{
-					"include": "#escaped_char"
-				},
-				{
-					"include": "#variable"
-				},
-				{
-					"include": "source.js"
-				}
-			]
-		},
-		{
-			"begin": "(((<<) *\"SQL\"))(.*)\\n?",
-			"captures": {
-				"1": {
-					"name": "punctuation.definition.string.perl"
-				},
-				"2": {
-					"name": "string.unquoted.heredoc.doublequote.perl"
-				},
-				"3": {
-					"name": "punctuation.definition.heredoc.perl"
-				},
-				"4": {
-					"patterns": [
-						{
-							"include": "$self"
-						}
-					]
-				}
-			},
-			"contentName": "source.sql.embedded.perl",
-			"end": "(^SQL$)",
-			"patterns": [
-				{
-					"include": "#escaped_char"
-				},
-				{
-					"include": "#variable"
-				},
-				{
-					"include": "source.sql"
-				}
-			]
-		},
-		{
-			"begin": "(((<<) *\"POSTSCRIPT\"))(.*)\\n?",
-			"captures": {
-				"1": {
-					"name": "punctuation.definition.string.perl"
-				},
-				"2": {
-					"name": "string.unquoted.heredoc.doublequote.perl"
-				},
-				"3": {
-					"name": "punctuation.definition.heredoc.perl"
-				},
-				"4": {
-					"patterns": [
-						{
-							"include": "$self"
-						}
-					]
-				}
-			},
-			"contentName": "text.postscript.embedded.perl",
-			"end": "(^POSTSCRIPT$)",
-			"patterns": [
-				{
-					"include": "#escaped_char"
-				},
-				{
-					"include": "#variable"
-				},
-				{
-					"include": "source.postscript"
-				}
-			]
-		},
-		{
-			"begin": "(((<<) *\"([^\"]*)\"))(.*)\\n?",
-			"captures": {
-				"1": {
-					"name": "punctuation.definition.string.perl"
-				},
-				"2": {
-					"name": "string.unquoted.heredoc.doublequote.perl"
-				},
-				"3": {
-					"name": "punctuation.definition.heredoc.perl"
-				},
-				"4": {
-					"patterns": [
-						{
-							"include": "$self"
-						}
-					]
-				}
-			},
-			"contentName": "string.unquoted.heredoc.doublequote.perl",
-			"end": "(^\\4$)",
-			"patterns": [
-				{
-					"include": "#escaped_char"
-				},
-				{
-					"include": "#variable"
-				}
-			]
-		},
-		{
-			"begin": "(((<<) *'HTML'))(.*)\\n?",
-			"captures": {
-				"1": {
-					"name": "punctuation.definition.string.perl"
-				},
-				"2": {
-					"name": "string.unquoted.heredoc.quote.perl"
-				},
-				"3": {
-					"name": "punctuation.definition.heredoc.perl"
-				},
-				"4": {
-					"patterns": [
-						{
-							"include": "$self"
-						}
-					]
-				}
-			},
-			"contentName": "text.html.embedded.perl",
-			"end": "(^HTML$)",
-			"patterns": [
-				{
-					"include": "text.html.basic"
-				}
-			]
-		},
-		{
-			"begin": "(((<<) *'XML'))(.*)\\n?",
-			"captures": {
-				"1": {
-					"name": "punctuation.definition.string.perl"
-				},
-				"2": {
-					"name": "string.unquoted.heredoc.quote.perl"
-				},
-				"3": {
-					"name": "punctuation.definition.heredoc.perl"
-				},
-				"4": {
-					"patterns": [
-						{
-							"include": "$self"
-						}
-					]
-				}
-			},
-			"contentName": "text.xml.embedded.perl",
-			"end": "(^XML$)",
-			"patterns": [
-				{
-					"include": "text.xml"
-				}
-			]
-		},
-		{
-			"begin": "(((<<) *'CSS'))(.*)\\n?",
-			"captures": {
-				"1": {
-					"name": "punctuation.definition.string.perl"
-				},
-				"2": {
-					"name": "string.unquoted.heredoc.quote.perl"
-				},
-				"3": {
-					"name": "punctuation.definition.heredoc.perl"
-				},
-				"4": {
-					"patterns": [
-						{
-							"include": "$self"
-						}
-					]
-				}
-			},
-			"contentName": "text.css.embedded.perl",
-			"end": "(^CSS$)",
-			"patterns": [
-				{
-					"include": "source.css"
-				}
-			]
-		},
-		{
-			"begin": "(((<<) *'JAVASCRIPT'))(.*)\\n?",
-			"captures": {
-				"1": {
-					"name": "punctuation.definition.string.perl"
-				},
-				"2": {
-					"name": "string.unquoted.heredoc.quote.perl"
-				},
-				"3": {
-					"name": "punctuation.definition.heredoc.perl"
-				},
-				"4": {
-					"patterns": [
-						{
-							"include": "$self"
-						}
-					]
-				}
-			},
-			"contentName": "text.js.embedded.perl",
-			"end": "(^JAVASCRIPT$)",
-			"patterns": [
-				{
-					"include": "source.js"
-				}
-			]
-		},
-		{
-			"begin": "(((<<) *'SQL'))(.*)\\n?",
-			"captures": {
-				"1": {
-					"name": "punctuation.definition.string.perl"
-				},
-				"2": {
-					"name": "string.unquoted.heredoc.quote.perl"
-				},
-				"3": {
-					"name": "punctuation.definition.heredoc.perl"
-				},
-				"4": {
-					"patterns": [
-						{
-							"include": "$self"
-						}
-					]
-				}
-			},
-			"contentName": "source.sql.embedded.perl",
-			"end": "(^SQL$)",
-			"patterns": [
-				{
-					"include": "source.sql"
-				}
-			]
-		},
-		{
-			"begin": "(((<<) *'POSTSCRIPT'))(.*)\\n?",
-			"captures": {
-				"1": {
-					"name": "punctuation.definition.string.perl"
-				},
-				"2": {
-					"name": "string.unquoted.heredoc.quote.perl"
-				},
-				"3": {
-					"name": "punctuation.definition.heredoc.perl"
-				},
-				"4": {
-					"patterns": [
-						{
-							"include": "$self"
-						}
-					]
-				}
-			},
-			"contentName": "source.postscript.embedded.perl",
-			"end": "(^POSTSCRIPT$)",
-			"patterns": [
-				{
-					"include": "source.postscript"
-				}
-			]
-		},
-		{
-			"begin": "(((<<) *'([^']*)'))(.*)\\n?",
-			"captures": {
-				"1": {
-					"name": "punctuation.definition.string.perl"
-				},
-				"2": {
-					"name": "string.unquoted.heredoc.quote.perl"
-				},
-				"3": {
-					"name": "punctuation.definition.heredoc.perl"
-				},
-				"4": {
-					"patterns": [
-						{
-							"include": "$self"
-						}
-					]
-				}
-			},
-			"contentName": "string.unquoted.heredoc.quote.perl",
-			"end": "(^\\4$)"
-		},
-		{
-			"begin": "(((<<) *\\\\((?![=\\d\\$\\( ])[^;,'\"`\\s\\)]*)))(.*)\\n?",
-			"captures": {
-				"1": {
-					"name": "punctuation.definition.string.perl"
-				},
-				"2": {
-					"name": "string.unquoted.heredoc.quote.perl"
-				},
-				"3": {
-					"name": "punctuation.definition.heredoc.perl"
-				},
-				"4": {
-					"patterns": [
-						{
-							"include": "$self"
-						}
-					]
-				}
-			},
-			"contentName": "string.unquoted.heredoc.quote.perl",
-			"end": "(^\\4$)"
-		},
-		{
-			"begin": "(((<<) *`([^`]*)`))(.*)\\n?",
-			"captures": {
-				"1": {
-					"name": "punctuation.definition.string.perl"
-				},
-				"2": {
-					"name": "string.unquoted.heredoc.backtick.perl"
-				},
-				"3": {
-					"name": "punctuation.definition.heredoc.perl"
-				},
-				"4": {
-					"patterns": [
-						{
-							"include": "$self"
-						}
-					]
-				}
-			},
-			"contentName": "string.unquoted.heredoc.backtick.perl",
-			"end": "(^\\4$)",
-			"patterns": [
-				{
-					"include": "#escaped_char"
-				},
-				{
-					"include": "#variable"
-				}
-			]
-		},
-		{
-			"begin": "(((<<) *HTML\\b))(.*)\\n?",
-			"captures": {
-				"1": {
-					"name": "punctuation.definition.string.perl"
-				},
-				"2": {
-					"name": "string.unquoted.heredoc.perl"
-				},
-				"3": {
-					"name": "punctuation.definition.heredoc.perl"
-				},
-				"4": {
-					"patterns": [
-						{
-							"include": "$self"
-						}
-					]
-				}
-			},
-			"contentName": "text.html.embedded.perl",
-			"end": "(^HTML$)",
-			"patterns": [
-				{
-					"include": "#escaped_char"
-				},
-				{
-					"include": "#variable"
-				},
-				{
-					"include": "text.html.basic"
-				}
-			]
-		},
-		{
-			"begin": "(((<<) *XML\\b))(.*)\\n?",
-			"captures": {
-				"1": {
-					"name": "punctuation.definition.string.perl"
-				},
-				"2": {
-					"name": "string.unquoted.heredoc.perl"
-				},
-				"3": {
-					"name": "punctuation.definition.heredoc.perl"
-				},
-				"4": {
-					"patterns": [
-						{
-							"include": "$self"
-						}
-					]
-				}
-			},
-			"contentName": "text.xml.embedded.perl",
-			"end": "(^XML$)",
-			"patterns": [
-				{
-					"include": "#escaped_char"
-				},
-				{
-					"include": "#variable"
-				},
-				{
-					"include": "text.xml"
-				}
-			]
-		},
-		{
-			"begin": "(((<<) *JAVASCRIPT\\b))(.*)\\n?",
-			"captures": {
-				"1": {
-					"name": "punctuation.definition.string.perl"
-				},
-				"2": {
-					"name": "string.unquoted.heredoc.perl"
-				},
-				"3": {
-					"name": "punctuation.definition.heredoc.perl"
-				},
-				"4": {
-					"patterns": [
-						{
-							"include": "$self"
-						}
-					]
-				}
-			},
-			"contentName": "source.js.embedded.perl",
-			"end": "(^JAVASCRIPT$)",
-			"patterns": [
-				{
-					"include": "#escaped_char"
-				},
-				{
-					"include": "#variable"
-				},
-				{
-					"include": "source.js"
-				}
-			]
-		},
-		{
-			"begin": "(((<<) *SQL\\b))(.*)\\n?",
-			"captures": {
-				"1": {
-					"name": "punctuation.definition.string.perl"
-				},
-				"2": {
-					"name": "string.unquoted.heredoc.perl"
-				},
-				"3": {
-					"name": "punctuation.definition.heredoc.perl"
-				},
-				"4": {
-					"patterns": [
-						{
-							"include": "$self"
-						}
-					]
-				}
-			},
-			"contentName": "source.sql.embedded.perl",
-			"end": "(^SQL$)",
-			"patterns": [
-				{
-					"include": "#escaped_char"
-				},
-				{
-					"include": "#variable"
-				},
-				{
-					"include": "source.sql"
-				}
-			]
-		},
-		{
-			"begin": "(((<<) *POSTSCRIPT\\b))(.*)\\n?",
-			"captures": {
-				"1": {
-					"name": "punctuation.definition.string.perl"
-				},
-				"2": {
-					"name": "string.unquoted.heredoc.perl"
-				},
-				"3": {
-					"name": "punctuation.definition.heredoc.perl"
-				},
-				"4": {
-					"patterns": [
-						{
-							"include": "$self"
-						}
-					]
-				}
-			},
-			"contentName": "source.postscript.embedded.perl",
-			"end": "(^POSTSCRIPT$)",
-			"patterns": [
-				{
-					"include": "#escaped_char"
-				},
-				{
-					"include": "#variable"
-				},
-				{
-					"include": "source.postscript"
-				}
-			]
-		},
-		{
-			"begin": "(((<<) *((?![=\\d\\$\\( ])[^;,'\"`\\s\\)]*)))(.*)\\n?",
-			"captures": {
-				"1": {
-					"name": "punctuation.definition.string.perl"
-				},
-				"2": {
-					"name": "string.unquoted.heredoc.perl"
-				},
-				"3": {
-					"name": "punctuation.definition.heredoc.perl"
-				},
-				"5": {
-					"patterns": [
-						{
-							"include": "$self"
-						}
-					]
-				}
-			},
-			"contentName": "string.unquoted.heredoc.perl",
-			"end": "(^\\4$)",
-			"patterns": [
-				{
-					"include": "#escaped_char"
-				},
-				{
-					"include": "#variable"
-				}
-			]
+			"include": "#heredoc"
 		},
 		{
 			"begin": "\\bqq\\s*([^\\(\\{\\[\\<\\w\\s])",
@@ -2147,6 +1469,1122 @@
 				{
 					"match": "\\\\.",
 					"name": "constant.character.escape.perl"
+				}
+			]
+		},
+		"heredoc": {
+			"patterns": [
+				{
+					"begin": "((((<<(~)?) *')(HTML)(')))(.*)\\n?",
+					"beginCaptures": {
+						"1": {
+							"name": "string.unquoted.heredoc.raw.perl"
+						},
+						"2": {
+							"name": "punctuation.definition.string.begin.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.delimiter.begin.perl"
+						},
+						"7": {
+							"name": "punctuation.definition.delimiter.end.perl"
+						},
+						"8": {
+							"patterns": [
+								{
+									"include": "$self"
+								}
+							]
+						}
+					},
+					"contentName": "string.unquoted.heredoc.raw.perl",
+					"end": "^((?!\\5)\\s+)?((\\6))$",
+					"endCaptures": {
+						"2": {
+							"name": "string.unquoted.heredoc.raw.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.string.end.perl"
+						}
+					},
+					"name": "meta.embedded.block.html",
+					"patterns": [
+						{
+							"begin": "^",
+							"end": "\\n",
+							"name": "text.html.basic",
+							"patterns": [
+								{
+									"include": "text.html.basic"
+								}
+							]
+						}
+					]
+				},
+				{
+					"begin": "((((<<(~)?) *')(XML)(')))(.*)\\n?",
+					"beginCaptures": {
+						"1": {
+							"name": "string.unquoted.heredoc.raw.perl"
+						},
+						"2": {
+							"name": "punctuation.definition.string.begin.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.delimiter.begin.perl"
+						},
+						"7": {
+							"name": "punctuation.definition.delimiter.end.perl"
+						},
+						"8": {
+							"patterns": [
+								{
+									"include": "$self"
+								}
+							]
+						}
+					},
+					"contentName": "string.unquoted.heredoc.raw.perl",
+					"end": "^((?!\\5)\\s+)?((\\6))$",
+					"endCaptures": {
+						"2": {
+							"name": "string.unquoted.heredoc.raw.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.string.end.perl"
+						}
+					},
+					"name": "meta.embedded.block.xml",
+					"patterns": [
+						{
+							"begin": "^",
+							"end": "\\n",
+							"name": "text.xml",
+							"patterns": [
+								{
+									"include": "text.xml"
+								}
+							]
+						}
+					]
+				},
+				{
+					"begin": "((((<<(~)?) *')(CSS)(')))(.*)\\n?",
+					"beginCaptures": {
+						"1": {
+							"name": "string.unquoted.heredoc.raw.perl"
+						},
+						"2": {
+							"name": "punctuation.definition.string.begin.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.delimiter.begin.perl"
+						},
+						"7": {
+							"name": "punctuation.definition.delimiter.end.perl"
+						},
+						"8": {
+							"patterns": [
+								{
+									"include": "$self"
+								}
+							]
+						}
+					},
+					"contentName": "string.unquoted.heredoc.raw.perl",
+					"end": "^((?!\\5)\\s+)?((\\6))$",
+					"endCaptures": {
+						"2": {
+							"name": "string.unquoted.heredoc.raw.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.string.end.perl"
+						}
+					},
+					"name": "meta.embedded.block.css",
+					"patterns": [
+						{
+							"begin": "^",
+							"end": "\\n",
+							"name": "source.css",
+							"patterns": [
+								{
+									"include": "source.css"
+								}
+							]
+						}
+					]
+				},
+				{
+					"begin": "((((<<(~)?) *')(JAVASCRIPT)(')))(.*)\\n?",
+					"beginCaptures": {
+						"1": {
+							"name": "string.unquoted.heredoc.raw.perl"
+						},
+						"2": {
+							"name": "punctuation.definition.string.begin.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.delimiter.begin.perl"
+						},
+						"7": {
+							"name": "punctuation.definition.delimiter.end.perl"
+						},
+						"8": {
+							"patterns": [
+								{
+									"include": "$self"
+								}
+							]
+						}
+					},
+					"contentName": "string.unquoted.heredoc.raw.perl",
+					"end": "^((?!\\5)\\s+)?((\\6))$",
+					"endCaptures": {
+						"2": {
+							"name": "string.unquoted.heredoc.raw.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.string.end.perl"
+						}
+					},
+					"name": "meta.embedded.block.js",
+					"patterns": [
+						{
+							"begin": "^",
+							"end": "\\n",
+							"name": "source.js",
+							"patterns": [
+								{
+									"include": "source.js"
+								}
+							]
+						}
+					]
+				},
+				{
+					"begin": "((((<<(~)?) *')(SQL)(')))(.*)\\n?",
+					"beginCaptures": {
+						"1": {
+							"name": "string.unquoted.heredoc.raw.perl"
+						},
+						"2": {
+							"name": "punctuation.definition.string.begin.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.delimiter.begin.perl"
+						},
+						"7": {
+							"name": "punctuation.definition.delimiter.end.perl"
+						},
+						"8": {
+							"patterns": [
+								{
+									"include": "$self"
+								}
+							]
+						}
+					},
+					"contentName": "string.unquoted.heredoc.raw.perl",
+					"end": "^((?!\\5)\\s+)?((\\6))$",
+					"endCaptures": {
+						"2": {
+							"name": "string.unquoted.heredoc.raw.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.string.end.perl"
+						}
+					},
+					"name": "meta.embedded.block.sql",
+					"patterns": [
+						{
+							"begin": "^",
+							"end": "\\n",
+							"name": "source.sql",
+							"patterns": [
+								{
+									"include": "source.sql"
+								}
+							]
+						}
+					]
+				},
+				{
+					"begin": "((((<<(~)?) *')(POSTSCRIPT)(')))(.*)\\n?",
+					"beginCaptures": {
+						"1": {
+							"name": "string.unquoted.heredoc.raw.perl"
+						},
+						"2": {
+							"name": "punctuation.definition.string.begin.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.delimiter.begin.perl"
+						},
+						"7": {
+							"name": "punctuation.definition.delimiter.end.perl"
+						},
+						"8": {
+							"patterns": [
+								{
+									"include": "$self"
+								}
+							]
+						}
+					},
+					"contentName": "string.unquoted.heredoc.raw.perl",
+					"end": "^((?!\\5)\\s+)?((\\6))$",
+					"endCaptures": {
+						"2": {
+							"name": "string.unquoted.heredoc.raw.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.string.end.perl"
+						}
+					},
+					"name": "meta.embedded.block.postscript",
+					"patterns": [
+						{
+							"begin": "^",
+							"end": "\\n",
+							"name": "source.postscript",
+							"patterns": [
+								{
+									"include": "source.postscript"
+								}
+							]
+						}
+					]
+				},
+				{
+					"begin": "((((<<(~)?) *')([^']*)(')))(.*)\\n?",
+					"beginCaptures": {
+						"1": {
+							"name": "string.unquoted.heredoc.raw.perl"
+						},
+						"2": {
+							"name": "punctuation.definition.string.begin.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.delimiter.begin.perl"
+						},
+						"7": {
+							"name": "punctuation.definition.delimiter.end.perl"
+						},
+						"8": {
+							"patterns": [
+								{
+									"include": "$self"
+								}
+							]
+						}
+					},
+					"contentName": "string.unquoted.heredoc.raw.perl",
+					"end": "^((?!\\5)\\s+)?((\\6))$",
+					"endCaptures": {
+						"2": {
+							"name": "string.unquoted.heredoc.raw.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.string.end.perl"
+						}
+					}
+				},
+				{
+					"begin": "((((<<(~)?) *\\\\)((?![=\\d\\$\\( ])[^;,'\"`\\s\\)]*)()))(.*)\\n?",
+					"beginCaptures": {
+						"1": {
+							"name": "string.unquoted.heredoc.raw.perl"
+						},
+						"2": {
+							"name": "punctuation.definition.string.begin.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.delimiter.begin.perl"
+						},
+						"7": {
+							"name": "punctuation.definition.delimiter.end.perl"
+						},
+						"8": {
+							"patterns": [
+								{
+									"include": "$self"
+								}
+							]
+						}
+					},
+					"contentName": "string.unquoted.heredoc.raw.perl",
+					"end": "^((?!\\5)\\s+)?((\\6))$",
+					"endCaptures": {
+						"2": {
+							"name": "string.unquoted.heredoc.raw.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.string.end.perl"
+						}
+					}
+				},
+				{
+					"begin": "((((<<(~)?) *\")(HTML)(\")))(.*)\\n?",
+					"beginCaptures": {
+						"1": {
+							"name": "string.unquoted.heredoc.interpolated.perl"
+						},
+						"2": {
+							"name": "punctuation.definition.string.begin.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.delimiter.begin.perl"
+						},
+						"7": {
+							"name": "punctuation.definition.delimiter.end.perl"
+						},
+						"8": {
+							"patterns": [
+								{
+									"include": "$self"
+								}
+							]
+						}
+					},
+					"contentName": "string.unquoted.heredoc.interpolated.perl",
+					"end": "^((?!\\5)\\s+)?((\\6))$",
+					"endCaptures": {
+						"2": {
+							"name": "string.unquoted.heredoc.interpolated.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.string.end.perl"
+						}
+					},
+					"name": "meta.embedded.block.html",
+					"patterns": [
+						{
+							"begin": "^",
+							"end": "\\n",
+							"name": "text.html.basic",
+							"patterns": [
+								{
+									"include": "#escaped_char"
+								},
+								{
+									"include": "#variable"
+								},
+								{
+									"include": "text.html.basic"
+								}
+							]
+						}
+					]
+				},
+				{
+					"begin": "((((<<(~)?) *\")(XML)(\")))(.*)\\n?",
+					"beginCaptures": {
+						"1": {
+							"name": "string.unquoted.heredoc.interpolated.perl"
+						},
+						"2": {
+							"name": "punctuation.definition.string.begin.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.delimiter.begin.perl"
+						},
+						"7": {
+							"name": "punctuation.definition.delimiter.end.perl"
+						},
+						"8": {
+							"patterns": [
+								{
+									"include": "$self"
+								}
+							]
+						}
+					},
+					"contentName": "string.unquoted.heredoc.interpolated.perl",
+					"end": "^((?!\\5)\\s+)?((\\6))$",
+					"endCaptures": {
+						"2": {
+							"name": "string.unquoted.heredoc.interpolated.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.string.end.perl"
+						}
+					},
+					"name": "meta.embedded.block.xml",
+					"patterns": [
+						{
+							"begin": "^",
+							"end": "\\n",
+							"name": "text.xml",
+							"patterns": [
+								{
+									"include": "#escaped_char"
+								},
+								{
+									"include": "#variable"
+								},
+								{
+									"include": "text.xml"
+								}
+							]
+						}
+					]
+				},
+				{
+					"begin": "((((<<(~)?) *\")(CSS)(\")))(.*)\\n?",
+					"beginCaptures": {
+						"1": {
+							"name": "string.unquoted.heredoc.interpolated.perl"
+						},
+						"2": {
+							"name": "punctuation.definition.string.begin.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.delimiter.begin.perl"
+						},
+						"7": {
+							"name": "punctuation.definition.delimiter.end.perl"
+						},
+						"8": {
+							"patterns": [
+								{
+									"include": "$self"
+								}
+							]
+						}
+					},
+					"contentName": "string.unquoted.heredoc.interpolated.perl",
+					"end": "^((?!\\5)\\s+)?((\\6))$",
+					"endCaptures": {
+						"2": {
+							"name": "string.unquoted.heredoc.interpolated.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.string.end.perl"
+						}
+					},
+					"name": "meta.embedded.block.css",
+					"patterns": [
+						{
+							"begin": "^",
+							"end": "\\n",
+							"name": "source.css",
+							"patterns": [
+								{
+									"include": "#escaped_char"
+								},
+								{
+									"include": "#variable"
+								},
+								{
+									"include": "source.css"
+								}
+							]
+						}
+					]
+				},
+				{
+					"begin": "((((<<(~)?) *\")(JAVASCRIPT)(\")))(.*)\\n?",
+					"beginCaptures": {
+						"1": {
+							"name": "string.unquoted.heredoc.interpolated.perl"
+						},
+						"2": {
+							"name": "punctuation.definition.string.begin.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.delimiter.begin.perl"
+						},
+						"7": {
+							"name": "punctuation.definition.delimiter.end.perl"
+						},
+						"8": {
+							"patterns": [
+								{
+									"include": "$self"
+								}
+							]
+						}
+					},
+					"contentName": "string.unquoted.heredoc.interpolated.perl",
+					"end": "^((?!\\5)\\s+)?((\\6))$",
+					"endCaptures": {
+						"2": {
+							"name": "string.unquoted.heredoc.interpolated.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.string.end.perl"
+						}
+					},
+					"name": "meta.embedded.block.js",
+					"patterns": [
+						{
+							"begin": "^",
+							"end": "\\n",
+							"name": "source.js",
+							"patterns": [
+								{
+									"include": "#escaped_char"
+								},
+								{
+									"include": "#variable"
+								},
+								{
+									"include": "source.js"
+								}
+							]
+						}
+					]
+				},
+				{
+					"begin": "((((<<(~)?) *\")(SQL)(\")))(.*)\\n?",
+					"beginCaptures": {
+						"1": {
+							"name": "string.unquoted.heredoc.interpolated.perl"
+						},
+						"2": {
+							"name": "punctuation.definition.string.begin.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.delimiter.begin.perl"
+						},
+						"7": {
+							"name": "punctuation.definition.delimiter.end.perl"
+						},
+						"8": {
+							"patterns": [
+								{
+									"include": "$self"
+								}
+							]
+						}
+					},
+					"contentName": "string.unquoted.heredoc.interpolated.perl",
+					"end": "^((?!\\5)\\s+)?((\\6))$",
+					"endCaptures": {
+						"2": {
+							"name": "string.unquoted.heredoc.interpolated.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.string.end.perl"
+						}
+					},
+					"name": "meta.embedded.block.sql",
+					"patterns": [
+						{
+							"begin": "^",
+							"end": "\\n",
+							"name": "source.sql",
+							"patterns": [
+								{
+									"include": "#escaped_char"
+								},
+								{
+									"include": "#variable"
+								},
+								{
+									"include": "source.sql"
+								}
+							]
+						}
+					]
+				},
+				{
+					"begin": "((((<<(~)?) *\")(POSTSCRIPT)(\")))(.*)\\n?",
+					"beginCaptures": {
+						"1": {
+							"name": "string.unquoted.heredoc.interpolated.perl"
+						},
+						"2": {
+							"name": "punctuation.definition.string.begin.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.delimiter.begin.perl"
+						},
+						"7": {
+							"name": "punctuation.definition.delimiter.end.perl"
+						},
+						"8": {
+							"patterns": [
+								{
+									"include": "$self"
+								}
+							]
+						}
+					},
+					"contentName": "string.unquoted.heredoc.interpolated.perl",
+					"end": "^((?!\\5)\\s+)?((\\6))$",
+					"endCaptures": {
+						"2": {
+							"name": "string.unquoted.heredoc.interpolated.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.string.end.perl"
+						}
+					},
+					"name": "meta.embedded.block.postscript",
+					"patterns": [
+						{
+							"begin": "^",
+							"end": "\\n",
+							"name": "source.postscript",
+							"patterns": [
+								{
+									"include": "#escaped_char"
+								},
+								{
+									"include": "#variable"
+								},
+								{
+									"include": "source.postscript"
+								}
+							]
+						}
+					]
+				},
+				{
+					"begin": "((((<<(~)?) *\")([^\"]*)(\")))(.*)\\n?",
+					"beginCaptures": {
+						"1": {
+							"name": "string.unquoted.heredoc.interpolated.perl"
+						},
+						"2": {
+							"name": "punctuation.definition.string.begin.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.delimiter.begin.perl"
+						},
+						"7": {
+							"name": "punctuation.definition.delimiter.end.perl"
+						},
+						"8": {
+							"patterns": [
+								{
+									"include": "$self"
+								}
+							]
+						}
+					},
+					"contentName": "string.unquoted.heredoc.interpolated.perl",
+					"end": "^((?!\\5)\\s+)?((\\6))$",
+					"endCaptures": {
+						"2": {
+							"name": "string.unquoted.heredoc.interpolated.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.string.end.perl"
+						}
+					},
+					"patterns": [
+						{
+							"include": "#escaped_char"
+						},
+						{
+							"include": "#variable"
+						}
+					]
+				},
+				{
+					"begin": "((((<<(~)?) *)(HTML)()))(.*)\\n?",
+					"beginCaptures": {
+						"1": {
+							"name": "string.unquoted.heredoc.interpolated.perl"
+						},
+						"2": {
+							"name": "punctuation.definition.string.begin.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.delimiter.begin.perl"
+						},
+						"7": {
+							"name": "punctuation.definition.delimiter.end.perl"
+						},
+						"8": {
+							"patterns": [
+								{
+									"include": "$self"
+								}
+							]
+						}
+					},
+					"contentName": "string.unquoted.heredoc.interpolated.perl",
+					"end": "^((?!\\5)\\s+)?((\\6))$",
+					"endCaptures": {
+						"2": {
+							"name": "string.unquoted.heredoc.interpolated.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.string.end.perl"
+						}
+					},
+					"name": "meta.embedded.block.html",
+					"patterns": [
+						{
+							"begin": "^",
+							"end": "\\n",
+							"name": "text.html.basic",
+							"patterns": [
+								{
+									"include": "#escaped_char"
+								},
+								{
+									"include": "#variable"
+								},
+								{
+									"include": "text.html.basic"
+								}
+							]
+						}
+					]
+				},
+				{
+					"begin": "((((<<(~)?) *)(XML)()))(.*)\\n?",
+					"beginCaptures": {
+						"1": {
+							"name": "string.unquoted.heredoc.interpolated.perl"
+						},
+						"2": {
+							"name": "punctuation.definition.string.begin.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.delimiter.begin.perl"
+						},
+						"7": {
+							"name": "punctuation.definition.delimiter.end.perl"
+						},
+						"8": {
+							"patterns": [
+								{
+									"include": "$self"
+								}
+							]
+						}
+					},
+					"contentName": "string.unquoted.heredoc.interpolated.perl",
+					"end": "^((?!\\5)\\s+)?((\\6))$",
+					"endCaptures": {
+						"2": {
+							"name": "string.unquoted.heredoc.interpolated.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.string.end.perl"
+						}
+					},
+					"name": "meta.embedded.block.xml",
+					"patterns": [
+						{
+							"begin": "^",
+							"end": "\\n",
+							"name": "text.xml",
+							"patterns": [
+								{
+									"include": "#escaped_char"
+								},
+								{
+									"include": "#variable"
+								},
+								{
+									"include": "text.xml"
+								}
+							]
+						}
+					]
+				},
+				{
+					"begin": "((((<<(~)?) *)(CSS)()))(.*)\\n?",
+					"beginCaptures": {
+						"1": {
+							"name": "string.unquoted.heredoc.interpolated.perl"
+						},
+						"2": {
+							"name": "punctuation.definition.string.begin.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.delimiter.begin.perl"
+						},
+						"7": {
+							"name": "punctuation.definition.delimiter.end.perl"
+						},
+						"8": {
+							"patterns": [
+								{
+									"include": "$self"
+								}
+							]
+						}
+					},
+					"contentName": "string.unquoted.heredoc.interpolated.perl",
+					"end": "^((?!\\5)\\s+)?((\\6))$",
+					"endCaptures": {
+						"2": {
+							"name": "string.unquoted.heredoc.interpolated.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.string.end.perl"
+						}
+					},
+					"name": "meta.embedded.block.css",
+					"patterns": [
+						{
+							"begin": "^",
+							"end": "\\n",
+							"name": "source.css",
+							"patterns": [
+								{
+									"include": "#escaped_char"
+								},
+								{
+									"include": "#variable"
+								},
+								{
+									"include": "source.css"
+								}
+							]
+						}
+					]
+				},
+				{
+					"begin": "((((<<(~)?) *)(JAVASCRIPT)()))(.*)\\n?",
+					"beginCaptures": {
+						"1": {
+							"name": "string.unquoted.heredoc.interpolated.perl"
+						},
+						"2": {
+							"name": "punctuation.definition.string.begin.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.delimiter.begin.perl"
+						},
+						"7": {
+							"name": "punctuation.definition.delimiter.end.perl"
+						},
+						"8": {
+							"patterns": [
+								{
+									"include": "$self"
+								}
+							]
+						}
+					},
+					"contentName": "string.unquoted.heredoc.interpolated.perl",
+					"end": "^((?!\\5)\\s+)?((\\6))$",
+					"endCaptures": {
+						"2": {
+							"name": "string.unquoted.heredoc.interpolated.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.string.end.perl"
+						}
+					},
+					"name": "meta.embedded.block.js",
+					"patterns": [
+						{
+							"begin": "^",
+							"end": "\\n",
+							"name": "source.js",
+							"patterns": [
+								{
+									"include": "#escaped_char"
+								},
+								{
+									"include": "#variable"
+								},
+								{
+									"include": "source.js"
+								}
+							]
+						}
+					]
+				},
+				{
+					"begin": "((((<<(~)?) *)(SQL)()))(.*)\\n?",
+					"beginCaptures": {
+						"1": {
+							"name": "string.unquoted.heredoc.interpolated.perl"
+						},
+						"2": {
+							"name": "punctuation.definition.string.begin.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.delimiter.begin.perl"
+						},
+						"7": {
+							"name": "punctuation.definition.delimiter.end.perl"
+						},
+						"8": {
+							"patterns": [
+								{
+									"include": "$self"
+								}
+							]
+						}
+					},
+					"contentName": "string.unquoted.heredoc.interpolated.perl",
+					"end": "^((?!\\5)\\s+)?((\\6))$",
+					"endCaptures": {
+						"2": {
+							"name": "string.unquoted.heredoc.interpolated.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.string.end.perl"
+						}
+					},
+					"name": "meta.embedded.block.sql",
+					"patterns": [
+						{
+							"begin": "^",
+							"end": "\\n",
+							"name": "source.sql",
+							"patterns": [
+								{
+									"include": "#escaped_char"
+								},
+								{
+									"include": "#variable"
+								},
+								{
+									"include": "source.sql"
+								}
+							]
+						}
+					]
+				},
+				{
+					"begin": "((((<<(~)?) *)(POSTSCRIPT)()))(.*)\\n?",
+					"beginCaptures": {
+						"1": {
+							"name": "string.unquoted.heredoc.interpolated.perl"
+						},
+						"2": {
+							"name": "punctuation.definition.string.begin.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.delimiter.begin.perl"
+						},
+						"7": {
+							"name": "punctuation.definition.delimiter.end.perl"
+						},
+						"8": {
+							"patterns": [
+								{
+									"include": "$self"
+								}
+							]
+						}
+					},
+					"contentName": "string.unquoted.heredoc.interpolated.perl",
+					"end": "^((?!\\5)\\s+)?((\\6))$",
+					"endCaptures": {
+						"2": {
+							"name": "string.unquoted.heredoc.interpolated.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.string.end.perl"
+						}
+					},
+					"name": "meta.embedded.block.postscript",
+					"patterns": [
+						{
+							"begin": "^",
+							"end": "\\n",
+							"name": "source.postscript",
+							"patterns": [
+								{
+									"include": "#escaped_char"
+								},
+								{
+									"include": "#variable"
+								},
+								{
+									"include": "source.postscript"
+								}
+							]
+						}
+					]
+				},
+				{
+					"begin": "((((<<(~)?) *)((?![=\\d\\$\\( ])[^;,'\"`\\s\\)]*)()))(.*)\\n?",
+					"beginCaptures": {
+						"1": {
+							"name": "string.unquoted.heredoc.interpolated.perl"
+						},
+						"2": {
+							"name": "punctuation.definition.string.begin.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.delimiter.begin.perl"
+						},
+						"7": {
+							"name": "punctuation.definition.delimiter.end.perl"
+						},
+						"8": {
+							"patterns": [
+								{
+									"include": "$self"
+								}
+							]
+						}
+					},
+					"contentName": "string.unquoted.heredoc.interpolated.perl",
+					"end": "^((?!\\5)\\s+)?((\\6))$",
+					"endCaptures": {
+						"2": {
+							"name": "string.unquoted.heredoc.interpolated.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.string.end.perl"
+						}
+					},
+					"patterns": [
+						{
+							"include": "#escaped_char"
+						},
+						{
+							"include": "#variable"
+						}
+					]
+				},
+				{
+					"begin": "((((<<(~)?) *`)([^`]*)(`)))(.*)\\n?",
+					"beginCaptures": {
+						"1": {
+							"name": "string.unquoted.heredoc.interpolated.perl"
+						},
+						"2": {
+							"name": "punctuation.definition.string.begin.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.delimiter.begin.perl"
+						},
+						"7": {
+							"name": "punctuation.definition.delimiter.end.perl"
+						},
+						"8": {
+							"patterns": [
+								{
+									"include": "$self"
+								}
+							]
+						}
+					},
+					"contentName": "string.unquoted.heredoc.shell.perl",
+					"end": "^((?!\\5)\\s+)?((\\6))$",
+					"endCaptures": {
+						"2": {
+							"name": "string.unquoted.heredoc.interpolated.perl"
+						},
+						"3": {
+							"name": "punctuation.definition.string.end.perl"
+						}
+					},
+					"patterns": [
+						{
+							"include": "#escaped_char"
+						},
+						{
+							"include": "#variable"
+						}
+					]
 				}
 			]
 		},

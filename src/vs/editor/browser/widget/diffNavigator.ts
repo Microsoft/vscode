@@ -221,7 +221,7 @@ export class DiffNavigator extends Disposable implements IDiffNavigator {
 		this._move(false, scrollType);
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		super.dispose();
 		this.ranges = [];
 		this.disposed = true;

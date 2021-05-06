@@ -25,8 +25,6 @@ import { IPathService } from 'vs/workbench/services/path/common/pathService';
 
 export class FileDialogService extends AbstractFileDialogService implements IFileDialogService {
 
-	declare readonly _serviceBrand: undefined;
-
 	constructor(
 		@IHostService hostService: IHostService,
 		@IWorkspaceContextService contextService: IWorkspaceContextService,

@@ -619,7 +619,7 @@ export class DiffEditorWidget extends Disposable implements editorBrowser.IDiffE
 		return instantiationService.createInstance(CodeEditorWidget, container, options, editorWidgetOptions);
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		this._codeEditorService.removeDiffEditor(this);
 
 		if (this._beginUpdateDecorationsTimeout !== -1) {
@@ -2239,7 +2239,7 @@ class InlineViewZonesComputer extends ViewZonesComputer {
 		this._lineBreaksComputer = this._modifiedEditor._getViewModel()!.createLineBreaksComputer();
 	}
 
-	public getViewZones(): IEditorsZones {
+	public override getViewZones(): IEditorsZones {
 		const result = super.getViewZones();
 		this._finalize(result);
 		return result;

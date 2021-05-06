@@ -65,7 +65,7 @@ export async function getModifiedRanges(accessor: ServicesAccessor, modified: IT
 		if (!workerService.canComputeDirtyDiff(original, modified.uri)) {
 			return undefined;
 		}
-		const changes = await workerService.computeDirtyDiff(original, modified.uri, true);
+		const changes = await workerService.computeDirtyDiff(original, modified.uri, false);
 		if (!isNonEmptyArray(changes)) {
 			return undefined;
 		}

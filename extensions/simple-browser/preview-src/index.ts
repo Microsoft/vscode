@@ -80,7 +80,9 @@ onceDocumentLoaded(() => {
 		// history.go(0);
 
 		// This incorrectly adds entries to the history but does reload
-		iframe.src = input.value;
+		// It also always incorrectly always loads the value in the input bar,
+		// which may not match the current page if the user has navigated
+		navigateTo(input.value);
 	});
 
 	navigateTo(settings.url);

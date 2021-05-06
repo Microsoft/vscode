@@ -8,7 +8,7 @@ import { sep } from 'vs/base/common/path';
 import { Registry } from 'vs/platform/registry/common/platform';
 import { IConfigurationRegistry, Extensions as ConfigurationExtensions, ConfigurationScope, IConfigurationPropertySchema } from 'vs/platform/configuration/common/configurationRegistry';
 import { IWorkbenchContributionsRegistry, Extensions as WorkbenchExtensions, IWorkbenchContribution } from 'vs/workbench/common/contributions';
-import { EditorInput, IFileEditorInput, IEditorInputFactoryRegistry, Extensions as EditorInputExtensions } from 'vs/workbench/common/editor';
+import { EditorInput, IFileEditorInput, IEditorInputFactoryRegistry, EditorExtensions } from 'vs/workbench/common/editor';
 import { AutoSaveConfiguration, HotExitConfiguration, FILES_EXCLUDE_CONFIG, FILES_ASSOCIATIONS_CONFIG } from 'vs/platform/files/common/files';
 import { SortOrder, FILE_EDITOR_INPUT_ID } from 'vs/workbench/contrib/files/common/files';
 import { TextFileEditorTracker } from 'vs/workbench/contrib/files/browser/editors/textFileEditorTracker';
@@ -19,7 +19,7 @@ import { ServicesAccessor } from 'vs/platform/instantiation/common/instantiation
 import { SyncDescriptor } from 'vs/platform/instantiation/common/descriptors';
 import * as platform from 'vs/base/common/platform';
 import { ExplorerViewletViewsContribution } from 'vs/workbench/contrib/files/browser/explorerViewlet';
-import { IEditorRegistry, EditorDescriptor, Extensions as EditorExtensions } from 'vs/workbench/browser/editor';
+import { IEditorRegistry, EditorDescriptor } from 'vs/workbench/browser/editor';
 import { LifecyclePhase } from 'vs/workbench/services/lifecycle/common/lifecycle';
 import { ILabelService } from 'vs/platform/label/common/label';
 import { registerSingleton } from 'vs/platform/instantiation/common/extensions';
@@ -31,7 +31,7 @@ import { editorConfigurationBaseNode } from 'vs/editor/common/config/commonEdito
 import { DirtyFilesIndicator } from 'vs/workbench/contrib/files/common/dirtyFilesIndicator';
 import { UndoCommand, RedoCommand } from 'vs/editor/browser/editorExtensions';
 import { IUndoRedoService } from 'vs/platform/undoRedo/common/undoRedo';
-import { FileEditorInputFactory, IExplorerService } from 'vs/workbench/contrib/files/browser/files';
+import { FileEditorInputSerializer, IExplorerService } from 'vs/workbench/contrib/files/browser/files';
 
 class FileUriLabelContribution implements IWorkbenchContribution {
 
@@ -65,7 +65,9 @@ Registry.as<IEditorRegistry>(EditorExtensions.Editors).registerEditor(
 );
 
 // Register default file input factory
-Registry.as<IEditorInputFactoryRegistry>(EditorInputExtensions.EditorInputFactories).registerFileEditorInputFactory({
+Registry.as<IEditorInputFactoryRegistry>(EditorExtensions.EditorInputFactories).registerFileEditorInputFactory({
+
+	typeId: FILE_EDITOR_INPUT_ID,
 
 	createFileEditorInput: (resource, preferredResource, preferredName, preferredDescription, preferredEncoding, preferredMode, instantiationService): IFileEditorInput => {
 		return instantiationService.createInstance(FileEditorInput, resource, preferredResource, preferredName, preferredDescription, preferredEncoding, preferredMode);
@@ -76,8 +78,8 @@ Registry.as<IEditorInputFactoryRegistry>(EditorInputExtensions.EditorInputFactor
 	}
 });
 
-// Register Editor Input Factory
-Registry.as<IEditorInputFactoryRegistry>(EditorInputExtensions.EditorInputFactories).registerEditorInputFactory(FILE_EDITOR_INPUT_ID, FileEditorInputFactory);
+// Register Editor Input Serializer
+Registry.as<IEditorInputFactoryRegistry>(EditorExtensions.EditorInputFactories).registerEditorInputSerializer(FILE_EDITOR_INPUT_ID, FileEditorInputSerializer);
 
 // Register Explorer views
 Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench).registerWorkbenchContribution(ExplorerViewletViewsContribution, LifecyclePhase.Starting);
@@ -389,7 +391,7 @@ configurationRegistry.registerConfiguration({
 	}
 });
 
-UndoCommand.addImplementation(110, (accessor: ServicesAccessor) => {
+UndoCommand.addImplementation(110, 'explorer', (accessor: ServicesAccessor) => {
 	const undoRedoService = accessor.get(IUndoRedoService);
 	const explorerService = accessor.get(IExplorerService);
 	if (explorerService.hasViewFocus() && undoRedoService.canUndo(UNDO_REDO_SOURCE)) {
@@ -400,7 +402,7 @@ UndoCommand.addImplementation(110, (accessor: ServicesAccessor) => {
 	return false;
 });
 
-RedoCommand.addImplementation(110, (accessor: ServicesAccessor) => {
+RedoCommand.addImplementation(110, 'explorer', (accessor: ServicesAccessor) => {
 	const undoRedoService = accessor.get(IUndoRedoService);
 	const explorerService = accessor.get(IExplorerService);
 	if (explorerService.hasViewFocus() && undoRedoService.canRedo(UNDO_REDO_SOURCE)) {

@@ -33,7 +33,7 @@ class ToggleBreakpointAction extends EditorAction2 {
 			id: 'editor.debug.action.toggleBreakpoint',
 			title: {
 				value: nls.localize('toggleBreakpointAction', "Debug: Toggle Breakpoint"),
-				original: 'Toggle Breakpoint',
+				original: 'Debug: Toggle Breakpoint',
 				mnemonicTitle: nls.localize({ key: 'miToggleBreakpoint', comment: ['&& denotes a mnemonic'] }, "Toggle &&Breakpoint")
 			},
 			f1: true,

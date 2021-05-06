@@ -24,6 +24,8 @@ export const unfoldIcon = registerIcon('notebook-unfold', Codicon.unfold, locali
 
 export const successStateIcon = registerIcon('notebook-state-success', Codicon.check, localize('successStateIcon', 'Icon to indicate a success state in notebook editors.'));
 export const errorStateIcon = registerIcon('notebook-state-error', Codicon.error, localize('errorStateIcon', 'Icon to indicate an error state in notebook editors.'));
+export const pendingStateIcon = registerIcon('notebook-state-pending', Codicon.clock, localize('pendingStateIcon', 'Icon to indicate a pending state in notebook editors.'));
+export const executingStateIcon = registerIcon('notebook-state-executing', Codicon.sync, localize('executingStateIcon', 'Icon to indicate an executing state in notebook editors.'));
 
 export const collapsedIcon = registerIcon('notebook-collapsed', Codicon.chevronRight, localize('collapsedIcon', 'Icon to annotate a collapsed section in notebook editors.'));
 export const expandedIcon = registerIcon('notebook-expanded', Codicon.chevronDown, localize('expandedIcon', 'Icon to annotate an expanded section in notebook editors.'));

@@ -4,7 +4,7 @@
   "description": "%description%",
   "enableProposedApi": true,
   "version": "1.0.0",
-  "icon": "icon.png",
+  "icon": "media/icon.png",
   "publisher": "vscode",
   "license": "MIT",
   "aiKey": "AIF-d9b70cd4-b9f9-4d70-929b-a071c400b217",
@@ -27,6 +27,12 @@
     "onOpenExternalUri:http",
     "onOpenExternalUri:https"
   ],
+  "capabilities": {
+    "virtualWorkspaces": true,
+    "untrustedWorkspaces": {
+      "supported": true
+    }
+  },
   "contributes": {
     "commands": [
       {
@@ -57,16 +63,15 @@
     "build-preview": "npx webpack-cli --mode development",
     "build-preview-production": "npx webpack-cli --mode production",
     "compile-web": "npx webpack-cli --config extension-browser.webpack.config --mode none",
-    "watch-web": "npx webpack-cli --config extension-browser.webpack.config --mode none --watch --info-verbosity verbose",
-    "postinstall": "node ./build/copy"
+    "watch-web": "npx webpack-cli --config extension-browser.webpack.config --mode none --watch --info-verbosity verbose"
   },
   "dependencies": {
-    "vscode-extension-telemetry": "0.1.1",
+    "vscode-extension-telemetry": "0.1.7",
     "vscode-nls": "^4.0.0"
   },
   "devDependencies": {
     "vscode-codicons": "^0.0.14",
-    "@types/node": "^12.11.7"
+    "@types/node": "14.x"
   },
   "repository": {
     "type": "git",

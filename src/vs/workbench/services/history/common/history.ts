@@ -52,7 +52,7 @@ export interface IHistoryService {
 	/**
 	 * Get the entire history of editors that were opened.
 	 */
-	getHistory(): ReadonlyArray<IEditorInput | IResourceEditorInput>;
+	getHistory(): readonly (IEditorInput | IResourceEditorInput)[];
 
 	/**
 	 * Removes an entry from history.

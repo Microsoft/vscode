@@ -1,6 +1,7 @@
 {
 	"description": "Extension to add task support for npm scripts.",
 	"displayName": "NPM support for VS Code",
+	"workspaceTrust": "This extension calls the `tasks.executeTask()` API, which requires trust to run.",
 	"config.npm.autoDetect": "Controls whether npm scripts should be automatically detected.",
 	"config.npm.runSilent": "Run npm commands with the `--silent` option.",
 	"config.npm.packageManager": "The package manager used to run scripts.",

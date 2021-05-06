@@ -49,7 +49,11 @@ require('./bootstrap-amd').load(process.env['VSCODE_AMD_ENTRYPOINT']);
 function pipeLoggingToParent() {
 	const MAX_LENGTH = 100000;
 
-	// Prevent circular stringify and convert arguments to real array
+	/**
+	 * Prevent circular stringify and convert arguments to real array
+	 *
+	 * @param {IArguments} args
+	 */
 	function safeToArray(args) {
 		const seen = [];
 		const argsArray = [];

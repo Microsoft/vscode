@@ -18,14 +18,14 @@ class NotebookUndoRedoContribution extends Disposable {
 		super();
 
 		const PRIORITY = 105;
-		this._register(UndoCommand.addImplementation(PRIORITY, () => {
+		this._register(UndoCommand.addImplementation(PRIORITY, 'notebook-undo-redo', () => {
 			const editor = getNotebookEditorFromEditorPane(this._editorService.activeEditorPane);
 			if (editor?.viewModel) {
 				return editor.viewModel.undo().then(cellResources => {
 					if (cellResources?.length) {
 						editor?.viewModel?.viewCells.forEach(cell => {
 							if (cell.cellKind === CellKind.Markdown && cellResources.find(resource => resource.fragment === cell.model.uri.fragment)) {
-								cell.editState = CellEditState.Editing;
+								cell.updateEditState(CellEditState.Editing, 'undo');
 							}
 						});
 
@@ -37,14 +37,14 @@ class NotebookUndoRedoContribution extends Disposable {
 			return false;
 		}));
 
-		this._register(RedoCommand.addImplementation(PRIORITY, () => {
+		this._register(RedoCommand.addImplementation(PRIORITY, 'notebook-undo-redo', () => {
 			const editor = getNotebookEditorFromEditorPane(this._editorService.activeEditorPane);
 			if (editor?.viewModel) {
 				return editor.viewModel.redo().then(cellResources => {
 					if (cellResources?.length) {
 						editor?.viewModel?.viewCells.forEach(cell => {
 							if (cell.cellKind === CellKind.Markdown && cellResources.find(resource => resource.fragment === cell.model.uri.fragment)) {
-								cell.editState = CellEditState.Editing;
+								cell.updateEditState(CellEditState.Editing, 'redo');
 							}
 						});
 

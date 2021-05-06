@@ -19,7 +19,7 @@ const localize = nls.loadMessageBundle();
 
 export class TypeScriptReferencesCodeLensProvider extends TypeScriptBaseCodeLensProvider {
 	public constructor(
-		protected client: ITypeScriptServiceClient,
+		client: ITypeScriptServiceClient,
 		protected _cachedResponse: CachedResponse<Proto.NavTreeResponse>,
 		private modeId: string
 	) {

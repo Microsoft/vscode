@@ -14,7 +14,7 @@ import { KeybindingParser } from 'vs/base/common/keybindingParser';
 import { OS, OperatingSystem, isMacintosh } from 'vs/base/common/platform';
 import { ICommandService, CommandsRegistry } from 'vs/platform/commands/common/commands';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
-import { Extensions as ConfigExtensions, IConfigurationNode, IConfigurationRegistry } from 'vs/platform/configuration/common/configurationRegistry';
+import { ConfigurationScope, Extensions as ConfigExtensions, IConfigurationNode, IConfigurationRegistry } from 'vs/platform/configuration/common/configurationRegistry';
 import { ContextKeyExpr, IContextKeyService, ContextKeyExpression, IContextKey } from 'vs/platform/contextkey/common/contextkey';
 import { IEnvironmentService } from 'vs/platform/environment/common/environment';
 import { Extensions, IJSONContributionRegistry } from 'vs/platform/jsonschemas/common/jsonContributionRegistry';
@@ -353,7 +353,7 @@ export class WorkbenchKeybindingService extends AbstractKeybindingService {
 		return JSON.stringify(info, null, '\t');
 	}
 
-	public customKeybindingsCount(): number {
+	public override customKeybindingsCount(): number {
 		return this.userKeybindings.keybindings.length;
 	}
 
@@ -578,7 +578,7 @@ export class WorkbenchKeybindingService extends AbstractKeybindingService {
 		return desc;
 	}
 
-	public getDefaultKeybindingsContent(): string {
+	public override getDefaultKeybindingsContent(): string {
 		const resolver = this._getResolver();
 		const defaultKeybindings = resolver.getDefaultKeybindings();
 		const boundCommands = resolver.getDefaultBoundCommands();
@@ -612,7 +612,7 @@ export class WorkbenchKeybindingService extends AbstractKeybindingService {
 		return '// ' + nls.localize('unboundCommands', "Here are other available commands: ") + '\n// - ' + pretty;
 	}
 
-	mightProducePrintableCharacter(event: IKeyboardEvent): boolean {
+	override mightProducePrintableCharacter(event: IKeyboardEvent): boolean {
 		if (event.ctrlKey || event.metaKey || event.altKey) {
 			// ignore ctrl/cmd/alt-combination but not shift-combinatios
 			return false;
@@ -677,6 +677,8 @@ class UserKeybindings extends Disposable {
 		super();
 
 		this._register(fileService.watch(dirname(keybindingsResource)));
+		// Also listen to the resource incase the resource is a symlink - https://github.com/microsoft/vscode/issues/118134
+		this._register(this.fileService.watch(this.keybindingsResource));
 		this.reloadConfigurationScheduler = this._register(new RunOnceScheduler(() => this.reload().then(changed => {
 			if (changed) {
 				this._onDidChange.fire();
@@ -802,7 +804,11 @@ function updateSchema(additionalContributions: readonly IJSONSchema[]) {
 		}
 
 		const argsSchema = commandDescription.args[0].schema;
-		const argsRequired = Array.isArray(argsSchema.required) && argsSchema.required.length > 0;
+		const argsRequired = (
+			(typeof commandDescription.args[0].isOptional !== 'undefined')
+				? (!commandDescription.args[0].isOptional)
+				: (Array.isArray(argsSchema.required) && argsSchema.required.length > 0)
+		);
 		const addition = {
 			'if': {
 				'properties': {
@@ -837,11 +843,12 @@ const keyboardConfiguration: IConfigurationNode = {
 	'title': nls.localize('keyboardConfigurationTitle', "Keyboard"),
 	'properties': {
 		'keyboard.dispatch': {
-			'type': 'string',
-			'enum': ['code', 'keyCode'],
-			'default': 'code',
-			'markdownDescription': nls.localize('dispatch', "Controls the dispatching logic for key presses to use either `code` (recommended) or `keyCode`."),
-			'included': OS === OperatingSystem.Macintosh || OS === OperatingSystem.Linux
+			scope: ConfigurationScope.APPLICATION,
+			type: 'string',
+			enum: ['code', 'keyCode'],
+			default: 'code',
+			markdownDescription: nls.localize('dispatch', "Controls the dispatching logic for key presses to use either `code` (recommended) or `keyCode`."),
+			included: OS === OperatingSystem.Macintosh || OS === OperatingSystem.Linux
 		}
 	}
 };

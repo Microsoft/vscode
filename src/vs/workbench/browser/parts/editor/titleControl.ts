@@ -38,6 +38,7 @@ import { IFileService } from 'vs/platform/files/common/files';
 import { withNullAsUndefined, withUndefinedAsNull, assertIsDefined } from 'vs/base/common/types';
 import { isFirefox } from 'vs/base/browser/browser';
 import { ITextEditorOptions } from 'vs/platform/editor/common/editor';
+import { isPromiseCanceledError } from 'vs/base/common/errors';
 
 export interface IToolbarActions {
 	primary: IAction[];
@@ -151,12 +152,12 @@ export abstract class TitleControl extends Themable {
 		this._register(this.editorActionsToolbar.actionRunner.onDidRun(e => {
 
 			// Notify for Error
-			this.notificationService.error(e.error);
+			if (e.error && !isPromiseCanceledError(e.error)) {
+				this.notificationService.error(e.error);
+			}
 
 			// Log in telemetry
-			if (this.telemetryService) {
-				this.telemetryService.publicLog2<WorkbenchActionExecutedEvent, WorkbenchActionExecutedClassification>('workbenchActionExecuted', { id: e.action.id, from: 'editorPart' });
-			}
+			this.telemetryService.publicLog2<WorkbenchActionExecutedEvent, WorkbenchActionExecutedClassification>('workbenchActionExecuted', { id: e.action.id, from: 'editorPart' });
 		}));
 	}
 
@@ -385,13 +386,11 @@ export abstract class TitleControl extends Themable {
 
 	abstract updateOptions(oldOptions: IEditorPartOptions, newOptions: IEditorPartOptions): void;
 
-	abstract updateStyles(): void;
-
 	abstract layout(dimensions: ITitleControlDimensions): Dimension;
 
 	abstract getHeight(): IEditorGroupTitleHeight;
 
-	dispose(): void {
+	override dispose(): void {
 		dispose(this.breadcrumbsControl);
 		this.breadcrumbsControl = undefined;
 

@@ -52,8 +52,8 @@ export class UpdateChannelClient implements IUpdateService {
 		this.channel.call<State>('_getInitialState').then(state => this.state = state);
 	}
 
-	checkForUpdates(context: any): Promise<void> {
-		return this.channel.call('checkForUpdates', context);
+	checkForUpdates(explicit: boolean): Promise<void> {
+		return this.channel.call('checkForUpdates', explicit);
 	}
 
 	downloadUpdate(): Promise<void> {

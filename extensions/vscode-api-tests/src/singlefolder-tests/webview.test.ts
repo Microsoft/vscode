@@ -399,6 +399,118 @@ suite.skip('vscode API - webview', () => {
 			assert.strictEqual(await vscode.env.clipboard.readText(), expectedText);
 		});
 	}
+
+	test('webviews should transfer ArrayBuffers to and from webviews', async () => {
+		const webview = _register(vscode.window.createWebviewPanel(webviewId, 'title', { viewColumn: vscode.ViewColumn.One }, { enableScripts: true, retainContextWhenHidden: true }));
+		const ready = getMessage(webview);
+		webview.webview.html = createHtmlDocumentWithBody(/*html*/`
+			<script>
+				const vscode = acquireVsCodeApi();
+
+				window.addEventListener('message', (message) => {
+					switch (message.data.type) {
+						case 'add1':
+							const arrayBuffer = message.data.array;
+							const uint8Array = new Uint8Array(arrayBuffer);
+
+							for (let i = 0; i < uint8Array.length; ++i) {
+								uint8Array[i] = uint8Array[i] + 1;
+							}
+
+							vscode.postMessage({ array: arrayBuffer }, [arrayBuffer]);
+							break;
+					}
+				});
+				vscode.postMessage({ type: 'ready' });
+			</script>`);
+		await ready;
+
+		const responsePromise = getMessage(webview);
+
+		const bufferLen = 100;
+
+		{
+			const arrayBuffer = new ArrayBuffer(bufferLen);
+			const uint8Array = new Uint8Array(arrayBuffer);
+			for (let i = 0; i < bufferLen; ++i) {
+				uint8Array[i] = i;
+			}
+			webview.webview.postMessage({
+				type: 'add1',
+				array: arrayBuffer
+			});
+		}
+		{
+			const response = await responsePromise;
+			assert.ok(response.array instanceof ArrayBuffer);
+
+			const uint8Array = new Uint8Array(response.array);
+			for (let i = 0; i < bufferLen; ++i) {
+				assert.strictEqual(uint8Array[i], i + 1);
+			}
+		}
+	});
+
+	test('webviews should transfer Typed arrays to and from webviews', async () => {
+		const webview = _register(vscode.window.createWebviewPanel(webviewId, 'title', { viewColumn: vscode.ViewColumn.One }, { enableScripts: true, retainContextWhenHidden: true }));
+		const ready = getMessage(webview);
+		webview.webview.html = createHtmlDocumentWithBody(/*html*/`
+			<script>
+				const vscode = acquireVsCodeApi();
+
+				window.addEventListener('message', (message) => {
+					switch (message.data.type) {
+						case 'add1':
+							const uint8Array = message.data.array1;
+
+							// This should update both buffers since they use the same ArrayBuffer storage
+							const uint16Array = message.data.array2;
+							for (let i = 0; i < uint16Array.length; ++i) {
+								uint16Array[i] = uint16Array[i] + 1;
+							}
+
+							vscode.postMessage({ array1: uint8Array, array2: uint16Array, }, [uint16Array.buffer]);
+							break;
+					}
+				});
+				vscode.postMessage({ type: 'ready' });
+			</script>`);
+		await ready;
+
+		const responsePromise = getMessage(webview);
+
+		const bufferLen = 100;
+		{
+			const arrayBuffer = new ArrayBuffer(bufferLen);
+			const uint8Array = new Uint8Array(arrayBuffer);
+			const uint16Array = new Uint16Array(arrayBuffer);
+			for (let i = 0; i < uint16Array.length; ++i) {
+				uint16Array[i] = i;
+			}
+
+			webview.webview.postMessage({
+				type: 'add1',
+				array1: uint8Array,
+				array2: uint16Array,
+			});
+		}
+		{
+			const response = await responsePromise;
+
+			assert.ok(response.array1 instanceof Uint8Array);
+			assert.ok(response.array2 instanceof Uint16Array);
+			assert.ok(response.array1.buffer === response.array2.buffer);
+
+			const uint8Array = response.array1;
+			for (let i = 0; i < bufferLen; ++i) {
+				if (i % 2 === 0) {
+					assert.strictEqual(uint8Array[i], Math.floor(i / 2) + 1);
+				} else {
+					assert.strictEqual(uint8Array[i], 0);
+				}
+			}
+		}
+	});
 });
 
 function createHtmlDocumentWithBody(body: string): string {

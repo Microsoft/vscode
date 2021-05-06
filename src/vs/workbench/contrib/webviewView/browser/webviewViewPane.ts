@@ -91,18 +91,18 @@ export class WebviewViewPane extends ViewPane {
 	private readonly _onDispose = this._register(new Emitter<void>());
 	readonly onDispose = this._onDispose.event;
 
-	dispose() {
+	override dispose() {
 		this._onDispose.fire();
 
 		super.dispose();
 	}
 
-	focus(): void {
+	override focus(): void {
 		super.focus();
 		this._webview.value?.focus();
 	}
 
-	renderBody(container: HTMLElement): void {
+	override renderBody(container: HTMLElement): void {
 		super.renderBody(container);
 
 		this._container = container;
@@ -123,7 +123,7 @@ export class WebviewViewPane extends ViewPane {
 		}
 	}
 
-	public saveState() {
+	public override saveState() {
 		if (this._webview.value) {
 			this.viewState[storageKeys.webviewState] = this._webview.value.state;
 		}
@@ -132,7 +132,7 @@ export class WebviewViewPane extends ViewPane {
 		super.saveState();
 	}
 
-	protected layoutBody(height: number, width: number): void {
+	protected override layoutBody(height: number, width: number): void {
 		super.layoutBody(height, width);
 
 		if (!this._webview.value) {
@@ -210,7 +210,7 @@ export class WebviewViewPane extends ViewPane {
 		}
 	}
 
-	protected updateTitle(value: string | undefined) {
+	protected override updateTitle(value: string | undefined) {
 		this.setTitle = value;
 		super.updateTitle(typeof value === 'string' ? value : this.defaultTitle);
 	}

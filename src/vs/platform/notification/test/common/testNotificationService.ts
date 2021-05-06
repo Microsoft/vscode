@@ -5,8 +5,13 @@
 
 import { INotificationService, INotificationHandle, NoOpNotification, Severity, INotification, IPromptChoice, IPromptOptions, IStatusMessageOptions, NotificationsFilter } from 'vs/platform/notification/common/notification';
 import { Disposable, IDisposable } from 'vs/base/common/lifecycle';
+import { Event } from 'vs/base/common/event';
 
 export class TestNotificationService implements INotificationService {
+
+	readonly onDidAddNotification: Event<INotification> = Event.None;
+
+	readonly onDidRemoveNotification: Event<INotification> = Event.None;
 
 	declare readonly _serviceBrand: undefined;
 

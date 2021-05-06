@@ -19,7 +19,7 @@ import { SideBarVisibleContext } from 'vs/workbench/common/viewlet';
 import { IWorkbenchLayoutService, Parts, positionToString } from 'vs/workbench/services/layout/browser/layoutService';
 import { IViewletService } from 'vs/workbench/services/viewlet/browser/viewlet';
 import { PanelMaximizedContext, PanelPositionContext, PanelVisibleContext } from 'vs/workbench/common/panel';
-import { getRemoteName } from 'vs/platform/remote/common/remoteHosts';
+import { getRemoteName, getVirtualWorkspaceScheme } from 'vs/platform/remote/common/remoteHosts';
 import { IWorkingCopyService } from 'vs/workbench/services/workingCopy/common/workingCopyService';
 import { isNative } from 'vs/base/common/platform';
 
@@ -27,9 +27,10 @@ export const WorkbenchStateContext = new RawContextKey<string>('workbenchState',
 export const WorkspaceFolderCountContext = new RawContextKey<number>('workspaceFolderCount', 0, localize('workspaceFolderCount', "The number of root folders in the workspace"));
 export const EmptyWorkspaceSupportContext = new RawContextKey<boolean>('emptyWorkspaceSupport', true, true);
 
-export const DirtyWorkingCopiesContext = new RawContextKey<boolean>('dirtyWorkingCopies', false, localize('dirtyWorkingCopies', "Wether there are any dirty working copies"));
+export const DirtyWorkingCopiesContext = new RawContextKey<boolean>('dirtyWorkingCopies', false, localize('dirtyWorkingCopies', "Whether there are any dirty working copies"));
 
 export const RemoteNameContext = new RawContextKey<string>('remoteName', '', localize('remoteName', "The name of the remote the window is connected to or an empty string if not connected to any remote"));
+export const VirtualWorkspaceContext = new RawContextKey<string>('virtualWorkspace', '', localize('virtualWorkspace', "The scheme of the current workspace if is from a virtual file system or an empty string."));
 
 export const IsFullscreenContext = new RawContextKey<boolean>('isFullscreen', false, localize('isFullscreen', "Whether the window is in fullscreen mode"));
 
@@ -68,6 +69,8 @@ export class WorkbenchContextKeysHandler extends Disposable {
 	private panelVisibleContext: IContextKey<boolean>;
 	private panelMaximizedContext: IContextKey<boolean>;
 
+	private vitualWorkspaceContext: IContextKey<string>;
+
 	constructor(
 		@IContextKeyService private readonly contextKeyService: IContextKeyService,
 		@IWorkspaceContextService private readonly contextService: IWorkspaceContextService,
@@ -90,6 +93,9 @@ export class WorkbenchContextKeysHandler extends Disposable {
 		IsMacNativeContext.bindTo(this.contextKeyService);
 
 		RemoteNameContext.bindTo(this.contextKeyService).set(getRemoteName(this.environmentService.remoteAuthority) || '');
+
+		this.vitualWorkspaceContext = VirtualWorkspaceContext.bindTo(this.contextKeyService);
+		this.updateVirtualWorkspaceContextKey();
 
 		// Capabilities
 		HasWebFileSystemAccess.bindTo(this.contextKeyService).set(WebFileSystemAccess.supported(window));
@@ -161,7 +167,7 @@ export class WorkbenchContextKeysHandler extends Disposable {
 	}
 
 	private registerListeners(): void {
-		this.editorGroupService.whenRestored.then(() => this.updateEditorContextKeys());
+		this.editorGroupService.whenReady.then(() => this.updateEditorContextKeys());
 
 		this._register(this.editorService.onDidActiveEditorChange(() => this.updateEditorContextKeys()));
 		this._register(this.editorService.onDidVisibleEditorsChange(() => this.updateEditorContextKeys()));
@@ -173,7 +179,10 @@ export class WorkbenchContextKeysHandler extends Disposable {
 		this._register(addDisposableListener(window, EventType.FOCUS_IN, () => this.updateInputContextKeys(), true));
 
 		this._register(this.contextService.onDidChangeWorkbenchState(() => this.updateWorkbenchStateContextKey()));
-		this._register(this.contextService.onDidChangeWorkspaceFolders(() => this.updateWorkspaceFolderCountContextKey()));
+		this._register(this.contextService.onDidChangeWorkspaceFolders(() => {
+			this.updateWorkspaceFolderCountContextKey();
+			this.updateVirtualWorkspaceContextKey();
+		}));
 
 		this._register(this.configurationService.onDidChangeConfiguration(e => {
 			if (e.affectsConfiguration('workbench.editor.openSideBySideDirection')) {
@@ -284,5 +293,9 @@ export class WorkbenchContextKeysHandler extends Disposable {
 
 	private updateSideBarContextKeys(): void {
 		this.sideBarVisibleContext.set(this.layoutService.isVisible(Parts.SIDEBAR_PART));
+	}
+
+	private updateVirtualWorkspaceContextKey(): void {
+		this.vitualWorkspaceContext.set(getVirtualWorkspaceScheme(this.contextService.getWorkspace()) || '');
 	}
 }

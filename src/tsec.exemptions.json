@@ -1,9 +1,13 @@
 {
 	"ban-eval-calls": [
-		"vs/workbench/api/worker/extHostExtensionService.ts"
+		"vs/workbench/api/worker/extHostExtensionService.ts",
+		"vs/base/worker/workerMain",
+		"vs/workbench/services/extensions/worker/extensionHostWorkerMain"
 	],
 	"ban-function-calls": [
 		"vs/workbench/api/worker/extHostExtensionService.ts",
+		"vs/base/worker/workerMain",
+		"vs/workbench/services/extensions/worker/extensionHostWorkerMain",
 		"vs/workbench/contrib/notebook/browser/view/renderers/webviewPreloads.ts",
 		"vs/workbench/services/keybinding/test/electron-browser/keyboardMapperTestUtils.ts"
 	],

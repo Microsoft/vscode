@@ -57,7 +57,7 @@ export class EmbeddedCodeEditorWidget extends CodeEditorWidget {
 		super.updateOptions(this._overwriteOptions);
 	}
 
-	updateOptions(newOptions: IEditorOptions): void {
+	override updateOptions(newOptions: IEditorOptions): void {
 		objects.mixin(this._overwriteOptions, newOptions, true);
 		super.updateOptions(this._overwriteOptions);
 	}
@@ -102,7 +102,7 @@ export class EmbeddedDiffEditorWidget extends DiffEditorWidget {
 		super.updateOptions(this._overwriteOptions);
 	}
 
-	updateOptions(newOptions: IEditorOptions): void {
+	override updateOptions(newOptions: IEditorOptions): void {
 		objects.mixin(this._overwriteOptions, newOptions, true);
 		super.updateOptions(this._overwriteOptions);
 	}

@@ -35,7 +35,7 @@ export class TerminalHover extends Disposable implements ITerminalWidget {
 		super();
 	}
 
-	dispose() {
+	override dispose() {
 		super.dispose();
 	}
 
@@ -117,7 +117,7 @@ class CellHoverTarget extends Widget implements IHoverTarget {
 		container.appendChild(this._domNode);
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this._domNode?.parentElement?.removeChild(this._domNode);
 		super.dispose();
 	}

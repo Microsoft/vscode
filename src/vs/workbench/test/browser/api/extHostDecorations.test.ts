@@ -25,14 +25,14 @@ suite('ExtHostDecorations', function () {
 		providers.clear();
 
 		mainThreadShape = new class extends mock<MainThreadDecorationsShape>() {
-			$registerDecorationProvider(handle: number) {
+			override $registerDecorationProvider(handle: number) {
 				providers.add(handle);
 			}
 		};
 
 		extHostDecorations = new ExtHostDecorations(
 			new class extends mock<IExtHostRpcService>() {
-				getProxy(): any {
+				override getProxy(): any {
 					return mainThreadShape;
 				}
 			},

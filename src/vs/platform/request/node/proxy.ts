@@ -8,11 +8,11 @@ import { isBoolean } from 'vs/base/common/types';
 
 export type Agent = any;
 
-function getSystemProxyURI(requestURL: Url): string | null {
+function getSystemProxyURI(requestURL: Url, env: typeof process.env): string | null {
 	if (requestURL.protocol === 'http:') {
-		return process.env.HTTP_PROXY || process.env.http_proxy || null;
+		return env.HTTP_PROXY || env.http_proxy || null;
 	} else if (requestURL.protocol === 'https:') {
-		return process.env.HTTPS_PROXY || process.env.https_proxy || process.env.HTTP_PROXY || process.env.http_proxy || null;
+		return env.HTTPS_PROXY || env.https_proxy || env.HTTP_PROXY || env.http_proxy || null;
 	}
 
 	return null;
@@ -23,9 +23,9 @@ export interface IOptions {
 	strictSSL?: boolean;
 }
 
-export async function getProxyAgent(rawRequestURL: string, options: IOptions = {}): Promise<Agent> {
+export async function getProxyAgent(rawRequestURL: string, env: typeof process.env, options: IOptions = {}): Promise<Agent> {
 	const requestURL = parseUrl(rawRequestURL);
-	const proxyURL = options.proxyUrl || getSystemProxyURI(requestURL);
+	const proxyURL = options.proxyUrl || getSystemProxyURI(requestURL, env);
 
 	if (!proxyURL) {
 		return null;

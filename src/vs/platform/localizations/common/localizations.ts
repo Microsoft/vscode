@@ -25,8 +25,6 @@ export interface ILocalizationsService {
 
 	readonly onDidLanguagesChange: Event<void>;
 	getLanguageIds(): Promise<string[]>;
-
-	update(): Promise<boolean>;
 }
 
 export function isValidLocalization(localization: ILocalization): boolean {

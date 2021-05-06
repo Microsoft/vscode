@@ -148,7 +148,7 @@ suite('PagedModel', () => {
 
 		const model = new PagedModel(pager);
 
-		assert.equal(state, 'idle');
+		assert.strictEqual(state, 'idle');
 
 		const tokenSource1 = new CancellationTokenSource();
 		const promise1 = model.resolve(5, tokenSource1.token).then(
@@ -156,7 +156,7 @@ suite('PagedModel', () => {
 			err => assert(isPromiseCanceledError(err))
 		);
 
-		assert.equal(state, 'resolving');
+		assert.strictEqual(state, 'resolving');
 
 		const tokenSource2 = new CancellationTokenSource();
 		const promise2 = model.resolve(6, tokenSource2.token).then(
@@ -164,17 +164,17 @@ suite('PagedModel', () => {
 			err => assert(isPromiseCanceledError(err))
 		);
 
-		assert.equal(state, 'resolving');
+		assert.strictEqual(state, 'resolving');
 
 		setTimeout(() => {
-			assert.equal(state, 'resolving');
+			assert.strictEqual(state, 'resolving');
 			tokenSource1.cancel();
-			assert.equal(state, 'resolving');
+			assert.strictEqual(state, 'resolving');
 
 			setTimeout(() => {
-				assert.equal(state, 'resolving');
+				assert.strictEqual(state, 'resolving');
 				tokenSource2.cancel();
-				assert.equal(state, 'idle');
+				assert.strictEqual(state, 'idle');
 			}, 10);
 		}, 10);
 

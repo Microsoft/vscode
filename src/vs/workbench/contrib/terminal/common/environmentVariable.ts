@@ -102,5 +102,10 @@ export interface IEnvironmentVariableInfo {
 	readonly requiresAction: boolean;
 	getInfo(): string;
 	getIcon(): ThemeIcon;
-	getActions?(): { label: string, iconClass?: string, run: () => void, commandId: string }[];
+	getActions?(): {
+		label: string;
+		commandId: string;
+		iconClass?: string;
+		run(target: any): void;
+	}[];
 }

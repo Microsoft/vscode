@@ -175,7 +175,7 @@ export class ExplorerView extends ViewPane {
 		@IConfigurationService configurationService: IConfigurationService,
 		@IDecorationsService private readonly decorationService: IDecorationsService,
 		@ILabelService private readonly labelService: ILabelService,
-		@IThemeService protected themeService: IWorkbenchThemeService,
+		@IThemeService themeService: IWorkbenchThemeService,
 		@IMenuService private readonly menuService: IMenuService,
 		@ITelemetryService telemetryService: ITelemetryService,
 		@IExplorerService private readonly explorerService: IExplorerService,
@@ -207,11 +207,11 @@ export class ExplorerView extends ViewPane {
 		return this.labelService.getWorkspaceLabel(this.contextService.getWorkspace());
 	}
 
-	get title(): string {
+	override get title(): string {
 		return this.name;
 	}
 
-	set title(_: string) {
+	override set title(_: string) {
 		// noop
 	}
 
@@ -232,7 +232,7 @@ export class ExplorerView extends ViewPane {
 
 	// Split view methods
 
-	protected renderHeader(container: HTMLElement): void {
+	protected override renderHeader(container: HTMLElement): void {
 		super.renderHeader(container);
 
 		// Expand on drag over
@@ -252,12 +252,12 @@ export class ExplorerView extends ViewPane {
 		setHeader();
 	}
 
-	protected layoutBody(height: number, width: number): void {
+	protected override layoutBody(height: number, width: number): void {
 		super.layoutBody(height, width);
 		this.tree.layout(height, width);
 	}
 
-	renderBody(container: HTMLElement): void {
+	override renderBody(container: HTMLElement): void {
 		super.renderBody(container);
 
 		this.container = container;
@@ -297,7 +297,7 @@ export class ExplorerView extends ViewPane {
 		}));
 	}
 
-	focus(): void {
+	override focus(): void {
 		this.tree.domFocus();
 
 		const focused = this.tree.getFocus();
@@ -621,7 +621,7 @@ export class ExplorerView extends ViewPane {
 		}
 	}
 
-	getOptimalWidth(): number {
+	override getOptimalWidth(): number {
 		const parentNode = this.tree.getHTMLElement();
 		const childNodes = ([] as HTMLElement[]).slice.call(parentNode.querySelectorAll('.explorer-item .label-name')); // select all file labels
 
@@ -682,7 +682,7 @@ export class ExplorerView extends ViewPane {
 
 		this.progressService.withProgress({
 			location: ProgressLocation.Explorer,
-			delay: this.layoutService.isRestored() ? 800 : 1200 // less ugly initial startup
+			delay: this.layoutService.isRestored() ? 800 : 1500 // reduce progress visibility when still restoring
 		}, _progress => promise);
 
 		await promise;
@@ -703,9 +703,7 @@ export class ExplorerView extends ViewPane {
 		}
 
 		// Expand all stats in the parent chain.
-		let item: ExplorerItem | undefined = this.explorerService.roots.filter(i => this.uriIdentityService.extUri.isEqualOrParent(resource, i.resource))
-			// Take the root that is the closest to the stat #72299
-			.sort((first, second) => second.resource.path.length - first.resource.path.length)[0];
+		let item: ExplorerItem | null = this.explorerService.findClosestRoot(resource);
 
 		while (item && item.resource.toString() !== resource.toString()) {
 			try {
@@ -719,7 +717,7 @@ export class ExplorerView extends ViewPane {
 					item = child;
 					break;
 				}
-				item = undefined;
+				item = null;
 			}
 		}
 
@@ -837,7 +835,7 @@ export class ExplorerView extends ViewPane {
 		}
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		if (this.dragHandler) {
 			this.dragHandler.dispose();
 		}

@@ -4,7 +4,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as assert from 'assert';
-import { getPathFromAmdModule } from 'vs/base/common/amd';
 import { CancelablePromise, createCancelablePromise } from 'vs/base/common/async';
 import { Emitter, Event } from 'vs/base/common/event';
 import * as path from 'vs/base/common/path';
@@ -12,7 +11,7 @@ import { URI } from 'vs/base/common/uri';
 import { IFileQuery, IFileSearchStats, IFolderQuery, IProgressMessage, IRawFileMatch, ISearchEngine, ISearchEngineStats, ISearchEngineSuccess, ISearchProgressItem, ISerializedFileMatch, ISerializedSearchComplete, ISerializedSearchProgressItem, ISerializedSearchSuccess, isFileMatch, QueryType } from 'vs/workbench/services/search/common/search';
 import { IProgressCallback, SearchService as RawSearchService } from 'vs/workbench/services/search/node/rawSearchService';
 import { DiskSearch } from 'vs/workbench/services/search/electron-browser/searchService';
-import { flakySuite } from 'vs/base/test/node/testUtils';
+import { flakySuite, getPathFromAmdModule } from 'vs/base/test/node/testUtils';
 
 const TEST_FOLDER_QUERIES = [
 	{ folder: URI.file(path.normalize('/some/where')) }
@@ -48,7 +47,8 @@ class TestSearchEngine implements ISearchEngine<IRawFileMatch> {
 				if (self.isCanceled) {
 					done(null!, {
 						limitHit: false,
-						stats: stats
+						stats: stats,
+						messages: [],
 					});
 					return;
 				}
@@ -56,7 +56,8 @@ class TestSearchEngine implements ISearchEngine<IRawFileMatch> {
 				if (!result) {
 					done(null!, {
 						limitHit: false,
-						stats: stats
+						stats: stats,
+						messages: [],
 					});
 				} else {
 					onResult(result);

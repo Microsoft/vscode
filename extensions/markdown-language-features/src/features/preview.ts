@@ -207,7 +207,7 @@ class MarkdownPreview extends Disposable implements WebviewResourceProvider {
 		this.updatePreview();
 	}
 
-	dispose() {
+	override dispose() {
 		super.dispose();
 		this._disposed = true;
 		clearTimeout(this.throttleTimer);
@@ -434,14 +434,14 @@ class MarkdownPreview extends Disposable implements WebviewResourceProvider {
 	private async onDidClickPreviewLink(href: string) {
 		let [hrefPath, fragment] = decodeURIComponent(href).split('#');
 
-		// We perviously already resolve absolute paths.
-		// Now make sure we handle relative file paths
 		if (hrefPath[0] !== '/') {
-			// Fix #93691, use this.resource.fsPath instead of this.resource.path
-			hrefPath = path.join(path.dirname(this.resource.fsPath), hrefPath);
+			// We perviously already resolve absolute paths.
+			// Now make sure we handle relative file paths
+			const dirnameUri = vscode.Uri.parse(path.dirname(this.resource.path));
+			hrefPath = vscode.Uri.joinPath(dirnameUri, hrefPath).path;
 		} else {
 			// Handle any normalized file paths
-			hrefPath = vscode.Uri.parse(hrefPath.replace('/file', '')).fsPath;
+			hrefPath = vscode.Uri.parse(hrefPath.replace('/file', '')).path;
 		}
 
 		const config = vscode.workspace.getConfiguration('markdown', this.resource);
@@ -537,7 +537,7 @@ export class StaticMarkdownPreview extends Disposable implements ManagedMarkdown
 	private readonly _onDidChangeViewState = this._register(new vscode.EventEmitter<vscode.WebviewPanelOnDidChangeViewStateEvent>());
 	public readonly onDidChangeViewState = this._onDidChangeViewState.event;
 
-	dispose() {
+	override dispose() {
 		this._onDispose.fire();
 		super.dispose();
 	}
@@ -682,7 +682,7 @@ export class DynamicMarkdownPreview extends Disposable implements ManagedMarkdow
 	private readonly _onDidChangeViewStateEmitter = this._register(new vscode.EventEmitter<vscode.WebviewPanelOnDidChangeViewStateEvent>());
 	public readonly onDidChangeViewState = this._onDidChangeViewStateEmitter.event;
 
-	dispose() {
+	override dispose() {
 		this._preview.dispose();
 		this._webviewPanel.dispose();
 

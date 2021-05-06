@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as assert from 'assert';
-import { isReadableStream, newWriteableStream, Readable, consumeReadable, peekReadable, consumeStream, ReadableStream, toStream, toReadable, transform, peekStream, isReadableBufferedStream, listenStream } from 'vs/base/common/stream';
+import { isReadableStream, newWriteableStream, Readable, consumeReadable, peekReadable, consumeStream, ReadableStream, toStream, toReadable, transform, peekStream, isReadableBufferedStream, listenStream, prefixedReadable, prefixedStream } from 'vs/base/common/stream';
 import { timeout } from 'vs/base/common/async';
 
 suite('Stream', () => {
@@ -386,7 +386,7 @@ suite('Stream', () => {
 
 	test('toReadable', async () => {
 		const readable = toReadable('1,2,3,4,5');
-		const consumed = await consumeReadable(readable, strings => strings.join());
+		const consumed = consumeReadable(readable, strings => strings.join());
 		assert.strictEqual(consumed, '1,2,3,4,5');
 	});
 
@@ -423,5 +423,50 @@ suite('Stream', () => {
 
 		assert.strictEqual(listener1Called, true);
 		assert.strictEqual(listener2Called, true);
+	});
+
+	test('prefixedReadable', () => {
+
+		// Basic
+		let readable = prefixedReadable('1,2', arrayToReadable(['3', '4', '5']), val => val.join(','));
+		assert.strictEqual(consumeReadable(readable, val => val.join(',')), '1,2,3,4,5');
+
+		// Empty
+		readable = prefixedReadable('empty', arrayToReadable<string>([]), val => val.join(','));
+		assert.strictEqual(consumeReadable(readable, val => val.join(',')), 'empty');
+	});
+
+	test('prefixedStream', async () => {
+
+		// Basic
+		let stream = newWriteableStream<string>(strings => strings.join());
+		stream.write('3');
+		stream.write('4');
+		stream.write('5');
+		stream.end();
+
+		let prefixStream = prefixedStream<string>('1,2', stream, val => val.join(','));
+		assert.strictEqual(await consumeStream(prefixStream, val => val.join(',')), '1,2,3,4,5');
+
+		// Empty
+		stream = newWriteableStream<string>(strings => strings.join());
+		stream.end();
+
+		prefixStream = prefixedStream<string>('1,2', stream, val => val.join(','));
+		assert.strictEqual(await consumeStream(prefixStream, val => val.join(',')), '1,2');
+
+		// Error
+		stream = newWriteableStream<string>(strings => strings.join());
+		stream.error(new Error('fail'));
+
+		prefixStream = prefixedStream<string>('error', stream, val => val.join(','));
+
+		let error;
+		try {
+			await consumeStream(prefixStream, val => val.join(','));
+		} catch (e) {
+			error = e;
+		}
+		assert.ok(error);
 	});
 });

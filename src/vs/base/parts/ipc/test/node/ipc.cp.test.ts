@@ -6,7 +6,7 @@
 import * as assert from 'assert';
 import { Client } from 'vs/base/parts/ipc/node/ipc.cp';
 import { TestServiceClient } from './testService';
-import { getPathFromAmdModule } from 'vs/base/common/amd';
+import { getPathFromAmdModule } from 'vs/base/test/node/testUtils';
 
 function createClient(): Client {
 	return new Client(getPathFromAmdModule(require, 'bootstrap-fork'), {
@@ -22,8 +22,8 @@ suite('IPC, Child Process', () => {
 		const service = new TestServiceClient(channel);
 
 		const result = service.pong('ping').then(r => {
-			assert.equal(r.incoming, 'ping');
-			assert.equal(r.outgoing, 'pong');
+			assert.strictEqual(r.incoming, 'ping');
+			assert.strictEqual(r.outgoing, 'pong');
 		});
 
 		return result.finally(() => client.dispose());
@@ -37,7 +37,7 @@ suite('IPC, Child Process', () => {
 		const event = new Promise((c, e) => {
 			service.onMarco(({ answer }) => {
 				try {
-					assert.equal(answer, 'polo');
+					assert.strictEqual(answer, 'polo');
 					c(undefined);
 				} catch (err) {
 					e(err);
@@ -60,17 +60,17 @@ suite('IPC, Child Process', () => {
 		const disposable = service.onMarco(() => count++);
 
 		const result = service.marco().then(async answer => {
-			assert.equal(answer, 'polo');
-			assert.equal(count, 1);
+			assert.strictEqual(answer, 'polo');
+			assert.strictEqual(count, 1);
 
 			const answer_1 = await service.marco();
-			assert.equal(answer_1, 'polo');
-			assert.equal(count, 2);
+			assert.strictEqual(answer_1, 'polo');
+			assert.strictEqual(count, 2);
 			disposable.dispose();
 
 			const answer_2 = await service.marco();
-			assert.equal(answer_2, 'polo');
-			assert.equal(count, 2);
+			assert.strictEqual(answer_2, 'polo');
+			assert.strictEqual(count, 2);
 		});
 
 		return result.finally(() => client.dispose());

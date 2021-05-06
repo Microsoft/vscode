@@ -22,19 +22,19 @@ import { IFilesConfigurationService } from 'vs/workbench/services/filesConfigura
 import { Schemas } from 'vs/base/common/network';
 
 export class PreferencesEditorInput extends SideBySideEditorInput {
-	static readonly ID: string = 'workbench.editorinputs.preferencesEditorInput';
+	static override readonly ID: string = 'workbench.editorinputs.preferencesEditorInput';
 
-	getTypeId(): string {
+	override get typeId(): string {
 		return PreferencesEditorInput.ID;
 	}
 
-	getTitle(verbosity: Verbosity): string {
+	override getTitle(verbosity: Verbosity): string {
 		return this.primary.getTitle(verbosity);
 	}
 }
 
 export class DefaultPreferencesEditorInput extends ResourceEditorInput {
-	static readonly ID = 'workbench.editorinputs.defaultpreferences';
+	static override readonly ID = 'workbench.editorinputs.defaultpreferences';
 	constructor(
 		defaultSettingsResource: URI,
 		@ITextModelService textModelResolverService: ITextModelService,
@@ -48,11 +48,11 @@ export class DefaultPreferencesEditorInput extends ResourceEditorInput {
 		super(defaultSettingsResource, nls.localize('settingsEditorName', "Default Settings"), '', undefined, textModelResolverService, textFileService, editorService, editorGroupService, fileService, labelService, filesConfigurationService);
 	}
 
-	getTypeId(): string {
+	override get typeId(): string {
 		return DefaultPreferencesEditorInput.ID;
 	}
 
-	matches(other: unknown): boolean {
+	override matches(other: unknown): boolean {
 		if (other instanceof DefaultPreferencesEditorInput) {
 			return true;
 		}
@@ -84,23 +84,23 @@ export class KeybindingsEditorInput extends EditorInput {
 		this.keybindingsModel = instantiationService.createInstance(KeybindingsEditorModel, OS);
 	}
 
-	getTypeId(): string {
+	override get typeId(): string {
 		return KeybindingsEditorInput.ID;
 	}
 
-	getName(): string {
+	override getName(): string {
 		return nls.localize('keybindingsInputName', "Keyboard Shortcuts");
 	}
 
-	async resolve(): Promise<KeybindingsEditorModel> {
+	override async resolve(): Promise<KeybindingsEditorModel> {
 		return this.keybindingsModel;
 	}
 
-	matches(otherInput: unknown): boolean {
+	override matches(otherInput: unknown): boolean {
 		return otherInput instanceof KeybindingsEditorInput;
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this.keybindingsModel.dispose();
 
 		super.dispose();
@@ -125,23 +125,23 @@ export class SettingsEditor2Input extends EditorInput {
 		this._settingsModel = _preferencesService.createSettings2EditorModel();
 	}
 
-	matches(otherInput: unknown): boolean {
+	override matches(otherInput: unknown): boolean {
 		return otherInput instanceof SettingsEditor2Input;
 	}
 
-	getTypeId(): string {
+	override get typeId(): string {
 		return SettingsEditor2Input.ID;
 	}
 
-	getName(): string {
+	override getName(): string {
 		return nls.localize('settingsEditor2InputName', "Settings");
 	}
 
-	async resolve(): Promise<Settings2EditorModel> {
+	override async resolve(): Promise<Settings2EditorModel> {
 		return this._settingsModel;
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this._settingsModel.dispose();
 
 		super.dispose();

@@ -268,7 +268,7 @@ suite('ExtHostLanguageFeatures', function () {
 		assert.strictEqual(value.length, 2);
 	});
 
-	test('Definition, registration order ignored (results are sorted)', async () => {
+	test('Definition, registration order', async () => {
 
 		disposables.push(extHost.registerDefinitionProvider(defaultExtension, defaultSelector, new class implements vscode.DefinitionProvider {
 			provideDefinition(): any {
@@ -286,8 +286,8 @@ suite('ExtHostLanguageFeatures', function () {
 		const value = await getDefinitionsAtPosition(model, new EditorPosition(1, 1), CancellationToken.None);
 		assert.strictEqual(value.length, 2);
 		// let [first, second] = value;
-		assert.strictEqual(value[0].uri.authority, 'first');
-		assert.strictEqual(value[1].uri.authority, 'second');
+		assert.strictEqual(value[0].uri.authority, 'second');
+		assert.strictEqual(value[1].uri.authority, 'first');
 	});
 
 	test('Definition, evil provider', async () => {
@@ -521,7 +521,7 @@ suite('ExtHostLanguageFeatures', function () {
 
 	// --- references
 
-	test('References, registration order ignored (results are sorted)', async () => {
+	test('References, registration order', async () => {
 
 		disposables.push(extHost.registerReferenceProvider(defaultExtension, defaultSelector, new class implements vscode.ReferenceProvider {
 			provideReferences(): any {
@@ -539,8 +539,8 @@ suite('ExtHostLanguageFeatures', function () {
 		let value = await getReferencesAtPosition(model, new EditorPosition(1, 2), false, CancellationToken.None);
 		assert.strictEqual(value.length, 2);
 		let [first, second] = value;
-		assert.strictEqual(first.uri.path, '/first');
-		assert.strictEqual(second.uri.path, '/second');
+		assert.strictEqual(first.uri.path, '/second');
+		assert.strictEqual(second.uri.path, '/first');
 	});
 
 	test('References, data conversion', async () => {
@@ -591,7 +591,7 @@ suite('ExtHostLanguageFeatures', function () {
 		}));
 
 		await rpcProtocol.sync();
-		const { validActions: actions } = await getCodeActions(model, model.getFullModelRange(), { type: modes.CodeActionTriggerType.Manual }, Progress.None, CancellationToken.None);
+		const { validActions: actions } = await getCodeActions(model, model.getFullModelRange(), { type: modes.CodeActionTriggerType.Invoke }, Progress.None, CancellationToken.None);
 		assert.strictEqual(actions.length, 2);
 		const [first, second] = actions;
 		assert.strictEqual(first.action.title, 'Testing1');
@@ -615,7 +615,7 @@ suite('ExtHostLanguageFeatures', function () {
 		}));
 
 		await rpcProtocol.sync();
-		const { validActions: actions } = await getCodeActions(model, model.getFullModelRange(), { type: modes.CodeActionTriggerType.Manual }, Progress.None, CancellationToken.None);
+		const { validActions: actions } = await getCodeActions(model, model.getFullModelRange(), { type: modes.CodeActionTriggerType.Invoke }, Progress.None, CancellationToken.None);
 		assert.strictEqual(actions.length, 1);
 		const [first] = actions;
 		assert.strictEqual(first.action.title, 'Testing1');
@@ -638,7 +638,7 @@ suite('ExtHostLanguageFeatures', function () {
 		}));
 
 		await rpcProtocol.sync();
-		const { validActions: actions } = await getCodeActions(model, model.getFullModelRange(), { type: modes.CodeActionTriggerType.Manual }, Progress.None, CancellationToken.None);
+		const { validActions: actions } = await getCodeActions(model, model.getFullModelRange(), { type: modes.CodeActionTriggerType.Invoke }, Progress.None, CancellationToken.None);
 		assert.strictEqual(actions.length, 1);
 	});
 
@@ -656,7 +656,7 @@ suite('ExtHostLanguageFeatures', function () {
 		}));
 
 		await rpcProtocol.sync();
-		const { validActions: actions } = await getCodeActions(model, model.getFullModelRange(), { type: modes.CodeActionTriggerType.Manual }, Progress.None, CancellationToken.None);
+		const { validActions: actions } = await getCodeActions(model, model.getFullModelRange(), { type: modes.CodeActionTriggerType.Invoke }, Progress.None, CancellationToken.None);
 		assert.strictEqual(actions.length, 1);
 	});
 
@@ -966,7 +966,7 @@ suite('ExtHostLanguageFeatures', function () {
 	// --- format
 
 	const NullWorkerService = new class extends mock<IEditorWorkerService>() {
-		computeMoreMinimalEdits(resource: URI, edits: modes.TextEdit[] | null | undefined): Promise<modes.TextEdit[] | undefined> {
+		override computeMoreMinimalEdits(resource: URI, edits: modes.TextEdit[] | null | undefined): Promise<modes.TextEdit[] | undefined> {
 			return Promise.resolve(withNullAsUndefined(edits));
 		}
 	};

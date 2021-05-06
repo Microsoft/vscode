@@ -116,7 +116,7 @@ export class ExplorerDataSource implements IAsyncDataSource<ExplorerItem | Explo
 
 		this.progressService.withProgress({
 			location: ProgressLocation.Explorer,
-			delay: this.layoutService.isRestored() ? 800 : 1200 // less ugly initial startup
+			delay: this.layoutService.isRestored() ? 800 : 1500 // reduce progress visibility when still restoring
 		}, _progress => promise);
 
 		return promise;
@@ -532,8 +532,7 @@ interface CachedParsedExpression {
  * Makes sure that visible editors are always shown in the explorer even if they are filtered out by settings.
  */
 export class FilesFilter implements ITreeFilter<ExplorerItem, FuzzyScore> {
-	private hiddenExpressionPerRoot: Map<string, CachedParsedExpression>;
-	private uriVisibilityMap = new Map<URI, boolean>();
+	private hiddenExpressionPerRoot = new Map<string, CachedParsedExpression>();
 	private editorsAffectingFilter = new Set<IEditorInput>();
 	private _onDidChange = new Emitter<void>();
 	private toDispose: IDisposable[] = [];
@@ -545,7 +544,6 @@ export class FilesFilter implements ITreeFilter<ExplorerItem, FuzzyScore> {
 		@IEditorService private readonly editorService: IEditorService,
 		@IUriIdentityService private readonly uriIdentityService: IUriIdentityService
 	) {
-		this.hiddenExpressionPerRoot = new Map<string, CachedParsedExpression>();
 		this.toDispose.push(this.contextService.onDidChangeWorkspaceFolders(() => this.updateConfiguration()));
 		this.toDispose.push(this.configurationService.onDidChangeConfiguration((e) => {
 			if (e.affectsConfiguration('files.exclude')) {
@@ -555,26 +553,30 @@ export class FilesFilter implements ITreeFilter<ExplorerItem, FuzzyScore> {
 		this.toDispose.push(this.editorService.onDidVisibleEditorsChange(() => {
 			const editors = this.editorService.visibleEditors;
 			let shouldFire = false;
-			this.uriVisibilityMap.forEach((visible, uri) => {
-				if (!visible) {
-					editors.forEach(e => {
-						if (e.resource && this.uriIdentityService.extUri.isEqualOrParent(e.resource, uri)) {
-							// A filtered resource suddenly became visible since user opened an editor
-							shouldFire = true;
-						}
-					});
-				}
-			});
 
-			this.editorsAffectingFilter.forEach(e => {
+			for (const e of editors) {
+				if (!e.resource) {
+					continue;
+				}
+
+				const stat = this.explorerService.findClosest(e.resource);
+				if (stat && stat.isExcluded) {
+					// A filtered resource suddenly became visible since user opened an editor
+					shouldFire = true;
+					break;
+				}
+			}
+
+			for (const e of this.editorsAffectingFilter) {
 				if (!editors.includes(e)) {
 					// Editor that was affecting filtering is no longer visible
 					shouldFire = true;
+					break;
 				}
-			});
+			}
+
 			if (shouldFire) {
 				this.editorsAffectingFilter.clear();
-				this.uriVisibilityMap.clear();
 				this._onDidChange.fire();
 			}
 		}));
@@ -603,21 +605,12 @@ export class FilesFilter implements ITreeFilter<ExplorerItem, FuzzyScore> {
 
 		if (shouldFire) {
 			this.editorsAffectingFilter.clear();
-			this.uriVisibilityMap.clear();
 			this._onDidChange.fire();
 		}
 	}
 
 	filter(stat: ExplorerItem, parentVisibility: TreeVisibility): boolean {
-		const cachedVisibility = this.uriVisibilityMap.get(stat.resource);
-		if (typeof cachedVisibility === 'boolean') {
-			return cachedVisibility;
-		}
-
-		const isVisible = this.isVisible(stat, parentVisibility);
-		this.uriVisibilityMap.set(stat.resource, isVisible);
-
-		return isVisible;
+		return this.isVisible(stat, parentVisibility);
 	}
 
 	private isVisible(stat: ExplorerItem, parentVisibility: TreeVisibility): boolean {
@@ -636,7 +629,7 @@ export class FilesFilter implements ITreeFilter<ExplorerItem, FuzzyScore> {
 			stat.isExcluded = true;
 			const editors = this.editorService.visibleEditors;
 			const editor = editors.find(e => e.resource && this.uriIdentityService.extUri.isEqualOrParent(e.resource, stat.resource));
-			if (editor) {
+			if (editor && stat.root === this.explorerService.findClosestRoot(stat.resource)) {
 				this.editorsAffectingFilter.add(editor);
 				return true; // Show all opened files and their parents
 			}

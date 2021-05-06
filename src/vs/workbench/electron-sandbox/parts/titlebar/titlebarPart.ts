@@ -41,14 +41,16 @@ export class TitlebarPart extends BrowserTitleBarPart {
 		return 22;
 	}
 
-	get minimumHeight(): number { return isMacintosh ? this.getMacTitlebarSize() / getZoomFactor() : super.minimumHeight; }
-	get maximumHeight(): number { return this.minimumHeight; }
+	override get minimumHeight(): number { return isMacintosh ? this.getMacTitlebarSize() / getZoomFactor() : super.minimumHeight; }
+	override get maximumHeight(): number { return this.minimumHeight; }
+
+	protected override readonly environmentService: INativeWorkbenchEnvironmentService;
 
 	constructor(
 		@IContextMenuService contextMenuService: IContextMenuService,
-		@IConfigurationService protected readonly configurationService: IConfigurationService,
+		@IConfigurationService configurationService: IConfigurationService,
 		@IEditorService editorService: IEditorService,
-		@INativeWorkbenchEnvironmentService protected readonly environmentService: INativeWorkbenchEnvironmentService,
+		@INativeWorkbenchEnvironmentService environmentService: INativeWorkbenchEnvironmentService,
 		@IWorkspaceContextService contextService: IWorkspaceContextService,
 		@IInstantiationService instantiationService: IInstantiationService,
 		@IThemeService themeService: IThemeService,
@@ -62,6 +64,8 @@ export class TitlebarPart extends BrowserTitleBarPart {
 		@INativeHostService private readonly nativeHostService: INativeHostService
 	) {
 		super(contextMenuService, configurationService, editorService, environmentService, contextService, instantiationService, themeService, labelService, storageService, layoutService, menuService, contextKeyService, hostService, productService);
+
+		this.environmentService = environmentService;
 	}
 
 	private onUpdateAppIconDragBehavior(): void {
@@ -105,7 +109,7 @@ export class TitlebarPart extends BrowserTitleBarPart {
 		}
 	}
 
-	protected onMenubarVisibilityChanged(visible: boolean): void {
+	protected override onMenubarVisibilityChanged(visible: boolean): void {
 		// Hide title when toggling menu bar
 		if ((isWindows || isLinux) && this.currentMenubarVisibility === 'toggle' && visible) {
 			// Hack to fix issue #52522 with layered webkit-app-region elements appearing under cursor
@@ -118,7 +122,7 @@ export class TitlebarPart extends BrowserTitleBarPart {
 		super.onMenubarVisibilityChanged(visible);
 	}
 
-	protected onConfigurationChanged(event: IConfigurationChangeEvent): void {
+	protected override onConfigurationChanged(event: IConfigurationChangeEvent): void {
 		super.onConfigurationChanged(event);
 
 		if (event.affectsConfiguration('window.doubleClickIconToClose')) {
@@ -128,7 +132,7 @@ export class TitlebarPart extends BrowserTitleBarPart {
 		}
 	}
 
-	protected adjustTitleMarginToCenter(): void {
+	protected override adjustTitleMarginToCenter(): void {
 		if (this.customMenubar && this.menubar) {
 			const leftMarker = (this.appIcon ? this.appIcon.clientWidth : 0) + this.menubar.clientWidth + 10;
 			const rightMarker = this.element.clientWidth - (this.windowControls ? this.windowControls.clientWidth : 0) - 10;
@@ -147,9 +151,10 @@ export class TitlebarPart extends BrowserTitleBarPart {
 		this.title.style.position = 'absolute';
 		this.title.style.left = '50%';
 		this.title.style.transform = 'translate(-50%, 0)';
+		this.title.style.maxWidth = `calc(100vw - ${2 * ((this.windowControls?.clientWidth || 70) + 10)}px)`;
 	}
 
-	protected installMenubar(): void {
+	protected override installMenubar(): void {
 		super.installMenubar();
 
 		if (this.menubar) {
@@ -161,7 +166,7 @@ export class TitlebarPart extends BrowserTitleBarPart {
 		}
 	}
 
-	createContentArea(parent: HTMLElement): HTMLElement {
+	override createContentArea(parent: HTMLElement): HTMLElement {
 		const ret = super.createContentArea(parent);
 
 		// Native menu controller
@@ -218,7 +223,7 @@ export class TitlebarPart extends BrowserTitleBarPart {
 		return ret;
 	}
 
-	updateLayout(dimension: Dimension): void {
+	override updateLayout(dimension: Dimension): void {
 		this.lastLayoutDimensions = dimension;
 
 		if (getTitleBarStyle(this.configurationService) === 'custom') {

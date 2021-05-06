@@ -92,7 +92,7 @@ suite('CustomEditor tests', () => {
 		await vscode.commands.executeCommand(commands.open, testDocument);
 
 		const { content } = await listener.nextResponse();
-		assert.equal(content, startingContent);
+		assert.strictEqual(content, startingContent);
 	});
 
 	test('Should support basic edits', async () => {
@@ -107,7 +107,7 @@ suite('CustomEditor tests', () => {
 		const newContent = `basic edit test`;
 		await vscode.commands.executeCommand(Testing.abcEditorTypeCommand, newContent);
 		const { content } = await listener.nextResponse();
-		assert.equal(content, newContent);
+		assert.strictEqual(content, newContent);
 	});
 
 	test('Should support single undo', async () => {
@@ -123,13 +123,13 @@ suite('CustomEditor tests', () => {
 		{
 			await vscode.commands.executeCommand(Testing.abcEditorTypeCommand, newContent);
 			const { content } = await listener.nextResponse();
-			assert.equal(content, newContent);
+			assert.strictEqual(content, newContent);
 		}
 		await delay(100);
 		{
 			await vscode.commands.executeCommand(commands.undo);
 			const { content } = await listener.nextResponse();
-			assert.equal(content, startingContent);
+			assert.strictEqual(content, startingContent);
 		}
 	});
 
@@ -148,7 +148,7 @@ suite('CustomEditor tests', () => {
 		for (let i = 0; i < count; ++i) {
 			await vscode.commands.executeCommand(Testing.abcEditorTypeCommand, `${i}`);
 			const { content } = await listener.nextResponse();
-			assert.equal(`${i}`, content);
+			assert.strictEqual(`${i}`, content);
 		}
 
 		// Then undo them in order
@@ -156,14 +156,14 @@ suite('CustomEditor tests', () => {
 			await delay(100);
 			await vscode.commands.executeCommand(commands.undo);
 			const { content } = await listener.nextResponse();
-			assert.equal(`${i - 1}`, content);
+			assert.strictEqual(`${i - 1}`, content);
 		}
 
 		{
 			await delay(100);
 			await vscode.commands.executeCommand(commands.undo);
 			const { content } = await listener.nextResponse();
-			assert.equal(content, startingContent);
+			assert.strictEqual(content, startingContent);
 		}
 	});
 
@@ -184,8 +184,8 @@ suite('CustomEditor tests', () => {
 		await vscode.workspace.applyEdit(edit);
 
 		const response = (await listener.nextResponse());
-		assert.equal(response.content, startingContent);
-		assert.equal(response.source.toString(), newFileName.toString());
+		assert.strictEqual(response.content, startingContent);
+		assert.strictEqual(response.source.toString(), newFileName.toString());
 	});
 
 	test('Should support saving custom editors', async () => {
@@ -201,12 +201,12 @@ suite('CustomEditor tests', () => {
 		{
 			await vscode.commands.executeCommand(Testing.abcEditorTypeCommand, newContent);
 			const { content } = await listener.nextResponse();
-			assert.equal(content, newContent);
+			assert.strictEqual(content, newContent);
 		}
 		{
 			await vscode.commands.executeCommand(commands.save);
 			const fileContent = (await fs.promises.readFile(testDocument.fsPath)).toString();
-			assert.equal(fileContent, newContent);
+			assert.strictEqual(fileContent, newContent);
 		}
 	});
 
@@ -223,18 +223,18 @@ suite('CustomEditor tests', () => {
 		{
 			await vscode.commands.executeCommand(Testing.abcEditorTypeCommand, newContent);
 			const { content } = await listener.nextResponse();
-			assert.equal(content, newContent);
+			assert.strictEqual(content, newContent);
 		}
 		{
 			await vscode.commands.executeCommand(commands.save);
 			const fileContent = (await fs.promises.readFile(testDocument.fsPath)).toString();
-			assert.equal(fileContent, newContent);
+			assert.strictEqual(fileContent, newContent);
 		}
 		await delay(100);
 		{
 			await vscode.commands.executeCommand(commands.undo);
 			const { content } = await listener.nextResponse();
-			assert.equal(content, startingContent);
+			assert.strictEqual(content, startingContent);
 		}
 	});
 
@@ -244,14 +244,14 @@ suite('CustomEditor tests', () => {
 		const untitledFile = randomFilePath({ root: testWorkspaceRoot, ext: '.abc' }).with({ scheme: 'untitled' });
 
 		await vscode.commands.executeCommand(commands.open, untitledFile);
-		assert.equal((await listener.nextResponse()).content, '');
+		assert.strictEqual((await listener.nextResponse()).content, '');
 
 		await vscode.commands.executeCommand(Testing.abcEditorTypeCommand, `123`);
-		assert.equal((await listener.nextResponse()).content, '123');
+		assert.strictEqual((await listener.nextResponse()).content, '123');
 
 		await vscode.commands.executeCommand(commands.save);
 		const content = await fs.promises.readFile(untitledFile.fsPath);
-		assert.equal(content.toString(), '123');
+		assert.strictEqual(content.toString(), '123');
 	});
 
 	test.skip('When switching away from a non-default custom editors and then back, we should continue using the non-default editor', async () => {
@@ -264,7 +264,8 @@ suite('CustomEditor tests', () => {
 			await vscode.commands.executeCommand(commands.open, testDocument, { preview: false });
 			const { content } = await listener.nextResponse();
 			assert.strictEqual(content, startingContent.toString());
-			assert.ok(!vscode.window.activeTextEditor);
+			const activeEditor = vscode.window.activeTextEditor;
+			assert.ok(!activeEditor);
 		}
 
 		// Switch to non-default editor

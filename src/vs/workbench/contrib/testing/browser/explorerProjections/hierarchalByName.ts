@@ -5,11 +5,11 @@
 
 import { Iterable } from 'vs/base/common/iterator';
 import { IWorkspaceFolder } from 'vs/platform/workspace/common/workspace';
-import { ITestTreeElement } from 'vs/workbench/contrib/testing/browser/explorerProjections';
+import { TestExplorerTreeElement } from 'vs/workbench/contrib/testing/browser/explorerProjections';
 import { HierarchicalByLocationProjection as HierarchicalByLocationProjection } from 'vs/workbench/contrib/testing/browser/explorerProjections/hierarchalByLocation';
-import { HierarchicalElement, HierarchicalFolder } from 'vs/workbench/contrib/testing/browser/explorerProjections/hierarchalNodes';
+import { ByLocationTestItemElement, ByLocationFolderElement } from 'vs/workbench/contrib/testing/browser/explorerProjections/hierarchalNodes';
 import { NodeRenderDirective } from 'vs/workbench/contrib/testing/browser/explorerProjections/nodeHelper';
-import { InternalTestItem } from 'vs/workbench/contrib/testing/common/testCollection';
+import { InternalTestItem, ITestItemUpdate } from 'vs/workbench/contrib/testing/common/testCollection';
 import { ITestResultService } from 'vs/workbench/contrib/testing/common/testResultService';
 import { TestSubscriptionListener } from 'vs/workbench/contrib/testing/common/workspaceTestCollectionService';
 
@@ -30,13 +30,13 @@ export const enum ListElementType {
 /**
  * Version of the HierarchicalElement that is displayed as a list.
  */
-export class HierarchicalByNameElement extends HierarchicalElement {
+export class ByNameTestItemElement extends ByLocationTestItemElement {
 	public elementType: ListElementType = ListElementType.Unset;
 	public readonly isTestRoot = !this.actualParent;
-	public readonly actualChildren = new Set<HierarchicalByNameElement>();
+	public readonly actualChildren = new Set<ByNameTestItemElement>();
 
-	public get description() {
-		let description: string | undefined;
+	public override get description() {
+		let description: string | null = null;
 		for (let parent = this.actualParent; parent && !parent.isTestRoot; parent = parent.actualParent) {
 			description = description ? `${parent.label} › ${description}` : parent.label;
 		}
@@ -44,20 +44,16 @@ export class HierarchicalByNameElement extends HierarchicalElement {
 		return description;
 	}
 
-	public get testId() {
-		return `hintest:${this.test.item.extId}`;
-	}
-
 	/**
 	 * @param actualParent Parent of the item in the test heirarchy
 	 */
 	constructor(
 		internal: InternalTestItem,
-		parentItem: HierarchicalFolder | HierarchicalElement,
-		private readonly addUpdated: (n: ITestTreeElement) => void,
-		private readonly actualParent?: HierarchicalByNameElement,
+		parentItem: ByLocationFolderElement | ByLocationTestItemElement,
+		addedOrRemoved: (n: TestExplorerTreeElement) => void,
+		private readonly actualParent?: ByNameTestItemElement,
 	) {
-		super(internal, parentItem);
+		super(internal, parentItem, addedOrRemoved);
 		actualParent?.addChild(this);
 		this.updateLeafTestState();
 	}
@@ -65,11 +61,10 @@ export class HierarchicalByNameElement extends HierarchicalElement {
 	/**
 	 * @override
 	 */
-	public update(actual: InternalTestItem) {
-		const wasRunnable = this.test.item.runnable;
-		super.update(actual);
+	public override update(patch: ITestItemUpdate) {
+		super.update(patch);
 
-		if (this.test.item.runnable !== wasRunnable) {
+		if (patch.item?.runnable !== undefined) {
 			this.updateLeafTestState();
 		}
 	}
@@ -81,12 +76,12 @@ export class HierarchicalByNameElement extends HierarchicalElement {
 		this.actualParent?.removeChild(this);
 	}
 
-	private removeChild(element: HierarchicalByNameElement) {
+	private removeChild(element: ByNameTestItemElement) {
 		this.actualChildren.delete(element);
 		this.updateLeafTestState();
 	}
 
-	private addChild(element: HierarchicalByNameElement) {
+	private addChild(element: ByNameTestItemElement) {
 		this.actualChildren.add(element);
 		this.updateLeafTestState();
 	}
@@ -105,7 +100,7 @@ export class HierarchicalByNameElement extends HierarchicalElement {
 
 		if (newType !== this.elementType) {
 			this.elementType = newType;
-			this.addUpdated(this);
+			this.addedOrRemoved(this);
 		}
 
 		this.actualParent?.updateLeafTestState();
@@ -123,39 +118,51 @@ export class HierarchicalByNameProjection extends HierarchicalByLocationProjecti
 
 		const originalRenderNode = this.renderNode.bind(this);
 		this.renderNode = (node, recurse) => {
-			if (node instanceof HierarchicalByNameElement && node.elementType !== ListElementType.TestLeaf && !node.isTestRoot) {
+			if (node instanceof ByNameTestItemElement && node.elementType !== ListElementType.TestLeaf && !node.isTestRoot) {
 				return NodeRenderDirective.Concat;
 			}
 
-			return originalRenderNode(node, recurse);
+			const rendered = originalRenderNode(node, recurse);
+			if (typeof rendered !== 'number') {
+				(rendered as any).collapsible = false;
+			}
+
+			return rendered;
 		};
 	}
 
 	/**
 	 * @override
 	 */
-	protected createItem(item: InternalTestItem, folder: IWorkspaceFolder): HierarchicalElement {
-		const parent = this.getOrCreateFolderElement(folder);
-		const actualParent = item.parent ? this.items.get(item.parent) as HierarchicalByNameElement : undefined;
-		for (const testRoot of parent.children) {
-			if (testRoot.test.providerId === item.providerId) {
-				return new HierarchicalByNameElement(item, testRoot, this.addUpdated, actualParent);
+	protected override createItem(item: InternalTestItem, folder: IWorkspaceFolder): ByLocationTestItemElement {
+		const { root, items } = this.getOrCreateFolderElement(folder);
+		const actualParent = item.parent ? items.get(item.parent) as ByNameTestItemElement : undefined;
+		for (const testRoot of root.children) {
+			if (testRoot.test.src.controller === item.src.controller) {
+				return new ByNameTestItemElement(item, testRoot, r => this.changes.addedOrRemoved(r), actualParent);
 			}
 		}
 
-		return new HierarchicalByNameElement(item, parent, this.addUpdated);
+		return new ByNameTestItemElement(item, root, r => this.changes.addedOrRemoved(r));
 	}
 
 	/**
 	 * @override
 	 */
-	protected unstoreItem(item: HierarchicalElement) {
-		const treeChildren = super.unstoreItem(item);
-		if (item instanceof HierarchicalByNameElement) {
+	protected override unstoreItem(items: Map<string, ByLocationTestItemElement>, item: ByLocationTestItemElement) {
+		const treeChildren = super.unstoreItem(items, item);
+		if (item instanceof ByNameTestItemElement) {
 			item.remove();
 			return item.actualChildren;
 		}
 
 		return treeChildren;
+	}
+
+	/**
+	 * @override
+	 */
+	protected override getRevealDepth(element: ByLocationTestItemElement) {
+		return element.depth === 1 ? Infinity : undefined;
 	}
 }

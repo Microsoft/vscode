@@ -24,15 +24,15 @@ suite('ConfigurationRegistry', () => {
 		configurationRegistry.registerDefaultConfigurations([{ 'config': { a: 1, b: 2 } }]);
 		configurationRegistry.registerDefaultConfigurations([{ '[lang]': { a: 2, c: 3 } }]);
 
-		assert.deepEqual(configurationRegistry.getConfigurationProperties()['config'].default, { a: 1, b: 2 });
-		assert.deepEqual(configurationRegistry.getConfigurationProperties()['[lang]'].default, { a: 2, c: 3 });
+		assert.deepStrictEqual(configurationRegistry.getConfigurationProperties()['config'].default, { a: 1, b: 2 });
+		assert.deepStrictEqual(configurationRegistry.getConfigurationProperties()['[lang]'].default, { a: 2, c: 3 });
 	});
 
 	test('configuration override defaults - merges defaults', async () => {
 		configurationRegistry.registerDefaultConfigurations([{ '[lang]': { a: 1, b: 2 } }]);
 		configurationRegistry.registerDefaultConfigurations([{ '[lang]': { a: 2, c: 3 } }]);
 
-		assert.deepEqual(configurationRegistry.getConfigurationProperties()['[lang]'].default, { a: 2, b: 2, c: 3 });
+		assert.deepStrictEqual(configurationRegistry.getConfigurationProperties()['[lang]'].default, { a: 2, b: 2, c: 3 });
 	});
 
 	test('configuration defaults - overrides defaults', async () => {
@@ -48,6 +48,6 @@ suite('ConfigurationRegistry', () => {
 		configurationRegistry.registerDefaultConfigurations([{ 'config': { a: 1, b: 2 } }]);
 		configurationRegistry.registerDefaultConfigurations([{ 'config': { a: 2, c: 3 } }]);
 
-		assert.deepEqual(configurationRegistry.getConfigurationProperties()['config'].default, { a: 2, c: 3 });
+		assert.deepStrictEqual(configurationRegistry.getConfigurationProperties()['config'].default, { a: 2, c: 3 });
 	});
 });

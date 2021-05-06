@@ -11,19 +11,37 @@
 
 	// Load process explorer into window
 	bootstrapWindow.load(['vs/code/electron-sandbox/processExplorer/processExplorerMain'], function (processExplorer, configuration) {
-		processExplorer.startup(configuration.windowId, configuration.data);
-	}, { forceEnableDeveloperKeybindings: true });
-
-
-	//#region Globals
+		return processExplorer.startup(configuration);
+	}, {
+		configureDeveloperSettings: function () {
+			return {
+				forceEnableDeveloperKeybindings: true
+			};
+		},
+	});
 
 	/**
-	 * @returns {{ load: (modules: string[], resultCallback: (result, configuration: object) => any, options?: object) => unknown }}
+	 * @typedef {import('../../../base/parts/sandbox/common/sandboxTypes').ISandboxConfiguration} ISandboxConfiguration
+	 *
+	 * @returns {{
+	 *   load: (
+	 *     modules: string[],
+	 *     resultCallback: (result, configuration: ISandboxConfiguration) => unknown,
+	 *     options?: {
+	 *       configureDeveloperSettings?: (config: ISandboxConfiguration) => {
+	 * 			forceEnableDeveloperKeybindings?: boolean,
+	 * 			disallowReloadKeybinding?: boolean,
+	 * 			removeDeveloperKeybindingsAfterLoad?: boolean
+	 * 		 },
+	 * 	     canModifyDOM?: (config: ISandboxConfiguration) => void,
+	 * 	     beforeLoaderConfig?: (loaderConfig: object) => void,
+	 *       beforeRequire?: () => void
+	 *     }
+	 *   ) => Promise<unknown>
+	 * }}
 	 */
 	function bootstrapWindowLib() {
 		// @ts-ignore (defined in bootstrap-window.js)
 		return window.MonacoBootstrapWindow;
 	}
-
-	//#endregion
 }());

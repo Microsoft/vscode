@@ -170,6 +170,12 @@ export class ExplorerService implements IExplorerService {
 		return this.model.findClosest(resource);
 	}
 
+	findClosestRoot(resource: URI): ExplorerItem | null {
+		const parentRoots = this.model.roots.filter(r => this.uriIdentityService.extUri.isEqualOrParent(resource, r.resource))
+			.sort((first, second) => second.resource.path.length - first.resource.path.length);
+		return parentRoots.length ? parentRoots[0] : null;
+	}
+
 	async setEditable(stat: ExplorerItem, data: IEditableData | null): Promise<void> {
 		if (!this.view) {
 			return;
@@ -221,16 +227,13 @@ export class ExplorerService implements IExplorerService {
 
 		// Stat needs to be resolved first and then revealed
 		const options: IResolveFileOptions = { resolveTo: [resource], resolveMetadata: this.sortOrder === SortOrder.Modified };
-		const workspaceFolder = this.contextService.getWorkspaceFolder(resource);
-		if (workspaceFolder === null) {
-			return Promise.resolve(undefined);
+		const root = this.findClosestRoot(resource);
+		if (!root) {
+			return undefined;
 		}
-		const rootUri = workspaceFolder.uri;
-
-		const root = this.roots.find(r => this.uriIdentityService.extUri.isEqual(r.resource, rootUri))!;
 
 		try {
-			const stat = await this.fileService.resolve(rootUri, options);
+			const stat = await this.fileService.resolve(root.resource, options);
 
 			// Convert to model
 			const modelStat = ExplorerItem.create(this.fileService, stat, undefined, options.resolveTo);

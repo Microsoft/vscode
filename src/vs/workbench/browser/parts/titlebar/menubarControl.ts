@@ -39,6 +39,8 @@ import { KeybindingWeight } from 'vs/platform/keybinding/common/keybindingsRegis
 import { IsWebContext } from 'vs/platform/contextkey/common/contextkeys';
 import { ICommandService } from 'vs/platform/commands/common/commands';
 
+export type IOpenRecentAction = IAction & { uri: URI, remoteAuthority?: string };
+
 export abstract class MenubarControl extends Disposable {
 
 	protected keys = [
@@ -158,7 +160,7 @@ export abstract class MenubarControl extends Disposable {
 		this.updateMenubar();
 	}
 
-	protected getOpenRecentActions(): (Separator | IAction & { uri: URI })[] {
+	protected getOpenRecentActions(): (Separator | IOpenRecentAction)[] {
 		if (!this.recentlyOpened) {
 			return [];
 		}
@@ -224,12 +226,13 @@ export abstract class MenubarControl extends Disposable {
 		}
 	}
 
-	private createOpenRecentMenuAction(recent: IRecent): IAction & { uri: URI } {
+	private createOpenRecentMenuAction(recent: IRecent): IOpenRecentAction {
 
 		let label: string;
 		let uri: URI;
 		let commandId: string;
 		let openable: IWindowOpenable;
+		const remoteAuthority = recent.remoteAuthority;
 
 		if (isRecentFolder(recent)) {
 			uri = recent.folderUri;
@@ -248,15 +251,17 @@ export abstract class MenubarControl extends Disposable {
 			openable = { fileUri: uri };
 		}
 
-		const ret: IAction = new Action(commandId, unmnemonicLabel(label), undefined, undefined, (event) => {
-			const openInNewWindow = event && ((!isMacintosh && (event.ctrlKey || event.shiftKey)) || (isMacintosh && (event.metaKey || event.altKey)));
+		const ret: IAction = new Action(commandId, unmnemonicLabel(label), undefined, undefined, event => {
+			const browserEvent = event as KeyboardEvent;
+			const openInNewWindow = event && ((!isMacintosh && (browserEvent.ctrlKey || browserEvent.shiftKey)) || (isMacintosh && (browserEvent.metaKey || browserEvent.altKey)));
 
 			return this.hostService.openWindow([openable], {
-				forceNewWindow: openInNewWindow
+				forceNewWindow: !!openInNewWindow,
+				remoteAuthority
 			});
 		});
 
-		return Object.assign(ret, { uri });
+		return Object.assign(ret, { uri, remoteAuthority });
 	}
 
 	private notifyUserOfCustomMenubarAccessibility(): void {
@@ -307,11 +312,11 @@ export class CustomMenubarControl extends MenubarControl {
 		@IStorageService storageService: IStorageService,
 		@INotificationService notificationService: INotificationService,
 		@IPreferencesService preferencesService: IPreferencesService,
-		@IWorkbenchEnvironmentService protected readonly environmentService: IWorkbenchEnvironmentService,
+		@IWorkbenchEnvironmentService environmentService: IWorkbenchEnvironmentService,
 		@IAccessibilityService accessibilityService: IAccessibilityService,
 		@IThemeService private readonly themeService: IThemeService,
 		@IWorkbenchLayoutService private readonly layoutService: IWorkbenchLayoutService,
-		@IHostService protected readonly hostService: IHostService,
+		@IHostService hostService: IHostService,
 		@ICommandService commandService: ICommandService
 	) {
 		super(menuService, workspacesService, contextKeyService, keybindingService, configurationService, labelService, updateService, storageService, notificationService, preferencesService, environmentService, accessibilityService, hostService, commandService);
@@ -459,7 +464,7 @@ export class CustomMenubarControl extends MenubarControl {
 
 			case StateType.Idle:
 				return new Action('update.check', localize({ key: 'checkForUpdates', comment: ['&& denotes a mnemonic'] }, "Check for &&Updates..."), undefined, true, () =>
-					this.updateService.checkForUpdates(this.environmentService.sessionId));
+					this.updateService.checkForUpdates(true));
 
 			case StateType.CheckingForUpdates:
 				return new Action('update.checking', localize('checkingForUpdates', "Checking for Updates..."), undefined, false);
@@ -590,6 +595,7 @@ export class CustomMenubarControl extends MenubarControl {
 		const updateActions = (menu: IMenu, target: IAction[], topLevelTitle: string) => {
 			target.splice(0);
 			let groups = menu.getActions();
+
 			for (let group of groups) {
 				const [, actions] = group;
 
@@ -618,7 +624,10 @@ export class CustomMenubarControl extends MenubarControl {
 
 						const submenuActions: SubmenuAction[] = [];
 						updateActions(submenu, submenuActions, topLevelTitle);
-						target.push(new SubmenuAction(action.id, mnemonicMenuLabel(title), submenuActions));
+
+						if (submenuActions.length > 0) {
+							target.push(new SubmenuAction(action.id, mnemonicMenuLabel(title), submenuActions));
+						}
 					} else {
 						const newAction = new Action(action.id, mnemonicMenuLabel(title), action.class, action.enabled, () => this.commandService.executeCommand(action.id));
 						newAction.tooltip = action.tooltip;
@@ -731,7 +740,7 @@ export class CustomMenubarControl extends MenubarControl {
 		};
 	}
 
-	protected onDidChangeWindowFocus(hasFocus: boolean): void {
+	protected override onDidChangeWindowFocus(hasFocus: boolean): void {
 		if (!this.visible) {
 			return;
 		}
@@ -750,7 +759,7 @@ export class CustomMenubarControl extends MenubarControl {
 		}
 	}
 
-	protected onUpdateStateChange(): void {
+	protected override onUpdateStateChange(): void {
 		if (!this.visible) {
 			return;
 		}
@@ -758,7 +767,7 @@ export class CustomMenubarControl extends MenubarControl {
 		super.onUpdateStateChange();
 	}
 
-	protected onDidChangeRecentlyOpened(): void {
+	protected override onDidChangeRecentlyOpened(): void {
 		if (!this.visible) {
 			return;
 		}
@@ -766,7 +775,7 @@ export class CustomMenubarControl extends MenubarControl {
 		super.onDidChangeRecentlyOpened();
 	}
 
-	protected onUpdateKeybindings(): void {
+	protected override onUpdateKeybindings(): void {
 		if (!this.visible) {
 			return;
 		}
@@ -774,7 +783,7 @@ export class CustomMenubarControl extends MenubarControl {
 		super.onUpdateKeybindings();
 	}
 
-	protected registerListeners(): void {
+	protected override registerListeners(): void {
 		super.registerListeners();
 
 		this._register(addDisposableListener(window, EventType.RESIZE, () => {

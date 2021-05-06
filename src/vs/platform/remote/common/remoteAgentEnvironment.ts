@@ -20,6 +20,7 @@ export interface IRemoteAgentEnvironment {
 	userHome: URI;
 	os: OperatingSystem;
 	marks: performance.PerformanceMark[];
+	useHostProxy: boolean;
 }
 
 export interface RemoteAgentConnectionContext {

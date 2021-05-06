@@ -33,7 +33,7 @@ suite('Save Participants', function () {
 	test('insert final new line', async function () {
 		const model = instantiationService.createInstance(TextFileEditorModel, toResource.call(this, '/path/final_new_line.txt'), 'utf8', undefined) as IResolvedTextFileEditorModel;
 
-		await model.load();
+		await model.resolve();
 		const configService = new TestConfigurationService();
 		configService.setUserConfiguration('files', { 'insertFinalNewline': true });
 		const participant = new FinalNewLineParticipant(configService, undefined!);
@@ -66,7 +66,7 @@ suite('Save Participants', function () {
 	test('trim final new lines', async function () {
 		const model = instantiationService.createInstance(TextFileEditorModel, toResource.call(this, '/path/trim_final_new_line.txt'), 'utf8', undefined) as IResolvedTextFileEditorModel;
 
-		await model.load();
+		await model.resolve();
 		const configService = new TestConfigurationService();
 		configService.setUserConfiguration('files', { 'trimFinalNewlines': true });
 		const participant = new TrimFinalNewLinesParticipant(configService, undefined!);
@@ -101,7 +101,7 @@ suite('Save Participants', function () {
 	test('trim final new lines bug#39750', async function () {
 		const model = instantiationService.createInstance(TextFileEditorModel, toResource.call(this, '/path/trim_final_new_line.txt'), 'utf8', undefined) as IResolvedTextFileEditorModel;
 
-		await model.load();
+		await model.resolve();
 		const configService = new TestConfigurationService();
 		configService.setUserConfiguration('files', { 'trimFinalNewlines': true });
 		const participant = new TrimFinalNewLinesParticipant(configService, undefined!);
@@ -128,7 +128,7 @@ suite('Save Participants', function () {
 	test('trim final new lines bug#46075', async function () {
 		const model = instantiationService.createInstance(TextFileEditorModel, toResource.call(this, '/path/trim_final_new_line.txt'), 'utf8', undefined) as IResolvedTextFileEditorModel;
 
-		await model.load();
+		await model.resolve();
 		const configService = new TestConfigurationService();
 		configService.setUserConfiguration('files', { 'trimFinalNewlines': true });
 		const participant = new TrimFinalNewLinesParticipant(configService, undefined!);
@@ -155,7 +155,7 @@ suite('Save Participants', function () {
 	test('trim whitespace', async function () {
 		const model = instantiationService.createInstance(TextFileEditorModel, toResource.call(this, '/path/trim_final_new_line.txt'), 'utf8', undefined) as IResolvedTextFileEditorModel;
 
-		await model.load();
+		await model.resolve();
 		const configService = new TestConfigurationService();
 		configService.setUserConfiguration('files', { 'trimTrailingWhitespace': true });
 		const participant = new TrimWhitespaceParticipant(configService, undefined!);

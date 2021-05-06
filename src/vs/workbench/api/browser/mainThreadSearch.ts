@@ -138,7 +138,7 @@ class RemoteSearchProvider implements ISearchResultProvider, IDisposable {
 
 		return Promise.resolve(searchP).then((result: ISearchCompleteStats) => {
 			this._searches.delete(search.id);
-			return { results: Array.from(search.matches.values()), stats: result.stats, limitHit: result.limitHit };
+			return { results: Array.from(search.matches.values()), stats: result.stats, limitHit: result.limitHit, messages: result.messages };
 		}, err => {
 			this._searches.delete(search.id);
 			return Promise.reject(err);

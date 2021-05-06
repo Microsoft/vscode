@@ -10,3 +10,7 @@
 .monaco-workbench .notebookOverlay.notebook-editor.find-show-transition {
 	overflow-y: hidden;
 }
+
+.monaco-workbench .notebookOverlay.notebook-editor .simple-fr-find-part-wrapper .matchesCount {
+	text-align: center;
+}

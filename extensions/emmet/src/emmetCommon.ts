@@ -19,7 +19,7 @@ import { evaluateMathExpression } from './evaluateMathExpression';
 import { incrementDecrement } from './incrementDecrement';
 import { LANGUAGE_MODES, getMappingForIncludedLanguages, updateEmmetExtensionsPath, migrateEmmetExtensionsPath, getPathBaseName, getSyntaxes, getEmmetMode } from './util';
 import { reflectCssValue } from './reflectCssValue';
-import { addFileToParseCache, removeFileFromParseCache } from './parseDocument';
+import { addFileToParseCache, clearParseCache, removeFileFromParseCache } from './parseDocument';
 
 export function activateEmmetExtension(context: vscode.ExtensionContext) {
 	migrateEmmetExtensionsPath();
@@ -203,4 +203,6 @@ function registerCompletionProviders(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {
+	completionProvidersMapping.clear();
+	clearParseCache();
 }

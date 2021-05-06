@@ -93,7 +93,7 @@ export class OutputService extends Disposable implements IOutputService, ITextMo
 			this.setActiveChannel(channels && channels.length > 0 ? this.getChannel(channels[0].id) : undefined);
 		}
 
-		this._register(this.lifecycleService.onShutdown(() => this.dispose()));
+		this._register(this.lifecycleService.onDidShutdown(() => this.dispose()));
 	}
 
 	provideTextContent(resource: URI): Promise<ITextModel> | null {

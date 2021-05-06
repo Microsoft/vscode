@@ -20,7 +20,7 @@ import { originalFSPath, joinPath, basename, extUriBiasedIgnorePathCase } from '
 import { createDecorator } from 'vs/platform/instantiation/common/instantiation';
 import { ICodeWindow } from 'vs/platform/windows/electron-main/windows';
 import { localize } from 'vs/nls';
-import product from 'vs/platform/product/common/product';
+import { IProductService } from 'vs/platform/product/common/productService';
 import { MessageBoxOptions, BrowserWindow } from 'electron';
 import { withNullAsUndefined } from 'vs/base/common/types';
 import { IBackupMainService } from 'vs/platform/backup/electron-main/backup';
@@ -41,7 +41,7 @@ export interface IWorkspacesManagementMainService {
 	readonly onDidDeleteUntitledWorkspace: Event<IWorkspaceIdentifier>;
 	readonly onDidEnterWorkspace: Event<IWorkspaceEnteredEvent>;
 
-	enterWorkspace(intoWindow: ICodeWindow, openedWindows: ICodeWindow[], path: URI): Promise<IEnterWorkspaceResult | null>;
+	enterWorkspace(intoWindow: ICodeWindow, openedWindows: ICodeWindow[], path: URI): Promise<IEnterWorkspaceResult | undefined>;
 
 	createUntitledWorkspace(folders?: IWorkspaceFolderCreationData[], remoteAuthority?: string): Promise<IWorkspaceIdentifier>;
 	createUntitledWorkspaceSync(folders?: IWorkspaceFolderCreationData[]): IWorkspaceIdentifier;
@@ -52,7 +52,7 @@ export interface IWorkspacesManagementMainService {
 	getUntitledWorkspacesSync(): IUntitledWorkspaceInfo[];
 	isUntitledWorkspace(workspace: IWorkspaceIdentifier): boolean;
 
-	resolveLocalWorkspaceSync(path: URI): IResolvedWorkspace | null;
+	resolveLocalWorkspaceSync(path: URI): IResolvedWorkspace | undefined;
 	getWorkspaceIdentifier(workspacePath: URI): Promise<IWorkspaceIdentifier>;
 }
 
@@ -77,25 +77,26 @@ export class WorkspacesManagementMainService extends Disposable implements IWork
 		@IEnvironmentMainService private readonly environmentMainService: IEnvironmentMainService,
 		@ILogService private readonly logService: ILogService,
 		@IBackupMainService private readonly backupMainService: IBackupMainService,
-		@IDialogMainService private readonly dialogMainService: IDialogMainService
+		@IDialogMainService private readonly dialogMainService: IDialogMainService,
+		@IProductService private readonly productService: IProductService
 	) {
 		super();
 	}
 
-	resolveLocalWorkspaceSync(uri: URI): IResolvedWorkspace | null {
+	resolveLocalWorkspaceSync(uri: URI): IResolvedWorkspace | undefined {
 		if (!this.isWorkspacePath(uri)) {
-			return null; // does not look like a valid workspace config file
+			return undefined; // does not look like a valid workspace config file
 		}
 
 		if (uri.scheme !== Schemas.file) {
-			return null;
+			return undefined;
 		}
 
 		let contents: string;
 		try {
 			contents = readFileSync(uri.fsPath, 'utf8');
 		} catch (error) {
-			return null; // invalid workspace
+			return undefined; // invalid workspace
 		}
 
 		return this.doResolveWorkspace(uri, contents);
@@ -105,7 +106,7 @@ export class WorkspacesManagementMainService extends Disposable implements IWork
 		return isUntitledWorkspace(uri, this.environmentMainService) || hasWorkspaceFileExtension(uri);
 	}
 
-	private doResolveWorkspace(path: URI, contents: string): IResolvedWorkspace | null {
+	private doResolveWorkspace(path: URI, contents: string): IResolvedWorkspace | undefined {
 		try {
 			const workspace = this.doParseStoredWorkspace(path, contents);
 			const workspaceIdentifier = getWorkspaceIdentifier(path);
@@ -119,7 +120,7 @@ export class WorkspacesManagementMainService extends Disposable implements IWork
 			this.logService.warn(error.toString());
 		}
 
-		return null;
+		return undefined;
 	}
 
 	private doParseStoredWorkspace(path: URI, contents: string): IStoredWorkspace {
@@ -237,19 +238,19 @@ export class WorkspacesManagementMainService extends Disposable implements IWork
 		return untitledWorkspaces;
 	}
 
-	async enterWorkspace(window: ICodeWindow, windows: ICodeWindow[], path: URI): Promise<IEnterWorkspaceResult | null> {
+	async enterWorkspace(window: ICodeWindow, windows: ICodeWindow[], path: URI): Promise<IEnterWorkspaceResult | undefined> {
 		if (!window || !window.win || !window.isReady) {
-			return null; // return early if the window is not ready or disposed
+			return undefined; // return early if the window is not ready or disposed
 		}
 
 		const isValid = await this.isValidTargetWorkspacePath(window, windows, path);
 		if (!isValid) {
-			return null; // return early if the workspace is not valid
+			return undefined; // return early if the workspace is not valid
 		}
 
 		const result = this.doEnterWorkspace(window, getWorkspaceIdentifier(path));
 		if (!result) {
-			return null;
+			return undefined;
 		}
 
 		// Emit as event
@@ -270,7 +271,7 @@ export class WorkspacesManagementMainService extends Disposable implements IWork
 		// Prevent overwriting a workspace that is currently opened in another window
 		if (findWindowOnWorkspaceOrFolder(windows, workspacePath)) {
 			const options: MessageBoxOptions = {
-				title: product.nameLong,
+				title: this.productService.nameLong,
 				type: 'info',
 				buttons: [localize('ok', "OK")],
 				message: localize('workspaceOpenedMessage', "Unable to save workspace '{0}'", basename(workspacePath)),
@@ -286,9 +287,9 @@ export class WorkspacesManagementMainService extends Disposable implements IWork
 		return true; // OK
 	}
 
-	private doEnterWorkspace(window: ICodeWindow, workspace: IWorkspaceIdentifier): IEnterWorkspaceResult | null {
+	private doEnterWorkspace(window: ICodeWindow, workspace: IWorkspaceIdentifier): IEnterWorkspaceResult | undefined {
 		if (!window.config) {
-			return null;
+			return undefined;
 		}
 
 		window.focus();

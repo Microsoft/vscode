@@ -121,9 +121,9 @@ export class RangeUtil {
 		startChildIndex = Math.min(max, Math.max(min, startChildIndex));
 		endChildIndex = Math.min(max, Math.max(min, endChildIndex));
 
-		if (startChildIndex === endChildIndex && startOffset === endOffset && startOffset === 0) {
+		if (startChildIndex === endChildIndex && startOffset === endOffset && startOffset === 0 && !domNode.children[startChildIndex].firstChild) {
 			// We must find the position at the beginning of a <span>
-			// To cover cases of empty <span>s, aboid using a range and use the <span>'s bounding box
+			// To cover cases of empty <span>s, avoid using a range and use the <span>'s bounding box
 			const clientRects = domNode.children[startChildIndex].getClientRects();
 			return this._createHorizontalRangesFromClientRects(clientRects, clientRectDeltaLeft);
 		}

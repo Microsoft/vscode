@@ -12,7 +12,7 @@ suite('IssueReporter', () => {
 
 	test('sets defaults to include all data', () => {
 		const issueReporterModel = new IssueReporterModel();
-		assert.deepEqual(issueReporterModel.getData(), {
+		assert.deepStrictEqual(issueReporterModel.getData(), {
 			allExtensions: [],
 			includeSystemInfo: true,
 			includeWorkspaceInfo: true,
@@ -25,7 +25,7 @@ suite('IssueReporter', () => {
 
 	test('serializes model skeleton when no data is provided', () => {
 		const issueReporterModel = new IssueReporterModel({});
-		assert.equal(issueReporterModel.serialize(),
+		assert.strictEqual(issueReporterModel.serialize(),
 			`
 Issue Type: <b>Bug</b>
 
@@ -55,7 +55,7 @@ Extensions: none
 				}
 			}
 		});
-		assert.equal(issueReporterModel.serialize(),
+		assert.strictEqual(issueReporterModel.serialize(),
 			`
 Issue Type: <b>Bug</b>
 
@@ -98,7 +98,7 @@ OS version: undefined
 			},
 			experimentInfo: 'vsliv695:30137379\nvsins829:30139715'
 		});
-		assert.equal(issueReporterModel.serialize(),
+		assert.strictEqual(issueReporterModel.serialize(),
 			`
 Issue Type: <b>Bug</b>
 
@@ -152,7 +152,7 @@ vsins829:30139715
 				}
 			}
 		});
-		assert.equal(issueReporterModel.serialize(),
+		assert.strictEqual(issueReporterModel.serialize(),
 			`
 Issue Type: <b>Bug</b>
 
@@ -208,7 +208,7 @@ OS version: undefined
 				]
 			}
 		});
-		assert.equal(issueReporterModel.serialize(),
+		assert.strictEqual(issueReporterModel.serialize(),
 			`
 Issue Type: <b>Bug</b>
 
@@ -256,7 +256,7 @@ Remote OS version: Linux x64 4.18.0
 				gpuStatus: {}
 			}
 		});
-		assert.equal(issueReporterModel.serialize(),
+		assert.strictEqual(issueReporterModel.serialize(),
 			`
 Issue Type: <b>Bug</b>
 
@@ -291,7 +291,7 @@ OS version: undefined
 			'https://github.com/repo/issues/new',
 			'https://github.com/repo/issues/new/'
 		].forEach(url => {
-			assert.equal('https://github.com/repo', normalizeGitHubUrl(url));
+			assert.strictEqual('https://github.com/repo', normalizeGitHubUrl(url));
 		});
 	});
 
@@ -306,7 +306,7 @@ OS version: undefined
 				fileOnExtension: true
 			});
 
-			assert.equal(issueReporterModel.fileOnExtension(), true);
+			assert.strictEqual(issueReporterModel.fileOnExtension(), true);
 		});
 	});
 });

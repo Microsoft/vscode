@@ -320,7 +320,7 @@ export class Storage extends Disposable implements IStorage {
 		return new Promise(resolve => this.whenFlushedCallbacks.push(resolve));
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this.flushDelayer.cancel(); // workaround https://github.com/microsoft/vscode/issues/116777
 		this.flushDelayer.dispose();
 

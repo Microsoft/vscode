@@ -179,7 +179,7 @@ export class ThrottledDelayer<T> extends Delayer<Promise<T>> {
 		this.throttler = new Throttler<T>();
 	}
 
-	public trigger(promiseFactory: ITask<Promise<T>>, delay?: number): Promise<Promise<T>> {
+	public override trigger(promiseFactory: ITask<Promise<T>>, delay?: number): Promise<Promise<T>> {
 		return super.trigger(() => this.throttler.queue(promiseFactory), delay);
 	}
 }

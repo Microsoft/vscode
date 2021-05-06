@@ -8,13 +8,13 @@ import { MultilineTokens2, SparseEncodedTokens, TokensStore2 } from 'vs/editor/c
 import { Range } from 'vs/editor/common/core/range';
 import { TextModel } from 'vs/editor/common/model/textModel';
 import { IIdentifiedSingleEditOperation } from 'vs/editor/common/model';
-import { MetadataConsts, TokenMetadata, FontStyle } from 'vs/editor/common/modes';
+import { MetadataConsts, TokenMetadata, FontStyle, ColorId } from 'vs/editor/common/modes';
 import { createTextModel } from 'vs/editor/test/common/editorTestUtils';
 import { LineTokens } from 'vs/editor/common/core/lineTokens';
 
 suite('TokensStore', () => {
 
-	const SEMANTIC_COLOR = 5;
+	const SEMANTIC_COLOR: ColorId = 5;
 
 	function parseTokensState(state: string[]): { text: string; tokens: MultilineTokens2; } {
 		let text: string[] = [];

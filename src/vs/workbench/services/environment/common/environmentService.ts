@@ -29,8 +29,6 @@ export interface IWorkbenchEnvironmentService extends IEnvironmentService {
 
 	readonly remoteAuthority?: string;
 
-	readonly sessionId: string;
-
 	readonly logFile: URI;
 
 	readonly extHostLogsPath: URI;

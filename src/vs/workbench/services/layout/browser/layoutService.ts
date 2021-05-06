@@ -123,9 +123,14 @@ export interface IWorkbenchLayoutService extends ILayoutService {
 
 	/**
 	 * Asks the part service if all parts have been fully restored. For editor part
-	 * this means that the contents of editors have loaded.
+	 * this means that the contents of visible editors have loaded.
 	 */
 	isRestored(): boolean;
+
+	/**
+	 * A promise for to await the `isRestored()` condition to be `true`.
+	 */
+	readonly whenRestored: Promise<void>;
 
 	/**
 	 * Returns whether the given part has the keyboard focus or not.

@@ -27,7 +27,7 @@ suite('Processes', () => {
 			GDK_PIXBUF_MODULEDIR: 'x',
 		};
 		processes.sanitizeProcessEnvironment(env);
-		assert.equal(env['FOO'], 'bar');
-		assert.equal(Object.keys(env).length, 1);
+		assert.strictEqual(env['FOO'], 'bar');
+		assert.strictEqual(Object.keys(env).length, 1);
 	});
 });

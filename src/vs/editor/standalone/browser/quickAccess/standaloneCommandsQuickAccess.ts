@@ -15,7 +15,7 @@ import { IInstantiationService, ServicesAccessor } from 'vs/platform/instantiati
 import { IKeybindingService } from 'vs/platform/keybinding/common/keybinding';
 import { ICommandService } from 'vs/platform/commands/common/commands';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
-import { INotificationService } from 'vs/platform/notification/common/notification';
+import { IDialogService } from 'vs/platform/dialogs/common/dialogs';
 import { EditorAction, registerEditorAction } from 'vs/editor/browser/editorExtensions';
 import { EditorContextKeys } from 'vs/editor/common/editorContextKeys';
 import { KeyCode } from 'vs/base/common/keyCodes';
@@ -32,9 +32,9 @@ export class StandaloneCommandsQuickAccessProvider extends AbstractEditorCommand
 		@IKeybindingService keybindingService: IKeybindingService,
 		@ICommandService commandService: ICommandService,
 		@ITelemetryService telemetryService: ITelemetryService,
-		@INotificationService notificationService: INotificationService
+		@IDialogService dialogService: IDialogService
 	) {
-		super({ showAlias: false }, instantiationService, keybindingService, commandService, telemetryService, notificationService);
+		super({ showAlias: false }, instantiationService, keybindingService, commandService, telemetryService, dialogService);
 	}
 
 	protected async getCommandPicks(): Promise<Array<ICommandQuickPick>> {

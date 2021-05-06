@@ -30,6 +30,11 @@ export type OpenInternalOptions = {
 	 * action, such as keyboard or mouse usage.
 	 */
 	readonly fromUserGesture?: boolean;
+
+	/**
+	 * Allow command links to be handled.
+	 */
+	readonly allowCommands?: boolean;
 };
 
 export type OpenExternalOptions = {

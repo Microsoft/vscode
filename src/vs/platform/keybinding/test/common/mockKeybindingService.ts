@@ -78,7 +78,7 @@ export class MockScopableContextKeyService extends MockContextKeyService {
 	/**
 	 * Don't implement this for all tests since we rarely depend on this behavior and it isn't implemented fully
 	 */
-	public createScoped(domNote: HTMLElement): IContextKeyService {
+	public override createScoped(domNote: HTMLElement): IContextKeyService {
 		return new MockContextKeyService();
 	}
 }

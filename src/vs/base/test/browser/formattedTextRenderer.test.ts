@@ -44,8 +44,14 @@ suite('FormattedTextRenderer', () => {
 		result = renderFormattedText('__italics__');
 		assert.strictEqual(result.innerHTML, '<i>italics</i>');
 
-		result = renderFormattedText('this string has **bold** and __italics__');
-		assert.strictEqual(result.innerHTML, 'this string has <b>bold</b> and <i>italics</i>');
+		result = renderFormattedText('``code``');
+		assert.strictEqual(result.innerHTML, '``code``');
+
+		result = renderFormattedText('``code``', { renderCodeSegements: true });
+		assert.strictEqual(result.innerHTML, '<code>code</code>');
+
+		result = renderFormattedText('this string has **bold**, __italics__, and ``code``!!', { renderCodeSegements: true });
+		assert.strictEqual(result.innerHTML, 'this string has <b>bold</b>, <i>italics</i>, and <code>code</code>!!');
 	});
 
 	test('no formatting', () => {
@@ -93,6 +99,26 @@ suite('FormattedTextRenderer', () => {
 		let event: MouseEvent = <any>document.createEvent('MouseEvent');
 		event.initEvent('click', true, true);
 		result.firstChild!.firstChild!.firstChild!.dispatchEvent(event);
+		assert.strictEqual(callbackCalled, true);
+	});
+
+	test('fancier action', () => {
+		let callbackCalled = false;
+		let result: HTMLElement = renderFormattedText('``__**[[action]]**__``', {
+			renderCodeSegements: true,
+			actionHandler: {
+				callback(content) {
+					assert.strictEqual(content, '0');
+					callbackCalled = true;
+				},
+				disposeables: store
+			}
+		});
+		assert.strictEqual(result.innerHTML, '<code><i><b><a href="#">action</a></b></i></code>');
+
+		let event: MouseEvent = <any>document.createEvent('MouseEvent');
+		event.initEvent('click', true, true);
+		result.firstChild!.firstChild!.firstChild!.firstChild!.dispatchEvent(event);
 		assert.strictEqual(callbackCalled, true);
 	});
 

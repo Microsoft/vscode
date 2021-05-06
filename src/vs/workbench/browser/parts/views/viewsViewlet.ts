@@ -121,7 +121,7 @@ export abstract class FilterViewPaneContainer extends ViewPaneContainer {
 		return views;
 	}
 
-	onDidAddViewDescriptors(added: IAddedViewDescriptorRef[]): ViewPane[] {
+	override onDidAddViewDescriptors(added: IAddedViewDescriptorRef[]): ViewPane[] {
 		const panes: ViewPane[] = super.onDidAddViewDescriptors(added);
 		for (let i = 0; i < added.length; i++) {
 			if (this.constantViewDescriptors.has(added[i].viewDescriptor.id)) {
@@ -135,6 +135,6 @@ export abstract class FilterViewPaneContainer extends ViewPaneContainer {
 		return panes;
 	}
 
-	abstract getTitle(): string;
+	abstract override getTitle(): string;
 
 }

@@ -64,7 +64,7 @@ class ReplaceAllAction extends Action {
 		this._searchWidget = searchWidget;
 	}
 
-	run(): Promise<any> {
+	override run(): Promise<any> {
 		if (this._searchWidget) {
 			return this._searchWidget.triggerReplaceAll();
 		}
@@ -148,7 +148,7 @@ export class SearchWidget extends Widget {
 	readonly onDidToggleContext: Event<void> = this._onDidToggleContext.event;
 
 	private showContextCheckbox!: Checkbox;
-	private contextLinesInput!: InputBox;
+	public contextLinesInput!: InputBox;
 
 	constructor(
 		container: HTMLElement,
@@ -580,7 +580,7 @@ export class SearchWidget extends Widget {
 			}
 			keyboardEvent.preventDefault();
 		}
-		else if (KeyMod.Shift | KeyCode.Tab) {
+		else if (keyboardEvent.equals(KeyMod.Shift | KeyCode.Tab)) {
 			this.focusRegexAction();
 			keyboardEvent.preventDefault();
 		}
@@ -653,7 +653,7 @@ export class SearchWidget extends Widget {
 		this.onContextLinesChanged();
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this.setReplaceAllActionState(false);
 		super.dispose();
 	}

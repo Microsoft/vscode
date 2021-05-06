@@ -42,7 +42,7 @@ export class TextInputActionsProvider extends Disposable implements IWorkbenchCo
 			// Cut / Copy / Paste
 			new Action('editor.action.clipboardCutAction', localize('cut', "Cut"), undefined, true, async () => document.execCommand('cut')),
 			new Action('editor.action.clipboardCopyAction', localize('copy', "Copy"), undefined, true, async () => document.execCommand('copy')),
-			new Action('editor.action.clipboardPasteAction', localize('paste', "Paste"), undefined, true, async (element: HTMLInputElement | HTMLTextAreaElement) => {
+			new Action('editor.action.clipboardPasteAction', localize('paste', "Paste"), undefined, true, async element => {
 
 				// Native: paste is supported
 				if (isNative) {

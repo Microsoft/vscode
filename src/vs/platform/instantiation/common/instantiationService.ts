@@ -16,7 +16,7 @@ const _enableTracing = false;
 class CyclicDependencyError extends Error {
 	constructor(graph: Graph<any>) {
 		super('cyclic dependency between services');
-		this.message = graph.toString();
+		this.message = graph.findCycleSlow() ?? `UNABLE to detect cycle, dumping graph: \n${graph.toString()}`;
 	}
 }
 
@@ -267,8 +267,8 @@ class Trace {
 
 	private static readonly _None = new class extends Trace {
 		constructor() { super(-1, null); }
-		stop() { }
-		branch() { return this; }
+		override stop() { }
+		override branch() { return this; }
 	};
 
 	static traceInvocation(ctor: any): Trace {

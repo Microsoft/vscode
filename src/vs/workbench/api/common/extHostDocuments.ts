@@ -102,7 +102,7 @@ export class ExtHostDocuments implements ExtHostDocumentsShape {
 		return this._proxy.$tryCreateDocument(options).then(data => URI.revive(data));
 	}
 
-	public $acceptModelModeChanged(uriComponents: UriComponents, oldModeId: string, newModeId: string): void {
+	public $acceptModelModeChanged(uriComponents: UriComponents, newModeId: string): void {
 		const uri = URI.revive(uriComponents);
 		const data = this._documentsAndEditors.getDocument(uri);
 		if (!data) {

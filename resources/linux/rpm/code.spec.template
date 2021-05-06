@@ -1,6 +1,6 @@
 Name:     @@NAME@@
 Version:  @@VERSION@@
-Release:  @@RELEASE@@.el7
+Release:  @@RELEASE@@.el8
 Summary:  Code editing. Redefined.
 Group:    Development/Tools
 Vendor:   Microsoft Corporation

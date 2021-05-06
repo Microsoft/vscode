@@ -49,7 +49,7 @@ const CONFIG_PLACEHOLDER_TEXT = `[
 	// "https://microsoft.com"
 ]`;
 
-function computeTrustedDomainContent(defaultTrustedDomains: string[], trustedDomains: string[], userTrustedDomains: string[], workspaceTrustedDomains: string[]) {
+function computeTrustedDomainContent(defaultTrustedDomains: string[], trustedDomains: string[], userTrustedDomains: string[], workspaceTrustedDomains: string[], configuring?: string) {
 	let content = CONFIG_HELP_TEXT_PRE;
 
 	if (defaultTrustedDomains.length > 0) {
@@ -76,6 +76,8 @@ function computeTrustedDomainContent(defaultTrustedDomains: string[], trustedDom
 	}
 
 	content += CONFIG_HELP_TEXT_AFTER;
+
+	content += configuring ? `\n// Currently configuring trust for ${configuring}\n` : '';
 
 	if (trustedDomains.length === 0) {
 		content += CONFIG_PLACEHOLDER_TEXT;
@@ -110,14 +112,17 @@ export class TrustedDomainsFileSystemProvider implements IFileSystemProviderWith
 			StorageScope.GLOBAL
 		);
 
+		const configuring: string | undefined = resource.fragment;
+
 		const { defaultTrustedDomains, trustedDomains, userDomains, workspaceDomains } = await this.instantiationService.invokeFunction(readTrustedDomains);
 		if (
 			!trustedDomainsContent ||
 			trustedDomainsContent.indexOf(CONFIG_HELP_TEXT_PRE) === -1 ||
 			trustedDomainsContent.indexOf(CONFIG_HELP_TEXT_AFTER) === -1 ||
+			trustedDomainsContent.indexOf(configuring ?? '') === -1 ||
 			[...defaultTrustedDomains, ...trustedDomains, ...userDomains, ...workspaceDomains].some(d => !assertIsDefined(trustedDomainsContent).includes(d))
 		) {
-			trustedDomainsContent = computeTrustedDomainContent(defaultTrustedDomains, trustedDomains, userDomains, workspaceDomains);
+			trustedDomainsContent = computeTrustedDomainContent(defaultTrustedDomains, trustedDomains, userDomains, workspaceDomains, configuring);
 		}
 
 		const buffer = VSBuffer.fromString(trustedDomainsContent).buffer;

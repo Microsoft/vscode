@@ -358,13 +358,11 @@ function toExtension(galleryExtension: IRawGalleryExtension, version: IRawGaller
 		/* __GDPR__FRAGMENT__
 			"GalleryExtensionTelemetryData2" : {
 				"index" : { "classification": "SystemMetaData", "purpose": "FeatureInsight", "isMeasurement": true },
-				"searchText": { "classification": "CustomerContent", "purpose": "FeatureInsight" },
 				"querySource": { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
 			}
 		*/
 		telemetryData: {
 			index: ((query.pageNumber - 1) * query.pageSize) + index,
-			searchText: query.searchText,
 			querySource
 		},
 		preview: getIsPreview(galleryExtension.flags)

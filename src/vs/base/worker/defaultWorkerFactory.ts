@@ -31,23 +31,15 @@ function getWorker(workerId: string, label: string): Worker | Promise<Worker> {
 }
 
 // ESM-comment-begin
-export function getWorkerBootstrapUrl(scriptPath: string, label: string, forceDataUri: boolean = false): string {
-	if (forceDataUri || /^((http:)|(https:)|(file:))/.test(scriptPath)) {
-		const currentUrl = String(window.location);
-		const currentOrigin = currentUrl.substr(0, currentUrl.length - window.location.hash.length - window.location.search.length - window.location.pathname.length);
-		if (forceDataUri || scriptPath.substring(0, currentOrigin.length) !== currentOrigin) {
-			// this is the cross-origin case
-			// i.e. the webpage is running at a different origin than where the scripts are loaded from
-			const myPath = 'vs/base/worker/defaultWorkerFactory.js';
-			const workerBaseUrl = require.toUrl(myPath).slice(0, -myPath.length); // explicitly using require.toUrl(), see https://github.com/microsoft/vscode/issues/107440#issuecomment-698982321
-			const js = `/*${label}*/self.MonacoEnvironment={baseUrl: '${workerBaseUrl}'};importScripts('${scriptPath}');/*${label}*/`;
-			if (forceDataUri) {
-				const url = `data:text/javascript;charset=utf-8,${encodeURIComponent(js)}`;
-				return url;
-			}
-			const blob = new Blob([js], { type: 'application/javascript' });
-			return URL.createObjectURL(blob);
-		}
+export function getWorkerBootstrapUrl(scriptPath: string, label: string): string {
+	if (/^((http:)|(https:)|(file:))/.test(scriptPath) && scriptPath.substring(0, self.origin.length) !== self.origin) {
+		// this is the cross-origin case
+		// i.e. the webpage is running at a different origin than where the scripts are loaded from
+		const myPath = 'vs/base/worker/defaultWorkerFactory.js';
+		const workerBaseUrl = require.toUrl(myPath).slice(0, -myPath.length); // explicitly using require.toUrl(), see https://github.com/microsoft/vscode/issues/107440#issuecomment-698982321
+		const js = `/*${label}*/self.MonacoEnvironment={baseUrl: '${workerBaseUrl}'};importScripts('${scriptPath}');/*${label}*/`;
+		const blob = new Blob([js], { type: 'application/javascript' });
+		return URL.createObjectURL(blob);
 	}
 	return scriptPath + '#' + label;
 }

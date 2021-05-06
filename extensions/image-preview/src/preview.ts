@@ -212,6 +212,7 @@ class Preview extends Disposable {
 
 		const nonce = Date.now().toString();
 
+		const cspSource = this.webviewEditor.webview.cspSource;
 		return /* html */`<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -225,7 +226,7 @@ class Preview extends Disposable {
 
 	<link rel="stylesheet" href="${escapeAttribute(this.extensionResource('/media/main.css'))}" type="text/css" media="screen" nonce="${nonce}">
 
-	<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' data: ${this.webviewEditor.webview.cspSource}; script-src 'nonce-${nonce}'; style-src 'self' 'nonce-${nonce}';">
+	<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: ${cspSource}; script-src 'nonce-${nonce}'; style-src ${cspSource} 'nonce-${nonce}';">
 	<meta id="image-preview-settings" data-settings="${escapeAttribute(JSON.stringify(settings))}">
 </head>
 <body class="container image scale-to-fit loading">

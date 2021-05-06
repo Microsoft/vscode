@@ -5,7 +5,7 @@
 
 import { IDisposable } from 'vs/base/common/lifecycle';
 import { IConfigurationService, ConfigurationTarget, ConfigurationTargetToString } from 'vs/platform/configuration/common/configuration';
-import { ITelemetryService, ITelemetryInfo, ITelemetryData } from 'vs/platform/telemetry/common/telemetry';
+import { ITelemetryService, ITelemetryInfo, ITelemetryData, ICustomEndpointTelemetryService, ITelemetryEndpoint } from 'vs/platform/telemetry/common/telemetry';
 import { ClassifiedEvent, StrictPropertyCheck, GDPRClassification } from 'vs/platform/telemetry/common/gdprTypings';
 import { safeStringify } from 'vs/base/common/objects';
 import { isObject } from 'vs/base/common/types';
@@ -40,6 +40,18 @@ export const NullTelemetryService = new class implements ITelemetryService {
 		});
 	}
 };
+
+export class NullEndpointTelemetryService implements ICustomEndpointTelemetryService {
+	_serviceBrand: undefined;
+
+	async publicLog(_endpoint: ITelemetryEndpoint, _eventName: string, _data?: ITelemetryData): Promise<void> {
+		// noop
+	}
+
+	async publicLogError(_endpoint: ITelemetryEndpoint, _errorEventName: string, _data?: ITelemetryData): Promise<void> {
+		// noop
+	}
+}
 
 export interface ITelemetryAppender {
 	log(eventName: string, data: any): void;

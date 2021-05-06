@@ -18,12 +18,14 @@
 		"settings.numberInputBorder": "#CECECE",
 		"statusBarItem.remoteForeground": "#FFF",
 		"statusBarItem.remoteBackground": "#16825D",
+		"ports.iconRunningProcessForeground": "#369432",
 		"sideBarSectionHeader.background": "#0000",
 		"sideBarSectionHeader.border": "#61616130",
 		"tab.lastPinnedBorder": "#61616130",
 		"notebook.cellBorderColor": "#E8E8E8",
 		"notebook.selectedCellBackground": "#c8ddf150",
-		"statusBarItem.errorBackground": "#c72e0f"
+		"statusBarItem.errorBackground": "#c72e0f",
+		"list.focusHighlightForeground": "#33B6FF"
 	},
 	"tokenColors": [
 		{

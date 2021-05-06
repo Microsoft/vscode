@@ -34,14 +34,15 @@ import { ICommandService } from 'vs/platform/commands/common/commands';
 import { ConfigurationTarget, IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { IContextMenuService, IContextViewService } from 'vs/platform/contextview/browser/contextView';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
+import { IKeyboardEvent } from 'vs/base/browser/keyboardEvent';
 import { IKeybindingService } from 'vs/platform/keybinding/common/keybinding';
 import { IOpenerService } from 'vs/platform/opener/common/opener';
 import { editorBackground, errorForeground, focusBorder, foreground, inputValidationErrorBackground, inputValidationErrorBorder, inputValidationErrorForeground } from 'vs/platform/theme/common/colorRegistry';
-import { attachButtonStyler, attachInputBoxStyler, attachSelectBoxStyler, attachStyler } from 'vs/platform/theme/common/styler';
+import { attachButtonStyler, attachInputBoxStyler, attachSelectBoxStyler, attachStyler, attachStylerCallback } from 'vs/platform/theme/common/styler';
 import { ICssStyleCollector, IColorTheme, IThemeService, registerThemingParticipant } from 'vs/platform/theme/common/themeService';
 import { getIgnoredSettings } from 'vs/platform/userDataSync/common/settingsMerge';
 import { ITOCEntry } from 'vs/workbench/contrib/preferences/browser/settingsLayout';
-import { ISettingsEditorViewState, settingKeyToDisplayFormat, SettingsTreeElement, SettingsTreeGroupChild, SettingsTreeGroupElement, SettingsTreeNewExtensionsElement, SettingsTreeSettingElement } from 'vs/workbench/contrib/preferences/browser/settingsTreeModels';
+import { inspectSetting, ISettingsEditorViewState, settingKeyToDisplayFormat, SettingsTreeElement, SettingsTreeGroupChild, SettingsTreeGroupElement, SettingsTreeNewExtensionsElement, SettingsTreeSettingElement } from 'vs/workbench/contrib/preferences/browser/settingsTreeModels';
 import { ExcludeSettingWidget, ISettingListChangeEvent, IListDataItem, ListSettingWidget, settingsNumberInputBackground, settingsNumberInputBorder, settingsNumberInputForeground, settingsSelectBackground, settingsSelectBorder, settingsSelectForeground, settingsSelectListBorder, settingsTextInputBackground, settingsTextInputBorder, settingsTextInputForeground, ObjectSettingWidget, IObjectDataItem, IObjectEnumOption, ObjectValue, IObjectValueSuggester, IObjectKeySuggester, focusedRowBackground, focusedRowBorder, settingsHeaderForeground, rowHoverBackground } from 'vs/workbench/contrib/preferences/browser/settingsWidgets';
 import { SETTINGS_EDITOR_COMMAND_SHOW_CONTEXT_MENU } from 'vs/workbench/contrib/preferences/common/preferences';
 import { IWorkbenchEnvironmentService } from 'vs/workbench/services/environment/common/environmentService';
@@ -57,6 +58,10 @@ import { IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
 import { IAccessibilityService } from 'vs/platform/accessibility/common/accessibility';
 import { ILogService } from 'vs/platform/log/common/log';
 import { settingsMoreActionIcon } from 'vs/workbench/contrib/preferences/browser/preferencesIcons';
+import { IWorkbenchConfigurationService } from 'vs/workbench/services/configuration/common/configuration';
+import { SettingsTarget } from 'vs/workbench/contrib/preferences/browser/preferencesWidgets';
+import { untrustedForegroundColor } from 'vs/workbench/contrib/workspace/browser/workspaceTrustColors';
+import { isIPad } from 'vs/base/browser/browser';
 
 const $ = DOM.$;
 
@@ -279,6 +284,11 @@ export function resolveSettingsTree(tocData: ITOCEntry<string>, coreSettingsGrou
 	};
 }
 
+export function resolveConfiguredUntrustedSettings(groups: ISettingsGroup[], target: SettingsTarget, configurationService: IWorkbenchConfigurationService): ISetting[] {
+	const allSettings = getFlatSettings(groups);
+	return [...allSettings].filter(setting => setting.restricted && inspectSetting(setting.key, target, configurationService).isConfigured);
+}
+
 export function resolveExtensionsSettings(groups: ISettingsGroup[]): ITOCEntry<ISetting> {
 	const settingsGroupToEntry = (group: ISettingsGroup) => {
 		const flatSettings = arrays.flatten(
@@ -449,6 +459,7 @@ interface IGroupTitleTemplate extends IDisposableTemplate {
 	parent: HTMLElement;
 }
 
+const SETTINGS_UNTRUSTED_TEMPLATE_ID = 'settings.untrusted.template';
 const SETTINGS_TEXT_TEMPLATE_ID = 'settings.text.template';
 const SETTINGS_NUMBER_TEMPLATE_ID = 'settings.number.template';
 const SETTINGS_ENUM_TEMPLATE_ID = 'settings.enum.template';
@@ -650,7 +661,7 @@ export abstract class AbstractSettingRenderer extends Disposable implements ITre
 
 		const toolbar = new ToolBar(container, this._contextMenuService, {
 			toggleMenuTitle,
-			renderDropdownAsChildElement: true,
+			renderDropdownAsChildElement: !isIPad,
 			moreIcon: settingsMoreActionIcon // change icon from ellipsis to gear
 		});
 		return toolbar;
@@ -769,7 +780,7 @@ export abstract class AbstractSettingRenderer extends Disposable implements ITre
 						};
 						this._onDidClickSettingLink.fire(e);
 					} else {
-						this._openerService.open(content).catch(onUnexpectedError);
+						this._openerService.open(content, { allowCommands: true }).catch(onUnexpectedError);
 					}
 				},
 				disposeables
@@ -1518,6 +1529,46 @@ export class SettingBoolRenderer extends AbstractSettingRenderer implements ITre
 	}
 }
 
+export class SettingUntrustedRenderer extends AbstractSettingRenderer implements ITreeRenderer<SettingsTreeSettingElement, never, ISettingItemTemplate> {
+	templateId = SETTINGS_UNTRUSTED_TEMPLATE_ID;
+
+	renderTemplate(container: HTMLElement): ISettingItemTemplate {
+		const template = this.renderCommonTemplate(null, container, 'untrusted');
+
+		const manageWorkspaceTrustLabel = localize('manageWorkspaceTrust', "Manage Workspace Trust");
+		const trustLabelElement = $('.setting-item-trust-description');
+		const untrustedWorkspaceIcon = DOM.append(trustLabelElement, $('span.codicon.codicon-workspace-untrusted'));
+		template.toDispose.add(attachStylerCallback(this._themeService, { untrustedForegroundColor }, colors => {
+			untrustedWorkspaceIcon.style.setProperty('--workspace-trust-state-untrusted-color', colors.untrustedForegroundColor?.toString() || '');
+		}));
+		const element = DOM.append(trustLabelElement, $('span'));
+		element.textContent = localize('trustLabel', "This setting can only be applied in a trusted workspace");
+		const linkElement: HTMLAnchorElement = DOM.append(trustLabelElement, $('a'));
+		linkElement.textContent = manageWorkspaceTrustLabel;
+		linkElement.setAttribute('tabindex', '0');
+		linkElement.href = '#';
+		template.toDispose.add(DOM.addStandardDisposableListener(linkElement, DOM.EventType.CLICK, () => {
+			this._commandService.executeCommand('workbench.trust.manage');
+		}));
+		template.toDispose.add(DOM.addStandardDisposableListener(linkElement, DOM.EventType.KEY_DOWN, (e: IKeyboardEvent) => {
+			if (e.equals(KeyCode.Enter) || e.equals(KeyCode.Space)) {
+				this._commandService.executeCommand('workbench.trust.manage');
+				e.stopPropagation();
+			}
+		}));
+
+		template.containerElement.insertBefore(trustLabelElement, template.descriptionElement);
+
+		return template;
+	}
+
+	renderElement(element: ITreeNode<SettingsTreeSettingElement, never>, index: number, templateData: ISettingItemTemplate): void {
+		super.renderSettingElement(element, index, templateData);
+	}
+
+	protected renderValue(dataElement: SettingsTreeSettingElement, template: ISettingComplexItemTemplate, onChange: (value: string) => void): void { }
+}
+
 export class SettingTreeRenderers {
 	readonly onDidClickOverrideElement: Event<ISettingOverrideClickEvent>;
 
@@ -1541,12 +1592,12 @@ export class SettingTreeRenderers {
 		@IUserDataAutoSyncEnablementService private readonly _userDataAutoSyncEnablementService: IUserDataAutoSyncEnablementService,
 	) {
 		this.settingActions = [
-			new Action('settings.resetSetting', localize('resetSettingLabel', "Reset Setting"), undefined, undefined, (context: SettingsTreeSettingElement) => {
-				if (context) {
-					this._onDidChangeSetting.fire({ key: context.setting.key, value: undefined, type: context.setting.type as SettingValueType });
+			new Action('settings.resetSetting', localize('resetSettingLabel', "Reset Setting"), undefined, undefined, async context => {
+				if (context instanceof SettingsTreeSettingElement) {
+					if (!context.isUntrusted) {
+						this._onDidChangeSetting.fire({ key: context.setting.key, value: undefined, type: context.setting.type as SettingValueType });
+					}
 				}
-
-				return Promise.resolve(null);
 			}),
 			new Separator(),
 			this._instantiationService.createInstance(CopySettingIdAction),
@@ -1563,6 +1614,7 @@ export class SettingTreeRenderers {
 			this._instantiationService.createInstance(SettingExcludeRenderer, this.settingActions, actionFactory),
 			this._instantiationService.createInstance(SettingEnumRenderer, this.settingActions, actionFactory),
 			this._instantiationService.createInstance(SettingObjectRenderer, this.settingActions, actionFactory),
+			this._instantiationService.createInstance(SettingUntrustedRenderer, this.settingActions, actionFactory),
 		];
 
 		this.onDidClickOverrideElement = Event.any(...settingRenderers.map(r => r.onDidClickOverrideElement));
@@ -1772,6 +1824,11 @@ class SettingsTreeDelegate extends CachedListVirtualDelegate<SettingsTreeGroupCh
 		}
 
 		if (element instanceof SettingsTreeSettingElement) {
+
+			if (element.isUntrusted) {
+				return SETTINGS_UNTRUSTED_TEMPLATE_ID;
+			}
+
 			const invalidTypeError = element.isConfigured && getInvalidTypeError(element.value, element.setting.type);
 			if (invalidTypeError) {
 				return SETTINGS_COMPLEX_TEMPLATE_ID;
@@ -1829,11 +1886,11 @@ class SettingsTreeDelegate extends CachedListVirtualDelegate<SettingsTreeGroupCh
 }
 
 export class NonCollapsibleObjectTreeModel<T> extends ObjectTreeModel<T> {
-	isCollapsible(element: T): boolean {
+	override isCollapsible(element: T): boolean {
 		return false;
 	}
 
-	setCollapsed(element: T, collapsed?: boolean, recursive?: boolean): boolean {
+	override setCollapsed(element: T, collapsed?: boolean, recursive?: boolean): boolean {
 		return false;
 	}
 }
@@ -1908,6 +1965,9 @@ export class SettingsTree extends WorkbenchObjectTree<SettingsTreeElement> {
 				collector.addRule(`.settings-editor > .settings-body > .settings-tree-container .setting-item-contents .setting-item-description { color: ${fgWithOpacity}; }`);
 				collector.addRule(`.settings-editor > .settings-body .settings-toc-container .monaco-list-row:not(.selected) { color: ${fgWithOpacity}; }`);
 
+				const disabledfgColor = new Color(new RGBA(foregroundColor.rgba.r, foregroundColor.rgba.g, foregroundColor.rgba.b, 0.7));
+				collector.addRule(`.settings-editor > .settings-body > .settings-tree-container .setting-item.setting-item-untrusted > .setting-item-contents .setting-item-description { color: ${disabledfgColor}; }`);
+
 				// Hack for subpixel antialiasing
 				collector.addRule(`.settings-editor > .settings-body > .settings-tree-container .setting-item-contents .setting-item-title .setting-item-overrides,
 					.settings-editor > .settings-body > .settings-tree-container .setting-item-contents .setting-item-title .setting-item-ignored { color: ${fgWithOpacity}; }`);
@@ -1958,6 +2018,7 @@ export class SettingsTree extends WorkbenchObjectTree<SettingsTreeElement> {
 
 			const focusBorderColor = theme.getColor(focusBorder);
 			if (focusBorderColor) {
+				collector.addRule(`.settings-editor > .settings-body > .settings-tree-container .setting-item-contents .setting-item-trust-description a:focus { outline-color: ${focusBorderColor} }`);
 				collector.addRule(`.settings-editor > .settings-body > .settings-tree-container .setting-item-contents .setting-item-markdown a:focus { outline-color: ${focusBorderColor} }`);
 			}
 		}));
@@ -1993,7 +2054,7 @@ export class SettingsTree extends WorkbenchObjectTree<SettingsTreeElement> {
 		}));
 	}
 
-	protected createModel(user: string, view: IList<ITreeNode<SettingsTreeGroupChild>>, options: IObjectTreeOptions<SettingsTreeGroupChild>): ITreeModel<SettingsTreeGroupChild | null, void, SettingsTreeGroupChild | null> {
+	protected override createModel(user: string, view: IList<ITreeNode<SettingsTreeGroupChild>>, options: IObjectTreeOptions<SettingsTreeGroupChild>): ITreeModel<SettingsTreeGroupChild | null, void, SettingsTreeGroupChild | null> {
 		return new NonCollapsibleObjectTreeModel<SettingsTreeGroupChild>(user, view, options);
 	}
 }
@@ -2008,7 +2069,7 @@ class CopySettingIdAction extends Action {
 		super(CopySettingIdAction.ID, CopySettingIdAction.LABEL);
 	}
 
-	async run(context: SettingsTreeSettingElement): Promise<void> {
+	override async run(context: SettingsTreeSettingElement): Promise<void> {
 		if (context) {
 			await this.clipboardService.writeText(context.setting.key);
 		}
@@ -2027,7 +2088,7 @@ class CopySettingAsJSONAction extends Action {
 		super(CopySettingAsJSONAction.ID, CopySettingAsJSONAction.LABEL);
 	}
 
-	async run(context: SettingsTreeSettingElement): Promise<void> {
+	override async run(context: SettingsTreeSettingElement): Promise<void> {
 		if (context) {
 			const jsonResult = `"${context.setting.key}": ${JSON.stringify(context.value, undefined, '  ')}`;
 			await this.clipboardService.writeText(jsonResult);
@@ -2055,7 +2116,7 @@ class SyncSettingAction extends Action {
 		this.checked = !ignoredSettings.includes(this.setting.key);
 	}
 
-	async run(): Promise<void> {
+	override async run(): Promise<void> {
 		// first remove the current setting completely from ignored settings
 		let currentValue = [...this.configService.getValue<string[]>('settingsSync.ignoredSettings')];
 		currentValue = currentValue.filter(v => v !== this.setting.key && v !== `-${this.setting.key}`);

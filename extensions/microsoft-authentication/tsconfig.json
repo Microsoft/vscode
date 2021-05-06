@@ -17,5 +17,6 @@
 		"strict": true,
 		"target": "es2019"
 	},
-	"exclude": ["node_modules"]
+	"exclude": ["node_modules"],
+	"include": ["src/**/*"]
 }

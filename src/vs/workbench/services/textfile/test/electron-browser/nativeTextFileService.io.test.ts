@@ -14,14 +14,13 @@ import { rimraf, copy, exists } from 'vs/base/node/pfs';
 import { DisposableStore } from 'vs/base/common/lifecycle';
 import { FileService } from 'vs/platform/files/common/fileService';
 import { NullLogService } from 'vs/platform/log/common/log';
-import { flakySuite, getRandomTestPath } from 'vs/base/test/node/testUtils';
+import { flakySuite, getRandomTestPath, getPathFromAmdModule } from 'vs/base/test/node/testUtils';
 import { DiskFileSystemProvider } from 'vs/platform/files/node/diskFileSystemProvider';
-import { getPathFromAmdModule } from 'vs/base/common/amd';
 import { detectEncodingByBOM } from 'vs/workbench/services/textfile/test/node/encoding/encoding.test';
 import { workbenchInstantiationService, TestNativeTextFileServiceWithEncodingOverrides } from 'vs/workbench/test/electron-browser/workbenchTestServices';
 import createSuite from 'vs/workbench/services/textfile/test/common/textFileService.io.test';
 import { IWorkingCopyFileService, WorkingCopyFileService } from 'vs/workbench/services/workingCopy/common/workingCopyFileService';
-import { TestWorkingCopyService } from 'vs/workbench/test/common/workbenchTestServices';
+import { WorkingCopyService } from 'vs/workbench/services/workingCopy/common/workingCopyService';
 import { UriIdentityService } from 'vs/workbench/services/uriIdentity/common/uriIdentityService';
 
 flakySuite('Files - NativeTextFileService i/o', function () {
@@ -31,8 +30,8 @@ flakySuite('Files - NativeTextFileService i/o', function () {
 	let testDir: string;
 
 	function readFile(path: string): Promise<Buffer>;
-	function readFile(path: string, encoding: string): Promise<string>;
-	function readFile(path: string, encoding?: string): Promise<Buffer | string> {
+	function readFile(path: string, encoding: BufferEncoding): Promise<string>;
+	function readFile(path: string, encoding?: BufferEncoding): Promise<Buffer | string> {
 		return promises.readFile(path, encoding);
 	}
 
@@ -50,7 +49,7 @@ flakySuite('Files - NativeTextFileService i/o', function () {
 			const collection = new ServiceCollection();
 			collection.set(IFileService, fileService);
 
-			collection.set(IWorkingCopyFileService, new WorkingCopyFileService(fileService, new TestWorkingCopyService(), instantiationService, new UriIdentityService(fileService)));
+			collection.set(IWorkingCopyFileService, new WorkingCopyFileService(fileService, new WorkingCopyService(), instantiationService, new UriIdentityService(fileService)));
 
 			service = instantiationService.createChild(collection).createInstance(TestNativeTextFileServiceWithEncodingOverrides);
 

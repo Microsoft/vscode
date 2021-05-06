@@ -9,6 +9,7 @@
   "engines": {
     "vscode": "^1.39.0"
   },
+  "icon": "media/icon.png",
   "categories": [
     "Other"
   ],
@@ -20,21 +21,10 @@
   "dependencies": {
     "vscode-nls": "^5.0.0"
   },
-  "contributes": {
-    "configuration": {
-      "title": "Testing",
-      "properties": {
-        "testing.enableCodeLens": {
-          "description": "%config.enableCodeLens%",
-          "type": "boolean",
-          "default": true
-        },
-        "testing.enableProblemDiagnostics": {
-          "description": "%config.enableProblemDiagnostics%",
-          "type": "boolean",
-          "default": false
-        }
-      }
+  "capabilities": {
+    "virtualWorkspaces": true,
+    "untrustedWorkspaces": {
+      "supported": true
     }
   },
   "scripts": {

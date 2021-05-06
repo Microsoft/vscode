@@ -10,7 +10,7 @@ import { fixDriveC, getAbsoluteGlob } from 'vs/workbench/services/search/node/ri
 suite('RipgrepFileSearch - etc', () => {
 	function testGetAbsGlob(params: string[]): void {
 		const [folder, glob, expectedResult] = params;
-		assert.equal(fixDriveC(getAbsoluteGlob(folder, glob)), expectedResult, JSON.stringify(params));
+		assert.strictEqual(fixDriveC(getAbsoluteGlob(folder, glob)), expectedResult, JSON.stringify(params));
 	}
 
 	(!platform.isWindows ? test.skip : test)('getAbsoluteGlob_win', () => {

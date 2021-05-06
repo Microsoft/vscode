@@ -348,7 +348,7 @@ export class BreadcrumbsFilePicker extends BreadcrumbsPicker {
 
 	constructor(
 		parent: HTMLElement,
-		protected resource: URI,
+		resource: URI,
 		@IInstantiationService instantiationService: IInstantiationService,
 		@IThemeService themeService: IThemeService,
 		@IConfigurationService configService: IConfigurationService,

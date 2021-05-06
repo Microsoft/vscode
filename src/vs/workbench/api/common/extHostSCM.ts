@@ -259,6 +259,22 @@ export class ExtHostSCMInputBox implements vscode.SourceControlInputBox {
 		// noop
 	}
 
+	focus(): void {
+		checkProposedApiEnabled(this._extension);
+
+		if (!this._visible) {
+			this.visible = true;
+		}
+
+		this._proxy.$setInputBoxFocus(this._sourceControlHandle);
+	}
+
+	showValidationMessage(message: string, type: vscode.SourceControlInputBoxValidationType) {
+		checkProposedApiEnabled(this._extension);
+
+		this._proxy.$showValidationMessage(this._sourceControlHandle, message, type as any);
+	}
+
 	$onInputBoxValueChange(value: string): void {
 		this.updateValue(value);
 	}

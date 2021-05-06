@@ -15,6 +15,7 @@ import { ICommandService } from 'vs/platform/commands/common/commands';
 import { IViewletService } from 'vs/workbench/services/viewlet/browser/viewlet';
 import { INotificationService, Severity } from 'vs/platform/notification/common/notification';
 import { VIEWLET_ID, IExtensionsViewPaneContainer } from 'vs/workbench/contrib/extensions/common/extensions';
+import { IDialogService } from 'vs/platform/dialogs/common/dialogs';
 
 async function showExtensionQuery(viewletService: IViewletService, query: string) {
 	const viewlet = await viewletService.openViewlet(VIEWLET_ID, true);
@@ -40,7 +41,7 @@ registerEditorAction(class FormatDocumentMultipleAction extends EditorAction {
 		});
 	}
 
-	async run(accessor: ServicesAccessor, editor: ICodeEditor, args: any): Promise<void> {
+	async run(accessor: ServicesAccessor, editor: ICodeEditor): Promise<void> {
 		if (!editor.hasModel()) {
 			return;
 		}
@@ -48,6 +49,8 @@ registerEditorAction(class FormatDocumentMultipleAction extends EditorAction {
 		const commandService = accessor.get(ICommandService);
 		const viewletService = accessor.get(IViewletService);
 		const notificationService = accessor.get(INotificationService);
+		const dialogService = accessor.get(IDialogService);
+
 		const model = editor.getModel();
 		const formatterCount = DocumentFormattingEditProviderRegistry.all(model).length;
 
@@ -56,15 +59,18 @@ registerEditorAction(class FormatDocumentMultipleAction extends EditorAction {
 		} else if (formatterCount === 1) {
 			return commandService.executeCommand('editor.action.formatDocument');
 		} else if (model.isTooLargeForSyncing()) {
-			notificationService.prompt(Severity.Info, nls.localize('too.large', "This file cannot be formatted because it is too large"), []);
+			notificationService.warn(nls.localize('too.large', "This file cannot be formatted because it is too large"));
 		} else {
 			const langName = model.getLanguageIdentifier().language;
 			const message = nls.localize('no.provider', "There is no formatter for '{0}' files installed.", langName);
-			const choice = {
-				label: nls.localize('install.formatter', "Install Formatter..."),
-				run: () => showExtensionQuery(viewletService, `category:formatters ${langName}`)
-			};
-			notificationService.prompt(Severity.Info, message, [choice]);
+			const res = await dialogService.show(
+				Severity.Info,
+				message,
+				[nls.localize('cancel', "Cancel"), nls.localize('install.formatter', "Install Formatter...")]
+			);
+			if (res.choice === 1) {
+				showExtensionQuery(viewletService, `category:formatters ${langName}`);
+			}
 		}
 	}
 });

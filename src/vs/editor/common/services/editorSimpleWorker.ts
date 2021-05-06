@@ -13,7 +13,7 @@ import { IRange, Range } from 'vs/editor/common/core/range';
 import { DiffComputer } from 'vs/editor/common/diff/diffComputer';
 import { IChange } from 'vs/editor/common/editorCommon';
 import { EndOfLineSequence, IWordAtPosition } from 'vs/editor/common/model';
-import { IModelChangedEvent, MirrorTextModel as BaseMirrorModel } from 'vs/editor/common/model/mirrorTextModel';
+import { IMirrorTextModel, IModelChangedEvent, MirrorTextModel as BaseMirrorModel } from 'vs/editor/common/model/mirrorTextModel';
 import { ensureValidWordDefinition, getWordAtText } from 'vs/editor/common/model/wordHelper';
 import { IInplaceReplaceSupportResult, ILink, TextEdit } from 'vs/editor/common/modes';
 import { ILinkComputerTarget, computeLinks } from 'vs/editor/common/modes/linkComputer';
@@ -24,7 +24,7 @@ import * as types from 'vs/base/common/types';
 import { EditorWorkerHost } from 'vs/editor/common/services/editorWorkerServiceImpl';
 import { StopWatch } from 'vs/base/common/stopwatch';
 
-export interface IMirrorModel {
+export interface IMirrorModel extends IMirrorTextModel {
 	readonly uri: URI;
 	readonly version: number;
 	getValue(): string;
@@ -94,10 +94,6 @@ class MirrorModel extends BaseMirrorModel implements ICommonModel {
 
 	public get uri(): URI {
 		return this._uri;
-	}
-
-	public get version(): number {
-		return this._versionId;
 	}
 
 	public get eol(): string {

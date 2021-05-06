@@ -305,7 +305,7 @@ export class ParameterHintsModel extends Disposable {
 		}
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this.cancel(true);
 		super.dispose();
 	}

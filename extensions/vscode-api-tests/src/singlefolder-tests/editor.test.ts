@@ -44,7 +44,7 @@ suite('vscode API - editors', () => {
 		return withRandomFileEditor('', (editor, doc) => {
 			return editor.insertSnippet(snippetString).then(inserted => {
 				assert.ok(inserted);
-				assert.equal(doc.getText(), 'This is a placeholder snippet');
+				assert.strictEqual(doc.getText(), 'This is a placeholder snippet');
 				assert.ok(doc.isDirty);
 			});
 		});
@@ -69,7 +69,7 @@ suite('vscode API - editors', () => {
 		await withRandomFileEditor('', async (editor, doc) => {
 			const inserted = await editor.insertSnippet(snippetString);
 			assert.ok(inserted);
-			assert.equal(doc.getText(), 'running: INTEGRATION-TESTS');
+			assert.strictEqual(doc.getText(), 'running: INTEGRATION-TESTS');
 			assert.ok(doc.isDirty);
 		});
 
@@ -88,7 +88,7 @@ suite('vscode API - editors', () => {
 
 			return editor.insertSnippet(snippetString).then(inserted => {
 				assert.ok(inserted);
-				assert.equal(doc.getText(), 'This has been replaced');
+				assert.strictEqual(doc.getText(), 'This has been replaced');
 				assert.ok(doc.isDirty);
 			});
 		});
@@ -106,7 +106,7 @@ suite('vscode API - editors', () => {
 
 			return editor.insertSnippet(snippetString, selection).then(inserted => {
 				assert.ok(inserted);
-				assert.equal(doc.getText(), 'This has been replaced');
+				assert.strictEqual(doc.getText(), 'This has been replaced');
 				assert.ok(doc.isDirty);
 			});
 		});
@@ -118,7 +118,7 @@ suite('vscode API - editors', () => {
 				builder.insert(new Position(0, 0), 'Hello World');
 			}).then(applied => {
 				assert.ok(applied);
-				assert.equal(doc.getText(), 'Hello World');
+				assert.strictEqual(doc.getText(), 'Hello World');
 				assert.ok(doc.isDirty);
 			});
 		});
@@ -130,7 +130,7 @@ suite('vscode API - editors', () => {
 				builder.replace(new Range(0, 0, Number.MAX_VALUE, Number.MAX_VALUE), 'new');
 			}).then(applied => {
 				assert.ok(applied);
-				assert.equal(doc.getText(), 'new');
+				assert.strictEqual(doc.getText(), 'new');
 				assert.ok(doc.isDirty);
 			});
 		});
@@ -146,12 +146,12 @@ suite('vscode API - editors', () => {
 		return withRandomFileEditor('Hello world!', async (editor, doc) => {
 			const applied1 = await executeReplace(editor, new Range(0, 0, 0, 1), 'h', false, false);
 			assert.ok(applied1);
-			assert.equal(doc.getText(), 'hello world!');
+			assert.strictEqual(doc.getText(), 'hello world!');
 			assert.ok(doc.isDirty);
 
 			const applied2 = await executeReplace(editor, new Range(0, 1, 0, 5), 'ELLO', false, false);
 			assert.ok(applied2);
-			assert.equal(doc.getText(), 'hELLO world!');
+			assert.strictEqual(doc.getText(), 'hELLO world!');
 			assert.ok(doc.isDirty);
 
 			await commands.executeCommand('undo');
@@ -161,7 +161,7 @@ suite('vscode API - editors', () => {
 				// it is unclear why this happens, but it can happen for a multitude of reasons
 				await commands.executeCommand('undo');
 			}
-			assert.equal(doc.getText(), 'Hello world!');
+			assert.strictEqual(doc.getText(), 'Hello world!');
 		});
 	});
 
@@ -169,16 +169,16 @@ suite('vscode API - editors', () => {
 		return withRandomFileEditor('Hello world!', (editor, doc) => {
 			return executeReplace(editor, new Range(0, 0, 0, 1), 'h', false, false).then(applied => {
 				assert.ok(applied);
-				assert.equal(doc.getText(), 'hello world!');
+				assert.strictEqual(doc.getText(), 'hello world!');
 				assert.ok(doc.isDirty);
 				return executeReplace(editor, new Range(0, 1, 0, 5), 'ELLO', true, false);
 			}).then(applied => {
 				assert.ok(applied);
-				assert.equal(doc.getText(), 'hELLO world!');
+				assert.strictEqual(doc.getText(), 'hELLO world!');
 				assert.ok(doc.isDirty);
 				return commands.executeCommand('undo');
 			}).then(_ => {
-				assert.equal(doc.getText(), 'hello world!');
+				assert.strictEqual(doc.getText(), 'hello world!');
 			});
 		});
 	});
@@ -186,26 +186,26 @@ suite('vscode API - editors', () => {
 	test('issue #16573: Extension API: insertSpaces and tabSize are undefined', () => {
 		return withRandomFileEditor('Hello world!\n\tHello world!', (editor, _doc) => {
 
-			assert.equal(editor.options.tabSize, 4);
-			assert.equal(editor.options.insertSpaces, false);
-			assert.equal(editor.options.cursorStyle, TextEditorCursorStyle.Line);
-			assert.equal(editor.options.lineNumbers, TextEditorLineNumbersStyle.On);
+			assert.strictEqual(editor.options.tabSize, 4);
+			assert.strictEqual(editor.options.insertSpaces, false);
+			assert.strictEqual(editor.options.cursorStyle, TextEditorCursorStyle.Line);
+			assert.strictEqual(editor.options.lineNumbers, TextEditorLineNumbersStyle.On);
 
 			editor.options = {
 				tabSize: 2
 			};
 
-			assert.equal(editor.options.tabSize, 2);
-			assert.equal(editor.options.insertSpaces, false);
-			assert.equal(editor.options.cursorStyle, TextEditorCursorStyle.Line);
-			assert.equal(editor.options.lineNumbers, TextEditorLineNumbersStyle.On);
+			assert.strictEqual(editor.options.tabSize, 2);
+			assert.strictEqual(editor.options.insertSpaces, false);
+			assert.strictEqual(editor.options.cursorStyle, TextEditorCursorStyle.Line);
+			assert.strictEqual(editor.options.lineNumbers, TextEditorLineNumbersStyle.On);
 
 			editor.options.tabSize = 'invalid';
 
-			assert.equal(editor.options.tabSize, 2);
-			assert.equal(editor.options.insertSpaces, false);
-			assert.equal(editor.options.cursorStyle, TextEditorCursorStyle.Line);
-			assert.equal(editor.options.lineNumbers, TextEditorLineNumbersStyle.On);
+			assert.strictEqual(editor.options.tabSize, 2);
+			assert.strictEqual(editor.options.insertSpaces, false);
+			assert.strictEqual(editor.options.cursorStyle, TextEditorCursorStyle.Line);
+			assert.strictEqual(editor.options.lineNumbers, TextEditorLineNumbersStyle.On);
 
 			return Promise.resolve();
 		});
@@ -262,6 +262,6 @@ suite('vscode API - editors', () => {
 		const file = Uri.parse(root.toString() + relativePath);
 		const document = await workspace.openTextDocument(file);
 
-		assert.equal(document.getText(), Buffer.from(await workspace.fs.readFile(file)).toString());
+		assert.strictEqual(document.getText(), Buffer.from(await workspace.fs.readFile(file)).toString());
 	}
 });

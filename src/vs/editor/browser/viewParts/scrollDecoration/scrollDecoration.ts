@@ -37,7 +37,7 @@ export class ScrollDecorationViewPart extends ViewPart {
 		this._domNode.setAttribute('aria-hidden', 'true');
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		super.dispose();
 	}
 
@@ -67,7 +67,7 @@ export class ScrollDecorationViewPart extends ViewPart {
 
 	// --- begin event handlers
 
-	public onConfigurationChanged(e: viewEvents.ViewConfigurationChangedEvent): boolean {
+	public override onConfigurationChanged(e: viewEvents.ViewConfigurationChangedEvent): boolean {
 		const options = this._context.configuration.options;
 		const scrollbar = options.get(EditorOption.scrollbar);
 		this._useShadows = scrollbar.useShadows;
@@ -75,7 +75,7 @@ export class ScrollDecorationViewPart extends ViewPart {
 		this._updateShouldShow();
 		return true;
 	}
-	public onScrollChanged(e: viewEvents.ViewScrollChangedEvent): boolean {
+	public override onScrollChanged(e: viewEvents.ViewScrollChangedEvent): boolean {
 		this._scrollTop = e.scrollTop;
 		return this._updateShouldShow();
 	}

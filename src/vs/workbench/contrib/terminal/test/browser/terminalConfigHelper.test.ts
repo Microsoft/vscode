@@ -7,7 +7,13 @@ import * as assert from 'assert';
 import { TerminalConfigHelper } from 'vs/workbench/contrib/terminal/browser/terminalConfigHelper';
 import { EDITOR_FONT_DEFAULTS } from 'vs/editor/common/config/editorOptions';
 import { TestConfigurationService } from 'vs/platform/configuration/test/common/testConfigurationService';
-import { LinuxDistro } from 'vs/workbench/contrib/terminal/common/terminal';
+import { LinuxDistro } from 'vs/workbench/contrib/terminal/browser/terminal';
+
+class TestTerminalConfigHelper extends TerminalConfigHelper {
+	set linuxDistro(distro: LinuxDistro) {
+		this._linuxDistro = distro;
+	}
+}
 
 suite('Workbench - TerminalConfigHelper', () => {
 	let fixture: HTMLElement;
@@ -20,38 +26,38 @@ suite('Workbench - TerminalConfigHelper', () => {
 		const configurationService = new TestConfigurationService();
 		await configurationService.setUserConfiguration('editor', { fontFamily: 'foo' });
 		await configurationService.setUserConfiguration('terminal', { integrated: { fontFamily: 'bar' } });
-		const configHelper = new TerminalConfigHelper(configurationService, null!, null!, null!, null!, null!, null!);
+		const configHelper = new TestTerminalConfigHelper(configurationService, null!, null!, null!, null!, null!);
 		configHelper.panelContainer = fixture;
-		assert.equal(configHelper.getFont().fontFamily, 'bar', 'terminal.integrated.fontFamily should be selected over editor.fontFamily');
+		assert.strictEqual(configHelper.getFont().fontFamily, 'bar', 'terminal.integrated.fontFamily should be selected over editor.fontFamily');
 	});
 
 	test('TerminalConfigHelper - getFont fontFamily (Linux Fedora)', async () => {
 		const configurationService = new TestConfigurationService();
 		await configurationService.setUserConfiguration('editor', { fontFamily: 'foo' });
 		await configurationService.setUserConfiguration('terminal', { integrated: { fontFamily: null } });
-		const configHelper = new TerminalConfigHelper(configurationService, null!, null!, null!, null!, null!, null!);
-		configHelper.setLinuxDistro(LinuxDistro.Fedora);
+		const configHelper = new TestTerminalConfigHelper(configurationService, null!, null!, null!, null!, null!);
+		configHelper.linuxDistro = LinuxDistro.Fedora;
 		configHelper.panelContainer = fixture;
-		assert.equal(configHelper.getFont().fontFamily, '\'DejaVu Sans Mono\', monospace', 'Fedora should have its font overridden when terminal.integrated.fontFamily not set');
+		assert.strictEqual(configHelper.getFont().fontFamily, '\'DejaVu Sans Mono\', monospace', 'Fedora should have its font overridden when terminal.integrated.fontFamily not set');
 	});
 
 	test('TerminalConfigHelper - getFont fontFamily (Linux Ubuntu)', async () => {
 		const configurationService = new TestConfigurationService();
 		await configurationService.setUserConfiguration('editor', { fontFamily: 'foo' });
 		await configurationService.setUserConfiguration('terminal', { integrated: { fontFamily: null } });
-		const configHelper = new TerminalConfigHelper(configurationService, null!, null!, null!, null!, null!, null!);
-		configHelper.setLinuxDistro(LinuxDistro.Ubuntu);
+		const configHelper = new TestTerminalConfigHelper(configurationService, null!, null!, null!, null!, null!);
+		configHelper.linuxDistro = LinuxDistro.Ubuntu;
 		configHelper.panelContainer = fixture;
-		assert.equal(configHelper.getFont().fontFamily, '\'Ubuntu Mono\', monospace', 'Ubuntu should have its font overridden when terminal.integrated.fontFamily not set');
+		assert.strictEqual(configHelper.getFont().fontFamily, '\'Ubuntu Mono\', monospace', 'Ubuntu should have its font overridden when terminal.integrated.fontFamily not set');
 	});
 
 	test('TerminalConfigHelper - getFont fontFamily (Linux Unknown)', async () => {
 		const configurationService = new TestConfigurationService();
 		await configurationService.setUserConfiguration('editor', { fontFamily: 'foo' });
 		await configurationService.setUserConfiguration('terminal', { integrated: { fontFamily: null } });
-		const configHelper = new TerminalConfigHelper(configurationService, null!, null!, null!, null!, null!, null!);
+		const configHelper = new TestTerminalConfigHelper(configurationService, null!, null!, null!, null!, null!);
 		configHelper.panelContainer = fixture;
-		assert.equal(configHelper.getFont().fontFamily, 'foo', 'editor.fontFamily should be the fallback when terminal.integrated.fontFamily not set');
+		assert.strictEqual(configHelper.getFont().fontFamily, 'foo', 'editor.fontFamily should be the fallback when terminal.integrated.fontFamily not set');
 	});
 
 	test('TerminalConfigHelper - getFont fontSize', async () => {
@@ -67,9 +73,9 @@ suite('Workbench - TerminalConfigHelper', () => {
 				fontSize: 10
 			}
 		});
-		let configHelper = new TerminalConfigHelper(configurationService, null!, null!, null!, null!, null!, null!);
+		let configHelper = new TestTerminalConfigHelper(configurationService, null!, null!, null!, null!, null!);
 		configHelper.panelContainer = fixture;
-		assert.equal(configHelper.getFont().fontSize, 10, 'terminal.integrated.fontSize should be selected over editor.fontSize');
+		assert.strictEqual(configHelper.getFont().fontSize, 10, 'terminal.integrated.fontSize should be selected over editor.fontSize');
 
 		await configurationService.setUserConfiguration('editor', {
 			fontFamily: 'foo'
@@ -80,14 +86,14 @@ suite('Workbench - TerminalConfigHelper', () => {
 				fontSize: 0
 			}
 		});
-		configHelper = new TerminalConfigHelper(configurationService, null!, null!, null!, null!, null!, null!);
-		configHelper.setLinuxDistro(LinuxDistro.Ubuntu);
+		configHelper = new TestTerminalConfigHelper(configurationService, null!, null!, null!, null!, null!);
+		configHelper.linuxDistro = LinuxDistro.Ubuntu;
 		configHelper.panelContainer = fixture;
-		assert.equal(configHelper.getFont().fontSize, 8, 'The minimum terminal font size (with adjustment) should be used when terminal.integrated.fontSize less than it');
+		assert.strictEqual(configHelper.getFont().fontSize, 8, 'The minimum terminal font size (with adjustment) should be used when terminal.integrated.fontSize less than it');
 
-		configHelper = new TerminalConfigHelper(configurationService, null!, null!, null!, null!, null!, null!);
+		configHelper = new TestTerminalConfigHelper(configurationService, null!, null!, null!, null!, null!);
 		configHelper.panelContainer = fixture;
-		assert.equal(configHelper.getFont().fontSize, 6, 'The minimum terminal font size should be used when terminal.integrated.fontSize less than it');
+		assert.strictEqual(configHelper.getFont().fontSize, 6, 'The minimum terminal font size should be used when terminal.integrated.fontSize less than it');
 
 		await configurationService.setUserConfiguration('editor', {
 			fontFamily: 'foo'
@@ -98,9 +104,9 @@ suite('Workbench - TerminalConfigHelper', () => {
 				fontSize: 1500
 			}
 		});
-		configHelper = new TerminalConfigHelper(configurationService, null!, null!, null!, null!, null!, null!);
+		configHelper = new TestTerminalConfigHelper(configurationService, null!, null!, null!, null!, null!);
 		configHelper.panelContainer = fixture;
-		assert.equal(configHelper.getFont().fontSize, 25, 'The maximum terminal font size should be used when terminal.integrated.fontSize more than it');
+		assert.strictEqual(configHelper.getFont().fontSize, 25, 'The maximum terminal font size should be used when terminal.integrated.fontSize more than it');
 
 		await configurationService.setUserConfiguration('editor', {
 			fontFamily: 'foo'
@@ -111,14 +117,14 @@ suite('Workbench - TerminalConfigHelper', () => {
 				fontSize: null
 			}
 		});
-		configHelper = new TerminalConfigHelper(configurationService, null!, null!, null!, null!, null!, null!);
-		configHelper.setLinuxDistro(LinuxDistro.Ubuntu);
+		configHelper = new TestTerminalConfigHelper(configurationService, null!, null!, null!, null!, null!);
+		configHelper.linuxDistro = LinuxDistro.Ubuntu;
 		configHelper.panelContainer = fixture;
-		assert.equal(configHelper.getFont().fontSize, EDITOR_FONT_DEFAULTS.fontSize + 2, 'The default editor font size (with adjustment) should be used when terminal.integrated.fontSize is not set');
+		assert.strictEqual(configHelper.getFont().fontSize, EDITOR_FONT_DEFAULTS.fontSize + 2, 'The default editor font size (with adjustment) should be used when terminal.integrated.fontSize is not set');
 
-		configHelper = new TerminalConfigHelper(configurationService, null!, null!, null!, null!, null!, null!);
+		configHelper = new TestTerminalConfigHelper(configurationService, null!, null!, null!, null!, null!);
 		configHelper.panelContainer = fixture;
-		assert.equal(configHelper.getFont().fontSize, EDITOR_FONT_DEFAULTS.fontSize, 'The default editor font size should be used when terminal.integrated.fontSize is not set');
+		assert.strictEqual(configHelper.getFont().fontSize, EDITOR_FONT_DEFAULTS.fontSize, 'The default editor font size should be used when terminal.integrated.fontSize is not set');
 	});
 
 	test('TerminalConfigHelper - getFont lineHeight', async () => {
@@ -134,9 +140,9 @@ suite('Workbench - TerminalConfigHelper', () => {
 				lineHeight: 2
 			}
 		});
-		let configHelper = new TerminalConfigHelper(configurationService, null!, null!, null!, null!, null!, null!);
+		let configHelper = new TestTerminalConfigHelper(configurationService, null!, null!, null!, null!, null!);
 		configHelper.panelContainer = fixture;
-		assert.equal(configHelper.getFont().lineHeight, 2, 'terminal.integrated.lineHeight should be selected over editor.lineHeight');
+		assert.strictEqual(configHelper.getFont().lineHeight, 2, 'terminal.integrated.lineHeight should be selected over editor.lineHeight');
 
 		await configurationService.setUserConfiguration('editor', {
 			fontFamily: 'foo',
@@ -148,9 +154,9 @@ suite('Workbench - TerminalConfigHelper', () => {
 				lineHeight: 0
 			}
 		});
-		configHelper = new TerminalConfigHelper(configurationService, null!, null!, null!, null!, null!, null!);
+		configHelper = new TestTerminalConfigHelper(configurationService, null!, null!, null!, null!, null!);
 		configHelper.panelContainer = fixture;
-		assert.equal(configHelper.getFont().lineHeight, 1, 'editor.lineHeight should be 1 when terminal.integrated.lineHeight not set');
+		assert.strictEqual(configHelper.getFont().lineHeight, 1, 'editor.lineHeight should be 1 when terminal.integrated.lineHeight not set');
 	});
 
 	test('TerminalConfigHelper - isMonospace monospace', async function () {
@@ -161,9 +167,9 @@ suite('Workbench - TerminalConfigHelper', () => {
 			}
 		});
 
-		let configHelper = new TerminalConfigHelper(configurationService, null!, null!, null!, null!, null!, null!);
+		const configHelper = new TestTerminalConfigHelper(configurationService, null!, null!, null!, null!, null!);
 		configHelper.panelContainer = fixture;
-		assert.equal(configHelper.configFontIsMonospace(), true, 'monospace is monospaced');
+		assert.strictEqual(configHelper.configFontIsMonospace(), true, 'monospace is monospaced');
 	});
 
 	test('TerminalConfigHelper - isMonospace sans-serif', async () => {
@@ -173,9 +179,9 @@ suite('Workbench - TerminalConfigHelper', () => {
 				fontFamily: 'sans-serif'
 			}
 		});
-		let configHelper = new TerminalConfigHelper(configurationService, null!, null!, null!, null!, null!, null!);
+		const configHelper = new TestTerminalConfigHelper(configurationService, null!, null!, null!, null!, null!);
 		configHelper.panelContainer = fixture;
-		assert.equal(configHelper.configFontIsMonospace(), false, 'sans-serif is not monospaced');
+		assert.strictEqual(configHelper.configFontIsMonospace(), false, 'sans-serif is not monospaced');
 	});
 
 	test('TerminalConfigHelper - isMonospace serif', async () => {
@@ -185,9 +191,9 @@ suite('Workbench - TerminalConfigHelper', () => {
 				fontFamily: 'serif'
 			}
 		});
-		let configHelper = new TerminalConfigHelper(configurationService, null!, null!, null!, null!, null!, null!);
+		const configHelper = new TestTerminalConfigHelper(configurationService, null!, null!, null!, null!, null!);
 		configHelper.panelContainer = fixture;
-		assert.equal(configHelper.configFontIsMonospace(), false, 'serif is not monospaced');
+		assert.strictEqual(configHelper.configFontIsMonospace(), false, 'serif is not monospaced');
 	});
 
 	test('TerminalConfigHelper - isMonospace monospace falls back to editor.fontFamily', async () => {
@@ -201,9 +207,9 @@ suite('Workbench - TerminalConfigHelper', () => {
 			}
 		});
 
-		let configHelper = new TerminalConfigHelper(configurationService, null!, null!, null!, null!, null!, null!);
+		const configHelper = new TestTerminalConfigHelper(configurationService, null!, null!, null!, null!, null!);
 		configHelper.panelContainer = fixture;
-		assert.equal(configHelper.configFontIsMonospace(), true, 'monospace is monospaced');
+		assert.strictEqual(configHelper.configFontIsMonospace(), true, 'monospace is monospaced');
 	});
 
 	test('TerminalConfigHelper - isMonospace sans-serif falls back to editor.fontFamily', async () => {
@@ -217,9 +223,9 @@ suite('Workbench - TerminalConfigHelper', () => {
 			}
 		});
 
-		let configHelper = new TerminalConfigHelper(configurationService, null!, null!, null!, null!, null!, null!);
+		const configHelper = new TestTerminalConfigHelper(configurationService, null!, null!, null!, null!, null!);
 		configHelper.panelContainer = fixture;
-		assert.equal(configHelper.configFontIsMonospace(), false, 'sans-serif is not monospaced');
+		assert.strictEqual(configHelper.configFontIsMonospace(), false, 'sans-serif is not monospaced');
 	});
 
 	test('TerminalConfigHelper - isMonospace serif falls back to editor.fontFamily', async () => {
@@ -233,8 +239,8 @@ suite('Workbench - TerminalConfigHelper', () => {
 			}
 		});
 
-		let configHelper = new TerminalConfigHelper(configurationService, null!, null!, null!, null!, null!, null!);
+		const configHelper = new TestTerminalConfigHelper(configurationService, null!, null!, null!, null!, null!);
 		configHelper.panelContainer = fixture;
-		assert.equal(configHelper.configFontIsMonospace(), false, 'serif is not monospaced');
+		assert.strictEqual(configHelper.configFontIsMonospace(), false, 'serif is not monospaced');
 	});
 });

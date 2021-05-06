@@ -14,35 +14,35 @@
   "categories": [
     "Other"
   ],
+  "capabilities": {
+    "virtualWorkspaces": false
+  },
   "contributes": {
-    "notebookMarkdownRenderer": [
+    "notebookMarkupRenderers": [
       {
         "id": "markdownItRenderer-katex",
         "displayName": "Markdown it katex renderer",
-        "entrypoint": "./notebook-out/katex.js"
+        "entrypoint": "./notebook-out/katex.js",
+        "dependsOn": "markdownItRenderer"
       },
       {
         "id": "markdownItRenderer-emoji",
         "displayName": "Markdown it emoji renderer",
-        "entrypoint": "./notebook-out/emoji.js"
+        "entrypoint": "./notebook-out/emoji.js",
+        "dependsOn": "markdownItRenderer"
       }
     ]
   },
   "scripts": {
     "compile": "npm run build-notebook",
     "watch": "npm run build-notebook",
-    "build-notebook": "npx webpack-cli --config webpack.notebook.js --mode production"
-  },
-  "dependencies": {
-    "@iktakahiro/markdown-it-katex": "^4.0.1",
-    "markdown-it-emoji": "^2.0.0"
+    "build-notebook": "node ./esbuild"
   },
   "devDependencies": {
+    "@iktakahiro/markdown-it-katex": "https://github.com/mjbvz/markdown-it-katex.git",
     "@types/markdown-it": "^0.0.0",
-    "css-loader": "^5.0.2",
     "markdown-it": "^12.0.4",
-    "style-loader": "^2.0.0",
-    "url-loader": "^4.1.1"
+    "markdown-it-emoji": "^2.0.0"
   },
   "repository": {
     "type": "git",

@@ -41,8 +41,7 @@ export interface IExtensionsStatus {
 	runtimeErrors: Error[];
 }
 
-export type ExtensionActivationError = string | MissingDependencyError;
-export class MissingDependencyError {
+export class MissingExtensionDependency {
 	constructor(readonly dependency: string) { }
 }
 
@@ -238,9 +237,19 @@ export interface IExtensionService {
 	getInspectPort(tryEnableInspector: boolean): Promise<number>;
 
 	/**
+	 * Stops the extension hosts.
+	 */
+	stopExtensionHosts(): void;
+
+	/**
 	 * Restarts the extension host.
 	 */
-	restartExtensionHost(): void;
+	restartExtensionHost(): Promise<void>;
+
+	/**
+	 * Starts the extension hosts.
+	 */
+	startExtensionHosts(): Promise<void>;
 
 	/**
 	 * Modify the environment of the remote extension host
@@ -248,12 +257,11 @@ export interface IExtensionService {
 	 */
 	setRemoteEnvironment(env: { [key: string]: string | null }): Promise<void>;
 
-	_logOrShowMessage(severity: Severity, msg: string): void;
 	_activateById(extensionId: ExtensionIdentifier, reason: ExtensionActivationReason): Promise<void>;
 	_onWillActivateExtension(extensionId: ExtensionIdentifier): void;
 	_onDidActivateExtension(extensionId: ExtensionIdentifier, codeLoadingTime: number, activateCallTime: number, activateResolvedTime: number, activationReason: ExtensionActivationReason): void;
+	_onDidActivateExtensionError(extensionId: ExtensionIdentifier, error: Error): void;
 	_onExtensionRuntimeError(extensionId: ExtensionIdentifier, err: Error): void;
-	_onExtensionHostExit(code: number): void;
 }
 
 export interface ProfileSession {
@@ -268,16 +276,6 @@ export function checkProposedApiEnabled(extension: IExtensionDescription): void 
 
 export function throwProposedApiError(extension: IExtensionDescription): never {
 	throw new Error(`[${extension.identifier.value}]: Proposed API is only available when running out of dev or with the following command line switch: --enable-proposed-api ${extension.identifier.value}`);
-}
-
-export function checkRequiresWorkspaceTrust(extension: IExtensionDescription): void {
-	if (!extension.requiresWorkspaceTrust) {
-		throwRequiresWorkspaceTrustError(extension);
-	}
-}
-
-export function throwRequiresWorkspaceTrustError(extension: IExtensionDescription): void {
-	throw new Error(`[${extension.identifier.value}]: This API is only available when the "requiresWorkspaceTrust" is set to "onStart" or "onDemand" in the extension's package.json.`);
 }
 
 export function toExtension(extensionDescription: IExtensionDescription): IExtension {
@@ -317,14 +315,16 @@ export class NullExtensionService implements IExtensionService {
 	readExtensionPointContributions<T>(_extPoint: IExtensionPoint<T>): Promise<ExtensionPointContribution<T>[]> { return Promise.resolve(Object.create(null)); }
 	getExtensionsStatus(): { [id: string]: IExtensionsStatus; } { return Object.create(null); }
 	getInspectPort(_tryEnableInspector: boolean): Promise<number> { return Promise.resolve(0); }
-	restartExtensionHost(): void { }
+	stopExtensionHosts(): void { }
+	async restartExtensionHost(): Promise<void> { }
+	async startExtensionHosts(): Promise<void> { }
 	async setRemoteEnvironment(_env: { [key: string]: string | null }): Promise<void> { }
 	canAddExtension(): boolean { return false; }
 	canRemoveExtension(): boolean { return false; }
-	_logOrShowMessage(_severity: Severity, _msg: string): void { }
 	_activateById(_extensionId: ExtensionIdentifier, _reason: ExtensionActivationReason): Promise<void> { return Promise.resolve(); }
 	_onWillActivateExtension(_extensionId: ExtensionIdentifier): void { }
 	_onDidActivateExtension(_extensionId: ExtensionIdentifier, _codeLoadingTime: number, _activateCallTime: number, _activateResolvedTime: number, _activationReason: ExtensionActivationReason): void { }
+	_onDidActivateExtensionError(_extensionId: ExtensionIdentifier, _error: Error): void { }
 	_onExtensionRuntimeError(_extensionId: ExtensionIdentifier, _err: Error): void { }
 	_onExtensionHostExit(code: number): void { }
 }

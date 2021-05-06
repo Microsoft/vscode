@@ -7,7 +7,7 @@ import { onUnexpectedError, setUnexpectedErrorHandler } from 'vs/base/common/err
 import BaseErrorTelemetry from 'vs/platform/telemetry/common/errorTelemetry';
 
 export default class ErrorTelemetry extends BaseErrorTelemetry {
-	protected installErrorListeners(): void {
+	protected override installErrorListeners(): void {
 		setUnexpectedErrorHandler(err => console.error(err));
 
 		// Print a console message when rejection isn't handled within N seconds. For details:

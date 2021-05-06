@@ -1,12 +1,5 @@
-test/**
-test-workspace/**
-src/**
-tsconfig.json
-out/test/**
-out/**
-extension.webpack.config.js
+notebook/**
 extension-browser.webpack.config.js
 cgmanifest.json
 yarn.lock
-preview-src/**
 webpack.config.js

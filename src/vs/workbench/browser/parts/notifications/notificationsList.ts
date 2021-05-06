@@ -246,7 +246,7 @@ export class NotificationsList extends Themable {
 		return isAncestor(document.activeElement, this.listContainer);
 	}
 
-	protected updateStyles(): void {
+	protected override updateStyles(): void {
 		if (this.listContainer) {
 			const foreground = this.getColor(NOTIFICATIONS_FOREGROUND);
 			this.listContainer.style.color = foreground ? foreground : '';
@@ -271,7 +271,7 @@ export class NotificationsList extends Themable {
 		}
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this.hide();
 
 		super.dispose();

@@ -34,7 +34,7 @@ async function testRename(value: string, newName: string, expectedDocContent: st
 		}
 
 		const newDocContent = TextDocument.applyEdits(document, edits);
-		assert.equal(newDocContent, expectedDocContent, `Expected: ${expectedDocContent}\nActual: ${newDocContent}`);
+		assert.strictEqual(newDocContent, expectedDocContent, `Expected: ${expectedDocContent}\nActual: ${newDocContent}`);
 	} else {
 		assert.fail('should have javascriptMode but no')
 	}

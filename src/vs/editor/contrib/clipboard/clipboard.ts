@@ -12,7 +12,7 @@ import { ICodeEditor } from 'vs/editor/browser/editorBrowser';
 import { EditorAction, registerEditorAction, Command, MultiCommand } from 'vs/editor/browser/editorExtensions';
 import { ICodeEditorService } from 'vs/editor/browser/services/codeEditorService';
 import { EditorContextKeys } from 'vs/editor/common/editorContextKeys';
-import { MenuId } from 'vs/platform/actions/common/actions';
+import { MenuRegistry, MenuId } from 'vs/platform/actions/common/actions';
 import { ServicesAccessor } from 'vs/platform/instantiation/common/instantiation';
 import { KeybindingWeight } from 'vs/platform/keybinding/common/keybindingsRegistry';
 import { EditorOption } from 'vs/editor/common/config/editorOptions';
@@ -94,6 +94,9 @@ export const CopyAction = supportsCopy ? registerCommand(new MultiCommand({
 	}]
 })) : undefined;
 
+MenuRegistry.appendMenuItem(MenuId.MenubarEditMenu, { submenu: MenuId.MenubarCopy, title: { value: nls.localize('copy as', "Copy As"), original: 'Copy As', }, group: '2_ccp', order: 3 });
+MenuRegistry.appendMenuItem(MenuId.EditorContext, { submenu: MenuId.EditorContextCopy, title: { value: nls.localize('copy as', "Copy As"), original: 'Copy As', }, group: CLIPBOARD_CONTEXT_MENU_GROUP, order: 3 });
+
 export const PasteAction = supportsPaste ? registerCommand(new MultiCommand({
 	id: 'editor.action.clipboardPasteAction',
 	precondition: undefined,
@@ -111,13 +114,13 @@ export const PasteAction = supportsPaste ? registerCommand(new MultiCommand({
 		menuId: MenuId.MenubarEditMenu,
 		group: '2_ccp',
 		title: nls.localize({ key: 'miPaste', comment: ['&& denotes a mnemonic'] }, "&&Paste"),
-		order: 3
+		order: 4
 	}, {
 		menuId: MenuId.EditorContext,
 		group: CLIPBOARD_CONTEXT_MENU_GROUP,
 		title: nls.localize('actions.clipboard.pasteLabel', "Paste"),
 		when: EditorContextKeys.writable,
-		order: 3,
+		order: 4,
 	}, {
 		menuId: MenuId.CommandPalette,
 		group: '',
@@ -166,7 +169,7 @@ function registerExecCommandImpl(target: MultiCommand | undefined, browserComman
 	}
 
 	// 1. handle case when focus is in editor.
-	target.addImplementation(10000, (accessor: ServicesAccessor, args: any) => {
+	target.addImplementation(10000, 'code-editor', (accessor: ServicesAccessor, args: any) => {
 		// Only if editor text focus (i.e. not if editor has widget focus).
 		const focusedEditor = accessor.get(ICodeEditorService).getFocusedCodeEditor();
 		if (focusedEditor && focusedEditor.hasTextFocus()) {
@@ -183,7 +186,7 @@ function registerExecCommandImpl(target: MultiCommand | undefined, browserComman
 	});
 
 	// 2. (default) handle case when focus is somewhere else.
-	target.addImplementation(0, (accessor: ServicesAccessor, args: any) => {
+	target.addImplementation(0, 'generic-dom', (accessor: ServicesAccessor, args: any) => {
 		document.execCommand(browserCommand);
 		return true;
 	});
@@ -194,7 +197,7 @@ registerExecCommandImpl(CopyAction, 'copy');
 
 if (PasteAction) {
 	// 1. Paste: handle case when focus is in editor.
-	PasteAction.addImplementation(10000, (accessor: ServicesAccessor, args: any) => {
+	PasteAction.addImplementation(10000, 'code-editor', (accessor: ServicesAccessor, args: any) => {
 		const codeEditorService = accessor.get(ICodeEditorService);
 		const clipboardService = accessor.get(IClipboardService);
 
@@ -232,7 +235,7 @@ if (PasteAction) {
 	});
 
 	// 2. Paste: (default) handle case when focus is somewhere else.
-	PasteAction.addImplementation(0, (accessor: ServicesAccessor, args: any) => {
+	PasteAction.addImplementation(0, 'generic-dom', (accessor: ServicesAccessor, args: any) => {
 		document.execCommand('paste');
 		return true;
 	});

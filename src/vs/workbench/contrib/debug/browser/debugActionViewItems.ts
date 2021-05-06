@@ -67,7 +67,7 @@ export class StartDebugActionViewItem extends BaseActionViewItem {
 		}));
 	}
 
-	render(container: HTMLElement): void {
+	override render(container: HTMLElement): void {
 		this.container = container;
 		container.classList.add('start-debug-action-item');
 		this.start = dom.append(container, $(ThemeIcon.asCSSSelector(debugStart)));
@@ -142,15 +142,15 @@ export class StartDebugActionViewItem extends BaseActionViewItem {
 		this.updateOptions();
 	}
 
-	setActionContext(context: any): void {
+	override setActionContext(context: any): void {
 		this.context = context;
 	}
 
-	isEnabled(): boolean {
+	override isEnabled(): boolean {
 		return true;
 	}
 
-	focus(fromRight?: boolean): void {
+	override focus(fromRight?: boolean): void {
 		if (fromRight) {
 			this.selectBox.focus();
 		} else {
@@ -159,13 +159,13 @@ export class StartDebugActionViewItem extends BaseActionViewItem {
 		}
 	}
 
-	blur(): void {
+	override blur(): void {
 		this.start.tabIndex = -1;
 		this.selectBox.blur();
 		this.container.blur();
 	}
 
-	setFocusable(focusable: boolean): void {
+	override setFocusable(focusable: boolean): void {
 		if (focusable) {
 			this.start.tabIndex = 0;
 		} else {
@@ -174,7 +174,7 @@ export class StartDebugActionViewItem extends BaseActionViewItem {
 		}
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this.toDispose = dispose(this.toDispose);
 	}
 
@@ -292,7 +292,7 @@ export class FocusSessionActionViewItem extends SelectActionViewItem {
 		this.update(selectedSession);
 	}
 
-	protected getActionContext(_: string, index: number): any {
+	protected override getActionContext(_: string, index: number): any {
 		return this.getSessions()[index];
 	}
 

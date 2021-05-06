@@ -7,7 +7,7 @@ import { IURLService, IURLHandler, IOpenURLOptions } from 'vs/platform/url/commo
 import { URI, UriComponents } from 'vs/base/common/uri';
 import { first } from 'vs/base/common/async';
 import { toDisposable, IDisposable, Disposable } from 'vs/base/common/lifecycle';
-import product from 'vs/platform/product/common/product';
+import { IProductService } from 'vs/platform/product/common/productService';
 
 export abstract class AbstractURLService extends Disposable implements IURLService {
 
@@ -30,6 +30,12 @@ export abstract class AbstractURLService extends Disposable implements IURLServi
 
 export class NativeURLService extends AbstractURLService {
 
+	constructor(
+		@IProductService protected readonly productService: IProductService
+	) {
+		super();
+	}
+
 	create(options?: Partial<UriComponents>): URI {
 		let { authority, path, query, fragment } = options ? options : { authority: undefined, path: undefined, query: undefined, fragment: undefined };
 
@@ -37,6 +43,6 @@ export class NativeURLService extends AbstractURLService {
 			path = `/${path}`; // URI validation requires a path if there is an authority
 		}
 
-		return URI.from({ scheme: product.urlProtocol, authority, path, query, fragment });
+		return URI.from({ scheme: this.productService.urlProtocol, authority, path, query, fragment });
 	}
 }

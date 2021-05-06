@@ -11,7 +11,7 @@ import { IDisposable, toDisposable, DisposableStore } from 'vs/base/common/lifec
 import { isThenable } from 'vs/base/common/async';
 import { LinkedList } from 'vs/base/common/linkedList';
 import { createStyleSheet, createCSSRule, removeCSSRulesContainingSelector } from 'vs/base/browser/dom';
-import { IThemeService, IColorTheme } from 'vs/platform/theme/common/themeService';
+import { IThemeService, IColorTheme, ThemeIcon } from 'vs/platform/theme/common/themeService';
 import { isFalsyOrWhitespace } from 'vs/base/common/strings';
 import { localize } from 'vs/nls';
 import { isPromiseCanceledError } from 'vs/base/common/errors';
@@ -19,6 +19,7 @@ import { CancellationTokenSource } from 'vs/base/common/cancellation';
 import { registerSingleton } from 'vs/platform/instantiation/common/extensions';
 import { hash } from 'vs/base/common/hash';
 import { IUriIdentityService } from 'vs/workbench/services/uriIdentity/common/uriIdentity';
+import { iconRegistry } from 'vs/base/common/codicons';
 
 class DecorationRule {
 
@@ -27,7 +28,11 @@ class DecorationRule {
 			return data.map(DecorationRule.keyOf).join(',');
 		} else {
 			const { color, letter } = data;
-			return `${color}/${letter}`;
+			if (ThemeIcon.isThemeIcon(letter)) {
+				return `${color}+${letter.id}`;
+			} else {
+				return `${color}/${letter}`;
+			}
 		}
 	}
 
@@ -36,6 +41,7 @@ class DecorationRule {
 	readonly data: IDecorationData | IDecorationData[];
 	readonly itemColorClassName: string;
 	readonly itemBadgeClassName: string;
+	readonly iconBadgeClassName: string;
 	readonly bubbleBadgeClassName: string;
 
 	private _refCounter: number = 0;
@@ -46,6 +52,7 @@ class DecorationRule {
 		this.itemColorClassName = `${DecorationRule._classNamesPrefix}-itemColor-${suffix}`;
 		this.itemBadgeClassName = `${DecorationRule._classNamesPrefix}-itemBadge-${suffix}`;
 		this.bubbleBadgeClassName = `${DecorationRule._classNamesPrefix}-bubbleBadge-${suffix}`;
+		this.iconBadgeClassName = `${DecorationRule._classNamesPrefix}-iconBadge-${suffix}`;
 	}
 
 	acquire(): void {
@@ -68,8 +75,12 @@ class DecorationRule {
 		const { color, letter } = data;
 		// label
 		createCSSRule(`.${this.itemColorClassName}`, `color: ${getColor(theme, color)};`, element);
+		// icon
+		if (ThemeIcon.isThemeIcon(letter)) {
+			this._createIconCSSRule(letter, color, element, theme);
+		}
 		// letter
-		if (letter) {
+		else if (letter) {
 			createCSSRule(`.${this.itemBadgeClassName}::after`, `content: "${letter}"; color: ${getColor(theme, color)};`, element);
 		}
 	}
@@ -79,17 +90,36 @@ class DecorationRule {
 		const { color } = data[0];
 		createCSSRule(`.${this.itemColorClassName}`, `color: ${getColor(theme, color)};`, element);
 
-		// badge
-		const letters = data.filter(d => !isFalsyOrWhitespace(d.letter)).map(d => d.letter);
-		if (letters.length) {
-			createCSSRule(`.${this.itemBadgeClassName}::after`, `content: "${letters.join(', ')}"; color: ${getColor(theme, color)};`, element);
-		}
+		// icon (only show first)
+		const icon = data.find(d => ThemeIcon.isThemeIcon(d.letter))?.letter as ThemeIcon | undefined;
+		if (icon) {
+			this._createIconCSSRule(icon, color, element, theme);
+		} else {
+			// badge
+			const letters = data.filter(d => !isFalsyOrWhitespace(d.letter as string | undefined)).map(d => d.letter);
+			if (letters.length) {
+				createCSSRule(`.${this.itemBadgeClassName}::after`, `content: "${letters.join(', ')}"; color: ${getColor(theme, color)};`, element);
+			}
 
-		// bubble badge
-		// TODO @misolori update bubble badge to use class name instead of unicode
+			// bubble badge
+			// TODO @misolori update bubble badge to adopt letter: ThemeIcon instead of unicode
+			createCSSRule(
+				`.${this.bubbleBadgeClassName}::after`,
+				`content: "\uea71"; color: ${getColor(theme, color)}; font-family: codicon; font-size: 14px; padding-right: 14px; opacity: 0.4;`,
+				element
+			);
+		}
+	}
+
+	private _createIconCSSRule(icon: ThemeIcon, color: string | undefined, element: HTMLStyleElement, theme: IColorTheme) {
+		const codicon = iconRegistry.get(icon.id);
+		if (!codicon || !('fontCharacter' in codicon.definition)) {
+			return;
+		}
+		const charCode = parseInt(codicon.definition.fontCharacter.substr(1), 16);
 		createCSSRule(
-			`.${this.bubbleBadgeClassName}::after`,
-			`content: "\uea71"; color: ${getColor(theme, color)}; font-family: codicon; font-size: 14px; padding-right: 14px; opacity: 0.4;`,
+			`.${this.iconBadgeClassName}::after`,
+			`content: "${String.fromCharCode(charCode)}"; color: ${getColor(theme, color)}; font-family: codicon; font-size: 16px; padding-right: 14px; font-weight: normal`,
 			element
 		);
 	}
@@ -98,6 +128,7 @@ class DecorationRule {
 		removeCSSRulesContainingSelector(this.itemColorClassName, element);
 		removeCSSRulesContainingSelector(this.itemBadgeClassName, element);
 		removeCSSRulesContainingSelector(this.bubbleBadgeClassName, element);
+		removeCSSRulesContainingSelector(this.iconBadgeClassName, element);
 	}
 }
 
@@ -135,6 +166,7 @@ class DecorationStyles {
 
 		let labelClassName = rule.itemColorClassName;
 		let badgeClassName = rule.itemBadgeClassName;
+		let iconClassName = rule.iconBadgeClassName;
 		let tooltip = data.filter(d => !isFalsyOrWhitespace(d.tooltip)).map(d => d.tooltip).join(' • ');
 
 		if (onlyChildren) {
@@ -146,6 +178,7 @@ class DecorationStyles {
 		return {
 			labelClassName,
 			badgeClassName,
+			iconClassName,
 			tooltip,
 			dispose: () => {
 				if (rule?.release()) {

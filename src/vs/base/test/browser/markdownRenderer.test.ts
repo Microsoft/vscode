@@ -111,7 +111,7 @@ suite('MarkdownRenderer', () => {
 
 		const data = <{ script: string, documentUri: URI }>parse(decodeURIComponent(uri.query));
 		assert.ok(data);
-		assert.equal(data.script, 'echo');
+		assert.strictEqual(data.script, 'echo');
 		assert.ok(data.documentUri.toString().startsWith('file:///c%3A/'));
 	});
 

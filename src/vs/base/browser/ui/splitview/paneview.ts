@@ -568,7 +568,7 @@ export class PaneView extends Disposable {
 		}, 200);
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		super.dispose();
 
 		this.paneItems.forEach(i => i.disposable.dispose());

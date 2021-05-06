@@ -262,12 +262,12 @@ const toggleMultilineAction = 'problems.action.toggleMultiline';
 
 class ToggleMultilineActionViewItem extends ActionViewItem {
 
-	render(container: HTMLElement): void {
+	override render(container: HTMLElement): void {
 		super.render(container);
 		this.updateExpandedAttribute();
 	}
 
-	updateClass(): void {
+	override updateClass(): void {
 		super.updateClass();
 		this.updateExpandedAttribute();
 	}
@@ -428,7 +428,7 @@ class MarkerWidget extends Disposable {
 
 					this._register(onOpen(e => {
 						dom.EventHelper.stop(e, true);
-						this._openerService.open(codeUri);
+						this._openerService.open(codeUri, { allowCommands: true });
 					}));
 
 					const code = new HighlightedLabel(dom.append(this._codeLink, dom.$('.marker-code')), false);
@@ -695,7 +695,7 @@ export class MarkerViewModel extends Disposable {
 					if (!this.codeActionsPromise) {
 						this.codeActionsPromise = createCancelablePromise(cancellationToken => {
 							return getCodeActions(model, new Range(this.marker.range.startLineNumber, this.marker.range.startColumn, this.marker.range.endLineNumber, this.marker.range.endColumn), {
-								type: CodeActionTriggerType.Manual, filter: { include: CodeActionKind.QuickFix }
+								type: CodeActionTriggerType.Invoke, filter: { include: CodeActionKind.QuickFix }
 							}, Progress.None, cancellationToken).then(actions => {
 								return this._register(actions);
 							});
@@ -857,7 +857,7 @@ export class MarkersViewModel extends Disposable {
 		}
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this.markersViewStates.forEach(({ disposables }) => dispose(disposables));
 		this.markersViewStates.clear();
 		this.markersPerResource.clear();

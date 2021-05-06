@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 .monaco-workbench .part {
-	box-sizing:	border-box;
+	box-sizing: border-box;
 	overflow: hidden;
 }
 
@@ -29,7 +29,7 @@
 .monaco-workbench .part > .title {
 	height: 35px;
 	display: flex;
-	box-sizing:	border-box;
+	box-sizing: border-box;
 	overflow: hidden;
 }
 
@@ -73,9 +73,6 @@
 
 .monaco-workbench .part > .title > .title-actions .action-label {
 	display: block;
-	height: 35px;
-	line-height: 35px;
-	min-width: 28px;
 	background-size: 16px;
 	background-position: center center;
 	background-repeat: no-repeat;
@@ -103,6 +100,10 @@
 }
 
 .monaco-workbench .part > .content > .monaco-progress-container .progress-bit,
-.monaco-workbench .part.editor > .content .monaco-progress-container .progress-bit {
+.monaco-workbench
+	.part.editor
+	> .content
+	.monaco-progress-container
+	.progress-bit {
 	height: 2px;
 }

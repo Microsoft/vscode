@@ -34,16 +34,16 @@ export class TestingViewPaneContainer extends ViewPaneContainer {
 		super(Testing.ViewletId, { mergeViewWithContainerWhenSingleView: true }, instantiationService, configurationService, layoutService, contextMenuService, telemetryService, extensionService, themeService, storageService, contextService, viewDescriptorService);
 	}
 
-	create(parent: HTMLElement): void {
+	override create(parent: HTMLElement): void {
 		super.create(parent);
 		parent.classList.add('testing-view-pane');
 	}
 
-	getOptimalWidth(): number {
+	override getOptimalWidth(): number {
 		return 400;
 	}
 
-	getTitle(): string {
+	override getTitle(): string {
 		return localize('testing', "Testing");
 	}
 }

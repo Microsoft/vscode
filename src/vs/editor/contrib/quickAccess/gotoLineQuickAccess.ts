@@ -125,7 +125,7 @@ export abstract class AbstractGotoLineQuickAccessProvider extends AbstractEditor
 		// Location valid: indicate this as picker label
 		if (this.isValidLineNumber(editor, lineNumber)) {
 			if (this.isValidColumn(editor, lineNumber, column)) {
-				return localize('gotoLineColumnLabel', "Go to line {0} and column {1}.", lineNumber, column);
+				return localize('gotoLineColumnLabel', "Go to line {0} and character {1}.", lineNumber, column);
 			}
 
 			return localize('gotoLineLabel', "Go to line {0}.", lineNumber);

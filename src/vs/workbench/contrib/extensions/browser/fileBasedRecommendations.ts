@@ -12,7 +12,8 @@ import { IExtensionsViewPaneContainer, IExtensionsWorkbenchService, IExtension }
 import { CancellationToken } from 'vs/base/common/cancellation';
 import { localize } from 'vs/nls';
 import { StorageScope, IStorageService, StorageTarget } from 'vs/platform/storage/common/storage';
-import { ImportantExtensionTip, IProductService } from 'vs/platform/product/common/productService';
+import { IProductService } from 'vs/platform/product/common/productService';
+import { ImportantExtensionTip } from 'vs/base/common/product';
 import { forEach, IStringDictionary } from 'vs/base/common/collections';
 import { ITextModel } from 'vs/editor/common/model';
 import { Schemas } from 'vs/base/common/network';

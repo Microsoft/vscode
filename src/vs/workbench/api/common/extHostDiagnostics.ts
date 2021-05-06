@@ -288,7 +288,7 @@ export class ExtHostDiagnostics implements ExtHostDiagnosticsShape {
 				super(name!, owner, ExtHostDiagnostics._maxDiagnosticsPerFile, loggingProxy, _onDidChangeDiagnostics);
 				_collections.set(owner, this);
 			}
-			dispose() {
+			override dispose() {
 				super.dispose();
 				_collections.delete(owner);
 			}

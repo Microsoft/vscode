@@ -28,3 +28,14 @@ export function testRepeat(n: number, description: string, callback: (this: any)
 		test(`${description} (iteration ${i})`, callback);
 	}
 }
+
+export async function assertThrowsAsync(block: () => any, message: string | Error = 'Missing expected exception'): Promise<void> {
+	try {
+		await block();
+	} catch {
+		return;
+	}
+
+	const err = message instanceof Error ? message : new Error(message);
+	throw err;
+}

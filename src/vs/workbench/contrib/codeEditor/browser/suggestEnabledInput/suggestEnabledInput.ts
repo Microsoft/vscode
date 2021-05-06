@@ -88,10 +88,10 @@ type ISuggestEnabledInputStyles = {
 
 export function attachSuggestEnabledInputBoxStyler(widget: IThemable, themeService: IThemeService, style?: ISuggestEnabledInputStyleOverrides): IDisposable {
 	return attachStyler(themeService, {
-		inputBackground: (style && style.inputBackground) || inputBackground,
-		inputForeground: (style && style.inputForeground) || inputForeground,
-		inputBorder: (style && style.inputBorder) || inputBorder,
-		inputPlaceholderForeground: (style && style.inputPlaceholderForeground) || inputPlaceholderForeground,
+		inputBackground: style?.inputBackground || inputBackground,
+		inputForeground: style?.inputForeground || inputForeground,
+		inputBorder: style?.inputBorder || inputBorder,
+		inputPlaceholderForeground: style?.inputPlaceholderForeground || inputPlaceholderForeground,
 	} as ISuggestEnabledInputStyleOverrides, widget);
 }
 

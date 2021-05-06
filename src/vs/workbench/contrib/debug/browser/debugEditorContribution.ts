@@ -30,7 +30,7 @@ import { ExceptionWidget } from 'vs/workbench/contrib/debug/browser/exceptionWid
 import { FloatingClickWidget } from 'vs/workbench/browser/codeeditor';
 import { Position } from 'vs/editor/common/core/position';
 import { CoreEditingCommands } from 'vs/editor/browser/controller/coreCommands';
-import { memoize, createMemoizer } from 'vs/base/common/decorators';
+import { memoize } from 'vs/base/common/decorators';
 import { IEditorHoverOptions, EditorOption } from 'vs/editor/common/config/editorOptions';
 import { DebugHoverWidget } from 'vs/workbench/contrib/debug/browser/debugHover';
 import { ITextModel } from 'vs/editor/common/model';
@@ -185,7 +185,6 @@ export class DebugEditorContribution implements IDebugEditorContribution {
 	private hoverRange: Range | null = null;
 	private mouseDown = false;
 	private exceptionWidgetVisible: IContextKey<boolean>;
-	private static readonly MEMOIZER = createMemoizer();
 
 	private exceptionWidget: ExceptionWidget | undefined;
 	private configurationWidget: FloatingClickWidget | undefined;
@@ -234,9 +233,10 @@ export class DebugEditorContribution implements IDebugEditorContribution {
 		}));
 		this.toDispose.push(this.editor.onKeyDown((e: IKeyboardEvent) => this.onKeyDown(e)));
 		this.toDispose.push(this.editor.onDidChangeModelContent(() => {
-			DebugEditorContribution.MEMOIZER.clear();
+			this._wordToLineNumbersMap = undefined;
 			this.updateInlineValuesScheduler.schedule();
 		}));
+		this.toDispose.push(this.debugService.getViewModel().onWillUpdateViews(() => this.updateInlineValuesScheduler.schedule()));
 		this.toDispose.push(this.editor.onDidChangeModel(async () => {
 			const stackFrame = this.debugService.getViewModel().focusedStackFrame;
 			const model = this.editor.getModel();
@@ -246,10 +246,18 @@ export class DebugEditorContribution implements IDebugEditorContribution {
 			this.toggleExceptionWidget();
 			this.hideHoverWidget();
 			this.updateConfigurationWidgetVisibility();
-			DebugEditorContribution.MEMOIZER.clear();
+			this._wordToLineNumbersMap = undefined;
 			await this.updateInlineValueDecorations(stackFrame);
 		}));
-		this.toDispose.push(this.editor.onDidScrollChange(() => this.hideHoverWidget));
+		this.toDispose.push(this.editor.onDidScrollChange(() => {
+			this.hideHoverWidget();
+
+			// Inline value provider should get called on view port change
+			const model = this.editor.getModel();
+			if (model && InlineValuesProviderRegistry.has(model)) {
+				this.updateInlineValuesScheduler.schedule();
+			}
+		}));
 		this.toDispose.push(this.debugService.onDidChangeState((state: State) => {
 			if (state !== State.Stopped) {
 				this.toggleExceptionWidget();
@@ -257,9 +265,12 @@ export class DebugEditorContribution implements IDebugEditorContribution {
 		}));
 	}
 
-	@DebugEditorContribution.MEMOIZER
+	private _wordToLineNumbersMap: Map<string, number[]> | undefined = undefined;
 	private get wordToLineNumbersMap(): Map<string, number[]> {
-		return getWordToLineNumbersMap(this.editor.getModel());
+		if (!this._wordToLineNumbersMap) {
+			this._wordToLineNumbersMap = getWordToLineNumbersMap(this.editor.getModel());
+		}
+		return this._wordToLineNumbersMap;
 	}
 
 	private applyHoverConfiguration(model: ITextModel, stackFrame: IStackFrame | undefined): void {
@@ -357,12 +368,11 @@ export class DebugEditorContribution implements IDebugEditorContribution {
 
 	@memoize
 	private get hideHoverScheduler(): RunOnceScheduler {
-		const hoverOption = this.editor.getOption(EditorOption.hover);
 		const scheduler = new RunOnceScheduler(() => {
 			if (!this.hoverWidget.isHovered()) {
 				this.hoverWidget.hide();
 			}
-		}, hoverOption.delay);
+		}, 0);
 		this.toDispose.push(scheduler);
 
 		return scheduler;
@@ -576,8 +586,9 @@ export class DebugEditorContribution implements IDebugEditorContribution {
 		const separator = ', ';
 
 		const model = this.editor.getModel();
-		if (!this.configurationService.getValue<IDebugConfiguration>('debug').inlineValues ||
-			!model || !stackFrame || model.uri.toString() !== stackFrame.source.uri.toString()) {
+		const inlineValuesSetting = this.configurationService.getValue<IDebugConfiguration>('debug').inlineValues;
+		const inlineValuesTurnedOn = inlineValuesSetting === true || (inlineValuesSetting === 'auto' && model && InlineValuesProviderRegistry.has(model));
+		if (!inlineValuesTurnedOn || !model || !stackFrame || model.uri.toString() !== stackFrame.source.uri.toString()) {
 			if (!this.removeInlineValuesScheduler.isScheduled()) {
 				this.removeInlineValuesScheduler.schedule();
 			}

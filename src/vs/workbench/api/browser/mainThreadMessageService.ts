@@ -66,9 +66,12 @@ export class MainThreadMessageService implements MainThreadMessageServiceShape {
 				primaryActions.push(new MessageItemAction('_extension_message_handle_' + command.handle, command.title, command.handle));
 			});
 
-			let source: string | undefined;
+			let source: string | { label: string, id: string } | undefined;
 			if (extension) {
-				source = nls.localize('extensionSource', "{0} (Extension)", extension.displayName || extension.name);
+				source = {
+					label: nls.localize('extensionSource', "{0} (Extension)", extension.displayName || extension.name),
+					id: extension.identifier.value
+				};
 			}
 
 			if (!source) {
@@ -118,7 +121,7 @@ export class MainThreadMessageService implements MainThreadMessageServiceShape {
 			cancelId = buttons.length - 1;
 		}
 
-		const { choice } = await this._dialogService.show(severity, message, buttons, { cancelId, useCustom });
+		const { choice } = await this._dialogService.show(severity, message, buttons, { cancelId, custom: useCustom });
 		return choice === commands.length ? undefined : commands[choice].handle;
 	}
 }

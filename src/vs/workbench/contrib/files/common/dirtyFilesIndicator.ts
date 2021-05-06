@@ -9,7 +9,8 @@ import { VIEWLET_ID } from 'vs/workbench/contrib/files/common/files';
 import { ILifecycleService } from 'vs/workbench/services/lifecycle/common/lifecycle';
 import { Disposable, MutableDisposable } from 'vs/base/common/lifecycle';
 import { IActivityService, NumberBadge } from 'vs/workbench/services/activity/common/activity';
-import { IWorkingCopyService, IWorkingCopy, WorkingCopyCapabilities } from 'vs/workbench/services/workingCopy/common/workingCopyService';
+import { IWorkingCopyService } from 'vs/workbench/services/workingCopy/common/workingCopyService';
+import { IWorkingCopy, WorkingCopyCapabilities } from 'vs/workbench/services/workingCopy/common/workingCopy';
 import { IFilesConfigurationService, AutoSaveMode } from 'vs/workbench/services/filesConfiguration/common/filesConfigurationService';
 
 export class DirtyFilesIndicator extends Disposable implements IWorkbenchContribution {
@@ -36,7 +37,7 @@ export class DirtyFilesIndicator extends Disposable implements IWorkbenchContrib
 		this._register(this.workingCopyService.onDidChangeDirty(workingCopy => this.onWorkingCopyDidChangeDirty(workingCopy)));
 
 		// Lifecycle
-		this.lifecycleService.onShutdown(() => this.dispose());
+		this.lifecycleService.onDidShutdown(() => this.dispose());
 	}
 
 	private onWorkingCopyDidChangeDirty(workingCopy: IWorkingCopy): void {

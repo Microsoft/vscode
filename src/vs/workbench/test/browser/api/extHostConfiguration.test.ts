@@ -18,20 +18,19 @@ import { IExtHostInitDataService } from 'vs/workbench/api/common/extHostInitData
 import { IExtHostFileSystemInfo } from 'vs/workbench/api/common/extHostFileSystemInfo';
 import { FileSystemProviderCapabilities } from 'vs/platform/files/common/files';
 import { isLinux } from 'vs/base/common/platform';
-import { WorkspaceTrustState } from 'vs/platform/workspace/common/workspaceTrust';
 
 suite('ExtHostConfiguration', function () {
 
 	class RecordingShape extends mock<MainThreadConfigurationShape>() {
 		lastArgs!: [ConfigurationTarget, string, any];
-		$updateConfigurationOption(target: ConfigurationTarget, key: string, value: any): Promise<void> {
+		override $updateConfigurationOption(target: ConfigurationTarget, key: string, value: any): Promise<void> {
 			this.lastArgs = [target, key, value];
 			return Promise.resolve(undefined);
 		}
 	}
 
 	function createExtHostWorkspace(): ExtHostWorkspace {
-		return new ExtHostWorkspace(new TestRPCProtocol(), new class extends mock<IExtHostInitDataService>() { }, new class extends mock<IExtHostFileSystemInfo>() { getCapabilities() { return isLinux ? FileSystemProviderCapabilities.PathCaseSensitive : undefined; } }, new NullLogService());
+		return new ExtHostWorkspace(new TestRPCProtocol(), new class extends mock<IExtHostInitDataService>() { }, new class extends mock<IExtHostFileSystemInfo>() { override getCapabilities() { return isLinux ? FileSystemProviderCapabilities.PathCaseSensitive : undefined; } }, new NullLogService());
 	}
 
 	function createExtHostConfiguration(contents: any = Object.create(null), shape?: MainThreadConfigurationShape) {
@@ -319,7 +318,7 @@ suite('ExtHostConfiguration', function () {
 			'id': 'foo',
 			'folders': [aWorkspaceFolder(URI.file('foo'), 0)],
 			'name': 'foo'
-		}, WorkspaceTrustState.Trusted);
+		}, true);
 		const testObject = new ExtHostConfigProvider(
 			new class extends mock<MainThreadConfigurationShape>() { },
 			extHostWorkspace,
@@ -395,7 +394,7 @@ suite('ExtHostConfiguration', function () {
 			'id': 'foo',
 			'folders': [aWorkspaceFolder(firstRoot, 0), aWorkspaceFolder(secondRoot, 1)],
 			'name': 'foo'
-		}, WorkspaceTrustState.Trusted);
+		}, true);
 		const testObject = new ExtHostConfigProvider(
 			new class extends mock<MainThreadConfigurationShape>() { },
 			extHostWorkspace,
@@ -498,7 +497,7 @@ suite('ExtHostConfiguration', function () {
 			'id': 'foo',
 			'folders': [aWorkspaceFolder(firstRoot, 0), aWorkspaceFolder(secondRoot, 1)],
 			'name': 'foo'
-		}, WorkspaceTrustState.Trusted);
+		}, true);
 		const testObject = new ExtHostConfigProvider(
 			new class extends mock<MainThreadConfigurationShape>() { },
 			extHostWorkspace,
@@ -657,7 +656,7 @@ suite('ExtHostConfiguration', function () {
 	test('update/error-state not OK', function () {
 
 		const shape = new class extends mock<MainThreadConfigurationShape>() {
-			$updateConfigurationOption(target: ConfigurationTarget, key: string, value: any): Promise<any> {
+			override $updateConfigurationOption(target: ConfigurationTarget, key: string, value: any): Promise<any> {
 				return Promise.reject(new Error('Unknown Key')); // something !== OK
 			}
 		};
@@ -676,7 +675,7 @@ suite('ExtHostConfiguration', function () {
 			'id': 'foo',
 			'folders': [workspaceFolder],
 			'name': 'foo'
-		}, WorkspaceTrustState.Trusted);
+		}, true);
 		const testObject = new ExtHostConfigProvider(
 			new class extends mock<MainThreadConfigurationShape>() { },
 			extHostWorkspace,
@@ -732,7 +731,7 @@ suite('ExtHostConfiguration', function () {
 
 	function toConfigurationModel(obj: any): ConfigurationModel {
 		const parser = new ConfigurationModelParser('test');
-		parser.parseContent(JSON.stringify(obj));
+		parser.parse(JSON.stringify(obj));
 		return parser.configurationModel;
 	}
 

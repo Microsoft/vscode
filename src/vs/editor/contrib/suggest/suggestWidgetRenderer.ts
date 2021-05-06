@@ -209,13 +209,13 @@ export class ItemRenderer implements IListRenderer<CompletionItem, ISuggestionTe
 		if (typeof completion.label === 'string') {
 			data.parametersLabel.textContent = '';
 			data.qualifierLabel.textContent = '';
-			data.detailsLabel.textContent = (completion.detail || '').replace(/\n.*$/m, '');
+			data.detailsLabel.textContent = stripNewLines(completion.detail || '');
 			data.root.classList.add('string-label');
 			data.root.title = '';
 		} else {
-			data.parametersLabel.textContent = (completion.label.parameters || '').replace(/\n.*$/m, '');
-			data.qualifierLabel.textContent = (completion.label.qualifier || '').replace(/\n.*$/m, '');
-			data.detailsLabel.textContent = (completion.label.type || '').replace(/\n.*$/m, '');
+			data.parametersLabel.textContent = stripNewLines(completion.label.parameters || '');
+			data.qualifierLabel.textContent = stripNewLines(completion.label.qualifier || '');
+			data.detailsLabel.textContent = stripNewLines(completion.label.type || '');
 			data.root.classList.remove('string-label');
 			data.root.title = `${element.textLabel}${completion.label.parameters ?? ''}  ${completion.label.qualifier ?? ''}  ${completion.label.type ?? ''}`;
 		}
@@ -249,4 +249,8 @@ export class ItemRenderer implements IListRenderer<CompletionItem, ISuggestionTe
 	disposeTemplate(templateData: ISuggestionTemplateData): void {
 		templateData.disposables.dispose();
 	}
+}
+
+function stripNewLines(str: string): string {
+	return str.replace(/\r\n|\r|\n/g, '');
 }

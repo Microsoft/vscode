@@ -89,6 +89,7 @@ export class MainThreadQuickOpen implements MainThreadQuickOpenShape {
 		const inputOptions: IInputOptions = Object.create(null);
 
 		if (options) {
+			inputOptions.title = options.title;
 			inputOptions.password = options.password;
 			inputOptions.placeHolder = options.placeHolder;
 			inputOptions.valueSelection = options.valueSelection;

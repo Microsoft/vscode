@@ -214,42 +214,53 @@ export class DefaultConfigurationModel extends ConfigurationModel {
 	}
 }
 
+export interface ConfigurationParseOptions {
+	scopes: ConfigurationScope[] | undefined;
+	skipRestricted?: boolean;
+}
+
 export class ConfigurationModelParser {
 
 	private _raw: any = null;
 	private _configurationModel: ConfigurationModel | null = null;
+	private _restrictedConfigurations: string[] = [];
 	private _parseErrors: any[] = [];
 
-	constructor(protected readonly _name: string, private _scopes?: ConfigurationScope[]) { }
+	constructor(protected readonly _name: string) { }
 
 	get configurationModel(): ConfigurationModel {
 		return this._configurationModel || new ConfigurationModel();
+	}
+
+	get restrictedConfigurations(): string[] {
+		return this._restrictedConfigurations;
 	}
 
 	get errors(): any[] {
 		return this._parseErrors;
 	}
 
-	public parseContent(content: string | null | undefined): void {
+	public parse(content: string | null | undefined, options?: ConfigurationParseOptions): void {
 		if (!types.isUndefinedOrNull(content)) {
 			const raw = this.doParseContent(content);
-			this.parseRaw(raw);
+			this.parseRaw(raw, options);
 		}
 	}
 
-	public parseRaw(raw: any): void {
-		this._raw = raw;
-		const configurationModel = this.doParseRaw(raw);
-		this._configurationModel = new ConfigurationModel(configurationModel.contents, configurationModel.keys, configurationModel.overrides);
-	}
-
-	public parse(): void {
+	public reparse(options: ConfigurationParseOptions): void {
 		if (this._raw) {
-			this.parseRaw(this._raw);
+			this.parseRaw(this._raw, options);
 		}
 	}
 
-	protected doParseContent(content: string): any {
+	public parseRaw(raw: any, options?: ConfigurationParseOptions): void {
+		this._raw = raw;
+		const { contents, keys, overrides, restricted } = this.doParseRaw(raw, options);
+		this._configurationModel = new ConfigurationModel(contents, keys, overrides);
+		this._restrictedConfigurations = restricted || [];
+	}
+
+	private doParseContent(content: string): any {
 		let raw: any = {};
 		let currentProperty: string | null = null;
 		let currentParent: any = [];
@@ -306,42 +317,50 @@ export class ConfigurationModelParser {
 		return raw;
 	}
 
-	protected doParseRaw(raw: any): IConfigurationModel {
-		if (this._scopes) {
-			const configurationProperties = Registry.as<IConfigurationRegistry>(Extensions.Configuration).getConfigurationProperties();
-			raw = this.filterByScope(raw, configurationProperties, true, this._scopes);
-		}
+	protected doParseRaw(raw: any, options?: ConfigurationParseOptions): IConfigurationModel & { restricted?: string[] } {
+		const configurationProperties = Registry.as<IConfigurationRegistry>(Extensions.Configuration).getConfigurationProperties();
+		const filtered = this.filter(raw, configurationProperties, true, options);
+		raw = filtered.raw;
 		const contents = toValuesTree(raw, message => console.error(`Conflict in settings file ${this._name}: ${message}`));
 		const keys = Object.keys(raw);
 		const overrides: IOverrides[] = toOverrides(raw, message => console.error(`Conflict in settings file ${this._name}: ${message}`));
-		return { contents, keys, overrides };
+		return { contents, keys, overrides, restricted: filtered.restricted };
 	}
 
-	private filterByScope(properties: any, configurationProperties: { [qualifiedKey: string]: IConfigurationPropertySchema }, filterOverriddenProperties: boolean, scopes: ConfigurationScope[]): {} {
-		const result: any = {};
+	private filter(properties: any, configurationProperties: { [qualifiedKey: string]: IConfigurationPropertySchema | undefined }, filterOverriddenProperties: boolean, options?: ConfigurationParseOptions): { raw: {}, restricted: string[] } {
+		if (!options?.scopes && !options?.skipRestricted) {
+			return { raw: properties, restricted: [] };
+		}
+		const raw: any = {};
+		const restricted: string[] = [];
 		for (let key in properties) {
 			if (OVERRIDE_PROPERTY_PATTERN.test(key) && filterOverriddenProperties) {
-				result[key] = this.filterByScope(properties[key], configurationProperties, false, scopes);
+				const result = this.filter(properties[key], configurationProperties, false, options);
+				raw[key] = result.raw;
+				restricted.push(...result.restricted);
 			} else {
-				const scope = this.getScope(key, configurationProperties);
+				const propertySchema = configurationProperties[key];
+				const scope = propertySchema ? typeof propertySchema.scope !== 'undefined' ? propertySchema.scope : ConfigurationScope.WINDOW : undefined;
+				if (propertySchema?.restricted) {
+					restricted.push(key);
+				}
 				// Load unregistered configurations always.
-				if (scope === undefined || scopes.indexOf(scope) !== -1) {
-					result[key] = properties[key];
+				if (scope === undefined || options.scopes === undefined || options.scopes.includes(scope)) {
+					if (!(options.skipRestricted && propertySchema?.restricted)) {
+						raw[key] = properties[key];
+					}
 				}
 			}
 		}
-		return result;
+		return { raw, restricted };
 	}
 
-	private getScope(key: string, configurationProperties: { [qualifiedKey: string]: IConfigurationPropertySchema }): ConfigurationScope | undefined {
-		const propertySchema = configurationProperties[key];
-		return propertySchema ? typeof propertySchema.scope !== 'undefined' ? propertySchema.scope : ConfigurationScope.WINDOW : undefined;
-	}
 }
 
 export class UserSettings extends Disposable {
 
 	private readonly parser: ConfigurationModelParser;
+	private readonly parseOptions: ConfigurationParseOptions;
 	protected readonly _onDidChange: Emitter<void> = this._register(new Emitter<void>());
 	readonly onDidChange: Event<void> = this._onDidChange.event;
 
@@ -352,24 +371,31 @@ export class UserSettings extends Disposable {
 		private readonly fileService: IFileService
 	) {
 		super();
-		this.parser = new ConfigurationModelParser(this.userSettingsResource.toString(), this.scopes);
+		this.parser = new ConfigurationModelParser(this.userSettingsResource.toString());
+		this.parseOptions = { scopes: this.scopes };
 		this._register(this.fileService.watch(extUri.dirname(this.userSettingsResource)));
+		// Also listen to the resource incase the resource is a symlink - https://github.com/microsoft/vscode/issues/118134
+		this._register(this.fileService.watch(this.userSettingsResource));
 		this._register(Event.filter(this.fileService.onDidFilesChange, e => e.contains(this.userSettingsResource))(() => this._onDidChange.fire()));
 	}
 
 	async loadConfiguration(): Promise<ConfigurationModel> {
 		try {
 			const content = await this.fileService.readFile(this.userSettingsResource);
-			this.parser.parseContent(content.value.toString() || '{}');
+			this.parser.parse(content.value.toString() || '{}', this.parseOptions);
 			return this.parser.configurationModel;
 		} catch (e) {
 			return new ConfigurationModel();
 		}
 	}
 
-	reprocess(): ConfigurationModel {
-		this.parser.parse();
+	reparse(): ConfigurationModel {
+		this.parser.reparse(this.parseOptions);
 		return this.parser.configurationModel;
+	}
+
+	getRestrictedSettings(): string[] {
+		return this.parser.restrictedConfigurations;
 	}
 }
 
@@ -797,8 +823,9 @@ export class ConfigurationChangeEvent implements IConfigurationChangeEvent {
 }
 
 export class AllKeysConfigurationChangeEvent extends ConfigurationChangeEvent {
-	constructor(configuration: Configuration, workspace: Workspace, public source: ConfigurationTarget, public sourceConfig: any) {
+	constructor(configuration: Configuration, workspace: Workspace, source: ConfigurationTarget, sourceConfig: any) {
 		super({ keys: configuration.allKeys(), overrides: [] }, undefined, configuration, workspace);
+		this.source = source;
+		this.sourceConfig = sourceConfig;
 	}
-
 }

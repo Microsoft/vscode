@@ -8,10 +8,14 @@ import { GitHubAuthenticationProvider, onDidChangeSessions } from './github';
 import { uriHandler } from './githubServer';
 import Logger from './common/logger';
 import TelemetryReporter from 'vscode-extension-telemetry';
+import { createExperimentationService, ExperimentationTelemetry } from './experimentationService';
 
 export async function activate(context: vscode.ExtensionContext) {
 	const { name, version, aiKey } = require('../package.json') as { name: string, version: string, aiKey: string };
-	const telemetryReporter = new TelemetryReporter(name, version, aiKey);
+	const telemetryReporter = new ExperimentationTelemetry(new TelemetryReporter(name, version, aiKey));
+
+	const experimentationService = await createExperimentationService(context, telemetryReporter);
+	await experimentationService.initialFetch;
 
 	context.subscriptions.push(vscode.window.registerUriHandler(uriHandler));
 	const loginService = new GitHubAuthenticationProvider(context, telemetryReporter);

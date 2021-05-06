@@ -21,7 +21,7 @@ suite('Platform / Registry', () => {
 
 		assert.ok(Registry.knows('foo'));
 		assert.ok(Registry.as<any>('foo').bar);
-		assert.equal(Registry.as<any>('foo').bar, true);
+		assert.strictEqual(Registry.as<any>('foo').bar, true);
 	});
 
 	test('registry - knows, as', function () {

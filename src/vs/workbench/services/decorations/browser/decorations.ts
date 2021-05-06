@@ -9,13 +9,14 @@ import { Event } from 'vs/base/common/event';
 import { ColorIdentifier } from 'vs/platform/theme/common/colorRegistry';
 import { IDisposable } from 'vs/base/common/lifecycle';
 import { CancellationToken } from 'vs/base/common/cancellation';
+import { ThemeIcon } from 'vs/platform/theme/common/themeService';
 
 export const IDecorationsService = createDecorator<IDecorationsService>('IFileDecorationsService');
 
 export interface IDecorationData {
 	readonly weight?: number;
 	readonly color?: ColorIdentifier;
-	readonly letter?: string;
+	readonly letter?: string | ThemeIcon;
 	readonly tooltip?: string;
 	readonly bubble?: boolean;
 }
@@ -24,6 +25,7 @@ export interface IDecoration extends IDisposable {
 	readonly tooltip: string;
 	readonly labelClassName: string;
 	readonly badgeClassName: string;
+	readonly iconClassName: string;
 }
 
 export interface IDecorationsProvider {

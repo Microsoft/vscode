@@ -25,11 +25,11 @@ export class TestSingleUseCollection extends SingleUseTestCollection {
 
 export class TestOwnedTestCollection extends OwnedTestCollection {
 	public get idToInternal() {
-		return Iterable.first(this.testIdsToInternal)!;
+		return Iterable.first(this.testIdsToInternal.values())!;
 	}
 
-	public createForHierarchy(publishDiff: (diff: TestsDiff) => void = () => undefined) {
-		return new TestSingleUseCollection(this.createIdMap(), publishDiff);
+	public override createForHierarchy(publishDiff: (diff: TestsDiff) => void = () => undefined) {
+		return new TestSingleUseCollection(this.createIdMap(0), publishDiff);
 	}
 }
 
@@ -37,10 +37,11 @@ export class TestOwnedTestCollection extends OwnedTestCollection {
  * Gets a main thread test collection initialized with the given set of
  * roots/stubs.
  */
-export const getInitializedMainTestCollection = (root = testStubs.nested()) => {
-	const c = new MainThreadTestCollection(0);
-	const singleUse = new TestSingleUseCollection({ object: new TestTree(), dispose: () => undefined }, () => undefined);
+export const getInitializedMainTestCollection = async (root = testStubs.nested()) => {
+	const c = new MainThreadTestCollection(0, async (t, l) => singleUse.expand(t.testId, l));
+	const singleUse = new TestSingleUseCollection({ object: new TestTree(0), dispose: () => undefined }, () => undefined);
 	singleUse.addRoot(root, 'provider');
+	await singleUse.expand('id-root', Infinity);
 	c.apply(singleUse.collectDiff());
 	return c;
 };

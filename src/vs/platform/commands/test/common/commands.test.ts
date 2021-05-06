@@ -71,7 +71,7 @@ suite('Command Tests', function () {
 		CommandsRegistry.getCommands().get('test')!.handler.apply(undefined, [undefined!, 'string']);
 		CommandsRegistry.getCommands().get('test2')!.handler.apply(undefined, [undefined!, 'string']);
 		assert.throws(() => CommandsRegistry.getCommands().get('test3')!.handler.apply(undefined, [undefined!, 'string']));
-		assert.equal(CommandsRegistry.getCommands().get('test3')!.handler.apply(undefined, [undefined!, 1]), true);
+		assert.strictEqual(CommandsRegistry.getCommands().get('test3')!.handler.apply(undefined, [undefined!, 1]), true);
 
 	});
 });

@@ -17,7 +17,7 @@ import { Schemas } from 'vs/base/common/network';
 
 class NativeExtensionTipsService extends ExtensionTipsService implements IExtensionTipsService {
 
-	_serviceBrand: any;
+	override _serviceBrand: any;
 
 	private readonly channel: IChannel;
 
@@ -32,22 +32,22 @@ class NativeExtensionTipsService extends ExtensionTipsService implements IExtens
 		this.channel = sharedProcessService.getChannel('extensionTipsService');
 	}
 
-	getConfigBasedTips(folder: URI): Promise<IConfigBasedExtensionTip[]> {
+	override getConfigBasedTips(folder: URI): Promise<IConfigBasedExtensionTip[]> {
 		if (folder.scheme === Schemas.file) {
 			return this.channel.call<IConfigBasedExtensionTip[]>('getConfigBasedTips', [folder]);
 		}
 		return super.getConfigBasedTips(folder);
 	}
 
-	getImportantExecutableBasedTips(): Promise<IExecutableBasedExtensionTip[]> {
+	override getImportantExecutableBasedTips(): Promise<IExecutableBasedExtensionTip[]> {
 		return this.channel.call<IExecutableBasedExtensionTip[]>('getImportantExecutableBasedTips');
 	}
 
-	getOtherExecutableBasedTips(): Promise<IExecutableBasedExtensionTip[]> {
+	override getOtherExecutableBasedTips(): Promise<IExecutableBasedExtensionTip[]> {
 		return this.channel.call<IExecutableBasedExtensionTip[]>('getOtherExecutableBasedTips');
 	}
 
-	getAllWorkspacesTips(): Promise<IWorkspaceTips[]> {
+	override getAllWorkspacesTips(): Promise<IWorkspaceTips[]> {
 		return this.channel.call<IWorkspaceTips[]>('getAllWorkspacesTips');
 	}
 

@@ -228,13 +228,15 @@ suite('Debug - Breakpoints', () => {
 		let eventCount = 0;
 		model.onDidChangeBreakpoints(() => eventCount++);
 
-		model.addDataBreakpoint('label', 'id', true, ['read']);
-		model.addDataBreakpoint('second', 'secondId', false, ['readWrite']);
+		model.addDataBreakpoint('label', 'id', true, ['read'], 'read');
+		model.addDataBreakpoint('second', 'secondId', false, ['readWrite'], 'readWrite');
 		const dataBreakpoints = model.getDataBreakpoints();
 		assert.strictEqual(dataBreakpoints[0].canPersist, true);
 		assert.strictEqual(dataBreakpoints[0].dataId, 'id');
+		assert.strictEqual(dataBreakpoints[0].accessType, 'read');
 		assert.strictEqual(dataBreakpoints[1].canPersist, false);
 		assert.strictEqual(dataBreakpoints[1].description, 'second');
+		assert.strictEqual(dataBreakpoints[1].accessType, 'readWrite');
 
 		assert.strictEqual(eventCount, 2);
 
@@ -282,7 +284,7 @@ suite('Debug - Breakpoints', () => {
 		assert.strictEqual(result.message, 'Disabled Logpoint');
 		assert.strictEqual(result.icon.id, 'debug-breakpoint-log-disabled');
 
-		model.addDataBreakpoint('label', 'id', true, ['read']);
+		model.addDataBreakpoint('label', 'id', true, ['read'], 'read');
 		const dataBreakpoints = model.getDataBreakpoints();
 		result = getBreakpointMessageAndIcon(State.Stopped, true, dataBreakpoints[0]);
 		assert.strictEqual(result.message, 'Data Breakpoint');

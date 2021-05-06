@@ -4,7 +4,8 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { URI } from 'vs/base/common/uri';
-import { IProductService, IConfigBasedExtensionTip as IRawConfigBasedExtensionTip } from 'vs/platform/product/common/productService';
+import { IProductService } from 'vs/platform/product/common/productService';
+import { IConfigBasedExtensionTip as IRawConfigBasedExtensionTip } from 'vs/base/common/product';
 import { IFileService } from 'vs/platform/files/common/files';
 import { isNonEmptyArray } from 'vs/base/common/arrays';
 import { IExtensionTipsService, IExecutableBasedExtensionTip, IWorkspaceTips, IConfigBasedExtensionTip } from 'vs/platform/extensionManagement/common/extensionManagement';

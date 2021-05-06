@@ -9,6 +9,7 @@
   "engines": {
     "vscode": "0.10.x"
   },
+  "enableProposedApi": true,
   "activationEvents": [
     "onLanguage:php"
   ],
@@ -16,6 +17,16 @@
   "categories": [
     "Programming Languages"
   ],
+  "capabilities": {
+    "virtualWorkspaces": false,
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "%workspaceTrust%",
+      "restrictedConfigurations": [
+        "php.validate.executablePath"
+      ]
+    }
+  },
   "contributes": {
     "configuration": {
       "title": "%configuration.title%",
@@ -79,10 +90,12 @@
     "watch": "npx gulp watch-extension:php-language-features"
   },
   "dependencies": {
-    "vscode-nls": "^4.0.0"
+    "vscode-nls": "^4.0.0",
+    "which": "^2.0.2"
   },
   "devDependencies": {
-    "@types/node": "^12.19.9"
+    "@types/node": "14.x",
+    "@types/which": "^2.0.0"
   },
   "repository": {
     "type": "git",

@@ -7,5 +7,6 @@
 	"commands.categroy.php": "PHP",
 	"command.untrustValidationExecutable": "Disallow PHP validation executable (defined as workspace setting)",
 	"displayName": "PHP Language Features",
-	"description": "Provides rich language support for PHP files."
+	"description": "Provides rich language support for PHP files.",
+	"workspaceTrust": "The extension requires workspace trust when the `php.validate.executablePath` setting will load a version of PHP in the workspace."
 }

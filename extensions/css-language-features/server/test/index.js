@@ -11,7 +11,7 @@ const suite = 'Integration CSS Extension Tests';
 
 const options = {
 	ui: 'tdd',
-	useColors: (!process.env.BUILD_ARTIFACTSTAGINGDIRECTORY && process.platform !== 'win32'),
+	color: true,
 	timeout: 60000
 };
 

@@ -118,6 +118,7 @@ export abstract class AbstractSynchroniser extends Disposable {
 	readonly onDidChangeLocal: Event<void> = this._onDidChangeLocal.event;
 
 	protected readonly lastSyncResource: URI;
+	private hasSyncResourceStateVersionChanged: boolean = false;
 	protected readonly syncResourceLogLabel: string;
 
 	private syncHeaders: IHeaders = {};
@@ -566,8 +567,7 @@ export abstract class AbstractSynchroniser extends Disposable {
 		const machineId = await this.currentMachineIdPromise;
 		const isLastSyncFromCurrentMachine = !!remoteUserData.syncData?.machineId && remoteUserData.syncData.machineId === machineId;
 
-		// For preview, use remoteUserData if lastSyncUserData does not exists and last sync is from current machine
-		const lastSyncUserDataForPreview = lastSyncUserData === null && isLastSyncFromCurrentMachine ? remoteUserData : lastSyncUserData;
+		const lastSyncUserDataForPreview = lastSyncUserData === null && isLastSyncFromCurrentMachine && !this.hasSyncResourceStateVersionChanged ? remoteUserData : lastSyncUserData;
 		const resourcePreviewResults = await this.generateSyncPreview(remoteUserData, lastSyncUserDataForPreview, token);
 
 		const resourcePreviews: IEditableResourcePreview[] = [];
@@ -616,6 +616,14 @@ export abstract class AbstractSynchroniser extends Disposable {
 		try {
 			const content = await this.fileService.readFile(this.lastSyncResource);
 			const parsed = JSON.parse(content.value.toString());
+			const resourceSyncStateVersion = this.userDataSyncResourceEnablementService.getResourceSyncStateVersion(this.resource);
+			this.hasSyncResourceStateVersionChanged = parsed.version && resourceSyncStateVersion && parsed.version !== resourceSyncStateVersion;
+			if (this.hasSyncResourceStateVersionChanged) {
+				this.logService.info(`${this.syncResourceLogLabel}: Reset last sync state because last sync state version ${parsed.version} is not compatible with current sync state version ${resourceSyncStateVersion}.`);
+				await this.resetLocal();
+				return null;
+			}
+
 			const userData: IUserData = parsed as IUserData;
 			if (userData.content === null) {
 				return { ref: parsed.ref, syncData: null } as T;
@@ -637,7 +645,12 @@ export abstract class AbstractSynchroniser extends Disposable {
 	}
 
 	protected async updateLastSyncUserData(lastSyncRemoteUserData: IRemoteUserData, additionalProps: IStringDictionary<any> = {}): Promise<void> {
-		const lastSyncUserData: IUserData = { ref: lastSyncRemoteUserData.ref, content: lastSyncRemoteUserData.syncData ? JSON.stringify(lastSyncRemoteUserData.syncData) : null, ...additionalProps };
+		if (additionalProps['ref'] || additionalProps['content'] || additionalProps['version']) {
+			throw new Error('Cannot have core properties as additional');
+		}
+
+		const version = this.userDataSyncResourceEnablementService.getResourceSyncStateVersion(this.resource);
+		const lastSyncUserData = { ref: lastSyncRemoteUserData.ref, content: lastSyncRemoteUserData.syncData ? JSON.stringify(lastSyncRemoteUserData.syncData) : null, version, ...additionalProps };
 		await this.fileService.writeFile(this.lastSyncResource, VSBuffer.fromString(JSON.stringify(lastSyncUserData)));
 	}
 

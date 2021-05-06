@@ -6,12 +6,11 @@
 import { localize } from 'vs/nls';
 import { IAction, toAction } from 'vs/base/common/actions';
 import { illegalArgument } from 'vs/base/common/errors';
-import { equals } from 'vs/base/common/arrays';
 import { IDisposable, toDisposable } from 'vs/base/common/lifecycle';
 import { IBadge } from 'vs/workbench/services/activity/common/activity';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { ActionBar, ActionsOrientation } from 'vs/base/browser/ui/actionbar/actionbar';
-import { CompositeActionViewItem, CompositeOverflowActivityAction, ICompositeActivity, CompositeOverflowActivityActionViewItem, ActivityAction, ICompositeBar, ICompositeBarColors } from 'vs/workbench/browser/parts/compositeBarActions';
+import { CompositeActionViewItem, CompositeOverflowActivityAction, ICompositeActivity, CompositeOverflowActivityActionViewItem, ActivityAction, ICompositeBar, ICompositeBarColors, IActivityHoverOptions } from 'vs/workbench/browser/parts/compositeBarActions';
 import { Dimension, $, addDisposableListener, EventType, EventHelper, isAncestor } from 'vs/base/browser/dom';
 import { StandardMouseEvent } from 'vs/base/browser/mouseEvent';
 import { IContextMenuService } from 'vs/platform/contextview/browser/contextView';
@@ -146,6 +145,7 @@ export interface ICompositeBarOptions {
 	readonly compositeSize: number;
 	readonly overflowActionSize: number;
 	readonly dndHandler: ICompositeDragAndDrop;
+	readonly activityHoverOptions: IActivityHoverOptions;
 	readonly preventLoopNavigation?: boolean;
 
 	getActivityAction: (compositeId: string) => ActivityAction;
@@ -214,11 +214,12 @@ export class CompositeBar extends Widget implements ICompositeBar {
 				}
 				const item = this.model.findItem(action.id);
 				return item && this.instantiationService.createInstance(
-					CompositeActionViewItem, action as ActivityAction, item.pinnedAction,
+					CompositeActionViewItem,
+					{ draggable: true, colors: this.options.colors, icon: this.options.icon, hoverOptions: this.options.activityHoverOptions },
+					action as ActivityAction,
+					item.pinnedAction,
 					compositeId => this.options.getContextMenuActionsForComposite(compositeId),
 					() => this.getContextMenuActions(),
-					this.options.colors,
-					this.options.icon,
 					this.options.dndHandler,
 					this
 				);
@@ -536,10 +537,8 @@ export class CompositeBar extends Widget implements ICompositeBar {
 			compositesToShow.length ? compositesToShow.splice(compositesToShow.length - 2, 1) : compositesToShow.pop();
 		}
 
-		const visibleCompositesChange = !equals(compositesToShow, this.visibleComposites);
-
-		// Pull out overflow action if there is a composite change so that we can add it to the end later
-		if (this.compositeOverflowAction && visibleCompositesChange) {
+		// Remove the overflow action if there are no overflows
+		if (!overflows && this.compositeOverflowAction) {
 			compositeSwitcherBar.pull(compositeSwitcherBar.length() - 1);
 
 			this.compositeOverflowAction.dispose();
@@ -582,7 +581,7 @@ export class CompositeBar extends Widget implements ICompositeBar {
 		});
 
 		// Add overflow action as needed
-		if ((visibleCompositesChange && overflows)) {
+		if ((overflows && !this.compositeOverflowAction)) {
 			this.compositeOverflowAction = this.instantiationService.createInstance(CompositeOverflowActivityAction, () => {
 				if (this.compositeOverflowActionViewItem) {
 					this.compositeOverflowActionViewItem.showMenu();
@@ -598,7 +597,8 @@ export class CompositeBar extends Widget implements ICompositeBar {
 					return item?.activity[0]?.badge;
 				},
 				this.options.getOnCompositeClickAction,
-				this.options.colors
+				this.options.colors,
+				this.options.activityHoverOptions
 			);
 
 			compositeSwitcherBar.push(this.compositeOverflowAction, { label: false, icon: true });

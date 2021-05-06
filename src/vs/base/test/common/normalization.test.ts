@@ -9,57 +9,57 @@ import { removeAccents } from 'vs/base/common/normalization';
 suite('Normalization', () => {
 
 	test('removeAccents', function () {
-		assert.equal(removeAccents('joào'), 'joao');
-		assert.equal(removeAccents('joáo'), 'joao');
-		assert.equal(removeAccents('joâo'), 'joao');
-		assert.equal(removeAccents('joäo'), 'joao');
-		// assert.equal(strings.removeAccents('joæo'), 'joao'); // not an accent
-		assert.equal(removeAccents('joão'), 'joao');
-		assert.equal(removeAccents('joåo'), 'joao');
-		assert.equal(removeAccents('joåo'), 'joao');
-		assert.equal(removeAccents('joāo'), 'joao');
+		assert.strictEqual(removeAccents('joào'), 'joao');
+		assert.strictEqual(removeAccents('joáo'), 'joao');
+		assert.strictEqual(removeAccents('joâo'), 'joao');
+		assert.strictEqual(removeAccents('joäo'), 'joao');
+		// assert.strictEqual(strings.removeAccents('joæo'), 'joao'); // not an accent
+		assert.strictEqual(removeAccents('joão'), 'joao');
+		assert.strictEqual(removeAccents('joåo'), 'joao');
+		assert.strictEqual(removeAccents('joåo'), 'joao');
+		assert.strictEqual(removeAccents('joāo'), 'joao');
 
-		assert.equal(removeAccents('fôo'), 'foo');
-		assert.equal(removeAccents('föo'), 'foo');
-		assert.equal(removeAccents('fòo'), 'foo');
-		assert.equal(removeAccents('fóo'), 'foo');
-		// assert.equal(strings.removeAccents('fœo'), 'foo');
-		// assert.equal(strings.removeAccents('føo'), 'foo');
-		assert.equal(removeAccents('fōo'), 'foo');
-		assert.equal(removeAccents('fõo'), 'foo');
+		assert.strictEqual(removeAccents('fôo'), 'foo');
+		assert.strictEqual(removeAccents('föo'), 'foo');
+		assert.strictEqual(removeAccents('fòo'), 'foo');
+		assert.strictEqual(removeAccents('fóo'), 'foo');
+		// assert.strictEqual(strings.removeAccents('fœo'), 'foo');
+		// assert.strictEqual(strings.removeAccents('føo'), 'foo');
+		assert.strictEqual(removeAccents('fōo'), 'foo');
+		assert.strictEqual(removeAccents('fõo'), 'foo');
 
-		assert.equal(removeAccents('andrè'), 'andre');
-		assert.equal(removeAccents('andré'), 'andre');
-		assert.equal(removeAccents('andrê'), 'andre');
-		assert.equal(removeAccents('andrë'), 'andre');
-		assert.equal(removeAccents('andrē'), 'andre');
-		assert.equal(removeAccents('andrė'), 'andre');
-		assert.equal(removeAccents('andrę'), 'andre');
+		assert.strictEqual(removeAccents('andrè'), 'andre');
+		assert.strictEqual(removeAccents('andré'), 'andre');
+		assert.strictEqual(removeAccents('andrê'), 'andre');
+		assert.strictEqual(removeAccents('andrë'), 'andre');
+		assert.strictEqual(removeAccents('andrē'), 'andre');
+		assert.strictEqual(removeAccents('andrė'), 'andre');
+		assert.strictEqual(removeAccents('andrę'), 'andre');
 
-		assert.equal(removeAccents('hvîc'), 'hvic');
-		assert.equal(removeAccents('hvïc'), 'hvic');
-		assert.equal(removeAccents('hvíc'), 'hvic');
-		assert.equal(removeAccents('hvīc'), 'hvic');
-		assert.equal(removeAccents('hvįc'), 'hvic');
-		assert.equal(removeAccents('hvìc'), 'hvic');
+		assert.strictEqual(removeAccents('hvîc'), 'hvic');
+		assert.strictEqual(removeAccents('hvïc'), 'hvic');
+		assert.strictEqual(removeAccents('hvíc'), 'hvic');
+		assert.strictEqual(removeAccents('hvīc'), 'hvic');
+		assert.strictEqual(removeAccents('hvįc'), 'hvic');
+		assert.strictEqual(removeAccents('hvìc'), 'hvic');
 
-		assert.equal(removeAccents('ûdo'), 'udo');
-		assert.equal(removeAccents('üdo'), 'udo');
-		assert.equal(removeAccents('ùdo'), 'udo');
-		assert.equal(removeAccents('údo'), 'udo');
-		assert.equal(removeAccents('ūdo'), 'udo');
+		assert.strictEqual(removeAccents('ûdo'), 'udo');
+		assert.strictEqual(removeAccents('üdo'), 'udo');
+		assert.strictEqual(removeAccents('ùdo'), 'udo');
+		assert.strictEqual(removeAccents('údo'), 'udo');
+		assert.strictEqual(removeAccents('ūdo'), 'udo');
 
-		assert.equal(removeAccents('heÿ'), 'hey');
+		assert.strictEqual(removeAccents('heÿ'), 'hey');
 
-		// assert.equal(strings.removeAccents('gruß'), 'grus');
-		assert.equal(removeAccents('gruś'), 'grus');
-		assert.equal(removeAccents('gruš'), 'grus');
+		// assert.strictEqual(strings.removeAccents('gruß'), 'grus');
+		assert.strictEqual(removeAccents('gruś'), 'grus');
+		assert.strictEqual(removeAccents('gruš'), 'grus');
 
-		assert.equal(removeAccents('çool'), 'cool');
-		assert.equal(removeAccents('ćool'), 'cool');
-		assert.equal(removeAccents('čool'), 'cool');
+		assert.strictEqual(removeAccents('çool'), 'cool');
+		assert.strictEqual(removeAccents('ćool'), 'cool');
+		assert.strictEqual(removeAccents('čool'), 'cool');
 
-		assert.equal(removeAccents('ñice'), 'nice');
-		assert.equal(removeAccents('ńice'), 'nice');
+		assert.strictEqual(removeAccents('ñice'), 'nice');
+		assert.strictEqual(removeAccents('ńice'), 'nice');
 	});
 });

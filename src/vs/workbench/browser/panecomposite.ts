@@ -36,13 +36,13 @@ export abstract class PaneComposite extends Composite implements IPaneComposite 
 		super(id, telemetryService, themeService, storageService);
 	}
 
-	create(parent: HTMLElement): void {
+	override create(parent: HTMLElement): void {
 		this.viewPaneContainer = this._register(this.createViewPaneContainer(parent));
 		this._register(this.viewPaneContainer.onTitleAreaUpdate(() => this.updateTitleArea()));
 		this.viewPaneContainer.create(parent);
 	}
 
-	setVisible(visible: boolean): void {
+	override setVisible(visible: boolean): void {
 		super.setVisible(visible);
 		this.viewPaneContainer?.setVisible(visible);
 	}
@@ -63,15 +63,15 @@ export abstract class PaneComposite extends Composite implements IPaneComposite 
 		return this.viewPaneContainer;
 	}
 
-	getActionsContext(): unknown {
+	override getActionsContext(): unknown {
 		return this.getViewPaneContainer()?.getActionsContext();
 	}
 
-	getContextMenuActions(): ReadonlyArray<IAction> {
+	override getContextMenuActions(): readonly IAction[] {
 		return this.viewPaneContainer?.menuActions?.getContextMenuActions() ?? [];
 	}
 
-	getActions(): ReadonlyArray<IAction> {
+	override getActions(): readonly IAction[] {
 		const result = [];
 		if (this.viewPaneContainer?.menuActions) {
 			result.push(...this.viewPaneContainer.menuActions.getPrimaryActions());
@@ -82,7 +82,7 @@ export abstract class PaneComposite extends Composite implements IPaneComposite 
 		return result;
 	}
 
-	getSecondaryActions(): ReadonlyArray<IAction> {
+	override getSecondaryActions(): readonly IAction[] {
 		if (!this.viewPaneContainer?.menuActions) {
 			return [];
 		}
@@ -116,19 +116,19 @@ export abstract class PaneComposite extends Composite implements IPaneComposite 
 		return menuActions.length ? menuActions : viewPaneActions;
 	}
 
-	getActionViewItem(action: IAction): IActionViewItem | undefined {
+	override getActionViewItem(action: IAction): IActionViewItem | undefined {
 		return this.viewPaneContainer?.getActionViewItem(action);
 	}
 
-	getTitle(): string {
+	override getTitle(): string {
 		return this.viewPaneContainer?.getTitle() ?? '';
 	}
 
-	saveState(): void {
+	override saveState(): void {
 		super.saveState();
 	}
 
-	focus(): void {
+	override focus(): void {
 		this.viewPaneContainer?.focus();
 	}
 

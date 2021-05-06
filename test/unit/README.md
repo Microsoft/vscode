@@ -8,6 +8,7 @@ All unit tests are run inside a electron-browser environment which access to DOM
 
 - use the `--debug` to see an electron window with dev tools which allows for debugging
 - to run only a subset of tests use the `--run` or `--glob` options
+- use `yarn watch` to automatically compile changes
 
 For instance, `./scripts/test.sh --debug --glob **/extHost*.test.js` runs all tests from `extHost`-files and enables you to debug them.
 
@@ -24,7 +25,7 @@ Unit tests from layers `common` and `browser` are run inside `chromium`, `webkit
 
 ## Run (with node)
 
-	yarn run mocha --run src/vs/editor/test/browser/controller/cursor.test.ts
+	yarn run mocha --ui tdd --run src/vs/editor/test/browser/controller/cursor.test.ts
 
 
 ## Coverage

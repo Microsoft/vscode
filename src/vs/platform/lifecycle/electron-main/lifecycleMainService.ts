@@ -5,7 +5,7 @@
 
 import { ipcMain, app, BrowserWindow } from 'electron';
 import { ILogService } from 'vs/platform/log/common/log';
-import { IStateService } from 'vs/platform/state/node/state';
+import { IStateMainService } from 'vs/platform/state/electron-main/state';
 import { Event, Emitter } from 'vs/base/common/event';
 import { createDecorator } from 'vs/platform/instantiation/common/instantiation';
 import { ICodeWindow } from 'vs/platform/windows/electron-main/windows';
@@ -16,6 +16,7 @@ import { Promises, Barrier, timeout } from 'vs/base/common/async';
 import { NativeParsedArgs } from 'vs/platform/environment/common/argv';
 import { ISingleFolderWorkspaceIdentifier, IWorkspaceIdentifier } from 'vs/platform/workspaces/common/workspaces';
 import { assertIsDefined } from 'vs/base/common/types';
+import { cwd } from 'vs/base/common/process';
 
 export const ILifecycleMainService = createDecorator<ILifecycleMainService>('lifecycleMainService');
 
@@ -114,12 +115,12 @@ export interface ILifecycleMainService {
 	/**
 	 * Restart the application with optional arguments (CLI). All lifecycle event handlers are triggered.
 	 */
-	relaunch(options?: { addArgs?: string[], removeArgs?: string[] }): void;
+	relaunch(options?: { addArgs?: string[], removeArgs?: string[] }): Promise<void>;
 
 	/**
 	 * Shutdown the application normally. All lifecycle event handlers are triggered.
 	 */
-	quit(fromUpdate?: boolean): Promise<boolean /* veto */>;
+	quit(willRestart?: boolean): Promise<boolean /* veto */>;
 
 	/**
 	 * Forcefully shutdown the application. No livecycle event handlers are triggered.
@@ -157,7 +158,7 @@ export class LifecycleMainService extends Disposable implements ILifecycleMainSe
 
 	declare readonly _serviceBrand: undefined;
 
-	private static readonly QUIT_FROM_RESTART_MARKER = 'quit.from.restart'; // use a marker to find out if the session was restarted
+	private static readonly QUIT_AND_RESTART_KEY = 'lifecycle.quitAndRestart';
 
 	private readonly _onBeforeShutdown = this._register(new Emitter<void>());
 	readonly onBeforeShutdown = this._onBeforeShutdown.event;
@@ -187,28 +188,29 @@ export class LifecycleMainService extends Disposable implements ILifecycleMainSe
 	private oneTimeListenerTokenGenerator = 0;
 	private windowCounter = 0;
 
-	private pendingQuitPromise: Promise<boolean> | null = null;
-	private pendingQuitPromiseResolve: { (veto: boolean): void } | null = null;
+	private pendingQuitPromise: Promise<boolean> | undefined = undefined;
+	private pendingQuitPromiseResolve: { (veto: boolean): void } | undefined = undefined;
 
-	private pendingWillShutdownPromise: Promise<void> | null = null;
+	private pendingWillShutdownPromise: Promise<void> | undefined = undefined;
 
 	private readonly phaseWhen = new Map<LifecycleMainPhase, Barrier>();
 
 	constructor(
 		@ILogService private readonly logService: ILogService,
-		@IStateService private readonly stateService: IStateService
+		@IStateMainService private readonly stateMainService: IStateMainService
 	) {
 		super();
 
-		this.handleRestarted();
+		this.resolveRestarted();
 		this.when(LifecycleMainPhase.Ready).then(() => this.registerListeners());
 	}
 
-	private handleRestarted(): void {
-		this._wasRestarted = !!this.stateService.getItem(LifecycleMainService.QUIT_FROM_RESTART_MARKER);
+	private resolveRestarted(): void {
+		this._wasRestarted = !!this.stateMainService.getItem(LifecycleMainService.QUIT_AND_RESTART_KEY);
 
 		if (this._wasRestarted) {
-			this.stateService.removeItem(LifecycleMainService.QUIT_FROM_RESTART_MARKER); // remove the marker right after if found
+			// remove the marker right after if found
+			this.stateMainService.removeItem(LifecycleMainService.QUIT_AND_RESTART_KEY);
 		}
 	}
 
@@ -285,7 +287,13 @@ export class LifecycleMainService extends Disposable implements ILifecycleMainSe
 
 		this.logService.trace('Lifecycle#onWillShutdown.fire()');
 
-		const joiners: Promise<void>[] = [];
+		const joiners: Promise<void>[] = [
+			// Always make sure the state service
+			// is flushed. Since we depend on it
+			// we cannot really use the lifecycle
+			// service from the state service...
+			this.stateMainService.flush()
+		];
 
 		this._onWillShutdown.fire({
 			join(promise) {
@@ -453,8 +461,8 @@ export class LifecycleMainService extends Disposable implements ILifecycleMainSe
 	private resolvePendingQuitPromise(veto: boolean): void {
 		if (this.pendingQuitPromiseResolve) {
 			this.pendingQuitPromiseResolve(veto);
-			this.pendingQuitPromiseResolve = null;
-			this.pendingQuitPromise = null;
+			this.pendingQuitPromiseResolve = undefined;
+			this.pendingQuitPromise = undefined;
 		}
 	}
 
@@ -501,16 +509,16 @@ export class LifecycleMainService extends Disposable implements ILifecycleMainSe
 		});
 	}
 
-	quit(fromUpdate?: boolean): Promise<boolean /* veto */> {
+	quit(willRestart?: boolean): Promise<boolean /* veto */> {
 		if (this.pendingQuitPromise) {
 			return this.pendingQuitPromise;
 		}
 
-		this.logService.trace(`Lifecycle#quit() - from update: ${fromUpdate}`);
+		this.logService.trace(`Lifecycle#quit() - will restart: ${willRestart}`);
 
-		// Remember the reason for quit was to restart
-		if (fromUpdate) {
-			this.stateService.setItem(LifecycleMainService.QUIT_FROM_RESTART_MARKER, true);
+		// Remember if we are about to restart
+		if (willRestart) {
+			this.stateMainService.setItem(LifecycleMainService.QUIT_AND_RESTART_KEY, true);
 		}
 
 		this.pendingQuitPromise = new Promise(resolve => {
@@ -527,7 +535,7 @@ export class LifecycleMainService extends Disposable implements ILifecycleMainSe
 		return this.pendingQuitPromise;
 	}
 
-	relaunch(options?: { addArgs?: string[], removeArgs?: string[] }): void {
+	async relaunch(options?: { addArgs?: string[], removeArgs?: string[] }): Promise<void> {
 		this.logService.trace('Lifecycle#relaunch()');
 
 		const args = process.argv.slice(1);
@@ -544,37 +552,34 @@ export class LifecycleMainService extends Disposable implements ILifecycleMainSe
 			}
 		}
 
-		let quitVetoed = false;
-		app.once('quit', () => {
-			if (!quitVetoed) {
-
-				// Remember the reason for quit was to restart
-				this.stateService.setItem(LifecycleMainService.QUIT_FROM_RESTART_MARKER, true);
-
-				// Windows: we are about to restart and as such we need to restore the original
-				// current working directory we had on startup to get the exact same startup
-				// behaviour. As such, we briefly change back to the VSCODE_CWD and then when
-				// Code starts it will set it back to the installation directory again.
-				try {
-					if (isWindows) {
-						const vscodeCwd = process.env['VSCODE_CWD'];
-						if (vscodeCwd) {
-							process.chdir(vscodeCwd);
-						}
+		const quitListener = () => {
+			// Windows: we are about to restart and as such we need to restore the original
+			// current working directory we had on startup to get the exact same startup
+			// behaviour. As such, we briefly change back to that directory and then when
+			// Code starts it will set it back to the installation directory again.
+			try {
+				if (isWindows) {
+					const currentWorkingDir = cwd();
+					if (currentWorkingDir !== process.cwd()) {
+						process.chdir(currentWorkingDir);
 					}
-				} catch (err) {
-					this.logService.error(err);
 				}
-
-				// relaunch after we are sure there is no veto
-				this.logService.trace('Lifecycle#relaunch() - calling app.relaunch()');
-				app.relaunch({ args });
+			} catch (err) {
+				this.logService.error(err);
 			}
-		});
+
+			// relaunch after we are sure there is no veto
+			this.logService.trace('Lifecycle#relaunch() - calling app.relaunch()');
+			app.relaunch({ args });
+		};
+		app.once('quit', quitListener);
 
 		// app.relaunch() does not quit automatically, so we quit first,
 		// check for vetoes and then relaunch from the app.on('quit') event
-		this.quit().then(veto => quitVetoed = veto);
+		const veto = await this.quit(true /* will restart */);
+		if (veto) {
+			app.removeListener('quit', quitListener);
+		}
 	}
 
 	async kill(code?: number): Promise<void> {

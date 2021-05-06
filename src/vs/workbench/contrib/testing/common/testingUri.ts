@@ -15,6 +15,7 @@ export const enum TestUriType {
 
 interface IResultTestUri {
 	resultId: string;
+	taskIndex: number;
 	testExtId: string;
 }
 
@@ -46,17 +47,18 @@ export const parseTestUri = (uri: URI): ParsedTestUri | undefined => {
 	const [locationId, ...request] = uri.path.slice(1).split('/');
 
 	if (request[0] === TestUriParts.Messages) {
-		const index = Number(request[1]);
-		const part = request[2];
+		const taskIndex = Number(request[1]);
+		const index = Number(request[2]);
+		const part = request[3];
 		const testExtId = uri.query;
 		if (type === TestUriParts.Results) {
 			switch (part) {
 				case TestUriParts.Text:
-					return { resultId: locationId, testExtId, messageIndex: index, type: TestUriType.ResultMessage };
+					return { resultId: locationId, taskIndex, testExtId, messageIndex: index, type: TestUriType.ResultMessage };
 				case TestUriParts.ActualOutput:
-					return { resultId: locationId, testExtId, messageIndex: index, type: TestUriType.ResultActualOutput };
+					return { resultId: locationId, taskIndex, testExtId, messageIndex: index, type: TestUriType.ResultActualOutput };
 				case TestUriParts.ExpectedOutput:
-					return { resultId: locationId, testExtId, messageIndex: index, type: TestUriType.ResultExpectedOutput };
+					return { resultId: locationId, taskIndex, testExtId, messageIndex: index, type: TestUriType.ResultExpectedOutput };
 			}
 		}
 	}
@@ -69,20 +71,20 @@ export const buildTestUri = (parsed: ParsedTestUri): URI => {
 		scheme: TEST_DATA_SCHEME,
 		authority: TestUriParts.Results
 	};
-	const msgRef = (locationId: string, index: number, ...remaining: string[]) =>
+	const msgRef = (locationId: string, ...remaining: (string | number)[]) =>
 		URI.from({
 			...uriParts,
 			query: parsed.testExtId,
-			path: ['', locationId, TestUriParts.Messages, index, ...remaining].join('/'),
+			path: ['', locationId, TestUriParts.Messages, ...remaining].join('/'),
 		});
 
 	switch (parsed.type) {
 		case TestUriType.ResultActualOutput:
-			return msgRef(parsed.resultId, parsed.messageIndex, TestUriParts.ActualOutput);
+			return msgRef(parsed.resultId, parsed.taskIndex, parsed.messageIndex, TestUriParts.ActualOutput);
 		case TestUriType.ResultExpectedOutput:
-			return msgRef(parsed.resultId, parsed.messageIndex, TestUriParts.ExpectedOutput);
+			return msgRef(parsed.resultId, parsed.taskIndex, parsed.messageIndex, TestUriParts.ExpectedOutput);
 		case TestUriType.ResultMessage:
-			return msgRef(parsed.resultId, parsed.messageIndex, TestUriParts.Text);
+			return msgRef(parsed.resultId, parsed.taskIndex, parsed.messageIndex, TestUriParts.Text);
 		default:
 			throw new Error('Invalid test uri');
 	}

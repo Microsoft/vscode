@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Emitter, Event } from 'vs/base/common/event';
-import { Disposable } from 'vs/base/common/lifecycle';
+import { Disposable, IDisposable } from 'vs/base/common/lifecycle';
 import { URI } from 'vs/base/common/uri';
 import { IMode, LanguageId, LanguageIdentifier } from 'vs/editor/common/modes';
 import { FrankensteinMode } from 'vs/editor/common/modes/abstractMode';
@@ -13,20 +13,28 @@ import { LanguagesRegistry } from 'vs/editor/common/services/languagesRegistry';
 import { ILanguageSelection, IModeService } from 'vs/editor/common/services/modeService';
 import { firstOrDefault } from 'vs/base/common/arrays';
 
-class LanguageSelection extends Disposable implements ILanguageSelection {
+class LanguageSelection implements ILanguageSelection {
 
 	public languageIdentifier: LanguageIdentifier;
 
 	private readonly _selector: () => LanguageIdentifier;
-
-	private readonly _onDidChange: Emitter<LanguageIdentifier> = this._register(new Emitter<LanguageIdentifier>());
-	public readonly onDidChange: Event<LanguageIdentifier> = this._onDidChange.event;
+	private readonly _onDidChange: Emitter<LanguageIdentifier>;
+	public readonly onDidChange: Event<LanguageIdentifier>;
 
 	constructor(onLanguagesMaybeChanged: Event<void>, selector: () => LanguageIdentifier) {
-		super();
 		this._selector = selector;
 		this.languageIdentifier = this._selector();
-		this._register(onLanguagesMaybeChanged(() => this._evaluate()));
+
+		let listener: IDisposable;
+		this._onDidChange = new Emitter<LanguageIdentifier>({
+			onFirstListenerAdd: () => {
+				listener = onLanguagesMaybeChanged(() => this._evaluate());
+			},
+			onLastListenerRemove: () => {
+				listener.dispose();
+			}
+		});
+		this.onDidChange = this._onDidChange.event;
 	}
 
 	private _evaluate(): void {
@@ -49,7 +57,7 @@ export class ModeServiceImpl extends Disposable implements IModeService {
 	private readonly _onDidCreateMode = this._register(new Emitter<IMode>());
 	public readonly onDidCreateMode: Event<IMode> = this._onDidCreateMode.event;
 
-	protected readonly _onLanguagesMaybeChanged = this._register(new Emitter<void>());
+	protected readonly _onLanguagesMaybeChanged = this._register(new Emitter<void>({ leakWarningThreshold: 200 /* https://github.com/microsoft/vscode/issues/119968 */ }));
 	public readonly onLanguagesMaybeChanged: Event<void> = this._onLanguagesMaybeChanged.event;
 
 	constructor(warnOnOverwrite = false) {

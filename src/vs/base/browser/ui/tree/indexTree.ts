@@ -14,7 +14,7 @@ export interface IIndexTreeOptions<T, TFilterData = void> extends IAbstractTreeO
 
 export class IndexTree<T, TFilterData = void> extends AbstractTree<T, TFilterData, number[]> {
 
-	protected model!: IndexTreeModel<T, TFilterData>;
+	protected override model!: IndexTreeModel<T, TFilterData>;
 
 	constructor(
 		user: string,

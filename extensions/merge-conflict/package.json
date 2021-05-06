@@ -3,7 +3,7 @@
   "publisher": "vscode",
   "displayName": "%displayName%",
   "description": "%description%",
-  "icon": "resources/icons/merge-conflict.png",
+  "icon": "media/icon.png",
   "version": "1.0.0",
   "license": "MIT",
   "aiKey": "AIF-d9b70cd4-b9f9-4d70-929b-a071c400b217",
@@ -13,6 +13,12 @@
   "categories": [
     "Other"
   ],
+  "capabilities": {
+    "virtualWorkspaces": false,
+    "untrustedWorkspaces": {
+      "supported": true
+    }
+  },
   "activationEvents": [
     "onStartupFinished"
   ],
@@ -70,13 +76,15 @@
         "category": "%command.category%",
         "title": "%command.next%",
         "original": "Next Conflict",
-        "command": "merge-conflict.next"
+        "command": "merge-conflict.next",
+        "icon": "$(arrow-down)"
       },
       {
         "category": "%command.category%",
         "title": "%command.previous%",
         "original": "Previous Conflict",
-        "command": "merge-conflict.previous"
+        "command": "merge-conflict.previous",
+        "icon": "$(arrow-up)"
       },
       {
         "category": "%command.category%",
@@ -96,6 +104,18 @@
           "command": "merge-conflict.accept.all-incoming",
           "when": "scmProvider == git && scmResourceGroup == merge",
           "group": "1_modification"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "merge-conflict.previous",
+          "group": "navigation@1",
+          "when": "mergeConflictsCount && mergeConflictsCount != 0"
+        },
+        {
+          "command": "merge-conflict.next",
+          "group": "navigation@2",
+          "when": "mergeConflictsCount && mergeConflictsCount != 0"
         }
       ]
     },
@@ -139,7 +159,7 @@
     "vscode-nls": "^4.0.0"
   },
   "devDependencies": {
-    "@types/node": "^12.19.9"
+    "@types/node": "14.x"
   },
   "repository": {
     "type": "git",

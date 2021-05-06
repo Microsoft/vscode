@@ -132,7 +132,7 @@ suite('Debug - Debugger', () => {
 	const testResourcePropertiesService = new TestTextResourcePropertiesService(configurationService);
 
 	setup(() => {
-		_debugger = new Debugger(adapterManager, debuggerContribution, extensionDescriptor0, configurationService, testResourcePropertiesService, undefined!, undefined!, undefined!, undefined!);
+		_debugger = new Debugger(adapterManager, debuggerContribution, extensionDescriptor0, configurationService, testResourcePropertiesService, undefined!, undefined!, undefined!);
 	});
 
 	teardown(() => {
@@ -147,20 +147,6 @@ suite('Debug - Debugger', () => {
 
 		assert.strictEqual(ae!.command, join(extensionFolderPath, debuggerContribution.program));
 		assert.deepStrictEqual(ae!.args, debuggerContribution.args);
-	});
-
-	test('schema attributes', () => {
-		const schemaAttribute = _debugger.getSchemaAttributes()![0];
-		assert.notDeepStrictEqual(schemaAttribute, debuggerContribution.configurationAttributes);
-		Object.keys(debuggerContribution.configurationAttributes.launch).forEach(key => {
-			assert.deepStrictEqual((<any>schemaAttribute)[key], (<any>debuggerContribution.configurationAttributes.launch)[key]);
-		});
-
-		assert.strictEqual(schemaAttribute['additionalProperties'], false);
-		assert.strictEqual(!!schemaAttribute['properties']!['request'], true);
-		assert.strictEqual(!!schemaAttribute['properties']!['name'], true);
-		assert.strictEqual(!!schemaAttribute['properties']!['type'], true);
-		assert.strictEqual(!!schemaAttribute['properties']!['preLaunchTask'], true);
 	});
 
 	test('merge platform specific attributes', () => {

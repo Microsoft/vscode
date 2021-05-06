@@ -9,7 +9,7 @@ import { findWindowOnFile } from 'vs/platform/windows/electron-main/windowsFinde
 import { ICodeWindow, ILoadEvent, IWindowState } from 'vs/platform/windows/electron-main/windows';
 import { IWorkspaceIdentifier, toWorkspaceFolders } from 'vs/platform/workspaces/common/workspaces';
 import { URI } from 'vs/base/common/uri';
-import { getPathFromAmdModule } from 'vs/base/common/amd';
+import { getPathFromAmdModule } from 'vs/base/test/node/testUtils';
 import { extUriBiasedIgnorePathCase } from 'vs/base/common/resources';
 import { CancellationToken } from 'vs/base/common/cancellation';
 import { Event } from 'vs/base/common/event';
@@ -28,7 +28,7 @@ suite('WindowsFinder', () => {
 	};
 
 	const testWorkspaceFolders = toWorkspaceFolders([{ path: join(fixturesFolder, 'vscode_workspace_1_folder') }, { path: join(fixturesFolder, 'vscode_workspace_2_folder') }], testWorkspace.configPath, extUriBiasedIgnorePathCase);
-	const localWorkspaceResolver = (workspace: any) => { return workspace === testWorkspace ? { id: testWorkspace.id, configPath: workspace.configPath, folders: testWorkspaceFolders } : null; };
+	const localWorkspaceResolver = (workspace: any) => { return workspace === testWorkspace ? { id: testWorkspace.id, configPath: workspace.configPath, folders: testWorkspaceFolders } : undefined; };
 
 	function createTestCodeWindow(options: { lastFocusTime: number, openedFolderUri?: URI, openedWorkspace?: IWorkspaceIdentifier }): ICodeWindow {
 		return new class implements ICodeWindow {

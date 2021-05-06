@@ -31,10 +31,6 @@
 			"project": "vscode-workbench"
 		},
 		{
-			"name": "vs/workbench/contrib/backup",
-			"project": "vscode-workbench"
-		},
-		{
 			"name": "vs/workbench/contrib/bulkEdit",
 			"project": "vscode-workbench"
 		},
@@ -259,6 +255,10 @@
 			"project": "vscode-workbench"
 		},
 		{
+			"name": "vs/workbench/services/backup",
+			"project": "vscode-workbench"
+		},
+		{
 			"name": "vs/workbench/services/bulkEdit",
 			"project": "vscode-workbench"
 		},
@@ -396,6 +396,10 @@
 		},
 		{
 			"name": "vs/workbench/services/gettingStarted",
+			"project": "vscode-workbench"
+		},
+		{
+			"name": "vs/workbench/services/host",
 			"project": "vscode-workbench"
 		}
 	]

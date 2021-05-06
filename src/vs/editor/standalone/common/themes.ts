@@ -5,7 +5,7 @@
 
 import { editorActiveIndentGuides, editorIndentGuides } from 'vs/editor/common/view/editorColorRegistry';
 import { IStandaloneThemeData } from 'vs/editor/standalone/common/standaloneThemeService';
-import { editorBackground, editorForeground, editorInactiveSelection, editorSelectionHighlight } from 'vs/platform/theme/common/colorRegistry';
+import { editorBackground, editorForeground, editorInactiveSelection, editorSelectionHighlight, listFocusHighlightForeground } from 'vs/platform/theme/common/colorRegistry';
 
 /* -------------------------------- Begin vs theme -------------------------------- */
 export const vs: IStandaloneThemeData = {
@@ -73,7 +73,8 @@ export const vs: IStandaloneThemeData = {
 		[editorInactiveSelection]: '#E5EBF1',
 		[editorIndentGuides]: '#D3D3D3',
 		[editorActiveIndentGuides]: '#939393',
-		[editorSelectionHighlight]: '#ADD6FF4D'
+		[editorSelectionHighlight]: '#ADD6FF4D',
+		[listFocusHighlightForeground]: '#33B6FF'
 	}
 };
 /* -------------------------------- End vs theme -------------------------------- */

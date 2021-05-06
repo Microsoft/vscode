@@ -71,7 +71,7 @@ class InspectEditorTokensController extends Disposable implements IEditorContrib
 		this._register(this._editor.onKeyUp((e) => e.keyCode === KeyCode.Escape && this.stop()));
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		this.stop();
 		super.dispose();
 	}
@@ -214,7 +214,7 @@ class InspectEditorTokensWidget extends Disposable implements IContentWidget {
 		this._editor.addContentWidget(this);
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		this._isDisposed = true;
 		this._editor.removeContentWidget(this);
 		this._currentRequestCancellationTokenSource.cancel();

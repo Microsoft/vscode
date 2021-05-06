@@ -261,7 +261,7 @@ export default class TypeScriptServiceClient extends Disposable implements IType
 		return this._configuration;
 	}
 
-	public dispose() {
+	public override dispose() {
 		super.dispose();
 
 		this.bufferSyncSupport.dispose();
@@ -710,16 +710,20 @@ export default class TypeScriptServiceClient extends Disposable implements IType
 			return undefined;
 		}
 
-		if (resource.scheme === fileSchemes.file || resource.scheme === fileSchemes.untitled) {
-			for (const root of roots.sort((a, b) => a.uri.fsPath.length - b.uri.fsPath.length)) {
-				if (resource.fsPath.startsWith(root.uri.fsPath + path.sep)) {
-					return root.uri.fsPath;
+		switch (resource.scheme) {
+			case fileSchemes.file:
+			case fileSchemes.untitled:
+			case fileSchemes.vscodeNotebookCell:
+				for (const root of roots.sort((a, b) => a.uri.fsPath.length - b.uri.fsPath.length)) {
+					if (resource.fsPath.startsWith(root.uri.fsPath + path.sep)) {
+						return root.uri.fsPath;
+					}
 				}
-			}
-			return roots[0].uri.fsPath;
-		}
+				return roots[0].uri.fsPath;
 
-		return undefined;
+			default:
+				return undefined;
+		}
 	}
 
 	public execute(command: keyof TypeScriptRequests, args: any, token: vscode.CancellationToken, config?: ExecConfig): Promise<ServerResponse.Response<Proto.Response>> {
@@ -763,11 +767,18 @@ export default class TypeScriptServiceClient extends Disposable implements IType
 	}
 
 	public executeWithoutWaitingForResponse(command: keyof TypeScriptRequests, args: any): void {
-		this.executeImpl(command, args, {
+		const promise = this.executeImpl(command, args, {
 			isAsync: false,
 			token: undefined,
-			expectsResult: false
+			expectsResult: command === 'updateOpen'
 		});
+
+		if (command === 'updateOpen') {
+			// If update open has completed, consider that the project has loaded
+			promise.then(() => {
+				this.loadingIndicator.reset();
+			});
+		}
 	}
 
 	public executeAsync(command: keyof TypeScriptRequests, args: Proto.GeterrRequestArgs, token: vscode.CancellationToken): Promise<ServerResponse.Response<Proto.Response>> {

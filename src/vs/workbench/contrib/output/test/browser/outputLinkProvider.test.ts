@@ -282,14 +282,14 @@ suite('OutputLinkProvider', () => {
 	});
 
 	test('OutputLinkProvider - #106847', function () {
-		const rootFolder = isWindows ? URI.file('C:\\Users\\bpasero\\Desktop\\test-ts') :
-			URI.file('C:/Users/bpasero/Desktop');
+		const rootFolder = isWindows ? URI.file('C:\\Users\\username\\Desktop\\test-ts') :
+			URI.file('C:/Users/username/Desktop');
 
 		let patterns = OutputLinkComputer.createPatterns(rootFolder);
 
 		let contextService = new TestContextService();
 
-		let line = toOSPath('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa C:\\Users\\bpasero\\Desktop\\test-ts\\prj.conf C:\\Users\\bpasero\\Desktop\\test-ts\\prj.conf C:\\Users\\bpasero\\Desktop\\test-ts\\prj.conf');
+		let line = toOSPath('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa C:\\Users\\username\\Desktop\\test-ts\\prj.conf C:\\Users\\username\\Desktop\\test-ts\\prj.conf C:\\Users\\username\\Desktop\\test-ts\\prj.conf');
 		let result = OutputLinkComputer.detectLinks(line, 1, patterns, contextService);
 		assert.strictEqual(result.length, 3);
 

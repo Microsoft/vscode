@@ -224,6 +224,17 @@ export const tocData: ITOCEntry<string> = {
 					settings: ['settingsSync.*']
 				}
 			]
+		},
+		{
+			id: 'security',
+			label: localize('security', "Security"),
+			children: [
+				{
+					id: 'security/workspace',
+					label: localize('workspace', "Workspace"),
+					settings: ['security.workspace.*']
+				}
+			]
 		}
 	]
 };

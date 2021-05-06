@@ -21,7 +21,7 @@ import { Severity, NotificationsFilter } from 'vs/platform/notification/common/n
 import { ScrollbarVisibility } from 'vs/base/common/scrollable';
 import { ILifecycleService, LifecyclePhase } from 'vs/workbench/services/lifecycle/common/lifecycle';
 import { IHostService } from 'vs/workbench/services/host/browser/host';
-import { IntervalCounter, timeout } from 'vs/base/common/async';
+import { IntervalCounter } from 'vs/base/common/async';
 import { assertIsDefined } from 'vs/base/common/types';
 
 interface INotificationToast {
@@ -93,8 +93,9 @@ export class NotificationsToasts extends Themable implements INotificationsToast
 		// Layout
 		this._register(this.layoutService.onDidLayout(dimension => this.layout(Dimension.lift(dimension))));
 
-		// Delay some tasks until after we can show notifications
-		this.onCanShowNotifications().then(() => {
+		// Delay some tasks until after we have restored
+		// to reduce UI pressure from the startup phase
+		this.lifecycleService.when(LifecyclePhase.Restored).then(() => {
 
 			// Show toast for initial notifications if any
 			this.model.notifications.forEach(notification => this.addToast(notification));
@@ -109,19 +110,6 @@ export class NotificationsToasts extends Themable implements INotificationsToast
 				this.hide();
 			}
 		}));
-	}
-
-	private async onCanShowNotifications(): Promise<void> {
-
-		// Wait for the running phase to ensure we can draw notifications properly
-		await this.lifecycleService.when(LifecyclePhase.Ready);
-
-		// Push notificiations out until either workbench is restored
-		// or some time has ellapsed to reduce pressure on the startup
-		return Promise.race([
-			this.lifecycleService.when(LifecyclePhase.Restored),
-			timeout(2000)
-		]);
 	}
 
 	private onDidChangeNotification(e: INotificationChangeEvent): void {
@@ -476,7 +464,7 @@ export class NotificationsToasts extends Themable implements INotificationsToast
 		}
 	}
 
-	protected updateStyles(): void {
+	protected override updateStyles(): void {
 		this.mapNotificationToToast.forEach(({ toast }) => {
 			const backgroundColor = this.getColor(NOTIFICATIONS_BACKGROUND);
 			toast.style.background = backgroundColor ? backgroundColor : '';

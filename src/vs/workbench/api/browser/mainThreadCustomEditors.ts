@@ -5,6 +5,7 @@
 
 import { multibyteAwareBtoa } from 'vs/base/browser/dom';
 import { CancelablePromise, createCancelablePromise, timeout } from 'vs/base/common/async';
+import { VSBuffer } from 'vs/base/common/buffer';
 import { CancellationToken } from 'vs/base/common/cancellation';
 import { isPromiseCanceledError, onUnexpectedError } from 'vs/base/common/errors';
 import { Emitter, Event } from 'vs/base/common/event';
@@ -30,13 +31,13 @@ import { CustomTextEditorModel } from 'vs/workbench/contrib/customEditor/common/
 import { WebviewExtensionDescription } from 'vs/workbench/contrib/webview/browser/webview';
 import { WebviewInput } from 'vs/workbench/contrib/webviewPanel/browser/webviewEditorInput';
 import { IWebviewWorkbenchService } from 'vs/workbench/contrib/webviewPanel/browser/webviewWorkbenchService';
-import { IBackupFileService } from 'vs/workbench/services/backup/common/backup';
 import { IEditorGroupsService } from 'vs/workbench/services/editor/common/editorGroupsService';
 import { IWorkbenchEnvironmentService } from 'vs/workbench/services/environment/common/environmentService';
 import { IExtensionService } from 'vs/workbench/services/extensions/common/extensions';
 import { IPathService } from 'vs/workbench/services/path/common/pathService';
 import { IWorkingCopyFileService } from 'vs/workbench/services/workingCopy/common/workingCopyFileService';
-import { IWorkingCopy, IWorkingCopyBackup, IWorkingCopyService, WorkingCopyCapabilities } from 'vs/workbench/services/workingCopy/common/workingCopyService';
+import { IWorkingCopyService } from 'vs/workbench/services/workingCopy/common/workingCopyService';
+import { IWorkingCopy, IWorkingCopyBackup, NO_TYPE_ID, WorkingCopyCapabilities } from 'vs/workbench/services/workingCopy/common/workingCopy';
 
 const enum CustomEditorModelType {
 	Custom,
@@ -59,8 +60,7 @@ export class MainThreadCustomEditors extends Disposable implements extHostProtoc
 		@ICustomEditorService private readonly _customEditorService: ICustomEditorService,
 		@IEditorGroupsService private readonly _editorGroupService: IEditorGroupsService,
 		@IWebviewWorkbenchService private readonly _webviewWorkbenchService: IWebviewWorkbenchService,
-		@IInstantiationService private readonly _instantiationService: IInstantiationService,
-		@IBackupFileService private readonly _backupService: IBackupFileService,
+		@IInstantiationService private readonly _instantiationService: IInstantiationService
 	) {
 		super();
 
@@ -91,19 +91,19 @@ export class MainThreadCustomEditors extends Disposable implements extHostProtoc
 		}));
 	}
 
-	dispose() {
+	override dispose() {
 		super.dispose();
 
 		dispose(this._editorProviders.values());
 		this._editorProviders.clear();
 	}
 
-	public $registerTextEditorProvider(extensionData: extHostProtocol.WebviewExtensionDescription, viewType: string, options: extHostProtocol.IWebviewPanelOptions, capabilities: extHostProtocol.CustomTextEditorCapabilities): void {
-		this.registerEditorProvider(CustomEditorModelType.Text, reviveWebviewExtension(extensionData), viewType, options, capabilities, true);
+	public $registerTextEditorProvider(extensionData: extHostProtocol.WebviewExtensionDescription, viewType: string, options: extHostProtocol.IWebviewPanelOptions, capabilities: extHostProtocol.CustomTextEditorCapabilities, serializeBuffersForPostMessage: boolean): void {
+		this.registerEditorProvider(CustomEditorModelType.Text, reviveWebviewExtension(extensionData), viewType, options, capabilities, true, serializeBuffersForPostMessage);
 	}
 
-	public $registerCustomEditorProvider(extensionData: extHostProtocol.WebviewExtensionDescription, viewType: string, options: extHostProtocol.IWebviewPanelOptions, supportsMultipleEditorsPerDocument: boolean): void {
-		this.registerEditorProvider(CustomEditorModelType.Custom, reviveWebviewExtension(extensionData), viewType, options, {}, supportsMultipleEditorsPerDocument);
+	public $registerCustomEditorProvider(extensionData: extHostProtocol.WebviewExtensionDescription, viewType: string, options: extHostProtocol.IWebviewPanelOptions, supportsMultipleEditorsPerDocument: boolean, serializeBuffersForPostMessage: boolean): void {
+		this.registerEditorProvider(CustomEditorModelType.Custom, reviveWebviewExtension(extensionData), viewType, options, {}, supportsMultipleEditorsPerDocument, serializeBuffersForPostMessage);
 	}
 
 	private registerEditorProvider(
@@ -113,6 +113,7 @@ export class MainThreadCustomEditors extends Disposable implements extHostProtoc
 		options: extHostProtocol.IWebviewPanelOptions,
 		capabilities: extHostProtocol.CustomTextEditorCapabilities,
 		supportsMultipleEditorsPerDocument: boolean,
+		serializeBuffersForPostMessage: boolean,
 	): void {
 		if (this._editorProviders.has(viewType)) {
 			throw new Error(`Provider for ${viewType} already registered`);
@@ -132,7 +133,7 @@ export class MainThreadCustomEditors extends Disposable implements extHostProtoc
 				const handle = webviewInput.id;
 				const resource = webviewInput.resource;
 
-				this.mainThreadWebviewPanels.addWebviewInput(handle, webviewInput);
+				this.mainThreadWebviewPanels.addWebviewInput(handle, webviewInput, { serializeBuffersForPostMessage });
 				webviewInput.webview.options = options;
 				webviewInput.webview.extension = extension;
 
@@ -227,7 +228,7 @@ export class MainThreadCustomEditors extends Disposable implements extHostProtoc
 					const model = MainThreadCustomEditorModel.create(this._instantiationService, this._proxyCustomEditors, viewType, resource, options, () => {
 						return Array.from(this.mainThreadWebviewPanels.webviewInputs)
 							.filter(editor => editor instanceof CustomEditorInput && isEqual(editor.resource, resource)) as CustomEditorInput[];
-					}, cancellation, this._backupService);
+					}, cancellation);
 					return this._customEditorService.models.add(resource, viewType, model);
 				}
 		}
@@ -294,6 +295,18 @@ class MainThreadCustomEditorModel extends Disposable implements ICustomEditorMod
 	private readonly _onDidChangeOrphaned = this._register(new Emitter<void>());
 	public readonly onDidChangeOrphaned = this._onDidChangeOrphaned.event;
 
+	// TODO@mjbvz consider to enable a `typeId` that is specific for custom
+	// editors. Using a distinct `typeId` allows the working copy to have
+	// any resource (including file based resources) even if other working
+	// copies exist with the same resource.
+	//
+	// IMPORTANT: changing the `typeId` has an impact on backups for this
+	// working copy. Any value that is not the empty string will be used
+	// as seed to the backup. Only change the `typeId` if you have implemented
+	// a fallback solution to resolve any existing backups that do not have
+	// this seed.
+	readonly typeId = NO_TYPE_ID;
+
 	public static async create(
 		instantiationService: IInstantiationService,
 		proxy: extHostProtocol.ExtHostCustomEditorsShape,
@@ -302,10 +315,14 @@ class MainThreadCustomEditorModel extends Disposable implements ICustomEditorMod
 		options: { backupId?: string },
 		getEditors: () => CustomEditorInput[],
 		cancellation: CancellationToken,
-		_backupFileService: IBackupFileService,
-	) {
-		const { editable } = await proxy.$createCustomDocument(resource, viewType, options.backupId, cancellation);
-		return instantiationService.createInstance(MainThreadCustomEditorModel, proxy, viewType, resource, !!options.backupId, editable, getEditors);
+	): Promise<MainThreadCustomEditorModel> {
+		const editors = getEditors();
+		let untitledDocumentData: VSBuffer | undefined;
+		if (editors.length !== 0) {
+			untitledDocumentData = editors[0].untitledDocumentData;
+		}
+		const { editable } = await proxy.$createCustomDocument(resource, viewType, options.backupId, untitledDocumentData, cancellation);
+		return instantiationService.createInstance(MainThreadCustomEditorModel, proxy, viewType, resource, !!options.backupId, editable, !!untitledDocumentData, getEditors);
 	}
 
 	constructor(
@@ -314,6 +331,7 @@ class MainThreadCustomEditorModel extends Disposable implements ICustomEditorMod
 		private readonly _editorResource: URI,
 		fromBackup: boolean,
 		private readonly _editable: boolean,
+		startDirty: boolean,
 		private readonly _getEditors: () => CustomEditorInput[],
 		@IFileDialogService private readonly _fileDialogService: IFileDialogService,
 		@IFileService private readonly _fileService: IFileService,
@@ -321,7 +339,7 @@ class MainThreadCustomEditorModel extends Disposable implements ICustomEditorMod
 		@IUndoRedoService private readonly _undoService: IUndoRedoService,
 		@IWorkbenchEnvironmentService private readonly _environmentService: IWorkbenchEnvironmentService,
 		@IWorkingCopyService workingCopyService: IWorkingCopyService,
-		@IPathService private readonly _pathService: IPathService
+		@IPathService private readonly _pathService: IPathService,
 	) {
 		super();
 
@@ -331,6 +349,11 @@ class MainThreadCustomEditorModel extends Disposable implements ICustomEditorMod
 			this._register(workingCopyService.registerWorkingCopy(this));
 		}
 
+		// Normally means we're re-opening an untitled file
+		if (startDirty) {
+			this._isDirtyFromContentChange = true;
+		}
+
 		this._register(_fileService.onDidFilesChange(e => this.onDidFilesChange(e)));
 	}
 
@@ -338,7 +361,7 @@ class MainThreadCustomEditorModel extends Disposable implements ICustomEditorMod
 		return this._editorResource;
 	}
 
-	dispose() {
+	override dispose() {
 		this.#isDisposed = true;
 
 		if (this._editable) {
@@ -645,21 +668,23 @@ class MainThreadCustomEditorModel extends Disposable implements ICustomEditorMod
 		}
 		const primaryEditor = editors[0];
 
-		const backupData: IWorkingCopyBackup<CustomDocumentBackupData> = {
-			meta: {
-				viewType: this.viewType,
-				editorResource: this._editorResource,
-				backupId: '',
-				extension: primaryEditor.extension ? {
-					id: primaryEditor.extension.id.value,
-					location: primaryEditor.extension.location,
-				} : undefined,
-				webview: {
-					id: primaryEditor.id,
-					options: primaryEditor.webview.options,
-					state: primaryEditor.webview.state,
-				}
+		const backupMeta: CustomDocumentBackupData = {
+			viewType: this.viewType,
+			editorResource: this._editorResource,
+			backupId: '',
+			extension: primaryEditor.extension ? {
+				id: primaryEditor.extension.id.value,
+				location: primaryEditor.extension.location,
+			} : undefined,
+			webview: {
+				id: primaryEditor.id,
+				options: primaryEditor.webview.options,
+				state: primaryEditor.webview.state,
 			}
+		};
+
+		const backupData: IWorkingCopyBackup = {
+			meta: backupMeta
 		};
 
 		if (!this._editable) {

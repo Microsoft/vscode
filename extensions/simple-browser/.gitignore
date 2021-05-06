@@ -1,0 +1,4 @@
+# Ignore built files
+media/*.js
+media/codicon.css
+media/codicon.ttf

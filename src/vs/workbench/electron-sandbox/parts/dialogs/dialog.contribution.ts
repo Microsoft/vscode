@@ -20,6 +20,7 @@ import { NativeDialogHandler } from 'vs/workbench/electron-sandbox/parts/dialogs
 import { DialogService } from 'vs/workbench/services/dialogs/common/dialogService';
 import { LifecyclePhase } from 'vs/workbench/services/lifecycle/common/lifecycle';
 import { Disposable } from 'vs/base/common/lifecycle';
+import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 
 export class DialogHandlerContribution extends Disposable implements IWorkbenchContribution {
 	private nativeImpl: IDialogHandler;
@@ -35,13 +36,14 @@ export class DialogHandlerContribution extends Disposable implements IWorkbenchC
 		@ILayoutService layoutService: ILayoutService,
 		@IThemeService themeService: IThemeService,
 		@IKeybindingService keybindingService: IKeybindingService,
+		@IInstantiationService instantiationService: IInstantiationService,
 		@IProductService productService: IProductService,
 		@IClipboardService clipboardService: IClipboardService,
 		@INativeHostService nativeHostService: INativeHostService
 	) {
 		super();
 
-		this.browserImpl = new BrowserDialogHandler(logService, layoutService, themeService, keybindingService, productService, clipboardService);
+		this.browserImpl = new BrowserDialogHandler(logService, layoutService, themeService, keybindingService, instantiationService, productService, clipboardService);
 		this.nativeImpl = new NativeDialogHandler(logService, nativeHostService, productService, clipboardService);
 
 		this.model = (this.dialogService as DialogService).model;
@@ -76,7 +78,7 @@ export class DialogHandlerContribution extends Disposable implements IWorkbenchC
 			// Message
 			else if (this.currentDialog.args.showArgs) {
 				const args = this.currentDialog.args.showArgs;
-				result = this.useCustomDialog || args.options?.useCustom ?
+				result = (this.useCustomDialog || args.options?.custom) ?
 					await this.browserImpl.show(args.severity, args.message, args.buttons, args.options) :
 					await this.nativeImpl.show(args.severity, args.message, args.buttons, args.options);
 			}

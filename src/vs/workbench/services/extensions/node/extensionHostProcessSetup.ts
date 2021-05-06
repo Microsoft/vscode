@@ -105,7 +105,7 @@ function _createExtHostProtocol(): Promise<PersistentProtocol> {
 			let protocol: PersistentProtocol | null = null;
 
 			let timer = setTimeout(() => {
-				reject(new Error('VSCODE_EXTHOST_IPC_SOCKET timeout'));
+				onTerminate('VSCODE_EXTHOST_IPC_SOCKET timeout');
 			}, 60000);
 
 			const reconnectionGraceTime = ProtocolConstants.ReconnectionGraceTime;

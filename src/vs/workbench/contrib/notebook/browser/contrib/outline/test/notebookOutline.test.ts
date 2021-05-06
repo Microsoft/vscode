@@ -23,14 +23,14 @@ suite('Notebook Outline', function () {
 	instantiationService.set(IEditorService, new class extends mock<IEditorService>() { });
 	instantiationService.set(IMarkerService, new MarkerService());
 	instantiationService.set(IThemeService, new class extends mock<IThemeService>() {
-		onDidFileIconThemeChange = Event.None;
-		getFileIconTheme(): IFileIconTheme {
+		override onDidFileIconThemeChange = Event.None;
+		override getFileIconTheme(): IFileIconTheme {
 			return { hasFileIcons: true, hasFolderIcons: true, hidesExplorerArrows: false };
 		}
 	});
 
-	function withNotebookOutline<R = any>(cells: [source: string, lang: string, kind: CellKind, output?: IOutputDto[], metadata?: NotebookCellMetadata][], callback: (outline: NotebookCellOutline, editor: IActiveNotebookEditor) => R): R {
-		return withTestNotebook(instantiationService, cells, (editor) => {
+	function withNotebookOutline<R = any>(cells: [source: string, lang: string, kind: CellKind, output?: IOutputDto[], metadata?: NotebookCellMetadata][], callback: (outline: NotebookCellOutline, editor: IActiveNotebookEditor) => R): Promise<R> {
+		return withTestNotebook(cells, (editor) => {
 			if (!editor.hasModel()) {
 				assert.ok(false, 'MUST have active text editor');
 			}
@@ -40,15 +40,15 @@ suite('Notebook Outline', function () {
 
 	}
 
-	test('basic', function () {
-		withNotebookOutline([], outline => {
+	test('basic', async function () {
+		await withNotebookOutline([], outline => {
 			assert.ok(outline instanceof NotebookCellOutline);
 			assert.deepStrictEqual(outline.config.quickPickDataSource.getQuickPickElements(), []);
 		});
 	});
 
-	test('special characters in heading', function () {
-		withNotebookOutline([
+	test('special characters in heading', async function () {
+		await withNotebookOutline([
 			['# Hellö & Hällo', 'md', CellKind.Markdown]
 		], outline => {
 			assert.ok(outline instanceof NotebookCellOutline);
@@ -56,7 +56,7 @@ suite('Notebook Outline', function () {
 			assert.deepStrictEqual(outline.config.quickPickDataSource.getQuickPickElements()[0].label, 'Hellö & Hällo');
 		});
 
-		withNotebookOutline([
+		await withNotebookOutline([
 			['# bo<i>ld</i>', 'md', CellKind.Markdown]
 		], outline => {
 			assert.ok(outline instanceof NotebookCellOutline);
@@ -65,8 +65,8 @@ suite('Notebook Outline', function () {
 		});
 	});
 
-	test('Heading text defines entry label', function () {
-		return withNotebookOutline([
+	test('Heading text defines entry label', async function () {
+		return await withNotebookOutline([
 			['foo\n # h1', 'md', CellKind.Markdown]
 		], outline => {
 			assert.ok(outline instanceof NotebookCellOutline);
@@ -75,8 +75,8 @@ suite('Notebook Outline', function () {
 		});
 	});
 
-	test('Notebook outline ignores markdown headings #115200', function () {
-		withNotebookOutline([
+	test('Notebook outline ignores markdown headings #115200', async function () {
+		await withNotebookOutline([
 			['## h2 \n# h1', 'md', CellKind.Markdown]
 		], outline => {
 			assert.ok(outline instanceof NotebookCellOutline);
@@ -85,7 +85,7 @@ suite('Notebook Outline', function () {
 			assert.deepStrictEqual(outline.config.quickPickDataSource.getQuickPickElements()[1].label, 'h1');
 		});
 
-		withNotebookOutline([
+		await withNotebookOutline([
 			['## h2', 'md', CellKind.Markdown],
 			['# h1', 'md', CellKind.Markdown]
 		], outline => {

@@ -125,7 +125,7 @@ export class BaseDropdown extends ActionRunner {
 		this.hide();
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		super.dispose();
 		this.hide();
 
@@ -159,7 +159,7 @@ export class Dropdown extends BaseDropdown {
 		this.contextViewProvider = options.contextViewProvider;
 	}
 
-	show(): void {
+	override show(): void {
 		super.show();
 
 		this.element.classList.add('active');
@@ -187,7 +187,7 @@ export class Dropdown extends BaseDropdown {
 		this.element.classList.remove('active');
 	}
 
-	hide(): void {
+	override hide(): void {
 		super.hide();
 
 		if (this.contextViewProvider) {
@@ -250,7 +250,7 @@ export class DropdownMenu extends BaseDropdown {
 		this._actions = actions;
 	}
 
-	show(): void {
+	override show(): void {
 		super.show();
 
 		this.element.classList.add('active');
@@ -269,7 +269,7 @@ export class DropdownMenu extends BaseDropdown {
 		});
 	}
 
-	hide(): void {
+	override hide(): void {
 		super.hide();
 	}
 

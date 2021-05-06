@@ -25,7 +25,7 @@ export class TunnelService extends BaseTunnelService {
 		super(nodeSocketFactory, logService, signService, productService);
 	}
 
-	canTunnel(uri: URI): boolean {
+	override canTunnel(uri: URI): boolean {
 		return super.canTunnel(uri) && !!this.environmentService.remoteAuthority;
 	}
 }

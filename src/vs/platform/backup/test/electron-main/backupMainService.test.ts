@@ -23,6 +23,7 @@ import { createHash } from 'crypto';
 import { flakySuite, getRandomTestPath } from 'vs/base/test/node/testUtils';
 import { Schemas } from 'vs/base/common/network';
 import { isEqual } from 'vs/base/common/resources';
+import product from 'vs/platform/product/common/product';
 
 flakySuite('BackupMainService', () => {
 
@@ -104,7 +105,7 @@ flakySuite('BackupMainService', () => {
 		backupWorkspacesPath = path.join(backupHome, 'workspaces.json');
 		existingTestFolder1 = URI.file(path.join(testDir, 'folder1'));
 
-		environmentService = new EnvironmentMainService(parseArgs(process.argv, OPTIONS));
+		environmentService = new EnvironmentMainService(parseArgs(process.argv, OPTIONS), { _serviceBrand: undefined, ...product });
 
 		await fs.promises.mkdir(backupHome, { recursive: true });
 
@@ -122,7 +123,7 @@ flakySuite('BackupMainService', () => {
 				return path.join(this.backupHome, id);
 			}
 
-			getFolderHash(folderUri: URI): string {
+			override getFolderHash(folderUri: URI): string {
 				return super.getFolderHash(folderUri);
 			}
 		};

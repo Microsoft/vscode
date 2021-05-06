@@ -107,10 +107,7 @@ export class DiffReview extends Disposable {
 			this.actionBarContainer.domNode
 		));
 
-		this._actionBar.push(new Action('diffreview.close', nls.localize('label.close', "Close"), 'close-diff-review ' + ThemeIcon.asClassName(diffReviewCloseIcon), true, () => {
-			this.hide();
-			return Promise.resolve(null);
-		}), { label: false, icon: true });
+		this._actionBar.push(new Action('diffreview.close', nls.localize('label.close', "Close"), 'close-diff-review ' + ThemeIcon.asClassName(diffReviewCloseIcon), true, async () => this.hide()), { label: false, icon: true });
 
 		this.domNode = createFastDomNode(document.createElement('div'));
 		this.domNode.setClassName('diff-review monaco-editor-background');

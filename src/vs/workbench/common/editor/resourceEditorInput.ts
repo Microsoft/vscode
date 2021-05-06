@@ -3,12 +3,11 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { ITextEditorModel, IModeSupport } from 'vs/workbench/common/editor';
 import { URI } from 'vs/base/common/uri';
 import { IReference } from 'vs/base/common/lifecycle';
-import { ITextModelService } from 'vs/editor/common/services/resolverService';
+import { ITextEditorModel, ITextModelService } from 'vs/editor/common/services/resolverService';
 import { ResourceEditorModel } from 'vs/workbench/common/editor/resourceEditorModel';
-import { ITextFileService } from 'vs/workbench/services/textfile/common/textfiles';
+import { IModeSupport, ITextFileService } from 'vs/workbench/services/textfile/common/textfiles';
 import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
 import { IEditorGroupsService } from 'vs/workbench/services/editor/common/editorGroupsService';
 import { IFileService } from 'vs/platform/files/common/files';
@@ -24,6 +23,10 @@ import { isEqual } from 'vs/base/common/resources';
 export class ResourceEditorInput extends AbstractTextResourceEditorInput implements IModeSupport {
 
 	static readonly ID: string = 'workbench.editors.resourceEditorInput';
+
+	override get typeId(): string {
+		return ResourceEditorInput.ID;
+	}
 
 	private cachedModel: ResourceEditorModel | undefined = undefined;
 	private modelReference: Promise<IReference<ITextEditorModel>> | undefined = undefined;
@@ -44,11 +47,7 @@ export class ResourceEditorInput extends AbstractTextResourceEditorInput impleme
 		super(resource, undefined, editorService, editorGroupService, textFileService, labelService, fileService, filesConfigurationService);
 	}
 
-	getTypeId(): string {
-		return ResourceEditorInput.ID;
-	}
-
-	getName(): string {
+	override getName(): string {
 		return this.name || super.getName();
 	}
 
@@ -60,7 +59,7 @@ export class ResourceEditorInput extends AbstractTextResourceEditorInput impleme
 		}
 	}
 
-	getDescription(): string | undefined {
+	override getDescription(): string | undefined {
 		return this.description;
 	}
 
@@ -84,7 +83,7 @@ export class ResourceEditorInput extends AbstractTextResourceEditorInput impleme
 		this.preferredMode = mode;
 	}
 
-	async resolve(): Promise<ITextEditorModel> {
+	override async resolve(): Promise<ITextEditorModel> {
 		if (!this.modelReference) {
 			this.modelReference = this.textModelResolverService.createModelReference(this.resource);
 		}
@@ -110,7 +109,7 @@ export class ResourceEditorInput extends AbstractTextResourceEditorInput impleme
 		return model;
 	}
 
-	matches(otherInput: unknown): boolean {
+	override matches(otherInput: unknown): boolean {
 		if (otherInput === this) {
 			return true;
 		}
@@ -122,7 +121,7 @@ export class ResourceEditorInput extends AbstractTextResourceEditorInput impleme
 		return false;
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		if (this.modelReference) {
 			this.modelReference.then(ref => ref.dispose());
 			this.modelReference = undefined;

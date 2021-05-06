@@ -12,7 +12,7 @@
 }
 
 .monaco-workbench .debug-toolbar .monaco-action-bar .action-item {
-	height: 32px;
+	margin-right: 4px;
 }
 
 .monaco-workbench .debug-toolbar .monaco-action-bar .action-item.select-container {
@@ -26,7 +26,6 @@
 
 .monaco-workbench .debug-toolbar .drag-area {
 	cursor: grab;
-	height: 32px;
 	width: 16px;
 	opacity: 0.5;
 	display: flex;
@@ -39,8 +38,6 @@
 }
 
 .monaco-workbench  .debug-toolbar .monaco-action-bar .action-item .action-label {
-	width: 32px;
-	height: 32px;
 	margin-right: 0;
 	background-size: 16px;
 	background-position: center center;

@@ -8,7 +8,7 @@ import { IWorkspaceIdentifier, IResolvedWorkspace, isWorkspaceIdentifier, isSing
 import { extUriBiasedIgnorePathCase } from 'vs/base/common/resources';
 import { ICodeWindow } from 'vs/platform/windows/electron-main/windows';
 
-export function findWindowOnFile(windows: ICodeWindow[], fileUri: URI, localWorkspaceResolver: (workspace: IWorkspaceIdentifier) => IResolvedWorkspace | null): ICodeWindow | undefined {
+export function findWindowOnFile(windows: ICodeWindow[], fileUri: URI, localWorkspaceResolver: (workspace: IWorkspaceIdentifier) => IResolvedWorkspace | undefined): ICodeWindow | undefined {
 
 	// First check for windows with workspaces that have a parent folder of the provided path opened
 	for (const window of windows) {

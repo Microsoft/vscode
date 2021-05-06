@@ -5,7 +5,7 @@
 
 import * as nls from 'vs/nls';
 import type * as vscode from 'vscode';
-import * as env from 'vs/base/common/platform';
+import * as platform from 'vs/base/common/platform';
 import { DebugAdapterExecutable } from 'vs/workbench/api/common/extHostTypes';
 import { ExecutableDebugAdapter, SocketDebugAdapter, NamedPipeDebugAdapter } from 'vs/workbench/contrib/debug/node/debugAdapter';
 import { AbstractDebugAdapter } from 'vs/workbench/contrib/debug/common/abstractDebugAdapter';
@@ -20,14 +20,14 @@ import { IExtHostRpcService } from 'vs/workbench/api/common/extHostRpcService';
 import { ExtHostDebugServiceBase, ExtHostDebugSession, ExtHostVariableResolverService } from 'vs/workbench/api/common/extHostDebugService';
 import { ISignService } from 'vs/platform/sign/common/sign';
 import { SignService } from 'vs/platform/sign/node/signService';
-import { hasChildProcesses, prepareCommand, runInExternalTerminal } from 'vs/workbench/contrib/debug/node/terminals';
 import { IDisposable } from 'vs/base/common/lifecycle';
 import { AbstractVariableResolverService } from 'vs/workbench/services/configurationResolver/common/variableResolver';
 import { createCancelablePromise, firstParallel } from 'vs/base/common/async';
+import { hasChildProcesses, prepareCommand, runInExternalTerminal } from 'vs/workbench/contrib/debug/node/terminals';
 
 export class ExtHostDebugService extends ExtHostDebugServiceBase {
 
-	readonly _serviceBrand: undefined;
+	override readonly _serviceBrand: undefined;
 
 	private _integratedTerminalInstances = new DebugTerminalCollection();
 	private _terminalDisposedListener: IDisposable | undefined;
@@ -43,7 +43,7 @@ export class ExtHostDebugService extends ExtHostDebugServiceBase {
 		super(extHostRpcService, workspaceService, extensionService, editorsService, configurationService);
 	}
 
-	protected createDebugAdapter(adapter: IAdapterDescriptor, session: ExtHostDebugSession): AbstractDebugAdapter | undefined {
+	protected override createDebugAdapter(adapter: IAdapterDescriptor, session: ExtHostDebugSession): AbstractDebugAdapter | undefined {
 		switch (adapter.type) {
 			case 'server':
 				return new SocketDebugAdapter(adapter);
@@ -55,7 +55,7 @@ export class ExtHostDebugService extends ExtHostDebugServiceBase {
 		return super.createDebugAdapter(adapter, session);
 	}
 
-	protected daExecutableFromPackage(session: ExtHostDebugSession, extensionRegistry: ExtensionDescriptionRegistry): DebugAdapterExecutable | undefined {
+	protected override daExecutableFromPackage(session: ExtHostDebugSession, extensionRegistry: ExtensionDescriptionRegistry): DebugAdapterExecutable | undefined {
 		const dae = ExecutableDebugAdapter.platformAdapterExecutable(extensionRegistry.getAllExtensionDescriptions(), session.type);
 		if (dae) {
 			return new DebugAdapterExecutable(dae.command, dae.args, dae.options);
@@ -63,11 +63,11 @@ export class ExtHostDebugService extends ExtHostDebugServiceBase {
 		return undefined;
 	}
 
-	protected createSignService(): ISignService | undefined {
+	protected override createSignService(): ISignService | undefined {
 		return new SignService();
 	}
 
-	public async $runInTerminal(args: DebugProtocol.RunInTerminalRequestArguments, sessionId: string): Promise<number | undefined> {
+	public override async $runInTerminal(args: DebugProtocol.RunInTerminalRequestArguments, sessionId: string): Promise<number | undefined> {
 
 		if (args.kind === 'integrated') {
 
@@ -110,10 +110,23 @@ export class ExtHostDebugService extends ExtHostDebugServiceBase {
 			if (giveShellTimeToInitialize) {
 				// give a new terminal some time to initialize the shell
 				await new Promise(resolve => setTimeout(resolve, 1000));
+			} else {
+				if (configProvider.getConfiguration('debug.terminal').get<boolean>('clearBeforeReusing')) {
+					// clear terminal before reusing it
+					if (shell.indexOf('powershell') >= 0 || shell.indexOf('pwsh') >= 0 || shell.indexOf('cmd.exe') >= 0) {
+						terminal.sendText('cls');
+					} else if (shell.indexOf('bash') >= 0) {
+						terminal.sendText('clear');
+					} else if (platform.isWindows) {
+						terminal.sendText('cls');
+					} else {
+						terminal.sendText('clear');
+					}
+				}
 			}
 
 			const command = prepareCommand(shell, args.args, cwdForPrepareCommand, args.env);
-			terminal.sendText(command, true);
+			terminal.sendText(command);
 
 			// Mark terminal as unused when its session ends, see #112055
 			const sessionListener = this.onDidTerminateDebugSession(s => {
@@ -126,14 +139,13 @@ export class ExtHostDebugService extends ExtHostDebugServiceBase {
 			return shellProcessId;
 
 		} else if (args.kind === 'external') {
-
 			return runInExternalTerminal(args, await this._configurationService.getConfigProvider());
 		}
 		return super.$runInTerminal(args, sessionId);
 	}
 
 	protected createVariableResolver(folders: vscode.WorkspaceFolder[], editorService: ExtHostDocumentsAndEditors, configurationService: ExtHostConfigProvider): AbstractVariableResolverService {
-		return new ExtHostVariableResolverService(folders, editorService, configurationService, process.env as env.IProcessEnvironment, this._workspaceService);
+		return new ExtHostVariableResolverService(folders, editorService, configurationService, this._workspaceService);
 	}
 }
 

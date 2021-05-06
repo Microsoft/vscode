@@ -18,10 +18,10 @@ import { nullExtensionDescription } from 'vs/workbench/services/extensions/commo
 suite('ExtHostDiagnostics', () => {
 
 	class DiagnosticsShape extends mock<MainThreadDiagnosticsShape>() {
-		$changeMany(owner: string, entries: [UriComponents, IMarkerData[]][]): void {
+		override $changeMany(owner: string, entries: [UriComponents, IMarkerData[]][]): void {
 			//
 		}
-		$clear(owner: string): void {
+		override $clear(owner: string): void {
 			//
 		}
 	}
@@ -164,7 +164,7 @@ suite('ExtHostDiagnostics', () => {
 
 		let lastEntries!: [UriComponents, IMarkerData[]][];
 		let collection = new DiagnosticCollection('test', 'test', 100, new class extends DiagnosticsShape {
-			$changeMany(owner: string, entries: [UriComponents, IMarkerData[]][]): void {
+			override $changeMany(owner: string, entries: [UriComponents, IMarkerData[]][]): void {
 				lastEntries = entries;
 				return super.$changeMany(owner, entries);
 			}
@@ -198,7 +198,7 @@ suite('ExtHostDiagnostics', () => {
 		const emitter = new Emitter<any>();
 		emitter.event(_ => eventCount += 1);
 		const collection = new DiagnosticCollection('test', 'test', 100, new class extends DiagnosticsShape {
-			$changeMany() {
+			override $changeMany() {
 				changeCount += 1;
 			}
 		}, emitter);
@@ -263,7 +263,7 @@ suite('ExtHostDiagnostics', () => {
 
 		let lastEntries!: [UriComponents, IMarkerData[]][];
 		let collection = new DiagnosticCollection('test', 'test', 250, new class extends DiagnosticsShape {
-			$changeMany(owner: string, entries: [UriComponents, IMarkerData[]][]): void {
+			override $changeMany(owner: string, entries: [UriComponents, IMarkerData[]][]): void {
 				lastEntries = entries;
 				return super.$changeMany(owner, entries);
 			}
@@ -350,7 +350,7 @@ suite('ExtHostDiagnostics', () => {
 	test('diagnostics with related information', function (done) {
 
 		let collection = new DiagnosticCollection('ddd', 'test', 100, new class extends DiagnosticsShape {
-			$changeMany(owner: string, entries: [UriComponents, IMarkerData[]][]) {
+			override $changeMany(owner: string, entries: [UriComponents, IMarkerData[]][]) {
 
 				let [[, data]] = entries;
 				assert.strictEqual(entries.length, 1);
@@ -408,7 +408,7 @@ suite('ExtHostDiagnostics', () => {
 	test('Error updating diagnostics from extension #60394', function () {
 		let callCount = 0;
 		let collection = new DiagnosticCollection('ddd', 'test', 100, new class extends DiagnosticsShape {
-			$changeMany(owner: string, entries: [UriComponents, IMarkerData[]][]) {
+			override $changeMany(owner: string, entries: [UriComponents, IMarkerData[]][]) {
 				callCount += 1;
 			}
 		}, new Emitter<any>());

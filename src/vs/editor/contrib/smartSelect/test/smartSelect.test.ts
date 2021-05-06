@@ -77,7 +77,7 @@ suite('SmartSelect', () => {
 		let actualStr = actual!.map(r => new Range(r.startLineNumber, r.startColumn, r.endLineNumber, r.endColumn).toString());
 		let desiredStr = ranges.reverse().map(r => String(r));
 
-		assert.deepEqual(actualStr, desiredStr, `\nA: ${actualStr} VS \nE: ${desiredStr}`);
+		assert.deepStrictEqual(actualStr, desiredStr, `\nA: ${actualStr} VS \nE: ${desiredStr}`);
 		modelService.destroyModel(uri);
 	}
 
@@ -226,7 +226,7 @@ suite('SmartSelect', () => {
 
 		modelService.destroyModel(model.uri);
 
-		assert.equal(expected.length, ranges!.length);
+		assert.strictEqual(expected.length, ranges!.length);
 		for (const range of ranges!) {
 			let exp = expected.shift() || null;
 			assert.ok(Range.equalsRange(range.range, exp), `A=${range.range} <> E=${exp}`);

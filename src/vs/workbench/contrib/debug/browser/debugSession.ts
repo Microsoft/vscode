@@ -21,13 +21,11 @@ import { IDisposable, dispose } from 'vs/base/common/lifecycle';
 import { RunOnceScheduler, Queue } from 'vs/base/common/async';
 import { generateUuid } from 'vs/base/common/uuid';
 import { IHostService } from 'vs/workbench/services/host/browser/host';
-import { IExtensionHostDebugService } from 'vs/platform/debug/common/extensionHostDebug';
-import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
+import { ICustomEndpointTelemetryService, ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
 import { normalizeDriveLetter } from 'vs/base/common/labels';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { IViewletService } from 'vs/workbench/services/viewlet/browser/viewlet';
 import { ReplModel } from 'vs/workbench/contrib/debug/common/replModel';
-import { IOpenerService } from 'vs/platform/opener/common/opener';
 import { CancellationTokenSource, CancellationToken } from 'vs/base/common/cancellation';
 import { distinct } from 'vs/base/common/arrays';
 import { INotificationService } from 'vs/platform/notification/common/notification';
@@ -37,6 +35,7 @@ import { canceled } from 'vs/base/common/errors';
 import { filterExceptionsFromTelemetry } from 'vs/workbench/contrib/debug/common/debugUtils';
 import { DebugCompoundRoot } from 'vs/workbench/contrib/debug/common/debugCompoundRoot';
 import { IUriIdentityService } from 'vs/workbench/services/uriIdentity/common/uriIdentity';
+import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 
 export class DebugSession implements IDebugSession {
 
@@ -80,11 +79,11 @@ export class DebugSession implements IDebugSession {
 		@IViewletService private readonly viewletService: IViewletService,
 		@IWorkspaceContextService private readonly workspaceContextService: IWorkspaceContextService,
 		@IProductService private readonly productService: IProductService,
-		@IExtensionHostDebugService private readonly extensionHostDebugService: IExtensionHostDebugService,
-		@IOpenerService private readonly openerService: IOpenerService,
 		@INotificationService private readonly notificationService: INotificationService,
 		@ILifecycleService lifecycleService: ILifecycleService,
-		@IUriIdentityService private readonly uriIdentityService: IUriIdentityService
+		@IUriIdentityService private readonly uriIdentityService: IUriIdentityService,
+		@IInstantiationService private readonly instantiationService: IInstantiationService,
+		@ICustomEndpointTelemetryService private readonly customEndpointTelemetryService: ICustomEndpointTelemetryService
 	) {
 		this._options = options || {};
 		if (this.hasSeparateRepl()) {
@@ -96,7 +95,7 @@ export class DebugSession implements IDebugSession {
 		const toDispose: IDisposable[] = [];
 		toDispose.push(this.repl.onDidChangeElements(() => this._onDidChangeREPLElements.fire()));
 		if (lifecycleService) {
-			toDispose.push(lifecycleService.onShutdown(() => {
+			toDispose.push(lifecycleService.onDidShutdown(() => {
 				this.shutdown();
 				dispose(toDispose);
 			}));
@@ -233,9 +232,8 @@ export class DebugSession implements IDebugSession {
 		}
 
 		try {
-			const customTelemetryService = await dbgr.getCustomTelemetryService();
 			const debugAdapter = await dbgr.createDebugAdapter(this);
-			this.raw = new RawDebugSession(debugAdapter, dbgr, this.id, this.telemetryService, customTelemetryService, this.extensionHostDebugService, this.openerService, this.notificationService);
+			this.raw = this.instantiationService.createInstance(RawDebugSession, debugAdapter, dbgr, this.id);
 
 			await this.raw.start();
 			this.registerListeners();
@@ -287,7 +285,7 @@ export class DebugSession implements IDebugSession {
 	}
 
 	/**
-	 * end the current debug adapter session
+	 * terminate the current debug adapter session
 	 */
 	async terminate(restart = false): Promise<void> {
 		if (!this.raw) {
@@ -300,7 +298,7 @@ export class DebugSession implements IDebugSession {
 			if (this.raw.capabilities.supportsTerminateRequest && this._configuration.resolved.request === 'launch') {
 				await this.raw.terminate(restart);
 			} else {
-				await this.raw.disconnect(restart);
+				await this.raw.disconnect({ restart, terminateDebuggee: true });
 			}
 		}
 
@@ -320,7 +318,7 @@ export class DebugSession implements IDebugSession {
 
 		this.cancelAllRequests();
 		if (this.raw) {
-			await this.raw.disconnect(restart);
+			await this.raw.disconnect({ restart, terminateDebuggee: false });
 		}
 
 		if (!restart) {
@@ -337,7 +335,7 @@ export class DebugSession implements IDebugSession {
 		}
 
 		this.cancelAllRequests();
-		await this.raw.restart();
+		await this.raw.restart({ arguments: this.configuration });
 	}
 
 	async sendBreakpoints(modelUri: URI, breakpointsToSend: IBreakpoint[], sourceModified: boolean): Promise<void> {
@@ -408,7 +406,15 @@ export class DebugSession implements IDebugSession {
 				})
 			} : { filters: exbpts.map(exb => exb.filter) };
 
-			await this.raw.setExceptionBreakpoints(args);
+			const response = await this.raw.setExceptionBreakpoints(args);
+			if (response && response.body && response.body.breakpoints) {
+				const data = new Map<string, DebugProtocol.Breakpoint>();
+				for (let i = 0; i < exbpts.length; i++) {
+					data.set(exbpts[i].getId(), response.body.breakpoints[i]);
+				}
+
+				this.model.setBreakpointSessionData(this.getId(), this.capabilities, data);
+			}
 		}
 	}
 
@@ -797,7 +803,7 @@ export class DebugSession implements IDebugSession {
 						// Disconnect the debug session on configuration done error #10596
 						this.notificationService.error(e);
 						if (this.raw) {
-							this.raw.disconnect();
+							this.raw.disconnect({});
 						}
 					}
 				}
@@ -877,7 +883,7 @@ export class DebugSession implements IDebugSession {
 			if (event.body && event.body.restart) {
 				await this.debugService.restartSession(this, event.body.restart);
 			} else if (this.raw) {
-				await this.raw.disconnect();
+				await this.raw.disconnect({ terminateDebuggee: false });
 			}
 		}));
 
@@ -908,14 +914,15 @@ export class DebugSession implements IDebugSession {
 				if (event.body.category === 'telemetry') {
 					// only log telemetry events from debug adapter if the debug extension provided the telemetry key
 					// and the user opted in telemetry
-					if (this.raw.customTelemetryService && this.telemetryService.isOptedIn) {
+					const telemetryEndpoint = this.raw.dbgr.getCustomTelemetryEndpoint();
+					if (telemetryEndpoint && this.telemetryService.isOptedIn) {
 						// __GDPR__TODO__ We're sending events in the name of the debug extension and we can not ensure that those are declared correctly.
 						let data = event.body.data;
-						if (!this.raw.customTelemetryService.sendErrorTelemetry && event.body.data) {
+						if (!telemetryEndpoint.sendErrorTelemetry && event.body.data) {
 							data = filterExceptionsFromTelemetry(event.body.data);
 						}
 
-						this.raw.customTelemetryService.publicLog(event.body.output, data);
+						this.customEndpointTelemetryService.publicLog(telemetryEndpoint, event.body.output, data);
 					}
 
 					return;
@@ -960,6 +967,8 @@ export class DebugSession implements IDebugSession {
 			const id = event.body && event.body.breakpoint ? event.body.breakpoint.id : undefined;
 			const breakpoint = this.model.getBreakpoints().find(bp => bp.getIdFromAdapter(this.getId()) === id);
 			const functionBreakpoint = this.model.getFunctionBreakpoints().find(bp => bp.getIdFromAdapter(this.getId()) === id);
+			const dataBreakpoint = this.model.getDataBreakpoints().find(dbp => dbp.getIdFromAdapter(this.getId()) === id);
+			const exceptionBreakpoint = this.model.getExceptionBreakpoints().find(excbp => excbp.getIdFromAdapter(this.getId()) === id);
 
 			if (event.body.reason === 'new' && event.body.breakpoint.source && event.body.breakpoint.line) {
 				const source = this.getSource(event.body.breakpoint.source);
@@ -981,6 +990,9 @@ export class DebugSession implements IDebugSession {
 				if (functionBreakpoint) {
 					this.model.removeFunctionBreakpoints(functionBreakpoint.getId());
 				}
+				if (dataBreakpoint) {
+					this.model.removeDataBreakpoints(dataBreakpoint.getId());
+				}
 			}
 
 			if (event.body.reason === 'changed') {
@@ -993,6 +1005,14 @@ export class DebugSession implements IDebugSession {
 				}
 				if (functionBreakpoint) {
 					const data = new Map<string, DebugProtocol.Breakpoint>([[functionBreakpoint.getId(), event.body.breakpoint]]);
+					this.model.setBreakpointSessionData(this.getId(), this.capabilities, data);
+				}
+				if (dataBreakpoint) {
+					const data = new Map<string, DebugProtocol.Breakpoint>([[dataBreakpoint.getId(), event.body.breakpoint]]);
+					this.model.setBreakpointSessionData(this.getId(), this.capabilities, data);
+				}
+				if (exceptionBreakpoint) {
+					const data = new Map<string, DebugProtocol.Breakpoint>([[exceptionBreakpoint.getId(), event.body.breakpoint]]);
 					this.model.setBreakpointSessionData(this.getId(), this.capabilities, data);
 				}
 			}
@@ -1046,7 +1066,7 @@ export class DebugSession implements IDebugSession {
 	private shutdown(): void {
 		dispose(this.rawListeners);
 		if (this.raw) {
-			this.raw.disconnect();
+			this.raw.disconnect({});
 			this.raw.dispose();
 			this.raw = undefined;
 		}

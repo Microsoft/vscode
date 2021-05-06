@@ -46,6 +46,7 @@ export interface IViewPaneOptions extends IPaneOptions {
 	id: string;
 	showActionsAlways?: boolean;
 	titleMenuId?: MenuId;
+	donotForwardArgs?: boolean;
 }
 
 type WelcomeActionClassification = {
@@ -142,6 +143,7 @@ class ViewMenuActions extends CompositeMenuActions {
 		viewId: string,
 		menuId: MenuId,
 		contextMenuId: MenuId,
+		donotForwardArgs: boolean,
 		@IContextKeyService contextKeyService: IContextKeyService,
 		@IMenuService menuService: IMenuService,
 		@IViewDescriptorService viewDescriptorService: IViewDescriptorService,
@@ -149,7 +151,7 @@ class ViewMenuActions extends CompositeMenuActions {
 		const scopedContextKeyService = contextKeyService.createScoped(element);
 		scopedContextKeyService.createKey('view', viewId);
 		const viewLocationKey = scopedContextKeyService.createKey('viewLocation', ViewContainerLocationToString(viewDescriptorService.getViewLocationById(viewId)!));
-		super(menuId, contextMenuId, { shouldForwardArgs: true }, scopedContextKeyService, menuService);
+		super(menuId, contextMenuId, { shouldForwardArgs: !donotForwardArgs }, scopedContextKeyService, menuService);
 		this._register(scopedContextKeyService);
 		this._register(Event.filter(viewDescriptorService.onDidChangeLocation, e => e.views.some(view => view.id === viewId))(() => viewLocationKey.set(ViewContainerLocationToString(viewDescriptorService.getViewLocationById(viewId)!))));
 	}
@@ -225,17 +227,17 @@ export abstract class ViewPane extends Pane implements IView {
 		this._titleDescription = options.titleDescription;
 		this.showActionsAlways = !!options.showActionsAlways;
 
-		this.menuActions = this._register(this.instantiationService.createInstance(ViewMenuActions, this.element, this.id, options.titleMenuId || MenuId.ViewTitle, MenuId.ViewTitleContext));
+		this.menuActions = this._register(this.instantiationService.createInstance(ViewMenuActions, this.element, this.id, options.titleMenuId || MenuId.ViewTitle, MenuId.ViewTitleContext, !!options.donotForwardArgs));
 		this._register(this.menuActions.onDidChange(() => this.updateActions()));
 
 		this.viewWelcomeController = new ViewWelcomeController(this.id, contextKeyService);
 	}
 
-	get headerVisible(): boolean {
+	override get headerVisible(): boolean {
 		return super.headerVisible;
 	}
 
-	set headerVisible(visible: boolean) {
+	override set headerVisible(visible: boolean) {
 		super.headerVisible = visible;
 		this.element.classList.toggle('merged-header', !visible);
 	}
@@ -258,7 +260,7 @@ export abstract class ViewPane extends Pane implements IView {
 		return this._isVisible && this.isExpanded();
 	}
 
-	setExpanded(expanded: boolean): boolean {
+	override setExpanded(expanded: boolean): boolean {
 		const changed = super.setExpanded(expanded);
 		if (changed) {
 			this._onDidChangeBodyVisibility.fire(expanded);
@@ -270,7 +272,7 @@ export abstract class ViewPane extends Pane implements IView {
 		return changed;
 	}
 
-	render(): void {
+	override render(): void {
 		super.render();
 
 		const focusTracker = trackFocus(this.element);
@@ -314,7 +316,7 @@ export abstract class ViewPane extends Pane implements IView {
 		return expanded ? viewPaneContainerExpandedIcon : viewPaneContainerCollapsedIcon;
 	}
 
-	style(styles: IPaneStyles): void {
+	override style(styles: IPaneStyles): void {
 		super.style(styles);
 
 		const icon = this.getIcon();
@@ -552,7 +554,7 @@ export abstract class ViewPane extends Pane implements IView {
 					button.label = node.label;
 					button.onDidClick(_ => {
 						this.telemetryService.publicLog2<{ viewId: string, uri: string }, WelcomeActionClassification>('views.welcomeAction', { viewId: this.id, uri: node.href });
-						this.openerService.open(node.href);
+						this.openerService.open(node.href, { allowCommands: true });
 					}, null, disposables);
 					disposables.add(button);
 					disposables.add(attachButtonStyler(button, this.themeService));
@@ -603,8 +605,10 @@ export abstract class ViewPane extends Pane implements IView {
 }
 
 export abstract class ViewAction<T extends IView> extends Action2 {
-	constructor(readonly desc: Readonly<IAction2Options> & { viewId: string }) {
+	override readonly desc: Readonly<IAction2Options> & { viewId: string };
+	constructor(desc: Readonly<IAction2Options> & { viewId: string }) {
 		super(desc);
+		this.desc = desc;
 	}
 
 	run(accessor: ServicesAccessor, ...args: any[]) {

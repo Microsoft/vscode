@@ -5,9 +5,11 @@
 const path = require('path');
 
 module.exports = {
+	context: path.resolve(__dirname),
+	mode: 'production',
 	entry: {
 		index: './preview-src/index.ts',
-		pre: './preview-src/pre.ts'
+		pre: './preview-src/pre.ts',
 	},
 	module: {
 		rules: [

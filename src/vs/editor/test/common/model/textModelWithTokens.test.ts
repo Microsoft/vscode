@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as assert from 'assert';
-import { IDisposable } from 'vs/base/common/lifecycle';
+import { DisposableStore, IDisposable } from 'vs/base/common/lifecycle';
 import { Position } from 'vs/editor/common/core/position';
 import { Range } from 'vs/editor/common/core/range';
 import { TokenizationResult2 } from 'vs/editor/common/core/token';
@@ -335,6 +335,97 @@ suite('TextModelWithTokens', () => {
 
 		model.dispose();
 		registration.dispose();
+	});
+
+	test('issue #95843: Highlighting of closing braces is indicating wrong brace when cursor is behind opening brace', () => {
+		const mode1 = new LanguageIdentifier('testMode1', 3);
+		const mode2 = new LanguageIdentifier('testMode2', 4);
+		const otherMetadata1 = (
+			(mode1.id << MetadataConsts.LANGUAGEID_OFFSET)
+			| (StandardTokenType.Other << MetadataConsts.TOKEN_TYPE_OFFSET)
+		) >>> 0;
+		const otherMetadata2 = (
+			(mode2.id << MetadataConsts.LANGUAGEID_OFFSET)
+			| (StandardTokenType.Other << MetadataConsts.TOKEN_TYPE_OFFSET)
+		) >>> 0;
+
+		const tokenizationSupport: ITokenizationSupport = {
+			getInitialState: () => NULL_STATE,
+			tokenize: undefined!,
+			tokenize2: (line, hasEOL, state) => {
+				switch (line) {
+					case 'function f() {': {
+						const tokens = new Uint32Array([
+							0, otherMetadata1,
+							8, otherMetadata1,
+							9, otherMetadata1,
+							10, otherMetadata1,
+							11, otherMetadata1,
+							12, otherMetadata1,
+							13, otherMetadata1,
+						]);
+						return new TokenizationResult2(tokens, state);
+					}
+					case '  return <p>{true}</p>;': {
+						const tokens = new Uint32Array([
+							0, otherMetadata1,
+							2, otherMetadata1,
+							8, otherMetadata1,
+							9, otherMetadata2,
+							10, otherMetadata2,
+							11, otherMetadata2,
+							12, otherMetadata2,
+							13, otherMetadata1,
+							17, otherMetadata2,
+							18, otherMetadata2,
+							20, otherMetadata2,
+							21, otherMetadata2,
+							22, otherMetadata2,
+						]);
+						return new TokenizationResult2(tokens, state);
+					}
+					case '}': {
+						const tokens = new Uint32Array([
+							0, otherMetadata1
+						]);
+						return new TokenizationResult2(tokens, state);
+					}
+				}
+				throw new Error(`Unexpected`);
+			}
+		};
+
+		const disposableStore = new DisposableStore();
+
+		disposableStore.add(TokenizationRegistry.register(mode1.language, tokenizationSupport));
+		disposableStore.add(LanguageConfigurationRegistry.register(mode1, {
+			brackets: [
+				['{', '}'],
+				['[', ']'],
+				['(', ')']
+			],
+		}));
+		disposableStore.add(LanguageConfigurationRegistry.register(mode2, {
+			brackets: [
+				['{', '}'],
+				['[', ']'],
+				['(', ')']
+			],
+		}));
+
+		const model = disposableStore.add(createTextModel([
+			'function f() {',
+			'  return <p>{true}</p>;',
+			'}',
+		].join('\n'), undefined, mode1));
+
+		model.forceTokenization(1);
+		model.forceTokenization(2);
+		model.forceTokenization(3);
+
+		assert.deepStrictEqual(model.matchBracket(new Position(2, 14)), [new Range(2, 13, 2, 14), new Range(2, 18, 2, 19)]);
+
+		disposableStore.dispose();
 	});
 
 	test('issue #88075: TypeScript brace matching is incorrect in `${}` strings', () => {

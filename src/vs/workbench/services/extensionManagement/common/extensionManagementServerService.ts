@@ -18,6 +18,7 @@ import { WebRemoteExtensionManagementService } from 'vs/workbench/services/exten
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { IExtensionGalleryService } from 'vs/platform/extensionManagement/common/extensionManagement';
 import { IProductService } from 'vs/platform/product/common/productService';
+import { IExtensionManifestPropertiesService } from 'vs/workbench/services/extensions/common/extensionManifestPropertiesService';
 
 export class ExtensionManagementServerService implements IExtensionManagementServerService {
 
@@ -34,10 +35,11 @@ export class ExtensionManagementServerService implements IExtensionManagementSer
 		@IProductService productService: IProductService,
 		@IConfigurationService configurationService: IConfigurationService,
 		@IInstantiationService instantiationService: IInstantiationService,
+		@IExtensionManifestPropertiesService extensionManifestPropertiesService: IExtensionManifestPropertiesService,
 	) {
 		const remoteAgentConnection = remoteAgentService.getConnection();
 		if (remoteAgentConnection) {
-			const extensionManagementService = new WebRemoteExtensionManagementService(remoteAgentConnection.getChannel<IChannel>('extensions'), galleryService, configurationService, productService);
+			const extensionManagementService = new WebRemoteExtensionManagementService(remoteAgentConnection.getChannel<IChannel>('extensions'), galleryService, configurationService, productService, extensionManifestPropertiesService);
 			this.remoteExtensionManagementServer = {
 				id: 'remote',
 				extensionManagementService,

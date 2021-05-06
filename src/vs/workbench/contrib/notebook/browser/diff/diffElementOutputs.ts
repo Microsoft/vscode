@@ -49,7 +49,7 @@ export class OutputElement extends Disposable {
 		const outputItemDiv = document.createElement('div');
 		let result: IRenderOutput | undefined = undefined;
 
-		const [mimeTypes, pick] = this.output.resolveMimeTypes(this._notebookTextModel);
+		const [mimeTypes, pick] = this.output.resolveMimeTypes(this._notebookTextModel, undefined);
 		const pickedMimeTypeRenderer = mimeTypes[pick];
 		if (mimeTypes.length > 1) {
 			outputItemDiv.style.position = 'relative';
@@ -109,7 +109,7 @@ export class OutputElement extends Disposable {
 
 		if (result.type !== RenderOutputType.Mainframe) {
 			// this.viewCell.selfSizeMonitoring = true;
-			this._notebookEditor.createInset(
+			this._notebookEditor.createOutput(
 				this._diffElementViewModel,
 				this._nestedCell,
 				result,
@@ -128,7 +128,7 @@ export class OutputElement extends Disposable {
 
 
 
-		const clientHeight = Math.ceil(outputItemDiv.clientHeight);
+		let clientHeight = Math.ceil(outputItemDiv.clientHeight);
 		const elementSizeObserver = getResizesObserver(outputItemDiv, undefined, () => {
 			if (this._outputContainer && document.body.contains(this._outputContainer)) {
 				const height = Math.ceil(elementSizeObserver.getHeight());
@@ -136,6 +136,8 @@ export class OutputElement extends Disposable {
 				if (clientHeight === height) {
 					return;
 				}
+
+				clientHeight = height;
 
 				const currIndex = this.getCellOutputCurrentIndex();
 				if (currIndex < 0) {
@@ -154,7 +156,7 @@ export class OutputElement extends Disposable {
 	}
 
 	private async pickActiveMimeTypeRenderer(notebookTextModel: NotebookTextModel, viewModel: ICellOutputViewModel) {
-		const [mimeTypes, currIndex] = viewModel.resolveMimeTypes(notebookTextModel);
+		const [mimeTypes, currIndex] = viewModel.resolveMimeTypes(notebookTextModel, undefined);
 
 		const items = mimeTypes.filter(mimeType => mimeType.isTrusted).map((mimeType, index): IMimeTypeRenderer => ({
 			label: mimeType.mimeType,

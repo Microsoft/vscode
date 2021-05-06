@@ -36,6 +36,14 @@ export class OutputRenderer {
 		}
 	}
 
+	getContribution(preferredMimeType: string | undefined): IOutputTransformContribution | undefined {
+		if (preferredMimeType) {
+			return this._richMimeTypeRenderers.get(preferredMimeType);
+		}
+
+		return undefined;
+	}
+
 	renderNoop(viewModel: ICellOutputViewModel, container: HTMLElement): IRenderOutput {
 		const contentNode = document.createElement('p');
 

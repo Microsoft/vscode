@@ -227,7 +227,7 @@ export class ResourceLabels extends Disposable {
 		this.labels = [];
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		super.dispose();
 
 		this.clear();
@@ -569,6 +569,7 @@ class ResourceLabelWidget extends IconLabel {
 
 				if (this.options.fileDecorations.badges) {
 					iconLabelOptions.extraClasses.push(deco.badgeClassName);
+					iconLabelOptions.extraClasses.push(deco.iconClassName);
 				}
 			}
 		}
@@ -580,7 +581,7 @@ class ResourceLabelWidget extends IconLabel {
 		return true;
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		super.dispose();
 
 		this.label = undefined;

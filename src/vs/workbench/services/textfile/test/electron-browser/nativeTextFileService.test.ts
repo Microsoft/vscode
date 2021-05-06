@@ -14,7 +14,7 @@ import { FileService } from 'vs/platform/files/common/fileService';
 import { NullLogService } from 'vs/platform/log/common/log';
 import { workbenchInstantiationService, TestNativeTextFileServiceWithEncodingOverrides, TestServiceAccessor } from 'vs/workbench/test/electron-browser/workbenchTestServices';
 import { IWorkingCopyFileService, WorkingCopyFileService } from 'vs/workbench/services/workingCopy/common/workingCopyFileService';
-import { TestWorkingCopyService } from 'vs/workbench/test/common/workbenchTestServices';
+import { WorkingCopyService } from 'vs/workbench/services/workingCopy/common/workingCopyService';
 import { UriIdentityService } from 'vs/workbench/services/uriIdentity/common/uriIdentityService';
 import { InMemoryFileSystemProvider } from 'vs/platform/files/common/inMemoryFilesystemProvider';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
@@ -40,7 +40,7 @@ suite('Files - NativeTextFileService', function () {
 		const collection = new ServiceCollection();
 		collection.set(IFileService, fileService);
 
-		collection.set(IWorkingCopyFileService, new WorkingCopyFileService(fileService, new TestWorkingCopyService(), instantiationService, new UriIdentityService(fileService)));
+		collection.set(IWorkingCopyFileService, new WorkingCopyFileService(fileService, new WorkingCopyService(), instantiationService, new UriIdentityService(fileService)));
 
 		service = instantiationService.createChild(collection).createInstance(TestNativeTextFileServiceWithEncodingOverrides);
 	});
@@ -54,7 +54,7 @@ suite('Files - NativeTextFileService', function () {
 	test('shutdown joins on pending saves', async function () {
 		const model: TextFileEditorModel = instantiationService.createInstance(TextFileEditorModel, toResource.call(this, '/path/index_async.txt'), 'utf8', undefined);
 
-		await model.load();
+		await model.resolve();
 
 		let pendingSaveAwaited = false;
 		model.save().then(() => pendingSaveAwaited = true);

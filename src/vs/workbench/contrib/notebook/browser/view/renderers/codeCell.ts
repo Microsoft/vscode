@@ -8,23 +8,23 @@ import { raceCancellation } from 'vs/base/common/async';
 import { CancellationTokenSource } from 'vs/base/common/cancellation';
 import { Disposable, IDisposable } from 'vs/base/common/lifecycle';
 import { IDimension } from 'vs/editor/common/editorCommon';
-import { IModeService } from 'vs/editor/common/services/modeService';
+import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { IOpenerService } from 'vs/platform/opener/common/opener';
 import { EDITOR_BOTTOM_PADDING } from 'vs/workbench/contrib/notebook/browser/constants';
 import { CellFocusMode, CodeCellRenderTemplate, getEditorTopPadding, IActiveNotebookEditor } from 'vs/workbench/contrib/notebook/browser/notebookBrowser';
-import { CodeCellViewModel } from 'vs/workbench/contrib/notebook/browser/viewModel/codeCellViewModel';
-import { ITextFileService } from 'vs/workbench/services/textfile/common/textfiles';
-import { ClickTargetType, getExecuteCellPlaceholder } from 'vs/workbench/contrib/notebook/browser/view/renderers/cellWidgets';
 import { CellOutputContainer } from 'vs/workbench/contrib/notebook/browser/view/renderers/cellOutput';
+import { ClickTargetType } from 'vs/workbench/contrib/notebook/browser/view/renderers/cellWidgets';
+import { CodeCellViewModel } from 'vs/workbench/contrib/notebook/browser/viewModel/codeCellViewModel';
 import { INotebookCellStatusBarService } from 'vs/workbench/contrib/notebook/common/notebookCellStatusBarService';
-import { NotebookCellsChangeType } from 'vs/workbench/contrib/notebook/common/notebookCommon';
-import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
+import { ITextFileService } from 'vs/workbench/services/textfile/common/textfiles';
 
 
 export class CodeCell extends Disposable {
 	private _outputContainerRenderer: CellOutputContainer;
-	private _activeCellRunPlaceholder: IDisposable | null = null;
 	private _untrustedStatusItem: IDisposable | null = null;
+
+	private _renderedInputCollapseState: boolean | undefined;
+	private _renderedOutputCollapseState: boolean | undefined;
 
 	constructor(
 		private notebookEditor: IActiveNotebookEditor,
@@ -33,10 +33,7 @@ export class CodeCell extends Disposable {
 		@IInstantiationService private readonly instantiationService: IInstantiationService,
 		@INotebookCellStatusBarService readonly notebookCellStatusBarService: INotebookCellStatusBarService,
 		@IOpenerService readonly openerService: IOpenerService,
-		@ITextFileService readonly textFileService: ITextFileService,
-		@IModeService private readonly _modeService: IModeService,
-		// @IKeybindingService private readonly _keybindingService: IKeybindingService,
-
+		@ITextFileService readonly textFileService: ITextFileService
 	) {
 		super();
 
@@ -76,18 +73,15 @@ export class CodeCell extends Disposable {
 		});
 
 		const updateForFocusMode = () => {
-			if (this.notebookEditor.getSelection().start !== this.notebookEditor.viewModel.getCellIndex(viewCell)) {
-				return;
+			if (this.notebookEditor.getFocus().start !== this.notebookEditor.viewModel.getCellIndex(viewCell)) {
+				templateData.container.classList.toggle('cell-editor-focus', viewCell.focusMode === CellFocusMode.Editor);
 			}
 
-			if (viewCell.focusMode === CellFocusMode.Editor) {
+			if (viewCell.focusMode === CellFocusMode.Editor && this.notebookEditor.getActiveCell() === this.viewCell) {
 				templateData.editor?.focus();
 			}
 
 			templateData.container.classList.toggle('cell-editor-focus', viewCell.focusMode === CellFocusMode.Editor);
-		};
-		const updateForCollapseState = () => {
-			this.viewUpdate();
 		};
 		this._register(viewCell.onDidChangeState((e) => {
 			if (e.focusModeChanged) {
@@ -96,22 +90,14 @@ export class CodeCell extends Disposable {
 		}));
 		updateForFocusMode();
 
-		templateData.editor?.updateOptions({ readOnly: !(viewCell.getEvaluatedMetadata(notebookEditor.viewModel.metadata).editable) });
+		templateData.editor?.updateOptions({ readOnly: notebookEditor.viewModel.options.isReadOnly });
 		this._register(viewCell.onDidChangeState((e) => {
 			if (e.metadataChanged) {
-				templateData.editor?.updateOptions({ readOnly: !(viewCell.getEvaluatedMetadata(notebookEditor.viewModel.metadata).editable) });
+				templateData.editor?.updateOptions({ readOnly: notebookEditor.viewModel.options.isReadOnly });
 
-				// TODO@rob this isn't nice
-				this.viewCell.layoutChange({});
-				updateForCollapseState();
-				this.relayoutCell();
-			}
-		}));
-
-		this._register(viewCell.onDidChangeState((e) => {
-			if (e.languageChanged) {
-				const mode = this._modeService.create(viewCell.language);
-				templateData.editor?.getModel()?.setMode(mode.languageIdentifier);
+				if (this.updateForCollapseState()) {
+					this.relayoutCell();
+				}
 			}
 		}));
 
@@ -204,69 +190,40 @@ export class CodeCell extends Disposable {
 		}));
 
 		// Focus Mode
-		const updateFocusMode = () => viewCell.focusMode = templateData.editor.hasWidgetFocus() ? CellFocusMode.Editor : CellFocusMode.Container;
+		const updateFocusMode = () => {
+			viewCell.focusMode =
+				(templateData.editor.hasWidgetFocus() || (document.activeElement && this.templateData.statusBar.statusBarContainer.contains(document.activeElement)))
+					? CellFocusMode.Editor
+					: CellFocusMode.Container;
+		};
+
 		this._register(templateData.editor.onDidFocusEditorWidget(() => {
 			updateFocusMode();
 		}));
 		this._register(templateData.editor.onDidBlurEditorWidget(() => {
 			// this is for a special case:
 			// users click the status bar empty space, which we will then focus the editor
-			// so we don't want to update the focus state too eagerly
-			if (document.activeElement?.contains(this.templateData.container)) {
-				setTimeout(() => {
-					updateFocusMode();
-				}, 300);
-			} else {
+			// so we don't want to update the focus state too eagerly, it will be updated with onDidFocusEditorWidget
+			if (!(document.activeElement && this.templateData.statusBar.statusBarContainer.contains(document.activeElement))) {
 				updateFocusMode();
 			}
 		}));
-		updateFocusMode();
 
 		// Render Outputs
 		this._outputContainerRenderer = this.instantiationService.createInstance(CellOutputContainer, notebookEditor, viewCell, templateData);
 		this._outputContainerRenderer.render(editorHeight);
 		// Need to do this after the intial renderOutput
-		updateForCollapseState();
-
-		const updatePlaceholder = () => {
-			if (this.notebookEditor.viewModel
-				&& this.notebookEditor.getActiveCell() === this.viewCell
-				&& viewCell.getEvaluatedMetadata(this.notebookEditor.viewModel.metadata).runnable
-				&& viewCell.metadata.runState === undefined
-				&& viewCell.metadata.lastRunDuration === undefined
-			) {
-				// active cell and no run status
-				if (this._activeCellRunPlaceholder === null) {
-					// const keybinding = this._keybindingService.lookupKeybinding(EXECUTE_CELL_COMMAND_ID);
-					this._activeCellRunPlaceholder = this.notebookCellStatusBarService.addEntry(getExecuteCellPlaceholder(this.viewCell));
-					this._register(this._activeCellRunPlaceholder);
-				}
-
-				return;
-			}
-
-			this._activeCellRunPlaceholder?.dispose();
-			this._activeCellRunPlaceholder = null;
-		};
-
-		this._register(this.notebookEditor.onDidChangeActiveCell(() => {
-			updatePlaceholder();
-		}));
-
-		this._register(this.viewCell.model.onDidChangeMetadata(() => {
-			updatePlaceholder();
-		}));
-
-		this._register(this.notebookEditor.viewModel.notebookDocument.onDidChangeContent(e => {
-			if (e.rawEvents.find(event => event.kind === NotebookCellsChangeType.ChangeDocumentMetadata)) {
-				updatePlaceholder();
-			}
-		}));
-
-		updatePlaceholder();
+		this.updateForCollapseState();
 	}
 
-	private viewUpdate(): void {
+	private updateForCollapseState(): boolean {
+		if (this.viewCell.metadata.outputCollapsed === this._renderedOutputCollapseState &&
+			this.viewCell.metadata.inputCollapsed === this._renderedInputCollapseState) {
+			return false;
+		}
+
+		this.viewCell.layoutChange({});
+
 		if (this.viewCell.metadata?.inputCollapsed && this.viewCell.metadata.outputCollapsed) {
 			this.viewUpdateAllCollapsed();
 		} else if (this.viewCell.metadata?.inputCollapsed) {
@@ -276,6 +233,11 @@ export class CodeCell extends Disposable {
 		} else {
 			this.viewUpdateExpanded();
 		}
+
+		this._renderedOutputCollapseState = this.viewCell.metadata.outputCollapsed;
+		this._renderedInputCollapseState = this.viewCell.metadata.inputCollapsed;
+
+		return true;
 	}
 
 	private viewUpdateInputCollapsed(): void {
@@ -327,7 +289,6 @@ export class CodeCell extends Disposable {
 
 	private layoutEditor(dimension: IDimension): void {
 		this.templateData.editor?.layout(dimension);
-		this.templateData.statusBar.layout(dimension.width);
 	}
 
 	private onCellWidthChange(): void {
@@ -358,10 +319,9 @@ export class CodeCell extends Disposable {
 		this.notebookEditor.layoutNotebookCell(this.viewCell, this.viewCell.layoutInfo.totalHeight);
 	}
 
-	dispose() {
+	override dispose() {
 		this.viewCell.detachTextEditor();
 		this._outputContainerRenderer.dispose();
-		this._activeCellRunPlaceholder?.dispose();
 		this._untrustedStatusItem?.dispose();
 		this.templateData.focusIndicatorLeft.style.height = 'initial';
 

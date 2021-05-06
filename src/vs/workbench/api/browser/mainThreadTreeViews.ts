@@ -31,7 +31,7 @@ export class MainThreadTreeViews extends Disposable implements MainThreadTreeVie
 		this._proxy = extHostContext.getProxy(ExtHostContext.ExtHostTreeViews);
 	}
 
-	async $registerTreeViewDataProvider(treeViewId: string, options: { showCollapseAll: boolean, canSelectMany: boolean }): Promise<void> {
+	async $registerTreeViewDataProvider(treeViewId: string, options: { showCollapseAll: boolean, canSelectMany: boolean, canDragAndDrop: boolean }): Promise<void> {
 		this.logService.trace('MainThreadTreeViews#$registerTreeViewDataProvider', treeViewId, options);
 
 		this.extensionService.whenInstalledExtensionsRegistered().then(() => {
@@ -43,6 +43,7 @@ export class MainThreadTreeViews extends Disposable implements MainThreadTreeVie
 				// Set all other properties first!
 				viewer.showCollapseAllAction = !!options.showCollapseAll;
 				viewer.canSelectMany = !!options.canSelectMany;
+				viewer.canDragAndDrop = !!options.canDragAndDrop;
 				viewer.dataProvider = dataProvider;
 				this.registerListeners(treeViewId, viewer);
 				this._proxy.$setVisible(treeViewId, viewer.visible);
@@ -147,7 +148,7 @@ export class MainThreadTreeViews extends Disposable implements MainThreadTreeVie
 		return viewDescriptor ? viewDescriptor.treeView : null;
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this._dataProviders.forEach((dataProvider, treeViewId) => {
 			const treeView = this.getTreeView(treeViewId);
 			if (treeView) {
@@ -181,6 +182,10 @@ class TreeViewDataProvider implements ITreeViewDataProvider {
 					this.notificationService.error(err);
 					return [];
 				}));
+	}
+
+	setParent(treeItem: ITreeItem[], targetTreeItem: ITreeItem): Promise<void> {
+		return this._proxy.$setParent(this.treeViewId, treeItem.map(item => item.handle), targetTreeItem.handle);
 	}
 
 	getItemsToRefresh(itemsToRefreshByHandle: { [treeItemHandle: string]: ITreeItem }): ITreeItem[] {

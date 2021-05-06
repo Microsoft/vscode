@@ -72,9 +72,10 @@ export class Application {
 		await this._start();
 		await this.code.waitForElement('.explorer-folders-view');
 
-		if (expectWalkthroughPart) {
-			await this.code.waitForElement(`.editor-instance > div > div.welcomePageFocusElement[tabIndex="0"]`);
-		}
+		// https://github.com/microsoft/vscode/issues/118748
+		// if (expectWalkthroughPart) {
+		// 	await this.code.waitForElement(`.editor-instance > div > div.welcomePageFocusElement[tabIndex="0"]`);
+		// }
 	}
 
 	async restart(options: { workspaceOrFolder?: string, extraArgs?: string[] }): Promise<any> {

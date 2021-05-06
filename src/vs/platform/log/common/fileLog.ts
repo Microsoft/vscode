@@ -3,13 +3,12 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { ILogService, LogLevel, AbstractLogger, ILoggerService, ILogger } from 'vs/platform/log/common/log';
+import { ILogService, LogLevel, AbstractLogger, ILoggerService, ILogger, AbstractLoggerService } from 'vs/platform/log/common/log';
 import { URI } from 'vs/base/common/uri';
 import { ByteSize, FileOperationError, FileOperationResult, IFileService, whenProviderRegistered } from 'vs/platform/files/common/files';
 import { Queue } from 'vs/base/common/async';
 import { VSBuffer } from 'vs/base/common/buffer';
 import { dirname, joinPath, basename } from 'vs/base/common/resources';
-import { Disposable } from 'vs/base/common/lifecycle';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { BufferLogService } from 'vs/platform/log/common/bufferLog';
 
@@ -159,34 +158,19 @@ export class FileLogger extends AbstractLogger implements ILogger {
 	}
 }
 
-export class FileLoggerService extends Disposable implements ILoggerService {
-
-	declare readonly _serviceBrand: undefined;
-
-	private readonly loggers = new Map<string, ILogger>();
+export class FileLoggerService extends AbstractLoggerService implements ILoggerService {
 
 	constructor(
-		@ILogService private logService: ILogService,
-		@IInstantiationService private instantiationService: IInstantiationService,
-		@IFileService private fileService: IFileService,
+		@ILogService logService: ILogService,
+		@IInstantiationService private readonly instantiationService: IInstantiationService,
+		@IFileService private readonly fileService: IFileService,
 	) {
-		super();
-		this._register(logService.onDidChangeLogLevel(level => this.loggers.forEach(logger => logger.setLevel(level))));
+		super(logService.getLevel(), logService.onDidChangeLogLevel);
 	}
 
-	createLogger(resource: URI): ILogger {
-		let logger = this.loggers.get(resource.toString());
-		if (!logger) {
-			logger = new BufferLogService(this.logService.getLevel());
-			this.loggers.set(resource.toString(), logger);
-			whenProviderRegistered(resource, this.fileService).then(() => (<BufferLogService>logger).logger = this.instantiationService.createInstance(FileLogger, basename(resource), resource, this.logService.getLevel()));
-		}
+	protected doCreateLogger(resource: URI, logLevel: LogLevel): ILogger {
+		const logger = new BufferLogService(logLevel);
+		whenProviderRegistered(resource, this.fileService).then(() => (<BufferLogService>logger).logger = this.instantiationService.createInstance(FileLogger, basename(resource), resource, logger.getLevel()));
 		return logger;
-	}
-
-	dispose(): void {
-		this.loggers.forEach(logger => logger.dispose());
-		this.loggers.clear();
-		super.dispose();
 	}
 }

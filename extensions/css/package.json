@@ -9,7 +9,7 @@
     "vscode": "0.10.x"
   },
   "scripts": {
-    "update-grammar": "node ../node_modules/vscode-grammar-updater/bin octref/language-css grammars/css.cson ./syntaxes/css.tmLanguage.json"
+    "update-grammar": "node ../node_modules/vscode-grammar-updater/bin atom/language-css grammars/css.cson ./syntaxes/css.tmLanguage.json"
   },
   "contributes": {
     "languages": [

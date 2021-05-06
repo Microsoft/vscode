@@ -176,7 +176,7 @@ suite('Debug - REPL', () => {
 		model.addSession(session);
 
 		const adapter = new MockDebugAdapter();
-		const raw = new RawDebugSession(adapter, undefined!, '', undefined!, undefined!, undefined!, undefined!, undefined!);
+		const raw = new RawDebugSession(adapter, undefined!, '', undefined!, undefined!, undefined!, undefined!, undefined!, undefined!);
 		session.initializeForTest(raw);
 
 		await session.addReplExpression(undefined, 'before.1');

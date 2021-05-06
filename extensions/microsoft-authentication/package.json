@@ -8,6 +8,7 @@
   "engines": {
     "vscode": "^1.42.0"
   },
+  "icon": "media/icon.png",
   "categories": [
     "Other"
   ],
@@ -15,6 +16,12 @@
   "activationEvents": [
     "onAuthenticationRequest:microsoft"
   ],
+  "capabilities": {
+    "virtualWorkspaces": true,
+    "untrustedWorkspaces": {
+      "supported": true
+    }
+  },
   "extensionKind": [
     "ui",
     "workspace",
@@ -39,7 +46,7 @@
     "watch-web": "npx webpack-cli --config extension-browser.webpack.config --mode none --watch --info-verbosity verbose"
   },
   "devDependencies": {
-    "@types/node": "^12.19.9",
+    "@types/node": "14.x",
     "@types/node-fetch": "^2.5.7",
     "@types/randombytes": "^2.0.0",
     "@types/sha.js": "^2.4.0",
@@ -52,7 +59,7 @@
     "sha.js": "2.4.11",
     "stream": "0.0.2",
     "uuid": "^8.2.0",
-    "vscode-extension-telemetry": "0.1.1",
+    "vscode-extension-telemetry": "0.1.7",
     "vscode-nls": "^4.1.1"
   },
   "repository": {

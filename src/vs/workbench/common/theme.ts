@@ -249,14 +249,6 @@ export const EDITOR_DRAG_AND_DROP_BACKGROUND = registerColor('editorGroup.dropBa
 	hc: null
 }, localize('editorDragAndDropBackground', "Background color when dragging editors around. The color should have transparency so that the editor contents can still shine through."));
 
-// < --- Resource Viewer --- >
-
-export const IMAGE_PREVIEW_BORDER = registerColor('imagePreview.border', {
-	dark: Color.fromHex('#808080').transparent(0.35),
-	light: Color.fromHex('#808080').transparent(0.35),
-	hc: contrastBorder
-}, localize('imagePreviewBorder', "Border color for image in image preview."));
-
 // < --- Panels --- >
 
 export const PANEL_BACKGROUND = registerColor('panel.background', {

@@ -427,11 +427,11 @@ export class StandaloneEditor extends StandaloneCodeEditor implements IStandalon
 		}
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		super.dispose();
 	}
 
-	public updateOptions(newOptions: Readonly<IEditorOptions & IGlobalEditorOptions>): void {
+	public override updateOptions(newOptions: Readonly<IEditorOptions & IGlobalEditorOptions>): void {
 		updateConfigurationService(this._configurationService, newOptions, false);
 		if (typeof newOptions.theme === 'string') {
 			this._standaloneThemeService.setTheme(newOptions.theme);
@@ -442,14 +442,14 @@ export class StandaloneEditor extends StandaloneCodeEditor implements IStandalon
 		super.updateOptions(newOptions);
 	}
 
-	_attachModel(model: ITextModel | null): void {
+	override _attachModel(model: ITextModel | null): void {
 		super._attachModel(model);
 		if (this._modelData) {
 			this._contextViewService.setContainer(this._modelData.view.domNode.domNode);
 		}
 	}
 
-	_postDetachModelCleanup(detachedModel: ITextModel): void {
+	override _postDetachModelCleanup(detachedModel: ITextModel): void {
 		super._postDetachModelCleanup(detachedModel);
 		if (detachedModel && this._ownsModel) {
 			detachedModel.dispose();
@@ -503,11 +503,11 @@ export class StandaloneDiffEditor extends DiffEditorWidget implements IStandalon
 		this._contextViewService.setContainer(this._containerDomElement);
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		super.dispose();
 	}
 
-	public updateOptions(newOptions: Readonly<IDiffEditorOptions & IGlobalEditorOptions>): void {
+	public override updateOptions(newOptions: Readonly<IDiffEditorOptions & IGlobalEditorOptions>): void {
 		updateConfigurationService(this._configurationService, newOptions, true);
 		if (typeof newOptions.theme === 'string') {
 			this._standaloneThemeService.setTheme(newOptions.theme);
@@ -518,15 +518,15 @@ export class StandaloneDiffEditor extends DiffEditorWidget implements IStandalon
 		super.updateOptions(newOptions);
 	}
 
-	protected _createInnerEditor(instantiationService: IInstantiationService, container: HTMLElement, options: Readonly<IEditorOptions>): CodeEditorWidget {
+	protected override _createInnerEditor(instantiationService: IInstantiationService, container: HTMLElement, options: Readonly<IEditorOptions>): CodeEditorWidget {
 		return instantiationService.createInstance(StandaloneCodeEditor, container, options);
 	}
 
-	public getOriginalEditor(): IStandaloneCodeEditor {
+	public override getOriginalEditor(): IStandaloneCodeEditor {
 		return <StandaloneCodeEditor>super.getOriginalEditor();
 	}
 
-	public getModifiedEditor(): IStandaloneCodeEditor {
+	public override getModifiedEditor(): IStandaloneCodeEditor {
 		return <StandaloneCodeEditor>super.getModifiedEditor();
 	}
 

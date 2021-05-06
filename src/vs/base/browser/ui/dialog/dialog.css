@@ -10,7 +10,7 @@
 	width: 100%;
 	left:0;
 	top:0;
-	z-index: 2000;
+	z-index: 2600;
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -34,17 +34,12 @@
 
 /** Dialog: Title Actions Row */
 .monaco-dialog-box .dialog-toolbar-row {
+	height: 22px;
 	padding-bottom: 4px;
 }
 
-.monaco-dialog-box .action-label {
-	height: 16px;
-	min-width: 16px;
-	background-size: 16px;
-	background-position: 50%;
-	background-repeat: no-repeat;
-	margin: 0px;
-	margin-left: 4px;
+.monaco-dialog-box .dialog-toolbar-row .actions-container {
+	justify-content: flex-end;
 }
 
 /** Dialog: Message Row */
@@ -142,6 +137,10 @@
 .monaco-dialog-box > .dialog-buttons-row > .dialog-buttons {
 	display: flex;
 	overflow: hidden;
+}
+
+.monaco-dialog-box > .dialog-buttons-row > .dialog-buttons.centered {
+	justify-content: center;
 }
 
 .monaco-dialog-box > .dialog-buttons-row > .dialog-buttons > .monaco-button {

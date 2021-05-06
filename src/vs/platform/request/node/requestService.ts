@@ -18,6 +18,8 @@ import { getProxyAgent, Agent } from 'vs/platform/request/node/proxy';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { ILogService } from 'vs/platform/log/common/log';
 import { streamToBufferReadableStream } from 'vs/base/common/buffer';
+import { INativeEnvironmentService } from 'vs/platform/environment/common/environment';
+import { resolveShellEnv } from 'vs/platform/environment/node/shellEnv';
 
 export interface IRawRequestFunction {
 	(options: http.RequestOptions, callback?: (res: http.IncomingMessage) => void): http.ClientRequest;
@@ -43,6 +45,7 @@ export class RequestService extends Disposable implements IRequestService {
 
 	constructor(
 		@IConfigurationService configurationService: IConfigurationService,
+		@INativeEnvironmentService private readonly environmentService: INativeEnvironmentService,
 		@ILogService private readonly logService: ILogService
 	) {
 		super();
@@ -60,7 +63,11 @@ export class RequestService extends Disposable implements IRequestService {
 		this.logService.trace('RequestService#request', options.url);
 
 		const { proxyUrl, strictSSL } = this;
-		const agent = options.agent ? options.agent : await getProxyAgent(options.url || '', { proxyUrl, strictSSL });
+		const env = {
+			...process.env,
+			...(await resolveShellEnv(this.logService, this.environmentService.args, process.env)),
+		};
+		const agent = options.agent ? options.agent : await getProxyAgent(options.url || '', env, { proxyUrl, strictSSL });
 
 		options.agent = agent;
 		options.strictSSL = strictSSL;

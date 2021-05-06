@@ -26,6 +26,12 @@
     "update-grammar": "node ./build/update-grammars.js",
     "test": "node ../../node_modules/mocha/bin/mocha"
   },
+  "capabilities": {
+    "virtualWorkspaces": true,
+    "untrustedWorkspaces": {
+      "supported": true
+    }
+  },
   "contributes": {
     "commands": [
       {
@@ -1547,13 +1553,17 @@
           "command": "git.branchFrom",
           "group": "branch@4"
         },
+				{
+					"command": "git.renameBranch",
+					"group": "branch@5"
+				},
         {
-          "command": "git.renameBranch",
-          "group": "branch@5"
+          "command": "git.deleteBranch",
+          "group": "branch@6"
         },
         {
           "command": "git.publish",
-          "group": "branch@6"
+          "group": "branch@7"
         }
       ],
       "git.remotes": [
@@ -1682,19 +1692,10 @@
           "default": true
         },
         "git.autofetch": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "string",
-              "enum": [
-                "all"
-              ]
-            }
-          ],
+          "type": ["boolean", "string"],
+          "enum": [true, false, "all"],
           "scope": "resource",
-          "description": "%config.autofetch%",
+          "markdownDescription": "%config.autofetch%",
           "default": false,
           "tags": [
             "usesOnlineServices"
@@ -1703,7 +1704,7 @@
         "git.autofetchPeriod": {
           "type": "number",
           "scope": "resource",
-          "description": "%config.autofetchPeriod%",
+          "markdownDescription": "%config.autofetchPeriod%",
           "default": 180
         },
         "git.branchValidationRegex": {
@@ -2374,8 +2375,8 @@
     "byline": "^5.0.0",
     "file-type": "^7.2.0",
     "iconv-lite-umd": "0.6.8",
-    "jschardet": "2.2.1",
-    "vscode-extension-telemetry": "0.1.1",
+    "jschardet": "2.3.0",
+    "vscode-extension-telemetry": "0.1.7",
     "vscode-nls": "^4.0.0",
     "vscode-uri": "^2.0.0",
     "which": "^1.3.0"
@@ -2384,7 +2385,7 @@
     "@types/byline": "4.2.31",
     "@types/file-type": "^5.2.1",
     "@types/mocha": "^8.2.0",
-    "@types/node": "^12.19.9",
+    "@types/node": "14.x",
     "@types/which": "^1.0.28"
   },
   "repository": {

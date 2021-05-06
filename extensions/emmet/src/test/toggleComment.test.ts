@@ -79,7 +79,7 @@ suite('Tests for Toggle Comment action from Emmet (HTML)', () => {
 			];
 
 			return toggleComment().then(() => {
-				assert.equal(doc.getText(), expectedContents);
+				assert.strictEqual(doc.getText(), expectedContents);
 				return Promise.resolve();
 			});
 		});
@@ -120,7 +120,7 @@ suite('Tests for Toggle Comment action from Emmet (HTML)', () => {
 			];
 
 			return toggleComment().then(() => {
-				assert.equal(doc.getText(), expectedContents);
+				assert.strictEqual(doc.getText(), expectedContents);
 				return Promise.resolve();
 			});
 		});
@@ -158,7 +158,7 @@ suite('Tests for Toggle Comment action from Emmet (HTML)', () => {
 			];
 
 			return toggleComment().then(() => {
-				assert.equal(doc.getText(), expectedContents);
+				assert.strictEqual(doc.getText(), expectedContents);
 				return Promise.resolve();
 			});
 		});
@@ -196,7 +196,7 @@ suite('Tests for Toggle Comment action from Emmet (HTML)', () => {
 			];
 
 			return toggleComment().then(() => {
-				assert.equal(doc.getText(), expectedContents);
+				assert.strictEqual(doc.getText(), expectedContents);
 				return Promise.resolve();
 			});
 		});
@@ -241,7 +241,7 @@ suite('Tests for Toggle Comment action from Emmet (HTML)', () => {
 			];
 
 			return toggleComment().then(() => {
-				assert.equal(doc.getText(), expectedContents);
+				assert.strictEqual(doc.getText(), expectedContents);
 
 				return Promise.resolve();
 			});
@@ -272,7 +272,7 @@ suite('Tests for Toggle Comment action from Emmet (HTML)', () => {
 				new Selection(4, 18, 4, 18), // cursor inside the noncommented span
 			];
 			return toggleComment().then(() => {
-				assert.equal(doc.getText(), expectedContents);
+				assert.strictEqual(doc.getText(), expectedContents);
 				return Promise.resolve();
 			});
 		});
@@ -315,9 +315,9 @@ suite('Tests for Toggle Comment action from Emmet (CSS)', () => {
 			];
 
 			return toggleComment().then(() => {
-				assert.equal(doc.getText(), expectedContents);
+				assert.strictEqual(doc.getText(), expectedContents);
 				return toggleComment().then(() => {
-					assert.equal(doc.getText(), contents);
+					assert.strictEqual(doc.getText(), contents);
 					return Promise.resolve();
 				});
 			});
@@ -345,9 +345,9 @@ suite('Tests for Toggle Comment action from Emmet (CSS)', () => {
 			];
 
 			return toggleComment().then(() => {
-				assert.equal(doc.getText(), expectedContents);
+				assert.strictEqual(doc.getText(), expectedContents);
 				//return toggleComment().then(() => {
-				//assert.equal(doc.getText(), contents);
+				//assert.strictEqual(doc.getText(), contents);
 				return Promise.resolve();
 				//});
 			});
@@ -376,9 +376,9 @@ suite('Tests for Toggle Comment action from Emmet (CSS)', () => {
 			];
 
 			return toggleComment().then(() => {
-				assert.equal(doc.getText(), expectedContents);
+				assert.strictEqual(doc.getText(), expectedContents);
 				return toggleComment().then(() => {
-					assert.equal(doc.getText(), contents);
+					assert.strictEqual(doc.getText(), contents);
 					return Promise.resolve();
 				});
 			});
@@ -404,9 +404,9 @@ suite('Tests for Toggle Comment action from Emmet (CSS)', () => {
 			];
 
 			return toggleComment().then(() => {
-				assert.equal(doc.getText(), expectedContents);
+				assert.strictEqual(doc.getText(), expectedContents);
 				return toggleComment().then(() => {
-					assert.equal(doc.getText(), contents);
+					assert.strictEqual(doc.getText(), contents);
 					return Promise.resolve();
 				});
 			});
@@ -432,9 +432,9 @@ suite('Tests for Toggle Comment action from Emmet (CSS)', () => {
 			];
 
 			return toggleComment().then(() => {
-				assert.equal(doc.getText(), expectedContents);
+				assert.strictEqual(doc.getText(), expectedContents);
 				return toggleComment().then(() => {
-					assert.equal(doc.getText(), contents);
+					assert.strictEqual(doc.getText(), contents);
 					return Promise.resolve();
 				});
 			});
@@ -460,9 +460,9 @@ suite('Tests for Toggle Comment action from Emmet (CSS)', () => {
 			];
 
 			return toggleComment().then(() => {
-				assert.equal(doc.getText(), expectedContents);
+				assert.strictEqual(doc.getText(), expectedContents);
 				return toggleComment().then(() => {
-					assert.equal(doc.getText(), contents);
+					assert.strictEqual(doc.getText(), contents);
 					return Promise.resolve();
 				});
 			});
@@ -488,9 +488,9 @@ suite('Tests for Toggle Comment action from Emmet (CSS)', () => {
 			];
 
 			return toggleComment().then(() => {
-				assert.equal(doc.getText(), expectedContents);
+				assert.strictEqual(doc.getText(), expectedContents);
 				return toggleComment().then(() => {
-					assert.equal(doc.getText(), contents);
+					assert.strictEqual(doc.getText(), contents);
 					return Promise.resolve();
 				});
 			});
@@ -517,9 +517,9 @@ suite('Tests for Toggle Comment action from Emmet (CSS)', () => {
 			];
 
 			return toggleComment().then(() => {
-				assert.equal(doc.getText(), expectedContents);
+				assert.strictEqual(doc.getText(), expectedContents);
 				return toggleComment().then(() => {
-					assert.equal(doc.getText(), contents);
+					assert.strictEqual(doc.getText(), contents);
 					return Promise.resolve();
 				});
 			});
@@ -568,9 +568,9 @@ suite('Tests for Toggle Comment action from Emmet in nested css (SCSS)', () => {
 			];
 
 			return toggleComment().then(() => {
-				assert.equal(doc.getText(), expectedContents);
+				assert.strictEqual(doc.getText(), expectedContents);
 				return toggleComment().then(() => {
-					assert.equal(doc.getText(), contents);
+					assert.strictEqual(doc.getText(), contents);
 					return Promise.resolve();
 				});
 			});
@@ -599,9 +599,9 @@ suite('Tests for Toggle Comment action from Emmet in nested css (SCSS)', () => {
 			];
 
 			return toggleComment().then(() => {
-				assert.equal(doc.getText(), expectedContents);
+				assert.strictEqual(doc.getText(), expectedContents);
 				return toggleComment().then(() => {
-					assert.equal(doc.getText(), contents);
+					assert.strictEqual(doc.getText(), contents);
 					return Promise.resolve();
 				});
 			});
@@ -629,9 +629,9 @@ suite('Tests for Toggle Comment action from Emmet in nested css (SCSS)', () => {
 			];
 
 			return toggleComment().then(() => {
-				assert.equal(doc.getText(), expectedContents);
+				assert.strictEqual(doc.getText(), expectedContents);
 				//return toggleComment().then(() => {
-				//	assert.equal(doc.getText(), contents);
+				//	assert.strictEqual(doc.getText(), contents);
 				return Promise.resolve();
 				//});
 			});
@@ -659,9 +659,9 @@ suite('Tests for Toggle Comment action from Emmet in nested css (SCSS)', () => {
 			];
 
 			return toggleComment().then(() => {
-				assert.equal(doc.getText(), expectedContents);
+				assert.strictEqual(doc.getText(), expectedContents);
 				return toggleComment().then(() => {
-					assert.equal(doc.getText(), contents);
+					assert.strictEqual(doc.getText(), contents);
 					return Promise.resolve();
 				});
 			});
@@ -689,9 +689,9 @@ suite('Tests for Toggle Comment action from Emmet in nested css (SCSS)', () => {
 			];
 
 			return toggleComment().then(() => {
-				assert.equal(doc.getText(), expectedContents);
+				assert.strictEqual(doc.getText(), expectedContents);
 				return toggleComment().then(() => {
-					assert.equal(doc.getText(), contents);
+					assert.strictEqual(doc.getText(), contents);
 					return Promise.resolve();
 				});
 			});
@@ -717,9 +717,9 @@ suite('Tests for Toggle Comment action from Emmet in nested css (SCSS)', () => {
 			];
 
 			return toggleComment().then(() => {
-				assert.equal(doc.getText(), expectedContents);
+				assert.strictEqual(doc.getText(), expectedContents);
 				return toggleComment().then(() => {
-					assert.equal(doc.getText(), contents);
+					assert.strictEqual(doc.getText(), contents);
 					return Promise.resolve();
 				});
 			});
@@ -743,9 +743,9 @@ suite('Tests for Toggle Comment action from Emmet in nested css (SCSS)', () => {
 			];
 
 			return toggleComment().then(() => {
-				assert.equal(doc.getText(), expectedContents);
+				assert.strictEqual(doc.getText(), expectedContents);
 				return toggleComment().then(() => {
-					assert.equal(doc.getText(), contents);
+					assert.strictEqual(doc.getText(), contents);
 					return Promise.resolve();
 				});
 			});

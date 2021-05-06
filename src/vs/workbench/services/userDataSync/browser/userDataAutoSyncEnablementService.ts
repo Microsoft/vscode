@@ -13,11 +13,11 @@ export class WebUserDataAutoSyncEnablementService extends UserDataAutoSyncEnable
 	private get workbenchEnvironmentService(): IWorkbenchEnvironmentService { return <IWorkbenchEnvironmentService>this.environmentService; }
 	private enabled: boolean | undefined = undefined;
 
-	canToggleEnablement(): boolean {
+	override canToggleEnablement(): boolean {
 		return this.isTrusted() && super.canToggleEnablement();
 	}
 
-	isEnabled(): boolean {
+	override isEnabled(): boolean {
 		if (!this.isTrusted()) {
 			return false;
 		}
@@ -30,7 +30,7 @@ export class WebUserDataAutoSyncEnablementService extends UserDataAutoSyncEnable
 		return this.enabled;
 	}
 
-	setEnablement(enabled: boolean) {
+	override setEnablement(enabled: boolean) {
 		if (enabled && !this.canToggleEnablement()) {
 			return;
 		}

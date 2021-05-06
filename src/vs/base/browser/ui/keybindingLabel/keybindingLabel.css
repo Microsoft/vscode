@@ -11,13 +11,10 @@
 
 .monaco-keybinding > .monaco-keybinding-key {
 	display: inline-block;
-	border: solid 1px rgba(204, 204, 204, 0.4);
-	border-bottom-color: rgba(187, 187, 187, 0.4);
+	border-style: solid;
+	border-width: 1px;
 	border-radius: 3px;
-	box-shadow: inset 0 -1px 0 rgba(187, 187, 187, 0.4);
-	background-color: rgba(221, 221, 221, 0.4);
 	vertical-align: middle;
-	color: #555;
 	font-size: 11px;
 	padding: 3px 5px;
 	margin: 0 2px;
@@ -29,15 +26,6 @@
 
 .monaco-keybinding > .monaco-keybinding-key:last-child {
 	margin-right: 0;
-}
-
-.hc-black .monaco-keybinding > .monaco-keybinding-key,
-.vs-dark .monaco-keybinding > .monaco-keybinding-key {
-	background-color: rgba(128, 128, 128, 0.17);
-	color: #ccc;
-	border: solid 1px rgba(51, 51, 51, 0.6);
-	border-bottom-color: rgba(68, 68, 68, 0.6);
-	box-shadow: inset 0 -1px 0 rgba(68, 68, 68, 0.6);
 }
 
 .monaco-keybinding > .monaco-keybinding-key-separator {

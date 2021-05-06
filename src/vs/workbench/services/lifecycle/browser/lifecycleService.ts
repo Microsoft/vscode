@@ -13,13 +13,11 @@ import { addDisposableListener } from 'vs/base/browser/dom';
 
 export class BrowserLifecycleService extends AbstractLifecycleService {
 
-	declare readonly _serviceBrand: undefined;
-
 	private beforeUnloadDisposable: IDisposable | undefined = undefined;
 	private expectedUnload = false;
 
 	constructor(
-		@ILogService readonly logService: ILogService
+		@ILogService logService: ILogService
 	) {
 		super(logService);
 
@@ -102,7 +100,7 @@ export class BrowserLifecycleService extends AbstractLifecycleService {
 			return;
 		}
 
-		// No Veto: continue with Will Shutdown
+		// No Veto: continue with willShutdown
 		this._onWillShutdown.fire({
 			join(promise, id) {
 				logService.error(`[lifecycle] Long running operations during shutdown are unsupported in the web (id: ${id})`);
@@ -110,8 +108,8 @@ export class BrowserLifecycleService extends AbstractLifecycleService {
 			reason: ShutdownReason.QUIT
 		});
 
-		// Finally end with Shutdown event
-		this._onShutdown.fire();
+		// Finally end with didShutdown
+		this._onDidShutdown.fire();
 	}
 }
 

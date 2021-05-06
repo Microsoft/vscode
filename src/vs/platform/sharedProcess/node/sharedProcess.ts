@@ -3,6 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import { ISandboxConfiguration } from 'vs/base/parts/sandbox/common/sandboxTypes';
 import { NativeParsedArgs } from 'vs/platform/environment/common/argv';
 import { LogLevel } from 'vs/platform/log/common/log';
 
@@ -15,18 +16,12 @@ export interface ISharedProcess {
 	toggle(): Promise<void>;
 }
 
-export interface ISharedProcessConfiguration {
+export interface ISharedProcessConfiguration extends ISandboxConfiguration {
 	readonly machineId: string;
-	readonly windowId: number;
-
-	readonly appRoot: string;
-
-	readonly userEnv: NodeJS.ProcessEnv;
 
 	readonly args: NativeParsedArgs;
 
 	readonly logLevel: LogLevel;
 
-	readonly nodeCachedDataDir?: string;
 	readonly backupWorkspacesPath: string;
 }

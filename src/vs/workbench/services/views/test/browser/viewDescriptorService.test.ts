@@ -36,8 +36,8 @@ suite('ViewDescriptorService', () => {
 	test('Empty Containers', function () {
 		const sidebarViews = viewDescriptorService.getViewContainerModel(sidebarContainer);
 		const panelViews = viewDescriptorService.getViewContainerModel(panelContainer);
-		assert.equal(sidebarViews.allViewDescriptors.length, 0, 'The sidebar container should have no views yet.');
-		assert.equal(panelViews.allViewDescriptors.length, 0, 'The panel container should have no views yet.');
+		assert.strictEqual(sidebarViews.allViewDescriptors.length, 0, 'The sidebar container should have no views yet.');
+		assert.strictEqual(panelViews.allViewDescriptors.length, 0, 'The panel container should have no views yet.');
 	});
 
 	test('Register/Deregister', () => {
@@ -70,8 +70,8 @@ suite('ViewDescriptorService', () => {
 		let sidebarViews = viewDescriptorService.getViewContainerModel(sidebarContainer);
 		let panelViews = viewDescriptorService.getViewContainerModel(panelContainer);
 
-		assert.equal(sidebarViews.activeViewDescriptors.length, 2, 'Sidebar should have 2 views');
-		assert.equal(panelViews.activeViewDescriptors.length, 1, 'Panel should have 1 view');
+		assert.strictEqual(sidebarViews.activeViewDescriptors.length, 2, 'Sidebar should have 2 views');
+		assert.strictEqual(panelViews.activeViewDescriptors.length, 1, 'Panel should have 1 view');
 
 		ViewsRegistry.deregisterViews(viewDescriptors.slice(0, 2), sidebarContainer);
 		ViewsRegistry.deregisterViews(viewDescriptors.slice(2), panelContainer);
@@ -80,8 +80,8 @@ suite('ViewDescriptorService', () => {
 		sidebarViews = viewDescriptorService.getViewContainerModel(sidebarContainer);
 		panelViews = viewDescriptorService.getViewContainerModel(panelContainer);
 
-		assert.equal(sidebarViews.activeViewDescriptors.length, 0, 'Sidebar should have no views');
-		assert.equal(panelViews.activeViewDescriptors.length, 0, 'Panel should have no views');
+		assert.strictEqual(sidebarViews.activeViewDescriptors.length, 0, 'Sidebar should have no views');
+		assert.strictEqual(panelViews.activeViewDescriptors.length, 0, 'Panel should have no views');
 	});
 
 	test('move views to existing containers', async function () {
@@ -115,12 +115,12 @@ suite('ViewDescriptorService', () => {
 		let sidebarViews = viewDescriptorService.getViewContainerModel(sidebarContainer);
 		let panelViews = viewDescriptorService.getViewContainerModel(panelContainer);
 
-		assert.equal(sidebarViews.activeViewDescriptors.length, 1, 'Sidebar should have 2 views');
-		assert.equal(panelViews.activeViewDescriptors.length, 2, 'Panel should have 1 view');
+		assert.strictEqual(sidebarViews.activeViewDescriptors.length, 1, 'Sidebar should have 2 views');
+		assert.strictEqual(panelViews.activeViewDescriptors.length, 2, 'Panel should have 1 view');
 
-		assert.notEqual(sidebarViews.activeViewDescriptors.indexOf(viewDescriptors[2]), -1, `Sidebar should have ${viewDescriptors[2].name}`);
-		assert.notEqual(panelViews.activeViewDescriptors.indexOf(viewDescriptors[0]), -1, `Panel should have ${viewDescriptors[0].name}`);
-		assert.notEqual(panelViews.activeViewDescriptors.indexOf(viewDescriptors[1]), -1, `Panel should have ${viewDescriptors[1].name}`);
+		assert.notStrictEqual(sidebarViews.activeViewDescriptors.indexOf(viewDescriptors[2]), -1, `Sidebar should have ${viewDescriptors[2].name}`);
+		assert.notStrictEqual(panelViews.activeViewDescriptors.indexOf(viewDescriptors[0]), -1, `Panel should have ${viewDescriptors[0].name}`);
+		assert.notStrictEqual(panelViews.activeViewDescriptors.indexOf(viewDescriptors[1]), -1, `Panel should have ${viewDescriptors[1].name}`);
 	});
 
 	test('move views to generated containers', async function () {
@@ -154,20 +154,20 @@ suite('ViewDescriptorService', () => {
 		let sidebarViews = viewDescriptorService.getViewContainerModel(sidebarContainer);
 		let panelViews = viewDescriptorService.getViewContainerModel(panelContainer);
 
-		assert.equal(sidebarViews.activeViewDescriptors.length, 1, 'Sidebar container should have 1 view');
-		assert.equal(panelViews.activeViewDescriptors.length, 0, 'Panel container should have no views');
+		assert.strictEqual(sidebarViews.activeViewDescriptors.length, 1, 'Sidebar container should have 1 view');
+		assert.strictEqual(panelViews.activeViewDescriptors.length, 0, 'Panel container should have no views');
 
 		const generatedPanel = assertIsDefined(viewDescriptorService.getViewContainerByViewId(viewDescriptors[0].id));
 		const generatedSidebar = assertIsDefined(viewDescriptorService.getViewContainerByViewId(viewDescriptors[2].id));
 
-		assert.equal(viewDescriptorService.getViewContainerLocation(generatedPanel), ViewContainerLocation.Panel, 'Generated Panel should be in located in the panel');
-		assert.equal(viewDescriptorService.getViewContainerLocation(generatedSidebar), ViewContainerLocation.Sidebar, 'Generated Sidebar should be in located in the sidebar');
+		assert.strictEqual(viewDescriptorService.getViewContainerLocation(generatedPanel), ViewContainerLocation.Panel, 'Generated Panel should be in located in the panel');
+		assert.strictEqual(viewDescriptorService.getViewContainerLocation(generatedSidebar), ViewContainerLocation.Sidebar, 'Generated Sidebar should be in located in the sidebar');
 
-		assert.equal(viewDescriptorService.getViewContainerLocation(generatedPanel), viewDescriptorService.getViewLocationById(viewDescriptors[0].id), 'Panel view location and container location should match');
-		assert.equal(viewDescriptorService.getViewContainerLocation(generatedSidebar), viewDescriptorService.getViewLocationById(viewDescriptors[2].id), 'Sidebar view location and container location should match');
+		assert.strictEqual(viewDescriptorService.getViewContainerLocation(generatedPanel), viewDescriptorService.getViewLocationById(viewDescriptors[0].id), 'Panel view location and container location should match');
+		assert.strictEqual(viewDescriptorService.getViewContainerLocation(generatedSidebar), viewDescriptorService.getViewLocationById(viewDescriptors[2].id), 'Sidebar view location and container location should match');
 
-		assert.equal(viewDescriptorService.getDefaultContainerById(viewDescriptors[2].id), panelContainer, `${viewDescriptors[2].name} has wrong default container`);
-		assert.equal(viewDescriptorService.getDefaultContainerById(viewDescriptors[0].id), sidebarContainer, `${viewDescriptors[0].name} has wrong default container`);
+		assert.strictEqual(viewDescriptorService.getDefaultContainerById(viewDescriptors[2].id), panelContainer, `${viewDescriptors[2].name} has wrong default container`);
+		assert.strictEqual(viewDescriptorService.getDefaultContainerById(viewDescriptors[0].id), sidebarContainer, `${viewDescriptors[0].name} has wrong default container`);
 
 		viewDescriptorService.moveViewToLocation(viewDescriptors[0], ViewContainerLocation.Sidebar);
 		viewDescriptorService.moveViewToLocation(viewDescriptors[2], ViewContainerLocation.Panel);
@@ -175,11 +175,11 @@ suite('ViewDescriptorService', () => {
 		sidebarViews = viewDescriptorService.getViewContainerModel(sidebarContainer);
 		panelViews = viewDescriptorService.getViewContainerModel(panelContainer);
 
-		assert.equal(sidebarViews.activeViewDescriptors.length, 1, 'Sidebar should have 2 views');
-		assert.equal(panelViews.activeViewDescriptors.length, 0, 'Panel should have 1 view');
+		assert.strictEqual(sidebarViews.activeViewDescriptors.length, 1, 'Sidebar should have 2 views');
+		assert.strictEqual(panelViews.activeViewDescriptors.length, 0, 'Panel should have 1 view');
 
-		assert.equal(viewDescriptorService.getViewLocationById(viewDescriptors[0].id), ViewContainerLocation.Sidebar, 'View should be located in the sidebar');
-		assert.equal(viewDescriptorService.getViewLocationById(viewDescriptors[2].id), ViewContainerLocation.Panel, 'View should be located in the panel');
+		assert.strictEqual(viewDescriptorService.getViewLocationById(viewDescriptors[0].id), ViewContainerLocation.Sidebar, 'View should be located in the sidebar');
+		assert.strictEqual(viewDescriptorService.getViewLocationById(viewDescriptors[2].id), ViewContainerLocation.Panel, 'View should be located in the panel');
 	});
 
 	test('move view events', async function () {
@@ -262,7 +262,7 @@ suite('ViewDescriptorService', () => {
 		expectedSequence += containerMoveString(viewDescriptors[2], sidebarContainer, panelContainer);
 		viewDescriptorService.moveViewsToContainer([viewDescriptors[1], viewDescriptors[2]], panelContainer);
 
-		assert.equal(actualSequence, expectedSequence, 'Event sequence not matching expected sequence');
+		assert.strictEqual(actualSequence, expectedSequence, 'Event sequence not matching expected sequence');
 	});
 
 });

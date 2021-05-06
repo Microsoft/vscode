@@ -8,10 +8,11 @@ import { ITextFileService, snapshotToString, TextFileOperationError, TextFileOpe
 import { URI } from 'vs/base/common/uri';
 import { join, basename } from 'vs/base/common/path';
 import { UTF16le, UTF8_with_bom, UTF16be, UTF8, UTF16le_BOM, UTF16be_BOM, UTF8_BOM } from 'vs/workbench/services/textfile/common/encoding';
-import { VSBuffer } from 'vs/base/common/buffer';
+import { bufferToStream, VSBuffer } from 'vs/base/common/buffer';
 import { createTextModel } from 'vs/editor/test/common/editorTestUtils';
 import { ITextSnapshot, DefaultEndOfLine } from 'vs/editor/common/model';
 import { isWindows } from 'vs/base/common/platform';
+import { createTextBufferFactoryFromStream } from 'vs/editor/common/model/textModel';
 
 export interface Params {
 	setup(): Promise<{
@@ -527,10 +528,27 @@ export default function createSuite(params: Params) {
 	async function testLargeEncoding(encoding: string, needle: string): Promise<void> {
 		const resource = URI.file(join(testDir, `lorem_${encoding}.txt`));
 
+		// Verify via `ITextFileService.readStream`
 		const result = await service.readStream(resource, { encoding });
 		assert.strictEqual(result.encoding, encoding);
 
-		const contents = snapshotToString(result.value.create(DefaultEndOfLine.LF).textBuffer.createSnapshot(false));
+		let contents = snapshotToString(result.value.create(DefaultEndOfLine.LF).textBuffer.createSnapshot(false));
+
+		assert.strictEqual(contents.indexOf(needle), 0);
+		assert.ok(contents.indexOf(needle, 10) > 0);
+
+		// Verify via `ITextFileService.getDecodedTextFactory`
+		const rawFile = await params.readFile(resource.fsPath);
+		let rawFileVSBuffer: VSBuffer;
+		if (rawFile instanceof VSBuffer) {
+			rawFileVSBuffer = rawFile;
+		} else {
+			rawFileVSBuffer = VSBuffer.wrap(rawFile);
+		}
+
+		const factory = await createTextBufferFactoryFromStream(await service.getDecodedStream(resource, bufferToStream(rawFileVSBuffer), { encoding }));
+
+		contents = snapshotToString(factory.create(DefaultEndOfLine.LF).textBuffer.createSnapshot(false));
 
 		assert.strictEqual(contents.indexOf(needle), 0);
 		assert.ok(contents.indexOf(needle, 10) > 0);

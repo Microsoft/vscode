@@ -90,10 +90,10 @@ suite('TelemetryService', () => {
 		let service = new TelemetryService({ appender: testAppender }, undefined!);
 
 		return service.publicLog('testPrivateEvent').then(() => {
-			assert.equal(testAppender.getEventsCount(), 1);
+			assert.strictEqual(testAppender.getEventsCount(), 1);
 
 			service.dispose();
-			assert.equal(!testAppender.isDisposed, true);
+			assert.strictEqual(!testAppender.isDisposed, true);
 		});
 	}));
 
@@ -103,9 +103,9 @@ suite('TelemetryService', () => {
 		let service = new TelemetryService({ appender: testAppender }, undefined!);
 
 		return service.publicLog('testEvent').then(_ => {
-			assert.equal(testAppender.getEventsCount(), 1);
-			assert.equal(testAppender.events[0].eventName, 'testEvent');
-			assert.notEqual(testAppender.events[0].data, null);
+			assert.strictEqual(testAppender.getEventsCount(), 1);
+			assert.strictEqual(testAppender.events[0].eventName, 'testEvent');
+			assert.notStrictEqual(testAppender.events[0].data, null);
 
 			service.dispose();
 		});
@@ -123,13 +123,13 @@ suite('TelemetryService', () => {
 				'value': 0
 			}
 		}).then(() => {
-			assert.equal(testAppender.getEventsCount(), 1);
-			assert.equal(testAppender.events[0].eventName, 'testEvent');
-			assert.notEqual(testAppender.events[0].data, null);
-			assert.equal(testAppender.events[0].data['stringProp'], 'property');
-			assert.equal(testAppender.events[0].data['numberProp'], 1);
-			assert.equal(testAppender.events[0].data['booleanProp'], true);
-			assert.equal(testAppender.events[0].data['complexProp'].value, 0);
+			assert.strictEqual(testAppender.getEventsCount(), 1);
+			assert.strictEqual(testAppender.events[0].eventName, 'testEvent');
+			assert.notStrictEqual(testAppender.events[0].data, null);
+			assert.strictEqual(testAppender.events[0].data['stringProp'], 'property');
+			assert.strictEqual(testAppender.events[0].data['numberProp'], 1);
+			assert.strictEqual(testAppender.events[0].data['booleanProp'], true);
+			assert.strictEqual(testAppender.events[0].data['complexProp'].value, 0);
 
 			service.dispose();
 		});
@@ -146,9 +146,9 @@ suite('TelemetryService', () => {
 		return service.publicLog('testEvent').then(_ => {
 			let [first] = testAppender.events;
 
-			assert.equal(Object.keys(first.data).length, 2);
-			assert.equal(typeof first.data['foo'], 'string');
-			assert.equal(typeof first.data['bar'], 'number');
+			assert.strictEqual(Object.keys(first.data).length, 2);
+			assert.strictEqual(typeof first.data['foo'], 'string');
+			assert.strictEqual(typeof first.data['bar'], 'number');
 
 			service.dispose();
 		});
@@ -164,11 +164,11 @@ suite('TelemetryService', () => {
 		return service.publicLog('testEvent', { hightower: 'xl', price: 8000 }).then(_ => {
 			let [first] = testAppender.events;
 
-			assert.equal(Object.keys(first.data).length, 4);
-			assert.equal(typeof first.data['foo'], 'string');
-			assert.equal(typeof first.data['bar'], 'number');
-			assert.equal(typeof first.data['hightower'], 'string');
-			assert.equal(typeof first.data['price'], 'number');
+			assert.strictEqual(Object.keys(first.data).length, 4);
+			assert.strictEqual(typeof first.data['foo'], 'string');
+			assert.strictEqual(typeof first.data['bar'], 'number');
+			assert.strictEqual(typeof first.data['hightower'], 'string');
+			assert.strictEqual(typeof first.data['price'], 'number');
 
 			service.dispose();
 		});
@@ -185,9 +185,9 @@ suite('TelemetryService', () => {
 		}, undefined!);
 
 		return service.getTelemetryInfo().then(info => {
-			assert.equal(info.sessionId, 'one');
-			assert.equal(info.instanceId, 'two');
-			assert.equal(info.machineId, 'three');
+			assert.strictEqual(info.sessionId, 'one');
+			assert.strictEqual(info.instanceId, 'two');
+			assert.strictEqual(info.machineId, 'three');
 
 			service.dispose();
 		});
@@ -198,8 +198,8 @@ suite('TelemetryService', () => {
 		let service = new TelemetryService({ appender: testAppender }, undefined!);
 
 		return service.publicLog('testEvent').then(() => {
-			assert.equal(testAppender.getEventsCount(), 1);
-			assert.equal(testAppender.events[0].eventName, 'testEvent');
+			assert.strictEqual(testAppender.getEventsCount(), 1);
+			assert.strictEqual(testAppender.events[0].eventName, 'testEvent');
 
 			service.dispose();
 		});
@@ -217,7 +217,7 @@ suite('TelemetryService', () => {
 			return Promise.all(this.promises);
 		}
 
-		publicLog(eventName: string, data?: ITelemetryData, anonymizeFilePaths?: boolean): Promise<void> {
+		override publicLog(eventName: string, data?: ITelemetryData, anonymizeFilePaths?: boolean): Promise<void> {
 			let p = super.publicLog(eventName, data, anonymizeFilePaths);
 			this.promises.push(p);
 			return p;
@@ -245,9 +245,9 @@ suite('TelemetryService', () => {
 			this.clock.tick(ErrorTelemetry.ERROR_FLUSH_TIMEOUT);
 			await service.join();
 
-			assert.equal(testAppender.getEventsCount(), 1);
-			assert.equal(testAppender.events[0].eventName, 'UnhandledError');
-			assert.equal(testAppender.events[0].data.msg, 'This is a test.');
+			assert.strictEqual(testAppender.getEventsCount(), 1);
+			assert.strictEqual(testAppender.events[0].eventName, 'UnhandledError');
+			assert.strictEqual(testAppender.events[0].data.msg, 'This is a test.');
 
 			errorTelemetry.dispose();
 			service.dispose();
@@ -275,9 +275,9 @@ suite('TelemetryService', () => {
 	// 			// allow for the promise to finish
 	// 			this.clock.tick(MainErrorTelemetry.ERROR_FLUSH_TIMEOUT);
 	//
-	// 			assert.equal(testAppender.getEventsCount(), 1);
-	// 			assert.equal(testAppender.events[0].eventName, 'UnhandledError');
-	// 			assert.equal(testAppender.events[0].data.msg,  'This should get logged');
+	// 			assert.strictEqual(testAppender.getEventsCount(), 1);
+	// 			assert.strictEqual(testAppender.events[0].eventName, 'UnhandledError');
+	// 			assert.strictEqual(testAppender.events[0].data.msg,  'This should get logged');
 	//
 	// 			service.dispose();
 	// 		} finally {
@@ -298,16 +298,16 @@ suite('TelemetryService', () => {
 		this.clock.tick(ErrorTelemetry.ERROR_FLUSH_TIMEOUT);
 		await service.join();
 
-		assert.equal(errorStub.alwaysCalledWithExactly('Error Message', 'file.js', 2, 42, testError), true);
-		assert.equal(errorStub.callCount, 1);
+		assert.strictEqual(errorStub.alwaysCalledWithExactly('Error Message', 'file.js', 2, 42, testError), true);
+		assert.strictEqual(errorStub.callCount, 1);
 
-		assert.equal(testAppender.getEventsCount(), 1);
-		assert.equal(testAppender.events[0].eventName, 'UnhandledError');
-		assert.equal(testAppender.events[0].data.msg, 'Error Message');
-		assert.equal(testAppender.events[0].data.file, 'file.js');
-		assert.equal(testAppender.events[0].data.line, 2);
-		assert.equal(testAppender.events[0].data.column, 42);
-		assert.equal(testAppender.events[0].data.uncaught_error_msg, 'test');
+		assert.strictEqual(testAppender.getEventsCount(), 1);
+		assert.strictEqual(testAppender.events[0].eventName, 'UnhandledError');
+		assert.strictEqual(testAppender.events[0].data.msg, 'Error Message');
+		assert.strictEqual(testAppender.events[0].data.file, 'file.js');
+		assert.strictEqual(testAppender.events[0].data.line, 2);
+		assert.strictEqual(testAppender.events[0].data.column, 42);
+		assert.strictEqual(testAppender.events[0].data.uncaught_error_msg, 'test');
 
 		errorTelemetry.dispose();
 		service.dispose();
@@ -328,9 +328,9 @@ suite('TelemetryService', () => {
 		this.clock.tick(ErrorTelemetry.ERROR_FLUSH_TIMEOUT);
 		await service.join();
 
-		assert.equal(errorStub.callCount, 1);
-		assert.equal(testAppender.events[0].data.file.indexOf(settings.dangerousPathWithImportantInfo.replace(settings.personalInfo, personInfoWithSpaces)), -1);
-		assert.equal(testAppender.events[0].data.file, settings.importantInfo + '/test.js');
+		assert.strictEqual(errorStub.callCount, 1);
+		assert.strictEqual(testAppender.events[0].data.file.indexOf(settings.dangerousPathWithImportantInfo.replace(settings.personalInfo, personInfoWithSpaces)), -1);
+		assert.strictEqual(testAppender.events[0].data.file, settings.importantInfo + '/test.js');
 
 		errorTelemetry.dispose();
 		service.dispose();
@@ -350,8 +350,8 @@ suite('TelemetryService', () => {
 		(<any>window.onerror)('dangerousFilename', settings.dangerousPathWithImportantInfo + '/test.js', 2, 42, dangerousFilenameError);
 		clock.tick(ErrorTelemetry.ERROR_FLUSH_TIMEOUT);
 		return service.join().then(() => {
-			assert.equal(errorStub.callCount, 1);
-			assert.equal(testAppender.events[0].data.file.indexOf(settings.dangerousPathWithImportantInfo), -1);
+			assert.strictEqual(errorStub.callCount, 1);
+			assert.strictEqual(testAppender.events[0].data.file.indexOf(settings.dangerousPathWithImportantInfo), -1);
 
 			dangerousFilenameError = new Error('dangerousFilename');
 			dangerousFilenameError.stack = settings.stack;
@@ -359,9 +359,9 @@ suite('TelemetryService', () => {
 			clock.tick(ErrorTelemetry.ERROR_FLUSH_TIMEOUT);
 			return service.join();
 		}).then(() => {
-			assert.equal(errorStub.callCount, 2);
-			assert.equal(testAppender.events[0].data.file.indexOf(settings.dangerousPathWithImportantInfo), -1);
-			assert.equal(testAppender.events[0].data.file, settings.importantInfo + '/test.js');
+			assert.strictEqual(errorStub.callCount, 2);
+			assert.strictEqual(testAppender.events[0].data.file.indexOf(settings.dangerousPathWithImportantInfo), -1);
+			assert.strictEqual(testAppender.events[0].data.file, settings.importantInfo + '/test.js');
 
 			errorTelemetry.dispose();
 			service.dispose();
@@ -383,13 +383,13 @@ suite('TelemetryService', () => {
 			this.clock.tick(ErrorTelemetry.ERROR_FLUSH_TIMEOUT);
 			await service.join();
 
-			assert.equal(testAppender.events[0].data.msg.indexOf(settings.personalInfo), -1);
-			assert.equal(testAppender.events[0].data.msg.indexOf(settings.filePrefix), -1);
+			assert.strictEqual(testAppender.events[0].data.msg.indexOf(settings.personalInfo), -1);
+			assert.strictEqual(testAppender.events[0].data.msg.indexOf(settings.filePrefix), -1);
 
-			assert.equal(testAppender.events[0].data.callstack.indexOf(settings.personalInfo), -1);
-			assert.equal(testAppender.events[0].data.callstack.indexOf(settings.filePrefix), -1);
-			assert.notEqual(testAppender.events[0].data.callstack.indexOf(settings.stack[4].replace(settings.randomUserFile, settings.anonymizedRandomUserFile)), -1);
-			assert.equal(testAppender.events[0].data.callstack.split('\n').length, settings.stack.length);
+			assert.strictEqual(testAppender.events[0].data.callstack.indexOf(settings.personalInfo), -1);
+			assert.strictEqual(testAppender.events[0].data.callstack.indexOf(settings.filePrefix), -1);
+			assert.notStrictEqual(testAppender.events[0].data.callstack.indexOf(settings.stack[4].replace(settings.randomUserFile, settings.anonymizedRandomUserFile)), -1);
+			assert.strictEqual(testAppender.events[0].data.callstack.split('\n').length, settings.stack.length);
 
 			errorTelemetry.dispose();
 			service.dispose();
@@ -413,14 +413,14 @@ suite('TelemetryService', () => {
 		this.clock.tick(ErrorTelemetry.ERROR_FLUSH_TIMEOUT);
 		await service.join();
 
-		assert.equal(errorStub.callCount, 1);
+		assert.strictEqual(errorStub.callCount, 1);
 		// Test that no file information remains, esp. personal info
-		assert.equal(testAppender.events[0].data.msg.indexOf(settings.personalInfo), -1);
-		assert.equal(testAppender.events[0].data.msg.indexOf(settings.filePrefix), -1);
-		assert.equal(testAppender.events[0].data.callstack.indexOf(settings.personalInfo), -1);
-		assert.equal(testAppender.events[0].data.callstack.indexOf(settings.filePrefix), -1);
-		assert.notEqual(testAppender.events[0].data.callstack.indexOf(settings.stack[4].replace(settings.randomUserFile, settings.anonymizedRandomUserFile)), -1);
-		assert.equal(testAppender.events[0].data.callstack.split('\n').length, settings.stack.length);
+		assert.strictEqual(testAppender.events[0].data.msg.indexOf(settings.personalInfo), -1);
+		assert.strictEqual(testAppender.events[0].data.msg.indexOf(settings.filePrefix), -1);
+		assert.strictEqual(testAppender.events[0].data.callstack.indexOf(settings.personalInfo), -1);
+		assert.strictEqual(testAppender.events[0].data.callstack.indexOf(settings.filePrefix), -1);
+		assert.notStrictEqual(testAppender.events[0].data.callstack.indexOf(settings.stack[4].replace(settings.randomUserFile, settings.anonymizedRandomUserFile)), -1);
+		assert.strictEqual(testAppender.events[0].data.callstack.split('\n').length, settings.stack.length);
 
 		errorTelemetry.dispose();
 		service.dispose();
@@ -445,14 +445,14 @@ suite('TelemetryService', () => {
 			this.clock.tick(ErrorTelemetry.ERROR_FLUSH_TIMEOUT);
 			await service.join();
 
-			assert.notEqual(testAppender.events[0].data.msg.indexOf(settings.importantInfo), -1);
-			assert.equal(testAppender.events[0].data.msg.indexOf(settings.personalInfo), -1);
-			assert.equal(testAppender.events[0].data.msg.indexOf(settings.filePrefix), -1);
-			assert.notEqual(testAppender.events[0].data.callstack.indexOf(settings.importantInfo), -1);
-			assert.equal(testAppender.events[0].data.callstack.indexOf(settings.personalInfo), -1);
-			assert.equal(testAppender.events[0].data.callstack.indexOf(settings.filePrefix), -1);
-			assert.notEqual(testAppender.events[0].data.callstack.indexOf(settings.stack[4].replace(settings.randomUserFile, settings.anonymizedRandomUserFile)), -1);
-			assert.equal(testAppender.events[0].data.callstack.split('\n').length, settings.stack.length);
+			assert.notStrictEqual(testAppender.events[0].data.msg.indexOf(settings.importantInfo), -1);
+			assert.strictEqual(testAppender.events[0].data.msg.indexOf(settings.personalInfo), -1);
+			assert.strictEqual(testAppender.events[0].data.msg.indexOf(settings.filePrefix), -1);
+			assert.notStrictEqual(testAppender.events[0].data.callstack.indexOf(settings.importantInfo), -1);
+			assert.strictEqual(testAppender.events[0].data.callstack.indexOf(settings.personalInfo), -1);
+			assert.strictEqual(testAppender.events[0].data.callstack.indexOf(settings.filePrefix), -1);
+			assert.notStrictEqual(testAppender.events[0].data.callstack.indexOf(settings.stack[4].replace(settings.randomUserFile, settings.anonymizedRandomUserFile)), -1);
+			assert.strictEqual(testAppender.events[0].data.callstack.split('\n').length, settings.stack.length);
 
 			errorTelemetry.dispose();
 			service.dispose();
@@ -476,16 +476,16 @@ suite('TelemetryService', () => {
 		this.clock.tick(ErrorTelemetry.ERROR_FLUSH_TIMEOUT);
 		await service.join();
 
-		assert.equal(errorStub.callCount, 1);
+		assert.strictEqual(errorStub.callCount, 1);
 		// Test that important information remains but personal info does not
-		assert.notEqual(testAppender.events[0].data.msg.indexOf(settings.importantInfo), -1);
-		assert.equal(testAppender.events[0].data.msg.indexOf(settings.personalInfo), -1);
-		assert.equal(testAppender.events[0].data.msg.indexOf(settings.filePrefix), -1);
-		assert.notEqual(testAppender.events[0].data.callstack.indexOf(settings.importantInfo), -1);
-		assert.equal(testAppender.events[0].data.callstack.indexOf(settings.personalInfo), -1);
-		assert.equal(testAppender.events[0].data.callstack.indexOf(settings.filePrefix), -1);
-		assert.notEqual(testAppender.events[0].data.callstack.indexOf(settings.stack[4].replace(settings.randomUserFile, settings.anonymizedRandomUserFile)), -1);
-		assert.equal(testAppender.events[0].data.callstack.split('\n').length, settings.stack.length);
+		assert.notStrictEqual(testAppender.events[0].data.msg.indexOf(settings.importantInfo), -1);
+		assert.strictEqual(testAppender.events[0].data.msg.indexOf(settings.personalInfo), -1);
+		assert.strictEqual(testAppender.events[0].data.msg.indexOf(settings.filePrefix), -1);
+		assert.notStrictEqual(testAppender.events[0].data.callstack.indexOf(settings.importantInfo), -1);
+		assert.strictEqual(testAppender.events[0].data.callstack.indexOf(settings.personalInfo), -1);
+		assert.strictEqual(testAppender.events[0].data.callstack.indexOf(settings.filePrefix), -1);
+		assert.notStrictEqual(testAppender.events[0].data.callstack.indexOf(settings.stack[4].replace(settings.randomUserFile, settings.anonymizedRandomUserFile)), -1);
+		assert.strictEqual(testAppender.events[0].data.callstack.split('\n').length, settings.stack.length);
 
 		errorTelemetry.dispose();
 		service.dispose();
@@ -510,10 +510,10 @@ suite('TelemetryService', () => {
 			this.clock.tick(ErrorTelemetry.ERROR_FLUSH_TIMEOUT);
 			await service.join();
 
-			assert.notEqual(testAppender.events[0].data.callstack.indexOf('(' + settings.nodeModuleAsarPathToRetain), -1);
-			assert.notEqual(testAppender.events[0].data.callstack.indexOf('(' + settings.nodeModulePathToRetain), -1);
-			assert.notEqual(testAppender.events[0].data.callstack.indexOf('(/' + settings.nodeModuleAsarPathToRetain), -1);
-			assert.notEqual(testAppender.events[0].data.callstack.indexOf('(/' + settings.nodeModulePathToRetain), -1);
+			assert.notStrictEqual(testAppender.events[0].data.callstack.indexOf('(' + settings.nodeModuleAsarPathToRetain), -1);
+			assert.notStrictEqual(testAppender.events[0].data.callstack.indexOf('(' + settings.nodeModulePathToRetain), -1);
+			assert.notStrictEqual(testAppender.events[0].data.callstack.indexOf('(/' + settings.nodeModuleAsarPathToRetain), -1);
+			assert.notStrictEqual(testAppender.events[0].data.callstack.indexOf('(/' + settings.nodeModulePathToRetain), -1);
 
 			errorTelemetry.dispose();
 			service.dispose();
@@ -537,12 +537,12 @@ suite('TelemetryService', () => {
 		this.clock.tick(ErrorTelemetry.ERROR_FLUSH_TIMEOUT);
 		await service.join();
 
-		assert.equal(errorStub.callCount, 1);
+		assert.strictEqual(errorStub.callCount, 1);
 
-		assert.notEqual(testAppender.events[0].data.callstack.indexOf('(' + settings.nodeModuleAsarPathToRetain), -1);
-		assert.notEqual(testAppender.events[0].data.callstack.indexOf('(' + settings.nodeModulePathToRetain), -1);
-		assert.notEqual(testAppender.events[0].data.callstack.indexOf('(/' + settings.nodeModuleAsarPathToRetain), -1);
-		assert.notEqual(testAppender.events[0].data.callstack.indexOf('(/' + settings.nodeModulePathToRetain), -1);
+		assert.notStrictEqual(testAppender.events[0].data.callstack.indexOf('(' + settings.nodeModuleAsarPathToRetain), -1);
+		assert.notStrictEqual(testAppender.events[0].data.callstack.indexOf('(' + settings.nodeModulePathToRetain), -1);
+		assert.notStrictEqual(testAppender.events[0].data.callstack.indexOf('(/' + settings.nodeModuleAsarPathToRetain), -1);
+		assert.notStrictEqual(testAppender.events[0].data.callstack.indexOf('(/' + settings.nodeModulePathToRetain), -1);
 
 		errorTelemetry.dispose();
 		service.dispose();
@@ -568,14 +568,14 @@ suite('TelemetryService', () => {
 			this.clock.tick(ErrorTelemetry.ERROR_FLUSH_TIMEOUT);
 			await service.join();
 
-			assert.notEqual(testAppender.events[0].data.msg.indexOf(settings.importantInfo), -1);
-			assert.equal(testAppender.events[0].data.msg.indexOf(settings.personalInfo), -1);
-			assert.equal(testAppender.events[0].data.msg.indexOf(settings.filePrefix), -1);
-			assert.notEqual(testAppender.events[0].data.callstack.indexOf(settings.importantInfo), -1);
-			assert.equal(testAppender.events[0].data.callstack.indexOf(settings.personalInfo), -1);
-			assert.equal(testAppender.events[0].data.callstack.indexOf(settings.filePrefix), -1);
-			assert.notEqual(testAppender.events[0].data.callstack.indexOf(settings.stack[4].replace(settings.randomUserFile, settings.anonymizedRandomUserFile)), -1);
-			assert.equal(testAppender.events[0].data.callstack.split('\n').length, settings.stack.length);
+			assert.notStrictEqual(testAppender.events[0].data.msg.indexOf(settings.importantInfo), -1);
+			assert.strictEqual(testAppender.events[0].data.msg.indexOf(settings.personalInfo), -1);
+			assert.strictEqual(testAppender.events[0].data.msg.indexOf(settings.filePrefix), -1);
+			assert.notStrictEqual(testAppender.events[0].data.callstack.indexOf(settings.importantInfo), -1);
+			assert.strictEqual(testAppender.events[0].data.callstack.indexOf(settings.personalInfo), -1);
+			assert.strictEqual(testAppender.events[0].data.callstack.indexOf(settings.filePrefix), -1);
+			assert.notStrictEqual(testAppender.events[0].data.callstack.indexOf(settings.stack[4].replace(settings.randomUserFile, settings.anonymizedRandomUserFile)), -1);
+			assert.strictEqual(testAppender.events[0].data.callstack.split('\n').length, settings.stack.length);
 
 			errorTelemetry.dispose();
 			service.dispose();
@@ -599,16 +599,16 @@ suite('TelemetryService', () => {
 		this.clock.tick(ErrorTelemetry.ERROR_FLUSH_TIMEOUT);
 		await service.join();
 
-		assert.equal(errorStub.callCount, 1);
+		assert.strictEqual(errorStub.callCount, 1);
 		// Test that important information remains but personal info does not
-		assert.notEqual(testAppender.events[0].data.msg.indexOf(settings.importantInfo), -1);
-		assert.equal(testAppender.events[0].data.msg.indexOf(settings.personalInfo), -1);
-		assert.equal(testAppender.events[0].data.msg.indexOf(settings.filePrefix), -1);
-		assert.notEqual(testAppender.events[0].data.callstack.indexOf(settings.importantInfo), -1);
-		assert.equal(testAppender.events[0].data.callstack.indexOf(settings.personalInfo), -1);
-		assert.equal(testAppender.events[0].data.callstack.indexOf(settings.filePrefix), -1);
-		assert.notEqual(testAppender.events[0].data.callstack.indexOf(settings.stack[4].replace(settings.randomUserFile, settings.anonymizedRandomUserFile)), -1);
-		assert.equal(testAppender.events[0].data.callstack.split('\n').length, settings.stack.length);
+		assert.notStrictEqual(testAppender.events[0].data.msg.indexOf(settings.importantInfo), -1);
+		assert.strictEqual(testAppender.events[0].data.msg.indexOf(settings.personalInfo), -1);
+		assert.strictEqual(testAppender.events[0].data.msg.indexOf(settings.filePrefix), -1);
+		assert.notStrictEqual(testAppender.events[0].data.callstack.indexOf(settings.importantInfo), -1);
+		assert.strictEqual(testAppender.events[0].data.callstack.indexOf(settings.personalInfo), -1);
+		assert.strictEqual(testAppender.events[0].data.callstack.indexOf(settings.filePrefix), -1);
+		assert.notStrictEqual(testAppender.events[0].data.callstack.indexOf(settings.stack[4].replace(settings.randomUserFile, settings.anonymizedRandomUserFile)), -1);
+		assert.strictEqual(testAppender.events[0].data.callstack.split('\n').length, settings.stack.length);
 
 		errorTelemetry.dispose();
 		service.dispose();
@@ -634,14 +634,14 @@ suite('TelemetryService', () => {
 			this.clock.tick(ErrorTelemetry.ERROR_FLUSH_TIMEOUT);
 			await service.join();
 
-			assert.notEqual(testAppender.events[0].data.msg.indexOf(settings.missingModelPrefix), -1);
-			assert.equal(testAppender.events[0].data.msg.indexOf(settings.personalInfo), -1);
-			assert.equal(testAppender.events[0].data.msg.indexOf(settings.filePrefix), -1);
-			assert.notEqual(testAppender.events[0].data.callstack.indexOf(settings.missingModelPrefix), -1);
-			assert.equal(testAppender.events[0].data.callstack.indexOf(settings.personalInfo), -1);
-			assert.equal(testAppender.events[0].data.callstack.indexOf(settings.filePrefix), -1);
-			assert.notEqual(testAppender.events[0].data.callstack.indexOf(settings.stack[4].replace(settings.randomUserFile, settings.anonymizedRandomUserFile)), -1);
-			assert.equal(testAppender.events[0].data.callstack.split('\n').length, settings.stack.length);
+			assert.notStrictEqual(testAppender.events[0].data.msg.indexOf(settings.missingModelPrefix), -1);
+			assert.strictEqual(testAppender.events[0].data.msg.indexOf(settings.personalInfo), -1);
+			assert.strictEqual(testAppender.events[0].data.msg.indexOf(settings.filePrefix), -1);
+			assert.notStrictEqual(testAppender.events[0].data.callstack.indexOf(settings.missingModelPrefix), -1);
+			assert.strictEqual(testAppender.events[0].data.callstack.indexOf(settings.personalInfo), -1);
+			assert.strictEqual(testAppender.events[0].data.callstack.indexOf(settings.filePrefix), -1);
+			assert.notStrictEqual(testAppender.events[0].data.callstack.indexOf(settings.stack[4].replace(settings.randomUserFile, settings.anonymizedRandomUserFile)), -1);
+			assert.strictEqual(testAppender.events[0].data.callstack.split('\n').length, settings.stack.length);
 
 			errorTelemetry.dispose();
 			service.dispose();
@@ -664,17 +664,17 @@ suite('TelemetryService', () => {
 		this.clock.tick(ErrorTelemetry.ERROR_FLUSH_TIMEOUT);
 		await service.join();
 
-		assert.equal(errorStub.callCount, 1);
+		assert.strictEqual(errorStub.callCount, 1);
 		// Test that no file information remains, but this particular
 		// error message does (Received model events for missing model)
-		assert.notEqual(testAppender.events[0].data.msg.indexOf(settings.missingModelPrefix), -1);
-		assert.equal(testAppender.events[0].data.msg.indexOf(settings.personalInfo), -1);
-		assert.equal(testAppender.events[0].data.msg.indexOf(settings.filePrefix), -1);
-		assert.notEqual(testAppender.events[0].data.callstack.indexOf(settings.missingModelPrefix), -1);
-		assert.equal(testAppender.events[0].data.callstack.indexOf(settings.personalInfo), -1);
-		assert.equal(testAppender.events[0].data.callstack.indexOf(settings.filePrefix), -1);
-		assert.notEqual(testAppender.events[0].data.callstack.indexOf(settings.stack[4].replace(settings.randomUserFile, settings.anonymizedRandomUserFile)), -1);
-		assert.equal(testAppender.events[0].data.callstack.split('\n').length, settings.stack.length);
+		assert.notStrictEqual(testAppender.events[0].data.msg.indexOf(settings.missingModelPrefix), -1);
+		assert.strictEqual(testAppender.events[0].data.msg.indexOf(settings.personalInfo), -1);
+		assert.strictEqual(testAppender.events[0].data.msg.indexOf(settings.filePrefix), -1);
+		assert.notStrictEqual(testAppender.events[0].data.callstack.indexOf(settings.missingModelPrefix), -1);
+		assert.strictEqual(testAppender.events[0].data.callstack.indexOf(settings.personalInfo), -1);
+		assert.strictEqual(testAppender.events[0].data.callstack.indexOf(settings.filePrefix), -1);
+		assert.notStrictEqual(testAppender.events[0].data.callstack.indexOf(settings.stack[4].replace(settings.randomUserFile, settings.anonymizedRandomUserFile)), -1);
+		assert.strictEqual(testAppender.events[0].data.callstack.split('\n').length, settings.stack.length);
 
 		errorTelemetry.dispose();
 		service.dispose();
@@ -700,14 +700,14 @@ suite('TelemetryService', () => {
 			this.clock.tick(ErrorTelemetry.ERROR_FLUSH_TIMEOUT);
 			await service.join();
 
-			assert.notEqual(testAppender.events[0].data.msg.indexOf(settings.noSuchFilePrefix), -1);
-			assert.equal(testAppender.events[0].data.msg.indexOf(settings.personalInfo), -1);
-			assert.equal(testAppender.events[0].data.msg.indexOf(settings.filePrefix), -1);
-			assert.notEqual(testAppender.events[0].data.callstack.indexOf(settings.noSuchFilePrefix), -1);
-			assert.equal(testAppender.events[0].data.callstack.indexOf(settings.personalInfo), -1);
-			assert.equal(testAppender.events[0].data.callstack.indexOf(settings.filePrefix), -1);
-			assert.notEqual(testAppender.events[0].data.callstack.indexOf(settings.stack[4].replace(settings.randomUserFile, settings.anonymizedRandomUserFile)), -1);
-			assert.equal(testAppender.events[0].data.callstack.split('\n').length, settings.stack.length);
+			assert.notStrictEqual(testAppender.events[0].data.msg.indexOf(settings.noSuchFilePrefix), -1);
+			assert.strictEqual(testAppender.events[0].data.msg.indexOf(settings.personalInfo), -1);
+			assert.strictEqual(testAppender.events[0].data.msg.indexOf(settings.filePrefix), -1);
+			assert.notStrictEqual(testAppender.events[0].data.callstack.indexOf(settings.noSuchFilePrefix), -1);
+			assert.strictEqual(testAppender.events[0].data.callstack.indexOf(settings.personalInfo), -1);
+			assert.strictEqual(testAppender.events[0].data.callstack.indexOf(settings.filePrefix), -1);
+			assert.notStrictEqual(testAppender.events[0].data.callstack.indexOf(settings.stack[4].replace(settings.randomUserFile, settings.anonymizedRandomUserFile)), -1);
+			assert.strictEqual(testAppender.events[0].data.callstack.split('\n').length, settings.stack.length);
 
 			errorTelemetry.dispose();
 			service.dispose();
@@ -734,18 +734,18 @@ suite('TelemetryService', () => {
 			this.clock.tick(ErrorTelemetry.ERROR_FLUSH_TIMEOUT);
 			await service.join();
 
-			assert.equal(errorStub.callCount, 1);
+			assert.strictEqual(errorStub.callCount, 1);
 			// Test that no file information remains, but this particular
 			// error message does (ENOENT: no such file or directory)
 			Errors.onUnexpectedError(noSuchFileError);
-			assert.notEqual(testAppender.events[0].data.msg.indexOf(settings.noSuchFilePrefix), -1);
-			assert.equal(testAppender.events[0].data.msg.indexOf(settings.personalInfo), -1);
-			assert.equal(testAppender.events[0].data.msg.indexOf(settings.filePrefix), -1);
-			assert.notEqual(testAppender.events[0].data.callstack.indexOf(settings.noSuchFilePrefix), -1);
-			assert.equal(testAppender.events[0].data.callstack.indexOf(settings.personalInfo), -1);
-			assert.equal(testAppender.events[0].data.callstack.indexOf(settings.filePrefix), -1);
-			assert.notEqual(testAppender.events[0].data.callstack.indexOf(settings.stack[4].replace(settings.randomUserFile, settings.anonymizedRandomUserFile)), -1);
-			assert.equal(testAppender.events[0].data.callstack.split('\n').length, settings.stack.length);
+			assert.notStrictEqual(testAppender.events[0].data.msg.indexOf(settings.noSuchFilePrefix), -1);
+			assert.strictEqual(testAppender.events[0].data.msg.indexOf(settings.personalInfo), -1);
+			assert.strictEqual(testAppender.events[0].data.msg.indexOf(settings.filePrefix), -1);
+			assert.notStrictEqual(testAppender.events[0].data.callstack.indexOf(settings.noSuchFilePrefix), -1);
+			assert.strictEqual(testAppender.events[0].data.callstack.indexOf(settings.personalInfo), -1);
+			assert.strictEqual(testAppender.events[0].data.callstack.indexOf(settings.filePrefix), -1);
+			assert.notStrictEqual(testAppender.events[0].data.callstack.indexOf(settings.stack[4].replace(settings.randomUserFile, settings.anonymizedRandomUserFile)), -1);
+			assert.strictEqual(testAppender.events[0].data.callstack.split('\n').length, settings.stack.length);
 
 			errorTelemetry.dispose();
 			service.dispose();
@@ -759,7 +759,7 @@ suite('TelemetryService', () => {
 		let service = new TelemetryService({ appender: testAppender }, undefined!);
 
 		return service.publicLog('testEvent').then(() => {
-			assert.equal(testAppender.getEventsCount(), 1);
+			assert.strictEqual(testAppender.getEventsCount(), 1);
 			service.dispose();
 		});
 	}));
@@ -773,23 +773,23 @@ suite('TelemetryService', () => {
 		let service = new TelemetryService({
 			appender: testAppender
 		}, new class extends TestConfigurationService {
-			onDidChangeConfiguration = emitter.event;
-			getValue() {
+			override onDidChangeConfiguration = emitter.event;
+			override getValue() {
 				return {
 					enableTelemetry: enableTelemetry
 				} as any;
 			}
 		}());
 
-		assert.equal(service.isOptedIn, false);
+		assert.strictEqual(service.isOptedIn, false);
 
 		enableTelemetry = true;
 		emitter.fire({});
-		assert.equal(service.isOptedIn, true);
+		assert.strictEqual(service.isOptedIn, true);
 
 		enableTelemetry = false;
 		emitter.fire({});
-		assert.equal(service.isOptedIn, false);
+		assert.strictEqual(service.isOptedIn, false);
 
 		service.dispose();
 	});

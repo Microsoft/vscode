@@ -28,7 +28,7 @@ suite('JSON - formatter', () => {
 			content = content.substring(0, edit.offset) + edit.content + content.substring(edit.offset + edit.length);
 		}
 
-		assert.equal(content, expected);
+		assert.strictEqual(content, expected);
 	}
 
 	test('object - single property', () => {

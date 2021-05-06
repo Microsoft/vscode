@@ -14,6 +14,7 @@ let url = require('url');
 // Please try and keep this list in alphabetical order! Thank you.
 let nonBuiltInLanguages = { // { fileNames, extensions  }
 	"argdown": { extensions: ['ad', 'adown', 'argdown', 'argdn'] },
+	"bicep": { extensions: ['bicep'] },
 	"elixir": { extensions: ['ex'] },
 	"elm": { extensions: ['elm'] },
 	"erb": { extensions: ['erb', 'rhtml', 'html.erb'] },
@@ -27,7 +28,7 @@ let nonBuiltInLanguages = { // { fileNames, extensions  }
 	"kotlin": { extensions: ['kt'] },
 	"mustache": { extensions: ['mustache', 'mst', 'mu', 'stache'] },
 	"nunjucks": { extensions: ['nunjucks', 'nunjs', 'nunj', 'nj', 'njk', 'tmpl', 'tpl'] },
-	"ocaml": { extensions: ['ml', 'mli'] },
+	"ocaml": { extensions: ['ml', 'mli', 'mll', 'mly', 'eliom', 'eliomi'] },
 	"puppet": { extensions: ['puppet'] },
 	"r": { extensions: ['r', 'rhistory', 'rprofile', 'rt'] },
 	"sass": { extensions: ['sass'] },
@@ -182,6 +183,16 @@ function darkenColor(color) {
 	return res;
 }
 
+function mergeMapping(to, from, property) {
+	if (from[property]) {
+		if (to[property]) {
+			to[property].push(...from[property]);
+		} else {
+			to[property] = from[property];
+		}
+	}
+}
+
 function getLanguageMappings() {
 	let langMappings = {};
 	let allExtensions = fs.readdirSync('..');
@@ -204,7 +215,22 @@ function getLanguageMappings() {
 						if (Array.isArray(filenames)) {
 							mapping.fileNames = filenames.map(function (f) { return f.toLowerCase(); });
 						}
-						langMappings[languageId] = mapping;
+						let existing = langMappings[languageId];
+
+						if (existing) {
+							// multiple contributions to the same language
+							// give preference to the contribution wth the configuration
+							if (languages[k].configuration) {
+								mergeMapping(mapping, existing, 'extensions');
+								mergeMapping(mapping, existing, 'fileNames');
+								langMappings[languageId] = mapping;
+							} else {
+								mergeMapping(existing, mapping, 'extensions');
+								mergeMapping(existing, mapping, 'fileNames');
+							}
+						} else {
+							langMappings[languageId] = mapping;
+						}
 					}
 				}
 			}
@@ -215,6 +241,8 @@ function getLanguageMappings() {
 	}
 	return langMappings;
 }
+
+
 
 exports.copyFont = function () {
 	return downloadBinary(font, './icons/seti.woff');

@@ -42,7 +42,7 @@ export class ExtHostDocumentData extends MirrorTextModel {
 		super(uri, lines, eol, versionId);
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		// we don't really dispose documents but let
 		// extensions still read from them. some
 		// operations, live saving, will now error tho

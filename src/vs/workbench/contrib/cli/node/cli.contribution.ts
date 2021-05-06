@@ -48,7 +48,7 @@ class InstallAction extends Action2 {
 			id: 'workbench.action.installCommandLine',
 			title: {
 				value: nls.localize('install', "Install '{0}' command in PATH", product.applicationName),
-				original: `Shell Command: Install \'${product.applicationName}\' command in PATH`
+				original: `Install \'${product.applicationName}\' command in PATH`
 			},
 			category,
 			f1: true,
@@ -111,12 +111,17 @@ class InstallAction extends Action2 {
 		});
 	}
 
-	private isInstalled(target: string): Promise<boolean> {
-		return fs.promises.lstat(target)
-			.then(stat => stat.isSymbolicLink())
-			.then(() => extpath.realpath(target))
-			.then(link => link === getSource())
-			.then(undefined, ignore('ENOENT', false));
+	private async isInstalled(target: string): Promise<boolean> {
+		try {
+			const stat = await fs.promises.lstat(target);
+			return stat.isSymbolicLink() && getSource() === await extpath.realpath(target);
+		} catch (err) {
+			if (err.code === 'ENOENT') {
+				return false;
+			}
+
+			throw err;
+		}
 	}
 }
 
@@ -127,7 +132,7 @@ class UninstallAction extends Action2 {
 			id: 'workbench.action.uninstallCommandLine',
 			title: {
 				value: nls.localize('uninstall', "Uninstall '{0}' command from PATH", product.applicationName),
-				original: `Shell Command: Uninstall \'${product.applicationName}\' command from PATH`
+				original: `Uninstall \'${product.applicationName}\' command from PATH`
 			},
 			category,
 			f1: true,

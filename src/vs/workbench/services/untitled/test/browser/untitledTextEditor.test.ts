@@ -15,6 +15,7 @@ import { IIdentifiedSingleEditOperation } from 'vs/editor/common/model';
 import { Range } from 'vs/editor/common/core/range';
 import { UntitledTextEditorInput } from 'vs/workbench/services/untitled/common/untitledTextEditorInput';
 import { IUntitledTextEditorModel } from 'vs/workbench/services/untitled/common/untitledTextEditorModel';
+import { CancellationToken } from 'vs/base/common/cancellation';
 
 suite('Untitled text editors', () => {
 
@@ -62,7 +63,7 @@ suite('Untitled text editors', () => {
 
 		const resourcePromise = awaitDidChangeDirty(accessor.untitledTextEditorService);
 
-		model.textEditorModel.setValue('foo bar');
+		model.textEditorModel?.setValue('foo bar');
 
 		const resource = await resourcePromise;
 
@@ -147,12 +148,12 @@ suite('Untitled text editors', () => {
 
 		// dirty
 		const model = await input.resolve();
-		model.textEditorModel.setValue('foo bar');
+		model.textEditorModel?.setValue('foo bar');
 		assert.ok(model.isDirty());
-		assert.ok(workingCopyService.isDirty(model.resource));
-		model.textEditorModel.setValue('');
+		assert.ok(workingCopyService.isDirty(model.resource, model.typeId));
+		model.textEditorModel?.setValue('');
 		assert.ok(!model.isDirty());
-		assert.ok(!workingCopyService.isDirty(model.resource));
+		assert.ok(!workingCopyService.isDirty(model.resource, model.typeId));
 		input.dispose();
 		model.dispose();
 	});
@@ -196,9 +197,9 @@ suite('Untitled text editors', () => {
 
 		// dirty
 		const model = await input.resolve();
-		model.textEditorModel.setValue('foo bar');
+		model.textEditorModel?.setValue('foo bar');
 		assert.ok(model.isDirty());
-		model.textEditorModel.setValue('');
+		model.textEditorModel?.setValue('');
 		assert.ok(model.isDirty());
 		input.dispose();
 		model.dispose();
@@ -326,7 +327,7 @@ suite('Untitled text editors', () => {
 
 		// encoding
 		const model = await input.resolve();
-		model.setEncoding('utf16');
+		await model.setEncoding('utf16');
 		assert.strictEqual(counter, 1);
 		input.dispose();
 		model.dispose();
@@ -345,19 +346,19 @@ suite('Untitled text editors', () => {
 
 		// label
 		const model = await input.resolve();
-		model.textEditorModel.setValue('Foo Bar');
+		model.textEditorModel?.setValue('Foo Bar');
 		assert.strictEqual(counter, 1);
 		input.dispose();
 		model.dispose();
 	});
 
-	test('service#onDidDisposeModel', async () => {
+	test('service#onWillDispose', async () => {
 		const service = accessor.untitledTextEditorService;
 		const input = instantiationService.createInstance(UntitledTextEditorInput, service.create());
 
 		let counter = 0;
 
-		service.onDidDispose(model => {
+		service.onWillDispose(model => {
 			counter++;
 			assert.strictEqual(model.resource.toString(), input.resource.toString());
 		});
@@ -366,6 +367,20 @@ suite('Untitled text editors', () => {
 		assert.strictEqual(counter, 0);
 		model.dispose();
 		assert.strictEqual(counter, 1);
+	});
+
+
+	test('service#getValue', async () => {
+		// This function is used for the untitledocumentData API
+		const service = accessor.untitledTextEditorService;
+		const model1 = await instantiationService.createInstance(UntitledTextEditorInput, service.create()).resolve();
+
+		model1.textEditorModel!.setValue('foo bar');
+		assert.strictEqual(service.getValue(model1.resource), 'foo bar');
+		model1.dispose();
+
+		// When a model doesn't exist, it should return undefined
+		assert.strictEqual(service.getValue(URI.parse('https://www.microsoft.com')), undefined);
 	});
 
 	test('model#onDidChangeContent', async function () {
@@ -377,16 +392,16 @@ suite('Untitled text editors', () => {
 		const model = await input.resolve();
 		model.onDidChangeContent(() => counter++);
 
-		model.textEditorModel.setValue('foo');
+		model.textEditorModel?.setValue('foo');
 
 		assert.strictEqual(counter, 1, 'Dirty model should trigger event');
-		model.textEditorModel.setValue('bar');
+		model.textEditorModel?.setValue('bar');
 
 		assert.strictEqual(counter, 2, 'Content change when dirty should trigger event');
-		model.textEditorModel.setValue('');
+		model.textEditorModel?.setValue('');
 
 		assert.strictEqual(counter, 3, 'Manual revert should trigger event');
-		model.textEditorModel.setValue('foo');
+		model.textEditorModel?.setValue('foo');
 
 		assert.strictEqual(counter, 4, 'Dirty model should trigger event');
 
@@ -403,7 +418,7 @@ suite('Untitled text editors', () => {
 		const model = await input.resolve();
 		model.onDidRevert(() => counter++);
 
-		model.textEditorModel.setValue('foo');
+		model.textEditorModel?.setValue('foo');
 
 		await model.revert();
 
@@ -420,43 +435,43 @@ suite('Untitled text editors', () => {
 		let model = await input.resolve();
 		model.onDidChangeName(() => counter++);
 
-		model.textEditorModel.setValue('foo');
+		model.textEditorModel?.setValue('foo');
 		assert.strictEqual(input.getName(), 'foo');
 		assert.strictEqual(model.name, 'foo');
 
 		assert.strictEqual(counter, 1);
-		model.textEditorModel.setValue('bar');
+		model.textEditorModel?.setValue('bar');
 		assert.strictEqual(input.getName(), 'bar');
 		assert.strictEqual(model.name, 'bar');
 
 		assert.strictEqual(counter, 2);
-		model.textEditorModel.setValue('');
+		model.textEditorModel?.setValue('');
 		assert.strictEqual(input.getName(), 'Untitled-1');
 		assert.strictEqual(model.name, 'Untitled-1');
 
-		model.textEditorModel.setValue('        ');
+		model.textEditorModel?.setValue('        ');
 		assert.strictEqual(input.getName(), 'Untitled-1');
 		assert.strictEqual(model.name, 'Untitled-1');
 
-		model.textEditorModel.setValue('([]}'); // require actual words
+		model.textEditorModel?.setValue('([]}'); // require actual words
 		assert.strictEqual(input.getName(), 'Untitled-1');
 		assert.strictEqual(model.name, 'Untitled-1');
 
-		model.textEditorModel.setValue('([]}hello   '); // require actual words
+		model.textEditorModel?.setValue('([]}hello   '); // require actual words
 		assert.strictEqual(input.getName(), '([]}hello');
 		assert.strictEqual(model.name, '([]}hello');
 
-		model.textEditorModel.setValue('12345678901234567890123456789012345678901234567890'); // trimmed at 40chars max
+		model.textEditorModel?.setValue('12345678901234567890123456789012345678901234567890'); // trimmed at 40chars max
 		assert.strictEqual(input.getName(), '1234567890123456789012345678901234567890');
 		assert.strictEqual(model.name, '1234567890123456789012345678901234567890');
 
-		model.textEditorModel.setValue('123456789012345678901234567890123456789🌞'); // do not break grapehems (#111235)
+		model.textEditorModel?.setValue('123456789012345678901234567890123456789🌞'); // do not break grapehems (#111235)
 		assert.strictEqual(input.getName(), '123456789012345678901234567890123456789');
 		assert.strictEqual(model.name, '123456789012345678901234567890123456789');
 
 		assert.strictEqual(counter, 6);
 
-		model.textEditorModel.setValue('Hello\nWorld');
+		model.textEditorModel?.setValue('Hello\nWorld');
 		assert.strictEqual(counter, 7);
 
 		function createSingleEditOp(text: string, positionLineNumber: number, positionColumn: number, selectionLineNumber: number = positionLineNumber, selectionColumn: number = positionColumn): IIdentifiedSingleEditOperation {
@@ -475,7 +490,7 @@ suite('Untitled text editors', () => {
 			};
 		}
 
-		model.textEditorModel.applyEdits([createSingleEditOp('hello', 2, 2)]);
+		model.textEditorModel?.applyEdits([createSingleEditOp('hello', 2, 2)]);
 		assert.strictEqual(counter, 7); // change was not on first line
 
 		input.dispose();
@@ -499,10 +514,10 @@ suite('Untitled text editors', () => {
 		const model = await input.resolve();
 		model.onDidChangeDirty(() => counter++);
 
-		model.textEditorModel.setValue('foo');
+		model.textEditorModel?.setValue('foo');
 
 		assert.strictEqual(counter, 1, 'Dirty model should trigger event');
-		model.textEditorModel.setValue('bar');
+		model.textEditorModel?.setValue('bar');
 
 		assert.strictEqual(counter, 1, 'Another change does not fire event');
 
@@ -519,14 +534,46 @@ suite('Untitled text editors', () => {
 		const model = await input.resolve();
 		model.onDidChangeEncoding(() => counter++);
 
-		model.setEncoding('utf16');
+		await model.setEncoding('utf16');
 
 		assert.strictEqual(counter, 1, 'Dirty model should trigger event');
-		model.setEncoding('utf16');
+		await model.setEncoding('utf16');
 
 		assert.strictEqual(counter, 1, 'Another change to same encoding does not fire event');
 
 		input.dispose();
 		model.dispose();
 	});
+
+	test('backup and restore (simple)', async function () {
+		return testBackupAndRestore('Some very small file text content.');
+	});
+
+	test('backup and restore (large, #121347)', async function () {
+		const largeContent = '국어한\n'.repeat(100000);
+		return testBackupAndRestore(largeContent);
+	});
+
+	async function testBackupAndRestore(content: string) {
+		const service = accessor.untitledTextEditorService;
+		const originalInput = instantiationService.createInstance(UntitledTextEditorInput, service.create());
+		const restoredInput = instantiationService.createInstance(UntitledTextEditorInput, service.create());
+
+		const originalModel = await originalInput.resolve();
+		originalModel.textEditorModel?.setValue(content);
+
+		const backup = await originalModel.backup(CancellationToken.None);
+		const modelRestoredIdentifier = { typeId: originalModel.typeId, resource: restoredInput.resource };
+		await accessor.workingCopyBackupService.backup(modelRestoredIdentifier, backup.content);
+
+		const restoredModel = await restoredInput.resolve();
+
+		assert.strictEqual(restoredModel.textEditorModel?.getValue(), content);
+		assert.strictEqual(restoredModel.isDirty(), true);
+
+		originalInput.dispose();
+		originalModel.dispose();
+		restoredInput.dispose();
+		restoredModel.dispose();
+	}
 });

@@ -106,7 +106,7 @@ export class View extends ViewEventHandler {
 
 		// The view context is passed on to most classes (basically to reduce param. counts in ctors)
 		this._context = new ViewContext(configuration, themeService.getColorTheme(), model);
-		this._configPixelRatio = this._configPixelRatio = this._context.configuration.options.get(EditorOption.pixelRatio);
+		this._configPixelRatio = this._context.configuration.options.get(EditorOption.pixelRatio);
 
 		// Ensure the view is the first event handler in order to update the layout
 		this._context.addEventHandler(this);
@@ -300,32 +300,32 @@ export class View extends ViewEventHandler {
 	}
 
 	// --- begin event handlers
-	public handleEvents(events: viewEvents.ViewEvent[]): void {
+	public override handleEvents(events: viewEvents.ViewEvent[]): void {
 		super.handleEvents(events);
 		this._scheduleRender();
 	}
-	public onConfigurationChanged(e: viewEvents.ViewConfigurationChangedEvent): boolean {
+	public override onConfigurationChanged(e: viewEvents.ViewConfigurationChangedEvent): boolean {
 		this._configPixelRatio = this._context.configuration.options.get(EditorOption.pixelRatio);
 		this.domNode.setClassName(this._getEditorClassName());
 		this._applyLayout();
 		return false;
 	}
-	public onCursorStateChanged(e: viewEvents.ViewCursorStateChangedEvent): boolean {
+	public override onCursorStateChanged(e: viewEvents.ViewCursorStateChangedEvent): boolean {
 		this._selections = e.selections;
 		return false;
 	}
-	public onFocusChanged(e: viewEvents.ViewFocusChangedEvent): boolean {
+	public override onFocusChanged(e: viewEvents.ViewFocusChangedEvent): boolean {
 		this.domNode.setClassName(this._getEditorClassName());
 		return false;
 	}
-	public onThemeChanged(e: viewEvents.ViewThemeChangedEvent): boolean {
+	public override onThemeChanged(e: viewEvents.ViewThemeChangedEvent): boolean {
 		this.domNode.setClassName(this._getEditorClassName());
 		return false;
 	}
 
 	// --- end event handlers
 
-	public dispose(): void {
+	public override dispose(): void {
 		if (this._renderAnimationFrame !== null) {
 			this._renderAnimationFrame.dispose();
 			this._renderAnimationFrame = null;

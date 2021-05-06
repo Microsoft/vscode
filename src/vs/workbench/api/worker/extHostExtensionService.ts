@@ -11,6 +11,7 @@ import { RequireInterceptor } from 'vs/workbench/api/common/extHostRequireInterc
 import { ExtensionIdentifier, IExtensionDescription } from 'vs/platform/extensions/common/extensions';
 import { ExtensionRuntime } from 'vs/workbench/api/common/extHostTypes';
 import { timeout } from 'vs/base/common/async';
+import { MainContext, MainThreadConsoleShape } from 'vs/workbench/api/common/extHost.protocol';
 
 namespace TrustedFunction {
 
@@ -68,6 +69,9 @@ export class ExtHostExtensionService extends AbstractExtHostExtensionService {
 	private _fakeModules?: WorkerRequireInterceptor;
 
 	protected async _beforeAlmostReadyToRunExtensions(): Promise<void> {
+		const mainThreadConsole = this._extHostContext.getProxy(MainContext.MainThreadConsole);
+		wrapConsoleMethods(mainThreadConsole, this._initData.environment.isExtensionDevelopmentDebug);
+
 		// initialize API and register actors
 		const apiFactory = this._instaService.invokeFunction(createApiFactoryAndRegisterActors);
 		this._fakeModules = this._instaService.createInstance(WorkerRequireInterceptor, apiFactory, this._registry);
@@ -166,4 +170,79 @@ export class ExtHostExtensionService extends AbstractExtHostExtensionService {
 
 function ensureSuffix(path: string, suffix: string): string {
 	return path.endsWith(suffix) ? path : path + suffix;
+}
+
+// copied from bootstrap-fork.js
+function wrapConsoleMethods(service: MainThreadConsoleShape, callToNative: boolean) {
+	wrap('info', 'log');
+	wrap('log', 'log');
+	wrap('warn', 'warn');
+	wrap('error', 'error');
+
+	function wrap(method: 'error' | 'warn' | 'info' | 'log', severity: 'error' | 'warn' | 'log') {
+		const original = console[method];
+		console[method] = function () {
+			service.$logExtensionHostMessage({ type: '__$console', severity, arguments: safeToArray(arguments) });
+			if (callToNative) {
+				original.apply(console, arguments as any);
+			}
+		};
+	}
+
+	const MAX_LENGTH = 100000;
+
+	function safeToArray(args: IArguments) {
+		const seen: any[] = [];
+		const argsArray = [];
+
+		// Massage some arguments with special treatment
+		if (args.length) {
+			for (let i = 0; i < args.length; i++) {
+
+				// Any argument of type 'undefined' needs to be specially treated because
+				// JSON.stringify will simply ignore those. We replace them with the string
+				// 'undefined' which is not 100% right, but good enough to be logged to console
+				if (typeof args[i] === 'undefined') {
+					args[i] = 'undefined';
+				}
+
+				// Any argument that is an Error will be changed to be just the error stack/message
+				// itself because currently cannot serialize the error over entirely.
+				else if (args[i] instanceof Error) {
+					const errorObj = args[i];
+					if (errorObj.stack) {
+						args[i] = errorObj.stack;
+					} else {
+						args[i] = errorObj.toString();
+					}
+				}
+
+				argsArray.push(args[i]);
+			}
+		}
+
+		try {
+			const res = JSON.stringify(argsArray, function (key, value) {
+
+				// Objects get special treatment to prevent circles
+				if (value && typeof value === 'object') {
+					if (seen.indexOf(value) !== -1) {
+						return '[Circular]';
+					}
+
+					seen.push(value);
+				}
+
+				return value;
+			});
+
+			if (res.length > MAX_LENGTH) {
+				return 'Output omitted for a large object that exceeds the limits';
+			}
+
+			return res;
+		} catch (error) {
+			return `Output omitted for an object that cannot be inspected ('${error.toString()}')`;
+		}
+	}
 }

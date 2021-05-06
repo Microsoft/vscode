@@ -662,7 +662,7 @@ class RenderedViewLine implements IRenderedViewLine {
 }
 
 class WebKitRenderedViewLine extends RenderedViewLine {
-	protected _readVisibleRangesForRange(domNode: FastDomNode<HTMLElement>, startColumn: number, endColumn: number, context: DomReadingContext): HorizontalRange[] | null {
+	protected override _readVisibleRangesForRange(domNode: FastDomNode<HTMLElement>, startColumn: number, endColumn: number, context: DomReadingContext): HorizontalRange[] | null {
 		const output = super._readVisibleRangesForRange(domNode, startColumn, endColumn, context);
 
 		if (!output || output.length === 0 || startColumn === endColumn || (startColumn === 1 && endColumn === this._characterMapping.length)) {

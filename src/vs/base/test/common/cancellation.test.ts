@@ -12,7 +12,7 @@ suite('CancellationToken', function () {
 		assert.strictEqual(typeof CancellationToken.None.onCancellationRequested, 'function');
 	});
 
-	test('cancel before token', function (done) {
+	test('cancel before token', function () {
 
 		const source = new CancellationTokenSource();
 		assert.strictEqual(source.token.isCancellationRequested, false);
@@ -20,9 +20,8 @@ suite('CancellationToken', function () {
 
 		assert.strictEqual(source.token.isCancellationRequested, true);
 
-		source.token.onCancellationRequested(function () {
-			assert.ok(true);
-			done();
+		return new Promise<void>(resolve => {
+			source.token.onCancellationRequested(() => resolve());
 		});
 	});
 

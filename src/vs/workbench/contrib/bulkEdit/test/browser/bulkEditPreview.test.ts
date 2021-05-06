@@ -24,17 +24,17 @@ suite('BulkEditPreview', function () {
 	setup(function () {
 
 		const fileService: IFileService = new class extends mock<IFileService>() {
-			onDidFilesChange = Event.None;
-			async exists() {
+			override onDidFilesChange = Event.None;
+			override async exists() {
 				return true;
 			}
 		};
 
 		const modelService: IModelService = new class extends mock<IModelService>() {
-			getModel() {
+			override getModel() {
 				return null;
 			}
-			getModels() {
+			override getModels() {
 				return [];
 			}
 		};
@@ -53,8 +53,8 @@ suite('BulkEditPreview', function () {
 		];
 
 		const ops = await instaService.invokeFunction(BulkFileOperations.create, edits);
-		assert.equal(ops.fileOperations.length, 1);
-		assert.equal(ops.checked.isChecked(edits[0]), false);
+		assert.strictEqual(ops.fileOperations.length, 1);
+		assert.strictEqual(ops.checked.isChecked(edits[0]), false);
 	});
 
 	test('has categories', async function () {
@@ -66,9 +66,9 @@ suite('BulkEditPreview', function () {
 
 
 		const ops = await instaService.invokeFunction(BulkFileOperations.create, edits);
-		assert.equal(ops.categories.length, 2);
-		assert.equal(ops.categories[0].metadata.label, 'uri1'); // unconfirmed!
-		assert.equal(ops.categories[1].metadata.label, 'uri2');
+		assert.strictEqual(ops.categories.length, 2);
+		assert.strictEqual(ops.categories[0].metadata.label, 'uri1'); // unconfirmed!
+		assert.strictEqual(ops.categories[1].metadata.label, 'uri2');
 	});
 
 	test('has not categories', async function () {
@@ -79,9 +79,9 @@ suite('BulkEditPreview', function () {
 		];
 
 		const ops = await instaService.invokeFunction(BulkFileOperations.create, edits);
-		assert.equal(ops.categories.length, 1);
-		assert.equal(ops.categories[0].metadata.label, 'uri1'); // unconfirmed!
-		assert.equal(ops.categories[0].metadata.label, 'uri1');
+		assert.strictEqual(ops.categories.length, 1);
+		assert.strictEqual(ops.categories[0].metadata.label, 'uri1'); // unconfirmed!
+		assert.strictEqual(ops.categories[0].metadata.label, 'uri1');
 	});
 
 	test('category selection', async function () {
@@ -94,8 +94,8 @@ suite('BulkEditPreview', function () {
 
 		const ops = await instaService.invokeFunction(BulkFileOperations.create, edits);
 
-		assert.equal(ops.checked.isChecked(edits[0]), true);
-		assert.equal(ops.checked.isChecked(edits[1]), true);
+		assert.strictEqual(ops.checked.isChecked(edits[0]), true);
+		assert.strictEqual(ops.checked.isChecked(edits[1]), true);
 
 		assert.ok(edits === ops.getWorkspaceEdit());
 
@@ -105,8 +105,8 @@ suite('BulkEditPreview', function () {
 		const newEdits = ops.getWorkspaceEdit();
 		assert.ok(edits !== newEdits);
 
-		assert.equal(edits.length, 2);
-		assert.equal(newEdits.length, 1);
+		assert.strictEqual(edits.length, 2);
+		assert.strictEqual(newEdits.length, 1);
 	});
 
 	test('fix bad metadata', async function () {
@@ -120,7 +120,7 @@ suite('BulkEditPreview', function () {
 
 		const ops = await instaService.invokeFunction(BulkFileOperations.create, edits);
 
-		assert.equal(ops.checked.isChecked(edits[0]), false);
-		assert.equal(ops.checked.isChecked(edits[1]), false);
+		assert.strictEqual(ops.checked.isChecked(edits[0]), false);
+		assert.strictEqual(ops.checked.isChecked(edits[1]), false);
 	});
 });

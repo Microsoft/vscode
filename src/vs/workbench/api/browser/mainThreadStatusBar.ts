@@ -10,12 +10,12 @@ import { extHostNamedCustomer } from 'vs/workbench/api/common/extHostCustomers';
 import { dispose } from 'vs/base/common/lifecycle';
 import { Command } from 'vs/editor/common/modes';
 import { IAccessibilityInformation } from 'vs/platform/accessibility/common/accessibility';
+import { getCodiconAriaLabel } from 'vs/base/common/codicons';
 
 @extHostNamedCustomer(MainContext.MainThreadStatusBar)
 export class MainThreadStatusBar implements MainThreadStatusBarShape {
 
 	private readonly entries: Map<number, { accessor: IStatusbarEntryAccessor, alignment: MainThreadStatusBarAlignment, priority: number }> = new Map();
-	static readonly CODICON_REGEXP = /\$\((.*?)\)/g;
 
 	constructor(
 		_extHostContext: IExtHostContext,
@@ -35,7 +35,7 @@ export class MainThreadStatusBar implements MainThreadStatusBarShape {
 			ariaLabel = accessibilityInformation.label;
 			role = accessibilityInformation.role;
 		} else {
-			ariaLabel = text ? text.replace(MainThreadStatusBar.CODICON_REGEXP, (_match, codiconName) => codiconName) : '';
+			ariaLabel = getCodiconAriaLabel(text);
 		}
 		const entry: IStatusbarEntry = { text, tooltip, command, color, backgroundColor, ariaLabel, role };
 

@@ -17,7 +17,7 @@ import { WalkThroughInput } from 'vs/workbench/contrib/welcome/walkThrough/brows
 import { IOpenerService } from 'vs/platform/opener/common/opener';
 import { IModelService } from 'vs/editor/common/services/modelService';
 import { CodeEditorWidget } from 'vs/editor/browser/widget/codeEditorWidget';
-import { IInstantiationService, optional } from 'vs/platform/instantiation/common/instantiation';
+import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { IKeybindingService } from 'vs/platform/keybinding/common/keybinding';
 import { localize } from 'vs/nls';
 import { IStorageService } from 'vs/platform/storage/common/storage';
@@ -39,7 +39,6 @@ import { IEditorGroupsService } from 'vs/workbench/services/editor/common/editor
 import { CancellationToken } from 'vs/base/common/cancellation';
 import { domEvent } from 'vs/base/browser/event';
 import { IExtensionService } from 'vs/workbench/services/extensions/common/extensions';
-import { ITASExperimentService } from 'vs/workbench/services/experiment/common/experimentService';
 
 export const WALK_THROUGH_FOCUS = new RawContextKey<boolean>('interactivePlaygroundFocus', false);
 
@@ -67,7 +66,6 @@ export class WalkThroughPart extends EditorPane {
 	private lastFocus: HTMLElement | undefined;
 	private size: Dimension | undefined;
 	private editorMemento: IEditorMemento<IWalkThroughEditorViewState>;
-	private tasExperimentService: ITASExperimentService | undefined;
 
 	constructor(
 		@ITelemetryService telemetryService: ITelemetryService,
@@ -82,12 +80,10 @@ export class WalkThroughPart extends EditorPane {
 		@INotificationService private readonly notificationService: INotificationService,
 		@IExtensionService private readonly extensionService: IExtensionService,
 		@IEditorGroupsService editorGroupService: IEditorGroupsService,
-		@optional(ITASExperimentService) tasExperimentService: ITASExperimentService,
 	) {
 		super(WalkThroughPart.ID, telemetryService, themeService, storageService);
 		this.editorFocus = WALK_THROUGH_FOCUS.bindTo(this.contextKeyService);
 		this.editorMemento = this.getEditorMemento<IWalkThroughEditorViewState>(editorGroupService, WALK_THROUGH_EDITOR_VIEW_STATE_PREFERENCE_KEY);
-		this.tasExperimentService = tasExperimentService;
 	}
 
 	createEditor(container: HTMLElement): void {
@@ -194,16 +190,7 @@ export class WalkThroughPart extends EditorPane {
 			this.notificationService.info(localize('walkThrough.gitNotFound', "It looks like Git is not installed on your system."));
 			return;
 		}
-		if (uri.scheme === 'command' && uri.path === 'workbench.action.files.newUntitledFile') {
-			Promise.all([
-				this.tasExperimentService?.getTreatment<boolean>('newuntitledmode'),
-				this.openerService.open(this.addFrom(uri)),
-			]).then(([newUntitledMode]) => {
-				return newUntitledMode && this.openerService.open(this.addFrom(URI.parse('command:workbench.action.editor.changeLanguageMode')));
-			});
-			return;
-		}
-		this.openerService.open(this.addFrom(uri));
+		this.openerService.open(this.addFrom(uri), { allowCommands: true });
 	}
 
 	private addFrom(uri: URI) {
@@ -239,7 +226,7 @@ export class WalkThroughPart extends EditorPane {
 		}
 	}
 
-	focus(): void {
+	override focus(): void {
 		let active = document.activeElement;
 		while (active && active !== this.content) {
 			active = active.parentElement;
@@ -280,7 +267,7 @@ export class WalkThroughPart extends EditorPane {
 		this.scrollbar.setScrollPosition({ scrollTop: scrollPosition.scrollTop + scrollDimensions.height });
 	}
 
-	setInput(input: WalkThroughInput, options: EditorOptions | undefined, context: IEditorOpenContext, token: CancellationToken): Promise<void> {
+	override setInput(input: WalkThroughInput, options: EditorOptions | undefined, context: IEditorOpenContext, token: CancellationToken): Promise<void> {
 		if (this.input instanceof WalkThroughInput) {
 			this.saveTextEditorViewState(this.input);
 		}
@@ -326,10 +313,13 @@ export class WalkThroughPart extends EditorPane {
 
 				model.snippets.forEach((snippet, i) => {
 					const model = snippet.textEditorModel;
+					if (!model) {
+						return;
+					}
 					const id = `snippet-${model.uri.fragment}`;
 					const div = innerContent.querySelector(`#${id.replace(/[\\.]/g, '\\$&')}`) as HTMLElement;
 
-					const options = this.getEditorOptions(snippet.textEditorModel.getModeId());
+					const options = this.getEditorOptions(model.getModeId());
 					const telemetryData = {
 						target: this.input instanceof WalkThroughInput ? this.input.getTelemetryFrom() : undefined,
 						snippet: i
@@ -426,7 +416,7 @@ export class WalkThroughPart extends EditorPane {
 				this.loadTextEditorViewState(input);
 				this.updatedScrollPosition();
 				this.contentDisposables.push(Gesture.addTarget(innerContent));
-				this.contentDisposables.push(domEvent(innerContent, TouchEventType.Change)(this.onTouchChange, this, this.disposables));
+				this.contentDisposables.push(domEvent(innerContent, TouchEventType.Change)(e => this.onTouchChange(e as GestureEvent), this, this.disposables));
 			});
 	}
 
@@ -512,7 +502,7 @@ export class WalkThroughPart extends EditorPane {
 		}
 	}
 
-	public clearInput(): void {
+	public override clearInput(): void {
 		if (this.input instanceof WalkThroughInput) {
 			this.saveTextEditorViewState(this.input);
 		}
@@ -520,7 +510,7 @@ export class WalkThroughPart extends EditorPane {
 		super.clearInput();
 	}
 
-	protected saveState(): void {
+	protected override saveState(): void {
 		if (this.input instanceof WalkThroughInput) {
 			this.saveTextEditorViewState(this.input);
 		}
@@ -528,7 +518,7 @@ export class WalkThroughPart extends EditorPane {
 		super.saveState();
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this.editorFocus.reset();
 		this.contentDisposables = dispose(this.contentDisposables);
 		this.disposables.dispose();

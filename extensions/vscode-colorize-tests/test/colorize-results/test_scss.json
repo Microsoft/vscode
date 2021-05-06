@@ -1299,13 +1299,13 @@
 	},
 	{
 		"c": "font",
-		"t": "source.css.scss meta.property-list.scss entity.name.tag.css",
+		"t": "source.css.scss meta.property-list.scss meta.property-name.scss support.type.property-name.css",
 		"r": {
-			"dark_plus": "entity.name.tag.css: #D7BA7D",
-			"light_plus": "entity.name.tag: #800000",
-			"dark_vs": "entity.name.tag.css: #D7BA7D",
-			"light_vs": "entity.name.tag: #800000",
-			"hc_black": "entity.name.tag.css: #D7BA7D"
+			"dark_plus": "support.type.property-name: #9CDCFE",
+			"light_plus": "support.type.property-name: #FF0000",
+			"dark_vs": "support.type.property-name: #9CDCFE",
+			"light_vs": "support.type.property-name: #FF0000",
+			"hc_black": "support.type.property-name: #D4D4D4"
 		}
 	},
 	{
@@ -1419,7 +1419,7 @@
 		}
 	},
 	{
-		"c": ": ",
+		"c": ": fantasy",
 		"t": "source.css.scss meta.property-list.scss meta.property-value.scss",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
@@ -1427,17 +1427,6 @@
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
 			"hc_black": "default: #FFFFFF"
-		}
-	},
-	{
-		"c": "fantasy",
-		"t": "source.css.scss meta.property-list.scss meta.property-value.scss support.constant.font-name.css",
-		"r": {
-			"dark_plus": "support.constant.font-name: #CE9178",
-			"light_plus": "support.constant.font-name: #0451A5",
-			"dark_vs": "default: #D4D4D4",
-			"light_vs": "support.constant.font-name: #0451A5",
-			"hc_black": "support.constant.font-name: #CE9178"
 		}
 	},
 	{
@@ -3367,13 +3356,13 @@
 	},
 	{
 		"c": "font",
-		"t": "source.css.scss meta.property-list.scss entity.name.tag.css",
+		"t": "source.css.scss meta.property-list.scss meta.property-name.scss support.type.property-name.css",
 		"r": {
-			"dark_plus": "entity.name.tag.css: #D7BA7D",
-			"light_plus": "entity.name.tag: #800000",
-			"dark_vs": "entity.name.tag.css: #D7BA7D",
-			"light_vs": "entity.name.tag: #800000",
-			"hc_black": "entity.name.tag.css: #D7BA7D"
+			"dark_plus": "support.type.property-name: #9CDCFE",
+			"light_plus": "support.type.property-name: #FF0000",
+			"dark_vs": "support.type.property-name: #9CDCFE",
+			"light_vs": "support.type.property-name: #FF0000",
+			"hc_black": "support.type.property-name: #D4D4D4"
 		}
 	},
 	{
@@ -4742,13 +4731,13 @@
 	},
 	{
 		"c": "content",
-		"t": "source.css.scss meta.property-list.scss entity.name.tag.css",
+		"t": "source.css.scss meta.property-list.scss meta.property-name.scss support.type.property-name.css",
 		"r": {
-			"dark_plus": "entity.name.tag.css: #D7BA7D",
-			"light_plus": "entity.name.tag: #800000",
-			"dark_vs": "entity.name.tag.css: #D7BA7D",
-			"light_vs": "entity.name.tag: #800000",
-			"hc_black": "entity.name.tag.css: #D7BA7D"
+			"dark_plus": "support.type.property-name: #9CDCFE",
+			"light_plus": "support.type.property-name: #FF0000",
+			"dark_vs": "support.type.property-name: #9CDCFE",
+			"light_vs": "support.type.property-name: #FF0000",
+			"hc_black": "support.type.property-name: #D4D4D4"
 		}
 	},
 	{
@@ -12893,13 +12882,13 @@
 	},
 	{
 		"c": "font",
-		"t": "source.css.scss meta.at-rule.each.scss meta.at-rule.while.scss meta.property-list.scss entity.name.tag.css",
+		"t": "source.css.scss meta.at-rule.each.scss meta.at-rule.while.scss meta.property-list.scss meta.property-name.scss support.type.property-name.css",
 		"r": {
-			"dark_plus": "entity.name.tag.css: #D7BA7D",
-			"light_plus": "entity.name.tag: #800000",
-			"dark_vs": "entity.name.tag.css: #D7BA7D",
-			"light_vs": "entity.name.tag: #800000",
-			"hc_black": "entity.name.tag.css: #D7BA7D"
+			"dark_plus": "support.type.property-name: #9CDCFE",
+			"light_plus": "support.type.property-name: #FF0000",
+			"dark_vs": "support.type.property-name: #9CDCFE",
+			"light_vs": "support.type.property-name: #FF0000",
+			"hc_black": "support.type.property-name: #D4D4D4"
 		}
 	},
 	{
@@ -13828,13 +13817,13 @@
 	},
 	{
 		"c": "style",
-		"t": "source.css.scss meta.at-rule.each.scss meta.at-rule.while.scss meta.property-list.scss meta.property-list.scss entity.name.tag.css",
+		"t": "source.css.scss meta.at-rule.each.scss meta.at-rule.while.scss meta.property-list.scss meta.property-list.scss meta.property-name.scss support.type.property-name.css",
 		"r": {
-			"dark_plus": "entity.name.tag.css: #D7BA7D",
-			"light_plus": "entity.name.tag: #800000",
-			"dark_vs": "entity.name.tag.css: #D7BA7D",
-			"light_vs": "entity.name.tag: #800000",
-			"hc_black": "entity.name.tag.css: #D7BA7D"
+			"dark_plus": "support.type.property-name: #9CDCFE",
+			"light_plus": "support.type.property-name: #FF0000",
+			"dark_vs": "support.type.property-name: #9CDCFE",
+			"light_vs": "support.type.property-name: #FF0000",
+			"hc_black": "support.type.property-name: #D4D4D4"
 		}
 	},
 	{
@@ -16325,13 +16314,13 @@
 	},
 	{
 		"c": "content",
-		"t": "source.css.scss meta.at-rule.each.scss meta.at-rule.while.scss meta.property-list.scss entity.name.tag.css",
+		"t": "source.css.scss meta.at-rule.each.scss meta.at-rule.while.scss meta.property-list.scss meta.property-name.scss support.type.property-name.css",
 		"r": {
-			"dark_plus": "entity.name.tag.css: #D7BA7D",
-			"light_plus": "entity.name.tag: #800000",
-			"dark_vs": "entity.name.tag.css: #D7BA7D",
-			"light_vs": "entity.name.tag: #800000",
-			"hc_black": "entity.name.tag.css: #D7BA7D"
+			"dark_plus": "support.type.property-name: #9CDCFE",
+			"light_plus": "support.type.property-name: #FF0000",
+			"dark_vs": "support.type.property-name: #9CDCFE",
+			"light_vs": "support.type.property-name: #FF0000",
+			"hc_black": "support.type.property-name: #D4D4D4"
 		}
 	},
 	{
@@ -18030,13 +18019,13 @@
 	},
 	{
 		"c": "a",
-		"t": "source.css.scss meta.at-rule.each.scss meta.at-rule.while.scss meta.property-list.scss meta.property-list.scss entity.name.tag.css",
+		"t": "source.css.scss meta.at-rule.each.scss meta.at-rule.while.scss meta.property-list.scss meta.property-list.scss meta.property-name.scss",
 		"r": {
-			"dark_plus": "entity.name.tag.css: #D7BA7D",
-			"light_plus": "entity.name.tag: #800000",
-			"dark_vs": "entity.name.tag.css: #D7BA7D",
-			"light_vs": "entity.name.tag: #800000",
-			"hc_black": "entity.name.tag.css: #D7BA7D"
+			"dark_plus": "default: #D4D4D4",
+			"light_plus": "default: #000000",
+			"dark_vs": "default: #D4D4D4",
+			"light_vs": "default: #000000",
+			"hc_black": "default: #FFFFFF"
 		}
 	},
 	{
@@ -18151,13 +18140,13 @@
 	},
 	{
 		"c": "b",
-		"t": "source.css.scss meta.at-rule.each.scss meta.at-rule.while.scss meta.property-list.scss meta.property-list.scss entity.name.tag.css",
+		"t": "source.css.scss meta.at-rule.each.scss meta.at-rule.while.scss meta.property-list.scss meta.property-list.scss meta.property-name.scss",
 		"r": {
-			"dark_plus": "entity.name.tag.css: #D7BA7D",
-			"light_plus": "entity.name.tag: #800000",
-			"dark_vs": "entity.name.tag.css: #D7BA7D",
-			"light_vs": "entity.name.tag: #800000",
-			"hc_black": "entity.name.tag.css: #D7BA7D"
+			"dark_plus": "default: #D4D4D4",
+			"light_plus": "default: #000000",
+			"dark_vs": "default: #D4D4D4",
+			"light_vs": "default: #000000",
+			"hc_black": "default: #FFFFFF"
 		}
 	},
 	{

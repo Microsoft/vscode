@@ -10,7 +10,7 @@ import { ITelemetryService, ITelemetryInfo, ITelemetryData } from 'vs/platform/t
 import { ITelemetryAppender } from 'vs/platform/telemetry/common/telemetryUtils';
 import { optional } from 'vs/platform/instantiation/common/instantiation';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
-import { IConfigurationRegistry, Extensions } from 'vs/platform/configuration/common/configurationRegistry';
+import { IConfigurationRegistry, Extensions, ConfigurationScope } from 'vs/platform/configuration/common/configurationRegistry';
 import { DisposableStore } from 'vs/base/common/lifecycle';
 import { cloneAndChange, mixin } from 'vs/base/common/objects';
 import { Registry } from 'vs/platform/registry/common/platform';
@@ -223,6 +223,8 @@ Registry.as<IConfigurationRegistry>(Extensions.Configuration).registerConfigurat
 					localize('telemetry.enableTelemetry', "Enable usage data and errors to be sent to a Microsoft online service.") :
 					localize('telemetry.enableTelemetryMd', "Enable usage data and errors to be sent to a Microsoft online service. Read our privacy statement [here]({0}).", product.privacyStatementUrl),
 			'default': true,
+			'restricted': true,
+			'scope': ConfigurationScope.APPLICATION,
 			'tags': ['usesOnlineServices']
 		}
 	}

@@ -1835,7 +1835,10 @@ export class Repository implements Disposable {
 			// noop
 		}
 
-		const sort = config.get<'alphabetically' | 'committerdate'>('branchSortOrder') || 'alphabetically';
+		let sort = config.get<'alphabetically' | 'committerdate'>('branchSortOrder') || 'alphabetically';
+		if (sort !== 'alphabetically' && sort !== 'committerdate') {
+			sort = 'alphabetically';
+		}
 		const [refs, remotes, submodules, rebaseCommit] = await Promise.all([this.repository.getRefs({ sort }), this.repository.getRemotes(), this.repository.getSubmodules(), this.getRebaseCommit()]);
 
 		this._HEAD = HEAD;

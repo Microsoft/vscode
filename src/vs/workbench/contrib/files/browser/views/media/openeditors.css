@@ -12,19 +12,11 @@
 
 .open-editors .monaco-list .monaco-list-row > .monaco-action-bar .action-label {
 	display: block;
+	padding: 2px;
 }
 
 .open-editors .monaco-list .monaco-list-row > .monaco-action-bar .codicon {
 	color: inherit;
-}
-
-.open-editors .monaco-list .monaco-list-row > .monaco-action-bar .codicon-close,
-.open-editors .monaco-list .monaco-list-row > .monaco-action-bar .codicon-pinned {
-	width: 8px;
-	height: 22px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
 }
 
 .open-editors .monaco-list .monaco-list-row.dirty:not(:hover) > .monaco-action-bar .codicon-pinned::before {

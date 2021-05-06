@@ -9,15 +9,16 @@
   },
   "main": "./out/node/htmlServerMain",
   "dependencies": {
-    "vscode-css-languageservice": "^5.1.0",
-    "vscode-html-languageservice": "^4.0.1",
+    "vscode-css-languageservice": "^5.1.1",
+    "vscode-html-languageservice": "^4.0.3",
     "vscode-languageserver": "^7.0.0",
+    "vscode-languageserver-textdocument": "^1.0.1",
     "vscode-nls": "^5.0.0",
     "vscode-uri": "^3.0.2"
   },
   "devDependencies": {
     "@types/mocha": "^8.2.0",
-    "@types/node": "^12.19.9"
+    "@types/node": "14.x"
   },
   "scripts": {
     "compile": "npx gulp compile-extension:html-language-features-server",

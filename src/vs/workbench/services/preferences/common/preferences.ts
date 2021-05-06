@@ -77,6 +77,7 @@ export interface ISetting {
 	enumDescriptionsAreMarkdown?: boolean;
 	tags?: string[];
 	disallowSyncIgnore?: boolean;
+	restricted?: boolean;
 	extensionInfo?: IConfigurationExtensionInfo;
 	validator?: (value: any) => string | null;
 	enumItemLabels?: string[];
@@ -183,7 +184,7 @@ export class SettingsEditorOptions extends EditorOptions implements ISettingsEdi
 	};
 	focusSearch?: boolean;
 
-	static create(options: ISettingsEditorOptions): SettingsEditorOptions {
+	static override create(options: ISettingsEditorOptions): SettingsEditorOptions {
 		const newOptions = new SettingsEditorOptions();
 		options = {
 			...<IEditorOptions>{

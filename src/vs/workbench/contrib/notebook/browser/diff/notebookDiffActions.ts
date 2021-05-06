@@ -5,7 +5,9 @@
 
 import { IBulkEditService, ResourceTextEdit } from 'vs/editor/browser/services/bulkEditService';
 import { localize } from 'vs/nls';
-import { Action2, MenuId, registerAction2 } from 'vs/platform/actions/common/actions';
+import { Action2, ICommandActionTitle, MenuId, registerAction2 } from 'vs/platform/actions/common/actions';
+import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
+import { ContextKeyExpr, ContextKeyExpression } from 'vs/platform/contextkey/common/contextkey';
 import { ServicesAccessor } from 'vs/platform/instantiation/common/instantiation';
 import { ActiveEditorContext, viewColumnToEditorGroup } from 'vs/workbench/common/editor';
 import { DiffElementViewModelBase } from 'vs/workbench/contrib/notebook/browser/diff/diffElementViewModel';
@@ -15,6 +17,9 @@ import { NotebookDiffEditorInput } from 'vs/workbench/contrib/notebook/browser/n
 import { openAsTextIcon, renderOutputIcon, revertIcon } from 'vs/workbench/contrib/notebook/browser/notebookIcons';
 import { IEditorGroupsService } from 'vs/workbench/services/editor/common/editorGroupsService';
 import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
+import { Registry } from 'vs/platform/registry/common/platform';
+import { IConfigurationRegistry, Extensions as ConfigurationExtensions } from 'vs/platform/configuration/common/configurationRegistry';
+import { EditorOverride } from 'vs/platform/editor/common/editor';
 
 // ActiveEditorContext.isEqualTo(SearchEditorConstants.SearchEditorID)
 
@@ -47,7 +52,8 @@ registerAction2(class extends Action2 {
 			};
 
 			const label = diffEditorInput.textDiffName;
-			await editorService.openEditor({ leftResource, rightResource, label, options }, viewColumnToEditorGroup(editorGroupService, undefined));
+			const input = editorService.createEditorInput({ leftResource, rightResource, label, options });
+			await editorService.openEditor(input, { override: EditorOverride.DISABLED }, viewColumnToEditorGroup(editorGroupService, undefined));
 		}
 	}
 });
@@ -198,5 +204,80 @@ registerAction2(class extends Action2 {
 		return bulkEditService.apply([
 			new ResourceTextEdit(modified.uri, { range: modified.textModel.getFullModelRange(), text: original.textModel.getValue() }),
 		], { quotableLabel: 'Split Notebook Cell' });
+	}
+});
+
+class ToggleRenderAction extends Action2 {
+	constructor(id: string, title: string | ICommandActionTitle, precondition: ContextKeyExpression | undefined, toggled: ContextKeyExpression | undefined, order: number, private readonly toggleOutputs?: boolean, private readonly toggleMetadata?: boolean) {
+		super({
+			id: id,
+			title: title,
+			precondition: precondition,
+			menu: [{
+				id: MenuId.EditorTitle,
+				group: 'notebook',
+				when: precondition,
+				order: order,
+			}],
+			toggled: toggled
+		});
+	}
+
+	async run(accessor: ServicesAccessor): Promise<void> {
+		const configurationService = accessor.get(IConfigurationService);
+
+		if (this.toggleOutputs !== undefined) {
+			const oldValue = configurationService.getValue<boolean>('notebook.diff.ignoreOutputs');
+			configurationService.updateValue('notebook.diff.ignoreOutputs', !oldValue);
+		}
+
+		if (this.toggleMetadata !== undefined) {
+			const oldValue = configurationService.getValue<boolean>('notebook.diff.ignoreMetadata');
+			configurationService.updateValue('notebook.diff.ignoreMetadata', !oldValue);
+		}
+	}
+}
+
+registerAction2(class extends ToggleRenderAction {
+	constructor() {
+		super('notebook.diff.showOutputs',
+			{ value: localize('notebook.diff.showOutputs', "Show Outputs Differences"), original: 'Show Outputs Differences' },
+			ActiveEditorContext.isEqualTo(NotebookTextDiffEditor.ID),
+			ContextKeyExpr.notEquals('config.notebook.diff.ignoreOutputs', true),
+			2,
+			true,
+			undefined
+		);
+	}
+});
+
+registerAction2(class extends ToggleRenderAction {
+	constructor() {
+		super('notebook.diff.showMetadata',
+			{ value: localize('notebook.diff.showMetadata', "Show Metadata Differences"), original: 'Show Metadata Differences' },
+			ActiveEditorContext.isEqualTo(NotebookTextDiffEditor.ID),
+			ContextKeyExpr.notEquals('config.notebook.diff.ignoreMetadata', true),
+			1,
+			undefined,
+			true
+		);
+	}
+});
+
+Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration).registerConfiguration({
+	id: 'notebook',
+	order: 100,
+	type: 'object',
+	'properties': {
+		'notebook.diff.ignoreMetadata': {
+			type: 'boolean',
+			default: false,
+			markdownDescription: localize('notebook.diff.ignoreMetadata', "Hide Metadata Differences")
+		},
+		'notebook.diff.ignoreOutputs': {
+			type: 'boolean',
+			default: false,
+			markdownDescription: localize('notebook.diff.ignoreOutputs', "Hide Outputs Differences")
+		},
 	}
 });

@@ -3,7 +3,6 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { IAction } from 'vs/base/common/actions';
 import { Event } from 'vs/base/common/event';
 
 export interface IComposite {
@@ -32,21 +31,6 @@ export interface IComposite {
 	 * Returns the name of this composite to show in the title area.
 	 */
 	getTitle(): string | undefined;
-
-	/**
-	 * Returns the primary actions of the composite.
-	 */
-	getActions(): ReadonlyArray<IAction>;
-
-	/**
-	 * Returns the secondary actions of the composite.
-	 */
-	getSecondaryActions(): ReadonlyArray<IAction>;
-
-	/**
-	 * Returns an array of actions to show in the context menu of the composite
-	 */
-	getContextMenuActions(): ReadonlyArray<IAction>;
 
 	/**
 	 * Returns the underlying control of this composite.

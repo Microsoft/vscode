@@ -18,7 +18,7 @@ import { IInstantiationService, ServicesAccessor } from 'vs/platform/instantiati
 import { IKeybindingService } from 'vs/platform/keybinding/common/keybinding';
 import { ICommandService } from 'vs/platform/commands/common/commands';
 import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
-import { INotificationService } from 'vs/platform/notification/common/notification';
+import { IDialogService } from 'vs/platform/dialogs/common/dialogs';
 import { DefaultQuickAccessFilterValue } from 'vs/platform/quickinput/common/quickAccess';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { IWorkbenchQuickAccessConfiguration } from 'vs/workbench/browser/quickaccess';
@@ -31,6 +31,7 @@ import { IEditorGroupsService } from 'vs/workbench/services/editor/common/editor
 import { TriggerAction } from 'vs/platform/quickinput/browser/pickerQuickAccess';
 import { IPreferencesService } from 'vs/workbench/services/preferences/common/preferences';
 import { stripIcons } from 'vs/base/common/iconLabels';
+import { isFirefox } from 'vs/base/browser/browser';
 
 export class CommandsQuickAccessProvider extends AbstractEditorCommandsQuickAccessProvider {
 
@@ -61,7 +62,7 @@ export class CommandsQuickAccessProvider extends AbstractEditorCommandsQuickAcce
 		@IKeybindingService keybindingService: IKeybindingService,
 		@ICommandService commandService: ICommandService,
 		@ITelemetryService telemetryService: ITelemetryService,
-		@INotificationService notificationService: INotificationService,
+		@IDialogService dialogService: IDialogService,
 		@IConfigurationService private readonly configurationService: IConfigurationService,
 		@IEditorGroupsService private readonly editorGroupService: IEditorGroupsService,
 		@IPreferencesService private readonly preferencesService: IPreferencesService,
@@ -72,7 +73,7 @@ export class CommandsQuickAccessProvider extends AbstractEditorCommandsQuickAcce
 				label: localize('noCommandResults', "No matching commands"),
 				commandId: ''
 			}
-		}, instantiationService, keybindingService, commandService, telemetryService, notificationService);
+		}, instantiationService, keybindingService, commandService, telemetryService, dialogService);
 	}
 
 	private get configuration() {
@@ -163,7 +164,7 @@ export class ShowAllCommandsAction extends Action2 {
 			keybinding: {
 				weight: KeybindingWeight.WorkbenchContrib,
 				when: undefined,
-				primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KEY_P,
+				primary: !isFirefox ? (KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KEY_P) : undefined,
 				secondary: [KeyCode.F1]
 			}
 		});

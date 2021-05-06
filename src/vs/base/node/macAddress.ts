@@ -34,10 +34,13 @@ function doGetMac(): Promise<string> {
 	return new Promise((resolve, reject) => {
 		try {
 			const ifaces = networkInterfaces();
-			for (const [, infos] of Object.entries(ifaces)) {
-				for (const info of infos) {
-					if (validateMacAddress(info.mac)) {
-						return resolve(info.mac);
+			for (let name in ifaces) {
+				const networkInterface = ifaces[name];
+				if (networkInterface) {
+					for (const { mac } of networkInterface) {
+						if (validateMacAddress(mac)) {
+							return resolve(mac);
+						}
 					}
 				}
 			}

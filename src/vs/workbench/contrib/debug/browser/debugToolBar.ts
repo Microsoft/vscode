@@ -25,7 +25,7 @@ import { INotificationService } from 'vs/platform/notification/common/notificati
 import { RunOnceScheduler } from 'vs/base/common/async';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { createActionViewItem, createAndFillInActionBarActions } from 'vs/platform/actions/browser/menuEntryActionViewItem';
-import { IMenu, IMenuService, MenuId, MenuRegistry } from 'vs/platform/actions/common/actions';
+import { ICommandAction, IMenu, IMenuService, MenuId, MenuRegistry } from 'vs/platform/actions/common/actions';
 import { IContextKeyService, ContextKeyExpression, ContextKeyExpr, ContextKeyEqualsExpr } from 'vs/platform/contextkey/common/contextkey';
 import { IDisposable, dispose } from 'vs/base/common/lifecycle';
 import * as icons from 'vs/workbench/contrib/debug/browser/debugIcons';
@@ -126,9 +126,7 @@ export class DebugToolBar extends Themable implements IWorkbenchContribution {
 			}
 
 			// log in telemetry
-			if (this.telemetryService) {
-				this.telemetryService.publicLog2<WorkbenchActionExecutedEvent, WorkbenchActionExecutedClassification>('workbenchActionExecuted', { id: e.action.id, from: 'debugActionsWidget' });
-			}
+			this.telemetryService.publicLog2<WorkbenchActionExecutedEvent, WorkbenchActionExecutedClassification>('workbenchActionExecuted', { id: e.action.id, from: 'debugActionsWidget' });
 		}));
 		this._register(dom.addDisposableListener(window, dom.EventType.RESIZE, () => this.setCoordinates()));
 
@@ -174,7 +172,7 @@ export class DebugToolBar extends Themable implements IWorkbenchContribution {
 		}
 	}
 
-	protected updateStyles(): void {
+	protected override updateStyles(): void {
 		super.updateStyles();
 
 		if (this.$el) {
@@ -245,7 +243,7 @@ export class DebugToolBar extends Themable implements IWorkbenchContribution {
 		dom.hide(this.$el);
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		super.dispose();
 
 		if (this.$el) {
@@ -259,7 +257,7 @@ export class DebugToolBar extends Themable implements IWorkbenchContribution {
 
 // Debug toolbar
 
-const registerDebugToolBarItem = (id: string, title: string, order: number, icon?: { light?: URI, dark?: URI } | ThemeIcon, when?: ContextKeyExpression, precondition?: ContextKeyExpression) => {
+const registerDebugToolBarItem = (id: string, title: string, order: number, icon?: { light?: URI, dark?: URI } | ThemeIcon, when?: ContextKeyExpression, precondition?: ContextKeyExpression, alt?: ICommandAction) => {
 	MenuRegistry.appendMenuItem(MenuId.DebugToolBar, {
 		group: 'navigation',
 		when,
@@ -269,7 +267,8 @@ const registerDebugToolBarItem = (id: string, title: string, order: number, icon
 			title,
 			icon,
 			precondition
-		}
+		},
+		alt
 	});
 
 	// Register actions in debug viewlet when toolbar is docked
@@ -288,8 +287,8 @@ const registerDebugToolBarItem = (id: string, title: string, order: number, icon
 
 registerDebugToolBarItem(CONTINUE_ID, CONTINUE_LABEL, 10, icons.debugContinue, CONTEXT_DEBUG_STATE.isEqualTo('stopped'));
 registerDebugToolBarItem(PAUSE_ID, PAUSE_LABEL, 10, icons.debugPause, CONTEXT_DEBUG_STATE.notEqualsTo('stopped'), CONTEXT_DEBUG_STATE.isEqualTo('running'));
-registerDebugToolBarItem(STOP_ID, STOP_LABEL, 70, icons.debugStop, CONTEXT_FOCUSED_SESSION_IS_ATTACH.toNegated());
-registerDebugToolBarItem(DISCONNECT_ID, DISCONNECT_LABEL, 70, icons.debugDisconnect, CONTEXT_FOCUSED_SESSION_IS_ATTACH);
+registerDebugToolBarItem(STOP_ID, STOP_LABEL, 70, icons.debugStop, CONTEXT_FOCUSED_SESSION_IS_ATTACH.toNegated(), undefined, { id: DISCONNECT_ID, title: DISCONNECT_LABEL, icon: icons.debugDisconnect });
+registerDebugToolBarItem(DISCONNECT_ID, DISCONNECT_LABEL, 70, icons.debugDisconnect, CONTEXT_FOCUSED_SESSION_IS_ATTACH, undefined, { id: STOP_ID, title: STOP_LABEL, icon: icons.debugStop });
 registerDebugToolBarItem(STEP_OVER_ID, STEP_OVER_LABEL, 20, icons.debugStepOver, undefined, CONTEXT_DEBUG_STATE.isEqualTo('stopped'));
 registerDebugToolBarItem(STEP_INTO_ID, STEP_INTO_LABEL, 30, icons.debugStepInto, undefined, CONTEXT_DEBUG_STATE.isEqualTo('stopped'));
 registerDebugToolBarItem(STEP_OUT_ID, STEP_OUT_LABEL, 40, icons.debugStepOut, undefined, CONTEXT_DEBUG_STATE.isEqualTo('stopped'));

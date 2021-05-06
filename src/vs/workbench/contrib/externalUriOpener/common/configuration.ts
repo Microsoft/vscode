@@ -39,7 +39,7 @@ export const externalUriOpenersConfigurationNode: IConfigurationNode = {
 	properties: {
 		[externalUriOpenersSettingId]: {
 			type: 'object',
-			markdownDescription: nls.localize('externalUriOpeners', "Configure the opener to use for external uris (i.e. http, https)."),
+			markdownDescription: nls.localize('externalUriOpeners', "Configure the opener to use for external URIs (http, https)."),
 			defaultSnippets: [{
 				body: {
 					'example.com': '$1'
@@ -49,11 +49,11 @@ export const externalUriOpenersConfigurationNode: IConfigurationNode = {
 				anyOf: [
 					{
 						type: 'string',
-						markdownDescription: nls.localize('externalUriOpeners.uri', "Map uri pattern to an opener id.\nExample patterns: \n{0}", exampleUriPatterns),
+						markdownDescription: nls.localize('externalUriOpeners.uri', "Map URI pattern to an opener id.\nExample patterns: \n{0}", exampleUriPatterns),
 					},
 					{
 						type: 'string',
-						markdownDescription: nls.localize('externalUriOpeners.uri', "Map uri pattern to an opener id.\nExample patterns: \n{0}", exampleUriPatterns),
+						markdownDescription: nls.localize('externalUriOpeners.uri', "Map URI pattern to an opener id.\nExample patterns: \n{0}", exampleUriPatterns),
 						enum: [defaultExternalUriOpenerId],
 						enumDescriptions: [nls.localize('externalUriOpeners.defaultId', "Open using VS Code's standard opener.")],
 					},

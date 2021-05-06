@@ -13,7 +13,7 @@ import { Client, IIPCOptions } from 'vs/base/parts/ipc/node/ipc.cp';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { IDebugParams } from 'vs/platform/environment/common/environment';
 import { INativeWorkbenchEnvironmentService } from 'vs/workbench/services/environment/electron-sandbox/environmentService';
-import { parseSearchPort } from 'vs/platform/environment/node/environmentService';
+import { parseSearchPort } from 'vs/platform/environment/common/environmentService';
 import { IFileService } from 'vs/platform/files/common/files';
 import { ILogService } from 'vs/platform/log/common/log';
 import { FileMatch, IFileMatch, IFileQuery, IProgressMessage, IRawSearchService, ISearchComplete, ISearchConfiguration, ISearchProgressItem, ISearchResultProvider, ISerializedFileMatch, ISerializedSearchComplete, ISerializedSearchProgressItem, isSerializedSearchComplete, isSerializedSearchSuccess, ITextQuery, ISearchService, isFileMatch } from 'vs/workbench/services/search/common/search';
@@ -138,7 +138,8 @@ export class DiskSearch implements ISearchResultProvider {
 						c({
 							limitHit: ev.limitHit,
 							results: result,
-							stats: ev.stats
+							stats: ev.stats,
+							messages: ev.messages,
 						});
 					} else {
 						e(ev.error);

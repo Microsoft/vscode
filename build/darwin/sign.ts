@@ -6,7 +6,9 @@
 'use strict';
 
 import * as codesign from 'electron-osx-sign';
+import * as fs from 'fs-extra';
 import * as path from 'path';
+import * as plist from 'plist';
 import * as util from '../lib/util';
 import * as product from '../../product.json';
 
@@ -30,6 +32,7 @@ async function main(): Promise<void> {
 	const helperAppBaseName = product.nameShort;
 	const gpuHelperAppName = helperAppBaseName + ' Helper (GPU).app';
 	const rendererHelperAppName = helperAppBaseName + ' Helper (Renderer).app';
+	const infoPlistPath = path.resolve(appRoot, appName, 'Contents', 'Info.plist');
 
 	const defaultOpts: codesign.SignOptions = {
 		app: path.join(appRoot, appName),
@@ -67,6 +70,15 @@ async function main(): Promise<void> {
 		entitlements: path.join(baseDir, 'azure-pipelines', 'darwin', 'helper-renderer-entitlements.plist'),
 		'entitlements-inherit': path.join(baseDir, 'azure-pipelines', 'darwin', 'helper-renderer-entitlements.plist'),
 	};
+
+	let infoPlistString = await fs.readFile(infoPlistPath, 'utf8');
+	let infoPlistJson = plist.parse(infoPlistString);
+	Object.assign(infoPlistJson, {
+		NSAppleEventsUsageDescription: 'An application in Visual Studio Code wants to use AppleScript.',
+		NSMicrophoneUsageDescription: 'An application in Visual Studio Code wants to use the Microphone.',
+		NSCameraUsageDescription: 'An application in Visual Studio Code wants to use the Camera.'
+	});
+	await fs.writeFile(infoPlistPath, plist.build(infoPlistJson), 'utf8');
 
 	await codesign.signAsync(gpuHelperOpts);
 	await codesign.signAsync(rendererHelperOpts);

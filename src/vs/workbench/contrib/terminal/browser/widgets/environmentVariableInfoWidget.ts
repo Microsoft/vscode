@@ -41,10 +41,9 @@ export class EnvironmentVariableInfoWidget extends Widget implements ITerminalWi
 		}
 		container.appendChild(this._domNode);
 
-		const timeout = this._configurationService.getValue<number>('editor.hover.delay');
-		const scheduler: RunOnceScheduler = new RunOnceScheduler(() => this._showHover(), timeout);
+		const scheduler: RunOnceScheduler = new RunOnceScheduler(() => this._showHover(), this._configurationService.getValue<number>('workbench.hover.delay'));
 		this._register(scheduler);
-		let origin = { x: 0, y: 0 };
+		const origin = { x: 0, y: 0 };
 
 		this.onmouseover(this._domNode, e => {
 			origin.x = e.browserEvent.pageX;
@@ -66,7 +65,7 @@ export class EnvironmentVariableInfoWidget extends Widget implements ITerminalWi
 		});
 	}
 
-	dispose() {
+	override dispose() {
 		super.dispose();
 		this._domNode?.parentElement?.removeChild(this._domNode);
 		this._mouseMoveListener?.dispose();

@@ -5,9 +5,9 @@
 
 import { localize } from 'vs/nls';
 import { INotificationService, INotification, INotificationHandle, Severity, NotificationMessage, INotificationActions, IPromptChoice, IPromptOptions, IStatusMessageOptions, NoOpNotification, NeverShowAgainScope, NotificationsFilter } from 'vs/platform/notification/common/notification';
-import { NotificationsModel, ChoiceAction } from 'vs/workbench/common/notifications';
+import { NotificationsModel, ChoiceAction, NotificationChangeType } from 'vs/workbench/common/notifications';
 import { Disposable, DisposableStore, IDisposable } from 'vs/base/common/lifecycle';
-import { Event } from 'vs/base/common/event';
+import { Emitter, Event } from 'vs/base/common/event';
 import { registerSingleton } from 'vs/platform/instantiation/common/extensions';
 import { IAction, Action } from 'vs/base/common/actions';
 import { IStorageService, StorageScope, StorageTarget } from 'vs/platform/storage/common/storage';
@@ -18,10 +18,44 @@ export class NotificationService extends Disposable implements INotificationServ
 
 	readonly model = this._register(new NotificationsModel());
 
+	private readonly _onDidAddNotification = this._register(new Emitter<INotification>());
+	readonly onDidAddNotification = this._onDidAddNotification.event;
+
+	private readonly _onDidRemoveNotification = this._register(new Emitter<INotification>());
+	readonly onDidRemoveNotification = this._onDidRemoveNotification.event;
+
 	constructor(
 		@IStorageService private readonly storageService: IStorageService
 	) {
 		super();
+
+		this.registerListeners();
+	}
+
+	private registerListeners(): void {
+		this._register(this.model.onDidChangeNotification(e => {
+			switch (e.kind) {
+				case NotificationChangeType.ADD:
+				case NotificationChangeType.REMOVE: {
+					const notification: INotification = {
+						message: e.item.message.original,
+						severity: e.item.severity,
+						source: typeof e.item.sourceId === 'string' && typeof e.item.source === 'string' ? { id: e.item.sourceId, label: e.item.source } : e.item.source,
+						silent: e.item.silent
+					};
+
+					if (e.kind === NotificationChangeType.ADD) {
+						this._onDidAddNotification.fire(notification);
+					}
+
+					if (e.kind === NotificationChangeType.REMOVE) {
+						this._onDidRemoveNotification.fire(notification);
+					}
+
+					break;
+				}
+			}
+		}));
 	}
 
 	setFilter(filter: NotificationsFilter): void {

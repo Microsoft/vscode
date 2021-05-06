@@ -327,7 +327,7 @@ export class LinkDetector implements IEditorContribution {
 				}
 			}
 
-			return this.openerService.open(uri, { openToSide, fromUserGesture, allowContributedOpeners: true });
+			return this.openerService.open(uri, { openToSide, fromUserGesture, allowContributedOpeners: true, allowCommands: true });
 
 		}, err => {
 			const messageOrError =

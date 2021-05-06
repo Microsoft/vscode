@@ -23,7 +23,7 @@ class PreviewStore<T extends ManagedMarkdownPreview> extends Disposable {
 
 	private readonly _previews = new Set<T>();
 
-	public dispose(): void {
+	public override dispose(): void {
 		super.dispose();
 		for (const preview of this._previews) {
 			preview.dispose();

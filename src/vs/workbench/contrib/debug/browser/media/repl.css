@@ -19,6 +19,12 @@
 
 .monaco-workbench .repl .repl-tree .monaco-tl-contents .expression {
 	font-family: var(--vscode-repl-font-family);
+	font-size: var(--vscode-repl-font-size);
+	line-height: var(--vscode-repl-line-height);
+}
+
+.monaco-workbench .repl .repl-tree .monaco-tl-twistie {
+	background-position-y: calc(100% - (var(--vscode-repl-font-size-for-twistie)));
 }
 
 .monaco-workbench .repl .repl-tree.word-wrap .monaco-tl-contents {
@@ -102,7 +108,27 @@
 /* ANSI Codes */
 .monaco-workbench .repl .repl-tree .output.expression .code-bold	{ font-weight: bold; }
 .monaco-workbench .repl .repl-tree .output.expression .code-italic	{ font-style: italic; }
-.monaco-workbench .repl .repl-tree .output.expression .code-underline { text-decoration: underline; }
+.monaco-workbench .repl .repl-tree .output.expression .code-underline { text-decoration: underline;  text-decoration-style:solid; }
+.monaco-workbench .repl .repl-tree .output.expression .code-double-underline { text-decoration: underline;  text-decoration-style:double; }
+.monaco-workbench .repl .repl-tree .output.expression .code-strike-through { text-decoration:line-through;  text-decoration-style:solid; }
+.monaco-workbench .repl .repl-tree .output.expression .code-overline { text-decoration:overline;  text-decoration-style:solid; }
+/* because they can exist at same time we need all the possible underline(or double-underline),overline and strike-through combinations */
+.monaco-workbench .repl .repl-tree .output.expression .code-overline.code-underline.code-strike-through { text-decoration: overline underline line-through; text-decoration-style:solid; }
+.monaco-workbench .repl .repl-tree .output.expression .code-overline.code-underline { text-decoration: overline underline; text-decoration-style:solid; }
+.monaco-workbench .repl .repl-tree .output.expression .code-overline.code-strike-through { text-decoration: overline line-through; text-decoration-style:solid; }
+.monaco-workbench .repl .repl-tree .output.expression .code-underline.code-strike-through { text-decoration: underline line-through; text-decoration-style:solid; }
+.monaco-workbench .repl .repl-tree .output.expression .code-overline.code-double-underline.code-strike-through { text-decoration: overline underline line-through; text-decoration-style:double; }
+.monaco-workbench .repl .repl-tree .output.expression .code-overline.code-double-underline { text-decoration: overline underline; text-decoration-style:double; }
+.monaco-workbench .repl .repl-tree .output.expression .code-double-underline.code-strike-through { text-decoration: underline line-through; text-decoration-style:double; }
+.monaco-workbench .repl .repl-tree .output.expression .code-dim	{ opacity: 0.4; }
+.monaco-workbench .repl .repl-tree .output.expression .code-hidden { opacity: 0; }
+.monaco-workbench .repl .repl-tree .output.expression .code-blink { animation: code-blink-key 1s cubic-bezier(1, 0, 0, 1) infinite alternate; }
+.monaco-workbench .repl .repl-tree .output.expression .code-rapid-blink { animation: code-blink-key 0.3s cubic-bezier(1, 0, 0, 1) infinite alternate; }
+@keyframes code-blink-key {
+	to { opacity: 0.4; }
+}
+.monaco-workbench .repl .repl-tree .output.expression .code-subscript { vertical-align: sub; font-size: smaller; line-height: normal; }
+.monaco-workbench .repl .repl-tree .output.expression .code-superscript { vertical-align: super; font-size: smaller; line-height: normal; }
 
 .monaco-action-bar .action-item.repl-panel-filter-container {
 	cursor: default;

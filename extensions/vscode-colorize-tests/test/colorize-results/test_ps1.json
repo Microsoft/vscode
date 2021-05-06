@@ -56,7 +56,7 @@
 	},
 	{
 		"c": "(",
-		"t": "source.powershell punctuation.section.group.begin.powershell",
+		"t": "source.powershell meta.group.simple.subexpression.powershell punctuation.section.group.begin.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -67,7 +67,7 @@
 	},
 	{
 		"c": ")",
-		"t": "source.powershell punctuation.section.group.end.powershell",
+		"t": "source.powershell meta.group.simple.subexpression.powershell punctuation.section.group.end.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -254,7 +254,7 @@
 	},
 	{
 		"c": "(",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell punctuation.section.group.begin.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell punctuation.section.group.begin.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -265,7 +265,7 @@
 	},
 	{
 		"c": ")",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell punctuation.section.group.end.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell punctuation.section.group.end.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -474,7 +474,7 @@
 	},
 	{
 		"c": "(",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell punctuation.section.group.begin.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell punctuation.section.group.begin.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -485,7 +485,7 @@
 	},
 	{
 		"c": " ",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell interpolated.simple.source.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -496,7 +496,7 @@
 	},
 	{
 		"c": "[",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell interpolated.simple.source.powershell punctuation.section.bracket.begin.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell punctuation.section.bracket.begin.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -507,7 +507,7 @@
 	},
 	{
 		"c": "Security.Principal.WindowsBuiltInRole",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell interpolated.simple.source.powershell storage.type.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell storage.type.powershell",
 		"r": {
 			"dark_plus": "storage.type: #569CD6",
 			"light_plus": "storage.type: #0000FF",
@@ -518,7 +518,7 @@
 	},
 	{
 		"c": "]",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell interpolated.simple.source.powershell punctuation.section.bracket.end.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell punctuation.section.bracket.end.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -529,7 +529,7 @@
 	},
 	{
 		"c": "::Administrator ",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell interpolated.simple.source.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -540,7 +540,7 @@
 	},
 	{
 		"c": ")",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell punctuation.section.group.end.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell punctuation.section.group.end.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -804,7 +804,7 @@
 	},
 	{
 		"c": "(",
-		"t": "source.powershell punctuation.section.group.begin.powershell",
+		"t": "source.powershell meta.group.simple.subexpression.powershell punctuation.section.group.begin.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -815,7 +815,7 @@
 	},
 	{
 		"c": ")",
-		"t": "source.powershell punctuation.section.group.end.powershell",
+		"t": "source.powershell meta.group.simple.subexpression.powershell punctuation.section.group.end.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -870,7 +870,7 @@
 	},
 	{
 		"c": "(",
-		"t": "source.powershell meta.scriptblock.powershell punctuation.section.group.begin.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell punctuation.section.group.begin.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -881,7 +881,7 @@
 	},
 	{
 		"c": "        ",
-		"t": "source.powershell meta.scriptblock.powershell interpolated.simple.source.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -892,7 +892,7 @@
 	},
 	{
 		"c": "[",
-		"t": "source.powershell meta.scriptblock.powershell interpolated.simple.source.powershell meta.attribute.powershell punctuation.section.bracket.begin.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell meta.attribute.powershell punctuation.section.bracket.begin.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -903,7 +903,7 @@
 	},
 	{
 		"c": "Parameter",
-		"t": "source.powershell meta.scriptblock.powershell interpolated.simple.source.powershell meta.attribute.powershell support.function.attribute.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell meta.attribute.powershell support.function.attribute.powershell",
 		"r": {
 			"dark_plus": "support.function: #DCDCAA",
 			"light_plus": "support.function: #795E26",
@@ -914,7 +914,7 @@
 	},
 	{
 		"c": "(",
-		"t": "source.powershell meta.scriptblock.powershell interpolated.simple.source.powershell meta.attribute.powershell punctuation.section.group.begin.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell meta.attribute.powershell punctuation.section.group.begin.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -925,7 +925,7 @@
 	},
 	{
 		"c": "Mandatory",
-		"t": "source.powershell meta.scriptblock.powershell interpolated.simple.source.powershell meta.attribute.powershell variable.parameter.attribute.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell meta.attribute.powershell variable.parameter.attribute.powershell",
 		"r": {
 			"dark_plus": "variable: #9CDCFE",
 			"light_plus": "variable: #001080",
@@ -936,7 +936,7 @@
 	},
 	{
 		"c": "=",
-		"t": "source.powershell meta.scriptblock.powershell interpolated.simple.source.powershell meta.attribute.powershell keyword.operator.assignment.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell meta.attribute.powershell keyword.operator.assignment.powershell",
 		"r": {
 			"dark_plus": "keyword.operator: #D4D4D4",
 			"light_plus": "keyword.operator: #000000",
@@ -947,7 +947,7 @@
 	},
 	{
 		"c": "1",
-		"t": "source.powershell meta.scriptblock.powershell interpolated.simple.source.powershell meta.attribute.powershell constant.numeric.integer.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell meta.attribute.powershell constant.numeric.integer.powershell",
 		"r": {
 			"dark_plus": "constant.numeric: #B5CEA8",
 			"light_plus": "constant.numeric: #098658",
@@ -958,7 +958,7 @@
 	},
 	{
 		"c": ")",
-		"t": "source.powershell meta.scriptblock.powershell interpolated.simple.source.powershell meta.attribute.powershell punctuation.section.group.end.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell meta.attribute.powershell punctuation.section.group.end.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -969,7 +969,7 @@
 	},
 	{
 		"c": "]",
-		"t": "source.powershell meta.scriptblock.powershell interpolated.simple.source.powershell meta.attribute.powershell punctuation.section.bracket.end.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell meta.attribute.powershell punctuation.section.bracket.end.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -980,7 +980,7 @@
 	},
 	{
 		"c": "[",
-		"t": "source.powershell meta.scriptblock.powershell interpolated.simple.source.powershell punctuation.section.bracket.begin.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell punctuation.section.bracket.begin.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -991,7 +991,7 @@
 	},
 	{
 		"c": "string",
-		"t": "source.powershell meta.scriptblock.powershell interpolated.simple.source.powershell storage.type.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell storage.type.powershell",
 		"r": {
 			"dark_plus": "storage.type: #569CD6",
 			"light_plus": "storage.type: #0000FF",
@@ -1002,7 +1002,7 @@
 	},
 	{
 		"c": "]",
-		"t": "source.powershell meta.scriptblock.powershell interpolated.simple.source.powershell punctuation.section.bracket.end.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell punctuation.section.bracket.end.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -1013,7 +1013,7 @@
 	},
 	{
 		"c": "$",
-		"t": "source.powershell meta.scriptblock.powershell interpolated.simple.source.powershell variable.other.readwrite.powershell punctuation.definition.variable.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell variable.other.readwrite.powershell punctuation.definition.variable.powershell",
 		"r": {
 			"dark_plus": "variable: #9CDCFE",
 			"light_plus": "variable: #001080",
@@ -1024,7 +1024,7 @@
 	},
 	{
 		"c": "Command",
-		"t": "source.powershell meta.scriptblock.powershell interpolated.simple.source.powershell variable.other.readwrite.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell variable.other.readwrite.powershell",
 		"r": {
 			"dark_plus": "variable: #9CDCFE",
 			"light_plus": "variable: #001080",
@@ -1035,7 +1035,7 @@
 	},
 	{
 		"c": "    ",
-		"t": "source.powershell meta.scriptblock.powershell interpolated.simple.source.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -1046,7 +1046,7 @@
 	},
 	{
 		"c": ")",
-		"t": "source.powershell meta.scriptblock.powershell punctuation.section.group.end.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell punctuation.section.group.end.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -1079,7 +1079,7 @@
 	},
 	{
 		"c": "(",
-		"t": "source.powershell meta.scriptblock.powershell punctuation.section.group.begin.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell punctuation.section.group.begin.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -1090,7 +1090,7 @@
 	},
 	{
 		"c": "$",
-		"t": "source.powershell meta.scriptblock.powershell interpolated.simple.source.powershell support.variable.automatic.powershell punctuation.definition.variable.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell support.variable.automatic.powershell punctuation.definition.variable.powershell",
 		"r": {
 			"dark_plus": "support.variable: #9CDCFE",
 			"light_plus": "support.variable: #001080",
@@ -1101,7 +1101,7 @@
 	},
 	{
 		"c": "_",
-		"t": "source.powershell meta.scriptblock.powershell interpolated.simple.source.powershell support.variable.automatic.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell support.variable.automatic.powershell",
 		"r": {
 			"dark_plus": "support.variable: #9CDCFE",
 			"light_plus": "support.variable: #001080",
@@ -1112,7 +1112,7 @@
 	},
 	{
 		"c": " ",
-		"t": "source.powershell meta.scriptblock.powershell interpolated.simple.source.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -1123,7 +1123,7 @@
 	},
 	{
 		"c": "in",
-		"t": "source.powershell meta.scriptblock.powershell interpolated.simple.source.powershell keyword.control.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell keyword.control.powershell",
 		"r": {
 			"dark_plus": "keyword.control: #C586C0",
 			"light_plus": "keyword.control: #AF00DB",
@@ -1134,7 +1134,7 @@
 	},
 	{
 		"c": " cmd ",
-		"t": "source.powershell meta.scriptblock.powershell interpolated.simple.source.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -1145,7 +1145,7 @@
 	},
 	{
 		"c": "/",
-		"t": "source.powershell meta.scriptblock.powershell interpolated.simple.source.powershell keyword.operator.assignment.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell keyword.operator.assignment.powershell",
 		"r": {
 			"dark_plus": "keyword.operator: #D4D4D4",
 			"light_plus": "keyword.operator: #000000",
@@ -1156,7 +1156,7 @@
 	},
 	{
 		"c": "c ",
-		"t": "source.powershell meta.scriptblock.powershell interpolated.simple.source.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -1167,7 +1167,7 @@
 	},
 	{
 		"c": "\"",
-		"t": "source.powershell meta.scriptblock.powershell interpolated.simple.source.powershell string.quoted.double.powershell punctuation.definition.string.begin.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell string.quoted.double.powershell punctuation.definition.string.begin.powershell",
 		"r": {
 			"dark_plus": "string: #CE9178",
 			"light_plus": "string: #A31515",
@@ -1178,7 +1178,7 @@
 	},
 	{
 		"c": "$",
-		"t": "source.powershell meta.scriptblock.powershell interpolated.simple.source.powershell string.quoted.double.powershell variable.other.readwrite.powershell punctuation.definition.variable.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell string.quoted.double.powershell variable.other.readwrite.powershell punctuation.definition.variable.powershell",
 		"r": {
 			"dark_plus": "variable: #9CDCFE",
 			"light_plus": "variable: #001080",
@@ -1189,7 +1189,7 @@
 	},
 	{
 		"c": "Command",
-		"t": "source.powershell meta.scriptblock.powershell interpolated.simple.source.powershell string.quoted.double.powershell variable.other.readwrite.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell string.quoted.double.powershell variable.other.readwrite.powershell",
 		"r": {
 			"dark_plus": "variable: #9CDCFE",
 			"light_plus": "variable: #001080",
@@ -1200,7 +1200,7 @@
 	},
 	{
 		"c": "  2>&1 & set",
-		"t": "source.powershell meta.scriptblock.powershell interpolated.simple.source.powershell string.quoted.double.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell string.quoted.double.powershell",
 		"r": {
 			"dark_plus": "string: #CE9178",
 			"light_plus": "string: #A31515",
@@ -1211,7 +1211,7 @@
 	},
 	{
 		"c": "\"",
-		"t": "source.powershell meta.scriptblock.powershell interpolated.simple.source.powershell string.quoted.double.powershell punctuation.definition.string.end.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell string.quoted.double.powershell punctuation.definition.string.end.powershell",
 		"r": {
 			"dark_plus": "string: #CE9178",
 			"light_plus": "string: #A31515",
@@ -1222,7 +1222,7 @@
 	},
 	{
 		"c": ")",
-		"t": "source.powershell meta.scriptblock.powershell punctuation.section.group.end.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell punctuation.section.group.end.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -1288,7 +1288,7 @@
 	},
 	{
 		"c": "(",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell punctuation.section.group.begin.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell punctuation.section.group.begin.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -1299,7 +1299,7 @@
 	},
 	{
 		"c": "$",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell interpolated.simple.source.powershell support.variable.automatic.powershell punctuation.definition.variable.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell support.variable.automatic.powershell punctuation.definition.variable.powershell",
 		"r": {
 			"dark_plus": "support.variable: #9CDCFE",
 			"light_plus": "support.variable: #001080",
@@ -1310,7 +1310,7 @@
 	},
 	{
 		"c": "_",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell interpolated.simple.source.powershell support.variable.automatic.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell support.variable.automatic.powershell",
 		"r": {
 			"dark_plus": "support.variable: #9CDCFE",
 			"light_plus": "support.variable: #001080",
@@ -1321,7 +1321,7 @@
 	},
 	{
 		"c": " ",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell interpolated.simple.source.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -1332,7 +1332,7 @@
 	},
 	{
 		"c": "-match",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell interpolated.simple.source.powershell keyword.operator.comparison.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell keyword.operator.comparison.powershell",
 		"r": {
 			"dark_plus": "keyword.operator: #D4D4D4",
 			"light_plus": "keyword.operator: #000000",
@@ -1343,7 +1343,7 @@
 	},
 	{
 		"c": " ",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell interpolated.simple.source.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -1354,7 +1354,7 @@
 	},
 	{
 		"c": "'",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell interpolated.simple.source.powershell string.quoted.single.powershell punctuation.definition.string.begin.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell string.quoted.single.powershell punctuation.definition.string.begin.powershell",
 		"r": {
 			"dark_plus": "string: #CE9178",
 			"light_plus": "string: #A31515",
@@ -1365,7 +1365,7 @@
 	},
 	{
 		"c": "^([^=]+)=(.*)",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell interpolated.simple.source.powershell string.quoted.single.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell string.quoted.single.powershell",
 		"r": {
 			"dark_plus": "string: #CE9178",
 			"light_plus": "string: #A31515",
@@ -1376,7 +1376,7 @@
 	},
 	{
 		"c": "'",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell interpolated.simple.source.powershell string.quoted.single.powershell punctuation.definition.string.end.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell string.quoted.single.powershell punctuation.definition.string.end.powershell",
 		"r": {
 			"dark_plus": "string: #CE9178",
 			"light_plus": "string: #A31515",
@@ -1387,7 +1387,7 @@
 	},
 	{
 		"c": ")",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell punctuation.section.group.end.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell punctuation.section.group.end.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -1475,7 +1475,7 @@
 	},
 	{
 		"c": "(",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.scriptblock.powershell punctuation.section.group.begin.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell punctuation.section.group.begin.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -1486,7 +1486,7 @@
 	},
 	{
 		"c": "$",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.scriptblock.powershell interpolated.simple.source.powershell support.variable.automatic.powershell punctuation.definition.variable.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell support.variable.automatic.powershell punctuation.definition.variable.powershell",
 		"r": {
 			"dark_plus": "support.variable: #9CDCFE",
 			"light_plus": "support.variable: #001080",
@@ -1497,7 +1497,7 @@
 	},
 	{
 		"c": "matches",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.scriptblock.powershell interpolated.simple.source.powershell support.variable.automatic.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell support.variable.automatic.powershell",
 		"r": {
 			"dark_plus": "support.variable: #9CDCFE",
 			"light_plus": "support.variable: #001080",
@@ -1508,7 +1508,7 @@
 	},
 	{
 		"c": "[",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.scriptblock.powershell interpolated.simple.source.powershell punctuation.section.bracket.begin.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell punctuation.section.bracket.begin.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -1519,7 +1519,7 @@
 	},
 	{
 		"c": "1",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.scriptblock.powershell interpolated.simple.source.powershell constant.numeric.integer.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell constant.numeric.integer.powershell",
 		"r": {
 			"dark_plus": "constant.numeric: #B5CEA8",
 			"light_plus": "constant.numeric: #098658",
@@ -1530,7 +1530,7 @@
 	},
 	{
 		"c": "]",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.scriptblock.powershell interpolated.simple.source.powershell punctuation.section.bracket.end.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell punctuation.section.bracket.end.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -1541,7 +1541,7 @@
 	},
 	{
 		"c": ",",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.scriptblock.powershell interpolated.simple.source.powershell keyword.operator.other.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell keyword.operator.other.powershell",
 		"r": {
 			"dark_plus": "keyword.operator: #D4D4D4",
 			"light_plus": "keyword.operator: #000000",
@@ -1552,7 +1552,7 @@
 	},
 	{
 		"c": " ",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.scriptblock.powershell interpolated.simple.source.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -1563,7 +1563,7 @@
 	},
 	{
 		"c": "$",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.scriptblock.powershell interpolated.simple.source.powershell support.variable.automatic.powershell punctuation.definition.variable.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell support.variable.automatic.powershell punctuation.definition.variable.powershell",
 		"r": {
 			"dark_plus": "support.variable: #9CDCFE",
 			"light_plus": "support.variable: #001080",
@@ -1574,7 +1574,7 @@
 	},
 	{
 		"c": "matches",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.scriptblock.powershell interpolated.simple.source.powershell support.variable.automatic.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell support.variable.automatic.powershell",
 		"r": {
 			"dark_plus": "support.variable: #9CDCFE",
 			"light_plus": "support.variable: #001080",
@@ -1585,7 +1585,7 @@
 	},
 	{
 		"c": "[",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.scriptblock.powershell interpolated.simple.source.powershell punctuation.section.bracket.begin.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell punctuation.section.bracket.begin.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -1596,7 +1596,7 @@
 	},
 	{
 		"c": "2",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.scriptblock.powershell interpolated.simple.source.powershell constant.numeric.integer.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell constant.numeric.integer.powershell",
 		"r": {
 			"dark_plus": "constant.numeric: #B5CEA8",
 			"light_plus": "constant.numeric: #098658",
@@ -1607,7 +1607,7 @@
 	},
 	{
 		"c": "]",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.scriptblock.powershell interpolated.simple.source.powershell punctuation.section.bracket.end.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell punctuation.section.bracket.end.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -1618,7 +1618,7 @@
 	},
 	{
 		"c": ")",
-		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.scriptblock.powershell punctuation.section.group.end.powershell",
+		"t": "source.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.scriptblock.powershell meta.group.simple.subexpression.powershell punctuation.section.group.end.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -1816,7 +1816,7 @@
 	},
 	{
 		"c": "(",
-		"t": "source.powershell punctuation.section.group.begin.powershell",
+		"t": "source.powershell meta.group.simple.subexpression.powershell punctuation.section.group.begin.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -1827,7 +1827,7 @@
 	},
 	{
 		"c": "!",
-		"t": "source.powershell interpolated.simple.source.powershell keyword.operator.unary.powershell",
+		"t": "source.powershell meta.group.simple.subexpression.powershell keyword.operator.unary.powershell",
 		"r": {
 			"dark_plus": "keyword.operator: #D4D4D4",
 			"light_plus": "keyword.operator: #000000",
@@ -1838,7 +1838,7 @@
 	},
 	{
 		"c": "(",
-		"t": "source.powershell interpolated.simple.source.powershell punctuation.section.group.begin.powershell",
+		"t": "source.powershell meta.group.simple.subexpression.powershell meta.group.simple.subexpression.powershell punctuation.section.group.begin.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -1849,7 +1849,7 @@
 	},
 	{
 		"c": "Test-IsAdmin",
-		"t": "source.powershell interpolated.simple.source.powershell interpolated.simple.source.powershell support.function.powershell",
+		"t": "source.powershell meta.group.simple.subexpression.powershell meta.group.simple.subexpression.powershell support.function.powershell",
 		"r": {
 			"dark_plus": "support.function: #DCDCAA",
 			"light_plus": "support.function: #795E26",
@@ -1860,7 +1860,7 @@
 	},
 	{
 		"c": ")",
-		"t": "source.powershell interpolated.simple.source.powershell punctuation.section.group.end.powershell",
+		"t": "source.powershell meta.group.simple.subexpression.powershell meta.group.simple.subexpression.powershell punctuation.section.group.end.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -1871,7 +1871,7 @@
 	},
 	{
 		"c": ")",
-		"t": "source.powershell punctuation.section.group.end.powershell",
+		"t": "source.powershell meta.group.simple.subexpression.powershell punctuation.section.group.end.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -2234,7 +2234,7 @@
 	},
 	{
 		"c": "(",
-		"t": "source.powershell punctuation.section.group.begin.powershell",
+		"t": "source.powershell meta.group.simple.subexpression.powershell punctuation.section.group.begin.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -2245,7 +2245,7 @@
 	},
 	{
 		"c": "Test-Path",
-		"t": "source.powershell interpolated.simple.source.powershell support.function.powershell",
+		"t": "source.powershell meta.group.simple.subexpression.powershell support.function.powershell",
 		"r": {
 			"dark_plus": "support.function: #DCDCAA",
 			"light_plus": "support.function: #795E26",
@@ -2256,7 +2256,7 @@
 	},
 	{
 		"c": " ",
-		"t": "source.powershell interpolated.simple.source.powershell",
+		"t": "source.powershell meta.group.simple.subexpression.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -2267,7 +2267,7 @@
 	},
 	{
 		"c": "-",
-		"t": "source.powershell interpolated.simple.source.powershell keyword.operator.assignment.powershell",
+		"t": "source.powershell meta.group.simple.subexpression.powershell keyword.operator.assignment.powershell",
 		"r": {
 			"dark_plus": "keyword.operator: #D4D4D4",
 			"light_plus": "keyword.operator: #000000",
@@ -2278,7 +2278,7 @@
 	},
 	{
 		"c": "Path ",
-		"t": "source.powershell interpolated.simple.source.powershell",
+		"t": "source.powershell meta.group.simple.subexpression.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
@@ -2289,7 +2289,7 @@
 	},
 	{
 		"c": "\"",
-		"t": "source.powershell interpolated.simple.source.powershell string.quoted.double.powershell punctuation.definition.string.begin.powershell",
+		"t": "source.powershell meta.group.simple.subexpression.powershell string.quoted.double.powershell punctuation.definition.string.begin.powershell",
 		"r": {
 			"dark_plus": "string: #CE9178",
 			"light_plus": "string: #A31515",
@@ -2300,7 +2300,7 @@
 	},
 	{
 		"c": "$",
-		"t": "source.powershell interpolated.simple.source.powershell string.quoted.double.powershell variable.other.readwrite.powershell punctuation.definition.variable.powershell",
+		"t": "source.powershell meta.group.simple.subexpression.powershell string.quoted.double.powershell variable.other.readwrite.powershell punctuation.definition.variable.powershell",
 		"r": {
 			"dark_plus": "variable: #9CDCFE",
 			"light_plus": "variable: #001080",
@@ -2311,7 +2311,7 @@
 	},
 	{
 		"c": "env:",
-		"t": "source.powershell interpolated.simple.source.powershell string.quoted.double.powershell variable.other.readwrite.powershell support.variable.drive.powershell",
+		"t": "source.powershell meta.group.simple.subexpression.powershell string.quoted.double.powershell variable.other.readwrite.powershell support.variable.drive.powershell",
 		"r": {
 			"dark_plus": "support.variable: #9CDCFE",
 			"light_plus": "support.variable: #001080",
@@ -2322,7 +2322,7 @@
 	},
 	{
 		"c": "ADXSDKProgramFiles",
-		"t": "source.powershell interpolated.simple.source.powershell string.quoted.double.powershell variable.other.readwrite.powershell",
+		"t": "source.powershell meta.group.simple.subexpression.powershell string.quoted.double.powershell variable.other.readwrite.powershell",
 		"r": {
 			"dark_plus": "variable: #9CDCFE",
 			"light_plus": "variable: #001080",
@@ -2333,7 +2333,7 @@
 	},
 	{
 		"c": "\\Microsoft Visual Studio 12.0",
-		"t": "source.powershell interpolated.simple.source.powershell string.quoted.double.powershell",
+		"t": "source.powershell meta.group.simple.subexpression.powershell string.quoted.double.powershell",
 		"r": {
 			"dark_plus": "string: #CE9178",
 			"light_plus": "string: #A31515",
@@ -2344,7 +2344,7 @@
 	},
 	{
 		"c": "\"",
-		"t": "source.powershell interpolated.simple.source.powershell string.quoted.double.powershell punctuation.definition.string.end.powershell",
+		"t": "source.powershell meta.group.simple.subexpression.powershell string.quoted.double.powershell punctuation.definition.string.end.powershell",
 		"r": {
 			"dark_plus": "string: #CE9178",
 			"light_plus": "string: #A31515",
@@ -2355,7 +2355,7 @@
 	},
 	{
 		"c": ")",
-		"t": "source.powershell punctuation.section.group.end.powershell",
+		"t": "source.powershell meta.group.simple.subexpression.powershell punctuation.section.group.end.powershell",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",

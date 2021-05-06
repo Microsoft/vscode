@@ -3,6 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import { CancellationToken } from 'vs/base/common/cancellation';
 import { Emitter, Event } from 'vs/base/common/event';
 import { IDisposable } from 'vs/base/common/lifecycle';
 import { isWindows, OperatingSystem } from 'vs/base/common/platform';
@@ -40,6 +41,23 @@ export interface TunnelProviderFeatures {
 
 export interface ITunnelProvider {
 	forwardPort(tunnelOptions: TunnelOptions, tunnelCreationOptions: TunnelCreationOptions): Promise<RemoteTunnel | undefined> | undefined;
+}
+
+export enum ProvidedOnAutoForward {
+	Notify = 1,
+	OpenBrowser = 2,
+	OpenPreview = 3,
+	Silent = 4,
+	Ignore = 5
+}
+
+export interface ProvidedPortAttributes {
+	port: number;
+	autoForwardAction: ProvidedOnAutoForward;
+}
+
+export interface PortAttributesProvider {
+	providePortAttributes(ports: number[], pid: number | undefined, commandLine: string | undefined, token: CancellationToken): Promise<ProvidedPortAttributes[]>;
 }
 
 export interface ITunnel {
@@ -219,7 +237,7 @@ export abstract class AbstractTunnelService implements ITunnelService {
 			localAddress: tunnel.localAddress,
 			public: tunnel.public,
 			dispose: async () => {
-				this.logService.trace(`ForwardedPorts: (TunnelService) dispose request for ${tunnel.tunnelRemotePort} `);
+				this.logService.trace(`ForwardedPorts: (TunnelService) dispose request for ${tunnel.tunnelRemoteHost}:${tunnel.tunnelRemotePort} `);
 				const existingHost = this._tunnels.get(tunnel.tunnelRemoteHost);
 				if (existingHost) {
 					const existing = existingHost.get(tunnel.tunnelRemotePort);
@@ -249,7 +267,7 @@ export abstract class AbstractTunnelService implements ITunnelService {
 	}
 
 	async closeTunnel(remoteHost: string, remotePort: number): Promise<void> {
-		this.logService.trace(`ForwardedPorts: (TunnelService) close request for ${remotePort} `);
+		this.logService.trace(`ForwardedPorts: (TunnelService) close request for ${remoteHost}:${remotePort} `);
 		const portMap = this._tunnels.get(remoteHost);
 		if (portMap && portMap.has(remotePort)) {
 			const value = portMap.get(remotePort)!;

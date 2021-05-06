@@ -674,7 +674,7 @@ export class PauseableEmitter<T> extends Emitter<T> {
 		}
 	}
 
-	fire(event: T): void {
+	override fire(event: T): void {
 		if (this._listeners) {
 			if (this._isPaused !== 0) {
 				this._eventQueue.push(event);

@@ -5,7 +5,7 @@
 
 import { CharCode } from 'vs/base/common/charCode';
 import * as strings from 'vs/base/common/strings';
-import { EditorAutoClosingStrategy } from 'vs/editor/common/config/editorOptions';
+import { EditorAutoClosingEditStrategy, EditorAutoClosingStrategy } from 'vs/editor/common/config/editorOptions';
 import { CursorConfiguration, ICursorSimpleModel, SingleCursorState } from 'vs/editor/common/controller/cursorCommon';
 import { DeleteOperations } from 'vs/editor/common/controller/cursorDeleteOperations';
 import { WordCharacterClass, WordCharacterClassifier, getMapForWordSeparators } from 'vs/editor/common/controller/wordCharacterClassifier';
@@ -52,9 +52,11 @@ export interface DeleteWordContext {
 	model: ITextModel;
 	selection: Selection;
 	whitespaceHeuristics: boolean;
+	autoClosingDelete: EditorAutoClosingEditStrategy;
 	autoClosingBrackets: EditorAutoClosingStrategy;
 	autoClosingQuotes: EditorAutoClosingStrategy;
 	autoClosingPairs: AutoClosingPairs;
+	autoClosedCharacters: Range[];
 }
 
 export class WordOperations {
@@ -384,7 +386,7 @@ export class WordOperations {
 			return selection;
 		}
 
-		if (DeleteOperations.isAutoClosingPairDelete(ctx.autoClosingBrackets, ctx.autoClosingQuotes, ctx.autoClosingPairs.autoClosingPairsOpenByEnd, ctx.model, [ctx.selection])) {
+		if (DeleteOperations.isAutoClosingPairDelete(ctx.autoClosingDelete, ctx.autoClosingBrackets, ctx.autoClosingQuotes, ctx.autoClosingPairs.autoClosingPairsOpenByEnd, ctx.model, [ctx.selection], ctx.autoClosedCharacters)) {
 			const position = ctx.selection.getPosition();
 			return new Range(position.lineNumber, position.column - 1, position.lineNumber, position.column + 1);
 		}

@@ -114,7 +114,7 @@ export class ExtHostAuthentication implements ExtHostAuthenticationShape {
 			this._proxy.$sendDidChangeSessions(id, {
 				added: e.added ?? [],
 				changed: e.changed ?? [],
-				removed: e.changed ?? []
+				removed: e.removed ?? []
 			});
 		});
 

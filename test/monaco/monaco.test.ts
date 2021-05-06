@@ -76,7 +76,7 @@ describe('API Integration Tests', function (): void {
 	});
 
 	it('`monaco` is not exposed as global', async function (): Promise<any> {
-		assert.equal(await page.evaluate(`typeof monaco`), 'undefined');
+		assert.strictEqual(await page.evaluate(`typeof monaco`), 'undefined');
 	});
 
 	it('Focus and Type', async function (): Promise<any> {
@@ -89,7 +89,7 @@ describe('API Integration Tests', function (): void {
 			});
 		})()
 		`);
-		assert.equal(await page.evaluate(`instance.getModel().getLineContent(1)`), 'afrom banana import *');
+		assert.strictEqual(await page.evaluate(`instance.getModel().getLineContent(1)`), 'afrom banana import *');
 	});
 
 	it('Type and Undo', async function (): Promise<any> {
@@ -103,7 +103,7 @@ describe('API Integration Tests', function (): void {
 			instance.getModel().undo();
 		})()
 		`);
-		assert.equal(await page.evaluate(`instance.getModel().getLineContent(1)`), 'from banana import *');
+		assert.strictEqual(await page.evaluate(`instance.getModel().getLineContent(1)`), 'from banana import *');
 	});
 
 	it('Multi Cursor', async function (): Promise<any> {
@@ -124,7 +124,7 @@ describe('API Integration Tests', function (): void {
 
 		await page.waitForTimeout(1000);
 
-		assert.deepEqual(await page.evaluate(`
+		assert.deepStrictEqual(await page.evaluate(`
 			[
 				instance.getModel().getLineContent(1),
 				instance.getModel().getLineContent(2),

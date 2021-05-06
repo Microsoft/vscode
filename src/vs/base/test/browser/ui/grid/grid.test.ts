@@ -40,35 +40,35 @@ suite('Grid', function () {
 	});
 
 	test('getRelativeLocation', () => {
-		assert.deepEqual(getRelativeLocation(Orientation.VERTICAL, [0], Direction.Up), [0]);
-		assert.deepEqual(getRelativeLocation(Orientation.VERTICAL, [0], Direction.Down), [1]);
-		assert.deepEqual(getRelativeLocation(Orientation.VERTICAL, [0], Direction.Left), [0, 0]);
-		assert.deepEqual(getRelativeLocation(Orientation.VERTICAL, [0], Direction.Right), [0, 1]);
+		assert.deepStrictEqual(getRelativeLocation(Orientation.VERTICAL, [0], Direction.Up), [0]);
+		assert.deepStrictEqual(getRelativeLocation(Orientation.VERTICAL, [0], Direction.Down), [1]);
+		assert.deepStrictEqual(getRelativeLocation(Orientation.VERTICAL, [0], Direction.Left), [0, 0]);
+		assert.deepStrictEqual(getRelativeLocation(Orientation.VERTICAL, [0], Direction.Right), [0, 1]);
 
-		assert.deepEqual(getRelativeLocation(Orientation.HORIZONTAL, [0], Direction.Up), [0, 0]);
-		assert.deepEqual(getRelativeLocation(Orientation.HORIZONTAL, [0], Direction.Down), [0, 1]);
-		assert.deepEqual(getRelativeLocation(Orientation.HORIZONTAL, [0], Direction.Left), [0]);
-		assert.deepEqual(getRelativeLocation(Orientation.HORIZONTAL, [0], Direction.Right), [1]);
+		assert.deepStrictEqual(getRelativeLocation(Orientation.HORIZONTAL, [0], Direction.Up), [0, 0]);
+		assert.deepStrictEqual(getRelativeLocation(Orientation.HORIZONTAL, [0], Direction.Down), [0, 1]);
+		assert.deepStrictEqual(getRelativeLocation(Orientation.HORIZONTAL, [0], Direction.Left), [0]);
+		assert.deepStrictEqual(getRelativeLocation(Orientation.HORIZONTAL, [0], Direction.Right), [1]);
 
-		assert.deepEqual(getRelativeLocation(Orientation.VERTICAL, [4], Direction.Up), [4]);
-		assert.deepEqual(getRelativeLocation(Orientation.VERTICAL, [4], Direction.Down), [5]);
-		assert.deepEqual(getRelativeLocation(Orientation.VERTICAL, [4], Direction.Left), [4, 0]);
-		assert.deepEqual(getRelativeLocation(Orientation.VERTICAL, [4], Direction.Right), [4, 1]);
+		assert.deepStrictEqual(getRelativeLocation(Orientation.VERTICAL, [4], Direction.Up), [4]);
+		assert.deepStrictEqual(getRelativeLocation(Orientation.VERTICAL, [4], Direction.Down), [5]);
+		assert.deepStrictEqual(getRelativeLocation(Orientation.VERTICAL, [4], Direction.Left), [4, 0]);
+		assert.deepStrictEqual(getRelativeLocation(Orientation.VERTICAL, [4], Direction.Right), [4, 1]);
 
-		assert.deepEqual(getRelativeLocation(Orientation.VERTICAL, [0, 0], Direction.Up), [0, 0, 0]);
-		assert.deepEqual(getRelativeLocation(Orientation.VERTICAL, [0, 0], Direction.Down), [0, 0, 1]);
-		assert.deepEqual(getRelativeLocation(Orientation.VERTICAL, [0, 0], Direction.Left), [0, 0]);
-		assert.deepEqual(getRelativeLocation(Orientation.VERTICAL, [0, 0], Direction.Right), [0, 1]);
+		assert.deepStrictEqual(getRelativeLocation(Orientation.VERTICAL, [0, 0], Direction.Up), [0, 0, 0]);
+		assert.deepStrictEqual(getRelativeLocation(Orientation.VERTICAL, [0, 0], Direction.Down), [0, 0, 1]);
+		assert.deepStrictEqual(getRelativeLocation(Orientation.VERTICAL, [0, 0], Direction.Left), [0, 0]);
+		assert.deepStrictEqual(getRelativeLocation(Orientation.VERTICAL, [0, 0], Direction.Right), [0, 1]);
 
-		assert.deepEqual(getRelativeLocation(Orientation.VERTICAL, [1, 2], Direction.Up), [1, 2, 0]);
-		assert.deepEqual(getRelativeLocation(Orientation.VERTICAL, [1, 2], Direction.Down), [1, 2, 1]);
-		assert.deepEqual(getRelativeLocation(Orientation.VERTICAL, [1, 2], Direction.Left), [1, 2]);
-		assert.deepEqual(getRelativeLocation(Orientation.VERTICAL, [1, 2], Direction.Right), [1, 3]);
+		assert.deepStrictEqual(getRelativeLocation(Orientation.VERTICAL, [1, 2], Direction.Up), [1, 2, 0]);
+		assert.deepStrictEqual(getRelativeLocation(Orientation.VERTICAL, [1, 2], Direction.Down), [1, 2, 1]);
+		assert.deepStrictEqual(getRelativeLocation(Orientation.VERTICAL, [1, 2], Direction.Left), [1, 2]);
+		assert.deepStrictEqual(getRelativeLocation(Orientation.VERTICAL, [1, 2], Direction.Right), [1, 3]);
 
-		assert.deepEqual(getRelativeLocation(Orientation.VERTICAL, [1, 2, 3], Direction.Up), [1, 2, 3]);
-		assert.deepEqual(getRelativeLocation(Orientation.VERTICAL, [1, 2, 3], Direction.Down), [1, 2, 4]);
-		assert.deepEqual(getRelativeLocation(Orientation.VERTICAL, [1, 2, 3], Direction.Left), [1, 2, 3, 0]);
-		assert.deepEqual(getRelativeLocation(Orientation.VERTICAL, [1, 2, 3], Direction.Right), [1, 2, 3, 1]);
+		assert.deepStrictEqual(getRelativeLocation(Orientation.VERTICAL, [1, 2, 3], Direction.Up), [1, 2, 3]);
+		assert.deepStrictEqual(getRelativeLocation(Orientation.VERTICAL, [1, 2, 3], Direction.Down), [1, 2, 4]);
+		assert.deepStrictEqual(getRelativeLocation(Orientation.VERTICAL, [1, 2, 3], Direction.Left), [1, 2, 3, 0]);
+		assert.deepStrictEqual(getRelativeLocation(Orientation.VERTICAL, [1, 2, 3], Direction.Right), [1, 2, 3, 1]);
 	});
 
 	test('empty', () => {
@@ -77,7 +77,7 @@ suite('Grid', function () {
 		container.appendChild(gridview.element);
 		gridview.layout(800, 600);
 
-		assert.deepEqual(view1.size, [800, 600]);
+		assert.deepStrictEqual(view1.size, [800, 600]);
 	});
 
 	test('two views vertically', function () {
@@ -85,12 +85,12 @@ suite('Grid', function () {
 		const grid = new Grid(view1);
 		container.appendChild(grid.element);
 		grid.layout(800, 600);
-		assert.deepEqual(view1.size, [800, 600]);
+		assert.deepStrictEqual(view1.size, [800, 600]);
 
 		const view2 = new TestView(50, Number.MAX_VALUE, 50, Number.MAX_VALUE);
 		grid.addView(view2, 200, view1, Direction.Up);
-		assert.deepEqual(view1.size, [800, 400]);
-		assert.deepEqual(view2.size, [800, 200]);
+		assert.deepStrictEqual(view1.size, [800, 400]);
+		assert.deepStrictEqual(view2.size, [800, 200]);
 	});
 
 	test('two views horizontally', function () {
@@ -99,12 +99,12 @@ suite('Grid', function () {
 		container.appendChild(grid.element);
 
 		grid.layout(800, 600);
-		assert.deepEqual(view1.size, [800, 600]);
+		assert.deepStrictEqual(view1.size, [800, 600]);
 
 		const view2 = new TestView(50, Number.MAX_VALUE, 50, Number.MAX_VALUE);
 		grid.addView(view2, 300, view1, Direction.Right);
-		assert.deepEqual(view1.size, [500, 600]);
-		assert.deepEqual(view2.size, [300, 600]);
+		assert.deepStrictEqual(view1.size, [500, 600]);
+		assert.deepStrictEqual(view2.size, [300, 600]);
 	});
 
 	test('simple layout', function () {
@@ -113,33 +113,33 @@ suite('Grid', function () {
 		container.appendChild(grid.element);
 
 		grid.layout(800, 600);
-		assert.deepEqual(view1.size, [800, 600]);
+		assert.deepStrictEqual(view1.size, [800, 600]);
 
 		const view2 = new TestView(50, Number.MAX_VALUE, 50, Number.MAX_VALUE);
 		grid.addView(view2, 200, view1, Direction.Up);
-		assert.deepEqual(view1.size, [800, 400]);
-		assert.deepEqual(view2.size, [800, 200]);
+		assert.deepStrictEqual(view1.size, [800, 400]);
+		assert.deepStrictEqual(view2.size, [800, 200]);
 
 		const view3 = new TestView(50, Number.MAX_VALUE, 50, Number.MAX_VALUE);
 		grid.addView(view3, 200, view1, Direction.Right);
-		assert.deepEqual(view1.size, [600, 400]);
-		assert.deepEqual(view2.size, [800, 200]);
-		assert.deepEqual(view3.size, [200, 400]);
+		assert.deepStrictEqual(view1.size, [600, 400]);
+		assert.deepStrictEqual(view2.size, [800, 200]);
+		assert.deepStrictEqual(view3.size, [200, 400]);
 
 		const view4 = new TestView(50, Number.MAX_VALUE, 50, Number.MAX_VALUE);
 		grid.addView(view4, 200, view2, Direction.Left);
-		assert.deepEqual(view1.size, [600, 400]);
-		assert.deepEqual(view2.size, [600, 200]);
-		assert.deepEqual(view3.size, [200, 400]);
-		assert.deepEqual(view4.size, [200, 200]);
+		assert.deepStrictEqual(view1.size, [600, 400]);
+		assert.deepStrictEqual(view2.size, [600, 200]);
+		assert.deepStrictEqual(view3.size, [200, 400]);
+		assert.deepStrictEqual(view4.size, [200, 200]);
 
 		const view5 = new TestView(50, Number.MAX_VALUE, 50, Number.MAX_VALUE);
 		grid.addView(view5, 100, view1, Direction.Down);
-		assert.deepEqual(view1.size, [600, 300]);
-		assert.deepEqual(view2.size, [600, 200]);
-		assert.deepEqual(view3.size, [200, 400]);
-		assert.deepEqual(view4.size, [200, 200]);
-		assert.deepEqual(view5.size, [600, 100]);
+		assert.deepStrictEqual(view1.size, [600, 300]);
+		assert.deepStrictEqual(view2.size, [600, 200]);
+		assert.deepStrictEqual(view3.size, [200, 400]);
+		assert.deepStrictEqual(view4.size, [200, 200]);
+		assert.deepStrictEqual(view5.size, [600, 100]);
 	});
 
 	test('another simple layout with automatic size distribution', function () {
@@ -148,42 +148,42 @@ suite('Grid', function () {
 		container.appendChild(grid.element);
 
 		grid.layout(800, 600);
-		assert.deepEqual(view1.size, [800, 600]);
+		assert.deepStrictEqual(view1.size, [800, 600]);
 
 		const view2 = new TestView(50, Number.MAX_VALUE, 50, Number.MAX_VALUE);
 		grid.addView(view2, Sizing.Distribute, view1, Direction.Left);
-		assert.deepEqual(view1.size, [400, 600]);
-		assert.deepEqual(view2.size, [400, 600]);
+		assert.deepStrictEqual(view1.size, [400, 600]);
+		assert.deepStrictEqual(view2.size, [400, 600]);
 
 		const view3 = new TestView(50, Number.MAX_VALUE, 50, Number.MAX_VALUE);
 		grid.addView(view3, Sizing.Distribute, view1, Direction.Right);
-		assert.deepEqual(view1.size, [266, 600]);
-		assert.deepEqual(view2.size, [266, 600]);
-		assert.deepEqual(view3.size, [268, 600]);
+		assert.deepStrictEqual(view1.size, [266, 600]);
+		assert.deepStrictEqual(view2.size, [266, 600]);
+		assert.deepStrictEqual(view3.size, [268, 600]);
 
 		const view4 = new TestView(50, Number.MAX_VALUE, 50, Number.MAX_VALUE);
 		grid.addView(view4, Sizing.Distribute, view2, Direction.Down);
-		assert.deepEqual(view1.size, [266, 600]);
-		assert.deepEqual(view2.size, [266, 300]);
-		assert.deepEqual(view3.size, [268, 600]);
-		assert.deepEqual(view4.size, [266, 300]);
+		assert.deepStrictEqual(view1.size, [266, 600]);
+		assert.deepStrictEqual(view2.size, [266, 300]);
+		assert.deepStrictEqual(view3.size, [268, 600]);
+		assert.deepStrictEqual(view4.size, [266, 300]);
 
 		const view5 = new TestView(50, Number.MAX_VALUE, 50, Number.MAX_VALUE);
 		grid.addView(view5, Sizing.Distribute, view3, Direction.Up);
-		assert.deepEqual(view1.size, [266, 600]);
-		assert.deepEqual(view2.size, [266, 300]);
-		assert.deepEqual(view3.size, [268, 300]);
-		assert.deepEqual(view4.size, [266, 300]);
-		assert.deepEqual(view5.size, [268, 300]);
+		assert.deepStrictEqual(view1.size, [266, 600]);
+		assert.deepStrictEqual(view2.size, [266, 300]);
+		assert.deepStrictEqual(view3.size, [268, 300]);
+		assert.deepStrictEqual(view4.size, [266, 300]);
+		assert.deepStrictEqual(view5.size, [268, 300]);
 
 		const view6 = new TestView(50, Number.MAX_VALUE, 50, Number.MAX_VALUE);
 		grid.addView(view6, Sizing.Distribute, view3, Direction.Down);
-		assert.deepEqual(view1.size, [266, 600]);
-		assert.deepEqual(view2.size, [266, 300]);
-		assert.deepEqual(view3.size, [268, 200]);
-		assert.deepEqual(view4.size, [266, 300]);
-		assert.deepEqual(view5.size, [268, 200]);
-		assert.deepEqual(view6.size, [268, 200]);
+		assert.deepStrictEqual(view1.size, [266, 600]);
+		assert.deepStrictEqual(view2.size, [266, 300]);
+		assert.deepStrictEqual(view3.size, [268, 200]);
+		assert.deepStrictEqual(view4.size, [266, 300]);
+		assert.deepStrictEqual(view5.size, [268, 200]);
+		assert.deepStrictEqual(view6.size, [268, 200]);
 	});
 
 	test('another simple layout with split size distribution', function () {
@@ -192,42 +192,42 @@ suite('Grid', function () {
 		container.appendChild(grid.element);
 
 		grid.layout(800, 600);
-		assert.deepEqual(view1.size, [800, 600]);
+		assert.deepStrictEqual(view1.size, [800, 600]);
 
 		const view2 = new TestView(50, Number.MAX_VALUE, 50, Number.MAX_VALUE);
 		grid.addView(view2, Sizing.Split, view1, Direction.Left);
-		assert.deepEqual(view1.size, [400, 600]);
-		assert.deepEqual(view2.size, [400, 600]);
+		assert.deepStrictEqual(view1.size, [400, 600]);
+		assert.deepStrictEqual(view2.size, [400, 600]);
 
 		const view3 = new TestView(50, Number.MAX_VALUE, 50, Number.MAX_VALUE);
 		grid.addView(view3, Sizing.Split, view1, Direction.Right);
-		assert.deepEqual(view1.size, [200, 600]);
-		assert.deepEqual(view2.size, [400, 600]);
-		assert.deepEqual(view3.size, [200, 600]);
+		assert.deepStrictEqual(view1.size, [200, 600]);
+		assert.deepStrictEqual(view2.size, [400, 600]);
+		assert.deepStrictEqual(view3.size, [200, 600]);
 
 		const view4 = new TestView(50, Number.MAX_VALUE, 50, Number.MAX_VALUE);
 		grid.addView(view4, Sizing.Split, view2, Direction.Down);
-		assert.deepEqual(view1.size, [200, 600]);
-		assert.deepEqual(view2.size, [400, 300]);
-		assert.deepEqual(view3.size, [200, 600]);
-		assert.deepEqual(view4.size, [400, 300]);
+		assert.deepStrictEqual(view1.size, [200, 600]);
+		assert.deepStrictEqual(view2.size, [400, 300]);
+		assert.deepStrictEqual(view3.size, [200, 600]);
+		assert.deepStrictEqual(view4.size, [400, 300]);
 
 		const view5 = new TestView(50, Number.MAX_VALUE, 50, Number.MAX_VALUE);
 		grid.addView(view5, Sizing.Split, view3, Direction.Up);
-		assert.deepEqual(view1.size, [200, 600]);
-		assert.deepEqual(view2.size, [400, 300]);
-		assert.deepEqual(view3.size, [200, 300]);
-		assert.deepEqual(view4.size, [400, 300]);
-		assert.deepEqual(view5.size, [200, 300]);
+		assert.deepStrictEqual(view1.size, [200, 600]);
+		assert.deepStrictEqual(view2.size, [400, 300]);
+		assert.deepStrictEqual(view3.size, [200, 300]);
+		assert.deepStrictEqual(view4.size, [400, 300]);
+		assert.deepStrictEqual(view5.size, [200, 300]);
 
 		const view6 = new TestView(50, Number.MAX_VALUE, 50, Number.MAX_VALUE);
 		grid.addView(view6, Sizing.Split, view3, Direction.Down);
-		assert.deepEqual(view1.size, [200, 600]);
-		assert.deepEqual(view2.size, [400, 300]);
-		assert.deepEqual(view3.size, [200, 150]);
-		assert.deepEqual(view4.size, [400, 300]);
-		assert.deepEqual(view5.size, [200, 300]);
-		assert.deepEqual(view6.size, [200, 150]);
+		assert.deepStrictEqual(view1.size, [200, 600]);
+		assert.deepStrictEqual(view2.size, [400, 300]);
+		assert.deepStrictEqual(view3.size, [200, 150]);
+		assert.deepStrictEqual(view4.size, [400, 300]);
+		assert.deepStrictEqual(view5.size, [200, 300]);
+		assert.deepStrictEqual(view6.size, [200, 150]);
 	});
 
 	test('3/2 layout with split', function () {
@@ -236,33 +236,33 @@ suite('Grid', function () {
 		container.appendChild(grid.element);
 
 		grid.layout(800, 600);
-		assert.deepEqual(view1.size, [800, 600]);
+		assert.deepStrictEqual(view1.size, [800, 600]);
 
 		const view2 = new TestView(50, Number.MAX_VALUE, 50, Number.MAX_VALUE);
 		grid.addView(view2, Sizing.Split, view1, Direction.Down);
-		assert.deepEqual(view1.size, [800, 300]);
-		assert.deepEqual(view2.size, [800, 300]);
+		assert.deepStrictEqual(view1.size, [800, 300]);
+		assert.deepStrictEqual(view2.size, [800, 300]);
 
 		const view3 = new TestView(50, Number.MAX_VALUE, 50, Number.MAX_VALUE);
 		grid.addView(view3, Sizing.Split, view2, Direction.Right);
-		assert.deepEqual(view1.size, [800, 300]);
-		assert.deepEqual(view2.size, [400, 300]);
-		assert.deepEqual(view3.size, [400, 300]);
+		assert.deepStrictEqual(view1.size, [800, 300]);
+		assert.deepStrictEqual(view2.size, [400, 300]);
+		assert.deepStrictEqual(view3.size, [400, 300]);
 
 		const view4 = new TestView(50, Number.MAX_VALUE, 50, Number.MAX_VALUE);
 		grid.addView(view4, Sizing.Split, view1, Direction.Right);
-		assert.deepEqual(view1.size, [400, 300]);
-		assert.deepEqual(view2.size, [400, 300]);
-		assert.deepEqual(view3.size, [400, 300]);
-		assert.deepEqual(view4.size, [400, 300]);
+		assert.deepStrictEqual(view1.size, [400, 300]);
+		assert.deepStrictEqual(view2.size, [400, 300]);
+		assert.deepStrictEqual(view3.size, [400, 300]);
+		assert.deepStrictEqual(view4.size, [400, 300]);
 
 		const view5 = new TestView(50, Number.MAX_VALUE, 50, Number.MAX_VALUE);
 		grid.addView(view5, Sizing.Split, view1, Direction.Right);
-		assert.deepEqual(view1.size, [200, 300]);
-		assert.deepEqual(view2.size, [400, 300]);
-		assert.deepEqual(view3.size, [400, 300]);
-		assert.deepEqual(view4.size, [400, 300]);
-		assert.deepEqual(view5.size, [200, 300]);
+		assert.deepStrictEqual(view1.size, [200, 300]);
+		assert.deepStrictEqual(view2.size, [400, 300]);
+		assert.deepStrictEqual(view3.size, [400, 300]);
+		assert.deepStrictEqual(view4.size, [400, 300]);
+		assert.deepStrictEqual(view5.size, [200, 300]);
 	});
 
 	test('sizing should be correct after branch demotion #50564', function () {
@@ -280,15 +280,15 @@ suite('Grid', function () {
 
 		const view4 = new TestView(50, Number.MAX_VALUE, 50, Number.MAX_VALUE);
 		grid.addView(view4, Sizing.Split, view2, Direction.Right);
-		assert.deepEqual(view1.size, [400, 600]);
-		assert.deepEqual(view2.size, [200, 300]);
-		assert.deepEqual(view3.size, [400, 300]);
-		assert.deepEqual(view4.size, [200, 300]);
+		assert.deepStrictEqual(view1.size, [400, 600]);
+		assert.deepStrictEqual(view2.size, [200, 300]);
+		assert.deepStrictEqual(view3.size, [400, 300]);
+		assert.deepStrictEqual(view4.size, [200, 300]);
 
 		grid.removeView(view3);
-		assert.deepEqual(view1.size, [400, 600]);
-		assert.deepEqual(view2.size, [200, 600]);
-		assert.deepEqual(view4.size, [200, 600]);
+		assert.deepStrictEqual(view1.size, [400, 600]);
+		assert.deepStrictEqual(view2.size, [200, 600]);
+		assert.deepStrictEqual(view4.size, [200, 600]);
 	});
 
 	test('sizing should be correct after branch demotion #50675', function () {
@@ -306,15 +306,15 @@ suite('Grid', function () {
 
 		const view4 = new TestView(50, Number.MAX_VALUE, 50, Number.MAX_VALUE);
 		grid.addView(view4, Sizing.Distribute, view3, Direction.Right);
-		assert.deepEqual(view1.size, [800, 200]);
-		assert.deepEqual(view2.size, [800, 200]);
-		assert.deepEqual(view3.size, [400, 200]);
-		assert.deepEqual(view4.size, [400, 200]);
+		assert.deepStrictEqual(view1.size, [800, 200]);
+		assert.deepStrictEqual(view2.size, [800, 200]);
+		assert.deepStrictEqual(view3.size, [400, 200]);
+		assert.deepStrictEqual(view4.size, [400, 200]);
 
 		grid.removeView(view3, Sizing.Distribute);
-		assert.deepEqual(view1.size, [800, 200]);
-		assert.deepEqual(view2.size, [800, 200]);
-		assert.deepEqual(view4.size, [800, 200]);
+		assert.deepStrictEqual(view1.size, [800, 200]);
+		assert.deepStrictEqual(view2.size, [800, 200]);
+		assert.deepStrictEqual(view4.size, [800, 200]);
 	});
 
 	test('getNeighborViews should work on single view layout', function () {
@@ -324,15 +324,15 @@ suite('Grid', function () {
 
 		grid.layout(800, 600);
 
-		assert.deepEqual(grid.getNeighborViews(view1, Direction.Up), []);
-		assert.deepEqual(grid.getNeighborViews(view1, Direction.Right), []);
-		assert.deepEqual(grid.getNeighborViews(view1, Direction.Down), []);
-		assert.deepEqual(grid.getNeighborViews(view1, Direction.Left), []);
+		assert.deepStrictEqual(grid.getNeighborViews(view1, Direction.Up), []);
+		assert.deepStrictEqual(grid.getNeighborViews(view1, Direction.Right), []);
+		assert.deepStrictEqual(grid.getNeighborViews(view1, Direction.Down), []);
+		assert.deepStrictEqual(grid.getNeighborViews(view1, Direction.Left), []);
 
-		assert.deepEqual(grid.getNeighborViews(view1, Direction.Up, true), [view1]);
-		assert.deepEqual(grid.getNeighborViews(view1, Direction.Right, true), [view1]);
-		assert.deepEqual(grid.getNeighborViews(view1, Direction.Down, true), [view1]);
-		assert.deepEqual(grid.getNeighborViews(view1, Direction.Left, true), [view1]);
+		assert.deepStrictEqual(grid.getNeighborViews(view1, Direction.Up, true), [view1]);
+		assert.deepStrictEqual(grid.getNeighborViews(view1, Direction.Right, true), [view1]);
+		assert.deepStrictEqual(grid.getNeighborViews(view1, Direction.Down, true), [view1]);
+		assert.deepStrictEqual(grid.getNeighborViews(view1, Direction.Left, true), [view1]);
 	});
 
 	test('getNeighborViews should work on simple layout', function () {
@@ -348,35 +348,35 @@ suite('Grid', function () {
 		const view3 = new TestView(50, Number.MAX_VALUE, 50, Number.MAX_VALUE);
 		grid.addView(view3, Sizing.Distribute, view2, Direction.Down);
 
-		assert.deepEqual(grid.getNeighborViews(view1, Direction.Up), []);
-		assert.deepEqual(grid.getNeighborViews(view1, Direction.Right), []);
-		assert.deepEqual(grid.getNeighborViews(view1, Direction.Down), [view2]);
-		assert.deepEqual(grid.getNeighborViews(view1, Direction.Left), []);
+		assert.deepStrictEqual(grid.getNeighborViews(view1, Direction.Up), []);
+		assert.deepStrictEqual(grid.getNeighborViews(view1, Direction.Right), []);
+		assert.deepStrictEqual(grid.getNeighborViews(view1, Direction.Down), [view2]);
+		assert.deepStrictEqual(grid.getNeighborViews(view1, Direction.Left), []);
 
-		assert.deepEqual(grid.getNeighborViews(view1, Direction.Up, true), [view3]);
-		assert.deepEqual(grid.getNeighborViews(view1, Direction.Right, true), [view1]);
-		assert.deepEqual(grid.getNeighborViews(view1, Direction.Down, true), [view2]);
-		assert.deepEqual(grid.getNeighborViews(view1, Direction.Left, true), [view1]);
+		assert.deepStrictEqual(grid.getNeighborViews(view1, Direction.Up, true), [view3]);
+		assert.deepStrictEqual(grid.getNeighborViews(view1, Direction.Right, true), [view1]);
+		assert.deepStrictEqual(grid.getNeighborViews(view1, Direction.Down, true), [view2]);
+		assert.deepStrictEqual(grid.getNeighborViews(view1, Direction.Left, true), [view1]);
 
-		assert.deepEqual(grid.getNeighborViews(view2, Direction.Up), [view1]);
-		assert.deepEqual(grid.getNeighborViews(view2, Direction.Right), []);
-		assert.deepEqual(grid.getNeighborViews(view2, Direction.Down), [view3]);
-		assert.deepEqual(grid.getNeighborViews(view2, Direction.Left), []);
+		assert.deepStrictEqual(grid.getNeighborViews(view2, Direction.Up), [view1]);
+		assert.deepStrictEqual(grid.getNeighborViews(view2, Direction.Right), []);
+		assert.deepStrictEqual(grid.getNeighborViews(view2, Direction.Down), [view3]);
+		assert.deepStrictEqual(grid.getNeighborViews(view2, Direction.Left), []);
 
-		assert.deepEqual(grid.getNeighborViews(view2, Direction.Up, true), [view1]);
-		assert.deepEqual(grid.getNeighborViews(view2, Direction.Right, true), [view2]);
-		assert.deepEqual(grid.getNeighborViews(view2, Direction.Down, true), [view3]);
-		assert.deepEqual(grid.getNeighborViews(view2, Direction.Left, true), [view2]);
+		assert.deepStrictEqual(grid.getNeighborViews(view2, Direction.Up, true), [view1]);
+		assert.deepStrictEqual(grid.getNeighborViews(view2, Direction.Right, true), [view2]);
+		assert.deepStrictEqual(grid.getNeighborViews(view2, Direction.Down, true), [view3]);
+		assert.deepStrictEqual(grid.getNeighborViews(view2, Direction.Left, true), [view2]);
 
-		assert.deepEqual(grid.getNeighborViews(view3, Direction.Up), [view2]);
-		assert.deepEqual(grid.getNeighborViews(view3, Direction.Right), []);
-		assert.deepEqual(grid.getNeighborViews(view3, Direction.Down), []);
-		assert.deepEqual(grid.getNeighborViews(view3, Direction.Left), []);
+		assert.deepStrictEqual(grid.getNeighborViews(view3, Direction.Up), [view2]);
+		assert.deepStrictEqual(grid.getNeighborViews(view3, Direction.Right), []);
+		assert.deepStrictEqual(grid.getNeighborViews(view3, Direction.Down), []);
+		assert.deepStrictEqual(grid.getNeighborViews(view3, Direction.Left), []);
 
-		assert.deepEqual(grid.getNeighborViews(view3, Direction.Up, true), [view2]);
-		assert.deepEqual(grid.getNeighborViews(view3, Direction.Right, true), [view3]);
-		assert.deepEqual(grid.getNeighborViews(view3, Direction.Down, true), [view1]);
-		assert.deepEqual(grid.getNeighborViews(view3, Direction.Left, true), [view3]);
+		assert.deepStrictEqual(grid.getNeighborViews(view3, Direction.Up, true), [view2]);
+		assert.deepStrictEqual(grid.getNeighborViews(view3, Direction.Right, true), [view3]);
+		assert.deepStrictEqual(grid.getNeighborViews(view3, Direction.Down, true), [view1]);
+		assert.deepStrictEqual(grid.getNeighborViews(view3, Direction.Left, true), [view3]);
 	});
 
 	test('getNeighborViews should work on a complex layout', function () {
@@ -398,26 +398,26 @@ suite('Grid', function () {
 		const view5 = new TestView(50, Number.MAX_VALUE, 50, Number.MAX_VALUE);
 		grid.addView(view5, Sizing.Distribute, view4, Direction.Down);
 
-		assert.deepEqual(grid.getNeighborViews(view1, Direction.Up), []);
-		assert.deepEqual(grid.getNeighborViews(view1, Direction.Right), []);
-		assert.deepEqual(grid.getNeighborViews(view1, Direction.Down), [view2, view4]);
-		assert.deepEqual(grid.getNeighborViews(view1, Direction.Left), []);
-		assert.deepEqual(grid.getNeighborViews(view2, Direction.Up), [view1]);
-		assert.deepEqual(grid.getNeighborViews(view2, Direction.Right), [view4, view5]);
-		assert.deepEqual(grid.getNeighborViews(view2, Direction.Down), [view3]);
-		assert.deepEqual(grid.getNeighborViews(view2, Direction.Left), []);
-		assert.deepEqual(grid.getNeighborViews(view4, Direction.Up), [view1]);
-		assert.deepEqual(grid.getNeighborViews(view4, Direction.Right), []);
-		assert.deepEqual(grid.getNeighborViews(view4, Direction.Down), [view5]);
-		assert.deepEqual(grid.getNeighborViews(view4, Direction.Left), [view2]);
-		assert.deepEqual(grid.getNeighborViews(view5, Direction.Up), [view4]);
-		assert.deepEqual(grid.getNeighborViews(view5, Direction.Right), []);
-		assert.deepEqual(grid.getNeighborViews(view5, Direction.Down), [view3]);
-		assert.deepEqual(grid.getNeighborViews(view5, Direction.Left), [view2]);
-		assert.deepEqual(grid.getNeighborViews(view3, Direction.Up), [view2, view5]);
-		assert.deepEqual(grid.getNeighborViews(view3, Direction.Right), []);
-		assert.deepEqual(grid.getNeighborViews(view3, Direction.Down), []);
-		assert.deepEqual(grid.getNeighborViews(view3, Direction.Left), []);
+		assert.deepStrictEqual(grid.getNeighborViews(view1, Direction.Up), []);
+		assert.deepStrictEqual(grid.getNeighborViews(view1, Direction.Right), []);
+		assert.deepStrictEqual(grid.getNeighborViews(view1, Direction.Down), [view2, view4]);
+		assert.deepStrictEqual(grid.getNeighborViews(view1, Direction.Left), []);
+		assert.deepStrictEqual(grid.getNeighborViews(view2, Direction.Up), [view1]);
+		assert.deepStrictEqual(grid.getNeighborViews(view2, Direction.Right), [view4, view5]);
+		assert.deepStrictEqual(grid.getNeighborViews(view2, Direction.Down), [view3]);
+		assert.deepStrictEqual(grid.getNeighborViews(view2, Direction.Left), []);
+		assert.deepStrictEqual(grid.getNeighborViews(view4, Direction.Up), [view1]);
+		assert.deepStrictEqual(grid.getNeighborViews(view4, Direction.Right), []);
+		assert.deepStrictEqual(grid.getNeighborViews(view4, Direction.Down), [view5]);
+		assert.deepStrictEqual(grid.getNeighborViews(view4, Direction.Left), [view2]);
+		assert.deepStrictEqual(grid.getNeighborViews(view5, Direction.Up), [view4]);
+		assert.deepStrictEqual(grid.getNeighborViews(view5, Direction.Right), []);
+		assert.deepStrictEqual(grid.getNeighborViews(view5, Direction.Down), [view3]);
+		assert.deepStrictEqual(grid.getNeighborViews(view5, Direction.Left), [view2]);
+		assert.deepStrictEqual(grid.getNeighborViews(view3, Direction.Up), [view2, view5]);
+		assert.deepStrictEqual(grid.getNeighborViews(view3, Direction.Right), []);
+		assert.deepStrictEqual(grid.getNeighborViews(view3, Direction.Down), []);
+		assert.deepStrictEqual(grid.getNeighborViews(view3, Direction.Left), []);
 	});
 
 	test('getNeighborViews should work on another simple layout', function () {
@@ -436,10 +436,10 @@ suite('Grid', function () {
 		const view4 = new TestView(50, Number.MAX_VALUE, 50, Number.MAX_VALUE);
 		grid.addView(view4, Sizing.Distribute, view2, Direction.Right);
 
-		assert.deepEqual(grid.getNeighborViews(view4, Direction.Up), []);
-		assert.deepEqual(grid.getNeighborViews(view4, Direction.Right), []);
-		assert.deepEqual(grid.getNeighborViews(view4, Direction.Down), [view3]);
-		assert.deepEqual(grid.getNeighborViews(view4, Direction.Left), [view2]);
+		assert.deepStrictEqual(grid.getNeighborViews(view4, Direction.Up), []);
+		assert.deepStrictEqual(grid.getNeighborViews(view4, Direction.Right), []);
+		assert.deepStrictEqual(grid.getNeighborViews(view4, Direction.Down), [view3]);
+		assert.deepStrictEqual(grid.getNeighborViews(view4, Direction.Left), [view2]);
 	});
 
 	test('getNeighborViews should only return immediate neighbors', function () {
@@ -458,7 +458,7 @@ suite('Grid', function () {
 		const view4 = new TestView(50, Number.MAX_VALUE, 50, Number.MAX_VALUE);
 		grid.addView(view4, Sizing.Distribute, view2, Direction.Right);
 
-		assert.deepEqual(grid.getNeighborViews(view1, Direction.Right), [view2, view3]);
+		assert.deepStrictEqual(grid.getNeighborViews(view1, Direction.Right), [view2, view3]);
 	});
 });
 
@@ -524,7 +524,7 @@ suite('SerializableGrid', function () {
 		grid.layout(800, 600);
 
 		const actual = grid.serialize();
-		assert.deepEqual(actual, {
+		assert.deepStrictEqual(actual, {
 			orientation: 0,
 			width: 800,
 			height: 600,
@@ -562,7 +562,7 @@ suite('SerializableGrid', function () {
 		const view5 = new TestSerializableView('view5', 50, Number.MAX_VALUE, 50, Number.MAX_VALUE);
 		grid.addView(view5, 100, view1, Direction.Down);
 
-		assert.deepEqual(grid.serialize(), {
+		assert.deepStrictEqual(grid.serialize(), {
 			orientation: 0,
 			width: 800,
 			height: 600,
@@ -611,7 +611,7 @@ suite('SerializableGrid', function () {
 		const grid2 = SerializableGrid.deserialize(json, deserializer);
 		grid2.layout(800, 600);
 
-		assert.deepEqual(nodesToNames(grid2.getViews()), ['view1']);
+		assert.deepStrictEqual(nodesToNames(grid2.getViews()), ['view1']);
 	});
 
 	test('deserialize simple layout', function () {
@@ -645,15 +645,15 @@ suite('SerializableGrid', function () {
 		const view4Copy = deserializer.getView('view4');
 		const view5Copy = deserializer.getView('view5');
 
-		assert.deepEqual(nodesToArrays(grid2.getViews()), [[view4Copy, view2Copy], [[view1Copy, view5Copy], view3Copy]]);
+		assert.deepStrictEqual(nodesToArrays(grid2.getViews()), [[view4Copy, view2Copy], [[view1Copy, view5Copy], view3Copy]]);
 
 		grid2.layout(800, 600);
 
-		assert.deepEqual(view1Copy.size, [600, 300]);
-		assert.deepEqual(view2Copy.size, [600, 200]);
-		assert.deepEqual(view3Copy.size, [200, 400]);
-		assert.deepEqual(view4Copy.size, [200, 200]);
-		assert.deepEqual(view5Copy.size, [600, 100]);
+		assert.deepStrictEqual(view1Copy.size, [600, 300]);
+		assert.deepStrictEqual(view2Copy.size, [600, 200]);
+		assert.deepStrictEqual(view3Copy.size, [200, 400]);
+		assert.deepStrictEqual(view4Copy.size, [200, 200]);
+		assert.deepStrictEqual(view5Copy.size, [600, 100]);
 	});
 
 	test('deserialize simple layout with scaling', function () {
@@ -688,11 +688,11 @@ suite('SerializableGrid', function () {
 		const view5Copy = deserializer.getView('view5');
 
 		grid2.layout(400, 800); // [/2, *4/3]
-		assert.deepEqual(view1Copy.size, [300, 400]);
-		assert.deepEqual(view2Copy.size, [300, 267]);
-		assert.deepEqual(view3Copy.size, [100, 533]);
-		assert.deepEqual(view4Copy.size, [100, 267]);
-		assert.deepEqual(view5Copy.size, [300, 133]);
+		assert.deepStrictEqual(view1Copy.size, [300, 400]);
+		assert.deepStrictEqual(view2Copy.size, [300, 267]);
+		assert.deepStrictEqual(view3Copy.size, [100, 533]);
+		assert.deepStrictEqual(view4Copy.size, [100, 267]);
+		assert.deepStrictEqual(view5Copy.size, [300, 133]);
 	});
 
 	test('deserialize 4 view layout (ben issue #2)', function () {
@@ -723,10 +723,10 @@ suite('SerializableGrid', function () {
 
 		grid2.layout(800, 600);
 
-		assert.deepEqual(view1Copy.size, [800, 300]);
-		assert.deepEqual(view2Copy.size, [800, 150]);
-		assert.deepEqual(view3Copy.size, [400, 150]);
-		assert.deepEqual(view4Copy.size, [400, 150]);
+		assert.deepStrictEqual(view1Copy.size, [800, 300]);
+		assert.deepStrictEqual(view2Copy.size, [800, 150]);
+		assert.deepStrictEqual(view3Copy.size, [400, 150]);
+		assert.deepStrictEqual(view4Copy.size, [400, 150]);
 	});
 
 	test('deserialize 2 view layout (ben issue #3)', function () {
@@ -750,8 +750,8 @@ suite('SerializableGrid', function () {
 
 		grid2.layout(800, 600);
 
-		assert.deepEqual(view1Copy.size, [400, 600]);
-		assert.deepEqual(view2Copy.size, [400, 600]);
+		assert.deepStrictEqual(view1Copy.size, [400, 600]);
+		assert.deepStrictEqual(view2Copy.size, [400, 600]);
 	});
 
 	test('deserialize simple view layout #50609', function () {
@@ -780,21 +780,21 @@ suite('SerializableGrid', function () {
 
 		grid2.layout(800, 600);
 
-		assert.deepEqual(view2Copy.size, [800, 300]);
-		assert.deepEqual(view3Copy.size, [800, 300]);
+		assert.deepStrictEqual(view2Copy.size, [800, 300]);
+		assert.deepStrictEqual(view3Copy.size, [800, 300]);
 	});
 
 	test('sanitizeGridNodeDescriptor', () => {
 		const nodeDescriptor = { groups: [{ size: 0.2 }, { size: 0.2 }, { size: 0.6, groups: [{}, {}] }] };
 		const nodeDescriptorCopy = deepClone<GridNodeDescriptor>(nodeDescriptor);
 		sanitizeGridNodeDescriptor(nodeDescriptorCopy, true);
-		assert.deepEqual(nodeDescriptorCopy, { groups: [{ size: 0.2 }, { size: 0.2 }, { size: 0.6, groups: [{ size: 0.5 }, { size: 0.5 }] }] });
+		assert.deepStrictEqual(nodeDescriptorCopy, { groups: [{ size: 0.2 }, { size: 0.2 }, { size: 0.6, groups: [{ size: 0.5 }, { size: 0.5 }] }] });
 	});
 
 	test('createSerializedGrid', () => {
 		const gridDescriptor = { orientation: Orientation.VERTICAL, groups: [{ size: 0.2 }, { size: 0.2 }, { size: 0.6, groups: [{}, {}] }] };
 		const serializedGrid = createSerializedGrid(gridDescriptor);
-		assert.deepEqual(serializedGrid, {
+		assert.deepStrictEqual(serializedGrid, {
 			root: {
 				type: 'branch',
 				size: undefined,
@@ -836,7 +836,7 @@ suite('SerializableGrid', function () {
 		};
 
 		const grid = SerializableGrid.deserialize(serializedGrid, deserializer);
-		assert.equal(views.length, 3);
+		assert.strictEqual(views.length, 3);
 
 		// should not throw
 		grid.removeView(views[2]);
@@ -860,40 +860,40 @@ suite('SerializableGrid', function () {
 		const view5 = new TestSerializableView('view5', 50, Number.MAX_VALUE, 50, Number.MAX_VALUE);
 		grid.addView(view5, 100, view1, Direction.Down);
 
-		assert.deepEqual(view1.size, [600, 300]);
-		assert.deepEqual(view2.size, [600, 200]);
-		assert.deepEqual(view3.size, [200, 400]);
-		assert.deepEqual(view4.size, [200, 200]);
-		assert.deepEqual(view5.size, [600, 100]);
+		assert.deepStrictEqual(view1.size, [600, 300]);
+		assert.deepStrictEqual(view2.size, [600, 200]);
+		assert.deepStrictEqual(view3.size, [200, 400]);
+		assert.deepStrictEqual(view4.size, [200, 200]);
+		assert.deepStrictEqual(view5.size, [600, 100]);
 
 		grid.setViewVisible(view5, false);
 
-		assert.deepEqual(view1.size, [600, 400]);
-		assert.deepEqual(view2.size, [600, 200]);
-		assert.deepEqual(view3.size, [200, 400]);
-		assert.deepEqual(view4.size, [200, 200]);
-		assert.deepEqual(view5.size, [600, 0]);
+		assert.deepStrictEqual(view1.size, [600, 400]);
+		assert.deepStrictEqual(view2.size, [600, 200]);
+		assert.deepStrictEqual(view3.size, [200, 400]);
+		assert.deepStrictEqual(view4.size, [200, 200]);
+		assert.deepStrictEqual(view5.size, [600, 0]);
 
 		grid.setViewVisible(view5, true);
 
-		assert.deepEqual(view1.size, [600, 300]);
-		assert.deepEqual(view2.size, [600, 200]);
-		assert.deepEqual(view3.size, [200, 400]);
-		assert.deepEqual(view4.size, [200, 200]);
-		assert.deepEqual(view5.size, [600, 100]);
+		assert.deepStrictEqual(view1.size, [600, 300]);
+		assert.deepStrictEqual(view2.size, [600, 200]);
+		assert.deepStrictEqual(view3.size, [200, 400]);
+		assert.deepStrictEqual(view4.size, [200, 200]);
+		assert.deepStrictEqual(view5.size, [600, 100]);
 
 		grid.setViewVisible(view5, false);
 
-		assert.deepEqual(view1.size, [600, 400]);
-		assert.deepEqual(view2.size, [600, 200]);
-		assert.deepEqual(view3.size, [200, 400]);
-		assert.deepEqual(view4.size, [200, 200]);
-		assert.deepEqual(view5.size, [600, 0]);
+		assert.deepStrictEqual(view1.size, [600, 400]);
+		assert.deepStrictEqual(view2.size, [600, 200]);
+		assert.deepStrictEqual(view3.size, [200, 400]);
+		assert.deepStrictEqual(view4.size, [200, 200]);
+		assert.deepStrictEqual(view5.size, [600, 0]);
 
 		grid.setViewVisible(view5, false);
 
 		const json = grid.serialize();
-		assert.deepEqual(json, {
+		assert.deepStrictEqual(json, {
 			orientation: 0,
 			width: 800,
 			height: 600,
@@ -939,34 +939,34 @@ suite('SerializableGrid', function () {
 		const view4Copy = deserializer.getView('view4');
 		const view5Copy = deserializer.getView('view5');
 
-		assert.deepEqual(nodesToArrays(grid2.getViews()), [[view4Copy, view2Copy], [[view1Copy, view5Copy], view3Copy]]);
+		assert.deepStrictEqual(nodesToArrays(grid2.getViews()), [[view4Copy, view2Copy], [[view1Copy, view5Copy], view3Copy]]);
 
 		grid2.layout(800, 600);
-		assert.deepEqual(view1Copy.size, [600, 400]);
-		assert.deepEqual(view2Copy.size, [600, 200]);
-		assert.deepEqual(view3Copy.size, [200, 400]);
-		assert.deepEqual(view4Copy.size, [200, 200]);
-		assert.deepEqual(view5Copy.size, [600, 0]);
+		assert.deepStrictEqual(view1Copy.size, [600, 400]);
+		assert.deepStrictEqual(view2Copy.size, [600, 200]);
+		assert.deepStrictEqual(view3Copy.size, [200, 400]);
+		assert.deepStrictEqual(view4Copy.size, [200, 200]);
+		assert.deepStrictEqual(view5Copy.size, [600, 0]);
 
-		assert.deepEqual(grid2.isViewVisible(view1Copy), true);
-		assert.deepEqual(grid2.isViewVisible(view2Copy), true);
-		assert.deepEqual(grid2.isViewVisible(view3Copy), true);
-		assert.deepEqual(grid2.isViewVisible(view4Copy), true);
-		assert.deepEqual(grid2.isViewVisible(view5Copy), false);
+		assert.deepStrictEqual(grid2.isViewVisible(view1Copy), true);
+		assert.deepStrictEqual(grid2.isViewVisible(view2Copy), true);
+		assert.deepStrictEqual(grid2.isViewVisible(view3Copy), true);
+		assert.deepStrictEqual(grid2.isViewVisible(view4Copy), true);
+		assert.deepStrictEqual(grid2.isViewVisible(view5Copy), false);
 
 		grid2.setViewVisible(view5Copy, true);
 
-		assert.deepEqual(view1Copy.size, [600, 300]);
-		assert.deepEqual(view2Copy.size, [600, 200]);
-		assert.deepEqual(view3Copy.size, [200, 400]);
-		assert.deepEqual(view4Copy.size, [200, 200]);
-		assert.deepEqual(view5Copy.size, [600, 100]);
+		assert.deepStrictEqual(view1Copy.size, [600, 300]);
+		assert.deepStrictEqual(view2Copy.size, [600, 200]);
+		assert.deepStrictEqual(view3Copy.size, [200, 400]);
+		assert.deepStrictEqual(view4Copy.size, [200, 200]);
+		assert.deepStrictEqual(view5Copy.size, [600, 100]);
 
-		assert.deepEqual(grid2.isViewVisible(view1Copy), true);
-		assert.deepEqual(grid2.isViewVisible(view2Copy), true);
-		assert.deepEqual(grid2.isViewVisible(view3Copy), true);
-		assert.deepEqual(grid2.isViewVisible(view4Copy), true);
-		assert.deepEqual(grid2.isViewVisible(view5Copy), true);
+		assert.deepStrictEqual(grid2.isViewVisible(view1Copy), true);
+		assert.deepStrictEqual(grid2.isViewVisible(view2Copy), true);
+		assert.deepStrictEqual(grid2.isViewVisible(view3Copy), true);
+		assert.deepStrictEqual(grid2.isViewVisible(view4Copy), true);
+		assert.deepStrictEqual(grid2.isViewVisible(view5Copy), true);
 	});
 
 	test('serialize should store visibility and previous size even for first leaf', function () {
@@ -987,22 +987,22 @@ suite('SerializableGrid', function () {
 		const view5 = new TestSerializableView('view5', 50, Number.MAX_VALUE, 50, Number.MAX_VALUE);
 		grid.addView(view5, 100, view1, Direction.Down);
 
-		assert.deepEqual(view1.size, [600, 300]);
-		assert.deepEqual(view2.size, [600, 200]);
-		assert.deepEqual(view3.size, [200, 400]);
-		assert.deepEqual(view4.size, [200, 200]);
-		assert.deepEqual(view5.size, [600, 100]);
+		assert.deepStrictEqual(view1.size, [600, 300]);
+		assert.deepStrictEqual(view2.size, [600, 200]);
+		assert.deepStrictEqual(view3.size, [200, 400]);
+		assert.deepStrictEqual(view4.size, [200, 200]);
+		assert.deepStrictEqual(view5.size, [600, 100]);
 
 		grid.setViewVisible(view4, false);
 
-		assert.deepEqual(view1.size, [600, 300]);
-		assert.deepEqual(view2.size, [800, 200]);
-		assert.deepEqual(view3.size, [200, 400]);
-		assert.deepEqual(view4.size, [0, 200]);
-		assert.deepEqual(view5.size, [600, 100]);
+		assert.deepStrictEqual(view1.size, [600, 300]);
+		assert.deepStrictEqual(view2.size, [800, 200]);
+		assert.deepStrictEqual(view3.size, [200, 400]);
+		assert.deepStrictEqual(view4.size, [0, 200]);
+		assert.deepStrictEqual(view5.size, [600, 100]);
 
 		const json = grid.serialize();
-		assert.deepEqual(json, {
+		assert.deepStrictEqual(json, {
 			orientation: 0,
 			width: 800,
 			height: 600,
@@ -1048,33 +1048,33 @@ suite('SerializableGrid', function () {
 		const view4Copy = deserializer.getView('view4');
 		const view5Copy = deserializer.getView('view5');
 
-		assert.deepEqual(nodesToArrays(grid2.getViews()), [[view4Copy, view2Copy], [[view1Copy, view5Copy], view3Copy]]);
+		assert.deepStrictEqual(nodesToArrays(grid2.getViews()), [[view4Copy, view2Copy], [[view1Copy, view5Copy], view3Copy]]);
 
 		grid2.layout(800, 600);
-		assert.deepEqual(view1Copy.size, [600, 300]);
-		assert.deepEqual(view2Copy.size, [800, 200]);
-		assert.deepEqual(view3Copy.size, [200, 400]);
-		assert.deepEqual(view4Copy.size, [0, 200]);
-		assert.deepEqual(view5Copy.size, [600, 100]);
+		assert.deepStrictEqual(view1Copy.size, [600, 300]);
+		assert.deepStrictEqual(view2Copy.size, [800, 200]);
+		assert.deepStrictEqual(view3Copy.size, [200, 400]);
+		assert.deepStrictEqual(view4Copy.size, [0, 200]);
+		assert.deepStrictEqual(view5Copy.size, [600, 100]);
 
-		assert.deepEqual(grid2.isViewVisible(view1Copy), true);
-		assert.deepEqual(grid2.isViewVisible(view2Copy), true);
-		assert.deepEqual(grid2.isViewVisible(view3Copy), true);
-		assert.deepEqual(grid2.isViewVisible(view4Copy), false);
-		assert.deepEqual(grid2.isViewVisible(view5Copy), true);
+		assert.deepStrictEqual(grid2.isViewVisible(view1Copy), true);
+		assert.deepStrictEqual(grid2.isViewVisible(view2Copy), true);
+		assert.deepStrictEqual(grid2.isViewVisible(view3Copy), true);
+		assert.deepStrictEqual(grid2.isViewVisible(view4Copy), false);
+		assert.deepStrictEqual(grid2.isViewVisible(view5Copy), true);
 
 		grid2.setViewVisible(view4Copy, true);
 
-		assert.deepEqual(view1Copy.size, [600, 300]);
-		assert.deepEqual(view2Copy.size, [600, 200]);
-		assert.deepEqual(view3Copy.size, [200, 400]);
-		assert.deepEqual(view4Copy.size, [200, 200]);
-		assert.deepEqual(view5Copy.size, [600, 100]);
+		assert.deepStrictEqual(view1Copy.size, [600, 300]);
+		assert.deepStrictEqual(view2Copy.size, [600, 200]);
+		assert.deepStrictEqual(view3Copy.size, [200, 400]);
+		assert.deepStrictEqual(view4Copy.size, [200, 200]);
+		assert.deepStrictEqual(view5Copy.size, [600, 100]);
 
-		assert.deepEqual(grid2.isViewVisible(view1Copy), true);
-		assert.deepEqual(grid2.isViewVisible(view2Copy), true);
-		assert.deepEqual(grid2.isViewVisible(view3Copy), true);
-		assert.deepEqual(grid2.isViewVisible(view4Copy), true);
-		assert.deepEqual(grid2.isViewVisible(view5Copy), true);
+		assert.deepStrictEqual(grid2.isViewVisible(view1Copy), true);
+		assert.deepStrictEqual(grid2.isViewVisible(view2Copy), true);
+		assert.deepStrictEqual(grid2.isViewVisible(view3Copy), true);
+		assert.deepStrictEqual(grid2.isViewVisible(view4Copy), true);
+		assert.deepStrictEqual(grid2.isViewVisible(view5Copy), true);
 	});
 });

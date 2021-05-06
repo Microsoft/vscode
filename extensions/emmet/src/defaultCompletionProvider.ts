@@ -67,7 +67,7 @@ export class DefaultCompletionItemProvider implements vscode.CompletionItemProvi
 		const lsDoc = toLSTextDocument(document);
 		position = document.validatePosition(position);
 
-		if (document.languageId === 'html') {
+		if (syntax === 'html') {
 			if (context.triggerKind === vscode.CompletionTriggerKind.TriggerForIncompleteCompletions) {
 				switch (this.lastCompletionType) {
 					case 'html':
@@ -176,7 +176,8 @@ export class DefaultCompletionItemProvider implements vscode.CompletionItemProvi
 				return;
 			}
 
-			let result = helper.doComplete(toLSTextDocument(document), position, syntax, getEmmetConfiguration(syntax!));
+			const config = getEmmetConfiguration(syntax!);
+			const result = helper.doComplete(toLSTextDocument(document), position, syntax, config);
 
 			// https://github.com/microsoft/vscode/issues/86941
 			if (result && result.items && result.items.length === 1) {

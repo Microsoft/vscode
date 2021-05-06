@@ -7,7 +7,7 @@ import { IQuickInputService, IQuickPickItem, IPickOptions, IInputOptions, IQuick
 import { ILayoutService } from 'vs/platform/layout/browser/layoutService';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { IThemeService, Themable } from 'vs/platform/theme/common/themeService';
-import { inputBackground, inputForeground, inputBorder, inputValidationInfoBackground, inputValidationInfoForeground, inputValidationInfoBorder, inputValidationWarningBackground, inputValidationWarningForeground, inputValidationWarningBorder, inputValidationErrorBackground, inputValidationErrorForeground, inputValidationErrorBorder, badgeBackground, badgeForeground, contrastBorder, buttonForeground, buttonBackground, buttonHoverBackground, progressBarBackground, widgetShadow, listFocusForeground, activeContrastBorder, pickerGroupBorder, pickerGroupForeground, quickInputForeground, quickInputBackground, quickInputTitleBackground, quickInputListFocusBackground } from 'vs/platform/theme/common/colorRegistry';
+import { inputBackground, inputForeground, inputBorder, inputValidationInfoBackground, inputValidationInfoForeground, inputValidationInfoBorder, inputValidationWarningBackground, inputValidationWarningForeground, inputValidationWarningBorder, inputValidationErrorBackground, inputValidationErrorForeground, inputValidationErrorBorder, badgeBackground, badgeForeground, contrastBorder, buttonForeground, buttonBackground, buttonHoverBackground, progressBarBackground, widgetShadow, activeContrastBorder, pickerGroupBorder, pickerGroupForeground, quickInputForeground, quickInputBackground, quickInputTitleBackground, quickInputListFocusBackground, keybindingLabelBackground, keybindingLabelForeground, keybindingLabelBorder, keybindingLabelBottomBorder, quickInputListFocusForeground } from 'vs/platform/theme/common/colorRegistry';
 import { CancellationToken } from 'vs/base/common/cancellation';
 import { computeStyles } from 'vs/platform/theme/common/styler';
 import { IContextKeyService, RawContextKey, IContextKey } from 'vs/platform/contextkey/common/contextkey';
@@ -166,7 +166,7 @@ export class QuickInputService extends Themable implements IQuickInputService {
 		return this.controller.cancel();
 	}
 
-	protected updateStyles() {
+	protected override updateStyles() {
 		this.controller.applyStyles(this.computeStyles());
 	}
 
@@ -209,10 +209,17 @@ export class QuickInputService extends Themable implements IQuickInputService {
 			progressBar: computeStyles(this.theme, {
 				progressBarBackground
 			}),
+			keybindingLabel: computeStyles(this.theme, {
+				keybindingLabelBackground,
+				keybindingLabelForeground,
+				keybindingLabelBorder,
+				keybindingLabelBottomBorder,
+				keybindingLabelShadow: widgetShadow
+			}),
 			list: computeStyles(this.theme, {
 				listBackground: quickInputBackground,
 				// Look like focused when inactive.
-				listInactiveFocusForeground: listFocusForeground,
+				listInactiveFocusForeground: quickInputListFocusForeground,
 				listInactiveFocusBackground: quickInputListFocusBackground,
 				listFocusOutline: activeContrastBorder,
 				listInactiveFocusOutline: activeContrastBorder,

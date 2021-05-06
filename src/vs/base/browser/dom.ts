@@ -1193,18 +1193,21 @@ export function computeScreenAwareSize(cssPx: number): number {
  * to change the location of the current page.
  * See https://mathiasbynens.github.io/rel-noopener/
  */
-export function windowOpenNoOpener(url: string): void {
+export function windowOpenNoOpener(url: string): boolean {
 	if (browser.isElectron || browser.isEdgeLegacyWebView) {
 		// In VSCode, window.open() always returns null...
 		// The same is true for a WebView (see https://github.com/microsoft/monaco-editor/issues/628)
 		// Also call directly window.open in sandboxed Electron (see https://github.com/microsoft/monaco-editor/issues/2220)
 		window.open(url);
+		return true;
 	} else {
 		let newTab = window.open();
 		if (newTab) {
 			(newTab as any).opener = null;
 			newTab.location.href = url;
+			return true;
 		}
+		return false;
 	}
 }
 
@@ -1409,37 +1412,8 @@ export function multibyteAwareBtoa(str: string): string {
  */
 export namespace WebFileSystemAccess {
 
-	// https://wicg.github.io/file-system-access/#dom-window-showdirectorypicker
-	export interface FileSystemAccess {
-		showDirectoryPicker: () => Promise<FileSystemDirectoryHandle>;
-	}
-
-	// https://wicg.github.io/file-system-access/#api-filesystemdirectoryhandle
-	export interface FileSystemDirectoryHandle {
-		readonly kind: 'directory',
-		readonly name: string,
-
-		getFileHandle: (name: string, options?: { create?: boolean }) => Promise<FileSystemFileHandle>;
-		getDirectoryHandle: (name: string, options?: { create?: boolean }) => Promise<FileSystemDirectoryHandle>;
-	}
-
-	// https://wicg.github.io/file-system-access/#api-filesystemfilehandle
-	export interface FileSystemFileHandle {
-		readonly kind: 'file',
-		readonly name: string,
-
-		createWritable: (options?: { keepExistingData?: boolean }) => Promise<FileSystemWritableFileStream>;
-	}
-
-	// https://wicg.github.io/file-system-access/#api-filesystemwritablefilestream
-	export interface FileSystemWritableFileStream {
-		write: (buffer: Uint8Array) => Promise<void>;
-		close: () => Promise<void>;
-	}
-
-	export function supported(obj: any & Window): obj is FileSystemAccess {
-		const candidate = obj as FileSystemAccess | undefined;
-		if (typeof candidate?.showDirectoryPicker === 'function') {
+	export function supported(obj: any & Window): boolean {
+		if (typeof obj?.showDirectoryPicker === 'function') {
 			return true;
 		}
 
@@ -1589,7 +1563,7 @@ export class ModifierKeyEmitter extends Emitter<IModifierKeyStatus> {
 		return ModifierKeyEmitter.instance;
 	}
 
-	dispose() {
+	override dispose() {
 		super.dispose();
 		this._subscriptions.dispose();
 	}

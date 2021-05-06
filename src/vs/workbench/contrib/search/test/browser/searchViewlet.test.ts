@@ -66,8 +66,8 @@ suite('Search - Viewlet', () => {
 		const fileMatch = result.matches()[0];
 		const lineMatch = fileMatch.matches()[0];
 
-		assert.equal(fileMatch.id(), 'file:///c%3A/foo');
-		assert.equal(lineMatch.id(), 'file:///c%3A/foo>[2,1 -> 2,2]b');
+		assert.strictEqual(fileMatch.id(), 'file:///c%3A/foo');
+		assert.strictEqual(lineMatch.id(), 'file:///c%3A/foo>[2,1 -> 2,2]b');
 	});
 
 	test('Comparer', () => {

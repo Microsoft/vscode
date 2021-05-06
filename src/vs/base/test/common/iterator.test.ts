@@ -19,10 +19,10 @@ suite('Iterable', function () {
 
 	test('first', function () {
 
-		assert.equal(Iterable.first([]), undefined);
-		assert.equal(Iterable.first([1]), 1);
-		assert.equal(Iterable.first(customIterable), 'one');
-		assert.equal(Iterable.first(customIterable), 'one'); // fresh
+		assert.strictEqual(Iterable.first([]), undefined);
+		assert.strictEqual(Iterable.first([1]), 1);
+		assert.strictEqual(Iterable.first(customIterable), 'one');
+		assert.strictEqual(Iterable.first(customIterable), 'one'); // fresh
 	});
 
 	test('equals', () => {

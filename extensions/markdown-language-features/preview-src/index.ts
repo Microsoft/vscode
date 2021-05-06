@@ -41,7 +41,7 @@ window.onload = () => {
 function doAfterImagesLoaded(cb: () => void) {
 	const imgElements = document.getElementsByTagName('img');
 	if (imgElements.length > 0) {
-		const ps = Array.from(imgElements).map(e => {
+		const ps = Array.from(imgElements, e => {
 			if (e.complete) {
 				return Promise.resolve();
 			} else {

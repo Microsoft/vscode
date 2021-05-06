@@ -4,22 +4,26 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as nls from 'vs/nls';
-import { MainThreadTunnelServiceShape, IExtHostContext, MainContext, ExtHostContext, ExtHostTunnelServiceShape, CandidatePortSource } from 'vs/workbench/api/common/extHost.protocol';
+import { MainThreadTunnelServiceShape, IExtHostContext, MainContext, ExtHostContext, ExtHostTunnelServiceShape, CandidatePortSource, PortAttributesProviderSelector } from 'vs/workbench/api/common/extHost.protocol';
 import { TunnelDto } from 'vs/workbench/api/common/extHostTunnelService';
 import { extHostNamedCustomer } from 'vs/workbench/api/common/extHostCustomers';
-import { CandidatePort, IRemoteExplorerService, makeAddress, PORT_AUTO_FORWARD_SETTING, PORT_AUTO_SOURCE_SETTING, PORT_AUTO_SOURCE_SETTING_OUTPUT } from 'vs/workbench/services/remote/common/remoteExplorerService';
-import { ITunnelProvider, ITunnelService, TunnelCreationOptions, TunnelProviderFeatures, TunnelOptions, RemoteTunnel, isPortPrivileged } from 'vs/platform/remote/common/tunnel';
+import { CandidatePort, IRemoteExplorerService, makeAddress, PORT_AUTO_FORWARD_SETTING, PORT_AUTO_SOURCE_SETTING, PORT_AUTO_SOURCE_SETTING_OUTPUT, PORT_AUTO_SOURCE_SETTING_PROCESS } from 'vs/workbench/services/remote/common/remoteExplorerService';
+import { ITunnelProvider, ITunnelService, TunnelCreationOptions, TunnelProviderFeatures, TunnelOptions, RemoteTunnel, isPortPrivileged, ProvidedPortAttributes, PortAttributesProvider } from 'vs/platform/remote/common/tunnel';
 import { Disposable } from 'vs/base/common/lifecycle';
 import type { TunnelDescription } from 'vs/platform/remote/common/remoteAuthorityResolver';
 import { INotificationService, Severity } from 'vs/platform/notification/common/notification';
-import { ConfigurationTarget, IConfigurationService } from 'vs/platform/configuration/common/configuration';
+import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { ILogService } from 'vs/platform/log/common/log';
 import { IRemoteAgentService } from 'vs/workbench/services/remote/common/remoteAgentService';
+import { CancellationToken } from 'vs/base/common/cancellation';
+import { Registry } from 'vs/platform/registry/common/platform';
+import { IConfigurationRegistry, Extensions as ConfigurationExtensions } from 'vs/platform/configuration/common/configurationRegistry';
 
 @extHostNamedCustomer(MainContext.MainThreadTunnelService)
-export class MainThreadTunnelService extends Disposable implements MainThreadTunnelServiceShape {
+export class MainThreadTunnelService extends Disposable implements MainThreadTunnelServiceShape, PortAttributesProvider {
 	private readonly _proxy: ExtHostTunnelServiceShape;
 	private elevateionRetry: boolean = false;
+	private portsAttributesProviders: Map<number, PortAttributesProviderSelector> = new Map();
 
 	constructor(
 		extHostContext: IExtHostContext,
@@ -36,18 +40,56 @@ export class MainThreadTunnelService extends Disposable implements MainThreadTun
 		this._register(tunnelService.onTunnelClosed(() => this._proxy.$onDidTunnelsChange()));
 	}
 
+	private processFindingEnabled(): boolean {
+		return (!!this.configurationService.getValue(PORT_AUTO_FORWARD_SETTING)) && (this.configurationService.getValue(PORT_AUTO_SOURCE_SETTING) === PORT_AUTO_SOURCE_SETTING_PROCESS);
+	}
+
 	async $setRemoteTunnelService(processId: number): Promise<void> {
 		this.remoteExplorerService.namedProcesses.set(processId, 'Code Extension Host');
 		if (this.remoteExplorerService.portsFeaturesEnabled) {
-			this._proxy.$registerCandidateFinder(this.configurationService.getValue(PORT_AUTO_FORWARD_SETTING));
+			this._proxy.$registerCandidateFinder(this.processFindingEnabled());
 		} else {
 			this._register(this.remoteExplorerService.onEnabledPortsFeatures(() => this._proxy.$registerCandidateFinder(this.configurationService.getValue(PORT_AUTO_FORWARD_SETTING))));
 		}
 		this._register(this.configurationService.onDidChangeConfiguration(async (e) => {
-			if (e.affectsConfiguration(PORT_AUTO_FORWARD_SETTING)) {
-				return this._proxy.$registerCandidateFinder((this.configurationService.getValue(PORT_AUTO_FORWARD_SETTING)));
+			if (e.affectsConfiguration(PORT_AUTO_FORWARD_SETTING) || e.affectsConfiguration(PORT_AUTO_SOURCE_SETTING)) {
+				return this._proxy.$registerCandidateFinder(this.processFindingEnabled());
 			}
 		}));
+	}
+
+	private _alreadyRegistered: boolean = false;
+	async $registerPortsAttributesProvider(selector: PortAttributesProviderSelector, providerHandle: number): Promise<void> {
+		this.portsAttributesProviders.set(providerHandle, selector);
+		if (!this._alreadyRegistered) {
+			this.remoteExplorerService.tunnelModel.addAttributesProvider(this);
+			this._alreadyRegistered = true;
+		}
+	}
+
+	async $unregisterPortsAttributesProvider(providerHandle: number): Promise<void> {
+		this.portsAttributesProviders.delete(providerHandle);
+	}
+
+	async providePortAttributes(ports: number[], pid: number | undefined, commandLine: string | undefined, token: CancellationToken): Promise<ProvidedPortAttributes[]> {
+		if (this.portsAttributesProviders.size === 0) {
+			return [];
+		}
+
+		// Check all the selectors to make sure it's worth going to the extension host.
+		const appropriateHandles = Array.from(this.portsAttributesProviders.entries()).filter(entry => {
+			const selector = entry[1];
+			const portRange = selector.portRange;
+			const portInRange = portRange ? ports.some(port => portRange[0] <= port && port < portRange[1]) : true;
+			const pidMatches = !selector.pid || (selector.pid === pid);
+			const commandMatches = !selector.commandMatcher || (commandLine && (commandLine.match(selector.commandMatcher)));
+			return portInRange && pidMatches && commandMatches;
+		}).map(entry => entry[0]);
+
+		if (appropriateHandles.length === 0) {
+			return [];
+		}
+		return this._proxy.$providePortAttributes(appropriateHandles, ports, pid, commandLine, token);
 	}
 
 	async $openTunnel(tunnelOptions: TunnelOptions, source: string): Promise<TunnelDto | undefined> {
@@ -135,19 +177,13 @@ export class MainThreadTunnelService extends Disposable implements MainThreadTun
 		this.remoteAgentService.getEnvironment().then(() => {
 			switch (source) {
 				case CandidatePortSource.None: {
-					const autoDetectionEnablement = this.configurationService.inspect(PORT_AUTO_FORWARD_SETTING);
-					if (autoDetectionEnablement.userRemote === undefined) {
-						// Only update the remote setting if the user hasn't already set it.
-						this.configurationService.updateValue(PORT_AUTO_FORWARD_SETTING, false, ConfigurationTarget.USER_REMOTE);
-					}
+					Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration)
+						.registerDefaultConfigurations([{ 'remote.autoForwardPorts': false }]);
 					break;
 				}
 				case CandidatePortSource.Output: {
-					const candidatePortSourceSetting = this.configurationService.inspect(PORT_AUTO_SOURCE_SETTING);
-					if (candidatePortSourceSetting.userRemote === undefined) {
-						// Only update the remote setting if the user hasn't already set it.
-						this.configurationService.updateValue(PORT_AUTO_SOURCE_SETTING, PORT_AUTO_SOURCE_SETTING_OUTPUT, ConfigurationTarget.USER_REMOTE);
-					}
+					Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration)
+						.registerDefaultConfigurations([{ 'remote.autoForwardPortsSource': PORT_AUTO_SOURCE_SETTING_OUTPUT }]);
 					break;
 				}
 				default: // Do nothing, the defaults for these settings should be used.
@@ -155,9 +191,5 @@ export class MainThreadTunnelService extends Disposable implements MainThreadTun
 		}).catch(() => {
 			// The remote failed to get setup. Errors from that area will already be surfaced to the user.
 		});
-	}
-
-	dispose(): void {
-
 	}
 }

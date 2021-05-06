@@ -70,7 +70,10 @@ class MirrorCell {
 			return this._primaryKey!;
 		}
 
-		this._hash = hash([hash(this.getValue()), this.metadata]);
+		this._hash = hash([hash(this.language), hash(this.getValue()), this.metadata, this.outputs.map(op => ({
+			outputs: op.outputs,
+			metadata: op.metadata
+		}))]);
 		return this._hash;
 	}
 

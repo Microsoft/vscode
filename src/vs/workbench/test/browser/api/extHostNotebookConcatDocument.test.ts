@@ -38,20 +38,20 @@ suite('NotebookConcatDocument', function () {
 
 		rpcProtocol = new TestRPCProtocol();
 		rpcProtocol.set(MainContext.MainThreadCommands, new class extends mock<MainThreadCommandsShape>() {
-			$registerCommand() { }
+			override $registerCommand() { }
 		});
 		rpcProtocol.set(MainContext.MainThreadNotebook, new class extends mock<MainThreadNotebookShape>() {
-			async $registerNotebookProvider() { }
-			async $unregisterNotebookProvider() { }
+			override async $registerNotebookProvider() { }
+			override async $unregisterNotebookProvider() { }
 		});
 		extHostDocumentsAndEditors = new ExtHostDocumentsAndEditors(rpcProtocol, new NullLogService());
 		extHostDocuments = new ExtHostDocuments(rpcProtocol, extHostDocumentsAndEditors);
 		const extHostStoragePaths = new class extends mock<IExtensionStoragePaths>() {
-			workspaceValue() {
+			override workspaceValue() {
 				return URI.from({ scheme: 'test', path: generateUuid() });
 			}
 		};
-		extHostNotebooks = new ExtHostNotebookController(rpcProtocol, new ExtHostCommands(rpcProtocol, new NullLogService()), extHostDocumentsAndEditors, { isExtensionDevelopmentDebug: false, webviewCspSource: '', webviewResourceRoot: '' }, new NullLogService(), extHostStoragePaths);
+		extHostNotebooks = new ExtHostNotebookController(rpcProtocol, new ExtHostCommands(rpcProtocol, new NullLogService()), extHostDocumentsAndEditors, extHostDocuments, new NullLogService(), extHostStoragePaths);
 		let reg = extHostNotebooks.registerNotebookContentProvider(nullExtensionDescription, 'test', new class extends mock<vscode.NotebookContentProvider>() {
 			// async openNotebook() { }
 		});
@@ -68,17 +68,14 @@ suite('NotebookConcatDocument', function () {
 					cellKind: CellKind.Markdown,
 					outputs: [],
 				}],
-				contentOptions: { transientOutputs: false, transientMetadata: {} },
 				versionId: 0
 			}],
-			addedEditors: [
-				{
-					documentUri: notebookUri,
-					id: '_notebook_editor_0',
-					selections: [{ start: 0, end: 1 }],
-					visibleRanges: []
-				}
-			]
+			addedEditors: [{
+				documentUri: notebookUri,
+				id: '_notebook_editor_0',
+				selections: [{ start: 0, end: 1 }],
+				visibleRanges: []
+			}]
 		});
 		extHostNotebooks.$acceptDocumentAndEditorsDelta({ newActiveEditor: '_notebook_editor_0' });
 
@@ -90,7 +87,7 @@ suite('NotebookConcatDocument', function () {
 	});
 
 	test('empty', function () {
-		let doc = new ExtHostNotebookConcatDocument(extHostNotebooks, extHostDocuments, notebook.notebookDocument, undefined);
+		let doc = new ExtHostNotebookConcatDocument(extHostNotebooks, extHostDocuments, notebook.apiNotebook, undefined);
 		assert.strictEqual(doc.getText(), '');
 		assert.strictEqual(doc.version, 0);
 
@@ -126,7 +123,7 @@ suite('NotebookConcatDocument', function () {
 		const cellUri2 = CellUri.generate(notebook.uri, 2);
 
 		extHostNotebooks.$acceptModelChanged(notebookUri, {
-			versionId: notebook.notebookDocument.version + 1,
+			versionId: notebook.apiNotebook.version + 1,
 			rawEvents: [{
 				kind: NotebookCellsChangeType.ModelChange,
 				changes: [[0, 0, [{
@@ -151,9 +148,9 @@ suite('NotebookConcatDocument', function () {
 		}, false);
 
 
-		assert.strictEqual(notebook.notebookDocument.cells.length, 1 + 2); // markdown and code
+		assert.strictEqual(notebook.apiNotebook.cellCount, 1 + 2); // markdown and code
 
-		let doc = new ExtHostNotebookConcatDocument(extHostNotebooks, extHostDocuments, notebook.notebookDocument, undefined);
+		let doc = new ExtHostNotebookConcatDocument(extHostNotebooks, extHostDocuments, notebook.apiNotebook, undefined);
 
 		assert.strictEqual(doc.contains(cellUri1), true);
 		assert.strictEqual(doc.contains(cellUri2), true);
@@ -163,7 +160,7 @@ suite('NotebookConcatDocument', function () {
 	test('location, position mapping', function () {
 
 		extHostNotebooks.$acceptModelChanged(notebookUri, {
-			versionId: notebook.notebookDocument.version + 1,
+			versionId: notebook.apiNotebook.version + 1,
 			rawEvents: [
 				{
 					kind: NotebookCellsChangeType.ModelChange,
@@ -189,26 +186,26 @@ suite('NotebookConcatDocument', function () {
 		}, false);
 
 
-		assert.strictEqual(notebook.notebookDocument.cells.length, 1 + 2); // markdown and code
+		assert.strictEqual(notebook.apiNotebook.cellCount, 1 + 2); // markdown and code
 
-		let doc = new ExtHostNotebookConcatDocument(extHostNotebooks, extHostDocuments, notebook.notebookDocument, undefined);
+		let doc = new ExtHostNotebookConcatDocument(extHostNotebooks, extHostDocuments, notebook.apiNotebook, undefined);
 		assertLines(doc, 'Hello', 'World', 'Hello World!', 'Hallo', 'Welt', 'Hallo Welt!');
 
-		assertLocation(doc, new Position(0, 0), new Location(notebook.notebookDocument.cells[0].uri, new Position(0, 0)));
-		assertLocation(doc, new Position(4, 0), new Location(notebook.notebookDocument.cells[1].uri, new Position(1, 0)));
-		assertLocation(doc, new Position(4, 3), new Location(notebook.notebookDocument.cells[1].uri, new Position(1, 3)));
-		assertLocation(doc, new Position(5, 11), new Location(notebook.notebookDocument.cells[1].uri, new Position(2, 11)));
-		assertLocation(doc, new Position(5, 12), new Location(notebook.notebookDocument.cells[1].uri, new Position(2, 11)), false); // don't check identity because position will be clamped
+		assertLocation(doc, new Position(0, 0), new Location(notebook.apiNotebook.cellAt(0).document.uri, new Position(0, 0)));
+		assertLocation(doc, new Position(4, 0), new Location(notebook.apiNotebook.cellAt(1).document.uri, new Position(1, 0)));
+		assertLocation(doc, new Position(4, 3), new Location(notebook.apiNotebook.cellAt(1).document.uri, new Position(1, 3)));
+		assertLocation(doc, new Position(5, 11), new Location(notebook.apiNotebook.cellAt(1).document.uri, new Position(2, 11)));
+		assertLocation(doc, new Position(5, 12), new Location(notebook.apiNotebook.cellAt(1).document.uri, new Position(2, 11)), false); // don't check identity because position will be clamped
 	});
 
 
 	test('location, position mapping, cell changes', function () {
 
-		let doc = new ExtHostNotebookConcatDocument(extHostNotebooks, extHostDocuments, notebook.notebookDocument, undefined);
+		let doc = new ExtHostNotebookConcatDocument(extHostNotebooks, extHostDocuments, notebook.apiNotebook, undefined);
 
 		// UPDATE 1
 		extHostNotebooks.$acceptModelChanged(notebookUri, {
-			versionId: notebook.notebookDocument.version + 1,
+			versionId: notebook.apiNotebook.version + 1,
 			rawEvents: [
 				{
 					kind: NotebookCellsChangeType.ModelChange,
@@ -224,18 +221,18 @@ suite('NotebookConcatDocument', function () {
 				}
 			]
 		}, false);
-		assert.strictEqual(notebook.notebookDocument.cells.length, 1 + 1);
+		assert.strictEqual(notebook.apiNotebook.cellCount, 1 + 1);
 		assert.strictEqual(doc.version, 1);
 		assertLines(doc, 'Hello', 'World', 'Hello World!');
 
-		assertLocation(doc, new Position(0, 0), new Location(notebook.notebookDocument.cells[0].uri, new Position(0, 0)));
-		assertLocation(doc, new Position(2, 2), new Location(notebook.notebookDocument.cells[0].uri, new Position(2, 2)));
-		assertLocation(doc, new Position(4, 0), new Location(notebook.notebookDocument.cells[0].uri, new Position(2, 12)), false); // clamped
+		assertLocation(doc, new Position(0, 0), new Location(notebook.apiNotebook.cellAt(0).document.uri, new Position(0, 0)));
+		assertLocation(doc, new Position(2, 2), new Location(notebook.apiNotebook.cellAt(0).document.uri, new Position(2, 2)));
+		assertLocation(doc, new Position(4, 0), new Location(notebook.apiNotebook.cellAt(0).document.uri, new Position(2, 12)), false); // clamped
 
 
 		// UPDATE 2
 		extHostNotebooks.$acceptModelChanged(notebookUri, {
-			versionId: notebook.notebookDocument.version + 1,
+			versionId: notebook.apiNotebook.version + 1,
 			rawEvents: [
 				{
 					kind: NotebookCellsChangeType.ModelChange,
@@ -252,18 +249,18 @@ suite('NotebookConcatDocument', function () {
 			]
 		}, false);
 
-		assert.strictEqual(notebook.notebookDocument.cells.length, 1 + 2);
+		assert.strictEqual(notebook.apiNotebook.cellCount, 1 + 2);
 		assert.strictEqual(doc.version, 2);
 		assertLines(doc, 'Hello', 'World', 'Hello World!', 'Hallo', 'Welt', 'Hallo Welt!');
-		assertLocation(doc, new Position(0, 0), new Location(notebook.notebookDocument.cells[0].uri, new Position(0, 0)));
-		assertLocation(doc, new Position(4, 0), new Location(notebook.notebookDocument.cells[1].uri, new Position(1, 0)));
-		assertLocation(doc, new Position(4, 3), new Location(notebook.notebookDocument.cells[1].uri, new Position(1, 3)));
-		assertLocation(doc, new Position(5, 11), new Location(notebook.notebookDocument.cells[1].uri, new Position(2, 11)));
-		assertLocation(doc, new Position(5, 12), new Location(notebook.notebookDocument.cells[1].uri, new Position(2, 11)), false); // don't check identity because position will be clamped
+		assertLocation(doc, new Position(0, 0), new Location(notebook.apiNotebook.cellAt(0).document.uri, new Position(0, 0)));
+		assertLocation(doc, new Position(4, 0), new Location(notebook.apiNotebook.cellAt(1).document.uri, new Position(1, 0)));
+		assertLocation(doc, new Position(4, 3), new Location(notebook.apiNotebook.cellAt(1).document.uri, new Position(1, 3)));
+		assertLocation(doc, new Position(5, 11), new Location(notebook.apiNotebook.cellAt(1).document.uri, new Position(2, 11)));
+		assertLocation(doc, new Position(5, 12), new Location(notebook.apiNotebook.cellAt(1).document.uri, new Position(2, 11)), false); // don't check identity because position will be clamped
 
 		// UPDATE 3 (remove cell #2 again)
 		extHostNotebooks.$acceptModelChanged(notebookUri, {
-			versionId: notebook.notebookDocument.version + 1,
+			versionId: notebook.apiNotebook.version + 1,
 			rawEvents: [
 				{
 					kind: NotebookCellsChangeType.ModelChange,
@@ -271,21 +268,21 @@ suite('NotebookConcatDocument', function () {
 				}
 			]
 		}, false);
-		assert.strictEqual(notebook.notebookDocument.cells.length, 1 + 1);
+		assert.strictEqual(notebook.apiNotebook.cellCount, 1 + 1);
 		assert.strictEqual(doc.version, 3);
 		assertLines(doc, 'Hello', 'World', 'Hello World!');
-		assertLocation(doc, new Position(0, 0), new Location(notebook.notebookDocument.cells[0].uri, new Position(0, 0)));
-		assertLocation(doc, new Position(2, 2), new Location(notebook.notebookDocument.cells[0].uri, new Position(2, 2)));
-		assertLocation(doc, new Position(4, 0), new Location(notebook.notebookDocument.cells[0].uri, new Position(2, 12)), false); // clamped
+		assertLocation(doc, new Position(0, 0), new Location(notebook.apiNotebook.cellAt(0).document.uri, new Position(0, 0)));
+		assertLocation(doc, new Position(2, 2), new Location(notebook.apiNotebook.cellAt(0).document.uri, new Position(2, 2)));
+		assertLocation(doc, new Position(4, 0), new Location(notebook.apiNotebook.cellAt(0).document.uri, new Position(2, 12)), false); // clamped
 	});
 
 	test('location, position mapping, cell-document changes', function () {
 
-		let doc = new ExtHostNotebookConcatDocument(extHostNotebooks, extHostDocuments, notebook.notebookDocument, undefined);
+		let doc = new ExtHostNotebookConcatDocument(extHostNotebooks, extHostDocuments, notebook.apiNotebook, undefined);
 
 		// UPDATE 1
 		extHostNotebooks.$acceptModelChanged(notebookUri, {
-			versionId: notebook.notebookDocument.version + 1,
+			versionId: notebook.apiNotebook.version + 1,
 			rawEvents: [
 				{
 
@@ -310,21 +307,21 @@ suite('NotebookConcatDocument', function () {
 				}
 			]
 		}, false);
-		assert.strictEqual(notebook.notebookDocument.cells.length, 1 + 2);
+		assert.strictEqual(notebook.apiNotebook.cellCount, 1 + 2);
 		assert.strictEqual(doc.version, 1);
 
 		assertLines(doc, 'Hello', 'World', 'Hello World!', 'Hallo', 'Welt', 'Hallo Welt!');
-		assertLocation(doc, new Position(0, 0), new Location(notebook.notebookDocument.cells[0].uri, new Position(0, 0)));
-		assertLocation(doc, new Position(2, 2), new Location(notebook.notebookDocument.cells[0].uri, new Position(2, 2)));
-		assertLocation(doc, new Position(2, 12), new Location(notebook.notebookDocument.cells[0].uri, new Position(2, 12)));
-		assertLocation(doc, new Position(4, 0), new Location(notebook.notebookDocument.cells[1].uri, new Position(1, 0)));
-		assertLocation(doc, new Position(4, 3), new Location(notebook.notebookDocument.cells[1].uri, new Position(1, 3)));
+		assertLocation(doc, new Position(0, 0), new Location(notebook.apiNotebook.cellAt(0).document.uri, new Position(0, 0)));
+		assertLocation(doc, new Position(2, 2), new Location(notebook.apiNotebook.cellAt(0).document.uri, new Position(2, 2)));
+		assertLocation(doc, new Position(2, 12), new Location(notebook.apiNotebook.cellAt(0).document.uri, new Position(2, 12)));
+		assertLocation(doc, new Position(4, 0), new Location(notebook.apiNotebook.cellAt(1).document.uri, new Position(1, 0)));
+		assertLocation(doc, new Position(4, 3), new Location(notebook.apiNotebook.cellAt(1).document.uri, new Position(1, 3)));
 
 		// offset math
 		let cell1End = doc.offsetAt(new Position(2, 12));
 		assert.strictEqual(doc.positionAt(cell1End).isEqual(new Position(2, 12)), true);
 
-		extHostDocuments.$acceptModelChanged(notebook.notebookDocument.cells[0].uri, {
+		extHostDocuments.$acceptModelChanged(notebook.apiNotebook.cellAt(0).document.uri, {
 			versionId: 0,
 			eol: '\n',
 			changes: [{
@@ -335,7 +332,7 @@ suite('NotebookConcatDocument', function () {
 			}]
 		}, false);
 		assertLines(doc, 'Hello', 'World', 'Hi World!', 'Hallo', 'Welt', 'Hallo Welt!');
-		assertLocation(doc, new Position(2, 12), new Location(notebook.notebookDocument.cells[0].uri, new Position(2, 9)), false);
+		assertLocation(doc, new Position(2, 12), new Location(notebook.apiNotebook.cellAt(0).document.uri, new Position(2, 9)), false);
 
 		assert.strictEqual(doc.positionAt(cell1End).isEqual(new Position(3, 2)), true);
 
@@ -344,7 +341,7 @@ suite('NotebookConcatDocument', function () {
 	test('selector', function () {
 
 		extHostNotebooks.$acceptModelChanged(notebookUri, {
-			versionId: notebook.notebookDocument.version + 1,
+			versionId: notebook.apiNotebook.version + 1,
 			rawEvents: [
 				{
 					kind: NotebookCellsChangeType.ModelChange,
@@ -369,16 +366,16 @@ suite('NotebookConcatDocument', function () {
 			]
 		}, false);
 
-		const mixedDoc = new ExtHostNotebookConcatDocument(extHostNotebooks, extHostDocuments, notebook.notebookDocument, undefined);
-		const fooLangDoc = new ExtHostNotebookConcatDocument(extHostNotebooks, extHostDocuments, notebook.notebookDocument, 'fooLang');
-		const barLangDoc = new ExtHostNotebookConcatDocument(extHostNotebooks, extHostDocuments, notebook.notebookDocument, 'barLang');
+		const mixedDoc = new ExtHostNotebookConcatDocument(extHostNotebooks, extHostDocuments, notebook.apiNotebook, undefined);
+		const fooLangDoc = new ExtHostNotebookConcatDocument(extHostNotebooks, extHostDocuments, notebook.apiNotebook, 'fooLang');
+		const barLangDoc = new ExtHostNotebookConcatDocument(extHostNotebooks, extHostDocuments, notebook.apiNotebook, 'barLang');
 
 		assertLines(mixedDoc, 'fooLang-document', 'barLang-document');
 		assertLines(fooLangDoc, 'fooLang-document');
 		assertLines(barLangDoc, 'barLang-document');
 
 		extHostNotebooks.$acceptModelChanged(notebookUri, {
-			versionId: notebook.notebookDocument.version + 1,
+			versionId: notebook.apiNotebook.version + 1,
 			rawEvents: [
 				{
 					kind: NotebookCellsChangeType.ModelChange,
@@ -416,7 +413,7 @@ suite('NotebookConcatDocument', function () {
 	test('offsetAt(position) <-> positionAt(offset)', function () {
 
 		extHostNotebooks.$acceptModelChanged(notebookUri, {
-			versionId: notebook.notebookDocument.version + 1,
+			versionId: notebook.apiNotebook.version + 1,
 			rawEvents: [
 				{
 					kind: NotebookCellsChangeType.ModelChange,
@@ -441,9 +438,9 @@ suite('NotebookConcatDocument', function () {
 			]
 		}, false);
 
-		assert.strictEqual(notebook.notebookDocument.cells.length, 1 + 2); // markdown and code
+		assert.strictEqual(notebook.apiNotebook.cellCount, 1 + 2); // markdown and code
 
-		let doc = new ExtHostNotebookConcatDocument(extHostNotebooks, extHostDocuments, notebook.notebookDocument, undefined);
+		let doc = new ExtHostNotebookConcatDocument(extHostNotebooks, extHostDocuments, notebook.apiNotebook, undefined);
 		assertLines(doc, 'Hello', 'World', 'Hello World!', 'Hallo', 'Welt', 'Hallo Welt!');
 
 		assertOffsetAtPosition(doc, 0, { line: 0, character: 0 });
@@ -473,7 +470,7 @@ suite('NotebookConcatDocument', function () {
 	test('locationAt(position) <-> positionAt(location)', function () {
 
 		extHostNotebooks.$acceptModelChanged(notebookUri, {
-			versionId: notebook.notebookDocument.version + 1,
+			versionId: notebook.apiNotebook.version + 1,
 			rawEvents: [
 				{
 					kind: NotebookCellsChangeType.ModelChange,
@@ -498,23 +495,23 @@ suite('NotebookConcatDocument', function () {
 			]
 		}, false);
 
-		assert.strictEqual(notebook.notebookDocument.cells.length, 1 + 2); // markdown and code
+		assert.strictEqual(notebook.apiNotebook.cellCount, 1 + 2); // markdown and code
 
-		let doc = new ExtHostNotebookConcatDocument(extHostNotebooks, extHostDocuments, notebook.notebookDocument, undefined);
+		let doc = new ExtHostNotebookConcatDocument(extHostNotebooks, extHostDocuments, notebook.apiNotebook, undefined);
 		assertLines(doc, 'Hello', 'World', 'Hello World!', 'Hallo', 'Welt', 'Hallo Welt!');
 
-		assertLocationAtPosition(doc, { line: 0, character: 0 }, { uri: notebook.notebookDocument.cells[0].uri, line: 0, character: 0 });
-		assertLocationAtPosition(doc, { line: 2, character: 0 }, { uri: notebook.notebookDocument.cells[0].uri, line: 2, character: 0 });
-		assertLocationAtPosition(doc, { line: 2, character: 12 }, { uri: notebook.notebookDocument.cells[0].uri, line: 2, character: 12 });
-		assertLocationAtPosition(doc, { line: 3, character: 0 }, { uri: notebook.notebookDocument.cells[1].uri, line: 0, character: 0 });
-		assertLocationAtPosition(doc, { line: 5, character: 0 }, { uri: notebook.notebookDocument.cells[1].uri, line: 2, character: 0 });
-		assertLocationAtPosition(doc, { line: 5, character: 11 }, { uri: notebook.notebookDocument.cells[1].uri, line: 2, character: 11 });
+		assertLocationAtPosition(doc, { line: 0, character: 0 }, { uri: notebook.apiNotebook.cellAt(0).document.uri, line: 0, character: 0 });
+		assertLocationAtPosition(doc, { line: 2, character: 0 }, { uri: notebook.apiNotebook.cellAt(0).document.uri, line: 2, character: 0 });
+		assertLocationAtPosition(doc, { line: 2, character: 12 }, { uri: notebook.apiNotebook.cellAt(0).document.uri, line: 2, character: 12 });
+		assertLocationAtPosition(doc, { line: 3, character: 0 }, { uri: notebook.apiNotebook.cellAt(1).document.uri, line: 0, character: 0 });
+		assertLocationAtPosition(doc, { line: 5, character: 0 }, { uri: notebook.apiNotebook.cellAt(1).document.uri, line: 2, character: 0 });
+		assertLocationAtPosition(doc, { line: 5, character: 11 }, { uri: notebook.apiNotebook.cellAt(1).document.uri, line: 2, character: 11 });
 	});
 
 	test('getText(range)', function () {
 
 		extHostNotebooks.$acceptModelChanged(notebookUri, {
-			versionId: notebook.notebookDocument.version + 1,
+			versionId: notebook.apiNotebook.version + 1,
 			rawEvents: [
 				{
 					kind: NotebookCellsChangeType.ModelChange,
@@ -539,9 +536,9 @@ suite('NotebookConcatDocument', function () {
 			]
 		}, false);
 
-		assert.strictEqual(notebook.notebookDocument.cells.length, 1 + 2); // markdown and code
+		assert.strictEqual(notebook.apiNotebook.cellCount, 1 + 2); // markdown and code
 
-		let doc = new ExtHostNotebookConcatDocument(extHostNotebooks, extHostDocuments, notebook.notebookDocument, undefined);
+		let doc = new ExtHostNotebookConcatDocument(extHostNotebooks, extHostDocuments, notebook.apiNotebook, undefined);
 		assertLines(doc, 'Hello', 'World', 'Hello World!', 'Hallo', 'Welt', 'Hallo Welt!');
 
 		assert.strictEqual(doc.getText(new Range(0, 0, 0, 0)), '');
@@ -552,7 +549,7 @@ suite('NotebookConcatDocument', function () {
 	test('validateRange/Position', function () {
 
 		extHostNotebooks.$acceptModelChanged(notebookUri, {
-			versionId: notebook.notebookDocument.version + 1,
+			versionId: notebook.apiNotebook.version + 1,
 			rawEvents: [
 				{
 					kind: NotebookCellsChangeType.ModelChange,
@@ -577,9 +574,9 @@ suite('NotebookConcatDocument', function () {
 			]
 		}, false);
 
-		assert.strictEqual(notebook.notebookDocument.cells.length, 1 + 2); // markdown and code
+		assert.strictEqual(notebook.apiNotebook.cellCount, 1 + 2); // markdown and code
 
-		let doc = new ExtHostNotebookConcatDocument(extHostNotebooks, extHostDocuments, notebook.notebookDocument, undefined);
+		let doc = new ExtHostNotebookConcatDocument(extHostNotebooks, extHostDocuments, notebook.apiNotebook, undefined);
 		assertLines(doc, 'Hello', 'World', 'Hello World!', 'Hallo', 'Welt', 'Hallo Welt!');
 
 

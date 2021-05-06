@@ -3,10 +3,20 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Emitter } from 'vs/base/common/event';
+import { Emitter, Event } from 'vs/base/common/event';
 import { StoredValue } from 'vs/workbench/contrib/testing/common/storedValue';
 
-export class ObservableValue<T> {
+export interface IObservableValue<T> {
+	onDidChange: Event<T>;
+	readonly value: T;
+}
+
+export const staticObservableValue = <T>(value: T): IObservableValue<T> => ({
+	onDidChange: Event.None,
+	value,
+});
+
+export class MutableObservableValue<T> implements IObservableValue<T> {
 	private readonly changeEmitter = new Emitter<T>();
 
 	public readonly onDidChange = this.changeEmitter.event;
@@ -23,7 +33,7 @@ export class ObservableValue<T> {
 	}
 
 	public static stored<T>(stored: StoredValue<T>, defaultValue: T) {
-		const o = new ObservableValue(stored.get(defaultValue));
+		const o = new MutableObservableValue(stored.get(defaultValue));
 		o.onDidChange(value => stored.store(value));
 		return o;
 	}

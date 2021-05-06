@@ -4,12 +4,13 @@
   "license": "MIT",
   "description": "Dependencies shared by all extensions",
   "dependencies": {
-    "typescript": "4.2.3"
+    "typescript": "4.3.0-dev.20210505"
   },
   "scripts": {
     "postinstall": "node ./postinstall"
   },
   "devDependencies": {
+    "esbuild": "^0.11.12",
     "vscode-grammar-updater": "^1.0.3"
   }
 }

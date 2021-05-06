@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import * as assert from 'assert';
-import { FoldingModel, setCollapseStateAtLevel, setCollapseStateLevelsDown, setCollapseStateLevelsUp, setCollapseStateForMatchingLines, setCollapseStateUp } from 'vs/editor/contrib/folding/foldingModel';
+import { FoldingModel, setCollapseStateAtLevel, setCollapseStateLevelsDown, setCollapseStateLevelsUp, setCollapseStateForMatchingLines, setCollapseStateUp, setCollapseStateForRest } from 'vs/editor/contrib/folding/foldingModel';
 import { ModelDecorationOptions } from 'vs/editor/common/model/textModel';
 import { createTextModel } from 'vs/editor/test/common/editorTestUtils';
 import { computeRanges } from 'vs/editor/contrib/folding/indentRangeProvider';
@@ -90,11 +90,11 @@ suite('Folding Model', () => {
 	}
 
 	function assertRegion(actual: FoldingRegion | null, expected: ExpectedRegion | null, message?: string) {
-		assert.equal(!!actual, !!expected, message);
+		assert.strictEqual(!!actual, !!expected, message);
 		if (actual && expected) {
-			assert.equal(actual.startLineNumber, expected.startLineNumber, message);
-			assert.equal(actual.endLineNumber, expected.endLineNumber, message);
-			assert.equal(actual.isCollapsed, expected.isCollapsed, message);
+			assert.strictEqual(actual.startLineNumber, expected.startLineNumber, message);
+			assert.strictEqual(actual.endLineNumber, expected.endLineNumber, message);
+			assert.strictEqual(actual.isCollapsed, expected.isCollapsed, message);
 		}
 	}
 
@@ -106,7 +106,7 @@ suite('Folding Model', () => {
 				actualRanges.push(r(actual.getStartLineNumber(i), actual.getEndLineNumber(i)));
 			}
 		}
-		assert.deepEqual(actualRanges, expectedRegions, message);
+		assert.deepStrictEqual(actualRanges, expectedRegions, message);
 	}
 
 	function assertRanges(foldingModel: FoldingModel, expectedRegions: ExpectedRegion[], message?: string) {
@@ -115,16 +115,16 @@ suite('Folding Model', () => {
 		for (let i = 0; i < actual.length; i++) {
 			actualRanges.push(r(actual.getStartLineNumber(i), actual.getEndLineNumber(i), actual.isCollapsed(i)));
 		}
-		assert.deepEqual(actualRanges, expectedRegions, message);
+		assert.deepStrictEqual(actualRanges, expectedRegions, message);
 	}
 
 	function assertDecorations(foldingModel: FoldingModel, expectedDecoration: ExpectedDecoration[], message?: string) {
 		const decorationProvider = foldingModel.decorationProvider as TestDecorationProvider;
-		assert.deepEqual(decorationProvider.getDecorations(), expectedDecoration, message);
+		assert.deepStrictEqual(decorationProvider.getDecorations(), expectedDecoration, message);
 	}
 
 	function assertRegions(actual: FoldingRegion[], expectedRegions: ExpectedRegion[], message?: string) {
-		assert.deepEqual(actual.map(r => ({ startLineNumber: r.startLineNumber, endLineNumber: r.endLineNumber, isCollapsed: r.isCollapsed })), expectedRegions, message);
+		assert.deepStrictEqual(actual.map(r => ({ startLineNumber: r.startLineNumber, endLineNumber: r.endLineNumber, isCollapsed: r.isCollapsed })), expectedRegions, message);
 	}
 
 	test('getRegionAtLine', () => {
@@ -716,6 +716,56 @@ suite('Folding Model', () => {
 		}
 
 	});
+
+
+	test('setCollapseStateForRest', () => {
+		let lines = [
+		/* 1*/	'//#region',
+		/* 2*/	'//#endregion',
+		/* 3*/	'class A {',
+		/* 4*/	'  void foo() {',
+		/* 5*/	'    if (true) {',
+		/* 6*/	'        return;',
+		/* 7*/	'    }',
+		/* 8*/	'',
+		/* 9*/	'    if (true) {',
+		/* 10*/	'      return;',
+		/* 11*/	'    }',
+		/* 12*/	'  }',
+		/* 13*/	'}'];
+
+		let textModel = createTextModel(lines.join('\n'));
+		try {
+			let foldingModel = new FoldingModel(textModel, new TestDecorationProvider(textModel));
+
+			let ranges = computeRanges(textModel, false, { start: /^\/\/#region$/, end: /^\/\/#endregion$/ });
+			foldingModel.update(ranges);
+
+			let r1 = r(1, 2, false);
+			let r2 = r(3, 12, false);
+			let r3 = r(4, 11, false);
+			let r4 = r(5, 6, false);
+			let r5 = r(9, 10, false);
+			assertRanges(foldingModel, [r1, r2, r3, r4, r5]);
+
+			setCollapseStateForRest(foldingModel, true, [5]);
+			assertFoldedRanges(foldingModel, [r1, r5], '1');
+
+			setCollapseStateForRest(foldingModel, false, [5]);
+			assertFoldedRanges(foldingModel, [], '2');
+
+			setCollapseStateForRest(foldingModel, true, [1]);
+			assertFoldedRanges(foldingModel, [r2, r3, r4, r5], '3');
+
+			setCollapseStateForRest(foldingModel, true, [3]);
+			assertFoldedRanges(foldingModel, [r1, r2, r3, r4, r5], '3');
+
+		} finally {
+			textModel.dispose();
+		}
+
+	});
+
 
 	test('folding decoration', () => {
 		let lines = [

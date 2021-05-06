@@ -16,6 +16,7 @@ import { ThemeIcon, QuickInputButtons } from 'vs/workbench/api/common/extHostTyp
 import { isPromiseCanceledError } from 'vs/base/common/errors';
 import { ExtensionIdentifier } from 'vs/platform/extensions/common/extensions';
 import { coalesce } from 'vs/base/common/arrays';
+import Severity from 'vs/base/common/severity';
 
 export type Item = string | QuickPickItem;
 
@@ -67,11 +68,12 @@ export function createExtHostQuickOpen(mainContext: IMainContext, workspace: IEx
 			const instance = ++this._instances;
 
 			const quickPickWidget = proxy.$show(instance, {
-				placeHolder: options && options.placeHolder,
-				matchOnDescription: options && options.matchOnDescription,
-				matchOnDetail: options && options.matchOnDetail,
-				ignoreFocusLost: options && options.ignoreFocusOut,
-				canPickMany: options && options.canPickMany
+				title: options?.title,
+				placeHolder: options?.placeHolder,
+				matchOnDescription: options?.matchOnDescription,
+				matchOnDetail: options?.matchOnDetail,
+				ignoreFocusLost: options?.ignoreFocusOut,
+				canPickMany: options?.canPickMany,
 			}, token);
 
 			const widgetClosedMarker = {};
@@ -632,7 +634,7 @@ export function createExtHostQuickOpen(mainContext: IMainContext, workspace: IEx
 
 		set validationMessage(validationMessage: string | undefined) {
 			this._validationMessage = validationMessage;
-			this.update({ validationMessage });
+			this.update({ validationMessage, severity: validationMessage ? Severity.Error : Severity.Ignore });
 		}
 	}
 

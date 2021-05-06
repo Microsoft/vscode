@@ -16,13 +16,13 @@ suite('formatOptions', () => {
 	}
 
 	test('Text should display small columns correctly', () => {
-		assert.deepEqual(
+		assert.deepStrictEqual(
 			formatOptions({
 				'add': o('bar')
 			}, 80),
 			['  --add bar']
 		);
-		assert.deepEqual(
+		assert.deepStrictEqual(
 			formatOptions({
 				'add': o('bar'),
 				'wait': o('ba'),
@@ -36,7 +36,7 @@ suite('formatOptions', () => {
 	});
 
 	test('Text should wrap', () => {
-		assert.deepEqual(
+		assert.deepStrictEqual(
 			formatOptions({
 				'add': o((<any>'bar ').repeat(9))
 			}, 40),
@@ -47,7 +47,7 @@ suite('formatOptions', () => {
 	});
 
 	test('Text should revert to the condensed view when the terminal is too narrow', () => {
-		assert.deepEqual(
+		assert.deepStrictEqual(
 			formatOptions({
 				'add': o((<any>'bar ').repeat(9))
 			}, 30),
@@ -58,11 +58,11 @@ suite('formatOptions', () => {
 	});
 
 	test('addArg', () => {
-		assert.deepEqual(addArg([], 'foo'), ['foo']);
-		assert.deepEqual(addArg([], 'foo', 'bar'), ['foo', 'bar']);
-		assert.deepEqual(addArg(['foo'], 'bar'), ['foo', 'bar']);
-		assert.deepEqual(addArg(['--wait'], 'bar'), ['--wait', 'bar']);
-		assert.deepEqual(addArg(['--wait', '--', '--foo'], 'bar'), ['--wait', 'bar', '--', '--foo']);
-		assert.deepEqual(addArg(['--', '--foo'], 'bar'), ['bar', '--', '--foo']);
+		assert.deepStrictEqual(addArg([], 'foo'), ['foo']);
+		assert.deepStrictEqual(addArg([], 'foo', 'bar'), ['foo', 'bar']);
+		assert.deepStrictEqual(addArg(['foo'], 'bar'), ['foo', 'bar']);
+		assert.deepStrictEqual(addArg(['--wait'], 'bar'), ['--wait', 'bar']);
+		assert.deepStrictEqual(addArg(['--wait', '--', '--foo'], 'bar'), ['--wait', 'bar', '--', '--foo']);
+		assert.deepStrictEqual(addArg(['--', '--foo'], 'bar'), ['bar', '--', '--foo']);
 	});
 });

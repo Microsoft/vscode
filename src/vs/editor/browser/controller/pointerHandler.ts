@@ -87,7 +87,7 @@ export class PointerEventHandler extends MouseHandler {
 		}
 	}
 
-	public _onMouseDown(e: EditorMouseEvent): void {
+	public override _onMouseDown(e: EditorMouseEvent): void {
 		if ((e.browserEvent as any).pointerType === 'touch') {
 			return;
 		}

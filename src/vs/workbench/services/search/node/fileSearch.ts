@@ -295,7 +295,7 @@ export class FileWalker {
 	/**
 	 * Public for testing.
 	 */
-	readStdout(cmd: childProcess.ChildProcess, encoding: string, cb: (err: Error | null, stdout?: string) => void): void {
+	readStdout(cmd: childProcess.ChildProcess, encoding: BufferEncoding, cb: (err: Error | null, stdout?: string) => void): void {
 		let all = '';
 		this.collectStdout(cmd, encoding, () => { }, (err: Error | null, stdout?: string, last?: boolean) => {
 			if (err) {
@@ -310,7 +310,7 @@ export class FileWalker {
 		});
 	}
 
-	private collectStdout(cmd: childProcess.ChildProcess, encoding: string, onMessage: (message: IProgressMessage) => void, cb: (err: Error | null, stdout?: string, last?: boolean) => void): void {
+	private collectStdout(cmd: childProcess.ChildProcess, encoding: BufferEncoding, onMessage: (message: IProgressMessage) => void, cb: (err: Error | null, stdout?: string, last?: boolean) => void): void {
 		let onData = (err: Error | null, stdout?: string, last?: boolean) => {
 			if (err || last) {
 				onData = () => { };
@@ -357,7 +357,7 @@ export class FileWalker {
 		});
 	}
 
-	private forwardData(stream: Readable, encoding: string, cb: (err: Error | null, stdout?: string) => void): StringDecoder {
+	private forwardData(stream: Readable, encoding: BufferEncoding, cb: (err: Error | null, stdout?: string) => void): StringDecoder {
 		const decoder = new StringDecoder(encoding);
 		stream.on('data', (data: Buffer) => {
 			cb(null, decoder.write(data));
@@ -373,7 +373,7 @@ export class FileWalker {
 		return buffers;
 	}
 
-	private decodeData(buffers: Buffer[], encoding: string): string {
+	private decodeData(buffers: Buffer[], encoding: BufferEncoding): string {
 		const decoder = new StringDecoder(encoding);
 		return buffers.map(buffer => decoder.write(buffer)).join('');
 	}
@@ -640,7 +640,8 @@ export class Engine implements ISearchEngine<IRawFileMatch> {
 		this.walker.walk(this.folderQueries, this.extraFiles, onResult, onProgress, (err: Error | null, isLimitHit: boolean) => {
 			done(err, {
 				limitHit: isLimitHit,
-				stats: this.walker.getStats()
+				stats: this.walker.getStats(),
+				messages: [],
 			});
 		});
 	}

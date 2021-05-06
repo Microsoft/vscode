@@ -200,7 +200,7 @@ export class AnythingQuickAccessProvider extends PickerQuickAccessProvider<IAnyt
 		};
 	}
 
-	provide(picker: IQuickPick<IAnythingQuickPickItem>, token: CancellationToken): IDisposable {
+	override provide(picker: IQuickPick<IAnythingQuickPickItem>, token: CancellationToken): IDisposable {
 		const disposables = new DisposableStore();
 
 		// Update the pick state for this run
@@ -259,7 +259,7 @@ export class AnythingQuickAccessProvider extends PickerQuickAccessProvider<IAnyt
 		return toDisposable(() => this.clearDecorations(activeEditorControl));
 	}
 
-	protected getPicks(originalFilter: string, disposables: DisposableStore, token: CancellationToken): Picks<IAnythingQuickPickItem> | Promise<Picks<IAnythingQuickPickItem>> | FastAndSlowPicks<IAnythingQuickPickItem> | null {
+	protected _getPicks(originalFilter: string, disposables: DisposableStore, token: CancellationToken): Picks<IAnythingQuickPickItem> | Promise<Picks<IAnythingQuickPickItem>> | FastAndSlowPicks<IAnythingQuickPickItem> | null {
 
 		// Find a suitable range from the pattern looking for ":", "#" or ","
 		// unless we have the `@` editor symbol character inside the filter

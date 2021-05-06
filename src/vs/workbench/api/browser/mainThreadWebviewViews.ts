@@ -28,7 +28,7 @@ export class MainThreadWebviewsViews extends Disposable implements extHostProtoc
 		this._proxy = context.getProxy(extHostProtocol.ExtHostContext.ExtHostWebviewViews);
 	}
 
-	dispose() {
+	override dispose() {
 		super.dispose();
 
 		dispose(this._webviewViewProviders.values());
@@ -55,7 +55,7 @@ export class MainThreadWebviewsViews extends Disposable implements extHostProtoc
 	public $registerWebviewViewProvider(
 		extensionData: extHostProtocol.WebviewExtensionDescription,
 		viewType: string,
-		options?: { retainContextWhenHidden?: boolean }
+		options: { retainContextWhenHidden?: boolean, serializeBuffersForPostMessage: boolean }
 	): void {
 		if (this._webviewViewProviders.has(viewType)) {
 			throw new Error(`View provider for ${viewType} already registered`);
@@ -68,7 +68,7 @@ export class MainThreadWebviewsViews extends Disposable implements extHostProtoc
 				const handle = webviewView.webview.id;
 
 				this._webviewViews.set(handle, webviewView);
-				this.mainThreadWebviews.addWebview(handle, webviewView.webview);
+				this.mainThreadWebviews.addWebview(handle, webviewView.webview, { serializeBuffersForPostMessage: options.serializeBuffersForPostMessage });
 
 				let state = undefined;
 				if (webviewView.webview.state) {

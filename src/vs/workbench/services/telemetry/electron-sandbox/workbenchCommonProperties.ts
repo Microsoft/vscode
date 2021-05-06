@@ -14,6 +14,7 @@ export async function resolveWorkbenchCommonProperties(
 	storageService: IStorageService,
 	fileService: IFileService,
 	release: string,
+	hostname: string,
 	commit: string | undefined,
 	version: string | undefined,
 	machineId: string,
@@ -21,15 +22,15 @@ export async function resolveWorkbenchCommonProperties(
 	installSourcePath: string,
 	remoteAuthority?: string
 ): Promise<{ [name: string]: string | boolean | undefined }> {
-	const result = await resolveCommonProperties(fileService, release, process.arch, commit, version, machineId, msftInternalDomains, installSourcePath);
+	const result = await resolveCommonProperties(fileService, release, hostname, process.arch, commit, version, machineId, msftInternalDomains, installSourcePath);
 	const instanceId = storageService.get(instanceStorageKey, StorageScope.GLOBAL)!;
 	const firstSessionDate = storageService.get(firstSessionDateStorageKey, StorageScope.GLOBAL)!;
 	const lastSessionDate = storageService.get(lastSessionDateStorageKey, StorageScope.GLOBAL)!;
 
 	// __GDPR__COMMON__ "common.version.shell" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth" }
-	result['common.version.shell'] = process.versions && process.versions['electron'];
+	result['common.version.shell'] = process.versions['electron'];
 	// __GDPR__COMMON__ "common.version.renderer" : { "classification": "SystemMetaData", "purpose": "PerformanceAndHealth" }
-	result['common.version.renderer'] = process.versions && process.versions['chrome'];
+	result['common.version.renderer'] = process.versions['chrome'];
 	// __GDPR__COMMON__ "common.firstSessionDate" : { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
 	result['common.firstSessionDate'] = firstSessionDate;
 	// __GDPR__COMMON__ "common.lastSessionDate" : { "classification": "SystemMetaData", "purpose": "FeatureInsight" }

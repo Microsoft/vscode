@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import product from 'vs/platform/product/common/product';
+import { IProductService } from 'vs/platform/product/common/productService';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { ILifecycleMainService } from 'vs/platform/lifecycle/electron-main/lifecycleMainService';
 import { State, IUpdate, AvailableForDownload, UpdateType } from 'vs/platform/update/common/update';
@@ -17,8 +17,6 @@ import { INativeHostMainService } from 'vs/platform/native/electron-main/nativeH
 
 export class LinuxUpdateService extends AbstractUpdateService {
 
-	declare readonly _serviceBrand: undefined;
-
 	constructor(
 		@ILifecycleMainService lifecycleMainService: ILifecycleMainService,
 		@IConfigurationService configurationService: IConfigurationService,
@@ -26,13 +24,14 @@ export class LinuxUpdateService extends AbstractUpdateService {
 		@IEnvironmentMainService environmentMainService: IEnvironmentMainService,
 		@IRequestService requestService: IRequestService,
 		@ILogService logService: ILogService,
-		@INativeHostMainService private readonly nativeHostMainService: INativeHostMainService
+		@INativeHostMainService private readonly nativeHostMainService: INativeHostMainService,
+		@IProductService productService: IProductService
 	) {
-		super(lifecycleMainService, configurationService, environmentMainService, requestService, logService);
+		super(lifecycleMainService, configurationService, environmentMainService, requestService, logService, productService);
 	}
 
 	protected buildUpdateFeedUrl(quality: string): string {
-		return createUpdateURL(`linux-${process.arch}`, quality);
+		return createUpdateURL(`linux-${process.arch}`, quality, this.productService);
 	}
 
 	protected doCheckForUpdates(context: any): void {
@@ -61,11 +60,11 @@ export class LinuxUpdateService extends AbstractUpdateService {
 			});
 	}
 
-	protected async doDownloadUpdate(state: AvailableForDownload): Promise<void> {
+	protected override async doDownloadUpdate(state: AvailableForDownload): Promise<void> {
 		// Use the download URL if available as we don't currently detect the package type that was
 		// installed and the website download page is more useful than the tarball generally.
-		if (product.downloadUrl && product.downloadUrl.length > 0) {
-			this.nativeHostMainService.openExternal(undefined, product.downloadUrl);
+		if (this.productService.downloadUrl && this.productService.downloadUrl.length > 0) {
+			this.nativeHostMainService.openExternal(undefined, this.productService.downloadUrl);
 		} else if (state.update.url) {
 			this.nativeHostMainService.openExternal(undefined, state.update.url);
 		}

@@ -11,7 +11,7 @@ import { domEvent } from 'vs/base/browser/event';
 import { StandardKeyboardEvent } from 'vs/base/browser/keyboardEvent';
 import { KeyCode, KeyMod } from 'vs/base/common/keyCodes';
 import { Color } from 'vs/base/common/color';
-import { ButtonBar, IButtonStyles } from 'vs/base/browser/ui/button/button';
+import { ButtonBar, ButtonWithDescription, IButtonStyles } from 'vs/base/browser/ui/button/button';
 import { ActionBar } from 'vs/base/browser/ui/actionbar/actionbar';
 import { Action } from 'vs/base/common/actions';
 import { mnemonicButtonLabel } from 'vs/base/common/labels';
@@ -34,6 +34,10 @@ export interface IDialogOptions {
 	readonly type?: 'none' | 'info' | 'error' | 'question' | 'warning' | 'pending';
 	readonly inputs?: IDialogInputOptions[];
 	readonly keyEventProcessor?: (event: StandardKeyboardEvent) => void;
+	readonly renderBody?: (container: HTMLElement) => void;
+	readonly icon?: Codicon;
+	readonly buttonDetails?: string[];
+	readonly disableCloseAction?: boolean;
 }
 
 export interface IDialogResult {
@@ -53,6 +57,8 @@ export interface IDialogStyles extends IButtonStyles, ISimpleCheckboxStyles {
 	readonly inputBackground?: Color;
 	readonly inputForeground?: Color;
 	readonly inputBorder?: Color;
+	readonly textLinkForeground?: Color;
+
 }
 
 interface ButtonMapEntry {
@@ -71,6 +77,7 @@ export class Dialog extends Disposable {
 	private modalElement: HTMLElement | undefined;
 	private readonly buttonsContainer: HTMLElement;
 	private readonly messageDetailElement: HTMLElement;
+	private readonly messageContainer: HTMLElement;
 	private readonly iconElement: HTMLElement;
 	private readonly checkbox: SimpleCheckbox | undefined;
 	private readonly toolbarContainer: HTMLElement;
@@ -83,7 +90,7 @@ export class Dialog extends Disposable {
 	constructor(private container: HTMLElement, private message: string, buttons: string[], private options: IDialogOptions) {
 		super();
 
-		this.modalElement = this.container.appendChild($(`.monaco-dialog-modal-block${options.type === 'pending' ? '.dimmed' : ''}`));
+		this.modalElement = this.container.appendChild($(`.monaco-dialog-modal-block.dimmed`));
 		this.shadowElement = this.modalElement.appendChild($('.dialog-shadow'));
 		this.element = this.shadowElement.appendChild($('.monaco-dialog-box'));
 		this.element.setAttribute('role', 'dialog');
@@ -95,20 +102,29 @@ export class Dialog extends Disposable {
 
 		const messageRowElement = this.element.appendChild($('.dialog-message-row'));
 		this.iconElement = messageRowElement.appendChild($('.dialog-icon'));
-		const messageContainer = messageRowElement.appendChild($('.dialog-message-container'));
+		this.messageContainer = messageRowElement.appendChild($('.dialog-message-container'));
 
-		if (this.options.detail) {
-			const messageElement = messageContainer.appendChild($('.dialog-message'));
+		if (this.options.detail || this.options.renderBody) {
+			const messageElement = this.messageContainer.appendChild($('.dialog-message'));
 			const messageTextElement = messageElement.appendChild($('.dialog-message-text'));
 			messageTextElement.innerText = this.message;
 		}
 
-		this.messageDetailElement = messageContainer.appendChild($('.dialog-message-detail'));
-		this.messageDetailElement.innerText = this.options.detail ? this.options.detail : message;
+		this.messageDetailElement = this.messageContainer.appendChild($('.dialog-message-detail'));
+		if (this.options.detail || !this.options.renderBody) {
+			this.messageDetailElement.innerText = this.options.detail ? this.options.detail : message;
+		} else {
+			this.messageDetailElement.style.display = 'none';
+		}
+
+		if (this.options.renderBody) {
+			const customBody = this.messageContainer.appendChild($('.dialog-message-body'));
+			this.options.renderBody(customBody);
+		}
 
 		if (this.options.inputs) {
 			this.inputs = this.options.inputs.map(input => {
-				const inputRowElement = messageContainer.appendChild($('.dialog-message-input'));
+				const inputRowElement = this.messageContainer.appendChild($('.dialog-message-input'));
 
 				const inputBox = this._register(new InputBox(inputRowElement, undefined, {
 					placeholder: input.placeholder,
@@ -126,7 +142,7 @@ export class Dialog extends Disposable {
 		}
 
 		if (this.options.checkboxLabel) {
-			const checkboxRowElement = messageContainer.appendChild($('.dialog-checkbox-row'));
+			const checkboxRowElement = this.messageContainer.appendChild($('.dialog-checkbox-row'));
 
 			const checkbox = this.checkbox = this._register(new SimpleCheckbox(this.options.checkboxLabel, !!this.options.checkboxChecked));
 
@@ -175,12 +191,16 @@ export class Dialog extends Disposable {
 
 			const buttonBar = this.buttonBar = this._register(new ButtonBar(this.buttonsContainer));
 			const buttonMap = this.rearrangeButtons(this.buttons, this.options.cancelId);
+			this.buttonsContainer.classList.toggle('centered');
 
 			// Handle button clicks
 			buttonMap.forEach((entry, index) => {
-				const button = this._register(buttonBar.addButton({ title: true }));
+				const primary = buttonMap[index].index === 0;
+				const button = this.options.buttonDetails ? this._register(buttonBar.addButtonWithDescription({ title: true, secondary: !primary })) : this._register(buttonBar.addButton({ title: true, secondary: !primary }));
 				button.label = mnemonicButtonLabel(buttonMap[index].label, true);
-
+				if (button instanceof ButtonWithDescription) {
+					button.description = this.options.buttonDetails![buttonMap[index].index];
+				}
 				this._register(button.onDidClick(e => {
 					if (e) {
 						EventHelper.stop(e);
@@ -287,7 +307,7 @@ export class Dialog extends Disposable {
 				EventHelper.stop(e, true);
 				const evt = new StandardKeyboardEvent(e);
 
-				if (evt.equals(KeyCode.Escape)) {
+				if (!this.options.disableCloseAction && evt.equals(KeyCode.Escape)) {
 					resolve({
 						button: this.options.cancelId || 0,
 						checkboxChecked: this.checkbox ? this.checkbox.checked : undefined
@@ -313,34 +333,41 @@ export class Dialog extends Disposable {
 
 			this.iconElement.classList.remove(...dialogErrorIcon.classNamesArray, ...dialogWarningIcon.classNamesArray, ...dialogInfoIcon.classNamesArray, ...Codicon.loading.classNamesArray, spinModifierClassName);
 
-			switch (this.options.type) {
-				case 'error':
-					this.iconElement.classList.add(...dialogErrorIcon.classNamesArray);
-					break;
-				case 'warning':
-					this.iconElement.classList.add(...dialogWarningIcon.classNamesArray);
-					break;
-				case 'pending':
-					this.iconElement.classList.add(...Codicon.loading.classNamesArray, spinModifierClassName);
-					break;
-				case 'none':
-				case 'info':
-				case 'question':
-				default:
-					this.iconElement.classList.add(...dialogInfoIcon.classNamesArray);
-					break;
+			if (this.options.icon) {
+				this.iconElement.classList.add(...this.options.icon.classNamesArray);
+			} else {
+				switch (this.options.type) {
+					case 'error':
+						this.iconElement.classList.add(...dialogErrorIcon.classNamesArray);
+						break;
+					case 'warning':
+						this.iconElement.classList.add(...dialogWarningIcon.classNamesArray);
+						break;
+					case 'pending':
+						this.iconElement.classList.add(...Codicon.loading.classNamesArray, spinModifierClassName);
+						break;
+					case 'none':
+					case 'info':
+					case 'question':
+					default:
+						this.iconElement.classList.add(...dialogInfoIcon.classNamesArray);
+						break;
+				}
 			}
 
-			const actionBar = this._register(new ActionBar(this.toolbarContainer, {}));
 
-			const action = this._register(new Action('dialog.close', nls.localize('dialogClose', "Close Dialog"), dialogCloseIcon.classNames, true, async () => {
-				resolve({
-					button: this.options.cancelId || 0,
-					checkboxChecked: this.checkbox ? this.checkbox.checked : undefined
-				});
-			}));
+			if (!this.options.disableCloseAction) {
+				const actionBar = this._register(new ActionBar(this.toolbarContainer, {}));
 
-			actionBar.push(action, { icon: true, label: false, });
+				const action = this._register(new Action('dialog.close', nls.localize('dialogClose', "Close Dialog"), dialogCloseIcon.classNames, true, async () => {
+					resolve({
+						button: this.options.cancelId || 0,
+						checkboxChecked: this.checkbox ? this.checkbox.checked : undefined
+					});
+				}));
+
+				actionBar.push(action, { icon: true, label: false, });
+			}
 
 			this.applyStyles();
 
@@ -369,6 +396,7 @@ export class Dialog extends Disposable {
 			const bgColor = style.dialogBackground;
 			const shadowColor = style.dialogShadow ? `0 0px 8px ${style.dialogShadow}` : '';
 			const border = style.dialogBorder ? `1px solid ${style.dialogBorder}` : '';
+			const linkFgColor = style.textLinkForeground;
 
 			this.shadowElement.style.boxShadow = shadowColor;
 
@@ -387,6 +415,12 @@ export class Dialog extends Disposable {
 			if (fgColor && bgColor) {
 				const messageDetailColor = fgColor.transparent(.9);
 				this.messageDetailElement.style.color = messageDetailColor.makeOpaque(bgColor).toString();
+			}
+
+			if (linkFgColor) {
+				for (const el of this.messageContainer.getElementsByTagName('a')) {
+					el.style.color = linkFgColor.toString();
+				}
 			}
 
 			let color;
@@ -417,7 +451,7 @@ export class Dialog extends Disposable {
 		this.applyStyles();
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		super.dispose();
 
 		if (this.modalElement) {

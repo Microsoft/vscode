@@ -982,10 +982,12 @@
 						"allowed": [
 							"FileSystemProvider",
 							"TreeDataProvider",
+							"TestProvider",
 							"CustomEditorProvider",
 							"CustomReadonlyEditorProvider",
 							"TerminalLinkProvider",
-							"AuthenticationProvider"
+							"AuthenticationProvider",
+							"NotebookContentProvider"
 						]
 					}
 				],
@@ -1008,12 +1010,14 @@
 							"edit",
 							"end",
 							"expand",
+							"grant",
 							"hide",
 							"invalidate",
 							"open",
 							"override",
 							"receive",
 							"register",
+							"remove",
 							"rename",
 							"save",
 							"send",

@@ -74,12 +74,12 @@ export class DebugViewPaneContainer extends ViewPaneContainer {
 		}));
 	}
 
-	create(parent: HTMLElement): void {
+	override create(parent: HTMLElement): void {
 		super.create(parent);
 		parent.classList.add('debug-viewlet');
 	}
 
-	focus(): void {
+	override focus(): void {
 		super.focus();
 
 		if (this.startDebugActionViewItem) {
@@ -89,7 +89,7 @@ export class DebugViewPaneContainer extends ViewPaneContainer {
 		}
 	}
 
-	getActionViewItem(action: IAction): IActionViewItem | undefined {
+	override getActionViewItem(action: IAction): IActionViewItem | undefined {
 		if (action.id === DEBUG_START_COMMAND_ID) {
 			this.startDebugActionViewItem = this.instantiationService.createInstance(StartDebugActionViewItem, null, action);
 			return this.startDebugActionViewItem;
@@ -120,7 +120,7 @@ export class DebugViewPaneContainer extends ViewPaneContainer {
 		}
 	}
 
-	addPanes(panes: { pane: ViewPane, size: number, index?: number }[]): void {
+	override addPanes(panes: { pane: ViewPane, size: number, index?: number }[]): void {
 		super.addPanes(panes);
 
 		for (const { pane: pane } of panes) {
@@ -134,7 +134,7 @@ export class DebugViewPaneContainer extends ViewPaneContainer {
 		}
 	}
 
-	removePanes(panes: ViewPane[]): void {
+	override removePanes(panes: ViewPane[]): void {
 		super.removePanes(panes);
 		for (const pane of panes) {
 			dispose(this.paneListeners.get(pane.id));

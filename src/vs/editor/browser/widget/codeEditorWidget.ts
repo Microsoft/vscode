@@ -346,7 +346,7 @@ export class CodeEditorWidget extends Disposable implements editorBrowser.ICodeE
 		return editorCommon.EditorType.ICodeEditor;
 	}
 
-	public dispose(): void {
+	public override dispose(): void {
 		this._codeEditorService.removeCodeEditor(this);
 
 		this._focusTracker.dispose();
@@ -1849,7 +1849,7 @@ export class EditorModeContext extends Disposable {
 	private readonly _hasMultipleDocumentFormattingProvider: IContextKey<boolean>;
 	private readonly _hasMultipleDocumentSelectionFormattingProvider: IContextKey<boolean>;
 	private readonly _hasSignatureHelpProvider: IContextKey<boolean>;
-	private readonly _hasInlineHintsProvider: IContextKey<boolean>;
+	private readonly _hasInlayHintsProvider: IContextKey<boolean>;
 	private readonly _isInWalkThrough: IContextKey<boolean>;
 
 	constructor(
@@ -1872,7 +1872,7 @@ export class EditorModeContext extends Disposable {
 		this._hasReferenceProvider = EditorContextKeys.hasReferenceProvider.bindTo(_contextKeyService);
 		this._hasRenameProvider = EditorContextKeys.hasRenameProvider.bindTo(_contextKeyService);
 		this._hasSignatureHelpProvider = EditorContextKeys.hasSignatureHelpProvider.bindTo(_contextKeyService);
-		this._hasInlineHintsProvider = EditorContextKeys.hasInlineHintsProvider.bindTo(_contextKeyService);
+		this._hasInlayHintsProvider = EditorContextKeys.hasInlayHintsProvider.bindTo(_contextKeyService);
 		this._hasDocumentFormattingProvider = EditorContextKeys.hasDocumentFormattingProvider.bindTo(_contextKeyService);
 		this._hasDocumentSelectionFormattingProvider = EditorContextKeys.hasDocumentSelectionFormattingProvider.bindTo(_contextKeyService);
 		this._hasMultipleDocumentFormattingProvider = EditorContextKeys.hasMultipleDocumentFormattingProvider.bindTo(_contextKeyService);
@@ -1901,12 +1901,12 @@ export class EditorModeContext extends Disposable {
 		this._register(modes.DocumentFormattingEditProviderRegistry.onDidChange(update));
 		this._register(modes.DocumentRangeFormattingEditProviderRegistry.onDidChange(update));
 		this._register(modes.SignatureHelpProviderRegistry.onDidChange(update));
-		this._register(modes.InlineHintsProviderRegistry.onDidChange(update));
+		this._register(modes.InlayHintsProviderRegistry.onDidChange(update));
 
 		update();
 	}
 
-	dispose() {
+	override dispose() {
 		super.dispose();
 	}
 
@@ -1953,7 +1953,7 @@ export class EditorModeContext extends Disposable {
 			this._hasReferenceProvider.set(modes.ReferenceProviderRegistry.has(model));
 			this._hasRenameProvider.set(modes.RenameProviderRegistry.has(model));
 			this._hasSignatureHelpProvider.set(modes.SignatureHelpProviderRegistry.has(model));
-			this._hasInlineHintsProvider.set(modes.InlineHintsProviderRegistry.has(model));
+			this._hasInlayHintsProvider.set(modes.InlayHintsProviderRegistry.has(model));
 			this._hasDocumentFormattingProvider.set(modes.DocumentFormattingEditProviderRegistry.has(model) || modes.DocumentRangeFormattingEditProviderRegistry.has(model));
 			this._hasDocumentSelectionFormattingProvider.set(modes.DocumentRangeFormattingEditProviderRegistry.has(model));
 			this._hasMultipleDocumentFormattingProvider.set(modes.DocumentFormattingEditProviderRegistry.all(model).length + modes.DocumentRangeFormattingEditProviderRegistry.all(model).length > 1);

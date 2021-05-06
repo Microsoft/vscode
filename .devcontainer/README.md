@@ -32,17 +32,17 @@ Next: **[Try it out!](#try-it)**
 
 ## Quick start - GitHub Codespaces
 
-> **IMPORTANT:** The current free user beta for GitHub Codespaces uses a "Basic" sized codespace which does not have enough RAM to run a full build of VS Code and will be considerably slower during codespace start and running VS Code. You'll soon be able to use a "Standard" sized codespace (4-core, 8GB) that will be better suited for this purpose (along with even larger sizes should you need it).
+> **IMPORTANT:** You need to use a "Standard" sized codespace or larger (4-core, 8GB) since VS Code needs 6GB of RAM to compile. This is now the default for GitHub Codespaces, but do not downgrade to "Basic" unless you do not intend to compile.
 
 1. From the [microsoft/vscode GitHub repository](https://github.com/microsoft/vscode), click on the **Code** dropdown, select **Open with Codespaces**, and the **New codespace**
 
     > Note that you will not see these options if you are not in the beta yet.
 
-2. After the codespace is up and running in your browser, press <kbd>Ctrl/Cmd</kbd> + <kbd>Shift</kbd> + <kbd>P</kbd> and select **View: Show Remote Explorer**.
+2. After the codespace is up and running in your browser, press <kbd>F1</kbd> and select **Ports: Focus on Ports View**.
 
 3. You should see port `6080` under **Forwarded Ports**. Select the line and click on the globe icon to open it in a browser tab.
 
-    > If you do not see port `6080`, press <kbd>Ctrl/Cmd</kbd> + <kbd>Shift</kbd> + <kbd>P</kbd>, select **Forward a Port** and enter port `6080`.
+    > If you do not see port `6080`, press <kbd>F1</kbd>, select **Forward a Port** and enter port `6080`.
 
 4. In the new tab, you should see noVNC. Click **Connect** and enter `vscode` as the password.
 
@@ -58,7 +58,7 @@ You will likely see better performance when accessing the codespace you created 
 
 2. Set up [VS Code for use with GitHub Codespaces](https://docs.github.com/github/developing-online-with-codespaces/using-codespaces-in-visual-studio-code)
 
-3. After the VS Code is up and running, press <kbd>Ctrl/Cmd</kbd> + <kbd>Shift</kbd> + <kbd>P</kbd>, choose **Codespaces: Connect to Codespace**, and select the codespace you created.
+3. After the VS Code is up and running, press <kbd>F1</kbd>, choose **Codespaces: Connect to Codespace**, and select the codespace you created.
 
 4. After you've connected to the codespace, use a [VNC Viewer](https://www.realvnc.com/en/connect/download/viewer/) to connect to `localhost:5901` and enter `vscode` as the password.
 

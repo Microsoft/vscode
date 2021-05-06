@@ -22,7 +22,7 @@ export class ShellEnvironmentService implements IShellEnvironmentService {
 	declare readonly _serviceBrand: undefined;
 
 	getShellEnv(): Promise<IProcessEnvironment> {
-		return process.getShellEnv();
+		return process.shellEnv();
 	}
 }
 

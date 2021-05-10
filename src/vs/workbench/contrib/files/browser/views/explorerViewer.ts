@@ -9,7 +9,7 @@ import * as glob from 'vs/base/common/glob';
 import { IListVirtualDelegate, ListDragOverEffect } from 'vs/base/browser/ui/list/list';
 import { IProgressService, ProgressLocation, IProgressStep, IProgress } from 'vs/platform/progress/common/progress';
 import { INotificationService, Severity } from 'vs/platform/notification/common/notification';
-import { IFileService, FileKind, FileOperationError, FileOperationResult, FileSystemProviderCapabilities, ByteSize } from 'vs/platform/files/common/files';
+import { IFileService, FileKind, FileOperationError, FileOperationResult, ByteSize } from 'vs/platform/files/common/files';
 import { IWorkbenchLayoutService } from 'vs/workbench/services/layout/browser/layoutService';
 import { IWorkspaceContextService, WorkbenchState } from 'vs/platform/workspace/common/workspace';
 import { IDisposable, Disposable, dispose, toDisposable, DisposableStore } from 'vs/base/common/lifecycle';
@@ -36,7 +36,7 @@ import { IDragAndDropData, DataTransfers } from 'vs/base/browser/dnd';
 import { Schemas } from 'vs/base/common/network';
 import { NativeDragAndDropData, ExternalElementsDragAndDropData, ElementsDragAndDropData } from 'vs/base/browser/ui/list/listView';
 import { isMacintosh, isWeb } from 'vs/base/common/platform';
-import { IDialogService, IConfirmation, getFileNamesMessage } from 'vs/platform/dialogs/common/dialogs';
+import { IDialogService, IConfirmation, IDialogOptions, getFileNamesMessage } from 'vs/platform/dialogs/common/dialogs';
 import { IHostService } from 'vs/workbench/services/host/browser/host';
 import { IWorkspaceEditingService } from 'vs/workbench/services/workspaces/common/workspaceEditing';
 import { URI } from 'vs/base/common/uri';
@@ -763,17 +763,38 @@ function getFileOverwriteConfirm(name: string): IConfirmation {
 	};
 }
 
-function getMultipleFilesOverwriteConfirm(files: URI[]): IConfirmation {
-	if (files.length > 1) {
-		return {
-			message: localize('confirmManyOverwrites', "The following {0} files and/or folders already exist in the destination folder. Do you want to replace them?", files.length),
-			detail: getFileNamesMessage(files) + '\n' + localize('irreversible', "This action is irreversible!"),
-			primaryButton: localize({ key: 'replaceButtonLabel', comment: ['&& denotes a mnemonic'] }, "&&Replace"),
-			type: 'warning'
-		};
-	}
+function getFileOverwriteOrSkip(file: URI): { severity: Severity, message: string, buttons: string[], options: IDialogOptions } {
+	const confirmDialog = getFileOverwriteConfirm(basename(file));
 
-	return getFileOverwriteConfirm(basename(files[0]));
+	return {
+		severity: Severity.Warning,
+		message: confirmDialog.message,
+		buttons: [
+			confirmDialog.primaryButton!,
+			localize({ key: 'skipButtonLabel', comment: ['&& denotes a mnemonic'] }, "&&Skip"),
+			localize({ key: 'cancelButtonLabel', comment: ['&& denotes a mnemonic'] }, "&&Cancel"),
+		],
+		options: {
+			cancelId: 2,
+			detail: confirmDialog.detail
+		}
+	};
+}
+
+function getMultipleFilesOverwriteOrSkip(files: URI[]): { severity: Severity, message: string, buttons: string[], options: IDialogOptions } {
+	return {
+		severity: Severity.Warning,
+		message: localize('confirmManyOverwrites', "The following {0} files and/or folders already exist in the destination folder?", files.length),
+		buttons: [
+			localize({ key: 'replaceAllButtonLabel', comment: ['&& denotes a mnemonic'] }, "&&Replace all"),
+			localize({ key: 'skipAllButtonLabel', comment: ['&& denotes a mnemonic'] }, "&&Skip all"),
+			localize({ key: 'cancelButtonLabel', comment: ['&& denotes a mnemonic'] }, "&&Cancel"),
+		],
+		options: {
+			cancelId: 2,
+			detail: getFileNamesMessage(files) + '\n' + localize('irreversible', "This action is irreversible!")
+		}
+	};
 }
 
 interface IWebkitDataTransfer {
@@ -1333,44 +1354,23 @@ export class FileDragAndDrop implements ITreeDragAndDrop<ExplorerItem> {
 	private async addResources(target: ExplorerItem, resources: URI[], token: CancellationToken): Promise<void> {
 		if (resources && resources.length > 0) {
 
-			// Resolve target to check for name collisions and ask user
-			const targetStat = await this.fileService.resolve(target.resource);
-
 			if (token.isCancellationRequested) {
 				return;
 			}
 
-			// Check for name collisions
-			const targetNames = new Set<string>();
-			const caseSensitive = this.fileService.hasCapability(target.resource, FileSystemProviderCapabilities.PathCaseSensitive);
-			if (targetStat.children) {
-				targetStat.children.forEach(child => {
-					targetNames.add(caseSensitive ? child.name : child.name.toLowerCase());
-				});
-			}
-
-			const resourcesFiltered = (await Promise.all(resources.map(async resource => {
-				if (targetNames.has(caseSensitive ? basename(resource) : basename(resource).toLowerCase())) {
-					const confirmationResult = await this.dialogService.confirm(getFileOverwriteConfirm(basename(resource)));
-					if (!confirmationResult.confirmed) {
-						return undefined;
-					}
-				}
-				return resource;
-			}))).filter(r => r instanceof URI) as URI[];
-			const resourceFileEdits = resourcesFiltered.map(resource => {
+			const resourceFileEdits = await this.expandResourceEdits(resources.map(resource => {
 				const sourceFileName = basename(resource);
 				const targetFile = joinPath(target.resource, sourceFileName);
-				return new ResourceFileEdit(resource, targetFile, { overwrite: true, copy: true });
-			});
+				return new ResourceFileEdit(resource, targetFile, { copy: true });
+			}));
 
-			await this.explorerService.applyBulkEdit(resourceFileEdits, {
-				undoLabel: resourcesFiltered.length === 1 ? localize('copyFile', "Copy {0}", basename(resourcesFiltered[0])) : localize('copynFile', "Copy {0} resources", resourcesFiltered.length),
-				progressLabel: resourcesFiltered.length === 1 ? localize('copyingFile', "Copying {0}", basename(resourcesFiltered[0])) : localize('copyingnFile', "Copying {0} resources", resourcesFiltered.length)
+			const success = await this.applyInteractiveBulkEdit(resourceFileEdits, {
+				undoLabel: resourceFileEdits.length === 1 ? localize('copyFile', "Copy {0}", basename(resourceFileEdits[0].oldResource!)) : localize('copynFile', "Copy {0} resources", resourceFileEdits.length),
+				progressLabel: resourceFileEdits.length === 1 ? localize('copyingFile', "Copying {0}", basename(resourceFileEdits[0].oldResource!)) : localize('copyingnFile', "Copying {0} resources", resourceFileEdits.length)
 			});
 
 			// if we only add one file, just open it directly
-			if (resourceFileEdits.length === 1) {
+			if (success && resourceFileEdits.length === 1) {
 				const item = this.explorerService.findClosest(resourceFileEdits[0].newResource!);
 				if (item && !item.isDirectory) {
 					this.editorService.openEditor({ resource: item.resource, options: { pinned: true } });
@@ -1475,44 +1475,117 @@ export class FileDragAndDrop implements ITreeDragAndDrop<ExplorerItem> {
 	}
 
 	private async doHandleExplorerDropOnMove(sources: ExplorerItem[], target: ExplorerItem): Promise<void> {
-
 		// Do not allow moving readonly items
-		const resourceFileEdits = sources.filter(source => !source.isReadonly).map(source => new ResourceFileEdit(source.resource, joinPath(target.resource, source.name)));
+		let resourceFileEdits = sources.filter(source => !source.isReadonly).map(source => new ResourceFileEdit(source.resource, joinPath(target.resource, source.name)));
 		const labelSufix = getFileOrFolderLabelSufix(sources);
 		const options = {
 			undoLabel: localize('move', "Move {0}", labelSufix),
 			progressLabel: localize('moving', "Moving {0}", labelSufix)
 		};
 
-		try {
-			await this.explorerService.applyBulkEdit(resourceFileEdits, options);
-		} catch (error) {
-			// Conflict
-			if ((<FileOperationError>error).fileOperationResult === FileOperationResult.FILE_MOVE_CONFLICT) {
+		// Add children of directories recursively
+		resourceFileEdits = await this.expandResourceEdits(resourceFileEdits);
 
-				const overwrites: URI[] = [];
-				for (const edit of resourceFileEdits) {
-					if (edit.newResource && await this.fileService.exists(edit.newResource)) {
-						overwrites.push(edit.newResource);
+		if (await this.applyInteractiveBulkEdit(resourceFileEdits.filter(edit => edit.newResource), options) && this.mergeDirectories()) {
+			// Since all children of conflicting folders are moved individually, we have to delete the remaining empty folders (once everything has been moved)
+			try {
+				// BulkEdit does not allow deleting in order. Executing all folder-deletions at once in arbitrary order would cause an error
+				// since deleting a parent-folder may fail with undeleted cild-folders in there (because the parent is not empty).
+				for (const edit of resourceFileEdits.filter(edit => !edit.newResource)) {
+					const resolved = await this.fileService.resolve(edit.oldResource!);
+					// since the user could decide to skip some files, we only delete empty folders
+					if (!resolved.children || resolved.children.length === 0) {
+						await this.explorerService.applyBulkEdit([edit], options);
 					}
 				}
-
-				const confirm = getMultipleFilesOverwriteConfirm(overwrites);
-				// Move with overwrite if the user confirms
-				const { confirmed } = await this.dialogService.confirm(confirm);
-				if (confirmed) {
-					try {
-						await this.explorerService.applyBulkEdit(resourceFileEdits.map(re => new ResourceFileEdit(re.oldResource, re.newResource, { overwrite: true })), options);
-					} catch (error) {
-						this.notificationService.error(error);
-					}
-				}
-			}
-			// Any other error
-			else {
+			} catch (error) {
 				this.notificationService.error(error);
 			}
 		}
+	}
+
+	/**
+	 * This function applies a given bulk edit request but if there are any conflicts, asks the user whether to replace those files or abort the process.
+	 * @return Whether the bulk edit was performed successfully.
+	 */
+	private async applyInteractiveBulkEdit(edits: ResourceFileEdit[], options: { undoLabel: string, progressLabel: string, confirmBeforeUndo?: boolean, progressLocation?: ProgressLocation.Explorer | ProgressLocation.Window }): Promise<boolean> {
+		try {
+			await this.explorerService.applyBulkEdit(edits, options);
+			return true;
+		} catch (error) {
+			// Conflict
+			if ((<FileOperationError>error).fileOperationResult === FileOperationResult.FILE_MOVE_CONFLICT) {
+				const overwrites: ResourceFileEdit[] = [];
+				for (const edit of edits) {
+					if (edit.newResource && await this.fileService.exists(edit.newResource)) {
+						overwrites.push(edit);
+					}
+				}
+
+				if (overwrites.length > 0) {
+					const dialog = overwrites.length === 1 ? getFileOverwriteOrSkip(overwrites[0].newResource!) : getMultipleFilesOverwriteOrSkip(overwrites.map(e => e.newResource!));
+
+					const { choice } = await this.dialogService.show(dialog.severity, dialog.message, dialog.buttons, dialog.options);
+					if (choice === 1) { // skip (i.e. do not move conflicting files)
+						edits = edits.filter(e => overwrites.indexOf(e) < 0);
+					} else if (choice === 2) { // cancel
+						return false;
+					}
+				}
+
+				try {
+					await this.explorerService.applyBulkEdit(edits.map(re => new ResourceFileEdit(re.oldResource, re.newResource, { ...re.options, overwrite: true })), options);
+					return true;
+				} catch (error) {
+					this.notificationService.error(error);
+				}
+			} else { // Any other error
+				this.notificationService.error(error);
+			}
+		}
+
+		return false;
+	}
+
+	private async expandResourceEdits(edits: ResourceFileEdit[], deleteFolders = false): Promise<ResourceFileEdit[]> {
+		if (!this.mergeDirectories()) {
+			return edits;
+		}
+
+		const expandedEdits: ResourceFileEdit[] = [];
+		for (const edit of edits) {
+			expandedEdits.push(...await this.recursivelyMoveChildrenOfConflictingFolders(edit, deleteFolders));
+		}
+
+		return expandedEdits;
+	}
+
+	private async recursivelyMoveChildrenOfConflictingFolders(edit: ResourceFileEdit, deleteFolders = false): Promise<ResourceFileEdit[]> {
+		if (!edit.oldResource || !edit.newResource || !await this.fileService.exists(edit.newResource)) { // end recursion if there is no conflict
+			return [edit];
+		}
+
+		const resolvedOldResource = await this.fileService.resolve(edit.oldResource);
+		if (!resolvedOldResource.isDirectory || !(await this.fileService.resolve(edit.newResource)).isDirectory) { // end recursion if one of the files is not a directory
+			return [edit];
+		}
+
+		const edits: ResourceFileEdit[] = [];
+		const newEdits = resolvedOldResource.children!.map(child => new ResourceFileEdit(child.resource, URI.joinPath(edit.newResource!, child.name), edit.options));
+
+		for (const newEdit of newEdits) {
+			edits.push(...await this.recursivelyMoveChildrenOfConflictingFolders(newEdit, deleteFolders));
+		}
+
+		if (deleteFolders) {
+			edits.push(new ResourceFileEdit(edit.oldResource, undefined)); // delete the original folder (as it is already present in the target)
+		}
+
+		return edits;
+	}
+
+	private mergeDirectories(): boolean {
+		return this.configurationService.getValue<IFilesConfiguration>().explorer.onFolderConflict === 'merge';
 	}
 
 	private static getStatsFromDragAndDropData(data: ElementsDragAndDropData<ExplorerItem, ExplorerItem[]>, dragStartEvent?: DragEvent): ExplorerItem[] {

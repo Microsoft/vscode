@@ -23,6 +23,9 @@
     "onCommand:markdown.showPreview",
     "onCommand:markdown.showPreviewToSide",
     "onCommand:markdown.showLockedPreviewToSide",
+    "onCommand:markdown.showStaticPreview",
+    "onCommand:markdown.showTextEditor",
+    "onCommand:markdown.toggleStaticPreview",
     "onCommand:markdown.showSource",
     "onCommand:markdown.showPreviewSecuritySelector",
     "onCommand:markdown.api.render",
@@ -69,6 +72,24 @@
       {
         "command": "markdown.showLockedPreviewToSide",
         "title": "%markdown.showLockedPreviewToSide.title%",
+        "category": "Markdown",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "markdown.showStaticPreview",
+        "title": "%markdown.showStaticPreview.title%",
+        "category": "Markdown",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "markdown.showTextEditor",
+        "title": "%markdown.showTextEditor.title%",
+        "category": "Markdown",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "markdown.toggleStaticPreview",
+        "title": "%markdown.toggleStaticPreview.title%",
         "category": "Markdown",
         "icon": "$(open-preview)"
       },
@@ -150,6 +171,21 @@
         },
         {
           "command": "markdown.showLockedPreviewToSide",
+          "when": "editorLangId == markdown && !notebookEditorFocused",
+          "group": "navigation"
+        },
+        {
+          "command": "markdown.showStaticPreview",
+          "when": "activeEditor != vscode.markdown.preview.editor && editorLangId == markdown && !notebookEditorFocused",
+          "group": "navigation"
+        },
+        {
+          "command": "markdown.showTextEditor",
+          "when": "activeEditor != workbench.editors.files.textFileEditor && !notebookEditorFocused",
+          "group": "navigation"
+        },
+        {
+          "command": "markdown.toggleStaticPreview",
           "when": "editorLangId == markdown && !notebookEditorFocused",
           "group": "navigation"
         },

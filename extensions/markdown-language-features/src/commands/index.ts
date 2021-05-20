@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 export { OpenDocumentLinkCommand } from './openDocumentLink';
-export { ShowPreviewCommand, ShowPreviewToSideCommand, ShowLockedPreviewToSideCommand } from './showPreview';
+export { ShowPreviewCommand, ShowPreviewToSideCommand, ShowLockedPreviewToSideCommand, ShowStaticPreviewCommand, ShowTextEditorCommand, ToggleStaticPreviewCommand } from './showPreview';
 export { ShowSourceCommand } from './showSource';
 export { RefreshPreviewCommand } from './refreshPreview';
 export { ShowPreviewSecuritySelectorCommand } from './showPreviewSecuritySelector';

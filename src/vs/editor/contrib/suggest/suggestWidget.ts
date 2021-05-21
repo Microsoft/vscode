@@ -806,7 +806,14 @@ export class SuggestWidget implements IDisposable {
 				height = maxHeight;
 			}
 
-			if (height > maxHeightBelow) {
+			let above = height > maxHeightBelow;
+			const position = this._contentWidget?.getPosition()?.position;
+			if (position) {
+				const topForLineNumber = this.editor.getTopForLineNumber(position.lineNumber) - this.editor.getScrollTop();
+				above = (bodyBox.height - info.verticalPadding) / 2 < topForLineNumber;
+			}
+
+			if (above) {
 				this._contentWidget.setPreference(ContentWidgetPositionPreference.ABOVE);
 				this.element.enableSashes(true, true, false, false);
 				maxHeight = maxHeightAbove;
@@ -847,7 +854,7 @@ export class SuggestWidget implements IDisposable {
 
 	private _positionDetails(): void {
 		if (this._isDetailsVisible()) {
-			this._details.placeAtAnchor(this.element.domNode);
+			this._details.placeAtAnchor(this.element.domNode, this._contentWidget.getPreference());
 		}
 	}
 
@@ -954,6 +961,10 @@ export class SuggestContentWidget implements IContentWidget {
 		if (!this._preferenceLocked) {
 			this._preference = preference;
 		}
+	}
+
+	getPreference(): ContentWidgetPositionPreference | undefined {
+		return this._preference;
 	}
 
 	lockPreference() {

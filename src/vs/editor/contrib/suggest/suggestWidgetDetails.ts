@@ -8,7 +8,7 @@ import { DisposableStore } from 'vs/base/common/lifecycle';
 import * as dom from 'vs/base/browser/dom';
 import { DomScrollableElement } from 'vs/base/browser/ui/scrollbar/scrollableElement';
 import { EditorOption } from 'vs/editor/common/config/editorOptions';
-import { ICodeEditor, IOverlayWidget } from 'vs/editor/browser/editorBrowser';
+import { ContentWidgetPositionPreference, ICodeEditor, IOverlayWidget } from 'vs/editor/browser/editorBrowser';
 import { CompletionItem } from './suggest';
 import { MarkdownRenderer } from 'vs/editor/browser/core/markdownRenderer';
 import { MarkdownString } from 'vs/base/common/htmlContent';
@@ -261,6 +261,7 @@ export class SuggestDetailsOverlay implements IOverlayWidget {
 
 	private _added: boolean = false;
 	private _anchorBox?: dom.IDomNodePagePosition;
+	private _preference?: ContentWidgetPositionPreference;
 	private _userSize?: dom.Dimension;
 	private _topLeft?: TopLeftPosition;
 
@@ -314,7 +315,7 @@ export class SuggestDetailsOverlay implements IOverlayWidget {
 
 		this._disposables.add(this.widget.onDidChangeContents(() => {
 			if (this._anchorBox) {
-				this._placeAtAnchor(this._anchorBox, this._userSize ?? this.widget.size);
+				this._placeAtAnchor(this._anchorBox, this._userSize ?? this.widget.size, this._preference);
 			}
 		}));
 	}
@@ -360,13 +361,14 @@ export class SuggestDetailsOverlay implements IOverlayWidget {
 		}
 	}
 
-	placeAtAnchor(anchor: HTMLElement) {
+	placeAtAnchor(anchor: HTMLElement, preference: ContentWidgetPositionPreference | undefined) {
 		const anchorBox = dom.getDomNodePagePosition(anchor);
 		this._anchorBox = anchorBox;
-		this._placeAtAnchor(this._anchorBox, this._userSize ?? this.widget.size);
+		this._preference = preference;
+		this._placeAtAnchor(this._anchorBox, this._userSize ?? this.widget.size, this._preference);
 	}
 
-	_placeAtAnchor(anchorBox: dom.IDomNodePagePosition, size: dom.Dimension) {
+	_placeAtAnchor(anchorBox: dom.IDomNodePagePosition, size: dom.Dimension, preference: ContentWidgetPositionPreference | undefined) {
 		const bodyBox = dom.getClientArea(document.body);
 
 		const info = this.widget.getLayoutInfo();
@@ -419,7 +421,7 @@ export class SuggestDetailsOverlay implements IOverlayWidget {
 			height = maxHeight;
 		}
 		let maxSize: dom.Dimension;
-		if (height <= maxSizeTop.height) {
+		if (preference === ContentWidgetPositionPreference.BELOW || preference === undefined && height <= maxSizeTop.height) {
 			alignAtTop = true;
 			maxSize = maxSizeTop;
 		} else {

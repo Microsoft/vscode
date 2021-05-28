@@ -34,15 +34,19 @@ export function setup() {
 		// 	await app.workbench.notebook.stopEditingCell();
 		// });
 
-		// it('inserts/edits markdown cell', async function () {
-		// 	const app = this.app as Application;
-		// 	await app.workbench.notebook.openNotebook();
-		// 	await app.workbench.notebook.focusNextCell();
-		// 	await app.workbench.notebook.insertNotebookCell('markdown');
-		// 	await app.workbench.notebook.waitForTypeInEditor('## hello2! ');
-		// 	await app.workbench.notebook.stopEditingCell();
-		// 	await app.workbench.notebook.waitForMarkdownContents('h2', 'hello2!');
-		// });
+		it('inserts/edits markdown cell', async function () {
+			const app = this.app as Application;
+			await app.workbench.notebook.openNotebook();
+			await app.workbench.notebook.focusNextCell();
+			await app.workbench.notebook.insertNotebookCell('markdown');
+			await app.workbench.notebook.editCell();
+			await app.workbench.notebook.waitForTypeInEditor('## hello2! ');
+			await app.workbench.notebook.stopEditingCell();
+			await app.workbench.notebook.waitForMarkdownContents({
+				shadowSelector: '.preview + .preview',
+				elementSelector: '#preview',
+			}, 'hello2!');
+		});
 
 		// it('moves focus as it inserts/deletes a cell', async function () {
 		// 	const app = this.app as Application;

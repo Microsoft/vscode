@@ -4,6 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Code } from './code';
+import { ElementSelector } from './driver';
 import { QuickAccess } from './quickaccess';
 
 const activeRowSelector = `.notebook-editor .monaco-list-row.focused`;
@@ -60,9 +61,8 @@ export class Notebook {
 		return this.code.waitForTextContent(selector, undefined, c => accept(c.replace(/\u00a0/g, ' ')));
 	}
 
-	async waitForMarkdownContents(markdownSelector: string, text: string): Promise<void> {
-		const selector = `${activeRowSelector} .markdown ${markdownSelector}`;
-		await this.code.waitForTextContent(selector, text);
+	waitForMarkdownContents(markdownSelector: ElementSelector, text: string): Promise<string> {
+		return this.code.waitForTextContentInWebview('.webview.ready', markdownSelector, text);
 	}
 
 	async insertNotebookCell(kind: 'markdown' | 'code'): Promise<void> {

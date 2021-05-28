@@ -9,7 +9,7 @@ import * as os from 'os';
 import * as fs from 'fs';
 import * as mkdirp from 'mkdirp';
 import { tmpName } from 'tmp';
-import { IDriver, connect as connectElectronDriver, IDisposable, IElement, Thenable } from './driver';
+import { IDriver, connect as connectElectronDriver, IDisposable, IElement, Thenable, ElementSelector } from './driver';
 import { connect as connectPlaywrightDriver, launch } from './playwrightDriver';
 import { Logger } from './logger';
 import { ncp } from 'ncp';
@@ -303,6 +303,21 @@ export class Code {
 			() => this.driver.getElements(windowId, selector).then(els => els.length > 0 ? Promise.resolve(els[0].textContent) : Promise.reject(new Error('Element not found for textContent'))),
 			s => accept!(typeof s === 'string' ? s : ''),
 			`get text content '${selector}'`,
+			retryCount
+		);
+	}
+
+	async waitForTextContentInWebview(iframeSelector: string, elementSelector: ElementSelector, textContent?: string, accept?: (result: string) => boolean, retryCount?: number): Promise<string> {
+		const windowId = await this.getActiveWindowId();
+		accept = accept || (result => textContent !== undefined ? textContent === result : !!result);
+
+		return await poll(
+			async () => {
+				const element = await this.driver.getElementInWebview(windowId, iframeSelector, elementSelector);
+				return element.textContent;
+			},
+			s => accept!(typeof s === 'string' ? s : ''),
+			`get text content '${elementSelector}'`,
 			retryCount
 		);
 	}

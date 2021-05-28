@@ -78,7 +78,8 @@ function buildDriver(browser: playwright.Browser, page: playwright.Page): IDrive
 		getElementXY: (windowId, selector, xoffset?, yoffset?) => page.evaluate(`window.driver.getElementXY('${selector}', ${xoffset}, ${yoffset})`),
 		typeInEditor: (windowId, selector, text) => page.evaluate(`window.driver.typeInEditor('${selector}', '${text}')`),
 		getTerminalBuffer: (windowId, selector) => page.evaluate(`window.driver.getTerminalBuffer('${selector}')`),
-		writeInTerminal: (windowId, selector, text) => page.evaluate(`window.driver.writeInTerminal('${selector}', '${text}')`)
+		writeInTerminal: (windowId, selector, text) => page.evaluate(`window.driver.writeInTerminal('${selector}', '${text}')`),
+		getElementInWebview: async (windowId, iframeSelector, elementSelector) => page.evaluate(`window.driver.getElementInWebview('${iframeSelector}', JSON.parse(decodeURIComponent("${encodeURIComponent(JSON.stringify(elementSelector))}"))))`),
 	};
 	return driver;
 }

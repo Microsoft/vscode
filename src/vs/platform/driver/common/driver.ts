@@ -18,6 +18,8 @@ export interface IElement {
 	left: number;
 }
 
+export type ElementSelector = string | { shadowSelector: string, elementSelector: string };
+
 export interface IDriver {
 	readonly _serviceBrand: undefined;
 
@@ -36,6 +38,7 @@ export interface IDriver {
 	typeInEditor(windowId: number, selector: string, text: string): Promise<void>;
 	getTerminalBuffer(windowId: number, selector: string): Promise<string[]>;
 	writeInTerminal(windowId: number, selector: string, text: string): Promise<void>;
+	getElementInWebview(windowId: number, iframeSelector: string, elementSelector: ElementSelector): Promise<IElement>;
 }
 //*END
 
@@ -53,6 +56,7 @@ export interface IWindowDriver {
 	typeInEditor(selector: string, text: string): Promise<void>;
 	getTerminalBuffer(selector: string): Promise<string[]>;
 	writeInTerminal(selector: string, text: string): Promise<void>;
+	getElementInWebview(iframeSelector: string, elementSelector: ElementSelector): Promise<IElement>;
 }
 
 export interface IDriverOptions {

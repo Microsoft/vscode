@@ -835,6 +835,27 @@ export async function createWebviewManager(host) {
 			assertIsDefined(target.contentDocument).execCommand(data);
 		});
 
+		// Used by smoke tests
+		host.onMessage('$$getContents$$', (_e, data) => {
+			const target = getActiveFrame();
+
+			let innerText;
+
+			if (data.elementSelector.shadowSelector) {
+				const shadowRoot = target?.contentDocument.querySelector(data.elementSelector.shadowSelector).shadowRoot;
+				const element = shadowRoot.querySelector(data.elementSelector.elementSelector);
+				innerText = element.innerText;
+			} else {
+				const element = target?.contentDocument.querySelector(data.elementSelector);
+				innerText = element.innerText;
+			}
+
+			window.parent.postMessage({
+				channel: '$$getContents$$',
+				textContent: innerText,
+			}, '*');
+		});
+
 		trackFocus({
 			onFocus: () => host.postMessage('did-focus'),
 			onBlur: () => host.postMessage('did-blur')

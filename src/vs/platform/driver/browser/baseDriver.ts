@@ -3,8 +3,9 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { getTopLeftOffset, getClientArea } from 'vs/base/browser/dom';
+import { getTopLeftOffset, getClientArea, addDisposableListener } from 'vs/base/browser/dom';
 import { coalesce } from 'vs/base/common/arrays';
+import { timeout } from 'vs/base/common/async';
 import { IElement, IWindowDriver } from 'vs/platform/driver/common/driver';
 
 function serializeElement(element: Element, recursive: boolean): IElement {
@@ -159,6 +160,42 @@ export abstract class BaseWindowDriver implements IWindowDriver {
 		}
 
 		xterm._core._coreService.triggerDataEvent(text);
+	}
+
+	async getElementInWebview(iframeSelector: string, elementSelector: string): Promise<IElement> {
+		const element = document.querySelector<HTMLIFrameElement>(iframeSelector);
+		if (!element) {
+			throw new Error(`Element not found: ${iframeSelector}`);
+		}
+
+		let resolve: (x: IElement) => void;
+		const contentPromise = new Promise<IElement>(r => resolve = r);
+
+		const listener = addDisposableListener(window, 'message', e => {
+			if (e.data.channel === '$$getContents$$') {
+				resolve(e.data);
+				listener.dispose();
+			}
+		});
+
+		element.contentWindow!.postMessage({
+			channel: '$$getContents$$',
+			args: {
+				elementSelector
+			}
+		}, '*');
+
+		const result = await Promise.race([
+			timeout(5000),
+			contentPromise
+		]);
+		listener.dispose();
+
+		if (result) {
+			return result;
+		}
+
+		throw new Error('Could not get webview contents');
 	}
 
 	protected async _getElementXY(selector: string, offset?: { x: number, y: number }): Promise<{ x: number; y: number; }> {

@@ -7,7 +7,7 @@ import { Client } from 'vs/base/parts/ipc/common/ipc.net';
 import { connect as connectNet } from 'vs/base/parts/ipc/node/ipc.net';
 import { IChannel, IServerChannel } from 'vs/base/parts/ipc/common/ipc';
 import { Event } from 'vs/base/common/event';
-import { IDriver, IElement, IWindowDriverRegistry } from 'vs/platform/driver/common/driver';
+import { ElementSelector, IDriver, IElement, IWindowDriverRegistry } from 'vs/platform/driver/common/driver';
 
 export class DriverChannel implements IServerChannel {
 
@@ -34,6 +34,7 @@ export class DriverChannel implements IServerChannel {
 			case 'typeInEditor': return this.driver.typeInEditor(arg[0], arg[1], arg[2]);
 			case 'getTerminalBuffer': return this.driver.getTerminalBuffer(arg[0], arg[1]);
 			case 'writeInTerminal': return this.driver.writeInTerminal(arg[0], arg[1], arg[2]);
+			case 'getElementInWebview': return this.driver.getElementInWebview(arg[0], arg[1], arg[2]);
 		}
 
 		throw new Error(`Call not found: ${command}`);
@@ -104,6 +105,9 @@ export class DriverChannelClient implements IDriver {
 
 	writeInTerminal(windowId: number, selector: string, text: string): Promise<void> {
 		return this.channel.call('writeInTerminal', [windowId, selector, text]);
+	}
+	getElementInWebview(windowId: number, selector: string, elementSelector: ElementSelector): Promise<IElement> {
+		return this.channel.call('getElementInWebview', [windowId, selector, elementSelector]);
 	}
 }
 

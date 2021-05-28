@@ -295,4 +295,46 @@ suite('Arrays', () => {
 		remove();
 		assert.strictEqual(array.length, 0);
 	});
+
+	test('splice', function () {
+		// negative start index, absolute value greater than the length
+		let array = [1, 2, 3, 4, 5];
+		arrays.splice(array, -6, 3, [6, 7]);
+		assert.strictEqual(array.length, 4);
+		assert.strictEqual(array[0], 6);
+		assert.strictEqual(array[1], 7);
+		assert.strictEqual(array[2], 4);
+		assert.strictEqual(array[3], 5);
+
+		// negative start index, absolute value less than the length
+		array = [1, 2, 3, 4, 5];
+		arrays.splice(array, -3, 3, [6, 7]);
+		assert.strictEqual(array.length, 4);
+		assert.strictEqual(array[0], 1);
+		assert.strictEqual(array[1], 2);
+		assert.strictEqual(array[2], 6);
+		assert.strictEqual(array[3], 7);
+
+		// Start index less than the length
+		array = [1, 2, 3, 4, 5];
+		arrays.splice(array, 3, 3, [6, 7]);
+		assert.strictEqual(array.length, 5);
+		assert.strictEqual(array[0], 1);
+		assert.strictEqual(array[1], 2);
+		assert.strictEqual(array[2], 3);
+		assert.strictEqual(array[3], 6);
+		assert.strictEqual(array[4], 7);
+
+		// Start index greater than the length
+		array = [1, 2, 3, 4, 5];
+		arrays.splice(array, 6, 3, [6, 7]);
+		assert.strictEqual(array.length, 7);
+		assert.strictEqual(array[0], 1);
+		assert.strictEqual(array[1], 2);
+		assert.strictEqual(array[2], 3);
+		assert.strictEqual(array[3], 4);
+		assert.strictEqual(array[4], 5);
+		assert.strictEqual(array[5], 6);
+		assert.strictEqual(array[6], 7);
+	});
 });

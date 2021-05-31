@@ -20,7 +20,7 @@ import { IModeService } from 'vs/editor/common/services/modeService';
 import { IFileDialogService, IPickAndOpenOptions } from 'vs/platform/dialogs/common/dialogs';
 import { URI } from 'vs/base/common/uri';
 import { Schemas } from 'vs/base/common/network';
-import { IOpenWindowOptions, IWindowOpenable } from 'vs/platform/windows/common/windows';
+import { IFileToOpen, IOpenWindowOptions, IWindowOpenable } from 'vs/platform/windows/common/windows';
 import { hasWorkspaceFileExtension } from 'vs/platform/workspaces/common/workspaces';
 import { IPathService } from 'vs/workbench/services/path/common/pathService';
 import { ILocalizedString } from 'vs/platform/actions/common/actions';
@@ -132,6 +132,11 @@ interface IOpenFolderAPICommandOptions {
 	forceReuseWindow?: boolean;
 	noRecentEntry?: boolean;
 	forceLocalWindow?: boolean;
+	filesToOpen?: {
+		uri: URI;
+		line?: number;
+		column?: number;
+	}[]
 }
 
 CommandsRegistry.registerCommand({
@@ -157,14 +162,31 @@ CommandsRegistry.registerCommand({
 
 		uri = URI.revive(uri);
 
+		const urisToOpen: IWindowOpenable[] = [
+			(hasWorkspaceFileExtension(uri) || uri.scheme === Schemas.untitled) ? { workspaceUri: uri } : { folderUri: uri }
+		];
+
+		let gotoLineMode;
+		if (arg?.filesToOpen && arg.filesToOpen.length > 0) {
+			urisToOpen.push(...arg.filesToOpen.map<IFileToOpen>(file => {
+				let uri = URI.revive(file.uri);
+				if (typeof file.line === 'number' || typeof file.column === 'number') {
+					gotoLineMode = true;
+					uri = uri.with({ path: `${uri.path}:${file.line || 0}:${file.column || 0}` });
+				}
+				return { fileUri: uri };
+			}));
+		}
+
 		const options: IOpenWindowOptions = {
 			forceNewWindow: arg?.forceNewWindow,
 			forceReuseWindow: arg?.forceReuseWindow,
 			noRecentEntry: arg?.noRecentEntry,
-			remoteAuthority: arg?.forceLocalWindow ? null : undefined
+			remoteAuthority: arg?.forceLocalWindow ? null : undefined,
+			gotoLineMode: gotoLineMode
 		};
-		const uriToOpen: IWindowOpenable = (hasWorkspaceFileExtension(uri) || uri.scheme === Schemas.untitled) ? { workspaceUri: uri } : { folderUri: uri };
-		return commandService.executeCommand('_files.windowOpen', [uriToOpen], options);
+
+		return commandService.executeCommand('_files.windowOpen', urisToOpen, options);
 	},
 	description: {
 		description: 'Open a folder or workspace in the current window or new window depending on the newWindow argument. Note that opening in the same window will shutdown the current extension host process and start a new one on the given folder/workspace unless the newWindow parameter is set to true.',

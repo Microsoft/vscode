@@ -22,6 +22,7 @@ import { disposableTimeout, Delayer } from 'vs/base/common/async';
 import { isFirefox } from 'vs/base/browser/browser';
 import { IMouseWheelEvent } from 'vs/base/browser/mouseEvent';
 import { $, animate, getContentHeight, getContentWidth, getTopLeftOffset, scheduleAtNextAnimationFrame } from 'vs/base/browser/dom';
+import { ScrollableElementChangeOptions } from 'vs/base/browser/ui/scrollbar/scrollableElementOptions';
 
 interface IItem<T> {
 	readonly id: string;
@@ -52,6 +53,7 @@ export interface IListViewOptionsUpdate {
 	readonly additionalScrollHeight?: number;
 	readonly smoothScrolling?: boolean;
 	readonly horizontalScrolling?: boolean;
+	readonly scrollableElementChangeOptions?: ScrollableElementChangeOptions;
 }
 
 export interface IListViewOptions<T> extends IListViewOptionsUpdate {
@@ -371,6 +373,10 @@ export class ListView<T> implements ISpliceable<T>, IDisposable {
 
 		if (options.horizontalScrolling !== undefined) {
 			this.horizontalScrolling = options.horizontalScrolling;
+		}
+
+		if (options.scrollableElementChangeOptions !== undefined) {
+			this.scrollableElement.updateOptions(options.scrollableElementChangeOptions);
 		}
 	}
 

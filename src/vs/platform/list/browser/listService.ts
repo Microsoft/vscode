@@ -129,6 +129,8 @@ const automaticKeyboardNavigationSettingKey = 'workbench.list.automaticKeyboardN
 const treeIndentKey = 'workbench.tree.indent';
 const treeRenderIndentGuidesKey = 'workbench.tree.renderIndentGuides';
 const listSmoothScrolling = 'workbench.list.smoothScrolling';
+const mouseWheelScrollSensitivity = 'workbench.list.mouseWheelScrollSensitivity';
+const fastScrollSensitivity = 'workbench.list.fastScrollSensitivity';
 const treeExpandMode = 'workbench.tree.expandMode';
 
 function useAltAsMultipleSelectionModifier(configurationService: IConfigurationService): boolean {
@@ -289,6 +291,17 @@ export class WorkbenchList<T> extends List<T> {
 				const smoothScrolling = Boolean(configurationService.getValue<boolean>(listSmoothScrolling));
 				options = { ...options, smoothScrolling };
 			}
+			if (e.affectsConfiguration(mouseWheelScrollSensitivity) || e.affectsConfiguration(fastScrollSensitivity)) {
+				const mwheelScrollSens = configurationService.getValue<number>(mouseWheelScrollSensitivity);
+				const fastScrollSens = configurationService.getValue<number>(fastScrollSensitivity);
+				options = {
+					...options,
+					scrollableElementChangeOptions: {
+						mouseWheelScrollSensitivity: mwheelScrollSens,
+						fastScrollSensitivity: fastScrollSens
+					}
+				};
+			}
 			if (Object.keys(options).length > 0) {
 				this.updateOptions(options);
 			}
@@ -400,6 +413,17 @@ export class WorkbenchPagedList<T> extends PagedList<T> {
 			if (e.affectsConfiguration(listSmoothScrolling)) {
 				const smoothScrolling = Boolean(configurationService.getValue<boolean>(listSmoothScrolling));
 				options = { ...options, smoothScrolling };
+			}
+			if (e.affectsConfiguration(mouseWheelScrollSensitivity) || e.affectsConfiguration(fastScrollSensitivity)) {
+				const mwheelScrollSens = configurationService.getValue<number>(mouseWheelScrollSensitivity);
+				const fastScrollSens = configurationService.getValue<number>(fastScrollSensitivity);
+				options = {
+					...options,
+					scrollableElementChangeOptions: {
+						mouseWheelScrollSensitivity: mwheelScrollSens,
+						fastScrollSensitivity: fastScrollSens
+					}
+				};
 			}
 			if (Object.keys(options).length > 0) {
 				this.updateOptions(options);
@@ -1136,6 +1160,17 @@ class WorkbenchTreeInternals<TInput, T, TFilterData> {
 				if (e.affectsConfiguration(treeExpandMode) && options.expandOnlyOnTwistieClick === undefined) {
 					newOptions = { ...newOptions, expandOnlyOnTwistieClick: configurationService.getValue<'singleClick' | 'doubleClick'>(treeExpandMode) === 'doubleClick' };
 				}
+				if (e.affectsConfiguration(mouseWheelScrollSensitivity) || e.affectsConfiguration(fastScrollSensitivity)) {
+					const mwheelScrollSens = configurationService.getValue<number>(mouseWheelScrollSensitivity);
+					const fastScrollSens = configurationService.getValue<number>(fastScrollSensitivity);
+					newOptions = {
+						...newOptions,
+						scrollableElementChangeOptions: {
+							mouseWheelScrollSensitivity: mwheelScrollSens,
+							fastScrollSensitivity: fastScrollSens
+						}
+					};
+				}
 				if (Object.keys(newOptions).length > 0) {
 					tree.updateOptions(newOptions);
 				}
@@ -1223,6 +1258,16 @@ configurationRegistry.registerConfiguration({
 			type: 'boolean',
 			default: false,
 			description: localize('list smoothScrolling setting', "Controls whether lists and trees have smooth scrolling."),
+		},
+		[mouseWheelScrollSensitivity]: {
+			type: 'number',
+			default: 1,
+			description: localize('Mouse Wheel Scroll Sensitivity', "A multiplier to be used on the deltaX and deltaY of mouse wheel scroll events.")
+		},
+		[fastScrollSensitivity]: {
+			type: 'number',
+			default: 5,
+			description: localize('Fast Scroll Sensitivity', "Scrolling speed multiplier when pressing Alt.")
 		},
 		[keyboardNavigationSettingKey]: {
 			type: 'string',

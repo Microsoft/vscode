@@ -298,28 +298,26 @@ describe(`VSCode Smoke Tests (${opts.web ? 'Web' : 'Electron'})`, () => {
 		});
 	}
 
-	describe(`VSCode Smoke Tests (${opts.web ? 'Web' : 'Electron'})`, () => {
-		before(async function () {
-			const app = new Application(this.defaultOptions);
-			await app!.start(opts.web ? false : undefined);
-			this.app = app;
-		});
-
-		after(async function () {
-			await this.app.stop();
-		});
-
-		if (!opts.web) { setupDataLossTests(); }
-		if (!opts.web) { setupDataPreferencesTests(); }
-		setupDataSearchTests();
-		setupDataNotebookTests();
-		setupDataLanguagesTests();
-		setupDataEditorTests();
-		setupDataStatusbarTests(!!opts.web);
-		setupDataExtensionTests();
-		if (!opts.web) { setupDataMultirootTests(); }
-		if (!opts.web) { setupDataLocalizationTests(); }
-		if (!opts.web) { setupLaunchTests(); }
+	before(async function () {
+		const app = new Application(this.defaultOptions);
+		await app!.start(opts.web ? false : undefined);
+		this.app = app;
 	});
+
+	after(async function () {
+		await this.app.stop();
+	});
+
+	if (!opts.web) { setupDataLossTests(); }
+	if (!opts.web) { setupDataPreferencesTests(); }
+	setupDataSearchTests();
+	setupDataNotebookTests();
+	setupDataLanguagesTests();
+	setupDataEditorTests();
+	setupDataStatusbarTests(!!opts.web);
+	setupDataExtensionTests();
+	if (!opts.web) { setupDataMultirootTests(); }
+	if (!opts.web) { setupDataLocalizationTests(); }
+	if (!opts.web) { setupLaunchTests(); }
 });
 

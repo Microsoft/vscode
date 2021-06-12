@@ -48,6 +48,11 @@ else
 	fi
 fi
 
+# if the user has GTK_USE_PORTAL defined in their evironment, respect it
+if [ -z "${GTK_USE_PORTAL}" ]; then
+	export GTK_USE_PORTAL=1
+fi
+
 ELECTRON="$VSCODE_PATH/@@NAME@@"
 CLI="$VSCODE_PATH/resources/app/out/cli.js"
 ELECTRON_RUN_AS_NODE=1 "$ELECTRON" "$CLI" "$@"

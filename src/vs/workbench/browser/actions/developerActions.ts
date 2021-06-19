@@ -19,7 +19,7 @@ import { StandardKeyboardEvent } from 'vs/base/browser/keyboardEvent';
 import { timeout } from 'vs/base/common/async';
 import { ILayoutService } from 'vs/platform/layout/browser/layoutService';
 import { Registry } from 'vs/platform/registry/common/platform';
-import { registerAction2, Action2 } from 'vs/platform/actions/common/actions';
+import { registerAction2, Action2, MenuRegistry } from 'vs/platform/actions/common/actions';
 import { IStorageService } from 'vs/platform/storage/common/storage';
 import { clamp } from 'vs/base/common/numbers';
 import { KeyCode } from 'vs/base/common/keyCodes';
@@ -218,8 +218,28 @@ class ToggleScreencastModeAction extends Action2 {
 				}
 
 				const keybinding = keybindingService.resolveKeyboardEvent(event);
-				const label = keybinding.getLabel();
-				const key = $('span.key', {}, label || '');
+				const command = shortcut?.commandId ? MenuRegistry.getCommand(shortcut.commandId) : null;
+				let titleLabel = '';
+				let categoryLabel = '';
+				let keyLabel = keybinding.getLabel();
+				if (command && configurationService.getValue<boolean>('screencastMode.showShortcutCommandTitles')) {
+					if (command.category) {
+						categoryLabel = typeof command.category === 'string' ? command.category : command.category.value;
+						categoryLabel = `${categoryLabel}: `;
+					}
+					titleLabel = typeof command.title === 'string' ? command.title : command.title.value;
+					if (shortcut?.commandId) {
+						const fullKeyLabel = keybindingService.lookupKeybinding(shortcut.commandId);
+						if (fullKeyLabel) {
+							keyLabel = fullKeyLabel.getLabel();
+						}
+					}
+				}
+				if (titleLabel) {
+					const title = $('span.title', {}, `${categoryLabel}${titleLabel} `);
+					append(keyboardMarker, title);
+				}
+				const key = $('span.key', {}, keyLabel || '');
 				length++;
 				append(keyboardMarker, key);
 			}
@@ -322,6 +342,11 @@ configurationRegistry.registerConfiguration({
 			type: 'boolean',
 			description: localize('screencastMode.onlyKeyboardShortcuts', "Only show keyboard shortcuts in screencast mode."),
 			default: false
+		},
+		'screencastMode.showShortcutCommandTitles': {
+			type: 'boolean',
+			description: localize('screencastMode.showShortcutCommandTitles', "Show command titles for shortcuts in screencast mode."),
+			default: true
 		},
 		'screencastMode.keyboardOverlayTimeout': {
 			type: 'number',

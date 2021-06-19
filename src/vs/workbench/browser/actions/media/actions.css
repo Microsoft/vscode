@@ -46,3 +46,7 @@
 	border-radius: 5px;
 	background-color: rgba(255, 255, 255, 0.05);
 }
+
+.monaco-workbench .screencast-keyboard > .title {
+	font-weight: 600;
+}

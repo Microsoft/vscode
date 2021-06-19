@@ -224,7 +224,7 @@ class ToggleScreencastModeAction extends Action2 {
 				let categoryLabel = '';
 				let keyLabel = keybinding.getLabel();
 				if (command && configurationService.getValue<boolean>('screencastMode.showShortcutCommandTitles')) {
-					if (command.category) {
+					if (command.category && configurationService.getValue<boolean>('screencastMode.showShortcutCommandTitlesWithCategory')) {
 						categoryLabel = typeof command.category === 'string' ? command.category : command.category.value;
 						categoryLabel = `${categoryLabel}: `;
 					}
@@ -348,6 +348,11 @@ configurationRegistry.registerConfiguration({
 			type: 'boolean',
 			description: localize('screencastMode.showShortcutCommandTitles', "Show command titles for shortcuts in screencast mode."),
 			default: true
+		},
+		'screencastMode.showShortcutCommandTitlesWithCategory': {
+			type: 'boolean',
+			description: localize('screencastMode.showShortcutCommandTitlesWithCategory', "When command titles are shown in screencast mode, include the command category.."),
+			default: false
 		},
 		'screencastMode.keyboardOverlayTimeout': {
 			type: 'number',

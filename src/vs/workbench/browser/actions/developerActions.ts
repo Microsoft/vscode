@@ -113,6 +113,7 @@ class ToggleScreencastModeAction extends Action2 {
 		const layoutService = accessor.get(ILayoutService);
 		const configurationService = accessor.get(IConfigurationService);
 		const keybindingService = accessor.get(IKeybindingService);
+		const contextKeyService = accessor.get(IContextKeyService);
 
 		const disposables = new DisposableStore();
 
@@ -229,7 +230,7 @@ class ToggleScreencastModeAction extends Action2 {
 					}
 					titleLabel = typeof command.title === 'string' ? command.title : command.title.value;
 					if (shortcut?.commandId) {
-						const fullKeyLabel = keybindingService.lookupKeybinding(shortcut.commandId);
+						const fullKeyLabel = keybindingService.lookupKeybinding(shortcut.commandId, contextKeyService);
 						if (fullKeyLabel) {
 							keyLabel = fullKeyLabel.getLabel();
 						}

@@ -691,7 +691,7 @@ export class EditorService extends Disposable implements EditorServiceImpl {
 		}
 
 		// Convert to typed editors and options
-		const typedEditors: IEditorInputWithOptions[] = editors.map(editor => {
+		let typedEditors: IEditorInputWithOptions[] = editors.map(editor => {
 			if (isEditorInputWithOptions(editor)) {
 				return editor;
 			}
@@ -705,7 +705,13 @@ export class EditorService extends Disposable implements EditorServiceImpl {
 		// Find target groups to open
 		const mapGroupToEditorsCandidates = new Map<IEditorGroup, IEditorInputWithOptions[]>();
 		if (group === SIDE_GROUP) {
+			// Custom editors which are open and only support one editor per resource should just move
+			const singletonEditors = this.getEditors(EditorsOrder.SEQUENTIAL).filter(e => typedEditors.find(t => isEqual(e.editor.resource, t.editor.resource)) && !e.editor.canSplit());
+			// We remove the singleton editors from the opening list
+			typedEditors = typedEditors.filter(t => !singletonEditors.find(e => isEqual(e.editor.resource, t.editor.resource)));
 			mapGroupToEditorsCandidates.set(this.findSideBySideGroup(), typedEditors);
+			// Move the editors which are opened and can't be opened again to the side
+			singletonEditors.forEach(e => this.editorGroupService.getGroup(e.groupId)?.moveEditor(e.editor, this.findSideBySideGroup()));
 		} else {
 			for (const typedEditor of typedEditors) {
 				const targetGroup = this.findTargetGroup(typedEditor.editor, typedEditor.options, group);

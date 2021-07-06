@@ -63,32 +63,6 @@ if (typeof globals.vscode !== 'undefined' && typeof globals.vscode.process !== '
 
 const isElectronRenderer = typeof nodeProcess?.versions?.electron === 'string' && nodeProcess.type === 'renderer';
 export const isElectronSandboxed = isElectronRenderer && nodeProcess?.sandboxed;
-type BROWSER_CODE_CACHE_OPTIONS =
-	'none' /*  do not produce cached data, do not use it even if it exists on disk */ |
-	'code' /* produce cached data based on browser heuristics, use cached data if it exists on disk */ |
-	'bypassHeatCheck' /* always produce cached data, but not for inline functions (unless IFE), use cached data if it exists on disk */ |
-	'bypassHeatCheckAndEagerCompile' /* always produce cached data, even inline functions, use cached data if it exists on disk */ |
-	undefined;
-export const browserCodeLoadingCacheStrategy: BROWSER_CODE_CACHE_OPTIONS = (() => {
-
-	// Always enabled when sandbox is enabled
-	if (isElectronSandboxed) {
-		return 'bypassHeatCheck';
-	}
-
-	// Otherwise, only enabled conditionally
-	const env = nodeProcess?.env['VSCODE_BROWSER_CODE_LOADING'];
-	if (typeof env === 'string') {
-		if (env === 'none' || env === 'code' || env === 'bypassHeatCheck' || env === 'bypassHeatCheckAndEagerCompile') {
-			return env;
-		}
-
-		return 'bypassHeatCheck';
-	}
-
-	return undefined;
-})();
-export const isPreferringBrowserCodeLoad = typeof browserCodeLoadingCacheStrategy === 'string';
 
 interface INavigator {
 	userAgent: string;

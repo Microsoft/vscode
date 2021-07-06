@@ -165,20 +165,17 @@ class FileAccessImpl {
 			return RemoteAuthorities.rewrite(uri);
 		}
 
-		let convertToVSCodeFileResource = false;
-
-		// Only convert the URI if we are in a native context and it has `file:` scheme
-		// and we have explicitly enabled the conversion (sandbox, or VSCODE_BROWSER_CODE_LOADING)
-		if (platform.isNative && (__forceCodeFileUri || platform.isPreferringBrowserCodeLoad) && uri.scheme === Schemas.file) {
-			convertToVSCodeFileResource = true;
-		}
-
-		// Also convert `file:` URIs in the web worker extension host (running in desktop) case
-		if (uri.scheme === Schemas.file && typeof platform.globals.importScripts === 'function' && platform.globals.origin === 'vscode-file://vscode-app') {
-			convertToVSCodeFileResource = true;
-		}
-
-		if (convertToVSCodeFileResource) {
+		// Convert to `vscode-file` resource in some cases..
+		if (
+			// ...only ever for `file` resources
+			uri.scheme === Schemas.file &&
+			(
+				// ...and we run in native environments
+				platform.isNative ||
+				// ...or web worker extensions on desktop
+				(typeof platform.globals.importScripts === 'function' && platform.globals.origin === `${Schemas.vscodeFileResource}://${this.FALLBACK_AUTHORITY}`)
+			)
+		) {
 			return uri.with({
 				scheme: Schemas.vscodeFileResource,
 				// We need to provide an authority here so that it can serve

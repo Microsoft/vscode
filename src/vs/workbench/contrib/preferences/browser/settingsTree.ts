@@ -60,6 +60,7 @@ import { ILogService } from 'vs/platform/log/common/log';
 import { settingsMoreActionIcon } from 'vs/workbench/contrib/preferences/browser/preferencesIcons';
 import { IWorkbenchConfigurationService } from 'vs/workbench/services/configuration/common/configuration';
 import { SettingsTarget } from 'vs/workbench/contrib/preferences/browser/preferencesWidgets';
+import { IExtensionService } from 'vs/workbench/services/extensions/common/extensions';
 
 const $ = DOM.$;
 
@@ -369,27 +370,78 @@ export function resolveConfiguredUntrustedSettings(groups: ISettingsGroup[], tar
 	return [...allSettings].filter(setting => setting.restricted && inspectSetting(setting.key, target, configurationService).isConfigured);
 }
 
-export function resolveExtensionsSettings(groups: ISettingsGroup[]): ITOCEntry<ISetting> {
-	const settingsGroupToEntry = (group: ISettingsGroup) => {
+export async function resolveExtensionsSettings(extensionService: IExtensionService, groups: ISettingsGroup[]): Promise<ITOCEntry<ISetting>> {
+	const extGroupTree = new Map<string, ITOCEntry<ISetting>>();
+	const addEntryToTree = (extensionId: string, extensionName: string, childEntry: ITOCEntry<ISetting>) => {
+		if (!extGroupTree.has(extensionId)) {
+			const rootEntry = {
+				id: extensionId,
+				label: extensionName,
+				children: []
+			};
+			extGroupTree.set(extensionId, rootEntry);
+		}
+		extGroupTree.get(extensionId)!.children!.push(childEntry);
+	};
+	const processGroupEntry = async (group: ISettingsGroup) => {
 		const flatSettings = arrays.flatten(
 			group.sections.map(section => section.settings));
 
-		return {
+		const extensionId = group.extensionInfo!.id;
+		const extension = await extensionService.getExtension(extensionId);
+		const extensionName = extension!.displayName ?? extension!.name;
+
+		let sectionOrder = 0;
+		const extensionConfiguration = extension?.contributes?.configuration;
+		if (Array.isArray(extensionConfiguration)) {
+			const currentSection = extensionConfiguration.find((config) => (config as any)?.id === group.id);
+			if (currentSection) {
+				sectionOrder = (currentSection as any)?.order ?? 0;
+			}
+		}
+
+		const childEntry = {
 			id: group.id,
 			label: group.title,
+			order: sectionOrder,
 			settings: flatSettings
 		};
+		addEntryToTree(extensionId, extensionName, childEntry);
 	};
 
-	const extGroups = groups
+	const processPromises = groups
 		.sort((a, b) => a.title.localeCompare(b.title))
-		.map(g => settingsGroupToEntry(g));
+		.map(g => processGroupEntry(g));
 
-	return {
-		id: 'extensions',
-		label: localize('extensions', "Extensions"),
-		children: extGroups
-	};
+	return Promise.all(processPromises).then(() => {
+		const extGroups: ITOCEntry<ISetting>[] = [];
+		for (const value of extGroupTree.values()) {
+			if (value.children!.length === 1) {
+				// push a flattened setting
+				extGroups.push({
+					id: value.id,
+					label: value.label,
+					settings: value.children![0].settings
+				});
+			} else {
+				value.children!.sort((a, b) => {
+					if (a.order !== undefined && b.order !== undefined) {
+						return a.order - b.order;
+					} else {
+						// leave things as-is
+						return 0;
+					}
+				});
+				extGroups.push(value);
+			}
+		}
+
+		return {
+			id: 'extensions',
+			label: localize('extensions', "Extensions"),
+			children: extGroups
+		};
+	});
 }
 
 function _resolveSettingsTree(tocData: ITOCEntry<string>, allSettings: Set<ISetting>, logService: ILogService): ITOCEntry<ISetting> {

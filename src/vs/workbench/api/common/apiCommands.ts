@@ -80,3 +80,38 @@ CommandsRegistry.registerCommand({
 		args: []
 	}
 });
+
+CommandsRegistry.registerCommand('_workbench.action.hideView', async function (accessor: ServicesAccessor, viewId: string) {
+	const viewDescriptorService = accessor.get(IViewDescriptorService);
+
+	const viewDescriptor = viewDescriptorService.getViewDescriptorById(viewId);
+	if (viewDescriptor?.canToggleVisibility) {
+		const viewContainer = viewDescriptorService.getViewContainerByViewId(viewId);
+		if (viewContainer) {
+			const viewContainerModel = viewDescriptorService.getViewContainerModel(viewContainer);
+			// Check if view is visible and active
+			if (viewContainerModel.isVisible(viewId) && viewContainerModel.activeViewDescriptors.some(viewDescriptor => viewDescriptor.id === viewId)) {
+				viewContainerModel.setVisible(viewId, false);
+			}
+		}
+	}
+});
+
+export class HideViewAPICommand {
+	public static readonly ID = 'vscode.hideView';
+	public static execute(executor: ICommandsExecutor, viewId: string): Promise<any> {
+		if (typeof viewId !== 'string') {
+			return Promise.reject('Invalid arguments');
+		}
+
+		return executor.executeCommand('_workbench.action.hideView', viewId);
+	}
+}
+CommandsRegistry.registerCommand({
+	id: HideViewAPICommand.ID,
+	handler: adjustHandler(HideViewAPICommand.execute),
+	description: {
+		description: 'Hide View',
+		args: []
+	}
+});

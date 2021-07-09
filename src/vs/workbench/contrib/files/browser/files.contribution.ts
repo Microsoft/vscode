@@ -414,6 +414,7 @@ configurationRegistry.registerConfiguration({
 				nls.localize('copyRelativePathSeparator.backslash', "Use backslash as path separation character."),
 			],
 			'description': nls.localize('copyRelativePathSeparator', "The path separation character used when copying relative file paths. Will use the operating system default unless specified."),
+			'default': isWindows ? '\\' : '/'
 		}
 	}
 });

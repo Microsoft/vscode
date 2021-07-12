@@ -90,6 +90,7 @@ export const FIRST_COMPRESSED_FOLDER = 'firstCompressedFolder';
 export const LAST_COMPRESSED_FOLDER = 'lastCompressedFolder';
 export const NEW_UNTITLED_FILE_COMMAND_ID = 'workbench.action.files.newUntitledFile';
 export const NEW_UNTITLED_FILE_LABEL = nls.localize('newUntitledFile', "New Untitled File");
+export const SELECTED_FILES_COMMAND_ID = 'explorer.selectedFiles';
 
 export const openWindowCommand = (accessor: ServicesAccessor, toOpen: IWindowOpenable[], options?: IOpenWindowOptions) => {
 	if (Array.isArray(toOpen)) {
@@ -697,4 +698,16 @@ KeybindingsRegistry.registerCommandAndKeybindingRule({
 	}
 });
 
+
+CommandsRegistry.registerCommand({
+	id: SELECTED_FILES_COMMAND_ID,
+	handler: async (accessor, resource) => {
+		const editorService = accessor.get(IEditorService);
+		const listService = accessor.get(IListService);
+		const explorerService = accessor.get(IExplorerService);
+		const resources = getMultiSelectedResources(resource, listService, editorService, explorerService);
+
+		return resources;
+	}
+});
 

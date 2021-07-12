@@ -37,6 +37,13 @@ export class MainThreadQuickOpen implements MainThreadQuickOpenShape {
 	}
 
 	$show(instance: number, options: IPickOptions<TransferQuickPickItems>, token: CancellationToken): Promise<number | number[] | undefined> {
+		const activeElement = document.activeElement as HTMLElement;
+		const focusBackToStartingPosition = () => {
+			try {
+				activeElement?.focus();
+			} catch { }
+		};
+
 		const contents = new Promise<TransferQuickPickItems[]>((resolve, reject) => {
 			this._items[instance] = { resolve, reject };
 		});
@@ -52,6 +59,7 @@ export class MainThreadQuickOpen implements MainThreadQuickOpenShape {
 
 		if (options.canPickMany) {
 			return this._quickInputService.pick(contents, options as { canPickMany: true }, token).then(items => {
+				focusBackToStartingPosition();
 				if (items) {
 					return items.map(item => item.handle);
 				}
@@ -59,6 +67,7 @@ export class MainThreadQuickOpen implements MainThreadQuickOpenShape {
 			});
 		} else {
 			return this._quickInputService.pick(contents, options, token).then(item => {
+				focusBackToStartingPosition();
 				if (item) {
 					return item.handle;
 				}

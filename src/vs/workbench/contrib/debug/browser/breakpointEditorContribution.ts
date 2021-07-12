@@ -258,7 +258,12 @@ export class BreakpointEditorContribution implements IBreakpointEditorContributi
 							breakpoints.forEach(bp => this.debugService.enableOrDisableBreakpoints(!disable, bp));
 						}
 					} else {
-						breakpoints.forEach(bp => this.debugService.removeBreakpoints(bp.getId()));
+						const enabled = breakpoints.some(bp => bp.enabled);
+						if(!enabled) {
+							breakpoints.forEach(bp => this.debugService.enableOrDisableBreakpoints(!enabled, bp));
+						} else {
+							breakpoints.forEach(bp => this.debugService.removeBreakpoints(bp.getId()));
+						}
 					}
 				} else if (canSetBreakpoints) {
 					this.debugService.addBreakpoints(uri, [{ lineNumber }]);

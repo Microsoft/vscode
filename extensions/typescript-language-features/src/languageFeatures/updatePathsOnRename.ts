@@ -58,31 +58,32 @@ class UpdateImportsOnFileRenameHandler extends Disposable {
 		super();
 
 		this._register(vscode.workspace.onDidRenameFiles(async (e) => {
-			const [{ newUri, oldUri }] = e.files;
-			const newFilePath = this.client.toPath(newUri);
-			if (!newFilePath) {
-				return;
-			}
+			await Promise.all(e.files.map(async ({ newUri, oldUri }) => {
+				const newFilePath = this.client.toPath(newUri);
+				if (!newFilePath) {
+					return;
+				}
 
-			const oldFilePath = this.client.toPath(oldUri);
-			if (!oldFilePath) {
-				return;
-			}
+				const oldFilePath = this.client.toPath(oldUri);
+				if (!oldFilePath) {
+					return;
+				}
 
-			const config = this.getConfiguration(newUri);
-			const setting = config.get<UpdateImportsOnFileMoveSetting>(updateImportsOnFileMoveName);
-			if (setting === UpdateImportsOnFileMoveSetting.Never) {
-				return;
-			}
+				const config = this.getConfiguration(newUri);
+				const setting = config.get<UpdateImportsOnFileMoveSetting>(updateImportsOnFileMoveName);
+				if (setting === UpdateImportsOnFileMoveSetting.Never) {
+					return;
+				}
 
-			// Try to get a js/ts file that is being moved
-			// For directory moves, this returns a js/ts file under the directory.
-			const jsTsFileThatIsBeingMoved = await this.getJsTsFileBeingMoved(newUri);
-			if (!jsTsFileThatIsBeingMoved || !this.client.toPath(jsTsFileThatIsBeingMoved)) {
-				return;
-			}
+				// Try to get a js/ts file that is being moved
+				// For directory moves, this returns a js/ts file under the directory.
+				const jsTsFileThatIsBeingMoved = await this.getJsTsFileBeingMoved(newUri);
+				if (!jsTsFileThatIsBeingMoved || !this.client.toPath(jsTsFileThatIsBeingMoved)) {
+					return;
+				}
 
-			this._pendingRenames.add({ oldUri, newUri, newFilePath, oldFilePath, jsTsFileThatIsBeingMoved });
+				this._pendingRenames.add({ oldUri, newUri, newFilePath, oldFilePath, jsTsFileThatIsBeingMoved });
+			}));
 
 			this._delayer.trigger(() => {
 				vscode.window.withProgress({

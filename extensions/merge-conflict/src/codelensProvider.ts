@@ -93,6 +93,27 @@ export default class MergeConflictCodeLensProvider implements vscode.CodeLensPro
 				new vscode.CodeLens(conflict.range.with(conflict.range.start.with({ character: conflict.range.start.character + 2 })), acceptBothCommand),
 				new vscode.CodeLens(conflict.range.with(conflict.range.start.with({ character: conflict.range.start.character + 3 })), diffCommand)
 			);
+
+			// if there is more than 1 conflict, add a 'next conflict' and 'previous conflict' button
+			if (conflicts.length > 1) {
+
+				let previousConflictCommand: vscode.Command = {
+					command: 'merge-conflict.previous',
+					title: localize('previousConflict', 'Previous Conflict'),
+					arguments: [conflict]
+				};
+
+				let nextConflictCommand: vscode.Command = {
+					command: 'merge-conflict.next',
+					title: localize('nextConflict', 'Next Conflict'),
+					arguments: [conflict]
+				};
+
+				items.push(
+					new vscode.CodeLens(conflict.range.with(conflict.range.start.with({ character: conflict.range.start.character + 4 })), previousConflictCommand),
+					new vscode.CodeLens(conflict.range.with(conflict.range.start.with({ character: conflict.range.start.character + 5 })), nextConflictCommand)
+				);
+			}
 		});
 
 		return items;

@@ -1333,7 +1333,8 @@ class InnerMinimap extends Disposable {
 
 	public render(renderingCtx: IMinimapRenderingContext): void {
 		const renderMinimap = this._model.options.renderMinimap;
-		if (renderMinimap === RenderMinimap.None) {
+		const miniMapNeeded = this._model.options.lineHeight * this._model.getLineCount() > this._model.options.editorHeight;
+		if (renderMinimap === RenderMinimap.None || !miniMapNeeded) {
 			this._shadow.setClassName('minimap-shadow-hidden');
 			this._sliderHorizontal.setWidth(0);
 			this._sliderHorizontal.setHeight(0);

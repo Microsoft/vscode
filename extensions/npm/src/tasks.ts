@@ -365,11 +365,18 @@ export function getPackageJsonUriFromTask(task: Task): Uri | null {
 }
 
 export async function hasPackageJson(): Promise<boolean> {
-	const token = new CancellationTokenSource();
-	// Search for files for max 1 second.
-	const timeout = setTimeout(() => token.cancel(), 1000);
-	const files = await workspace.findFiles('**/package.json', undefined, 1, token.token);
-	clearTimeout(timeout);
+	let files: Uri[];
+	const alwaysLookup = workspace.getConfiguration().get<boolean>('npm.alwaysPerformLookup');
+	if (!alwaysLookup) {
+		const token = new CancellationTokenSource();
+		// Search for files for max 1 second.
+		const timeout = setTimeout(() => token.cancel(), 1000);
+		files = await workspace.findFiles('**/package.json', undefined, 1, token.token);
+		clearTimeout(timeout);
+		return files.length > 0;
+	} else {
+		files = await workspace.findFiles('**/package.json', undefined, 1);
+	}
 	return files.length > 0 || await hasRootPackageJson();
 }
 

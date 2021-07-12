@@ -289,6 +289,12 @@
           "tags": [
             "usesOnlineServices"
           ]
+        },
+        "npm.alwaysPerformLookup": {
+          "type": "boolean",
+          "description": "%config.npm.alwaysPerformLookup%",
+          "default": false,
+          "scope": "application"
         }
       }
     },

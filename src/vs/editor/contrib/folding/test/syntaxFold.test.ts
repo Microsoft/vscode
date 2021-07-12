@@ -74,7 +74,7 @@ suite('Syntax folding', () => {
 		let providers = [new TestFoldingRangeProvider(model, ranges)];
 
 		async function assertLimit(maxEntries: number, expectedRanges: IndentRange[], message: string) {
-			let indentRanges = await new SyntaxRangeProvider(model, providers, () => { }, maxEntries).compute(CancellationToken.None);
+			let indentRanges = await new SyntaxRangeProvider(model, providers, '', () => { }, maxEntries).compute(CancellationToken.None);
 			let actual: IndentRange[] = [];
 			if (indentRanges) {
 				for (let i = 0; i < indentRanges.length; i++) {

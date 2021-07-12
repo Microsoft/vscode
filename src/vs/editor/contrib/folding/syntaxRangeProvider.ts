@@ -28,7 +28,11 @@ export class SyntaxRangeProvider implements RangeProvider {
 
 	readonly disposables: DisposableStore | undefined;
 
-	constructor(private readonly editorModel: ITextModel, private providers: FoldingRangeProvider[], handleFoldingRangesChange: () => void, private limit = MAX_FOLDING_REGIONS) {
+	constructor(private readonly editorModel: ITextModel, private providers: FoldingRangeProvider[], foldingStrategy: string, handleFoldingRangesChange: () => void, private limit = MAX_FOLDING_REGIONS) {
+		if (foldingStrategy && foldingStrategy !== 'auto') {
+			this.providers = providers = providers.filter(provider => provider.id === foldingStrategy);
+		}
+
 		for (const provider of providers) {
 			if (typeof provider.onDidChange === 'function') {
 				if (!this.disposables) {

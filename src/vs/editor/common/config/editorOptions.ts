@@ -542,7 +542,7 @@ export interface IEditorOptions {
 	 * Selects the folding strategy. 'auto' uses the strategies contributed for the current document, 'indentation' uses the indentation based folding strategy.
 	 * Defaults to 'auto'.
 	 */
-	foldingStrategy?: 'auto' | 'indentation';
+	foldingStrategy?: string;
 	/**
 	 * Enable highlight for folded regions.
 	 * Defaults to true.
@@ -4263,16 +4263,10 @@ export const EditorOptions = {
 		EditorOption.folding, 'folding', true,
 		{ description: nls.localize('folding', "Controls whether the editor has code folding enabled.") }
 	)),
-	foldingStrategy: register(new EditorStringEnumOption(
-		EditorOption.foldingStrategy, 'foldingStrategy',
-		'auto' as 'auto' | 'indentation',
-		['auto', 'indentation'] as const,
+	foldingStrategy: register(new EditorStringOption(
+		EditorOption.foldingStrategy, 'foldingStrategy', 'auto',
 		{
-			enumDescriptions: [
-				nls.localize('foldingStrategy.auto', "Use a language-specific folding strategy if available, else the indentation-based one."),
-				nls.localize('foldingStrategy.indentation', "Use the indentation-based folding strategy."),
-			],
-			description: nls.localize('foldingStrategy', "Controls the strategy for computing folding ranges.")
+			description: nls.localize('foldingStrategy', "Controls the strategy for computing folding ranges. `auto`, `indentation` or the custom id of an extension")
 		}
 	)),
 	foldingHighlight: register(new EditorBooleanOption(

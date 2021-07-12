@@ -4573,6 +4573,11 @@ declare module 'vscode' {
 		onDidChangeFoldingRanges?: Event<void>;
 
 		/**
+		 * Provides the id of the provider.
+		 */
+		readonly id?: string;
+
+		/**
 		 * Returns a list of folding ranges or null and undefined if the provider
 		 * does not want to participate or was cancelled.
 		 * @param document The document in which the command was invoked.

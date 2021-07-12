@@ -1431,6 +1431,11 @@ export interface FoldingRangeProvider {
 	onDidChange?: Event<this>;
 
 	/**
+	 * Provides the id of the provider.
+	 */
+	id?: string;
+
+	/**
 	 * Provides the folding ranges for a specific model.
 	 */
 	provideFoldingRanges(model: model.ITextModel, context: FoldingContext, token: CancellationToken): ProviderResult<FoldingRange[]>;

@@ -253,7 +253,6 @@ export class FoldingController extends Disposable implements IEditorContribution
 		}
 		this.rangeProvider = new IndentRangeProvider(editorModel); // fallback
 
-
 		if (this._useFoldingProviders && this.foldingModel) {
 			let foldingProviders = FoldingRangeProviderRegistry.ordered(this.foldingModel.textModel);
 			if (foldingProviders.length === 0 && this.foldingStateMemento && this.foldingStateMemento.collapsedRegions) {
@@ -264,9 +263,10 @@ export class FoldingController extends Disposable implements IEditorContribution
 				}, 30000);
 				return rangeProvider; // keep memento in case there are still no foldingProviders on the next request.
 			} else if (foldingProviders.length > 0) {
-				this.rangeProvider = new SyntaxRangeProvider(editorModel, foldingProviders, () => this.onModelContentChanged());
+				this.rangeProvider = new SyntaxRangeProvider(editorModel, foldingProviders, this.editor.getOptions().get(EditorOption.foldingStrategy), () => this.onModelContentChanged());
 			}
 		}
+
 		this.foldingStateMemento = null;
 		return this.rangeProvider;
 	}

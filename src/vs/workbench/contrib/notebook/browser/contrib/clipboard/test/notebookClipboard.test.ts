@@ -35,7 +35,7 @@ suite('Notebook Clipboard', () => {
 		return editorService;
 	};
 
-	test.skip('Cut multiple selected cells', async function () {
+	test('Cut multiple selected cells', async function () {
 		await withTestNotebook(
 			[
 				['# header 1', 'markdown', CellKind.Markup, [], {}],

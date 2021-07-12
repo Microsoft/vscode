@@ -329,14 +329,17 @@ export class NotebookClipboardContribution extends Disposable {
 	runCutAction(accessor: ServicesAccessor) {
 		const activeElement = <HTMLElement>document.activeElement;
 		if (activeElement && ['input', 'textarea'].indexOf(activeElement.tagName.toLowerCase()) >= 0) {
+			console.log('no active element', activeElement);
 			return false;
 		}
 
 		const { editor } = this._getContext();
 		if (!editor) {
+			console.log('no editor');
 			return false;
 		}
 
+		console.log('run cut cells');
 		return runCutCells(accessor, editor, undefined);
 	}
 }

@@ -374,6 +374,9 @@ export class MockSession implements IDebugSession {
 	setVariable(variablesReference: number, name: string, value: string): Promise<DebugProtocol.SetVariableResponse> {
 		throw new Error('Method not implemented.');
 	}
+	setExpression(frameId: number, expression: string, value: string): Promise<DebugProtocol.SetExpressionResponse | undefined> {
+		throw new Error('Method not implemented.');
+	}
 	loadSource(resource: uri): Promise<DebugProtocol.SourceResponse> {
 		throw new Error('Method not implemented.');
 	}

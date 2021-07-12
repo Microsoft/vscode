@@ -278,6 +278,7 @@ export interface IDebugSession extends ITreeElement {
 
 	completions(frameId: number | undefined, threadId: number, text: string, position: Position, overwriteBefore: number, token: CancellationToken): Promise<DebugProtocol.CompletionsResponse | undefined>;
 	setVariable(variablesReference: number | undefined, name: string, value: string): Promise<DebugProtocol.SetVariableResponse | undefined>;
+	setExpression(frameId: number, expression: string, value: string): Promise<DebugProtocol.SetExpressionResponse | undefined>;
 	loadSource(resource: uri): Promise<DebugProtocol.SourceResponse | undefined>;
 	getLoadedSources(): Promise<Source[]>;
 
@@ -456,15 +457,15 @@ export interface IViewModel extends ITreeElement {
 	 */
 	readonly focusedStackFrame: IStackFrame | undefined;
 
-	getSelectedExpression(): IExpression | undefined;
-	setSelectedExpression(expression: IExpression | undefined): void;
+	getSelectedExpression(): { expression: IExpression; settingWatch: boolean } | undefined;
+	setSelectedExpression(expression: IExpression | undefined, settingWatch: boolean): void;
 	updateViews(): void;
 
 	isMultiSessionView(): boolean;
 
 	onDidFocusSession: Event<IDebugSession | undefined>;
 	onDidFocusStackFrame: Event<{ stackFrame: IStackFrame | undefined, explicit: boolean }>;
-	onDidSelectExpression: Event<IExpression | undefined>;
+	onDidSelectExpression: Event<{ expression: IExpression; settingWatch: boolean } | undefined>;
 	onWillUpdateViews: Event<void>;
 }
 

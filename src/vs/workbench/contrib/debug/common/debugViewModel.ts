@@ -15,10 +15,10 @@ export class ViewModel implements IViewModel {
 	private _focusedStackFrame: IStackFrame | undefined;
 	private _focusedSession: IDebugSession | undefined;
 	private _focusedThread: IThread | undefined;
-	private selectedExpression: IExpression | undefined;
+	private selectedExpression: { expression: IExpression; settingWatch: boolean } | undefined;
 	private readonly _onDidFocusSession = new Emitter<IDebugSession | undefined>();
 	private readonly _onDidFocusStackFrame = new Emitter<{ stackFrame: IStackFrame | undefined, explicit: boolean }>();
-	private readonly _onDidSelectExpression = new Emitter<IExpression | undefined>();
+	private readonly _onDidSelectExpression = new Emitter<{ expression: IExpression; settingWatch: boolean } | undefined>();
 	private readonly _onWillUpdateViews = new Emitter<void>();
 	private expressionSelectedContextKey!: IContextKey<boolean>;
 	private loadedScriptsSupportedContextKey!: IContextKey<boolean>;
@@ -98,17 +98,17 @@ export class ViewModel implements IViewModel {
 		return this._onDidFocusStackFrame.event;
 	}
 
-	getSelectedExpression(): IExpression | undefined {
+	getSelectedExpression(): { expression: IExpression; settingWatch: boolean } | undefined {
 		return this.selectedExpression;
 	}
 
-	setSelectedExpression(expression: IExpression | undefined) {
-		this.selectedExpression = expression;
+	setSelectedExpression(expression: IExpression | undefined, settingWatch: boolean) {
+		this.selectedExpression = expression ? { expression, settingWatch: settingWatch } : undefined;
 		this.expressionSelectedContextKey.set(!!expression);
-		this._onDidSelectExpression.fire(expression);
+		this._onDidSelectExpression.fire(this.selectedExpression);
 	}
 
-	get onDidSelectExpression(): Event<IExpression | undefined> {
+	get onDidSelectExpression(): Event<{ expression: IExpression; settingWatch: boolean } | undefined> {
 		return this._onDidSelectExpression.event;
 	}
 

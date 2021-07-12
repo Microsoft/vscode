@@ -54,6 +54,7 @@ export const DEBUG_CONFIGURE_COMMAND_ID = 'workbench.action.debug.configure';
 export const DEBUG_START_COMMAND_ID = 'workbench.action.debug.start';
 export const DEBUG_RUN_COMMAND_ID = 'workbench.action.debug.run';
 export const EDIT_EXPRESSION_COMMAND_ID = 'debug.renameWatchExpression';
+export const SET_EXPRESSION_COMMAND_ID = 'debug.setWatchExpression';
 export const REMOVE_EXPRESSION_COMMAND_ID = 'debug.removeWatchExpression';
 
 export const RESTART_LABEL = nls.localize('restartDebug', "Restart");
@@ -481,7 +482,17 @@ KeybindingsRegistry.registerCommandAndKeybindingRule({
 		}
 
 		if (expression instanceof Expression) {
-			debugService.getViewModel().setSelectedExpression(expression);
+			debugService.getViewModel().setSelectedExpression(expression, false);
+		}
+	}
+});
+
+CommandsRegistry.registerCommand({
+	id: SET_EXPRESSION_COMMAND_ID,
+	handler: async (accessor: ServicesAccessor, expression: Expression | unknown) => {
+		const debugService = accessor.get(IDebugService);
+		if (expression instanceof Expression || expression instanceof Variable) {
+			debugService.getViewModel().setSelectedExpression(expression, true);
 		}
 	}
 });
@@ -500,7 +511,7 @@ KeybindingsRegistry.registerCommandAndKeybindingRule({
 		if (focused) {
 			const elements = focused.getFocus();
 			if (Array.isArray(elements) && elements[0] instanceof Variable) {
-				debugService.getViewModel().setSelectedExpression(elements[0]);
+				debugService.getViewModel().setSelectedExpression(elements[0], false);
 			}
 		}
 	}

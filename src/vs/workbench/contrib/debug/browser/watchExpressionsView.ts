@@ -89,7 +89,7 @@ export class WatchExpressionsView extends ViewPane {
 			identityProvider: { getId: (element: IExpression) => element.getId() },
 			keyboardNavigationLabelProvider: {
 				getKeyboardNavigationLabel: (e: IExpression) => {
-					if (e === this.debugService.getViewModel().getSelectedExpression()) {
+					if (e === this.debugService.getViewModel().getSelectedExpression()?.expression) {
 						// Don't filter input box
 						return undefined;
 					}
@@ -146,17 +146,18 @@ export class WatchExpressionsView extends ViewPane {
 		}));
 		let horizontalScrolling: boolean | undefined;
 		this._register(this.debugService.getViewModel().onDidSelectExpression(e => {
-			if (e instanceof Expression) {
+			const expression = e?.expression;
+			if (expression instanceof Expression || (expression instanceof Variable && e?.settingWatch)) {
 				horizontalScrolling = this.tree.options.horizontalScrolling;
 				if (horizontalScrolling) {
 					this.tree.updateOptions({ horizontalScrolling: false });
 				}
 
-				if (e.name) {
+				if (expression.name) {
 					// Only rerender if the input is already done since otherwise the tree is not yet aware of the new element
-					this.tree.rerender(e);
+					this.tree.rerender(expression);
 				}
-			} else if (!e && horizontalScrolling !== undefined) {
+			} else if (!expression && horizontalScrolling !== undefined) {
 				this.tree.updateOptions({ horizontalScrolling: horizontalScrolling });
 				horizontalScrolling = undefined;
 			}
@@ -184,8 +185,9 @@ export class WatchExpressionsView extends ViewPane {
 
 		const element = e.element;
 		// double click on primitive value: open input box to be able to select and copy value.
-		if (element instanceof Expression && element !== this.debugService.getViewModel().getSelectedExpression()) {
-			this.debugService.getViewModel().setSelectedExpression(element);
+		const selectedExpression = this.debugService.getViewModel().getSelectedExpression();
+		if (element instanceof Expression && element !== selectedExpression?.expression) {
+			this.debugService.getViewModel().setSelectedExpression(element, false);
 		} else if (!element) {
 			// Double click in watch panel triggers to add a new watch expression
 			this.debugService.addWatchExpression();
@@ -269,7 +271,27 @@ export class WatchExpressionsRenderer extends AbstractExpressionsRenderer {
 		});
 	}
 
-	protected getInputBoxOptions(expression: IExpression): IInputBoxOptions {
+	protected getInputBoxOptions(expression: IExpression, settingValue: boolean): IInputBoxOptions {
+		if (settingValue) {
+			return {
+				initialValue: expression.value,
+				ariaLabel: localize('typeNewValue', "Type new value"),
+				onFinish: async (value: string, success: boolean) => {
+					if (success && value) {
+						const focusedSession = this.debugService.getViewModel().focusedSession;
+						const focusedFrame = this.debugService.getViewModel().focusedStackFrame;
+						if (focusedSession && focusedFrame) {
+							const path = expression instanceof Variable && expression.evaluateName ? expression.evaluateName : expression.name;
+							await focusedSession.setExpression(focusedFrame.frameId, path, value);
+							ignoreViewUpdates = true;
+							this.debugService.getViewModel().updateViews();
+							ignoreViewUpdates = false;
+						}
+					}
+				}
+			};
+		}
+
 		return {
 			initialValue: expression.name ? expression.name : '',
 			ariaLabel: localize('watchExpressionInputAriaLabel', "Type watch expression"),
@@ -318,7 +340,7 @@ class WatchExpressionsDragAndDrop implements ITreeDragAndDrop<IExpression> {
 	}
 
 	getDragURI(element: IExpression): string | null {
-		if (!(element instanceof Expression) || element === this.debugService.getViewModel().getSelectedExpression()) {
+		if (!(element instanceof Expression) || element === this.debugService.getViewModel().getSelectedExpression()?.expression) {
 			return null;
 		}
 

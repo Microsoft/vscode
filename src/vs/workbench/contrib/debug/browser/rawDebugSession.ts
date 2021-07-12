@@ -358,6 +358,13 @@ export class RawDebugSession implements IDisposable {
 		return Promise.reject(new Error('setVariable not supported'));
 	}
 
+	setExpression(args: DebugProtocol.SetExpressionArguments): Promise<DebugProtocol.SetExpressionResponse | undefined> {
+		if (this.capabilities.supportsSetExpression) {
+			return this.send<DebugProtocol.SetExpressionResponse>('setExpression', args);
+		}
+		return Promise.reject(new Error('setExpression not supported'));
+	}
+
 	async restartFrame(args: DebugProtocol.RestartFrameArguments, threadId: number): Promise<DebugProtocol.RestartFrameResponse | undefined> {
 		if (this.capabilities.supportsRestartFrame) {
 			const response = await this.send('restartFrame', args);

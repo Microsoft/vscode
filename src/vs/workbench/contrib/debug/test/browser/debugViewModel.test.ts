@@ -38,9 +38,9 @@ suite('Debug - View Model', () => {
 	test('selected expression', () => {
 		assert.strictEqual(model.getSelectedExpression(), undefined);
 		const expression = new Expression('my expression');
-		model.setSelectedExpression(expression);
+		model.setSelectedExpression(expression, false);
 
-		assert.strictEqual(model.getSelectedExpression(), expression);
+		assert.strictEqual(model.getSelectedExpression()?.expression, expression);
 	});
 
 	test('multi session view and changed workbench state', () => {

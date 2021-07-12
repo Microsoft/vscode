@@ -208,6 +208,7 @@ export class ConfigurationManager implements IConfigurationManager {
 
 					const chosenPromise = new Promise<IDynamicPickItem | undefined>(resolve => {
 						disposables.add(input.onDidAccept(() => resolve(input.activeItems[0])));
+						disposables.add(input.onDidHide(() => resolve(undefined)));
 						disposables.add(input.onDidTriggerItemButton(async (context) => {
 							resolve(undefined);
 							const { launch, config } = context.item;
@@ -351,12 +352,20 @@ export class ConfigurationManager implements IConfigurationManager {
 		return undefined;
 	}
 
-	async selectConfiguration(launch: ILaunch | undefined, name?: string, config?: IConfig, dynamicConfig?: { type?: string }): Promise<void> {
+	async selectConfiguration(launch: ILaunch | undefined, name?: string, config?: IConfig, dynamicConfig?: { type?: string }, alwaysFireEvent?: boolean): Promise<void> {
 		if (typeof launch === 'undefined') {
-			const rootUri = this.historyService.getLastActiveWorkspaceRoot();
-			launch = this.getLaunch(rootUri);
-			if (!launch || launch.getConfigurationNames().length === 0) {
-				launch = this.launches.find(l => !!(l && l.getConfigurationNames().length)) || launch || this.launches[0];
+			if (alwaysFireEvent) {
+				// This pathway is for when user presses Esc on dynamic config quickinput.
+				// It makes the dropdown revert to showing the previous value. See https://github.com/microsoft/vscode/issues/127093
+				this._onDidSelectConfigurationName.fire();
+				return;
+			}
+			else {
+				const rootUri = this.historyService.getLastActiveWorkspaceRoot();
+				launch = this.getLaunch(rootUri);
+				if (!launch || launch.getConfigurationNames().length === 0) {
+					launch = this.launches.find(l => !!(l && l.getConfigurationNames().length)) || launch || this.launches[0];
+				}
 			}
 		}
 
@@ -426,7 +435,9 @@ export class ConfigurationManager implements IConfigurationManager {
 			this.debugConfigurationTypeContext.reset();
 		}
 
-		if (this.selectedLaunch !== previousLaunch || this.selectedName !== previousName) {
+		// alwaysFireEvent ensures the dropdown shows correct value in the case where user gets dynamic configs and then
+		// picks the same one as was already selected. See https://github.com/microsoft/vscode/issues/127093
+		if (alwaysFireEvent || this.selectedLaunch !== previousLaunch || this.selectedName !== previousName) {
 			this._onDidSelectConfigurationName.fire();
 		}
 	}

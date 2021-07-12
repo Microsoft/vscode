@@ -691,7 +691,7 @@ export interface IConfigurationManager {
 		type: string | undefined;
 	};
 
-	selectConfiguration(launch: ILaunch | undefined, name?: string, config?: IConfig, dynamicConfigOptions?: { type?: string }): Promise<void>;
+	selectConfiguration(launch: ILaunch | undefined, name?: string, config?: IConfig, dynamicConfigOptions?: { type?: string }, alwaysFireEvent?: boolean): Promise<void>;
 
 	getLaunches(): ReadonlyArray<ILaunch>;
 	getLaunch(workspaceUri: uri | undefined): ILaunch | undefined;

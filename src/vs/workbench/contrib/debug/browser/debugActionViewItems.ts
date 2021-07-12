@@ -238,9 +238,13 @@ export class StartDebugActionViewItem extends BaseActionViewItem {
 				handler: async () => {
 					const picked = await p.pick();
 					if (picked) {
-						await manager.selectConfiguration(picked.launch, picked.config.name, picked.config, { type: p.type });
+						// Pass alwaysFireEvent as true, otherwise the displayed list selection is wrong if the same dynamic config was selected again
+						// - part of https://github.com/microsoft/vscode/issues/127093
+						await manager.selectConfiguration(picked.launch, picked.config.name, picked.config, { type: p.type }, true);
 						return true;
 					}
+					// Ensure reselection of previous item
+					await manager.selectConfiguration(undefined, undefined, undefined, undefined, true);
 					return false;
 				}
 			});

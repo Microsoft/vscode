@@ -286,6 +286,7 @@ export class ExplorerItem {
 			// Resolve metadata only when the mtime is needed since this can be expensive
 			// Mtime is only used when the sort order is 'modified'
 			const resolveMetadata = sortOrder === SortOrder.Modified;
+			this.isError = false;
 			try {
 				const stat = await this.fileService.resolve(this.resource, { resolveSingleChildDescendants: true, resolveMetadata });
 				const resolved = ExplorerItem.create(this.fileService, stat, this);

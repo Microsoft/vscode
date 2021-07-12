@@ -11,18 +11,67 @@ const vfs = require("vinyl-fs");
 const filter = require("gulp-filter");
 const _ = require("underscore");
 const util = require("./util");
+function isDocumentSuffix(str) {
+    return str != undefined && (str === 'document' || str === 'script' || str === 'file' || str === 'source code');
+}
 const root = path.dirname(path.dirname(__dirname));
 const product = JSON.parse(fs.readFileSync(path.join(root, 'product.json'), 'utf8'));
 const commit = util.getVersion(root);
 const darwinCreditsTemplate = product.darwinCredits && _.template(fs.readFileSync(path.join(root, product.darwinCredits), 'utf8'));
-function darwinBundleDocumentType(extensions, icon) {
+/**
+ * Generate a `DarwinDocumentType` given a list of file extensions, an icon name, and an optional suffix or file type name.
+ * @param extensions A list of file extensions, such as `['bat', 'cmd']`
+ * @param icon A sentence-cased file type name that matches the lowercase name of a darwin icon resource.
+ * For example, `'HTML'` instead of `'html'`, or `'Java'` instead of `'java'`.
+ * This parameter is lowercased before it is used to reference an icon file.
+ * @param nameOrSuffix An optional suffix or a string to use as the file type. If a suffix is provided,
+ * it is used with the icon parameter to generate a file type string. If nothing is provided,
+ * `'document'` is used with the icon parameter to generate file type string.
+ *
+ * For example, if you call `darwinBundleDocumentType(..., 'HTML')`, the resulting file type is `"HTML document"`,
+ * and the `'html'` darwin icon is used.
+ *
+ * If you call `darwinBundleDocumentType(..., 'Javascript', 'file')`, the resulting file type is `"Javascript file"`.
+ * and the `'javascript'` darwin icon is used.
+ *
+ * If you call `darwinBundleDocumentType(..., 'bat', 'Windows command script')`, the file type is `"Windows command script"`,
+ * and the `'bat'` darwin icon is used.
+ */
+function darwinBundleDocumentType(extensions, icon, nameOrSuffix) {
+    // If given a suffix, generate a name from it. If not given anything, default to 'document'
+    if (isDocumentSuffix(nameOrSuffix) || !nameOrSuffix) {
+        nameOrSuffix = icon.charAt(0).toUpperCase() + icon.slice(1) + ' ' + (nameOrSuffix !== null && nameOrSuffix !== void 0 ? nameOrSuffix : 'document');
+    }
     return {
-        name: product.nameLong + ' document',
+        name: nameOrSuffix,
         role: 'Editor',
         ostypes: ['TEXT', 'utxt', 'TUTX', '****'],
         extensions: extensions,
-        iconFile: icon
+        iconFile: 'resources/darwin/' + icon + '.icns'
     };
+}
+/**
+ * Generate several `DarwinDocumentType`s with unique names and a shared icon.
+ * @param types A map of file type names to their associated file extensions.
+ * @param icon A darwin icon resource to use. For example, `'HTML'` would refer to `resources/darwin/html.icns`
+ *
+ * Examples:
+ * ```
+ * darwinBundleDocumentTypes({ 'C header file': 'h', 'C source code': 'c' },'c')
+ * darwinBundleDocumentTypes({ 'React source code': ['jsx', 'tsx'] }, 'react')
+ * ```
+ */
+function darwinBundleDocumentTypes(types, icon) {
+    return Object.keys(types).map((name) => {
+        const extensions = types[name];
+        return {
+            name: name,
+            role: 'Editor',
+            ostypes: ['TEXT', 'utxt', 'TUTX', '****'],
+            extensions: Array.isArray(extensions) ? extensions : [extensions],
+            iconFile: 'resources/darwin/' + icon + '.icns',
+        };
+    });
 }
 exports.config = {
     version: util.getElectronVersion(),
@@ -35,34 +84,68 @@ exports.config = {
     darwinHelpBookFolder: 'VS Code HelpBook',
     darwinHelpBookName: 'VS Code HelpBook',
     darwinBundleDocumentTypes: [
-        darwinBundleDocumentType(['bat', 'cmd'], 'resources/darwin/bat.icns'),
-        darwinBundleDocumentType(['bowerrc'], 'resources/darwin/bower.icns'),
-        darwinBundleDocumentType(['c', 'h'], 'resources/darwin/c.icns'),
-        darwinBundleDocumentType(['config', 'editorconfig', 'gitattributes', 'gitconfig', 'gitignore', 'ini'], 'resources/darwin/config.icns'),
-        darwinBundleDocumentType(['cc', 'cpp', 'cxx', 'c++', 'hh', 'hpp', 'hxx', 'h++'], 'resources/darwin/cpp.icns'),
-        darwinBundleDocumentType(['cs', 'csx'], 'resources/darwin/csharp.icns'),
-        darwinBundleDocumentType(['css'], 'resources/darwin/css.icns'),
-        darwinBundleDocumentType(['go'], 'resources/darwin/go.icns'),
-        darwinBundleDocumentType(['asp', 'aspx', 'cshtml', 'htm', 'html', 'jshtm', 'jsp', 'phtml', 'shtml'], 'resources/darwin/html.icns'),
-        darwinBundleDocumentType(['jade'], 'resources/darwin/jade.icns'),
-        darwinBundleDocumentType(['jav', 'java'], 'resources/darwin/java.icns'),
-        darwinBundleDocumentType(['js', 'jscsrc', 'jshintrc', 'mjs', 'cjs'], 'resources/darwin/javascript.icns'),
-        darwinBundleDocumentType(['json'], 'resources/darwin/json.icns'),
-        darwinBundleDocumentType(['less'], 'resources/darwin/less.icns'),
-        darwinBundleDocumentType(['markdown', 'md', 'mdoc', 'mdown', 'mdtext', 'mdtxt', 'mdwn', 'mkd', 'mkdn'], 'resources/darwin/markdown.icns'),
-        darwinBundleDocumentType(['php'], 'resources/darwin/php.icns'),
-        darwinBundleDocumentType(['ps1', 'psd1', 'psm1'], 'resources/darwin/powershell.icns'),
-        darwinBundleDocumentType(['py'], 'resources/darwin/python.icns'),
-        darwinBundleDocumentType(['gemspec', 'rb'], 'resources/darwin/ruby.icns'),
-        darwinBundleDocumentType(['scss'], 'resources/darwin/sass.icns'),
-        darwinBundleDocumentType(['bash', 'bash_login', 'bash_logout', 'bash_profile', 'bashrc', 'profile', 'rhistory', 'rprofile', 'sh', 'zlogin', 'zlogout', 'zprofile', 'zsh', 'zshenv', 'zshrc'], 'resources/darwin/shell.icns'),
-        darwinBundleDocumentType(['sql'], 'resources/darwin/sql.icns'),
-        darwinBundleDocumentType(['ts'], 'resources/darwin/typescript.icns'),
-        darwinBundleDocumentType(['tsx', 'jsx'], 'resources/darwin/react.icns'),
-        darwinBundleDocumentType(['vue'], 'resources/darwin/vue.icns'),
-        darwinBundleDocumentType(['ascx', 'csproj', 'dtd', 'wxi', 'wxl', 'wxs', 'xml', 'xaml'], 'resources/darwin/xml.icns'),
-        darwinBundleDocumentType(['eyaml', 'eyml', 'yaml', 'yml'], 'resources/darwin/yaml.icns'),
-        darwinBundleDocumentType(['clj', 'cljs', 'cljx', 'clojure', 'code-workspace', 'coffee', 'containerfile', 'ctp', 'dockerfile', 'dot', 'edn', 'fs', 'fsi', 'fsscript', 'fsx', 'handlebars', 'hbs', 'lua', 'm', 'makefile', 'ml', 'mli', 'pl', 'pl6', 'pm', 'pm6', 'pod', 'pp', 'properties', 'psgi', 'pug', 'r', 'rs', 'rt', 'svg', 'svgz', 't', 'txt', 'vb', 'xcodeproj', 'xcworkspace'], 'resources/darwin/default.icns')
+        ...darwinBundleDocumentTypes({ 'C header file': 'h', 'C source code': 'c' }, 'c'),
+        ...darwinBundleDocumentTypes({ 'Git configuration file': ['gitattributes', 'gitconfig', 'gitignore'] }, 'config'),
+        ...darwinBundleDocumentTypes({ 'HTML template document': ['asp', 'aspx', 'cshtml', 'jshtm', 'jsp', 'phtml', 'shtml'] }, 'html'),
+        darwinBundleDocumentType(['bat', 'cmd'], 'bat', 'Windows command script'),
+        darwinBundleDocumentType(['bowerrc'], 'Bower'),
+        darwinBundleDocumentType(['config', 'editorconfig', 'ini'], 'config', 'Configuration file'),
+        darwinBundleDocumentType(['hh', 'hpp', 'hxx', 'h++'], 'cpp', 'C++ header file'),
+        darwinBundleDocumentType(['cc', 'cpp', 'cxx', 'c++'], 'cpp', 'C++ source code'),
+        darwinBundleDocumentType(['m'], 'default', 'Objective-C source code'),
+        darwinBundleDocumentType(['mm'], 'cpp', 'Objective-C++ source code'),
+        darwinBundleDocumentType(['cs', 'csx'], 'csharp', 'C# source code'),
+        darwinBundleDocumentType(['css'], 'css', 'CSS'),
+        darwinBundleDocumentType(['go'], 'go', 'Go source code'),
+        darwinBundleDocumentType(['htm', 'html'], 'HTML'),
+        darwinBundleDocumentType(['jade'], 'Jade'),
+        darwinBundleDocumentType(['jav', 'java'], 'Java'),
+        darwinBundleDocumentType(['js', 'jscsrc', 'jshintrc', 'mjs', 'cjs'], 'Javascript', 'file'),
+        darwinBundleDocumentType(['json'], 'JSON'),
+        darwinBundleDocumentType(['less'], 'Less'),
+        darwinBundleDocumentType(['markdown', 'md', 'mdoc', 'mdown', 'mdtext', 'mdtxt', 'mdwn', 'mkd', 'mkdn'], 'Markdown'),
+        darwinBundleDocumentType(['php'], 'PHP', 'source code'),
+        darwinBundleDocumentType(['ps1', 'psd1', 'psm1'], 'Powershell', 'script'),
+        darwinBundleDocumentType(['py'], 'Python', 'script'),
+        darwinBundleDocumentType(['gemspec', 'rb'], 'Ruby', 'source code'),
+        darwinBundleDocumentType(['scss'], 'SASS', 'file'),
+        darwinBundleDocumentType(['sql'], 'SQL', 'script'),
+        darwinBundleDocumentType(['ts'], 'TypeScript', 'file'),
+        darwinBundleDocumentType(['tsx', 'jsx'], 'React', 'source code'),
+        darwinBundleDocumentType(['vue'], 'Vue', 'source code'),
+        darwinBundleDocumentType(['ascx', 'csproj', 'dtd', 'wxi', 'wxl', 'wxs', 'xml', 'xaml'], 'XML'),
+        darwinBundleDocumentType(['eyaml', 'eyml', 'yaml', 'yml'], 'YAML'),
+        darwinBundleDocumentType([
+            'bash', 'bash_login', 'bash_logout', 'bash_profile', 'bashrc',
+            'profile', 'rhistory', 'rprofile', 'sh', 'zlogin', 'zlogout',
+            'zprofile', 'zsh', 'zshenv', 'zshrc'
+        ], 'Shell', 'script'),
+        // Default icon with specified names
+        ...darwinBundleDocumentTypes({
+            'Clojure source code': ['clj', 'cljs', 'cljx', 'clojure'],
+            'VS Code workspace file': 'code-workspace',
+            'CoffeeScript source code': 'coffee',
+            'Dockerfile': 'dockerfile',
+            'Makefile': 'makefile',
+            'Lua script': 'lua',
+            'Pug document': 'pug',
+            'Lockfile': 'lock',
+            'Plain Text File': 'txt',
+            'Xcode project file': 'xcodeproj',
+            'Xcode workspace file': 'xcworkspace',
+            'Visual Basic script': 'vb',
+            'R source code': 'r',
+            'Rust source code': 'rs',
+            'F# source code': 'fs',
+            'F# signature file': 'fsi',
+            'F# script': ['fsx', 'fsscript'],
+            'SVG document': ['svg', 'svgz'],
+        }, 'default'),
+        // Default icon with default name
+        darwinBundleDocumentType([
+            'containerfile', 'ctp', 'dot', 'edn', 'handlebars', 'hbs', 'ml', 'mli',
+            'pl', 'pl6', 'pm', 'pm6', 'pod', 'pp', 'properties', 'psgi', 'rt', 't'
+        ], 'default', product.nameLong + ' document')
     ],
     darwinBundleURLTypes: [{
             role: 'Viewer',

@@ -49,7 +49,6 @@ suite('Multicursor', () => {
 			assert.strictEqual(viewModel.getSelections().length, 1);
 		});
 	});
-
 });
 
 function fromRange(rng: Range): number[] {
@@ -75,6 +74,18 @@ suite('Multicursor selection', () => {
 		isNew: () => true,
 		keys: () => []
 	} as IStorageService);
+
+	test('issue #123303: Cursors should be merged on select next', () => {
+		withTestCodeEditor([
+			'abc',
+		], { multiCursorMergeOverlapping: false, serviceCollection }, (editor, viewModel) => {
+			editor.registerAndInstantiateContribution(MultiCursorSelectionController.ID, MultiCursorSelectionController);
+			editor.registerAndInstantiateContribution(CommonFindController.ID, CommonFindController);
+			editor.setSelection(new Selection(1, 2, 1, 2));
+			new AddSelectionToNextFindMatchAction().run(null!, editor);
+			assert.deepStrictEqual(viewModel.getSelections(), [new Selection(1, 1, 1, 4)]);
+		});
+	});
 
 	test('issue #8817: Cursor position changes when you cancel multicursor', () => {
 		withTestCodeEditor([

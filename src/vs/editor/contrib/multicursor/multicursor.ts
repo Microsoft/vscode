@@ -341,7 +341,9 @@ export class MultiCursorSession {
 		}
 
 		const allSelections = this._editor.getSelections();
-		return new MultiCursorSessionResult(allSelections.concat(nextMatch), nextMatch, ScrollType.Smooth);
+		// Even if `editor.multiCursorMergeOverlapping` is set to false, we want to merge the selections.
+		const selections = allSelections.filter(s => !s.intersectRanges(nextMatch)).concat(nextMatch);
+		return new MultiCursorSessionResult(selections, nextMatch, ScrollType.Smooth);
 	}
 
 	public moveSelectionToNextFindMatch(): MultiCursorSessionResult | null {

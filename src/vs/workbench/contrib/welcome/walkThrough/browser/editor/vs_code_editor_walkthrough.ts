@@ -165,7 +165,7 @@ ul>li.item$*5
 Sometimes type checking your JavaScript code can help you spot mistakes you might have not caught otherwise. You can run the TypeScript type checker against your existing JavaScript code by simply adding a |// @ts-check| comment to the top of your file.
 
 |||js
-// @ts-nocheck
+// @ts-check
 
 let easy = true;
 easy = 42;

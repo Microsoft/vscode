@@ -154,6 +154,15 @@ declare module 'vscode' {
 		/**
 		 * Forwards a port. If the current resolver implements RemoteAuthorityResolver:forwardPort then that will be used to make the tunnel.
 		 * By default, openTunnel only support localhost; however, RemoteAuthorityResolver:tunnelFactory can be used to support other ips.
+		 * Usage (in the following order):
+		 * ```js
+		 * Remote:
+		 *     server.listen(1234);
+		 * Local:
+		 *     // Listen to port localhost:5678 on the local machine. Note that remoteAddress is the address with respect to the remote.
+		 *     openTunnel({ remoteAddress: { port: 1234, host: 'localhost'}, localAddress: 5678 });
+		 *     connectTo(5678, 'localhost');
+		 * ```
 		 *
 		 * @throws When run in an environment without a remote.
 		 *

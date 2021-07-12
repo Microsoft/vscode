@@ -319,13 +319,20 @@ export class CommonFindController extends Disposable implements IEditorContribut
 			stateChanges.isReplaceRevealed = false;
 		}
 
+		// Toggle isReplaceRevealed based on focus
+		if (opts.shouldFocus === FindStartFocusAction.FocusReplaceInput) {
+			stateChanges.isReplaceRevealed = true;
+		} else if (opts.shouldFocus === FindStartFocusAction.FocusFindInput) {
+			stateChanges.isReplaceRevealed = false;
+		}
+    
 		if (opts.updateSearchScope) {
 			let currentSelections = this._editor.getSelections();
 			if (currentSelections.some(selection => !selection.isEmpty())) {
 				stateChanges.searchScope = currentSelections;
 			}
 		}
-
+    
 		stateChanges.loop = opts.loop;
 
 		this._state.change(stateChanges, false);

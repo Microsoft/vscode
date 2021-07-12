@@ -682,4 +682,36 @@ suite('FindController query options persistence', async () => {
 			assert.deepStrictEqual(findController.getState().searchScope, [new Selection(1, 6, 2, 1)]);
 		});
 	});
+
+	test('issue #90429: isReplaceRevealed=false after find input is focused', () => {
+		/**
+		 * focus the Replace input, isReplaceRevealed == true
+		 * focus the Find input, isReplaceRevealed == false (Replace input is hidden)
+		 */
+		withTestCodeEditor([
+			'',
+		], { serviceCollection: serviceCollection }, (editor, cursor) => {
+			let findController = editor.registerAndInstantiateContribution<TestFindController>(TestFindController.ID, TestFindController);
+			findController.start({
+				forceRevealReplace: false,
+				seedSearchStringFromSelection: false,
+				seedSearchStringFromGlobalClipboard: false,
+				shouldFocus: FindStartFocusAction.FocusReplaceInput,
+				shouldAnimate: false,
+				updateSearchScope: false
+			});
+			assert.equal(findController.getState().isReplaceRevealed, true);
+
+			findController.start({
+				forceRevealReplace: false,
+				seedSearchStringFromSelection: false,
+				seedSearchStringFromGlobalClipboard: false,
+				shouldFocus: FindStartFocusAction.FocusFindInput,
+				shouldAnimate: false,
+				updateSearchScope: false
+			});
+
+			assert.equal(findController.getState().isReplaceRevealed, false);
+		});
+	});
 });

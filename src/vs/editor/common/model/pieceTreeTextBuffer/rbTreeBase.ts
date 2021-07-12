@@ -14,7 +14,7 @@ export class TreeNode {
 	// Piece
 	piece: Piece;
 	size_left: number; // size of the left subtree (not inorder)
-	lf_left: number; // line feeds cnt in the left subtree (not in order)
+	lf_left: number; // line feeds cnt in the left subtree (not inorder)
 
 	constructor(piece: Piece, color: NodeColor) {
 		this.piece = piece;
@@ -28,7 +28,7 @@ export class TreeNode {
 
 	public next(): TreeNode {
 		if (this.right !== SENTINEL) {
-			return leftest(this.right);
+			return leftmost(this.right);
 		}
 
 		let node: TreeNode = this;
@@ -50,7 +50,7 @@ export class TreeNode {
 
 	public prev(): TreeNode {
 		if (this.left !== SENTINEL) {
-			return righttest(this.left);
+			return rightmost(this.left);
 		}
 
 		let node: TreeNode = this;
@@ -88,14 +88,14 @@ SENTINEL.left = SENTINEL;
 SENTINEL.right = SENTINEL;
 SENTINEL.color = NodeColor.Black;
 
-export function leftest(node: TreeNode): TreeNode {
+export function leftmost(node: TreeNode): TreeNode {
 	while (node.left !== SENTINEL) {
 		node = node.left;
 	}
 	return node;
 }
 
-export function righttest(node: TreeNode): TreeNode {
+export function rightmost(node: TreeNode): TreeNode {
 	while (node.right !== SENTINEL) {
 		node = node.right;
 	}
@@ -103,19 +103,25 @@ export function righttest(node: TreeNode): TreeNode {
 }
 
 export function calculateSize(node: TreeNode): number {
-	if (node === SENTINEL) {
-		return 0;
+	let sum = 0;
+
+	while (node !== SENTINEL) {
+		sum += node.size_left + node.piece.length;
+		node = node.right;
 	}
 
-	return node.size_left + node.piece.length + calculateSize(node.right);
+	return sum;
 }
 
 export function calculateLF(node: TreeNode): number {
-	if (node === SENTINEL) {
-		return 0;
+	let sum = 0;
+
+	while (node !== SENTINEL) {
+		sum += node.lf_left + node.piece.lineFeedCnt;
+		node = node.right;
 	}
 
-	return node.lf_left + node.piece.lineFeedCnt + calculateLF(node.right);
+	return sum;
 }
 
 export function resetSentinel(): void {
@@ -180,7 +186,7 @@ export function rbDelete(tree: PieceTreeBase, z: TreeNode) {
 		y = z;
 		x = y.left;
 	} else {
-		y = leftest(z.right);
+		y = leftmost(z.right);
 		x = y.right;
 	}
 
@@ -373,6 +379,13 @@ export function fixInsert(tree: PieceTreeBase, x: TreeNode) {
 	}
 
 	tree.root.color = NodeColor.Black;
+}
+
+export function createTreeNode(p: Piece, color: NodeColor): TreeNode {
+	const treeNode = new TreeNode(p, color);
+	treeNode.parent = treeNode.left = treeNode.right = SENTINEL;
+	treeNode.size_left = treeNode.lf_left = 0;
+	return treeNode;
 }
 
 export function updateTreeMetadata(tree: PieceTreeBase, x: TreeNode, delta: number, lineFeedCntDelta: number): void {

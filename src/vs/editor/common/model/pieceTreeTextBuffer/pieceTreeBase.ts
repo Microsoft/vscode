@@ -7,7 +7,7 @@ import { CharCode } from 'vs/base/common/charCode';
 import { Position } from 'vs/editor/common/core/position';
 import { Range } from 'vs/editor/common/core/range';
 import { FindMatch, ITextSnapshot } from 'vs/editor/common/model';
-import { NodeColor, SENTINEL, TreeNode, fixInsert, leftest, rbDelete, righttest, updateTreeMetadata } from 'vs/editor/common/model/pieceTreeTextBuffer/rbTreeBase';
+import { NodeColor, SENTINEL, TreeNode, fixInsert, leftmost, rbDelete, rightmost, updateTreeMetadata, createTreeNode } from 'vs/editor/common/model/pieceTreeTextBuffer/rbTreeBase';
 import { SearchData, Searcher, createFindMatch, isValidMatch } from 'vs/editor/common/model/textModelSearch';
 
 // const lfRegex = new RegExp(/\r\n|\r|\n/g);
@@ -294,7 +294,7 @@ export class PieceTreeBase {
 
 		let lastNode: TreeNode | null = null;
 		for (let i = 0, len = chunks.length; i < len; i++) {
-			if (chunks[i].buffer.length > 0) {
+			if (chunks[i].buffer.length > 0) { // skip emty buffers
 				if (!chunks[i].lineStarts) {
 					chunks[i].lineStarts = createLineStartsFast(chunks[i].buffer);
 				}
@@ -307,7 +307,11 @@ export class PieceTreeBase {
 					chunks[i].buffer.length
 				);
 				this._buffers.push(chunks[i]);
-				lastNode = this.rbInsertRight(lastNode, piece);
+				if (lastNode === null) {
+					lastNode = this.initRootNode(piece);
+				} else {
+					lastNode = this.rbInsertRight(lastNode, piece);
+				}
 			}
 		}
 
@@ -910,7 +914,7 @@ export class PieceTreeBase {
 		} else {
 			// insert new node
 			let pieces = this.createNewPieces(value);
-			let node = this.rbInsertLeft(null, pieces[0]);
+			let node = this.initRootNode(pieces[0]);
 
 			for (let k = 1; k < pieces.length; k++) {
 				node = this.rbInsertRight(node, pieces[k]);
@@ -1762,25 +1766,23 @@ export class PieceTreeBase {
 		return callback(node) && this.iterate(node.right, callback);
 	}
 
-	private getNodeContent(node: TreeNode) {
+	private getNodeContent(node: TreeNode): string {
 		if (node === SENTINEL) {
 			return '';
 		}
-		let buffer = this._buffers[node.piece.bufferIndex];
-		let currentContent;
-		let piece = node.piece;
-		let startOffset = this.offsetInBuffer(piece.bufferIndex, piece.start);
-		let endOffset = this.offsetInBuffer(piece.bufferIndex, piece.end);
-		currentContent = buffer.buffer.substring(startOffset, endOffset);
-		return currentContent;
+		return this.getPieceContent(node.piece);
 	}
 
-	getPieceContent(piece: Piece) {
+	getPieceContent(piece: Piece): string {
 		let buffer = this._buffers[piece.bufferIndex];
 		let startOffset = this.offsetInBuffer(piece.bufferIndex, piece.start);
 		let endOffset = this.offsetInBuffer(piece.bufferIndex, piece.end);
 		let currentContent = buffer.buffer.substring(startOffset, endOffset);
 		return currentContent;
+	}
+
+	private initRootNode(p: Piece): TreeNode {
+		return this.root = createTreeNode(p, NodeColor.Black);
 	}
 
 	/**
@@ -1789,24 +1791,16 @@ export class PieceTreeBase {
 	 *    a   b    <----   a    b
 	 *                         /
 	 *                        z
+	 *  Require this.root !== SENTINEL
 	 */
-	private rbInsertRight(node: TreeNode | null, p: Piece): TreeNode {
-		let z = new TreeNode(p, NodeColor.Red);
-		z.left = SENTINEL;
-		z.right = SENTINEL;
-		z.parent = SENTINEL;
-		z.size_left = 0;
-		z.lf_left = 0;
+	private rbInsertRight(node: TreeNode, p: Piece): TreeNode {
+		let z = createTreeNode(p, NodeColor.Red);
 
-		let x = this.root;
-		if (x === SENTINEL) {
-			this.root = z;
-			z.color = NodeColor.Black;
-		} else if (node!.right === SENTINEL) {
+		if (node!.right === SENTINEL) {
 			node!.right = z;
 			z.parent = node!;
 		} else {
-			let nextNode = leftest(node!.right);
+			let nextNode = leftmost(node!.right);
 			nextNode.left = z;
 			z.parent = nextNode;
 		}
@@ -1821,23 +1815,16 @@ export class PieceTreeBase {
 	 *    a   b     ---->   a    b
 	 *                       \
 	 *                        z
+	 * Require this.root !== SENTINEL
 	 */
-	private rbInsertLeft(node: TreeNode | null, p: Piece): TreeNode {
-		let z = new TreeNode(p, NodeColor.Red);
-		z.left = SENTINEL;
-		z.right = SENTINEL;
-		z.parent = SENTINEL;
-		z.size_left = 0;
-		z.lf_left = 0;
+	private rbInsertLeft(node: TreeNode, p: Piece): TreeNode {
+		let z = createTreeNode(p, NodeColor.Red);
 
-		if (this.root === SENTINEL) {
-			this.root = z;
-			z.color = NodeColor.Black;
-		} else if (node!.left === SENTINEL) {
+		if (node!.left === SENTINEL) {
 			node!.left = z;
 			z.parent = node!;
 		} else {
-			let prevNode = righttest(node!.left); // a
+			let prevNode = rightmost(node!.left); // a
 			prevNode.right = z;
 			z.parent = prevNode;
 		}

@@ -171,6 +171,13 @@ function assertTreeInvariants(T: PieceTreeBase): void {
 	assertValidTree(T);
 }
 
+function treeSize(n: TreeNode): number {
+	if (n === SENTINEL) {
+		return 0;
+	}
+	return treeSize(n.left) + treeSize(n.right) + 1;
+}
+
 function depth(n: TreeNode): number {
 	if (n === SENTINEL) {
 		// The leafs are black
@@ -211,6 +218,52 @@ function assertValidTree(T: PieceTreeBase): void {
 }
 
 //#endregion
+
+suite('rbtree init and inserts', () => {
+	test('init root node', () => {
+		let pieceTree = createTextBuffer([
+			'Init text.'
+		]); // init root node in ctor
+		assertTreeInvariants(pieceTree);
+		assert.strictEqual(treeSize(pieceTree.root), 1);
+
+		let pieceTree2 = new PieceTreeBase([], '\r\n', false); // root node is now SENTINEL
+		assert.strictEqual(pieceTree2.root, SENTINEL);
+		pieceTree2.insert(0, 'Init text'); // init root node
+		assertTreeInvariants(pieceTree2);
+		assert.strictEqual(treeSize(pieceTree2.root), 1);
+	});
+
+	test('insert left', () => {
+		let pieceTree = createTextBuffer([
+			'Test text 2.'
+		]);
+		pieceTree.insert(0, 'Test text 1.'); // insert left to the root node
+		assertTreeInvariants(pieceTree);
+		assert.strictEqual(treeSize(pieceTree.root), 2);
+
+		pieceTree.insert(0, 'Test text 0.');
+		assertTreeInvariants(pieceTree);
+		assert.strictEqual(treeSize(pieceTree.root), 3);
+
+		assert.strictEqual(pieceTree.getLinesRawContent(), 'Test text 0.Test text 1.Test text 2.');
+	});
+
+	test('insert right', () => {
+		let pieceTree = createTextBuffer([
+			'Test text 0.', 'Test text 1.', 'Test text 2.'
+		]); // init root and 2 rbInsertRight
+
+		assertTreeInvariants(pieceTree);
+		assert.strictEqual(treeSize(pieceTree.root), 3);
+		assert.strictEqual(pieceTree.getLinesRawContent(), 'Test text 0.Test text 1.Test text 2.');
+
+		pieceTree.insert(pieceTree.getLength(), 'Test text 3.'); // insert rigth to the last node
+		assertTreeInvariants(pieceTree);
+		assert.strictEqual(treeSize(pieceTree.root), 4);
+		assert.strictEqual(pieceTree.getLinesRawContent(), 'Test text 0.Test text 1.Test text 2.Test text 3.');
+	});
+});
 
 suite('inserts and deletes', () => {
 	test('basic insert/delete', () => {

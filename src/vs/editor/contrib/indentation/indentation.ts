@@ -358,11 +358,28 @@ export class ReindentSelectedLinesAction extends EditorAction {
 				if (startLineNumber === endLineNumber) {
 					continue;
 				}
-			} else {
-				startLineNumber--;
 			}
-
-			let editOperations = getReindentEditOperations(model, startLineNumber, endLineNumber);
+			const { tabSize, indentSize, insertSpaces } = model.getOptions();
+			const indentConverter = {
+				shiftIndent: (indentation: string) => {
+					return ShiftCommand.shiftIndent(indentation, indentation.length + 1, tabSize, indentSize, insertSpaces);
+				},
+				unshiftIndent: (indentation: string) => {
+					return ShiftCommand.unshiftIndent(indentation, indentation.length + 1, tabSize, indentSize, insertSpaces);
+				}
+			};
+			const inheritedIndent = LanguageConfigurationRegistry.getGoodIndentForLine(
+				model,
+				model.getLanguageIdentifier().id,
+				startLineNumber,
+				indentConverter
+			);
+			let editOperations = getReindentEditOperations(
+				model,
+				startLineNumber,
+				endLineNumber,
+				inheritedIndent || undefined
+			);
 			edits.push(...editOperations);
 		}
 

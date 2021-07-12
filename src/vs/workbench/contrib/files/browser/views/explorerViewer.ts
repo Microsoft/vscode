@@ -458,8 +458,12 @@ export class FilesRenderer implements ICompressibleTreeRenderer<ExplorerItem, Fu
 			DOM.addStandardDisposableListener(inputBox.inputElement, DOM.EventType.KEY_UP, (e: IKeyboardEvent) => {
 				showInputBoxNotification();
 			}),
-			DOM.addDisposableListener(inputBox.inputElement, DOM.EventType.BLUR, () => {
-				done(inputBox.isInputValid(), true);
+			DOM.addDisposableListener(inputBox.inputElement, DOM.EventType.BLUR, (e: FocusEvent) => {
+				// Do not finish editing if focus goes to another inputBox element in the explorer tree
+				// This could happen if a rerender occurs while editing is active #116625
+				const parentLabel = (e.relatedTarget as HTMLElement)?.parentElement?.parentElement?.parentElement;
+				const finishEditing = parentLabel ? !(parentLabel.classList.contains('explorer-item-edited')) : true;
+				done(inputBox.isInputValid(), finishEditing);
 			}),
 			label,
 			styler

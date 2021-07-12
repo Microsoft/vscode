@@ -6,7 +6,7 @@
 import { ok } from 'vs/base/common/assert';
 import { illegalArgument, readonly } from 'vs/base/common/errors';
 import { IdGenerator } from 'vs/base/common/idGenerator';
-import { TextEditorCursorStyle } from 'vs/editor/common/config/editorOptions';
+import { IRulerOption, TextEditorCursorStyle } from 'vs/editor/common/config/editorOptions';
 import { IRange } from 'vs/editor/common/core/range';
 import { ISingleEditOperation } from 'vs/editor/common/model';
 import { IResolvedTextEditorConfiguration, ITextEditorConfigurationUpdate, MainThreadTextEditorsShape } from 'vs/workbench/api/common/extHost.protocol';
@@ -16,6 +16,7 @@ import type * as vscode from 'vscode';
 import { ILogService } from 'vs/platform/log/common/log';
 import { Lazy } from 'vs/base/common/lazy';
 import { IExtensionDescription } from 'vs/platform/extensions/common/extensions';
+import { equals } from 'vs/base/common/arrays';
 
 export class TextEditorDecorationType {
 
@@ -146,6 +147,7 @@ export class ExtHostTextEditorOptions {
 	private _insertSpaces!: boolean;
 	private _cursorStyle!: TextEditorCursorStyle;
 	private _lineNumbers!: TextEditorLineNumbersStyle;
+	private _rulers!: (number | IRulerOption)[];
 
 	readonly value: vscode.TextEditorOptions;
 
@@ -181,6 +183,12 @@ export class ExtHostTextEditorOptions {
 			},
 			set lineNumbers(value: TextEditorLineNumbersStyle) {
 				that._setLineNumbers(value);
+			},
+			get rulers(): (number | IRulerOption)[] {
+				return that._rulers;
+			},
+			set rulers(value: (number | IRulerOption)[]) {
+				that._setRulers(value);
 			}
 		};
 	}
@@ -190,6 +198,7 @@ export class ExtHostTextEditorOptions {
 		this._insertSpaces = source.insertSpaces;
 		this._cursorStyle = source.cursorStyle;
 		this._lineNumbers = TypeConverters.TextEditorLineNumbersStyle.to(source.lineNumbers);
+		this._rulers = source.rulers;
 	}
 
 	// --- internal: tabSize
@@ -281,6 +290,31 @@ export class ExtHostTextEditorOptions {
 		}));
 	}
 
+	private _setRulers(value: (number | IRulerOption)[]) {
+		const isEqual = equals(this._rulers, value, (a, b) => {
+			// For numbers and object equality
+			if (a === b) {
+				return true;
+			}
+
+			// TODO: Is there a better way to do the types here?
+			if ((a as IRulerOption).color !== (b as IRulerOption).color) {
+				return false;
+			}
+			if ((a as IRulerOption).column !== (b as IRulerOption).column) {
+				return false;
+			}
+			return true;
+		});
+		if (isEqual) {
+			return;
+		}
+		this._rulers = value;
+		this._warnOnError(this._proxy.$trySetOptions(this._id, {
+			rulers: value
+		}));
+	}
+
 	public assign(newOptions: vscode.TextEditorOptions) {
 		const bulkConfigurationUpdate: ITextEditorConfigurationUpdate = {};
 		let hasUpdate = false;
@@ -338,6 +372,12 @@ export class ExtHostTextEditorOptions {
 				hasUpdate = true;
 				bulkConfigurationUpdate.lineNumbers = TypeConverters.TextEditorLineNumbersStyle.from(newOptions.lineNumbers);
 			}
+		}
+
+		if (typeof newOptions.rulers !== 'undefined') {
+			this._rulers = newOptions.rulers;
+			hasUpdate = true;
+			bulkConfigurationUpdate.rulers = newOptions.rulers;
 		}
 
 		if (hasUpdate) {

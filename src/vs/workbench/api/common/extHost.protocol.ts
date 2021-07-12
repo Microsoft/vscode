@@ -15,7 +15,7 @@ import * as performance from 'vs/base/common/performance';
 import Severity from 'vs/base/common/severity';
 import { Dto } from 'vs/base/common/types';
 import { URI, UriComponents } from 'vs/base/common/uri';
-import { RenderLineNumbersType, TextEditorCursorStyle } from 'vs/editor/common/config/editorOptions';
+import { IRulerOption, RenderLineNumbersType, TextEditorCursorStyle } from 'vs/editor/common/config/editorOptions';
 import { IPosition } from 'vs/editor/common/core/position';
 import { IRange } from 'vs/editor/common/core/range';
 import { ISelection, Selection } from 'vs/editor/common/core/selection';
@@ -234,6 +234,7 @@ export interface ITextEditorConfigurationUpdate {
 	insertSpaces?: boolean | 'auto';
 	cursorStyle?: TextEditorCursorStyle;
 	lineNumbers?: RenderLineNumbersType;
+	rulers?: (number | IRulerOption)[];
 }
 
 export interface IResolvedTextEditorConfiguration {
@@ -241,6 +242,7 @@ export interface IResolvedTextEditorConfiguration {
 	insertSpaces: boolean;
 	cursorStyle: TextEditorCursorStyle;
 	lineNumbers: RenderLineNumbersType;
+	rulers: (number | IRulerOption)[];
 }
 
 export enum TextEditorRevealType {

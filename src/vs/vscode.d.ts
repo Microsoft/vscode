@@ -634,6 +634,11 @@ declare module 'vscode' {
 		Relative = 2
 	}
 
+	export interface RulerOption {
+		readonly column: number;
+		readonly color: string | null;
+	}
+
 	/**
 	 * Represents a {@link TextEditor text editor}'s {@link TextEditor.options options}.
 	 */
@@ -669,6 +674,13 @@ declare module 'vscode' {
 		 * When setting a text editor's options, this property is optional.
 		 */
 		lineNumbers?: TextEditorLineNumbersStyle;
+
+		/**
+		 * Render rulers at the specified number of characters.
+		 * When getting a text editor's option, this property will always be present.
+		 * When setting a text editor's options, this property is optional.
+		 */
+		rulers?: (number | RulerOption)[]
 	}
 
 	/**

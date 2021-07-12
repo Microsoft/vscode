@@ -6,7 +6,7 @@
 import { Emitter, Event } from 'vs/base/common/event';
 import { DisposableStore } from 'vs/base/common/lifecycle';
 import { ICodeEditor } from 'vs/editor/browser/editorBrowser';
-import { RenderLineNumbersType, TextEditorCursorStyle, cursorStyleToString, EditorOption } from 'vs/editor/common/config/editorOptions';
+import { RenderLineNumbersType, TextEditorCursorStyle, cursorStyleToString, EditorOption, IRulerOption } from 'vs/editor/common/config/editorOptions';
 import { IRange, Range } from 'vs/editor/common/core/range';
 import { ISelection, Selection } from 'vs/editor/common/core/selection';
 import { IDecorationOptions, ScrollType } from 'vs/editor/common/editorCommon';
@@ -62,17 +62,21 @@ export class MainThreadTextEditorProperties {
 
 		let cursorStyle: TextEditorCursorStyle;
 		let lineNumbers: RenderLineNumbersType;
+		let rulers: (number | IRulerOption)[];
 		if (codeEditor) {
 			const options = codeEditor.getOptions();
 			const lineNumbersOpts = options.get(EditorOption.lineNumbers);
 			cursorStyle = options.get(EditorOption.cursorStyle);
 			lineNumbers = lineNumbersOpts.renderType;
+			rulers = options.get(EditorOption.rulers);
 		} else if (previousProperties) {
 			cursorStyle = previousProperties.options.cursorStyle;
 			lineNumbers = previousProperties.options.lineNumbers;
+			rulers = previousProperties.options.rulers;
 		} else {
 			cursorStyle = TextEditorCursorStyle.Line;
 			lineNumbers = RenderLineNumbersType.On;
+			rulers = [];
 		}
 
 		const modelOptions = model.getOptions();
@@ -80,7 +84,8 @@ export class MainThreadTextEditorProperties {
 			insertSpaces: modelOptions.insertSpaces,
 			tabSize: modelOptions.tabSize,
 			cursorStyle: cursorStyle,
-			lineNumbers: lineNumbers
+			lineNumbers: lineNumbers,
+			rulers: rulers
 		};
 	}
 
@@ -148,6 +153,21 @@ export class MainThreadTextEditorProperties {
 			&& a.insertSpaces === b.insertSpaces
 			&& a.cursorStyle === b.cursorStyle
 			&& a.lineNumbers === b.lineNumbers
+			&& equals(a.rulers, b.rulers, (a, b) => {
+				// For numbers and object equality
+				if (a === b) {
+					return true;
+				}
+
+				// TODO: Is there a better way to do the types here?
+				if ((a as IRulerOption).color !== (b as IRulerOption).color) {
+					return false;
+				}
+				if ((a as IRulerOption).column !== (b as IRulerOption).column) {
+					return false;
+				}
+				return true;
+			})
 		);
 	}
 }
@@ -406,6 +426,12 @@ export class MainThreadTextEditor {
 			}
 			this._codeEditor.updateOptions({
 				lineNumbers: lineNumbers
+			});
+		}
+
+		if (typeof newConfiguration.rulers !== 'undefined') {
+			this._codeEditor.updateOptions({
+				rulers: newConfiguration.rulers
 			});
 		}
 	}

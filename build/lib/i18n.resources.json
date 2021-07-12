@@ -163,6 +163,10 @@
 			"project": "vscode-workbench"
 		},
 		{
+			"name": "vs/workbench/contrib/searchEditor2",
+			"project": "vscode-workbench"
+		},
+		{
 			"name": "vs/workbench/contrib/snippets",
 			"project": "vscode-workbench"
 		},

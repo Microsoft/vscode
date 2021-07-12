@@ -1,0 +1,180 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.search-editor {
+	display: flex;
+	flex-direction: column;
+}
+
+.search-editor .search-results {
+	flex: 1;
+}
+
+.search-editor .query-container {
+	margin: 0px 12px 12px 2px;
+	padding-top: 6px;
+}
+
+.search-editor .search-widget .toggle-replace-button {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 16px;
+	height: 100%;
+	box-sizing: border-box;
+	background-position: center center;
+	background-repeat: no-repeat;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.search-editor .search-widget .search-container,
+.search-editor .search-widget .replace-container {
+	margin-left: 18px;
+	display: flex;
+	align-items: center;
+}
+
+.search-editor .search-widget .monaco-findInput {
+	display: inline-block;
+	vertical-align: middle;
+	width: 100%;
+}
+
+.search-editor .search-widget .monaco-inputbox > .ibwrapper {
+	height: 100%;
+}
+
+.search-editor .search-widget .monaco-inputbox > .ibwrapper > .mirror,
+.search-editor .search-widget .monaco-inputbox > .ibwrapper > textarea.input {
+	padding: 3px;
+	padding-left: 4px;
+}
+
+.search-editor .search-widget .monaco-inputbox > .ibwrapper > .mirror {
+	max-height: 134px;
+}
+
+/* NOTE: height is also used in searchWidget.ts as a constant*/
+.search-editor .search-widget .monaco-inputbox > .ibwrapper > textarea.input {
+	overflow: initial;
+	height: 24px; /* set initial height before measure */
+}
+
+.search-editor .monaco-inputbox > .ibwrapper > textarea.input {
+	scrollbar-width: none; /* Firefox: hide scrollbar */
+}
+
+.search-editor .monaco-inputbox > .ibwrapper > textarea.input::-webkit-scrollbar {
+	display: none;
+}
+
+.search-editor .search-widget .context-lines-input {
+	display: none;
+}
+
+.search-editor .search-widget.show-context .context-lines-input {
+	display: inherit;
+	margin-left: 5px;
+	margin-right: 2px;
+	max-width: 50px;
+}
+
+
+.search-editor .search-widget .replace-container {
+	margin-top: 6px;
+	position: relative;
+	display: inline-flex;
+}
+
+.search-editor .search-widget .replace-input {
+	position: relative;
+	display: flex;
+	vertical-align: middle;
+	width: auto !important;
+	height: 25px;
+}
+
+.search-editor .search-widget .replace-input > .controls {
+	position: absolute;
+	top: 3px;
+	right: 2px;
+}
+
+.search-editor .search-widget .replace-container.disabled {
+	display: none;
+}
+
+.search-editor .search-widget .replace-container .monaco-action-bar {
+	margin-left: 0;
+}
+
+.search-editor .search-widget .replace-container .monaco-action-bar {
+	height: 25px;
+}
+
+.search-editor .search-widget .replace-container .monaco-action-bar .action-item .codicon {
+	background-repeat: no-repeat;
+	width: 25px;
+	height: 25px;
+	margin-right: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.search-editor .includes-excludes {
+	min-height: 1em;
+	position: relative;
+	margin: 0 0 0 17px;
+}
+
+.search-editor .includes-excludes .expand {
+	position: absolute;
+	right: -2px;
+	cursor: pointer;
+	width: 25px;
+	height: 16px;
+	z-index: 2; /* Force it above the search results message, which has a negative top margin */
+}
+
+.search-editor .includes-excludes .file-types {
+	display: none;
+}
+
+.search-editor .includes-excludes.expanded .file-types {
+	display: inherit;
+}
+
+.search-editor .includes-excludes.expanded .file-types:last-child {
+	padding-bottom: 10px;
+}
+
+.search-editor .includes-excludes.expanded h4 {
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+	padding: 4px 0 0;
+	margin: 0;
+	font-size: 11px;
+	font-weight: normal;
+}
+
+.search-editor .messages {
+	margin-top: -5px;
+	cursor: default;
+}
+
+.search-editor .message {
+	padding-left: 22px;
+	padding-right: 22px;
+	padding-top: 0px;
+}
+
+.search-editor a.prominent {
+	text-decoration: underline;
+}

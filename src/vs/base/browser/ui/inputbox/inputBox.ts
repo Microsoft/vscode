@@ -36,6 +36,7 @@ export interface IInputOptions extends IInputBoxStyles {
 	readonly flexibleWidth?: boolean;
 	readonly flexibleMaxHeight?: number;
 	readonly actions?: ReadonlyArray<IAction>;
+	readonly shouldNotBlurOnDisable?: boolean;
 }
 
 export interface IInputBoxStyles {
@@ -326,7 +327,9 @@ export class InputBox extends Widget {
 	}
 
 	public disable(): void {
-		this.blur();
+		if (!this.options.shouldNotBlurOnDisable) {
+			this.blur();
+		}
 		this.input.disabled = true;
 		this._hideMessage();
 	}

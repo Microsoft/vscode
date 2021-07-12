@@ -23,7 +23,7 @@ export class QuickInputBox extends Disposable {
 	) {
 		super();
 		this.container = dom.append(this.parent, $('.quick-input-box'));
-		this.inputBox = this._register(new InputBox(this.container, undefined));
+		this.inputBox = this._register(new InputBox(this.container, undefined, { shouldNotBlurOnDisable: true }));
 	}
 
 	onKeyDown = (handler: (event: StandardKeyboardEvent) => void): IDisposable => {

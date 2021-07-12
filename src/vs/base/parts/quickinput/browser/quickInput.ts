@@ -1546,7 +1546,7 @@ export class QuickInputController extends Disposable {
 			oldController.didHide();
 		}
 
-		this.setEnabled(true);
+		this.setEnabled(controller.enabled);
 		ui.leftActionBar.clear();
 		ui.title.textContent = '';
 		ui.description1.textContent = '';
@@ -1624,7 +1624,7 @@ export class QuickInputController extends Disposable {
 				(item as ActionViewItem).getAction().enabled = enabled;
 			}
 			this.getUI().checkAll.disabled = !enabled;
-			// this.getUI().inputBox.enabled = enabled; Avoid loosing focus.
+			this.getUI().inputBox.enabled = enabled;
 			this.getUI().ok.enabled = enabled;
 			this.getUI().list.enabled = enabled;
 		}

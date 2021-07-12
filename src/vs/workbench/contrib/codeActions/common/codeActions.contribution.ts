@@ -12,6 +12,7 @@ import { CodeActionsContribution, editorConfiguration } from 'vs/workbench/contr
 import { CodeActionsExtensionPoint, codeActionsExtensionPointDescriptor } from 'vs/workbench/contrib/codeActions/common/codeActionsExtensionPoint';
 import { CodeActionDocumentationContribution } from 'vs/workbench/contrib/codeActions/common/documentationContribution';
 import { DocumentationExtensionPoint, documentationExtensionPointDescriptor } from 'vs/workbench/contrib/codeActions/common/documentationExtensionPoint';
+import { RenameRefactorContribution } from 'vs/workbench/contrib/codeActions/common/renameRefactorContribution';
 import { ExtensionsRegistry } from 'vs/workbench/services/extensions/common/extensionsRegistry';
 
 const codeActionsExtensionPoint = ExtensionsRegistry.registerExtensionPoint<CodeActionsExtensionPoint[]>(codeActionsExtensionPointDescriptor);
@@ -26,6 +27,7 @@ class WorkbenchConfigurationContribution {
 	) {
 		instantiationService.createInstance(CodeActionsContribution, codeActionsExtensionPoint);
 		instantiationService.createInstance(CodeActionDocumentationContribution, documentationExtensionPoint);
+		instantiationService.createInstance(RenameRefactorContribution);
 	}
 }
 

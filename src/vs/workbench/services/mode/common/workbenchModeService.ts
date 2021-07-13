@@ -26,6 +26,7 @@ export interface IRawLanguageExtensionPoint {
 	aliases: string[];
 	mimetypes: string[];
 	configuration: string;
+	icon: string;
 }
 
 export const languagesExtPoint: IExtensionPoint<IRawLanguageExtensionPoint[]> = ExtensionsRegistry.registerExtensionPoint<IRawLanguageExtensionPoint[]>({
@@ -85,6 +86,10 @@ export const languagesExtPoint: IExtensionPoint<IRawLanguageExtensionPoint[]> = 
 					description: nls.localize('vscode.extension.contributes.languages.configuration', 'A relative path to a file containing configuration options for the language.'),
 					type: 'string',
 					default: './language-configuration.json'
+				},
+				icon: {
+					description: nls.localize('vscode.extension.contributes.languages.icon', 'A contributed icon name to use as file icon, if no icon theme provides one for the language'),
+					type: 'string'
 				}
 			}
 		}
@@ -131,7 +136,8 @@ export class WorkbenchModeServiceImpl extends ModeServiceImpl {
 							firstLine: ext.firstLine,
 							aliases: ext.aliases,
 							mimetypes: ext.mimetypes,
-							configuration: configuration
+							configuration: configuration,
+							icon: ext.icon
 						});
 					}
 				}
@@ -227,6 +233,10 @@ function isValidLanguageExtensionPoint(value: IRawLanguageExtensionPoint, collec
 	}
 	if (!isUndefinedOrStringArray(value.mimetypes)) {
 		collector.error(nls.localize('opt.mimetypes', "property `{0}` can be omitted and must be of type `string[]`", 'mimetypes'));
+		return false;
+	}
+	if (typeof value.icon !== 'undefined' && typeof value.icon !== 'string') {
+		collector.error(nls.localize('opt.icon', "property `{0}` can be omitted and must be of type `string`", 'icon'));
 		return false;
 	}
 	return true;

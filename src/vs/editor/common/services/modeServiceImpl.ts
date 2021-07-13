@@ -96,6 +96,10 @@ export class ModeServiceImpl extends Disposable implements IModeService {
 		return this._registry.getMimeForMode(modeId);
 	}
 
+	public getIconForMode(modeId: string): string | null {
+		return this._registry.getIconForMode(modeId);
+	}
+
 	public getLanguageName(modeId: string): string | null {
 		return this._registry.getLanguageName(modeId);
 	}

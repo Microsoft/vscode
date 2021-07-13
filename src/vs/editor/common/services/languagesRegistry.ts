@@ -26,6 +26,7 @@ export interface IResolvedLanguage {
 	extensions: string[];
 	filenames: string[];
 	configurationFiles: URI[];
+	icons: string[];
 }
 
 export class LanguagesRegistry extends Disposable {
@@ -129,7 +130,8 @@ export class LanguagesRegistry extends Disposable {
 				aliases: [],
 				extensions: [],
 				filenames: [],
-				configurationFiles: []
+				configurationFiles: [],
+				icons: []
 			};
 			this._languages[langId] = resolvedLanguage;
 		}
@@ -227,6 +229,10 @@ export class LanguagesRegistry extends Disposable {
 		if (lang.configuration) {
 			resolvedLanguage.configurationFiles.push(lang.configuration);
 		}
+
+		if (lang.icon) {
+			resolvedLanguage.icons.push(lang.icon);
+		}
 	}
 
 	public isRegisteredMode(mimetypeOrModeId: string): boolean {
@@ -273,6 +279,14 @@ export class LanguagesRegistry extends Disposable {
 		}
 		const language = this._languages[modeId];
 		return (language.mimetypes[0] || null);
+	}
+
+	public getIconForMode(modeId: string): string | null {
+		if (!hasOwnProperty.call(this._languages, modeId)) {
+			return null;
+		}
+		const language = this._languages[modeId];
+		return (language.icons[0] || null);
 	}
 
 	public extractModeIds(commaSeparatedMimetypesOrCommaSeparatedIds: string | undefined): string[] {

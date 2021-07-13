@@ -19,6 +19,7 @@ export interface ILanguageExtensionPoint {
 	aliases?: string[];
 	mimetypes?: string[];
 	configuration?: URI;
+	icon?: string;
 }
 
 export interface ILanguageSelection {
@@ -39,6 +40,7 @@ export interface IModeService {
 	getExtensions(alias: string): string[];
 	getFilenames(alias: string): string[];
 	getMimeForMode(modeId: string): string | null;
+	getIconForMode(modeId: string): string | null;
 	getLanguageName(modeId: string): string | null;
 	getModeIdForLanguageName(alias: string): string | null;
 	getModeIdByFilepathOrFirstLine(resource: URI, firstLine?: string): string | null;

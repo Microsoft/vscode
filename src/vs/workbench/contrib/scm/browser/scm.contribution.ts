@@ -233,6 +233,21 @@ KeybindingsRegistry.registerCommandAndKeybindingRule({
 	}
 });
 
+KeybindingsRegistry.registerCommandAndKeybindingRule({
+	id: 'scm.clearMessage',
+	description: { description: localize('scm clear message', "SCM: Clear Message"), args: [] },
+	weight: KeybindingWeight.WorkbenchContrib,
+	when: ContextKeyExpr.has('scmRepository'),
+	primary: KeyCode.Escape,
+	handler: accessor => {
+		const contextKeyService = accessor.get(IContextKeyService);
+		const context = contextKeyService.getContext(document.activeElement);
+		const repository = context.getValue<ISCMRepository>('scmRepository');
+
+		repository?.input.setValue('', true)
+	}
+});
+
 const viewNextCommitCommand = {
 	description: { description: localize('scm view next commit', "SCM: View Next Commit"), args: [] },
 	weight: KeybindingWeight.WorkbenchContrib,

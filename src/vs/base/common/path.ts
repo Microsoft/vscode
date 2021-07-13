@@ -40,6 +40,7 @@ const CHAR_FORWARD_SLASH = 47; /* / */
 const CHAR_BACKWARD_SLASH = 92; /* \ */
 const CHAR_COLON = 58; /* : */
 const CHAR_QUESTION_MARK = 63; /* ? */
+const CHAR_TILDE = 126; /* ~ */
 
 class ErrorInvalidArgType extends Error {
 	code: 'ERR_INVALID_ARG_TYPE';
@@ -231,6 +232,18 @@ export const win32: IPath = {
 			let device = '';
 			let isAbsolute = false;
 			const code = path.charCodeAt(0);
+
+			// Convert the leading tilde to home path. If the tilde is used
+			// as part of a filename or directory name, it will not be converted.
+			if (code === CHAR_TILDE &&
+				len === 1 ||
+				isPathSeparator(path.charCodeAt(1))) {
+				const userProfile = process.env['USERPROFILE'];
+				path = `${userProfile}\\${path.slice(1)}`;
+
+				rootEnd = 2;
+				isAbsolute = true;
+			}
 
 			// Try to match a root
 			if (len === 1) {

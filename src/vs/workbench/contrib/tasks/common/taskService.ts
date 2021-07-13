@@ -70,6 +70,7 @@ export interface ITaskService {
 	terminate(task: Task): Promise<TaskTerminateResponse>;
 	tasks(filter?: TaskFilter): Promise<Task[]>;
 	taskTypes(): string[];
+	getPossibleTaskTypes(): Promise<string[]>;
 	getWorkspaceTasks(runSource?: TaskRunSource): Promise<Map<string, WorkspaceFolderTaskResult>>;
 	readRecentTasks(): Promise<(Task | ConfiguringTask)[]>;
 	removeRecentlyUsedTask(taskRecentlyUsedKey: string): void;

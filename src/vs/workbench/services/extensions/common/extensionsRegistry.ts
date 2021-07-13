@@ -310,6 +310,16 @@ export const schema: IJSONSchema = {
 						description: nls.localize('vscode.extension.activationEvents.onCustomEditor', 'An activation event emitted whenever the specified custom editor becomes visible.'),
 					},
 					{
+						label: 'onTaskProvide',
+						description: nls.localize('vscode.extension.activationEvents.onTaskProvide', 'An activation event emitted whenever VS Code is looking for tasks of a given (or any) type.'),
+						body: 'onTaskResolve:${1:taskType}'
+					},
+					{
+						label: 'onTaskResolve',
+						description: nls.localize('vscode.extension.activationEvents.onTaskResolve', 'An activation event emitted whenever a task with the given type gets resolved.'),
+						body: 'onTaskResolve:${1:taskType}'
+					},
+					{
 						label: 'onNotebook',
 						body: 'onNotebook:${1:type}',
 						description: nls.localize('vscode.extension.activationEvents.onNotebook', 'An activation event emitted whenever the specified notebook document is opened.'),

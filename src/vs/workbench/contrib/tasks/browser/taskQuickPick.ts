@@ -148,7 +148,7 @@ export class TaskQuickPick extends Disposable {
 		}
 		let recentTasks: (Task | ConfiguringTask)[] = (await this.taskService.readRecentTasks()).reverse();
 		const configuredTasks: (Task | ConfiguringTask)[] = this.handleFolderTaskResult(await this.taskService.getWorkspaceTasks());
-		const extensionTaskTypes = this.taskService.taskTypes();
+		const extensionTaskTypes = await this.taskService.getPossibleTaskTypes();
 		this.topLevelEntries = [];
 		// Dedupe will update recent tasks if they've changed in tasks.json.
 		const dedupeAndPrune = this.dedupeConfiguredAndRecent(recentTasks, configuredTasks);

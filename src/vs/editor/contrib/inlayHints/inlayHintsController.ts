@@ -56,10 +56,12 @@ export class InlayHintsController implements IEditorContribution {
 
 	private readonly _disposables = new DisposableStore();
 	private readonly _sessionDisposables = new DisposableStore();
-	private readonly _getInlayHintsDelays = new LanguageFeatureRequestDelays(InlayHintsProviderRegistry, 250, 2500);
+	private readonly _getInlayHintsDelays = new LanguageFeatureRequestDelays(InlayHintsProviderRegistry, 300, 2500);
+	private readonly _getInlayHintsFastCleanupDelays = new LanguageFeatureRequestDelays(InlayHintsProviderRegistry, 100, 20);
 
 	private _decorationsTypeIds: string[] = [];
 	private _decorationIds: string[] = [];
+	private _decorationIdSet = new Set<string>();
 
 	constructor(
 		private readonly _editor: ICodeEditor,
@@ -119,8 +121,23 @@ export class InlayHintsController implements IEditorContribution {
 
 		this._sessionDisposables.add(scheduler);
 
+		const fastCleanupScheduler = new RunOnceScheduler(async () => {
+			const t1 = Date.now();
+			// update moving average
+			const newDelay = this._getInlayHintsDelays.update(model, Date.now() - t1);
+			scheduler.delay = newDelay;
+
+			// remove hints
+			this._removeDecorationsOnCursorLine();
+		}, this._getInlayHintsFastCleanupDelays.get(model));
+
+		this._sessionDisposables.add(fastCleanupScheduler);
+
 		// update inline hints when content or scroll position changes
-		this._sessionDisposables.add(this._editor.onDidChangeModelContent(() => scheduler.schedule()));
+		this._sessionDisposables.add(this._editor.onDidChangeModelContent(() => {
+			scheduler.schedule();
+			fastCleanupScheduler.schedule();
+		}));
 		this._disposables.add(this._editor.onDidScrollChange(() => scheduler.schedule()));
 		scheduler.schedule();
 
@@ -181,6 +198,7 @@ export class InlayHintsController implements IEditorContribution {
 		this._decorationsTypeIds = newDecorationsTypeIds;
 
 		this._decorationIds = this._editor.deltaDecorations(this._decorationIds, newDecorationsData);
+		this._decorationIdSet = new Set(this._decorationIds);
 	}
 
 	private _getLayoutInfo() {
@@ -192,6 +210,26 @@ export class InlayHintsController implements IEditorContribution {
 		}
 		const fontFamily = options.fontFamily || this._editor.getOption(EditorOption.fontFamily);
 		return { fontSize, fontFamily };
+	}
+
+	private _removeDecorationsOnCursorLine() {
+		const cursorPosition = this._editor.getPosition();
+		if (!cursorPosition) {
+			return;
+		}
+
+		const lineDecorations = this._editor.getLineDecorations(cursorPosition.lineNumber);
+		if (!lineDecorations?.length) {
+			return;
+		}
+
+		const lineDecorationIdsToRemove = lineDecorations.filter(decoration => this._decorationIdSet.has(decoration.id));
+		if (!lineDecorationIdsToRemove.length) {
+			// nothing to remove
+			return;
+		}
+
+		this._editor.deltaDecorations(lineDecorationIdsToRemove.map(x => x.id), []);
 	}
 
 	private _removeAllDecorations(): void {

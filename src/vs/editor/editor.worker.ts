@@ -9,7 +9,7 @@ import { EditorWorkerHost } from 'vs/editor/common/services/editorWorkerServiceI
 
 let initialized = false;
 
-export function initialize(foreignModule: any) {
+function initialize(foreignModule: any) {
 	if (initialized) {
 		return;
 	}

@@ -320,7 +320,7 @@ namespace schema {
 
 	export function isValidItems(items: (IUserFriendlyMenuItem | IUserFriendlySubmenuItem)[], collector: ExtensionMessageCollector): boolean {
 		if (!Array.isArray(items)) {
-			collector.error(localize('requirearray', "submenu items must be an array"));
+			collector.error(localize('requirearray', "menu items must be an array"));
 			return false;
 		}
 

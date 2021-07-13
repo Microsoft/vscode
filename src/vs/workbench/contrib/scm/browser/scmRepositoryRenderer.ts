@@ -83,7 +83,7 @@ export class RepositoryRenderer implements ICompressibleTreeRenderer<ISCMReposit
 			if (folder?.uri.toString() === repository.provider.rootUri.toString()) {
 				templateData.name.textContent = folder.name;
 			} else {
-				templateData.name.textContent = basename(repository.provider.rootUri);
+				templateData.name.textContent = (folder ? '┡ ' : '') + basename(repository.provider.rootUri);
 			}
 
 			templateData.label.title = `${repository.provider.label}: ${repository.provider.rootUri.fsPath}`;

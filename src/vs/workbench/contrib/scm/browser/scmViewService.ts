@@ -22,6 +22,12 @@ export interface ISCMViewServiceState {
 	readonly visible: number[];
 }
 
+interface SortIndex {
+	index: number;
+	uri: string;
+	children: SortIndex[];
+}
+
 export class SCMViewService implements ISCMViewService {
 
 	declare readonly _serviceBrand: undefined;
@@ -61,7 +67,7 @@ export class SCMViewService implements ISCMViewService {
 			return;
 		}
 
-		this._visibleRepositories = visibleRepositories;
+		this._visibleRepositories = this.sortRepositories(visibleRepositories);
 		this._visibleRepositoriesSet = set;
 		this._onDidSetVisibleRepositories.fire({ added, removed });
 
@@ -122,6 +128,33 @@ export class SCMViewService implements ISCMViewService {
 		storageService.onWillSaveState(this.onWillSaveState, this, this.disposables);
 	}
 
+	private sortRepositories(visibleRepositories: ISCMRepository[]): ISCMRepository[] {
+		let sortIndexs: SortIndex[] = visibleRepositories.map((repo, index) => ({
+			index,
+			uri: repo.provider.rootUri!.path,
+			children: []
+		}));
+		sortIndexs.sort((a, b) => b.uri.length - a.uri.length);
+		for (let i = sortIndexs.length; i--;) {
+			const repo = sortIndexs[i];
+			const rootUri = `${repo.uri}/`;
+
+			for (let j = i; j--;) {
+				if (sortIndexs[j].uri.includes(rootUri)) {
+					repo.children = sortIndexs.splice(j, 1).concat(repo.children);
+					--i;
+				}
+			}
+		}
+		sortIndexs.sort((a, b) => a.index - b.index);
+		sortIndexs = sortIndexs.reduce((acc: SortIndex[], repo) => {
+			acc.push(repo, ...repo.children);
+			return acc;
+		}, []);
+
+		return sortIndexs.map(({ index }) => visibleRepositories[index]);
+	}
+
 	private onDidAddRepository(repository: ISCMRepository): void {
 		this.logService.trace('SCMViewService#onDidAddRepository', getProviderStorageKey(repository.provider));
 
@@ -170,6 +203,7 @@ export class SCMViewService implements ISCMViewService {
 		}
 
 		this._visibleRepositories.push(repository);
+		this._visibleRepositories = this.sortRepositories(this._visibleRepositories);
 		this._visibleRepositoriesSet.add(repository);
 		this._onDidChangeRepositories.fire({ added: [repository], removed });
 

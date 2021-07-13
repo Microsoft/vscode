@@ -38,6 +38,8 @@ export interface IQuickInputOptions {
 	idPrefix: string;
 	container: HTMLElement;
 	ignoreFocusOut(): boolean;
+	maximumWidth(): number;
+	relativeWidth(): number;
 	isScreenReaderOptimized(): boolean;
 	backKeybindingLabel(): string | undefined;
 	setContextKey(id?: string): void;
@@ -1117,8 +1119,6 @@ class InputBox extends QuickInput implements IInputBox {
 }
 
 export class QuickInputController extends Disposable {
-	private static readonly MAX_WIDTH = 600; // Max total width of quick input widget
-
 	private idPrefix: string;
 	private ui: QuickInputUI | undefined;
 	private dimension?: dom.IDimension;
@@ -1700,7 +1700,7 @@ export class QuickInputController extends Disposable {
 			this.ui.container.style.top = `${this.titleBarOffset}px`;
 
 			const style = this.ui.container.style;
-			const width = Math.min(this.dimension!.width * 0.62 /* golden cut */, QuickInputController.MAX_WIDTH);
+			const width = Math.min(this.dimension!.width * this.options.relativeWidth(), this.options.maximumWidth());
 			style.width = width + 'px';
 			style.marginLeft = '-' + (width / 2) + 'px';
 

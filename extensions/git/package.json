@@ -2117,6 +2117,11 @@
           "default": false,
           "description": "%config.useCommitInputAsStashMessage%"
         },
+        "git.useIntegratedAskPass": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.useIntegratedAskPass%"
+        },
         "git.githubAuthentication": {
           "deprecationMessage": "This setting is now deprecated, please use `github.gitAuthentication` instead."
         },

@@ -185,6 +185,7 @@
 	"config.timeline.date.committed": "Use the committed date",
 	"config.timeline.date.authored": "Use the authored date",
 	"config.useCommitInputAsStashMessage": "Controls whether to use the message from the commit input box as the default stash message.",
+	"config.useIntegratedAskPass": "Controls wether GIT_ASKPASS should be overwritten to use the integrated version.",
 	"submenu.explorer": "Git",
 	"submenu.commit": "Commit",
 	"submenu.commit.amend": "Amend",

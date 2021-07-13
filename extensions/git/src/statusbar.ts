@@ -7,7 +7,7 @@ import { Disposable, Command, EventEmitter, Event, workspace, Uri } from 'vscode
 import { Repository, Operation } from './repository';
 import { anyEvent, dispose, filterEvent } from './util';
 import * as nls from 'vscode-nls';
-import { Branch, RemoteSourceProvider } from './api/git';
+import { Branch, RemoteSourceProvider } from 'git';
 import { IRemoteSourceProviderRegistry } from './remoteProvider';
 
 const localize = nls.loadMessageBundle();

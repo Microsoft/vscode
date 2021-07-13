@@ -7,7 +7,7 @@ import { window, InputBoxOptions, Uri, OutputChannel, Disposable, workspace } fr
 import { IDisposable, EmptyDisposable, toDisposable } from './util';
 import * as path from 'path';
 import { IIPCHandler, IIPCServer, createIPCServer } from './ipc/ipcServer';
-import { CredentialsProvider, Credentials } from './api/git';
+import { CredentialsProvider, Credentials } from 'git';
 
 export class Askpass implements IIPCHandler {
 

@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Disposable, Event } from 'vscode';
-import { RemoteSourceProvider } from './api/git';
+import { RemoteSourceProvider } from 'git';
 
 export interface IRemoteSourceProviderRegistry {
 	readonly onDidAddRemoteSourceProvider: Event<RemoteSourceProvider>;

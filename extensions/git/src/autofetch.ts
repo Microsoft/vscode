@@ -7,7 +7,7 @@ import { workspace, Disposable, EventEmitter, Memento, window, MessageItem, Conf
 import { Repository, Operation } from './repository';
 import { eventToPromise, filterEvent, onceEvent } from './util';
 import * as nls from 'vscode-nls';
-import { GitErrorCodes } from './api/git';
+import { GitErrorCodes } from 'git';
 
 const localize = nls.loadMessageBundle();
 

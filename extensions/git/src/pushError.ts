@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Disposable } from 'vscode';
-import { PushErrorHandler } from './api/git';
+import { PushErrorHandler } from 'git';
 
 export interface IPushErrorHandlerRegistry {
 	registerPushErrorHandler(provider: PushErrorHandler): Disposable;

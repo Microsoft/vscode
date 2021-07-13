@@ -9,7 +9,7 @@ import { Repository, GitResourceGroup } from './repository';
 import { Model } from './model';
 import { debounce } from './decorators';
 import { filterEvent, dispose, anyEvent, fireEvent, PromiseSource } from './util';
-import { GitErrorCodes, Status } from './api/git';
+import { GitErrorCodes, Status } from 'git';
 
 class GitIgnoreDecorationProvider implements FileDecorationProvider {
 

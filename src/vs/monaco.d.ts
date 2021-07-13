@@ -3493,6 +3493,11 @@ declare namespace monaco.editor {
 		 * Defaults to true.
 		 */
 		sticky?: boolean;
+		/**
+		 * Should the hover be shown below the line if possible?
+		 * Defaults to false.
+		 */
+		below?: boolean;
 	}
 
 	export type EditorHoverOptions = Readonly<Required<IEditorHoverOptions>>;

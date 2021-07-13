@@ -202,6 +202,7 @@ export class ModesContentHoverWidget extends Widget implements IContentWidget, I
 	private _shouldFocus: boolean;
 	private _colorPicker: ColorPickerWidget | null;
 	private _renderDisposable: IDisposable | null;
+	private _preferBelow: boolean;
 
 	constructor(
 		editor: ICodeEditor,
@@ -252,6 +253,7 @@ export class ModesContentHoverWidget extends Widget implements IContentWidget, I
 		this._isChangingDecorations = false;
 		this._shouldFocus = false;
 		this._colorPicker = null;
+		this._preferBelow = this._editor.getOption(EditorOption.hover).below;
 
 		this._hoverOperation = new HoverOperation(
 			this._computer,
@@ -271,6 +273,7 @@ export class ModesContentHoverWidget extends Widget implements IContentWidget, I
 		}));
 		this._register(editor.onDidChangeConfiguration(() => {
 			this._hoverOperation.setHoverTime(this._editor.getOption(EditorOption.hover).delay);
+			this._preferBelow = this._editor.getOption(EditorOption.hover).below;
 		}));
 		this._register(TokenizationRegistry.onDidChange(() => {
 			if (this._isVisible && this._lastAnchor && this._messages.length > 0) {
@@ -370,10 +373,13 @@ export class ModesContentHoverWidget extends Widget implements IContentWidget, I
 			return {
 				position: this._showAtPosition,
 				range: this._showAtRange,
-				preference: [
+				preference: this._preferBelow ? [
+					ContentWidgetPositionPreference.BELOW,
 					ContentWidgetPositionPreference.ABOVE,
-					ContentWidgetPositionPreference.BELOW
-				]
+				] : [
+					ContentWidgetPositionPreference.ABOVE,
+					ContentWidgetPositionPreference.BELOW,
+				],
 			};
 		}
 		return null;

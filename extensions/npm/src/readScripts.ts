@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { JSONVisitor, visit } from 'jsonc-parser';
-import { Location, Position, Range, TextDocument } from 'vscode';
+import { Location, Position, Range, TextDocument, workspace } from 'vscode';
 
 export interface INpmScriptReference {
 	name: string;
@@ -41,7 +41,9 @@ export const readScripts = (document: TextDocument, buffer = document.getText())
 			level--;
 		},
 		onLiteralValue(value: unknown, offset: number, length: number) {
-			if (buildingScript && typeof value === 'string') {
+			const config = workspace.getConfiguration('npm');
+			const excludeRegex = new RegExp(config.get<string>('branchValidationRegex')!);
+			if (buildingScript && typeof value === 'string' && value.length && !excludeRegex.test(value)) {
 				scripts.push({
 					...buildingScript,
 					value,

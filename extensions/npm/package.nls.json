@@ -14,6 +14,7 @@
 	"config.npm.scriptExplorerAction": "The default click action used in the npm scripts explorer: `open` or `run`, the default is `open`.",
 	"config.npm.enableRunFromFolder": "Enable running npm scripts contained in a folder from the Explorer context menu.",
 	"config.npm.fetchOnlinePackageInfo": "Fetch data from https://registry.npmjs.org and https://registry.bower.io to provide auto-completion and information on hover features on npm dependencies.",
+	"config.npm.excludeScripts": "A regular expression to hide npm scripts. Scripts that match will not be listed.",
 	"npm.parseError": "Npm task detection: failed to parse the file {0}",
 	"taskdef.script": "The npm script to customize.",
 	"taskdef.path": "The path to the folder of the package.json file that provides the script. Can be omitted.",

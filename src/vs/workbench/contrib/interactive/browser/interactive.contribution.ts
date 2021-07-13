@@ -118,15 +118,15 @@ export class InteractiveDocumentContribution extends Disposable implements IWork
 					transientOptions: contentOptions
 				};
 			},
-			save: async (uri: URI) => {
+			save: async () => {
 				// trigger backup always
 				return false;
 			},
-			saveAs: async (uri: URI, target: URI, token: CancellationToken) => {
+			saveAs: async () => {
 				// return this._proxy.$saveNotebookAs(viewType, uri, target, token);
 				return false;
 			},
-			backup: async (uri: URI, token: CancellationToken) => {
+			backup: async (uri: URI) => {
 				const doc = notebookService.listNotebookDocuments().find(document => document.uri.toString() === uri.toString());
 				if (doc) {
 					const cells = doc.cells.map(cell => ({
@@ -407,7 +407,38 @@ registerAction2(class extends Action2 {
 				]);
 
 				await editorControl.notebookEditor.executeNotebookCells(editorControl.notebookEditor.viewModel!.getCells({ start: index, end: index + 1 }));
-				editorControl.notebookEditor.revealCellRangeInView({ start: index, end: index + 1 });
+				const cell = editorControl.notebookEditor.getCellsFromViewRange(index, index + 1);
+				if (cell.length === 1) {
+					editorControl.notebookEditor.focusNotebookCell(cell[0], 'output');
+				}
+			}
+		}
+	}
+});
+
+registerAction2(class extends Action2 {
+	constructor() {
+		super({
+			id: 'interactive.focusOutput',
+			title: { value: localize('interactive.focusOutput', "Focus Cell Output"), original: 'Focus Cell Output' },
+			category: 'Interactive',
+			f1: false
+		});
+	}
+
+	async run(accessor: ServicesAccessor, cellIndex: number): Promise<void> {
+		const editorService = accessor.get(IEditorService);
+		const editorControl = editorService.activeEditorPane?.getControl() as { notebookEditor: NotebookEditorWidget | undefined, codeEditor: CodeEditorWidget; } | undefined;
+
+		if (editorControl && editorControl.notebookEditor) {
+			const notebookDocument = editorControl.notebookEditor.textModel;
+
+			if (notebookDocument) {
+				const index = cellIndex ?? notebookDocument.length;
+				const cell = editorControl.notebookEditor.getCellsFromViewRange(index, index + 1);
+				if (cell.length === 1) {
+					editorControl.notebookEditor.focusNotebookCell(cell[0], 'output');
+				}
 			}
 		}
 	}

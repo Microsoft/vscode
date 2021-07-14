@@ -26,10 +26,23 @@ class VSCodeWorkspaceMarkdownDocumentProvider extends Disposable implements Work
 
 	private _watcher: vscode.FileSystemWatcher | undefined;
 
-	async getAllMarkdownDocuments() {
+	/**
+	 * Reads and parses all .md documents in the workspace.
+	 * Files are processed in batches, to keep the number of open files small.
+	 *
+	 * @returns Array of processed .md files.
+	 */
+	async getAllMarkdownDocuments(): Promise<SkinnyTextDocument[]> {
+		const maxConcurrent = 20;
+		const docList: SkinnyTextDocument[] = [];
 		const resources = await vscode.workspace.findFiles('**/*.md', '**/node_modules/**');
-		const docs = await Promise.all(resources.map(doc => this.getMarkdownDocument(doc)));
-		return docs.filter(doc => !!doc) as SkinnyTextDocument[];
+
+		for (let i = 0; i < resources.length; i += maxConcurrent) {
+			const resourceBatch = resources.slice(i, i + maxConcurrent);
+			const documentBatch = (await Promise.all(resourceBatch.map(this.getMarkdownDocument))).filter((doc) => !!doc) as SkinnyTextDocument[];
+			docList.push(...documentBatch);
+		}
+		return docList;
 	}
 
 	public get onDidChangeMarkdownDocument() {

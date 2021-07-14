@@ -9,6 +9,9 @@
 
 .extension-ratings {
 	display: inline-block;
+	background: rgba(173, 173, 173, 0.31);
+	padding: 0px 4px;
+	border-radius: 4px;
 }
 
 .extension-ratings.small {

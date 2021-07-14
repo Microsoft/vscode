@@ -620,6 +620,9 @@ export interface IThemeDecorationRenderOptions {
 
 	before?: IContentDecorationRenderOptions;
 	after?: IContentDecorationRenderOptions;
+
+	beforeInjectedText?: IContentDecorationRenderOptions & { affectsLetterSpacing?: boolean };
+	afterInjectedText?: IContentDecorationRenderOptions & { affectsLetterSpacing?: boolean };
 }
 
 /**

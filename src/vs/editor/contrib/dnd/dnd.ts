@@ -7,7 +7,6 @@ import 'vs/css!./dnd';
 import { IKeyboardEvent } from 'vs/base/browser/keyboardEvent';
 import { Disposable } from 'vs/base/common/lifecycle';
 import { isMacintosh } from 'vs/base/common/platform';
-import { KeyCode } from 'vs/base/common/keyCodes';
 import { ICodeEditor, IEditorMouseEvent, IMouseTarget, MouseTargetType, IPartialEditorMouseEvent } from 'vs/editor/browser/editorBrowser';
 import { registerEditorContribution } from 'vs/editor/browser/editorExtensions';
 import { IEditorContribution, ScrollType } from 'vs/editor/common/editorCommon';
@@ -38,8 +37,6 @@ export class DragAndDropController extends Disposable implements IEditorContribu
 	private _dragSelection: Selection | null;
 	private _dndDecorationIds: string[];
 	private _mouseDown: boolean;
-	private _modifierPressed: boolean;
-	static readonly TRIGGER_KEY_VALUE = isMacintosh ? KeyCode.Alt : KeyCode.Ctrl;
 
 	static get(editor: ICodeEditor): DragAndDropController {
 		return editor.getContribution<DragAndDropController>(DragAndDropController.ID);
@@ -59,7 +56,6 @@ export class DragAndDropController extends Disposable implements IEditorContribu
 		this._register(this._editor.onDidBlurEditorText(() => this.onEditorBlur()));
 		this._dndDecorationIds = [];
 		this._mouseDown = false;
-		this._modifierPressed = false;
 		this._dragSelection = null;
 	}
 
@@ -67,16 +63,11 @@ export class DragAndDropController extends Disposable implements IEditorContribu
 		this._removeDecoration();
 		this._dragSelection = null;
 		this._mouseDown = false;
-		this._modifierPressed = false;
 	}
 
 	private onEditorKeyDown(e: IKeyboardEvent): void {
 		if (!this._editor.getOption(EditorOption.dragAndDrop) || this._editor.getOption(EditorOption.columnSelection)) {
 			return;
-		}
-
-		if (hasTriggerModifier(e)) {
-			this._modifierPressed = true;
 		}
 
 		if (this._mouseDown && hasTriggerModifier(e)) {
@@ -91,11 +82,7 @@ export class DragAndDropController extends Disposable implements IEditorContribu
 			return;
 		}
 
-		if (hasTriggerModifier(e)) {
-			this._modifierPressed = false;
-		}
-
-		if (this._mouseDown && e.keyCode === DragAndDropController.TRIGGER_KEY_VALUE) {
+		if (this._mouseDown && hasTriggerModifier(e)) {
 			this._editor.updateOptions({
 				mouseStyle: 'default'
 			});
@@ -182,14 +169,13 @@ export class DragAndDropController extends Disposable implements IEditorContribu
 			} else if (!this._dragSelection.containsPosition(newCursorPosition) ||
 				(
 					(
-						hasTriggerModifier(mouseEvent.event) ||
-						this._modifierPressed
+						hasTriggerModifier(mouseEvent.event)
 					) && (
 						this._dragSelection.getEndPosition().equals(newCursorPosition) || this._dragSelection.getStartPosition().equals(newCursorPosition)
 					) // we allow users to paste content beside the selection
 				)) {
 				this._editor.pushUndoStop();
-				this._editor.executeCommand(DragAndDropController.ID, new DragAndDropCommand(this._dragSelection, newCursorPosition, hasTriggerModifier(mouseEvent.event) || this._modifierPressed));
+				this._editor.executeCommand(DragAndDropController.ID, new DragAndDropCommand(this._dragSelection, newCursorPosition, hasTriggerModifier(mouseEvent.event)));
 				this._editor.pushUndoStop();
 			}
 		}
@@ -237,7 +223,6 @@ export class DragAndDropController extends Disposable implements IEditorContribu
 		this._removeDecoration();
 		this._dragSelection = null;
 		this._mouseDown = false;
-		this._modifierPressed = false;
 		super.dispose();
 	}
 }

@@ -1360,7 +1360,7 @@ export class Repository implements Disposable {
 		let remote: string | undefined;
 		let branch: string | undefined;
 
-		if (head && head.name && head.upstream) {
+		if (head && head.upstream) {
 			remote = head.upstream.remote;
 			branch = `${head.upstream.name}`;
 		}

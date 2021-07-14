@@ -5,7 +5,7 @@
 
 import { Model } from '../model';
 import { Repository as BaseRepository, Resource } from '../repository';
-import { InputBox, Git, API, Repository, Remote, RepositoryState, Branch, ForcePushMode, Ref, Submodule, Commit, Change, RepositoryUIState, Status, LogOptions, APIState, CommitOptions, RefType, RemoteSourceProvider, CredentialsProvider, BranchQuery, PushErrorHandler, PublishEvent, FetchOptions } from './git';
+import { InputBox, Git, API, Repository, Remote, RepositoryState, Branch, ForcePushMode, Ref, Submodule, Commit, Change, RepositoryUIState, Status, LogOptions, APIState, CommitOptions, RefType, RemoteSourceProvider, CredentialsProvider, BranchQuery, PushErrorHandler, PublishEvent, FetchOptions, PullOptions } from './git';
 import { Event, SourceControlInputBox, Uri, SourceControl, Disposable, commands } from 'vscode';
 import { mapEvent } from '../util';
 import { toGitUri } from '../uri';
@@ -205,8 +205,18 @@ export class ApiRepository implements Repository {
 		return this._repository.fetch({ remote: arg0, ref, depth, prune });
 	}
 
-	pull(unshallow?: boolean): Promise<void> {
-		return this._repository.pull(undefined, unshallow);
+	pull(arg0?: PullOptions | boolean): Promise<void> {
+		if (arg0 !== undefined && typeof arg0 === 'object' && arg0.ref && arg0.remote) {
+			const head: Branch = {
+				type: RefType.RemoteHead,
+				upstream: { name: arg0.ref, remote: arg0.remote, }
+			};
+			return this._repository.pull(head, arg0.unshallow);
+		}
+		if (arg0 !== undefined && typeof arg0 === 'object') {
+			return this._repository.pull(undefined, arg0.unshallow);
+		}
+		return this._repository.pull(undefined, arg0);
 	}
 
 	push(remoteName?: string, branchName?: string, setUpstream: boolean = false, force?: ForcePushMode): Promise<void> {

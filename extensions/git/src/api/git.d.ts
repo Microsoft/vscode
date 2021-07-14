@@ -147,6 +147,12 @@ export interface FetchOptions {
 	depth?: number;
 }
 
+export interface PullOptions {
+	remote?: string;
+	ref?: string;
+	unshallow?: boolean;
+}
+
 export interface BranchQuery {
 	readonly remote?: boolean;
 	readonly pattern?: string;
@@ -207,6 +213,7 @@ export interface Repository {
 
 	fetch(options?: FetchOptions): Promise<void>;
 	fetch(remote?: string, ref?: string, depth?: number): Promise<void>;
+	pull(options?: PullOptions): Promise<void>;
 	pull(unshallow?: boolean): Promise<void>;
 	push(remoteName?: string, branchName?: string, setUpstream?: boolean, force?: ForcePushMode): Promise<void>;
 

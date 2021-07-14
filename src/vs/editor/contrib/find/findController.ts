@@ -888,7 +888,7 @@ registerEditorCommand(new FindCommand({
 	handler: x => x.replaceAll(),
 	kbOpts: {
 		weight: KeybindingWeight.EditorContrib + 5,
-		kbExpr: ContextKeyExpr.and(EditorContextKeys.focus, CONTEXT_REPLACE_INPUT_FOCUSED),
+		kbExpr: EditorContextKeys.focus,
 		primary: undefined,
 		mac: {
 			primary: KeyMod.CtrlCmd | KeyCode.Enter,

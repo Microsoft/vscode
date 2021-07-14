@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { setFullscreen } from 'vs/base/browser/browser';
+import { isSafari, setFullscreen } from 'vs/base/browser/browser';
 import { addDisposableListener, addDisposableThrottledListener, detectFullscreen, EventHelper, EventType, windowOpenNoOpenerWithSuccess, windowOpenNoOpener } from 'vs/base/browser/dom';
 import { DomEmitter } from 'vs/base/browser/event';
 import { timeout } from 'vs/base/common/async';
@@ -144,29 +144,33 @@ export class BrowserWindow extends Disposable {
 		this.openerService.setDefaultExternalOpener({
 			openExternal: async (href: string) => {
 				if (matchesScheme(href, Schemas.http) || matchesScheme(href, Schemas.https)) {
-					const opened = windowOpenNoOpenerWithSuccess(href);
-					if (!opened) {
-						const showResult = await this.dialogService.show(
-							Severity.Warning,
-							localize('unableToOpenExternal', "The browser interrupted the opening of a new tab or window. Press 'Open' to open it anyway."),
-							[
-								localize('open', "Open"),
-								localize('learnMore', "Learn More"),
-								localize('cancel', "Cancel")
-							],
-							{
-								cancelId: 2,
-								detail: href
+					if (isSafari) {
+						const opened = windowOpenNoOpenerWithSuccess(href);
+						if (!opened) {
+							const showResult = await this.dialogService.show(
+								Severity.Warning,
+								localize('unableToOpenExternal', "The browser interrupted the opening of a new tab or window. Press 'Open' to open it anyway."),
+								[
+									localize('open', "Open"),
+									localize('learnMore', "Learn More"),
+									localize('cancel', "Cancel")
+								],
+								{
+									cancelId: 2,
+									detail: href
+								}
+							);
+
+							if (showResult.choice === 0) {
+								windowOpenNoOpener(href);
 							}
-						);
 
-						if (showResult.choice === 0) {
-							windowOpenNoOpener(href);
+							if (showResult.choice === 1) {
+								await this.openerService.open(URI.parse('https://aka.ms/allow-vscode-popup'));
+							}
 						}
-
-						if (showResult.choice === 1) {
-							await this.openerService.open(URI.parse('https://aka.ms/allow-vscode-popup'));
-						}
+					} else {
+						windowOpenNoOpener(href);
 					}
 				} else {
 					this.lifecycleService.withExpectedUnload(() => window.location.href = href);

@@ -55,9 +55,14 @@
 
 .extension-editor > .header > .details {
 	padding-left: 20px;
-	overflow: hidden;
+	overflow-x: auto;
+	overflow-y: hidden;
 	user-select: text;
 	-webkit-user-select: text;
+}
+
+.extension-editor > .header > .details::-webkit-scrollbar {
+	display: none;
 }
 
 .extension-editor > .header > .details > .title {

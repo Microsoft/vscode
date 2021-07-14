@@ -18,6 +18,7 @@ module.exports = withBrowserDefaults({
 	output: {
 		filename: 'jsonServerMain.js',
 		path: path.join(__dirname, 'dist', 'browser'),
-		libraryTarget: 'var'
+		libraryTarget: 'var',
+		library: 'serverExportVar'
 	}
 });

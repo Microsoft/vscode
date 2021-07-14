@@ -18,4 +18,5 @@ function registerPackageDocumentCompletions(): vscode.Disposable {
 			return new PackageDocument(document).provideCompletionItems(position, token);
 		}
 	});
+
 }

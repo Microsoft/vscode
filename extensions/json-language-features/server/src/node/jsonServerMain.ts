@@ -3,9 +3,9 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { createConnection, Connection } from 'vscode-languageserver/node';
+import { createConnection, Connection, Disposable } from 'vscode-languageserver/node';
 import { formatError } from '../utils/runner';
-import { startServer } from '../jsonServer';
+import { RuntimeEnvironment, startServer } from '../jsonServer';
 import { RequestService } from '../requests';
 
 import { xhr, XHRResponse, configure as configureHttpRequests, getErrorStatusDescription } from 'request-light';
@@ -51,5 +51,22 @@ function getFileRequestService(): RequestService {
 	};
 }
 
+const runtime: RuntimeEnvironment = {
+	timer: {
+		setImmediate(callback: (...args: any[]) => void, ...args: any[]): Disposable {
+			const handle = setImmediate(callback, ...args);
+			return { dispose: () => clearImmediate(handle) };
+		},
+		setTimeout(callback: (...args: any[]) => void, ms: number, ...args: any[]): Disposable {
+			const handle = setTimeout(callback, ms, ...args);
+			return { dispose: () => clearTimeout(handle) };
+		}
+	},
+	file: getFileRequestService(),
+	http: getHTTPRequestService(),
+	configureHttpRequests
+};
 
-startServer(connection, { file: getFileRequestService(), http: getHTTPRequestService(), configureHttpRequests });
+
+
+startServer(connection, runtime);

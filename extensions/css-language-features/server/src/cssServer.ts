@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import {
-	Connection, TextDocuments, InitializeParams, InitializeResult, ServerCapabilities, ConfigurationRequest, WorkspaceFolder, TextDocumentSyncKind, NotificationType
+	Connection, TextDocuments, InitializeParams, InitializeResult, ServerCapabilities, ConfigurationRequest, WorkspaceFolder, TextDocumentSyncKind, NotificationType, Disposable
 } from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import { getCSSLanguageService, getSCSSLanguageService, getLESSLanguageService, LanguageSettings, LanguageService, Stylesheet, TextDocument, Position } from 'vscode-css-languageservice';
@@ -25,8 +25,12 @@ export interface Settings {
 }
 
 export interface RuntimeEnvironment {
-	file?: RequestService;
-	http?: RequestService
+	readonly file?: RequestService;
+	readonly http?: RequestService;
+	readonly timer: {
+		setImmediate(callback: (...args: any[]) => void, ...args: any[]): Disposable;
+		setTimeout(callback: (...args: any[]) => void, ms: number, ...args: any[]): Disposable;
+	}
 }
 
 export function startServer(connection: Connection, runtime: RuntimeEnvironment) {
@@ -150,7 +154,7 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 		documents.all().forEach(triggerValidation);
 	}
 
-	const pendingValidationRequests: { [uri: string]: NodeJS.Timer } = {};
+	const pendingValidationRequests: { [uri: string]: Disposable } = {};
 	const validationDelayMs = 500;
 
 	// The content of a text document has changed. This event is emitted
@@ -168,14 +172,14 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 	function cleanPendingValidation(textDocument: TextDocument): void {
 		const request = pendingValidationRequests[textDocument.uri];
 		if (request) {
-			clearTimeout(request);
+			request.dispose();
 			delete pendingValidationRequests[textDocument.uri];
 		}
 	}
 
 	function triggerValidation(textDocument: TextDocument): void {
 		cleanPendingValidation(textDocument);
-		pendingValidationRequests[textDocument.uri] = setTimeout(() => {
+		pendingValidationRequests[textDocument.uri] = runtime.timer.setTimeout(() => {
 			delete pendingValidationRequests[textDocument.uri];
 			validateTextDocument(textDocument);
 		}, validationDelayMs);
@@ -203,7 +207,7 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 	}
 
 	connection.onCompletion((textDocumentPosition, token) => {
-		return runSafeAsync(async () => {
+		return runSafeAsync(runtime, async () => {
 			const document = documents.get(textDocumentPosition.textDocument.uri);
 			if (document) {
 				const [settings,] = await Promise.all([getDocumentSettings(document), dataProvidersReady]);
@@ -216,7 +220,7 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 	});
 
 	connection.onHover((textDocumentPosition, token) => {
-		return runSafeAsync(async () => {
+		return runSafeAsync(runtime, async () => {
 			const document = documents.get(textDocumentPosition.textDocument.uri);
 			if (document) {
 				const [settings,] = await Promise.all([getDocumentSettings(document), dataProvidersReady]);
@@ -228,7 +232,7 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 	});
 
 	connection.onDocumentSymbol((documentSymbolParams, token) => {
-		return runSafeAsync(async () => {
+		return runSafeAsync(runtime, async () => {
 			const document = documents.get(documentSymbolParams.textDocument.uri);
 			if (document) {
 				await dataProvidersReady;
@@ -240,7 +244,7 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 	});
 
 	connection.onDefinition((documentDefinitionParams, token) => {
-		return runSafeAsync(async () => {
+		return runSafeAsync(runtime, async () => {
 			const document = documents.get(documentDefinitionParams.textDocument.uri);
 			if (document) {
 				await dataProvidersReady;
@@ -252,7 +256,7 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 	});
 
 	connection.onDocumentHighlight((documentHighlightParams, token) => {
-		return runSafeAsync(async () => {
+		return runSafeAsync(runtime, async () => {
 			const document = documents.get(documentHighlightParams.textDocument.uri);
 			if (document) {
 				await dataProvidersReady;
@@ -265,7 +269,7 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 
 
 	connection.onDocumentLinks(async (documentLinkParams, token) => {
-		return runSafeAsync(async () => {
+		return runSafeAsync(runtime, async () => {
 			const document = documents.get(documentLinkParams.textDocument.uri);
 			if (document) {
 				await dataProvidersReady;
@@ -279,7 +283,7 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 
 
 	connection.onReferences((referenceParams, token) => {
-		return runSafeAsync(async () => {
+		return runSafeAsync(runtime, async () => {
 			const document = documents.get(referenceParams.textDocument.uri);
 			if (document) {
 				await dataProvidersReady;
@@ -291,7 +295,7 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 	});
 
 	connection.onCodeAction((codeActionParams, token) => {
-		return runSafeAsync(async () => {
+		return runSafeAsync(runtime, async () => {
 			const document = documents.get(codeActionParams.textDocument.uri);
 			if (document) {
 				await dataProvidersReady;
@@ -303,7 +307,7 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 	});
 
 	connection.onDocumentColor((params, token) => {
-		return runSafeAsync(async () => {
+		return runSafeAsync(runtime, async () => {
 			const document = documents.get(params.textDocument.uri);
 			if (document) {
 				await dataProvidersReady;
@@ -315,7 +319,7 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 	});
 
 	connection.onColorPresentation((params, token) => {
-		return runSafeAsync(async () => {
+		return runSafeAsync(runtime, async () => {
 			const document = documents.get(params.textDocument.uri);
 			if (document) {
 				await dataProvidersReady;
@@ -327,7 +331,7 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 	});
 
 	connection.onRenameRequest((renameParameters, token) => {
-		return runSafeAsync(async () => {
+		return runSafeAsync(runtime, async () => {
 			const document = documents.get(renameParameters.textDocument.uri);
 			if (document) {
 				await dataProvidersReady;
@@ -339,7 +343,7 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 	});
 
 	connection.onFoldingRanges((params, token) => {
-		return runSafeAsync(async () => {
+		return runSafeAsync(runtime, async () => {
 			const document = documents.get(params.textDocument.uri);
 			if (document) {
 				await dataProvidersReady;
@@ -350,7 +354,7 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 	});
 
 	connection.onSelectionRanges((params, token) => {
-		return runSafeAsync(async () => {
+		return runSafeAsync(runtime, async () => {
 			const document = documents.get(params.textDocument.uri);
 			const positions: Position[] = params.positions;
 

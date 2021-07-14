@@ -60,7 +60,7 @@
     "stream": "0.0.2",
     "uuid": "^8.2.0",
     "vscode-extension-telemetry": "0.1.7",
-    "vscode-nls": "^4.1.1"
+    "vscode-nls": "^5.0.0"
   },
   "repository": {
     "type": "git",

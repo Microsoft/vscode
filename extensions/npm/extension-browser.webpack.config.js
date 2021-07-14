@@ -9,7 +9,7 @@
 
 const withBrowserDefaults = require('../shared.webpack.config').browser;
 
-module.exports = withBrowserDefaults({
+const config = withBrowserDefaults({
 	context: __dirname,
 	entry: {
 		extension: './src/npmBrowserMain.ts'
@@ -17,8 +17,11 @@ module.exports = withBrowserDefaults({
 	output: {
 		filename: 'npmBrowserMain.js'
 	},
-	node: {
-		'child_process': 'empty',
-		'which': 'empty'
+	resolve: {
+		fallback: {
+			'child_process': false
+		}
 	}
 });
+
+module.exports = config;

@@ -3,6 +3,8 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import { Disposable } from 'vscode';
+
 export interface ITask<T> {
 	(): T;
 }
@@ -58,5 +60,15 @@ export class Delayer<T> {
 			clearTimeout(this.timeout);
 			this.timeout = null;
 		}
+	}
+}
+
+export function setImmediate(callback: (...args: any[]) => void, ...args: any[]): Disposable {
+	if (global.setImmediate) {
+		const handle = global.setImmediate(callback, ...args);
+		return { dispose: () => global.clearImmediate(handle) };
+	} else {
+		const handle = setTimeout(callback, 0, ...args);
+		return { dispose: () => clearTimeout(handle) };
 	}
 }

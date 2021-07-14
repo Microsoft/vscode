@@ -1,8 +1,29 @@
 {
 	"compilerOptions": {
-		"target": "es2019",
+		"target": "es2020",
 		"lib": [
-			"es2019"
+			"ES2016",
+			"ES2017.Object",
+			"ES2017.String",
+			"ES2017.Intl",
+			"ES2017.TypedArrays",
+			"ES2018.AsyncIterable",
+			"ES2018.AsyncGenerator",
+			"ES2018.Promise",
+			"ES2018.Regexp",
+			"ES2018.Intl",
+			"ES2019.Array",
+			"ES2019.Object",
+			"ES2019.String",
+			"ES2019.Symbol",
+			"ES2020.BigInt",
+			"ES2020.Promise",
+			"ES2020.String",
+			"ES2020.Symbol.WellKnown",
+			"ES2020.Intl",
+			"ES2021.Promise",
+			"ES2021.String",
+			"ES2021.Weakref"
 		],
 		"module": "commonjs",
 		"strict": true,

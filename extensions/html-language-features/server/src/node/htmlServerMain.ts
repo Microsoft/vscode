@@ -3,9 +3,9 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { createConnection, Connection } from 'vscode-languageserver/node';
+import { createConnection, Connection, Disposable } from 'vscode-languageserver/node';
 import { formatError } from '../utils/runner';
-import { startServer } from '../htmlServer';
+import { RuntimeEnvironment, startServer } from '../htmlServer';
 import { getNodeFSRequestService } from './nodeFs';
 
 
@@ -19,5 +19,18 @@ process.on('unhandledRejection', (e: any) => {
 	connection.console.error(formatError(`Unhandled exception`, e));
 });
 
+const runtime: RuntimeEnvironment = {
+	timer: {
+		setImmediate(callback: (...args: any[]) => void, ...args: any[]): Disposable {
+			const handle = setImmediate(callback, ...args);
+			return { dispose: () => clearImmediate(handle) };
+		},
+		setTimeout(callback: (...args: any[]) => void, ms: number, ...args: any[]): Disposable {
+			const handle = setTimeout(callback, ms, ...args);
+			return { dispose: () => clearTimeout(handle) };
+		}
+	},
+	file: getNodeFSRequestService()
+};
 
-startServer(connection, { file: getNodeFSRequestService() });
+startServer(connection, runtime);

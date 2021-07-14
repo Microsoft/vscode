@@ -63,7 +63,7 @@ export class BowerJSONContribution implements IJSONContribution {
 
 				return this.xhr({
 					url: queryUrl,
-					agent: USER_AGENT
+					headers: { agent: USER_AGENT }
 				}).then((success) => {
 					if (success.status === 200) {
 						try {
@@ -165,7 +165,7 @@ export class BowerJSONContribution implements IJSONContribution {
 
 		return this.xhr({
 			url: queryUrl,
-			agent: USER_AGENT
+			headers: { agent: USER_AGENT }
 		}).then((success) => {
 			try {
 				const obj = JSON.parse(success.responseText);

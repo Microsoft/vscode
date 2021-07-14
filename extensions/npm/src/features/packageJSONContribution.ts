@@ -96,7 +96,7 @@ export class PackageJSONContribution implements IJSONContribution {
 				queryUrl = `https://registry.npmjs.org/-/v1/search?size=${LIMIT}&text=${encodeURIComponent(currentWord)}`;
 				return this.xhr({
 					url: queryUrl,
-					agent: USER_AGENT
+					headers: { agent: USER_AGENT }
 				}).then((success) => {
 					if (success.status === 200) {
 						try {
@@ -156,7 +156,7 @@ export class PackageJSONContribution implements IJSONContribution {
 			let queryUrl = `https://registry.npmjs.com/-/v1/search?text=scope:${scope}%20${name}&size=250`;
 			return this.xhr({
 				url: queryUrl,
-				agent: USER_AGENT
+				headers: { agent: USER_AGENT }
 			}).then((success) => {
 				if (success.status === 200) {
 					try {
@@ -311,7 +311,7 @@ export class PackageJSONContribution implements IJSONContribution {
 		try {
 			const success = await this.xhr({
 				url: queryUrl,
-				agent: USER_AGENT
+				headers: { agent: USER_AGENT }
 			});
 			const obj = JSON.parse(success.responseText);
 			return {

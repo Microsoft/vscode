@@ -18,7 +18,8 @@ const serverConfig = withBrowserDefaults({
 	output: {
 		filename: 'htmlServerMain.js',
 		path: path.join(__dirname, 'dist', 'browser'),
-		libraryTarget: 'var'
+		libraryTarget: 'var',
+		library: 'serverExportVar'
 	},
 	optimization: {
 		splitChunks: {
@@ -26,7 +27,7 @@ const serverConfig = withBrowserDefaults({
 		}
 	}
 });
-serverConfig.module.noParse =  /typescript[\/\\]lib[\/\\]typescript\.js/;
+serverConfig.module.noParse = /typescript[\/\\]lib[\/\\]typescript\.js/;
 serverConfig.module.rules.push({
 	test: /javascriptLibs.ts$/,
 	use: [

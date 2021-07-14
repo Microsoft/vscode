@@ -82,7 +82,7 @@
   },
   "dependencies": {
     "vscode-extension-telemetry": "0.1.7",
-    "vscode-nls": "^4.0.0"
+    "vscode-nls": "^5.0.0"
   },
   "repository": {
     "type": "git",

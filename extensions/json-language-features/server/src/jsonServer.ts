@@ -48,6 +48,10 @@ export interface RuntimeEnvironment {
 	file?: RequestService;
 	http?: RequestService
 	configureHttpRequests?(proxy: string, strictSSL: boolean): void;
+	readonly timer: {
+		setImmediate(callback: (...args: any[]) => void, ...args: any[]): Disposable;
+		setTimeout(callback: (...args: any[]) => void, ms: number, ...args: any[]): Disposable;
+	}
 }
 
 export function startServer(connection: Connection, runtime: RuntimeEnvironment) {
@@ -171,13 +175,19 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 
 
 	const limitExceededWarnings = function () {
-		const pendingWarnings: { [uri: string]: { features: { [name: string]: string }; timeout?: NodeJS.Timeout; } } = {};
+		const pendingWarnings: { [uri: string]: { features: { [name: string]: string }; timeout?: Disposable; } } = {};
+
+		const showLimitedNotification = (uri: string, resultLimit: number) => {
+			const warning = pendingWarnings[uri];
+			connection.sendNotification(ResultLimitReachedNotification.type, `${basename(uri)}: For performance reasons, ${Object.keys(warning.features).join(' and ')} have been limited to ${resultLimit} items.`);
+			warning.timeout = undefined;
+		};
 
 		return {
 			cancel(uri: string) {
 				const warning = pendingWarnings[uri];
 				if (warning && warning.timeout) {
-					clearTimeout(warning.timeout);
+					warning.timeout.dispose();
 					delete pendingWarnings[uri];
 				}
 			},
@@ -191,13 +201,11 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 							return;
 						}
 						warning.features[name] = name;
-						warning.timeout.refresh();
+						warning.timeout.dispose();
+						warning.timeout = runtime.timer.setTimeout(() => showLimitedNotification(uri, resultLimit), 2000);
 					} else {
 						warning = { features: { [name]: name } };
-						warning.timeout = setTimeout(() => {
-							connection.sendNotification(ResultLimitReachedNotification.type, `${basename(uri)}: For performance reasons, ${Object.keys(warning.features).join(' and ')} have been limited to ${resultLimit} items.`);
-							warning.timeout = undefined;
-						}, 2000);
+						warning.timeout = runtime.timer.setTimeout(() => showLimitedNotification(uri, resultLimit), 2000);
 						pendingWarnings[uri] = warning;
 					}
 				};
@@ -316,20 +324,20 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 		connection.sendDiagnostics({ uri: event.document.uri, diagnostics: [] });
 	});
 
-	const pendingValidationRequests: { [uri: string]: NodeJS.Timer; } = {};
+	const pendingValidationRequests: { [uri: string]: Disposable; } = {};
 	const validationDelayMs = 300;
 
 	function cleanPendingValidation(textDocument: TextDocument): void {
 		const request = pendingValidationRequests[textDocument.uri];
 		if (request) {
-			clearTimeout(request);
+			request.dispose();
 			delete pendingValidationRequests[textDocument.uri];
 		}
 	}
 
 	function triggerValidation(textDocument: TextDocument): void {
 		cleanPendingValidation(textDocument);
-		pendingValidationRequests[textDocument.uri] = setTimeout(() => {
+		pendingValidationRequests[textDocument.uri] = runtime.timer.setTimeout(() => {
 			delete pendingValidationRequests[textDocument.uri];
 			validateTextDocument(textDocument);
 		}, validationDelayMs);
@@ -351,7 +359,7 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 
 		const documentSettings: DocumentLanguageSettings = textDocument.languageId === 'jsonc' ? { comments: 'ignore', trailingCommas: 'warning' } : { comments: 'error', trailingCommas: 'error' };
 		languageService.doValidation(textDocument, jsonDocument, documentSettings).then(diagnostics => {
-			setImmediate(() => {
+			runtime.timer.setImmediate(() => {
 				const currDocument = documents.get(textDocument.uri);
 				if (currDocument && currDocument.version === version) {
 					respond(diagnostics); // Send the computed diagnostics to VSCode.
@@ -388,7 +396,7 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 	}
 
 	connection.onCompletion((textDocumentPosition, token) => {
-		return runSafeAsync(async () => {
+		return runSafeAsync(runtime, async () => {
 			const document = documents.get(textDocumentPosition.textDocument.uri);
 			if (document) {
 				const jsonDocument = getJSONDocument(document);
@@ -399,7 +407,7 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 	});
 
 	connection.onHover((textDocumentPositionParams, token) => {
-		return runSafeAsync(async () => {
+		return runSafeAsync(runtime, async () => {
 			const document = documents.get(textDocumentPositionParams.textDocument.uri);
 			if (document) {
 				const jsonDocument = getJSONDocument(document);
@@ -410,7 +418,7 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 	});
 
 	connection.onDocumentSymbol((documentSymbolParams, token) => {
-		return runSafe(() => {
+		return runSafe(runtime, () => {
 			const document = documents.get(documentSymbolParams.textDocument.uri);
 			if (document) {
 				const jsonDocument = getJSONDocument(document);
@@ -439,15 +447,15 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 	}
 
 	connection.onDocumentRangeFormatting((formatParams, token) => {
-		return runSafe(() => onFormat(formatParams.textDocument, formatParams.range, formatParams.options), [], `Error while formatting range for ${formatParams.textDocument.uri}`, token);
+		return runSafe(runtime, () => onFormat(formatParams.textDocument, formatParams.range, formatParams.options), [], `Error while formatting range for ${formatParams.textDocument.uri}`, token);
 	});
 
 	connection.onDocumentFormatting((formatParams, token) => {
-		return runSafe(() => onFormat(formatParams.textDocument, undefined, formatParams.options), [], `Error while formatting ${formatParams.textDocument.uri}`, token);
+		return runSafe(runtime, () => onFormat(formatParams.textDocument, undefined, formatParams.options), [], `Error while formatting ${formatParams.textDocument.uri}`, token);
 	});
 
 	connection.onDocumentColor((params, token) => {
-		return runSafeAsync(async () => {
+		return runSafeAsync(runtime, async () => {
 			const document = documents.get(params.textDocument.uri);
 			if (document) {
 				const onResultLimitExceeded = limitExceededWarnings.onResultLimitExceeded(document.uri, resultLimit, 'document colors');
@@ -459,7 +467,7 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 	});
 
 	connection.onColorPresentation((params, token) => {
-		return runSafe(() => {
+		return runSafe(runtime, () => {
 			const document = documents.get(params.textDocument.uri);
 			if (document) {
 				const jsonDocument = getJSONDocument(document);
@@ -470,7 +478,7 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 	});
 
 	connection.onFoldingRanges((params, token) => {
-		return runSafe(() => {
+		return runSafe(runtime, () => {
 			const document = documents.get(params.textDocument.uri);
 			if (document) {
 				const onRangeLimitExceeded = limitExceededWarnings.onResultLimitExceeded(document.uri, foldingRangeLimit, 'folding ranges');
@@ -482,7 +490,7 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 
 
 	connection.onSelectionRanges((params, token) => {
-		return runSafe(() => {
+		return runSafe(runtime, () => {
 			const document = documents.get(params.textDocument.uri);
 			if (document) {
 				const jsonDocument = getJSONDocument(document);
@@ -493,7 +501,7 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 	});
 
 	connection.onDocumentLinks((params, token) => {
-		return runSafeAsync(async () => {
+		return runSafeAsync(runtime, async () => {
 			const document = documents.get(params.textDocument.uri);
 			if (document) {
 				const jsonDocument = getJSONDocument(document);

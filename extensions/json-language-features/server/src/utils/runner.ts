@@ -4,6 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { CancellationToken, ResponseError, LSPErrorCodes } from 'vscode-languageserver';
+import { RuntimeEnvironment } from '../jsonServer';
 
 export function formatError(message: string, err: any): string {
 	if (err instanceof Error) {
@@ -17,9 +18,9 @@ export function formatError(message: string, err: any): string {
 	return message;
 }
 
-export function runSafeAsync<T>(func: () => Thenable<T>, errorVal: T, errorMessage: string, token: CancellationToken): Thenable<T | ResponseError<any>> {
+export function runSafeAsync<T>(runtime: RuntimeEnvironment, func: () => Thenable<T>, errorVal: T, errorMessage: string, token: CancellationToken): Thenable<T | ResponseError<any>> {
 	return new Promise<T | ResponseError<any>>((resolve) => {
-		setImmediate(() => {
+		runtime.timer.setImmediate(() => {
 			if (token.isCancellationRequested) {
 				resolve(cancelValue());
 			}
@@ -38,9 +39,9 @@ export function runSafeAsync<T>(func: () => Thenable<T>, errorVal: T, errorMessa
 	});
 }
 
-export function runSafe<T, E>(func: () => T, errorVal: T, errorMessage: string, token: CancellationToken): Thenable<T | ResponseError<E>> {
+export function runSafe<T, E>(runtime: RuntimeEnvironment, func: () => T, errorVal: T, errorMessage: string, token: CancellationToken): Thenable<T | ResponseError<E>> {
 	return new Promise<T | ResponseError<E>>((resolve) => {
-		setImmediate(() => {
+		runtime.timer.setImmediate(() => {
 			if (token.isCancellationRequested) {
 				resolve(cancelValue());
 			} else {

@@ -4,8 +4,9 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { window, workspace, Disposable, TextDocumentContentChangeEvent, TextDocument, Position, SnippetString } from 'vscode';
+import { Runtime } from './htmlClient';
 
-export function activateTagClosing(tagProvider: (document: TextDocument, position: Position) => Thenable<string>, supportedLanguages: { [id: string]: boolean }, configName: string): Disposable {
+export function activateTagClosing(tagProvider: (document: TextDocument, position: Position) => Thenable<string>, supportedLanguages: { [id: string]: boolean }, configName: string, runtime: Runtime): Disposable {
 
 	let disposables: Disposable[] = [];
 	workspace.onDidChangeTextDocument(event => onDidChangeTextDocument(event.document, event.contentChanges), null, disposables);
@@ -14,7 +15,13 @@ export function activateTagClosing(tagProvider: (document: TextDocument, positio
 	updateEnabledState();
 	window.onDidChangeActiveTextEditor(updateEnabledState, null, disposables);
 
-	let timeout: NodeJS.Timer | undefined = undefined;
+	let timeout: Disposable | undefined = undefined;
+
+	disposables.push({
+		dispose: () => {
+			timeout?.dispose();
+		}
+	});
 
 	function updateEnabledState() {
 		isEnabled = false;
@@ -40,8 +47,8 @@ export function activateTagClosing(tagProvider: (document: TextDocument, positio
 		if (document !== activeDocument || changes.length === 0) {
 			return;
 		}
-		if (typeof timeout !== 'undefined') {
-			clearTimeout(timeout);
+		if (timeout) {
+			timeout.dispose();
 		}
 		let lastChange = changes[changes.length - 1];
 		let lastCharacter = lastChange.text[lastChange.text.length - 1];
@@ -50,7 +57,7 @@ export function activateTagClosing(tagProvider: (document: TextDocument, positio
 		}
 		let rangeStart = lastChange.range.start;
 		let version = document.version;
-		timeout = setTimeout(() => {
+		timeout = runtime.timer.setTimeout(() => {
 			let position = new Position(rangeStart.line, rangeStart.character + lastChange.text.length);
 			tagProvider(document, position).then(text => {
 				if (text && isEnabled) {

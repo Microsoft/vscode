@@ -18,6 +18,7 @@ module.exports = withBrowserDefaults({
 	output: {
 		filename: 'cssServerMain.js',
 		path: path.join(__dirname, 'dist', 'browser'),
-		libraryTarget: 'var'
+		libraryTarget: 'var',
+		library: 'serverExportVar'
 	}
 });

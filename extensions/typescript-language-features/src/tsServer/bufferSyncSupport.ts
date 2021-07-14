@@ -8,7 +8,7 @@ import type * as Proto from '../protocol';
 import { ITypeScriptServiceClient, ClientCapability } from '../typescriptService';
 import API from '../utils/api';
 import { coalesce } from '../utils/arrays';
-import { Delayer } from '../utils/async';
+import { Delayer, setImmediate } from '../utils/async';
 import { nulToken } from '../utils/cancellation';
 import { Disposable } from '../utils/dispose';
 import * as languageModeIds from '../utils/languageModeIds';

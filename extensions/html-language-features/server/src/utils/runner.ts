@@ -4,6 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { ResponseError, CancellationToken, LSPErrorCodes } from 'vscode-languageserver';
+import { RuntimeEnvironment } from '../htmlServer';
 
 export function formatError(message: string, err: any): string {
 	if (err instanceof Error) {
@@ -17,9 +18,9 @@ export function formatError(message: string, err: any): string {
 	return message;
 }
 
-export function runSafe<T>(func: () => Thenable<T>, errorVal: T, errorMessage: string, token: CancellationToken): Thenable<T | ResponseError<any>> {
+export function runSafe<T>(runtime: RuntimeEnvironment, func: () => Thenable<T>, errorVal: T, errorMessage: string, token: CancellationToken): Thenable<T | ResponseError<any>> {
 	return new Promise<T | ResponseError<any>>((resolve) => {
-		setImmediate(() => {
+		runtime.timer.setImmediate(() => {
 			if (token.isCancellationRequested) {
 				resolve(cancelValue());
 			}

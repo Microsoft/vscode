@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { getNodeFSRequestService } from './nodeFs';
-import { ExtensionContext } from 'vscode';
+import { Disposable, ExtensionContext } from 'vscode';
 import { startClient, LanguageClientConstructor } from '../htmlClient';
 import { ServerOptions, TransportKind, LanguageClientOptions, LanguageClient } from 'vscode-languageclient/node';
 import { TextDecoder } from 'util';
@@ -37,7 +37,14 @@ export function activate(context: ExtensionContext) {
 		return new LanguageClient(id, name, serverOptions, clientOptions);
 	};
 
-	startClient(context, newLanguageClient, { fs: getNodeFSRequestService(), TextDecoder, telemetry });
+	const timer = {
+		setTimeout(callback: (...args: any[]) => void, ms: number, ...args: any[]): Disposable {
+			const handle = setTimeout(callback, ms, ...args);
+			return { dispose: () => clearTimeout(handle) };
+		}
+	};
+
+	startClient(context, newLanguageClient, { fs: getNodeFSRequestService(), TextDecoder, telemetry, timer });
 }
 
 interface IPackageInfo {

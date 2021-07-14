@@ -16,26 +16,32 @@ export class OutputRenderer {
 	private readonly _richMimeTypeRenderers = new Map<string, IOutputTransformContribution>();
 
 	constructor(
-		notebookEditor: ICommonNotebookEditor,
-		instantiationService: IInstantiationService
+		private readonly notebookEditor: ICommonNotebookEditor,
+		private readonly instantiationService: IInstantiationService
 	) {
-		for (const desc of OutputRendererRegistry.getOutputTransformContributions()) {
-			try {
-				const contribution = instantiationService.createInstance(desc.ctor, notebookEditor);
-				contribution.getMimetypes().forEach(mimetype => { this._richMimeTypeRenderers.set(mimetype, contribution); });
-			} catch (err) {
-				onUnexpectedError(err);
-			}
-		}
 	}
-
 	dispose(): void {
 		dispose(this._richMimeTypeRenderers.values());
 		this._richMimeTypeRenderers.clear();
 	}
 
 	getContribution(preferredMimeType: string): IOutputTransformContribution | undefined {
+		this._initialize();
 		return this._richMimeTypeRenderers.get(preferredMimeType);
+	}
+
+	private _initialize() {
+		if (this._richMimeTypeRenderers.size) {
+			return;
+		}
+		for (const desc of OutputRendererRegistry.getOutputTransformContributions()) {
+			try {
+				const contribution = this.instantiationService.createInstance(desc.ctor, this.notebookEditor);
+				contribution.getMimetypes().forEach(mimetype => { this._richMimeTypeRenderers.set(mimetype, contribution); });
+			} catch (err) {
+				onUnexpectedError(err);
+			}
+		}
 	}
 
 	private _renderMessage(container: HTMLElement, message: string): IRenderOutput {
@@ -46,6 +52,7 @@ export class OutputRenderer {
 	}
 
 	render(viewModel: ICellOutputViewModel, container: HTMLElement, preferredMimeType: string | undefined, notebookUri: URI): IRenderOutput {
+		this._initialize();
 		if (!viewModel.model.outputs.length) {
 			return this._renderMessage(container, localize('empty', "Cell has no output"));
 		}

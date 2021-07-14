@@ -96,7 +96,7 @@ export class NotebookCodeRendererContribution extends Disposable {
 }
 
 const workbenchContributionsRegistry = Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench);
-workbenchContributionsRegistry.registerWorkbenchContribution(NotebookCodeRendererContribution, LifecyclePhase.Eventually);
+workbenchContributionsRegistry.registerWorkbenchContribution(NotebookCodeRendererContribution, LifecyclePhase.Restored);
 
 
 // --- utils ---

@@ -18,7 +18,10 @@ export class ExtHostStatusBarEntry implements vscode.StatusBarItem {
 	private static ID_GEN = 0;
 
 	private static ALLOWED_BACKGROUND_COLORS = new Map<string, ThemeColor>(
-		[['statusBarItem.errorBackground', new ThemeColor('statusBarItem.errorForeground')]]
+		[
+			['statusBarItem.errorBackground', new ThemeColor('statusBarItem.errorForeground')],
+			['statusBarItem.warningBackground', new ThemeColor('statusBarItem.warningForeground')]
+		]
 	);
 
 	#proxy: MainThreadStatusBarShape;

@@ -5667,9 +5667,11 @@ declare module 'vscode' {
 		/**
 		 * The background color for this entry.
 		 *
-		 * *Note*: only `new ThemeColor('statusBarItem.errorBackground')` is
-		 * supported for now. More background colors may be supported in the
-		 * future.
+		 * *Note*: only the following colors are supported:
+		 * * `new ThemeColor('statusBarItem.errorBackground')`
+		 * * `new ThemeColor('statusBarItem.warningBackground')`
+		 *
+		 * More background colors may be supported in the future.
 		 *
 		 * *Note*: when a background color is set, the statusbar may override
 		 * the `color` choice to ensure the entry is readable in all themes.

@@ -45,6 +45,17 @@ function canSyncModel(modelService: IModelService, resource: URI): boolean {
 	return true;
 }
 
+function canSyncModelForDiff(modelService: IModelService, resource: URI): boolean {
+	let model = modelService.getModel(resource);
+	if (!model) {
+		return false;
+	}
+	if (model.isTooLargeForDiffing()) {
+		return false;
+	}
+	return true;
+}
+
 export class EditorWorkerServiceImpl extends Disposable implements IEditorWorkerService {
 
 	declare readonly _serviceBrand: undefined;
@@ -82,7 +93,7 @@ export class EditorWorkerServiceImpl extends Disposable implements IEditorWorker
 	}
 
 	public canComputeDiff(original: URI, modified: URI): boolean {
-		return (canSyncModel(this._modelService, original) && canSyncModel(this._modelService, modified));
+		return (canSyncModelForDiff(this._modelService, original) && canSyncModelForDiff(this._modelService, modified));
 	}
 
 	public computeDiff(original: URI, modified: URI, ignoreTrimWhitespace: boolean, maxComputationTime: number): Promise<IDiffComputationResult | null> {

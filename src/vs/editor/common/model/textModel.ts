@@ -180,6 +180,7 @@ function stripBracketSearchCanceled<T>(result: T | null | BracketSearchCanceled)
 export class TextModel extends Disposable implements model.ITextModel, IDecorationsTreesHost {
 
 	private static readonly MODEL_SYNC_LIMIT = 50 * 1024 * 1024; // 50 MB
+	private static readonly MODEL_DIFF_LIMIT = 500 * 1024 * 1024; // 500 MB
 	private static readonly LARGE_FILE_SIZE_THRESHOLD = 20 * 1024 * 1024; // 20 MB;
 	private static readonly LARGE_FILE_LINE_COUNT_THRESHOLD = 300 * 1000; // 300K lines
 
@@ -271,6 +272,7 @@ export class TextModel extends Disposable implements model.ITextModel, IDecorati
 	private _alternativeVersionId: number;
 	private _initialUndoRedoSnapshot: ResourceEditStackSnapshot | null;
 	private readonly _isTooLargeForSyncing: boolean;
+	private readonly _isTooLargeForDiffing: boolean;
 	private readonly _isTooLargeForTokenization: boolean;
 
 	//#region Editing
@@ -346,6 +348,7 @@ export class TextModel extends Disposable implements model.ITextModel, IDecorati
 		}
 
 		this._isTooLargeForSyncing = (bufferTextLength > TextModel.MODEL_SYNC_LIMIT);
+		this._isTooLargeForDiffing = (bufferTextLength > TextModel.MODEL_DIFF_LIMIT);
 
 		this._versionId = 1;
 		this._alternativeVersionId = 1;
@@ -565,6 +568,10 @@ export class TextModel extends Disposable implements model.ITextModel, IDecorati
 
 	public isTooLargeForSyncing(): boolean {
 		return this._isTooLargeForSyncing;
+	}
+
+	public isTooLargeForDiffing(): boolean {
+		return this._isTooLargeForDiffing;
 	}
 
 	public isTooLargeForTokenization(): boolean {

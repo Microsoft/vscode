@@ -8,7 +8,7 @@ import { Position } from 'vs/editor/common/core/position';
 import { Selection } from 'vs/editor/common/core/selection';
 import { Handler } from 'vs/editor/common/editorCommon';
 import { ITextModel } from 'vs/editor/common/model';
-import { TitleCaseAction, DeleteAllLeftAction, DeleteAllRightAction, IndentLinesAction, InsertLineAfterAction, InsertLineBeforeAction, JoinLinesAction, LowerCaseAction, SortLinesAscendingAction, SortLinesDescendingAction, TransposeAction, UpperCaseAction, DeleteLinesAction, SnakeCaseAction } from 'vs/editor/contrib/linesOperations/linesOperations';
+import { TitleCaseAction, DeleteAllLeftAction, DeleteAllRightAction, IndentLinesAction, InsertLineAfterAction, InsertLineBeforeAction, JoinLinesAction, LowerCaseAction, SortLinesAscendingAction, SortLinesDescendingAction, TransposeAction, UpperCaseAction, DeleteLinesAction, SnakeCaseAction, DeleteDuplicateLinesAction } from 'vs/editor/contrib/linesOperations/linesOperations';
 import { withTestCodeEditor } from 'vs/editor/test/browser/testCodeEditor';
 import { createTextModel } from 'vs/editor/test/common/editorTestUtils';
 import type { ICodeEditor } from 'vs/editor/browser/editorBrowser';
@@ -135,6 +135,67 @@ suite('Editor Contrib - Line Operations', () => {
 					let expectedSelections = [
 						new Selection(1, 1, 3, 5),
 						new Selection(5, 1, 7, 5)
+					];
+					editor.getSelections()!.forEach((actualSelection, index) => {
+						assert.deepStrictEqual(actualSelection.toString(), expectedSelections[index].toString());
+					});
+				});
+		});
+	});
+
+	suite('DeleteDuplicateLinesAction', () => {
+		test('should remove duplicate lines', function () {
+			withTestCodeEditor(
+				[
+					'alpha',
+					'beta',
+					'beta',
+					'beta',
+					'alpha',
+					'omicron',
+				], {}, (editor) => {
+					let model = editor.getModel()!;
+					let deleteDuplicateLinesAction = new DeleteDuplicateLinesAction();
+
+					editor.setSelection(new Selection(1, 3, 6, 4));
+					executeAction(deleteDuplicateLinesAction, editor);
+					assert.deepStrictEqual(model.getLinesContent(), [
+						'alpha',
+						'beta',
+						'omicron',
+					]);
+					assertSelection(editor, new Selection(1, 1, 3, 7));
+				});
+		});
+
+		test('should remove duplicate lines in multiple selections', function () {
+			withTestCodeEditor(
+				[
+					'alpha',
+					'beta',
+					'beta',
+					'omicron',
+					'',
+					'alpha',
+					'alpha',
+					'beta'
+				], {}, (editor) => {
+					let model = editor.getModel()!;
+					let deleteDuplicateLinesAction = new DeleteDuplicateLinesAction();
+
+					editor.setSelections([new Selection(1, 2, 4, 3), new Selection(6, 2, 8, 3)]);
+					executeAction(deleteDuplicateLinesAction, editor);
+					assert.deepStrictEqual(model.getLinesContent(), [
+						'alpha',
+						'beta',
+						'omicron',
+						'',
+						'alpha',
+						'beta'
+					]);
+					let expectedSelections = [
+						new Selection(1, 1, 3, 7),
+						new Selection(5, 1, 6, 4)
 					];
 					editor.getSelections()!.forEach((actualSelection, index) => {
 						assert.deepStrictEqual(actualSelection.toString(), expectedSelections[index].toString());

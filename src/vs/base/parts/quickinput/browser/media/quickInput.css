@@ -168,6 +168,8 @@
 .quick-input-list .quick-input-list-entry.quick-input-list-separator-border {
 	border-top-width: 1px;
 	border-top-style: solid;
+	margin-top: 2px;
+	margin-bottom: 2px;
 }
 
 .quick-input-list .monaco-list-row[data-index="0"] .quick-input-list-entry.quick-input-list-separator-border {
@@ -194,6 +196,7 @@
 	height: 100%;
 	flex: 1;
 	margin-left: 5px;
+
 }
 
 .quick-input-widget.show-checkboxes .quick-input-list .quick-input-list-rows {

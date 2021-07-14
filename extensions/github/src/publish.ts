@@ -9,7 +9,7 @@ import { API as GitAPI, Repository } from './typings/git';
 import { getOctokit } from './auth';
 import { TextEncoder } from 'util';
 import { basename } from 'path';
-import { Octokit } from '@octokit/rest';
+import { Octokit, RestEndpointMethodTypes } from '@octokit/rest';
 
 const localize = nls.loadMessageBundle();
 
@@ -50,14 +50,6 @@ export async function publishRepository(gitAPI: GitAPI, repository?: Repository)
 		folder = pick.folder.uri;
 	}
 
-	let quickpick = vscode.window.createQuickPick<vscode.QuickPickItem & { repo?: string, auth?: 'https' | 'ssh', isPrivate?: boolean }>();
-	quickpick.ignoreFocusOut = true;
-
-	quickpick.placeholder = 'Repository Name';
-	quickpick.value = basename(folder.fsPath);
-	quickpick.show();
-	quickpick.busy = true;
-
 	let owner: string;
 	let octokit: Octokit;
 	try {
@@ -66,11 +58,49 @@ export async function publishRepository(gitAPI: GitAPI, repository?: Repository)
 		owner = user.data.login;
 	} catch (e) {
 		// User has cancelled sign in
-		quickpick.dispose();
 		return;
 	}
 
-	quickpick.busy = false;
+	let orgChoice: string = owner;
+	// TODO: While this api call is made, there isn't anything displayed to the
+	// user to show progress.  Showing either picker first risks having to swap
+	// them after the api call is finished and possibly causing confusion.
+	const orgs = await octokit.orgs.listForAuthenticatedUser();
+	// Only show the organization picker, if the user has an organization.
+	if (orgs.data.length) {
+		const orgQuickPick = vscode.window.createQuickPick<vscode.QuickPickItem & { org: string }>();
+		orgQuickPick.ignoreFocusOut = true;
+		orgQuickPick.placeholder = 'Organization Name';
+		// TODO: Should this be set to owner?  It kind of makes the fact that you can publish to other
+		// organizations hidden until you clear the value.
+		orgQuickPick.value = owner;
+		orgQuickPick.show();
+
+		const orgList = [];
+		for (let i = 0; i < orgs.data.length; i++) {
+			const org = orgs.data[i].login;
+			orgList.push({
+				label: `Publish to organization ${org}`,
+				org: org
+			});
+		}
+		// Owner is not listed as an organization, so it is added separately.
+		orgList.push({ label: `Publish to organization ${owner}`, org: owner });
+		orgQuickPick.items = orgList;
+
+		orgChoice = (await getPick(orgQuickPick))?.org!;
+		orgQuickPick.dispose();
+		if (!orgChoice) {
+			return;
+		}
+	}
+
+	let quickpick = vscode.window.createQuickPick<vscode.QuickPickItem & { repo?: string; auth?: 'https' | 'ssh', isPrivate?: boolean }>();
+	quickpick.ignoreFocusOut = true;
+
+	quickpick.placeholder = 'Repository Name';
+	quickpick.value = basename(folder.fsPath);
+	quickpick.show();
 
 	let repo: string | undefined;
 	let isPrivate: boolean;
@@ -82,8 +112,8 @@ export async function publishRepository(gitAPI: GitAPI, repository?: Repository)
 			quickpick.items = [];
 		} else {
 			quickpick.items = [
-				{ label: `$(repo) Publish to GitHub private repository`, description: `$(github) ${owner}/${sanitizedRepo}`, alwaysShow: true, repo: sanitizedRepo, isPrivate: true },
-				{ label: `$(repo) Publish to GitHub public repository`, description: `$(github) ${owner}/${sanitizedRepo}`, alwaysShow: true, repo: sanitizedRepo, isPrivate: false },
+				{ label: `$(repo) Publish to GitHub private repository`, description: `$(github) ${orgChoice}/${sanitizedRepo}`, alwaysShow: true, repo: sanitizedRepo, isPrivate: true },
+				{ label: `$(repo) Publish to GitHub public repository`, description: `$(github) ${orgChoice}/${sanitizedRepo}`, alwaysShow: true, repo: sanitizedRepo, isPrivate: false },
 			];
 		}
 	};
@@ -101,8 +131,8 @@ export async function publishRepository(gitAPI: GitAPI, repository?: Repository)
 		if (repo) {
 			try {
 				quickpick.busy = true;
-				await octokit.repos.get({ owner, repo: repo });
-				quickpick.items = [{ label: `$(error) GitHub repository already exists`, description: `$(github) ${owner}/${repo}`, alwaysShow: true }];
+				await octokit.repos.get({ owner: orgChoice, repo: repo });
+				quickpick.items = [{ label: `$(error) GitHub repository already exists`, description: `$(github) ${orgChoice}/${repo}`, alwaysShow: true }];
 			} catch {
 				break;
 			} finally {
@@ -175,10 +205,22 @@ export async function publishRepository(gitAPI: GitAPI, repository?: Repository)
 			increment: 25
 		});
 
-		const res = await octokit.repos.createForAuthenticatedUser({
-			name: repo!,
-			private: isPrivate
-		});
+		// TODO: Is there a better way to get the type for `res`?
+		let res: RestEndpointMethodTypes['repos']['createForAuthenticatedUser']['response'] | RestEndpointMethodTypes['repos']['createInOrg']['response'];
+
+		if (orgChoice === owner) {
+			res = await octokit.repos.createForAuthenticatedUser({
+				name: repo!,
+				private: isPrivate
+			});
+		} else {
+			res = await octokit.repos.createInOrg({
+				org: orgChoice,
+				name: repo!,
+				private: isPrivate
+			});
+		}
+
 
 		const createdGithubRepository = res.data;
 
@@ -208,7 +250,7 @@ export async function publishRepository(gitAPI: GitAPI, repository?: Repository)
 	}
 
 	const openOnGitHub = localize('openingithub', "Open on GitHub");
-	vscode.window.showInformationMessage(localize('publishing_done', "Successfully published the '{0}' repository to GitHub.", `${owner}/${repo}`), openOnGitHub).then(action => {
+	vscode.window.showInformationMessage(localize('publishing_done', "Successfully published the '{0}' repository to GitHub.", `${orgChoice}/${repo}`), openOnGitHub).then(action => {
 		if (action === openOnGitHub) {
 			vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(githubRepository.html_url));
 		}

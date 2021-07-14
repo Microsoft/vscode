@@ -925,6 +925,27 @@ export class DebugSession implements IDebugSession {
 
 		const outputQueue = new Queue<void>();
 		this.rawListeners.push(this.raw.onDidOutput(async event => {
+			// When a variables event is received, execute immediately to obtain the variables value #126967
+			if (event.body.variablesReference) {
+				const source = event.body.source && event.body.line ? {
+					lineNumber: event.body.line,
+					column: event.body.column ? event.body.column : 1,
+					source: this.getSource(event.body.source)
+				} : undefined;
+				const container = new ExpressionContainer(this, undefined, event.body.variablesReference, generateUuid());
+				const children = container.getChildren();
+				// we should put appendToRepl into queue to make sure the logs to be displayed in correct order
+				// see https://github.com/microsoft/vscode/issues/126967#issuecomment-874954269
+				outputQueue.queue(async () => {
+					const resolved = await children;
+					resolved.forEach((child) => {
+						// Since we can not display multiple trees in a row, we are displaying these variables one after the other (ignoring their names)
+						(<any>child).name = null;
+						this.appendToRepl(child, severity.Info, source);
+					});
+				});
+				return;
+			}
 			outputQueue.queue(async () => {
 				if (!event.body || !this.raw) {
 					return;
@@ -968,16 +989,7 @@ export class DebugSession implements IDebugSession {
 					}
 				}
 
-				if (event.body.variablesReference) {
-					const container = new ExpressionContainer(this, undefined, event.body.variablesReference, generateUuid());
-					await container.getChildren().then(children => {
-						children.forEach(child => {
-							// Since we can not display multiple trees in a row, we are displaying these variables one after the other (ignoring their names)
-							(<any>child).name = null;
-							this.appendToRepl(child, outputSeverity, source);
-						});
-					});
-				} else if (typeof event.body.output === 'string') {
+				if (typeof event.body.output === 'string') {
 					this.appendToRepl(event.body.output, outputSeverity, source);
 				}
 			});

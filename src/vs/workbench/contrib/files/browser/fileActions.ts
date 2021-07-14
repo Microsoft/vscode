@@ -623,6 +623,7 @@ export class ShowOpenedFileInNewWindow extends Action {
 export function validateFileName(item: ExplorerItem, name: string): { content: string, severity: Severity } | null {
 	// Produce a well formed file name
 	name = getWellFormedFileName(name);
+	const escaped_name = escapeMarkdown(name);
 
 	// Name not provided
 	if (!name || name.length === 0 || /^\s+$/.test(name)) {
@@ -648,7 +649,7 @@ export function validateFileName(item: ExplorerItem, name: string): { content: s
 		const child = parent?.getChild(name);
 		if (child && child !== item) {
 			return {
-				content: nls.localize('fileNameExistsError', "A file or folder **{0}** already exists at this location. Please choose a different name.", name),
+				content: nls.localize('fileNameExistsError', "A file or folder **{0}** already exists at this location. Please choose a different name.", escaped_name),
 				severity: Severity.Error
 			};
 		}
@@ -658,7 +659,7 @@ export function validateFileName(item: ExplorerItem, name: string): { content: s
 	const windowsBasenameValidity = item.resource.scheme === Schemas.file && isWindows;
 	if (names.some((folderName) => !extpath.isValidBasename(folderName, windowsBasenameValidity))) {
 		return {
-			content: nls.localize('invalidFileNameError', "The name **{0}** is not valid as a file or folder name. Please choose a different name.", trimLongName(name)),
+			content: nls.localize('invalidFileNameError', "The name **{0}** is not valid as a file or folder name. Please choose a different name.", trimLongName(escaped_name)),
 			severity: Severity.Error
 		};
 	}
@@ -671,6 +672,16 @@ export function validateFileName(item: ExplorerItem, name: string): { content: s
 	}
 
 	return null;
+}
+
+function escapeMarkdown(filename: string): string {
+	if (!filename) {
+		return filename;
+	}
+
+	let unescaped = filename.replace(/\\(\*|_|`|~|\\)/g, '$1');
+	let escaped = unescaped.replace(/(\*|_|`|~|\\)/g, '\\$1');
+	return escaped;
 }
 
 function trimLongName(name: string): string {

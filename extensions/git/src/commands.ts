@@ -208,13 +208,15 @@ function createCheckoutItems(repository: Repository): CheckoutItem[] {
 	const config = workspace.getConfiguration('git');
 	const checkoutTypeConfig = config.get<string | string[]>('checkoutType');
 	let checkoutTypes: string[];
+	const validCheckoutTypes: string[] = ['local', 'remote', 'tags'];
+	const checkValidity = (type: string): boolean => validCheckoutTypes.includes(type);
 
-	if (checkoutTypeConfig === 'all' || !checkoutTypeConfig || checkoutTypeConfig.length === 0) {
-		checkoutTypes = ['local', 'remote', 'tags'];
-	} else if (typeof checkoutTypeConfig === 'string') {
+	if (typeof checkoutTypeConfig === 'string' && checkValidity(checkoutTypeConfig)) {
 		checkoutTypes = [checkoutTypeConfig];
-	} else {
+	} else if (Array.isArray(checkoutTypeConfig) && checkoutTypeConfig.filter(checkValidity).length) {
 		checkoutTypes = checkoutTypeConfig;
+	} else {
+		checkoutTypes = validCheckoutTypes;
 	}
 
 	const processors = checkoutTypes.map(getCheckoutProcessor)

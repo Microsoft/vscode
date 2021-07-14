@@ -6,7 +6,7 @@
 import { basename } from 'vs/base/common/path';
 import * as Json from 'vs/base/common/json';
 import { Color } from 'vs/base/common/color';
-import { ExtensionData, ITokenColorCustomizations, ITextMateThemingRule, IWorkbenchColorTheme, IColorMap, IThemeExtensionPoint, VS_LIGHT_THEME, VS_HC_THEME, IColorCustomizations, ISemanticTokenRules, ISemanticTokenColorizationSetting, ISemanticTokenColorCustomizations, IExperimentalSemanticTokenColorCustomizations } from 'vs/workbench/services/themes/common/workbenchThemeService';
+import { ExtensionData, ITokenColorCustomizations, ITextMateThemingRule, IWorkbenchColorTheme, IColorMap, IThemeExtensionPoint, VS_LIGHT_THEME, VS_HC_THEME, IColorCustomizations, ISemanticTokenRules, ISemanticTokenColorizationSetting, ISemanticTokenColorCustomizations, IExperimentalSemanticTokenColorCustomizations, IThemeScopableCustomizations, IThemeScopedCustomizations, THEME_SCOPE_CLOSE_PAREN, THEME_SCOPE_OPEN_PAREN, themeScopeRegex, THEME_SCOPE_WILDCARD } from 'vs/workbench/services/themes/common/workbenchThemeService';
 import { convertSettings } from 'vs/workbench/services/themes/common/themeCompatibility';
 import * as nls from 'vs/nls';
 import * as types from 'vs/base/common/types';
@@ -356,7 +356,7 @@ export class ColorThemeData implements IWorkbenchColorTheme {
 		this.customColorMap = {};
 		this.overwriteCustomColors(colors);
 
-		const themeSpecificColors = colors[`[${this.settingsId}]`] as IColorCustomizations;
+		const themeSpecificColors = this.getThemeSpecificColors(colors) as IColorCustomizations;
 		if (types.isObject(themeSpecificColors)) {
 			this.overwriteCustomColors(themeSpecificColors);
 		}
@@ -383,7 +383,7 @@ export class ColorThemeData implements IWorkbenchColorTheme {
 		this.addCustomTokenColors(customTokenColors);
 
 		// append theme specific settings. Last rules will win.
-		const themeSpecificTokenColors = customTokenColors[`[${this.settingsId}]`] as ITokenColorCustomizations;
+		const themeSpecificTokenColors = this.getThemeSpecificColors(customTokenColors) as ITokenColorCustomizations;
 		if (types.isObject(themeSpecificTokenColors)) {
 			this.addCustomTokenColors(themeSpecificTokenColors);
 		}
@@ -399,7 +399,7 @@ export class ColorThemeData implements IWorkbenchColorTheme {
 
 		if (experimental) { // apply deprecated settings first
 			this.readSemanticTokenRules(experimental);
-			const themeSpecificColors = experimental[`[${this.settingsId}]`] as IExperimentalSemanticTokenColorCustomizations;
+			const themeSpecificColors = this.getThemeSpecificColors(experimental) as IExperimentalSemanticTokenColorCustomizations;
 			if (types.isObject(themeSpecificColors)) {
 				this.readSemanticTokenRules(themeSpecificColors);
 			}
@@ -409,7 +409,7 @@ export class ColorThemeData implements IWorkbenchColorTheme {
 			if (semanticTokenColors.rules) {
 				this.readSemanticTokenRules(semanticTokenColors.rules);
 			}
-			const themeSpecificColors = semanticTokenColors[`[${this.settingsId}]`] as ISemanticTokenColorCustomizations;
+			const themeSpecificColors = this.getThemeSpecificColors(semanticTokenColors) as ISemanticTokenColorCustomizations;
 			if (types.isObject(themeSpecificColors)) {
 				if (themeSpecificColors.enabled !== undefined) {
 					this.customSemanticHighlighting = themeSpecificColors.enabled;
@@ -424,10 +424,53 @@ export class ColorThemeData implements IWorkbenchColorTheme {
 		this.textMateThemingRules = undefined;
 	}
 
+	public isThemeScope(key: string): boolean {
+		return key.charAt(0) === THEME_SCOPE_OPEN_PAREN && key.charAt(key.length - 1) === THEME_SCOPE_CLOSE_PAREN;
+	}
+
+	public isThemeScopeMatch(themeId: string): boolean {
+		const themeIdFirstChar = themeId.charAt(0);
+		const themeIdLastChar = themeId.charAt(themeId.length - 1);
+		const themeIdPrefix = themeId.slice(0, -1);
+		const themeIdInfix = themeId.slice(1, -1);
+		const themeIdSuffix = themeId.slice(1);
+		return themeId === this.settingsId
+			|| (this.settingsId.includes(themeIdInfix) && themeIdFirstChar === THEME_SCOPE_WILDCARD && themeIdLastChar === THEME_SCOPE_WILDCARD)
+			|| (this.settingsId.startsWith(themeIdPrefix) && themeIdLastChar === THEME_SCOPE_WILDCARD)
+			|| (this.settingsId.endsWith(themeIdSuffix) && themeIdFirstChar === THEME_SCOPE_WILDCARD);
+	}
+
+	public getThemeSpecificColors(colors: IThemeScopableCustomizations): IThemeScopedCustomizations | undefined {
+		let themeSpecificColors;
+		for (let key in colors) {
+			const scopedColors = colors[key];
+			if (this.isThemeScope(key) && scopedColors instanceof Object && !types.isArray(scopedColors)) {
+				const themeIdList = key.match(themeScopeRegex) || [];
+				for (let themeId of themeIdList) {
+					if (this.isThemeScopeMatch(themeId)) {
+						if (!themeSpecificColors) {
+							themeSpecificColors = {} as IThemeScopedCustomizations;
+						}
+						const scopedThemeSpecificColors = scopedColors as IThemeScopedCustomizations;
+						for (let subkey in scopedThemeSpecificColors) {
+							const originalColors = themeSpecificColors[subkey];
+							const overrideColors = scopedThemeSpecificColors[subkey];
+							if (types.isArray(originalColors) && types.isArray(overrideColors)) {
+								themeSpecificColors[subkey] = originalColors.concat(overrideColors);
+							} else if (overrideColors) {
+								themeSpecificColors[subkey] = overrideColors;
+							}
+						}
+					}
+				}
+			}
+		}
+		return themeSpecificColors;
+	}
 
 	private readSemanticTokenRules(tokenStylingRuleSection: ISemanticTokenRules) {
 		for (let key in tokenStylingRuleSection) {
-			if (key[0] !== '[') { // still do this test until experimental settings are gone
+			if (!this.isThemeScope(key)) { // still do this test until experimental settings are gone
 				try {
 					const rule = readSemanticTokenRule(key, tokenStylingRuleSection[key]);
 					if (rule) {

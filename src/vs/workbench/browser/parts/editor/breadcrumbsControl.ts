@@ -386,6 +386,19 @@ export class BreadcrumbsControl {
 
 		this._contextViewService.showContextView({
 			render: (parent: HTMLElement) => {
+				// Render invisible div to block mouse interaction in the rest of the UI
+				const blockElement = parent.appendChild(dom.$('.context-view-block'));
+				blockElement.style.position = 'fixed';
+				blockElement.style.cursor = 'initial';
+				blockElement.style.left = '0';
+				blockElement.style.top = '0';
+				blockElement.style.width = '100%';
+				blockElement.style.height = '100%';
+				blockElement.style.zIndex = '-1';
+
+				const blockMouseListener = dom.addDisposableListener(blockElement, dom.EventType.MOUSE_DOWN, (e: MouseEvent) => e.stopPropagation());
+				const blockMouseDisposable = toDisposable(() => blockElement.remove());
+
 				if (event.item instanceof FileItem) {
 					picker = this._instantiationService.createInstance(BreadcrumbsFilePicker, parent, event.item.model.resource);
 				} else if (event.item instanceof OutlineItem) {
@@ -405,6 +418,8 @@ export class BreadcrumbsControl {
 				this._updateCkBreadcrumbsActive();
 
 				return combinedDisposable(
+					blockMouseListener,
+					blockMouseDisposable,
 					picker,
 					selectListener,
 					zoomListener,

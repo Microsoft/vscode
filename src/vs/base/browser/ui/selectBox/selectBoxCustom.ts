@@ -5,7 +5,7 @@
 
 import 'vs/css!./selectBoxCustom';
 
-import { IDisposable, dispose, Disposable } from 'vs/base/common/lifecycle';
+import { IDisposable, dispose, Disposable, toDisposable, combinedDisposable } from 'vs/base/common/lifecycle';
 import { Event, Emitter } from 'vs/base/common/event';
 import { KeyCode, KeyCodeUtils } from 'vs/base/common/keyCodes';
 import { StandardKeyboardEvent } from 'vs/base/browser/keyboardEvent';
@@ -454,7 +454,23 @@ export class SelectBoxList extends Disposable implements ISelectBoxDelegate, ILi
 
 		this.contextViewProvider.showContextView({
 			getAnchor: () => this.selectElement,
-			render: (container: HTMLElement) => this.renderSelectDropDown(container),
+			render: (container: HTMLElement) => {
+				// Render invisible div to block mouse interaction in the rest of the UI
+				const blockElement = container.appendChild($('.context-view-block'));
+				blockElement.style.position = 'fixed';
+				blockElement.style.cursor = 'initial';
+				blockElement.style.left = '0';
+				blockElement.style.top = '0';
+				blockElement.style.width = '100%';
+				blockElement.style.height = '100%';
+				blockElement.style.zIndex = '-1';
+
+				return combinedDisposable(
+					dom.addDisposableListener(blockElement, dom.EventType.MOUSE_DOWN, (e: MouseEvent) => e.stopPropagation()),
+					toDisposable(() => blockElement.remove()),
+					this.renderSelectDropDown(container)
+				);
+			},
 			layout: () => this.layoutSelectDropDown(),
 			onHide: () => {
 				this.selectDropDownContainer.classList.remove('visible');

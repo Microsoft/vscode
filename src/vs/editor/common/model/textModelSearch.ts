@@ -533,7 +533,8 @@ export class Searcher {
 
 		let m: RegExpExecArray | null;
 		do {
-			if (this._prevMatchStartIndex + this._prevMatchLength === textLength) {
+			const previousMatchEnd = this._prevMatchStartIndex + this._prevMatchLength;
+			if (previousMatchEnd === textLength) {
 				// Reached the end of the line
 				return null;
 			}
@@ -561,6 +562,11 @@ export class Searcher {
 			}
 			this._prevMatchStartIndex = matchStartIndex;
 			this._prevMatchLength = matchLength;
+
+			// do not return empty matches at he end of previous match
+			if (matchLength === 0 && matchStartIndex === previousMatchEnd) {
+				continue;
+			}
 
 			if (!this._wordSeparators || isValidMatch(this._wordSeparators, text, textLength, matchStartIndex, matchLength)) {
 				return m;

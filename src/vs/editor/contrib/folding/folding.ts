@@ -14,7 +14,7 @@ import { ScrollType, IEditorContribution } from 'vs/editor/common/editorCommon';
 import { ITextModel } from 'vs/editor/common/model';
 import { registerEditorAction, registerEditorContribution, ServicesAccessor, EditorAction, registerInstantiatedEditorAction } from 'vs/editor/browser/editorExtensions';
 import { ICodeEditor, IEditorMouseEvent, MouseTargetType } from 'vs/editor/browser/editorBrowser';
-import { FoldingModel, setCollapseStateAtLevel, CollapseMemento, setCollapseStateLevelsDown, setCollapseStateLevelsUp, setCollapseStateForMatchingLines, setCollapseStateForType, setCollapseStateForRest, toggleCollapseState, setCollapseStateUp } from 'vs/editor/contrib/folding/foldingModel';
+import { FoldingModel, setCollapseStateAtLevel, CollapseMemento, setCollapseStateLevelsDown, setCollapseStateLevelsUp, setCollapseStateForMatchingLines, setCollapseStateForType, setCollapseStateForRest, toggleCollapseState, setCollapseStateUp, getJumpToParentFoldLine, getJumpToPreviousFoldLine, getJumpToNextFoldLine } from 'vs/editor/contrib/folding/foldingModel';
 import { FoldingDecorationProvider, foldingCollapsedIcon, foldingExpandedIcon } from './foldingDecorations';
 import { FoldingRegions, FoldingRegion } from './foldingRanges';
 import { EditorContextKeys } from 'vs/editor/common/editorContextKeys';
@@ -937,6 +937,99 @@ class FoldLevelAction extends FoldingAction<void> {
 	}
 }
 
+/** Action to jump to the parent fold of current line */
+class JumpToParentFoldAction extends FoldingAction<void> {
+	constructor() {
+		super({
+			id: 'editor.jumpToParentFold',
+			label: nls.localize('jumpToParentFold.label', "Jump to Parent Fold"),
+			alias: 'Jump to Parent Fold',
+			precondition: CONTEXT_FOLDING_ENABLED,
+			kbOpts: {
+				kbExpr: EditorContextKeys.editorTextFocus,
+				weight: KeybindingWeight.EditorContrib
+			}
+		});
+	}
+
+	invoke(_foldingController: FoldingController, foldingModel: FoldingModel, editor: ICodeEditor): void {
+		let selectedLines = this.getSelectedLines(editor);
+		if (selectedLines.length > 0) {
+			let startLineNumber = getJumpToParentFoldLine(selectedLines[0], foldingModel);
+			if (startLineNumber !== null) {
+				editor.setSelection({
+					startLineNumber: startLineNumber,
+					startColumn: 1,
+					endLineNumber: startLineNumber,
+					endColumn: 1
+				});
+			}
+		}
+	}
+}
+
+/** Action to jump to the previous fold of current line */
+class JumpToPreviousFoldAction extends FoldingAction<void> {
+	constructor() {
+		super({
+			id: 'editor.jumpToPreviousFold',
+			label: nls.localize('jumpToPreviousFold.label', "Jump to Previous Fold"),
+			alias: 'Jump to Previous Fold',
+			precondition: CONTEXT_FOLDING_ENABLED,
+			kbOpts: {
+				kbExpr: EditorContextKeys.editorTextFocus,
+				weight: KeybindingWeight.EditorContrib
+			}
+		});
+	}
+
+	invoke(_foldingController: FoldingController, foldingModel: FoldingModel, editor: ICodeEditor): void {
+		let selectedLines = this.getSelectedLines(editor);
+		if (selectedLines.length > 0) {
+			let startLineNumber = getJumpToPreviousFoldLine(selectedLines[0], foldingModel);
+			if (startLineNumber !== null) {
+				editor.setSelection({
+					startLineNumber: startLineNumber,
+					startColumn: 1,
+					endLineNumber: startLineNumber,
+					endColumn: 1
+				});
+			}
+		}
+	}
+}
+
+/** Action to jump to the next fold of current line */
+class JumpToNextFoldAction extends FoldingAction<void> {
+	constructor() {
+		super({
+			id: 'editor.jumpToNextFold',
+			label: nls.localize('jumpToNextFold.label', "Jump to Next Fold"),
+			alias: 'Jump to Next Fold',
+			precondition: CONTEXT_FOLDING_ENABLED,
+			kbOpts: {
+				kbExpr: EditorContextKeys.editorTextFocus,
+				weight: KeybindingWeight.EditorContrib
+			}
+		});
+	}
+
+	invoke(_foldingController: FoldingController, foldingModel: FoldingModel, editor: ICodeEditor): void {
+		let selectedLines = this.getSelectedLines(editor);
+		if (selectedLines.length > 0) {
+			let startLineNumber = getJumpToNextFoldLine(selectedLines[0], foldingModel);
+			if (startLineNumber !== null) {
+				editor.setSelection({
+					startLineNumber: startLineNumber,
+					startColumn: 1,
+					endLineNumber: startLineNumber,
+					endColumn: 1
+				});
+			}
+		}
+	}
+}
+
 registerEditorContribution(FoldingController.ID, FoldingController);
 registerEditorAction(UnfoldAction);
 registerEditorAction(UnFoldRecursivelyAction);
@@ -950,6 +1043,9 @@ registerEditorAction(UnfoldAllRegionsAction);
 registerEditorAction(FoldAllRegionsExceptAction);
 registerEditorAction(UnfoldAllRegionsExceptAction);
 registerEditorAction(ToggleFoldAction);
+registerEditorAction(JumpToParentFoldAction);
+registerEditorAction(JumpToPreviousFoldAction);
+registerEditorAction(JumpToNextFoldAction);
 
 for (let i = 1; i <= 7; i++) {
 	registerInstantiatedEditorAction(

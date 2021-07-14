@@ -131,7 +131,7 @@ export class CodeApplication extends Disposable {
 				return callback(permission === 'clipboard-read');
 			}
 
-			return callback(false);
+			return callback(permission as any === 'font-access');
 		});
 
 		session.defaultSession.setPermissionCheckHandler((_webContents, permission /* 'media' */, _origin, details) => {

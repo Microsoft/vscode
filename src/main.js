@@ -244,6 +244,9 @@ function configureCommandlineSwitchesSync(cliArgs) {
 		app.commandLine.appendSwitch('js-flags', jsFlags);
 	}
 
+	// Enable font access API
+	app.commandLine.appendSwitch('enable-features', 'FontAccess');
+
 	// Configure vscode-file:// code loading environment
 	if (cliArgs.__sandbox || browserCodeLoadingStrategy) {
 		process.env['VSCODE_BROWSER_CODE_LOADING'] = browserCodeLoadingStrategy || 'bypassHeatCheck';

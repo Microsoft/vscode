@@ -121,10 +121,6 @@ const terminalConfiguration: IConfigurationNode = {
 			type: 'boolean',
 			default: true
 		},
-		[TerminalSettingId.FontFamily]: {
-			markdownDescription: localize('terminal.integrated.fontFamily', "Controls the font family of the terminal, this defaults to `#editor.fontFamily#`'s value."),
-			type: 'string'
-		},
 		// TODO: Support font ligatures
 		// 'terminal.integrated.fontLigatures': {
 		// 	'description': localize('terminal.integrated.fontLigatures', "Controls whether font ligatures are enabled in the terminal."),
@@ -439,4 +435,33 @@ const terminalConfiguration: IConfigurationNode = {
 export function registerTerminalConfiguration() {
 	const configurationRegistry = Registry.as<IConfigurationRegistry>(Extensions.Configuration);
 	configurationRegistry.registerConfiguration(terminalConfiguration);
+	registerTerminalFontFamilyConfiguration();
+}
+
+async function registerTerminalFontFamilyConfiguration() {
+	// Gather font families, avoiding duplicates
+	const fontsIterator = await (navigator as any).fonts.query();
+	const fontFamilies: string[] = ['monospace'];
+	for await (const metadata of fontsIterator) {
+		if (fontFamilies.length === 0 || fontFamilies[fontFamilies.length - 1] !== metadata.family) {
+			fontFamilies.push(metadata.family);
+		}
+	}
+
+	// Register configuration
+	const fontConfiguration: IConfigurationNode = {
+		id: 'terminal',
+		order: 100,
+		title: localize('terminalIntegratedConfigurationTitle', "Integrated Terminal"),
+		type: 'object',
+		properties: {
+			[TerminalSettingId.FontFamily]: {
+				markdownDescription: localize('terminal.integrated.fontFamily', "Controls the font family of the terminal, this defaults to `#editor.fontFamily#`'s value."),
+				type: 'string',
+				enum: fontFamilies
+			}
+		}
+	};
+	const configurationRegistry = Registry.as<IConfigurationRegistry>(Extensions.Configuration);
+	configurationRegistry.registerConfiguration(fontConfiguration);
 }

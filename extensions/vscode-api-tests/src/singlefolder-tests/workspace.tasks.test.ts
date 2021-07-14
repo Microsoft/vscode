@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as assert from 'assert';
-import { window, tasks, Disposable, TaskDefinition, Task, EventEmitter, CustomExecution, Pseudoterminal, TaskScope, commands, env, UIKind, ShellExecution, TaskExecution, Terminal, Event, workspace, ConfigurationTarget, TaskProcessStartEvent } from 'vscode';
+import { window, tasks, Disposable, TaskDefinition, Task, Task2, EventEmitter, CustomExecution, Pseudoterminal, TaskScope, commands, env, UIKind, ShellExecution, TaskExecution, Terminal, Event, workspace, ConfigurationTarget, TaskProcessStartEvent } from 'vscode';
 import { assertNoRpc } from '../utils';
 
 // Disable tasks tests:
@@ -329,6 +329,38 @@ import { assertNoRpc } from '../utils';
 					} else {
 						reject('fetched task can\'t be undefined');
 					}
+				});
+			});
+
+			test('A task can be fetched with default task group information', () => {
+				return new Promise<void>(async (resolve, reject) => {
+					// Add default to tasks.json since this is not possible using an API yet.
+					const tasksConfig = workspace.getConfiguration('tasks');
+					await tasksConfig.update('version', '2.0.0', ConfigurationTarget.Workspace);
+					await tasksConfig.update('tasks', [
+						{
+							label: 'Run this task',
+							type: 'shell',
+							command: 'sleep 1',
+							problemMatcher: [],
+							group: {
+								kind: 'build',
+								isDefault: 'true'
+							}
+						}
+					], ConfigurationTarget.Workspace);
+
+					const task = <Task2[]>(await tasks.fetchTasks());
+
+					if (task && task.length > 0) {
+						const grp = task[0].group;
+						assert.strictEqual(grp?.isDefault, true);
+						resolve();
+					} else {
+						reject('fetched task can\'t be undefined');
+					}
+					// Reset tasks.json
+					await tasksConfig.update('tasks', []);
 				});
 			});
 		});

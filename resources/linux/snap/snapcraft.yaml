@@ -53,16 +53,21 @@ parts:
       - -usr/share/lintian
       - -usr/share/man
 
+plugs:
+  browser-sandbox:
+    interface: browser-support
+    allow-sandbox: true
+
 apps:
   @@NAME@@:
-    command: electron-launch $SNAP/usr/share/@@NAME@@/bin/@@NAME@@ --no-sandbox
+    command: electron-launch $SNAP/usr/share/@@NAME@@/bin/@@NAME@@
     common-id: @@NAME@@.desktop
     environment:
       DISABLE_WAYLAND: 1
       GSETTINGS_SCHEMA_DIR: $SNAP/usr/share/glib-2.0/schemas
 
   url-handler:
-    command: electron-launch $SNAP/usr/share/@@NAME@@/bin/@@NAME@@ --open-url --no-sandbox
+    command: electron-launch $SNAP/usr/share/@@NAME@@/bin/@@NAME@@ --open-url
     environment:
       DISABLE_WAYLAND: 1
       GSETTINGS_SCHEMA_DIR: $SNAP/usr/share/glib-2.0/schemas

@@ -67,22 +67,33 @@ export function extractEditorsDropData(e: DragEvent, externalOnly?: boolean): Ar
 				} catch (error) {
 					// Invalid transfer
 				}
-			}
+			} else {
+				// Data Transfer: Terminals
+				const terminalResources = e.dataTransfer.getData(DataTransfers.TERMINALS);
+				if (terminalResources) {
+					try {
+						const terminalURIs: string[] = JSON.parse(terminalResources);
+						for (const uri of terminalURIs) {
+							editors.push({ resource: URI.parse(uri) });
+						}
+					} catch (error) {
+						// Invalid transfer
+					}
+				}
 
-			// Data Transfer: Resources
-			else {
-				try {
-					const rawResourcesData = e.dataTransfer.getData(DataTransfers.RESOURCES);
-					if (rawResourcesData) {
+				// Data Transfer: Resources
+				const rawResourcesData = e.dataTransfer.getData(DataTransfers.RESOURCES);
+				if (rawResourcesData) {
+					try {
 						const resourcesRaw: string[] = JSON.parse(rawResourcesData);
 						for (const resourceRaw of resourcesRaw) {
 							if (resourceRaw.indexOf(':') > 0) { // mitigate https://github.com/microsoft/vscode/issues/124946
 								editors.push({ resource: URI.parse(resourceRaw) });
 							}
 						}
+					} catch (error) {
+						// Invalid transfer
 					}
-				} catch (error) {
-					// Invalid transfer
 				}
 			}
 		}

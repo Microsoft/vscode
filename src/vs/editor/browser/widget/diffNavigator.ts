@@ -11,7 +11,8 @@ import { IDiffEditor } from 'vs/editor/browser/editorBrowser';
 import { ICursorPositionChangedEvent } from 'vs/editor/common/controller/cursorEvents';
 import { Range } from 'vs/editor/common/core/range';
 import { ILineChange, ScrollType } from 'vs/editor/common/editorCommon';
-
+import { alert as alertFn } from 'vs/base/browser/ui/aria/aria';
+import * as nls from 'vs/nls';
 
 interface IDiffRange {
 	rhs: boolean;
@@ -189,7 +190,8 @@ export class DiffNavigator extends Disposable implements IDiffNavigator {
 		} else if (fwd) {
 			this.nextIdx += 1;
 			if (this.nextIdx >= this.ranges.length) {
-				this.nextIdx = 0;
+				alert(nls.localize('hintnn', 'you have reached the end of the diff!'));
+				return;
 			}
 		} else {
 			this.nextIdx -= 1;

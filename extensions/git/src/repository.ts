@@ -542,7 +542,10 @@ class DotGitWatcher implements IFileWatcher {
 		const rootWatcher = watch(repository.dotGit);
 		this.disposables.push(rootWatcher);
 
-		const filteredRootWatcher = filterEvent(rootWatcher.event, uri => !/\/\.git(\/index\.lock)?$/.test(uri.path));
+		// People might be using the watchman fsmonitor hook (https://git-scm.com/docs/githooks#_fsmonitor_watchman)
+		// on large repos. Watchman creates a cookie file inside the git directory whenever a query is run (https://facebook.github.io/watchman/docs/cookies.html)
+		// We need to ignore it to avoid an infinite loop of git operation -> watchman cookie -> git operation
+		const filteredRootWatcher = filterEvent(rootWatcher.event, uri => !/\/\.git(\/index\.lock)?$/.test(uri.path) && !/\/\.watchman-cookie.*/.test(uri.path));
 		this.event = anyEvent(filteredRootWatcher, this.emitter.event);
 
 		repository.onDidRunGitStatus(this.updateTransientWatchers, this, this.disposables);

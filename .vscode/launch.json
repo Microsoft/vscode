@@ -115,7 +115,8 @@
 				"${workspaceFolder}/extensions/vscode-api-tests/testWorkspace",
 				"--extensionDevelopmentPath=${workspaceFolder}/extensions/vscode-api-tests",
 				"--extensionTestsPath=${workspaceFolder}/extensions/vscode-api-tests/out/singlefolder-tests",
-				"--disable-extensions"
+				"--disable-extensions",
+				"--enable-proposed-api"
 			],
 			"outFiles": [
 				"${workspaceFolder}/out/**/*.js"

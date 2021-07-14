@@ -454,7 +454,7 @@ function assertConfiguration(result: ParseResult, expected: Tasks.Task[]): void 
 		actualTasks[task.configurationProperties.name!] = task;
 		actualId2Name[task._id] = task.configurationProperties.name!;
 		if (task.configurationProperties.group) {
-			actualTaskGroups.add(task.configurationProperties.group, task);
+			actualTaskGroups.add(task.configurationProperties.group._id, task);
 		}
 	});
 	let expectedTasks: { [key: string]: Tasks.Task; } = Object.create(null);
@@ -463,7 +463,7 @@ function assertConfiguration(result: ParseResult, expected: Tasks.Task[]): void 
 		assert.ok(!expectedTasks[task.configurationProperties.name!]);
 		expectedTasks[task.configurationProperties.name!] = task;
 		if (task.configurationProperties.group) {
-			expectedTaskGroup.add(task.configurationProperties.group, task);
+			expectedTaskGroup.add(task.configurationProperties.group._id, task);
 		}
 	});
 	let actualKeys = Object.keys(actualTasks);

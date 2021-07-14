@@ -8,7 +8,7 @@ import { asPromise } from 'vs/base/common/async';
 import { Event, Emitter } from 'vs/base/common/event';
 
 import { MainContext, MainThreadTaskShape, ExtHostTaskShape } from 'vs/workbench/api/common/extHost.protocol';
-
+import * as Objects from 'vs/base/common/objects';
 import * as types from 'vs/workbench/api/common/extHostTypes';
 import { IExtHostWorkspaceProvider, IExtHostWorkspace } from 'vs/workbench/api/common/extHostWorkspace';
 import type * as vscode from 'vscode';
@@ -213,6 +213,14 @@ export namespace TaskHandleDTO {
 		};
 	}
 }
+export namespace TaskGroupDTO {
+	export function from(value: vscode.TaskGroup2): tasks.TaskGroupDTO | undefined {
+		if (value === undefined || value === null) {
+			return undefined;
+		}
+		return { _id: value.id, isDefault: value.isDefault };
+	}
+}
 
 export namespace TaskDTO {
 	export function fromMany(tasks: vscode.Task[], extension: IExtensionDescription): tasks.TaskDTO[] {
@@ -257,7 +265,6 @@ export namespace TaskDTO {
 		if (!definition || !scope) {
 			return undefined;
 		}
-		const group = (value.group as types.TaskGroup) ? (value.group as types.TaskGroup).id : undefined;
 		const result: tasks.TaskDTO = {
 			_id: (value as types.Task)._id!,
 			definition,
@@ -269,7 +276,7 @@ export namespace TaskDTO {
 			},
 			execution: execution!,
 			isBackground: value.isBackground,
-			group: group,
+			group: TaskGroupDTO.from(value.group as vscode.TaskGroup2),
 			presentationOptions: TaskPresentationOptionsDTO.from(value.presentationOptions),
 			problemMatchers: value.problemMatchers,
 			hasDefinedMatchers: (value as types.Task).hasDefinedMatchers,
@@ -311,7 +318,13 @@ export namespace TaskDTO {
 			result.isBackground = value.isBackground;
 		}
 		if (value.group !== undefined) {
-			result.group = types.TaskGroup.from(value.group);
+			result.group = types.TaskGroup.from(value.group._id);
+			if (result.group) {
+				result.group = Objects.deepClone(result.group);
+				if (value.group.isDefault) {
+					result.group.isDefault = value.group.isDefault;
+				}
+			}
 		}
 		if (value.presentationOptions) {
 			result.presentationOptions = TaskPresentationOptionsDTO.to(value.presentationOptions)!;

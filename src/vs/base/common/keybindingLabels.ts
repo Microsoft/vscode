@@ -89,7 +89,7 @@ export const AriaLabelProvider = new ModifierLabelProvider(
 	{
 		ctrlKey: nls.localize({ key: 'ctrlKey.long', comment: ['This is the long form for the Control key on the keyboard'] }, "Control"),
 		shiftKey: nls.localize({ key: 'shiftKey.long', comment: ['This is the long form for the Shift key on the keyboard'] }, "Shift"),
-		altKey: nls.localize({ key: 'altKey.long', comment: ['This is the long form for the Alt key on the keyboard'] }, "Alt"),
+		altKey: nls.localize({ key: 'optionKey.long', comment: ['This is the long form for the Option key on the keyboard'] }, "Option"),
 		metaKey: nls.localize({ key: 'cmdKey.long', comment: ['This is the long form for the Command key on the keyboard'] }, "Command"),
 		separator: '+',
 	},
@@ -117,7 +117,7 @@ export const ElectronAcceleratorLabelProvider = new ModifierLabelProvider(
 	{
 		ctrlKey: 'Ctrl',
 		shiftKey: 'Shift',
-		altKey: 'Alt',
+		altKey: 'Option',
 		metaKey: 'Cmd',
 		separator: '+',
 	},
@@ -137,7 +137,7 @@ export const UserSettingsLabelProvider = new ModifierLabelProvider(
 	{
 		ctrlKey: 'ctrl',
 		shiftKey: 'shift',
-		altKey: 'alt',
+		altKey: 'option',
 		metaKey: 'cmd',
 		separator: '+',
 	},

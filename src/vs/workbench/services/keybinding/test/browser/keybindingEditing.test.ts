@@ -213,13 +213,13 @@ suite('KeybindingsEditing', () => {
 	});
 
 	test('remove a default keybinding', async () => {
-		const expected: IUserFriendlyKeybinding[] = [{ key: 'alt+c', command: '-a' }];
+		const expected: IUserFriendlyKeybinding[] = [{ key: 'option+c', command: '-a' }];
 		await testObject.removeKeybinding(aResolvedKeybindingItem({ command: 'a', firstPart: { keyCode: KeyCode.KEY_C, modifiers: { altKey: true } } }));
 		assert.deepStrictEqual(await getUserKeybindings(), expected);
 	});
 
-	test('remove a default keybinding should not ad duplicate entries', async () => {
-		const expected: IUserFriendlyKeybinding[] = [{ key: 'alt+c', command: '-a' }];
+	test('remove a default keybinding should not add duplicate entries', async () => {
+		const expected: IUserFriendlyKeybinding[] = [{ key: 'option+c', command: '-a' }];
 		await testObject.removeKeybinding(aResolvedKeybindingItem({ command: 'a', firstPart: { keyCode: KeyCode.KEY_C, modifiers: { altKey: true } } }));
 		await testObject.removeKeybinding(aResolvedKeybindingItem({ command: 'a', firstPart: { keyCode: KeyCode.KEY_C, modifiers: { altKey: true } } }));
 		await testObject.removeKeybinding(aResolvedKeybindingItem({ command: 'a', firstPart: { keyCode: KeyCode.KEY_C, modifiers: { altKey: true } } }));

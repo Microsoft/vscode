@@ -1,0 +1,73 @@
+jobs:
+- job: Compliance
+  pool:
+    name: Azure Pipelines
+    vmImage: VS2017-Win2016
+
+  steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '12.14.1'
+
+  - task: YarnInstaller@3
+    inputs:
+      versionSpec: '1.x'
+    condition: succeeded()
+    
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '2.x'
+      addToPath: true
+
+  - task: AzureKeyVault@1
+    displayName: 'Azure Key Vault: Get Secrets'
+    inputs:
+      azureSubscription: 'vscode-builds-subscription'
+      KeyVaultName: vscode
+    condition: succeeded()
+    
+  - powershell: |
+      . build/azure-pipelines/win32/exec.ps1
+      $ErrorActionPreference = "Stop"
+      "machine github.com`nlogin vscode`npassword $(github-distro-mixin-password)" | Out-File "$env:USERPROFILE\_netrc" -Encoding ASCII
+
+      exec { git config user.email "vscode@microsoft.com" }
+      exec { git config user.name "VSCode" }
+
+      mkdir .build -ea 0
+      "$(VSCODE_ARCH)" | Out-File -Encoding ascii -NoNewLine .build\arch
+    displayName: Prepare tooling
+
+  - powershell: |
+      . build/azure-pipelines/win32/exec.ps1
+      $ErrorActionPreference = "Stop"
+      exec { git remote add distro "https://github.com/$(VSCODE_MIXIN_REPO).git" }
+      exec { git fetch distro }
+      exec { git merge $(node -p "require('./package.json').distro") }
+    displayName: Merge distro
+  
+  - task: CredScan@2
+    inputs:
+      toolMajorVersion: 'V2'
+
+  - powershell: |
+      . build/azure-pipelines/win32/exec.ps1
+      $ErrorActionPreference = "Stop"
+      $env:npm_config_arch="$(VSCODE_ARCH)"
+      $env:CHILD_CONCURRENCY="1"
+      exec { yarn --frozen-lockfile }
+    displayName: Install dependencies
+    condition: succeeded()
+
+  - powershell: |
+      . build/azure-pipelines/win32/exec.ps1
+      $ErrorActionPreference = "Stop"
+      exec { yarn postinstall }
+    displayName: Run postinstall scripts
+    condition: succeeded()
+
+  - powershell: |
+      . build/azure-pipelines/win32/exec.ps1
+      $ErrorActionPreference = "Stop"
+      exec { node build/azure-pipelines/mixin }
+    displayName: Mix in quality

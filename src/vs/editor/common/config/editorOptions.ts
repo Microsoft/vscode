@@ -1358,6 +1358,10 @@ export interface IEditorFindOptions {
 	 */
 	seedSearchStringFromSelection?: boolean;
 	/**
+	 * Controls if we seed search string in the Find Widget with editor cursor position.
+	 */
+	seedSearchStringFromCursor?: boolean;
+	/**
 	 * Controls if Find in Selection flag is turned on in the editor.
 	 */
 	autoFindInSelection?: 'never' | 'always' | 'multiline';
@@ -1384,6 +1388,7 @@ class EditorFind extends BaseEditorOption<EditorOption.find, EditorFindOptions> 
 		const defaults: EditorFindOptions = {
 			cursorMoveOnType: true,
 			seedSearchStringFromSelection: true,
+			seedSearchStringFromCursor: true,
 			autoFindInSelection: 'never',
 			globalFindClipboard: false,
 			addExtraSpaceOnTop: true,
@@ -1401,6 +1406,11 @@ class EditorFind extends BaseEditorOption<EditorOption.find, EditorFindOptions> 
 					type: 'boolean',
 					default: defaults.seedSearchStringFromSelection,
 					description: nls.localize('find.seedSearchStringFromSelection', "Controls whether the search string in the Find Widget is seeded from the editor selection.")
+				},
+				'editor.find.seedSearchStringFromCursor': {
+					type: 'boolean',
+					default: defaults.seedSearchStringFromCursor,
+					description: nls.localize('find.seedSearchStringFromCursor', "Controls whether the search string in the Find Widget is seeded from the editor cursor.")
 				},
 				'editor.find.autoFindInSelection': {
 					type: 'string',
@@ -1442,6 +1452,7 @@ class EditorFind extends BaseEditorOption<EditorOption.find, EditorFindOptions> 
 		return {
 			cursorMoveOnType: boolean(input.cursorMoveOnType, this.defaultValue.cursorMoveOnType),
 			seedSearchStringFromSelection: boolean(input.seedSearchStringFromSelection, this.defaultValue.seedSearchStringFromSelection),
+			seedSearchStringFromCursor: boolean(input.seedSearchStringFromCursor, this.defaultValue.seedSearchStringFromCursor),
 			autoFindInSelection: typeof _input.autoFindInSelection === 'boolean'
 				? (_input.autoFindInSelection ? 'always' : 'never')
 				: stringSet<'never' | 'always' | 'multiline'>(input.autoFindInSelection, this.defaultValue.autoFindInSelection, ['never', 'always', 'multiline']),

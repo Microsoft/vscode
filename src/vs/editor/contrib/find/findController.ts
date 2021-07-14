@@ -29,7 +29,7 @@ import { EditorOption } from 'vs/editor/common/config/editorOptions';
 
 const SEARCH_STRING_MAX_LENGTH = 524288;
 
-export function getSelectionSearchString(editor: ICodeEditor, seedSearchStringFromSelection: 'single' | 'multiple' = 'single'): string | null {
+export function getSelectionSearchString(editor: ICodeEditor, seedSearchStringFromSelection: 'single' | 'multiple' = 'single', seedSearchStringFromCursor: boolean = true): string | null {
 	if (!editor.hasModel()) {
 		return null;
 	}
@@ -41,7 +41,7 @@ export function getSelectionSearchString(editor: ICodeEditor, seedSearchStringFr
 		|| seedSearchStringFromSelection === 'multiple') {
 		if (selection.isEmpty()) {
 			const wordAtPosition = editor.getConfiguredWordAtPosition(selection.getStartPosition());
-			if (wordAtPosition) {
+			if (wordAtPosition && seedSearchStringFromCursor) {
 				return wordAtPosition.word;
 			}
 		} else {
@@ -63,6 +63,7 @@ export const enum FindStartFocusAction {
 export interface IFindStartOptions {
 	forceRevealReplace: boolean;
 	seedSearchStringFromSelection: 'none' | 'single' | 'multiple';
+	seedSearchStringFromCursor: boolean;
 	seedSearchStringFromGlobalClipboard: boolean;
 	shouldFocus: FindStartFocusAction;
 	shouldAnimate: boolean;
@@ -128,6 +129,7 @@ export class CommonFindController extends Disposable implements IEditorContribut
 				this._start({
 					forceRevealReplace: false,
 					seedSearchStringFromSelection: 'none',
+					seedSearchStringFromCursor: true,
 					seedSearchStringFromGlobalClipboard: false,
 					shouldFocus: FindStartFocusAction.NoFocusChange,
 					shouldAnimate: false,
@@ -284,7 +286,7 @@ export class CommonFindController extends Disposable implements IEditorContribut
 		};
 
 		if (opts.seedSearchStringFromSelection === 'single') {
-			let selectionSearchString = getSelectionSearchString(this._editor, opts.seedSearchStringFromSelection);
+			let selectionSearchString = getSelectionSearchString(this._editor, opts.seedSearchStringFromSelection, opts.seedSearchStringFromCursor);
 			if (selectionSearchString) {
 				if (this._state.isRegex) {
 					stateChanges.searchString = strings.escapeRegExpCharacters(selectionSearchString);
@@ -509,6 +511,7 @@ StartFindAction.addImplementation(0, (accessor: ServicesAccessor, editor: ICodeE
 	return controller.start({
 		forceRevealReplace: false,
 		seedSearchStringFromSelection: editor.getOption(EditorOption.find).seedSearchStringFromSelection ? 'single' : 'none',
+		seedSearchStringFromCursor: editor.getOption(EditorOption.find).seedSearchStringFromCursor,
 		seedSearchStringFromGlobalClipboard: editor.getOption(EditorOption.find).globalFindClipboard,
 		shouldFocus: FindStartFocusAction.FocusFindInput,
 		shouldAnimate: true,
@@ -542,6 +545,7 @@ export class StartFindWithSelectionAction extends EditorAction {
 			await controller.start({
 				forceRevealReplace: false,
 				seedSearchStringFromSelection: 'multiple',
+				seedSearchStringFromCursor: false,
 				seedSearchStringFromGlobalClipboard: false,
 				shouldFocus: FindStartFocusAction.NoFocusChange,
 				shouldAnimate: true,
@@ -560,6 +564,7 @@ export abstract class MatchFindAction extends EditorAction {
 			await controller.start({
 				forceRevealReplace: false,
 				seedSearchStringFromSelection: (controller.getState().searchString.length === 0) && editor.getOption(EditorOption.find).seedSearchStringFromSelection ? 'single' : 'none',
+				seedSearchStringFromCursor: editor.getOption(EditorOption.find).seedSearchStringFromCursor,
 				seedSearchStringFromGlobalClipboard: true,
 				shouldFocus: FindStartFocusAction.NoFocusChange,
 				shouldAnimate: true,
@@ -638,7 +643,7 @@ export abstract class SelectionMatchFindAction extends EditorAction {
 		if (!controller) {
 			return;
 		}
-		let selectionSearchString = getSelectionSearchString(editor);
+		let selectionSearchString = getSelectionSearchString(editor, 'single', editor.getOption(EditorOption.find).seedSearchStringFromCursor);
 		if (selectionSearchString) {
 			controller.setSearchString(selectionSearchString);
 		}
@@ -646,6 +651,7 @@ export abstract class SelectionMatchFindAction extends EditorAction {
 			await controller.start({
 				forceRevealReplace: false,
 				seedSearchStringFromSelection: editor.getOption(EditorOption.find).seedSearchStringFromSelection ? 'single' : 'none',
+				seedSearchStringFromCursor: editor.getOption(EditorOption.find).seedSearchStringFromCursor,
 				seedSearchStringFromGlobalClipboard: false,
 				shouldFocus: FindStartFocusAction.NoFocusChange,
 				shouldAnimate: true,
@@ -749,6 +755,7 @@ StartFindReplaceAction.addImplementation(0, (accessor: ServicesAccessor, editor:
 	return controller.start({
 		forceRevealReplace: true,
 		seedSearchStringFromSelection: seedSearchStringFromSelection ? 'single' : 'none',
+		seedSearchStringFromCursor: editor.getOption(EditorOption.find).seedSearchStringFromCursor,
 		seedSearchStringFromGlobalClipboard: editor.getOption(EditorOption.find).seedSearchStringFromSelection,
 		shouldFocus: shouldFocus,
 		shouldAnimate: true,

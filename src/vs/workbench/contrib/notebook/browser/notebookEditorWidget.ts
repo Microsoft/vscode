@@ -472,7 +472,7 @@ export class NotebookEditorWidget extends Disposable implements INotebookEditor 
 		const focus = this.viewModel.getFocus();
 		this.viewModel.updateSelectionsState({
 			kind: SelectionStateType.Index,
-			focus: focus,
+			focus: selections.length === 1 ? selections[0] : focus,
 			selections: selections
 		});
 	}

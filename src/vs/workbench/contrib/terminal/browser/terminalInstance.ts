@@ -63,6 +63,7 @@ import { getColorClass } from 'vs/workbench/contrib/terminal/browser/terminalIco
 import { IWorkbenchLayoutService, Position } from 'vs/workbench/services/layout/browser/layoutService';
 import { Orientation } from 'vs/base/browser/ui/sash/sash';
 import { Color } from 'vs/base/common/color';
+import { IWorkspaceContextService } from 'vs/platform/workspace/common/workspace';
 
 // How long in milliseconds should an average frame take to render for a notification to appear
 // which suggests the fallback DOM-based renderer
@@ -156,7 +157,7 @@ export class TerminalInstance extends Disposable implements ITerminalInstance {
 	get resource(): URI {
 		return URI.from({
 			scheme: Schemas.vscodeTerminal,
-			path: `/${this.instanceId}`,
+			path: `/${this._workspaceContextService.getWorkspace().id}/${this.instanceId}`,
 			fragment: this.title,
 		});
 	}
@@ -260,7 +261,8 @@ export class TerminalInstance extends Disposable implements ITerminalInstance {
 		@IViewDescriptorService private readonly _viewDescriptorService: IViewDescriptorService,
 		@IProductService private readonly _productService: IProductService,
 		@IQuickInputService private readonly _quickInputService: IQuickInputService,
-		@IWorkbenchEnvironmentService workbenchEnvironmentService: IWorkbenchEnvironmentService
+		@IWorkbenchEnvironmentService workbenchEnvironmentService: IWorkbenchEnvironmentService,
+		@IWorkspaceContextService private readonly _workspaceContextService: IWorkspaceContextService
 	) {
 		super();
 

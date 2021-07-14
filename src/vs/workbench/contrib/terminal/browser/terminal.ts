@@ -338,7 +338,7 @@ export interface ITerminalInstance {
 	/**
 	 * A unique URI for this terminal instance with the following encoding:
 	 * path: Title
-	 * fragment: Instance ID
+	 * fragment: workspaceId / instanceId
 	 */
 	readonly resource: URI;
 

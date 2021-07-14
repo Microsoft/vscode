@@ -16,7 +16,7 @@ import { IInstantiationService } from 'vs/platform/instantiation/common/instanti
 import { ActionBar } from 'vs/base/browser/ui/actionbar/actionbar';
 import { MenuItemAction } from 'vs/platform/actions/common/actions';
 import { MenuEntryActionViewItem } from 'vs/platform/actions/browser/menuEntryActionViewItem';
-import { IS_SPLIT_TERMINAL_CONTEXT_KEY, KEYBINDING_CONTEXT_TERMINAL_TABS_SINGULAR_SELECTION, TerminalCommandId } from 'vs/workbench/contrib/terminal/common/terminal';
+import { ILocalTerminalService, IS_SPLIT_TERMINAL_CONTEXT_KEY, KEYBINDING_CONTEXT_TERMINAL_TABS_SINGULAR_SELECTION, TerminalCommandId } from 'vs/workbench/contrib/terminal/common/terminal';
 import { TerminalLocation, TerminalSettingId } from 'vs/platform/terminal/common/terminal';
 import { Codicon } from 'vs/base/common/codicons';
 import { Action } from 'vs/base/common/actions';
@@ -29,7 +29,7 @@ import Severity from 'vs/base/common/severity';
 import { Disposable, DisposableStore, dispose, IDisposable, toDisposable } from 'vs/base/common/lifecycle';
 import { IListDragAndDrop, IListDragOverReaction, IListRenderer, ListDragOverEffect } from 'vs/base/browser/ui/list/list';
 import { DataTransfers, IDragAndDropData } from 'vs/base/browser/dnd';
-import { disposableTimeout } from 'vs/base/common/async';
+import { disposableTimeout, timeout } from 'vs/base/common/async';
 import { ElementsDragAndDropData, NativeDragAndDropData } from 'vs/base/browser/ui/list/listView';
 import { URI } from 'vs/base/common/uri';
 import { getColorClass, getIconId, getUriClasses } from 'vs/workbench/contrib/terminal/browser/terminalIcon';
@@ -44,6 +44,7 @@ import { KeyCode } from 'vs/base/common/keyCodes';
 import { containsDragType } from 'vs/workbench/browser/dnd';
 import { terminalStrings } from 'vs/workbench/contrib/terminal/common/terminalStrings';
 import { ILifecycleService } from 'vs/workbench/services/lifecycle/common/lifecycle';
+import { IWorkspaceContextService } from 'vs/platform/workspace/common/workspace';
 
 const $ = DOM.$;
 
@@ -540,13 +541,15 @@ class TerminalTabsDragAndDrop implements IListDragAndDrop<ITerminalInstance> {
 	constructor(
 		@ITerminalService private readonly _terminalService: ITerminalService,
 		@ITerminalGroupService private readonly _terminalGroupService: ITerminalGroupService,
-		@ITerminalInstanceService private readonly _terminalInstanceService: ITerminalInstanceService
+		@ITerminalInstanceService private readonly _terminalInstanceService: ITerminalInstanceService,
+		@ILocalTerminalService private readonly _localTerminalService: ILocalTerminalService,
+		@IWorkspaceContextService private readonly _workspaceContextService: IWorkspaceContextService
 	) { }
 
 	getDragURI(instance: ITerminalInstance): string | null {
 		return URI.from({
 			scheme: Schemas.vscodeTerminal,
-			path: `/${instance.instanceId.toString()}`
+			path: `/${this._workspaceContextService.getWorkspace().id}/${instance.instanceId.toString()}`
 		}).toString();
 	}
 
@@ -572,7 +575,7 @@ class TerminalTabsDragAndDrop implements IListDragAndDrop<ITerminalInstance> {
 		const terminals: ITerminalInstance[] = dndData.filter(e => 'instanceId' in (e as any));
 		if (terminals.length > 0) {
 			originalEvent.dataTransfer.setData(DataTransfers.RESOURCES, JSON.stringify(terminals.map(e => e.resource.toString())));
-			originalEvent.dataTransfer.setData(DataTransfers.TERMINALS, JSON.stringify(terminals.map(e => e.instanceId)));
+			originalEvent.dataTransfer.setData(DataTransfers.TERMINALS, JSON.stringify(terminals.map(e => e.instanceId.toString())));
 		}
 	}
 
@@ -607,54 +610,69 @@ class TerminalTabsDragAndDrop implements IListDragAndDrop<ITerminalInstance> {
 		};
 	}
 
-	drop(data: IDragAndDropData, targetInstance: ITerminalInstance | undefined, targetIndex: number | undefined, originalEvent: DragEvent): void {
+	async drop(data: IDragAndDropData, targetInstance: ITerminalInstance | undefined, targetIndex: number | undefined, originalEvent: DragEvent): Promise<void> {
 		this._autoFocusDisposable.dispose();
 		this._autoFocusInstance = undefined;
 
 		let sourceInstances: ITerminalInstance[] | undefined;
-		const terminalResources = originalEvent.dataTransfer?.getData(DataTransfers.TERMINALS);
-		if (terminalResources) {
+		const terminalResources = originalEvent.dataTransfer?.getData(DataTransfers.RESOURCES);
+		const terminals = originalEvent.dataTransfer?.getData(DataTransfers.TERMINALS);
+		if (terminals && terminalResources) {
 			const json = JSON.parse(terminalResources);
 			for (const entry of json) {
 				const uri = URI.parse(entry);
-				const instance = this._terminalService.instances.find(e => e.resource.path === uri.path);
-				if (instance) {
-					sourceInstances = [instance];
-					this._terminalService.moveToTerminalView(instance);
+				const [, workspaceId, instanceId] = uri.path.split('/');
+				if (workspaceId && instanceId) {
+					const instance = this._terminalService.instances.find(e => e.resource.path === instanceId);
+					if (instance) {
+						sourceInstances = [instance];
+						this._terminalService.moveToTerminalView(instance);
+					} else if (workspaceId !== this._workspaceContextService.getWorkspace().id) {
+						await this._localTerminalService.requestDetachInstance(workspaceId, Number.parseInt(instanceId));
+						await timeout(300);
+						const processes = await this._localTerminalService.listProcesses();
+						if (processes?.length > 0) {
+							const instance = this._terminalService.createTerminal({
+								config: { attachPersistentProcess: processes[0] },
+								target: TerminalLocation.TerminalView
+							});
+							sourceInstances = [instance];
+						}
+					}
 				}
 			}
-		}
 
-		if (sourceInstances === undefined) {
-			if (!(data instanceof ElementsDragAndDropData)) {
-				this._handleExternalDrop(targetInstance, originalEvent);
+			if (sourceInstances === undefined) {
+				if (!(data instanceof ElementsDragAndDropData)) {
+					this._handleExternalDrop(targetInstance, originalEvent);
+					return;
+				}
+
+				const draggedElement = data.getData();
+				if (!draggedElement || !Array.isArray(draggedElement)) {
+					return;
+				}
+
+				sourceInstances = [];
+				for (const e of draggedElement) {
+					if ('instanceId' in e) {
+						sourceInstances.push(e as ITerminalInstance);
+					}
+				}
+			}
+
+			if (!targetInstance) {
+				this._terminalGroupService.moveGroupToEnd(sourceInstances[0]);
 				return;
 			}
 
-			const draggedElement = data.getData();
-			if (!draggedElement || !Array.isArray(draggedElement)) {
-				return;
-			}
-
-			sourceInstances = [];
-			for (const e of draggedElement) {
-				if ('instanceId' in e) {
-					sourceInstances.push(e as ITerminalInstance);
+			let focused = false;
+			for (const instance of sourceInstances) {
+				this._terminalGroupService.moveGroup(instance, targetInstance);
+				if (!focused) {
+					this._terminalService.setActiveInstance(instance);
+					focused = true;
 				}
-			}
-		}
-
-		if (!targetInstance) {
-			this._terminalGroupService.moveGroupToEnd(sourceInstances[0]);
-			return;
-		}
-
-		let focused = false;
-		for (const instance of sourceInstances) {
-			this._terminalGroupService.moveGroup(instance, targetInstance);
-			if (!focused) {
-				this._terminalService.setActiveInstance(instance);
-				focused = true;
 			}
 		}
 	}

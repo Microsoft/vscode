@@ -27,6 +27,8 @@ export class PtyService extends Disposable implements IPtyService {
 	private readonly _ptys: Map<number, PersistentTerminalProcess> = new Map();
 	private readonly _workspaceLayoutInfos = new Map<WorkspaceId, ISetTerminalLayoutInfoArgs>();
 
+	private _processIdToAttach: number | undefined = undefined;
+
 	private readonly _onHeartbeat = this._register(new Emitter<void>());
 	readonly onHeartbeat = this._onHeartbeat.event;
 
@@ -48,6 +50,8 @@ export class PtyService extends Disposable implements IPtyService {
 	readonly onProcessResolvedShellLaunchConfig = this._onProcessResolvedShellLaunchConfig.event;
 	private readonly _onProcessOrphanQuestion = this._register(new Emitter<{ id: number }>());
 	readonly onProcessOrphanQuestion = this._onProcessOrphanQuestion.event;
+	private readonly _onDidRequestDetach = this._register(new Emitter<{ workspaceId: string, instanceId: number }>());
+	readonly onDidRequestDetach = this._onDidRequestDetach.event;
 
 	constructor(
 		private _lastPtyId: number,
@@ -62,6 +66,14 @@ export class PtyService extends Disposable implements IPtyService {
 			}
 			this._ptys.clear();
 		}));
+	}
+
+	async requestDetachInstance(workspaceId: string, instanceId: number): Promise<void> {
+		this._onDidRequestDetach.fire({ workspaceId, instanceId });
+	}
+
+	async acceptInstanceForAttachment(persistentProcessId: number): Promise<void> {
+		this._processIdToAttach = persistentProcessId;
 	}
 
 	async shutdownAll(): Promise<void> {
@@ -134,12 +146,20 @@ export class PtyService extends Disposable implements IPtyService {
 		}
 	}
 
-	async listProcesses(): Promise<IProcessDetails[]> {
+	async listProcesses(getDetachedInstance?: boolean): Promise<IProcessDetails[]> {
 		const persistentProcesses = Array.from(this._ptys.entries()).filter(([_, pty]) => pty.shouldPersistTerminal);
-
 		this._logService.info(`Listing ${persistentProcesses.length} persistent terminals, ${this._ptys.size} total terminals`);
 		const promises = persistentProcesses.map(async ([id, terminalProcessData]) => this._buildProcessDetails(id, terminalProcessData));
 		const allTerminals = await Promise.all(promises);
+		if (getDetachedInstance) {
+			if (!this._processIdToAttach) {
+				this._logService.info(`Tried to get a detached instance, but there was no processId to attach to`);
+				return [];
+			}
+			const result = allTerminals.filter(entry => entry.isOrphan && entry.id === this._processIdToAttach);
+			this._processIdToAttach = undefined;
+			return result;
+		}
 		return allTerminals.filter(entry => entry.isOrphan);
 	}
 

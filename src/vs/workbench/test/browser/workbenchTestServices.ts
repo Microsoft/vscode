@@ -1664,12 +1664,14 @@ export class TestLocalTerminalService implements ILocalTerminalService {
 	onPtyHostUnresponsive = Event.None;
 	onPtyHostResponsive = Event.None;
 	onPtyHostRestart = Event.None;
+	onDidMoveWindowInstance = Event.None;
+	onDidRequestDetach = Event.None;
 
 	async createProcess(shellLaunchConfig: IShellLaunchConfig, cwd: string, cols: number, rows: number, env: IProcessEnvironment, windowsEnableConpty: boolean, shouldPersist: boolean): Promise<ITerminalChildProcess> {
 		return new TestTerminalChildProcess(shouldPersist);
 	}
 	async attachToProcess(id: number): Promise<ITerminalChildProcess | undefined> { throw new Error('Method not implemented.'); }
-	async listProcesses(): Promise<IProcessDetails[]> { throw new Error('Method not implemented.'); }
+	async listProcesses(getDetachedInstance?: boolean): Promise<IProcessDetails[]> { throw new Error('Method not implemented.'); }
 	getDefaultSystemShell(osOverride?: OperatingSystem): Promise<string> { throw new Error('Method not implemented.'); }
 	getProfiles(isWorkspaceTrusted: boolean, includeDetectedProfiles?: boolean): Promise<ITerminalProfile[]> { throw new Error('Method not implemented.'); }
 	getEnvironment(): Promise<IProcessEnvironment> { throw new Error('Method not implemented.'); }
@@ -1681,6 +1683,8 @@ export class TestLocalTerminalService implements ILocalTerminalService {
 	processBinary(id: number, data: string): Promise<void> { throw new Error('Method not implemented.'); }
 	updateTitle(id: number, title: string): Promise<void> { throw new Error('Method not implemented.'); }
 	updateIcon(id: number, icon: URI | { light: URI; dark: URI } | { id: string, color?: { id: string } }, color?: string): Promise<void> { throw new Error('Method not implemented.'); }
+	requestDetachInstance(workspaceId: string, instanceId: number): Promise<void> { throw new Error('Method not implemented.'); }
+	acceptInstanceForAttachment(persistentProcessId: number): Promise<void> { throw new Error('Method not implemented.'); }
 }
 
 class TestTerminalChildProcess implements ITerminalChildProcess {

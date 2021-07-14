@@ -42,6 +42,8 @@ export class RemoteTerminalService extends Disposable implements IRemoteTerminal
 	readonly onPtyHostRestart = this._onPtyHostRestart.event;
 	private readonly _onPtyHostRequestResolveVariables = this._register(new Emitter<IRequestResolveVariablesEvent>());
 	readonly onPtyHostRequestResolveVariables = this._onPtyHostRequestResolveVariables.event;
+	private readonly _onDidRequestDetach = this._register(new Emitter<{ workspaceId: string, instanceId: number }>());
+	readonly onDidRequestDetach = this._onDidRequestDetach.event;
 
 	constructor(
 		@IRemoteAgentService private readonly _remoteAgentService: IRemoteAgentService,
@@ -76,6 +78,7 @@ export class RemoteTerminalService extends Disposable implements IRemoteTerminal
 			channel.onProcessResolvedShellLaunchConfig(e => this._ptys.get(e.id)?.handleResolvedShellLaunchConfig(e.event));
 			channel.onProcessReplay(e => this._ptys.get(e.id)?.handleReplay(e.event));
 			channel.onProcessOrphanQuestion(e => this._ptys.get(e.id)?.handleOrphanQuestion());
+			channel.onDidRequestDetach(e => this._onDidRequestDetach.fire(e));
 
 			const allowedCommands = ['_remoteCLI.openExternal', '_remoteCLI.windowOpen', '_remoteCLI.getSystemStatus', '_remoteCLI.manageExtensions'];
 			channel.onExecuteCommand(async e => {
@@ -151,6 +154,17 @@ export class RemoteTerminalService extends Disposable implements IRemoteTerminal
 		}
 	}
 
+	async acceptInstanceForAttachment(persistentProcessId: number): Promise<void> {
+		this._remoteTerminalChannel?.acceptInstanceForAttachment(persistentProcessId);
+	}
+
+	async requestDetachInstance(workspaceId: string, instanceId: number): Promise<void> {
+		if (!this._remoteTerminalChannel) {
+			throw new Error(`Cannot request adopt instance when there is no remote!`);
+		}
+		return this._remoteTerminalChannel.requestAdoptInstance(workspaceId, instanceId);
+	}
+
 	async createProcess(shellLaunchConfig: IShellLaunchConfig, configuration: ICompleteTerminalConfiguration, activeWorkspaceRootUri: URI | undefined, cols: number, rows: number, shouldPersist: boolean, configHelper: ITerminalConfigHelper): Promise<ITerminalChildProcess> {
 		if (!this._remoteTerminalChannel) {
 			throw new Error(`Cannot create remote terminal when there is no remote!`);
@@ -200,8 +214,8 @@ export class RemoteTerminalService extends Disposable implements IRemoteTerminal
 		return undefined;
 	}
 
-	async listProcesses(): Promise<IProcessDetails[]> {
-		const terms = this._remoteTerminalChannel ? await this._remoteTerminalChannel.listProcesses() : [];
+	async listProcesses(getDetachedInstance?: boolean): Promise<IProcessDetails[]> {
+		const terms = this._remoteTerminalChannel ? await this._remoteTerminalChannel.listProcesses(getDetachedInstance) : [];
 		return terms.map(termDto => {
 			return <IProcessDetails>{
 				id: termDto.id,

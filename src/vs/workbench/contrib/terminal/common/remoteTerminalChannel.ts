@@ -118,6 +118,10 @@ export class RemoteTerminalChannelClient {
 		return this._channel.listen<{ reqId: number, commandId: string, commandArgs: any[] }>('$onExecuteCommand');
 	}
 
+	get onDidRequestDetach(): Event<{ workspaceId: string, instanceId: number }> {
+		return this._channel.listen<{ workspaceId: string, instanceId: number }>('$onDidRequestDetach');
+	}
+
 	constructor(
 		private readonly _remoteAuthority: string,
 		private readonly _channel: IChannel,
@@ -195,14 +199,20 @@ export class RemoteTerminalChannelClient {
 		return await this._channel.call<ICreateTerminalProcessResult>('$createProcess', args);
 	}
 
+	requestAdoptInstance(workspaceId: string, instanceId: number): Promise<void> {
+		return this._channel.call('$requestAdoptInstance', [workspaceId, instanceId]);
+	}
+	acceptInstanceForAttachment(persistentProcessId: number): Promise<void> {
+		return this._channel.call('$acceptInstanceForAttachment', [persistentProcessId]);
+	}
 	attachToProcess(id: number): Promise<void> {
 		return this._channel.call('$attachToProcess', [id]);
 	}
 	detachFromProcess(id: number): Promise<void> {
 		return this._channel.call('$detachFromProcess', [id]);
 	}
-	listProcesses(): Promise<IProcessDetails[]> {
-		return this._channel.call('$listProcesses');
+	listProcesses(getDetachedInstance?: boolean): Promise<IProcessDetails[]> {
+		return this._channel.call('$listProcesses', [getDetachedInstance]);
 	}
 	reduceConnectionGraceTime(): Promise<void> {
 		return this._channel.call('$reduceConnectionGraceTime');

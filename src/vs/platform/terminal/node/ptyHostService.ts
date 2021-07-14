@@ -77,6 +77,8 @@ export class PtyHostService extends Disposable implements IPtyService {
 	readonly onProcessResolvedShellLaunchConfig = this._onProcessResolvedShellLaunchConfig.event;
 	private readonly _onProcessOrphanQuestion = this._register(new Emitter<{ id: number }>());
 	readonly onProcessOrphanQuestion = this._onProcessOrphanQuestion.event;
+	private readonly _onDidRequestDetach = this._register(new Emitter<{ workspaceId: string, instanceId: number }>());
+	readonly onDidRequestDetach = this._onDidRequestDetach.event;
 
 	constructor(
 		private readonly _reconnectConstants: IReconnectConstants,
@@ -154,6 +156,7 @@ export class PtyHostService extends Disposable implements IPtyService {
 		this._register(proxy.onProcessResolvedShellLaunchConfig(e => this._onProcessResolvedShellLaunchConfig.fire(e)));
 		this._register(proxy.onProcessReplay(e => this._onProcessReplay.fire(e)));
 		this._register(proxy.onProcessOrphanQuestion(e => this._onProcessOrphanQuestion.fire(e)));
+		this._register(proxy.onDidRequestDetach(e => this._onDidRequestDetach.fire(e)));
 
 		return [client, proxy];
 	}
@@ -182,8 +185,8 @@ export class PtyHostService extends Disposable implements IPtyService {
 	detachFromProcess(id: number): Promise<void> {
 		return this._proxy.detachFromProcess(id);
 	}
-	listProcesses(): Promise<IProcessDetails[]> {
-		return this._proxy.listProcesses();
+	listProcesses(getDetachedInstance?: boolean): Promise<IProcessDetails[]> {
+		return this._proxy.listProcesses(getDetachedInstance);
 	}
 	reduceConnectionGraceTime(): Promise<void> {
 		return this._proxy.reduceConnectionGraceTime();
@@ -237,6 +240,14 @@ export class PtyHostService extends Disposable implements IPtyService {
 	}
 	async getTerminalLayoutInfo(args: IGetTerminalLayoutInfoArgs): Promise<ITerminalsLayoutInfo | undefined> {
 		return await this._proxy.getTerminalLayoutInfo(args);
+	}
+
+	async requestDetachInstance(workspaceId: string, instanceId: number): Promise<void> {
+		return this._proxy.requestDetachInstance(workspaceId, instanceId);
+	}
+
+	async acceptInstanceForAttachment(persistentProcessId: number): Promise<void> {
+		return this._proxy.acceptInstanceForAttachment(persistentProcessId);
 	}
 
 	async restartPtyHost(): Promise<void> {

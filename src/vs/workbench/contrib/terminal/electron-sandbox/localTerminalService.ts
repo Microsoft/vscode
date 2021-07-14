@@ -36,6 +36,8 @@ export class LocalTerminalService extends Disposable implements ILocalTerminalSe
 	readonly onPtyHostResponsive = this._onPtyHostResponsive.event;
 	private readonly _onPtyHostRestart = this._register(new Emitter<void>());
 	readonly onPtyHostRestart = this._onPtyHostRestart.event;
+	private readonly _onDidRequestDetach = this._register(new Emitter<{ workspaceId: string, instanceId: number }>());
+	readonly onDidRequestDetach = this._onDidRequestDetach.event;
 
 	constructor(
 		@IInstantiationService private readonly _instantiationService: IInstantiationService,
@@ -65,6 +67,7 @@ export class LocalTerminalService extends Disposable implements ILocalTerminalSe
 		this._localPtyService.onProcessResolvedShellLaunchConfig(e => this._ptys.get(e.id)?.handleResolvedShellLaunchConfig(e.event));
 		this._localPtyService.onProcessReplay(e => this._ptys.get(e.id)?.handleReplay(e.event));
 		this._localPtyService.onProcessOrphanQuestion(e => this._ptys.get(e.id)?.handleOrphanQuestion());
+		this._localPtyService.onDidRequestDetach(e => this._onDidRequestDetach.fire(e));
 
 		// Attach pty host listeners
 		if (this._localPtyService.onPtyHostExit) {
@@ -121,6 +124,15 @@ export class LocalTerminalService extends Disposable implements ILocalTerminalSe
 			}));
 		}
 	}
+
+	async acceptInstanceForAttachment(persistentProcessId: number): Promise<void> {
+		await this._localPtyService.acceptInstanceForAttachment(persistentProcessId);
+	}
+
+	async requestDetachInstance(workspaceId: string, instanceId: number): Promise<void> {
+		await this._localPtyService.requestDetachInstance(workspaceId, instanceId);
+	}
+
 	async updateTitle(id: number, title: string, titleSource: TitleEventSource): Promise<void> {
 		await this._localPtyService.updateTitle(id, title, titleSource);
 	}
@@ -149,8 +161,8 @@ export class LocalTerminalService extends Disposable implements ILocalTerminalSe
 		return undefined;
 	}
 
-	async listProcesses(): Promise<IProcessDetails[]> {
-		return this._localPtyService.listProcesses();
+	async listProcesses(getDetachedInstance?: boolean): Promise<IProcessDetails[]> {
+		return this._localPtyService.listProcesses(getDetachedInstance);
 	}
 
 	async reduceConnectionGraceTime(): Promise<void> {

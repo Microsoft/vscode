@@ -30,6 +30,7 @@ import { iconForeground } from 'vs/platform/theme/common/colorRegistry';
 import { IconDefinition } from 'vs/platform/theme/common/iconRegistry';
 import { ColorScheme } from 'vs/platform/theme/common/theme';
 import { IThemeService, Themable, ThemeIcon } from 'vs/platform/theme/common/themeService';
+import { IWorkspaceContextService } from 'vs/platform/workspace/common/workspace';
 import { VirtualWorkspaceContext } from 'vs/workbench/browser/contextkeys';
 import { IEditableData, IViewsService } from 'vs/workbench/common/views';
 import { IRemoteTerminalService, ITerminalEditorService, ITerminalExternalLinkProvider, ITerminalFindHost, ITerminalGroup, ITerminalGroupService, ITerminalInstance, ITerminalInstanceHost, ITerminalInstanceService, ITerminalProfileProvider, ITerminalService, TerminalConnectionState } from 'vs/workbench/contrib/terminal/browser/terminal';
@@ -158,6 +159,7 @@ export class TerminalService implements ITerminalService {
 		@IEditorResolverService editorResolverService: IEditorResolverService,
 		@IExtensionService private readonly _extensionService: IExtensionService,
 		@INotificationService private readonly _notificationService: INotificationService,
+		@IWorkspaceContextService private readonly _workspaceContextService: IWorkspaceContextService,
 		@optional(ILocalTerminalService) localTerminalService: ILocalTerminalService
 	) {
 		this._localTerminalService = localTerminalService;
@@ -258,6 +260,16 @@ export class TerminalService implements ITerminalService {
 				? this._localTerminalsInitPromise = this._reconnectToLocalTerminals()
 				: Promise.resolve();
 		this._primaryOffProcessTerminalService = !!this._environmentService.remoteAuthority ? this._remoteTerminalService : this._localTerminalService;
+		this._primaryOffProcessTerminalService.onDidRequestDetach(async (e) => {
+			if (e.workspaceId && this._workspaceContextService.getWorkspace().id === e.workspaceId) {
+				const instanceToDetach = this.getInstanceFromId(e.instanceId);
+				const persistentProcessId = instanceToDetach?.persistentProcessId;
+				if (persistentProcessId) {
+					await instanceToDetach.detachFromProcess();
+					await this._primaryOffProcessTerminalService?.acceptInstanceForAttachment(persistentProcessId);
+				}
+			}
+		});
 		initPromise.then(() => this._setConnected());
 
 		// Wait up to 5 seconds for profiles to be ready so it's assured that we know the actual

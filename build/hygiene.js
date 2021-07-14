@@ -107,6 +107,22 @@ function hygiene(some, linting = true) {
 			);
 	});
 
+	const consoleLog = es.through(function (file) {
+		const lines = file.__lines;
+
+		for (let i = 0; i < lines.length; i++) {
+			if (/^\s*console\.log/.test(lines[i])) {
+				console.error(
+					file.relative + '(' + (i + 1) + ',1): Stray console.log'
+				);
+				errorCount++;
+				break;
+			}
+		}
+
+		this.emit('data', file);
+	});
+
 	let input;
 
 	if (Array.isArray(some) || typeof some === 'string' || !some) {
@@ -130,7 +146,9 @@ function hygiene(some, linting = true) {
 		.pipe(filter(indentationFilter))
 		.pipe(indentation)
 		.pipe(filter(copyrightFilter))
-		.pipe(copyrights);
+		.pipe(copyrights)
+		.pipe(filter(tsHygieneFilter))
+		.pipe(consoleLog);
 
 	const streams = [
 		result.pipe(filter(tsHygieneFilter)).pipe(formatting)

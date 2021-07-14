@@ -8,11 +8,13 @@ import { IViewsRegistry, IViewDescriptor, Extensions as ViewExtensions } from 'v
 import { OutlinePane } from './outlinePane';
 import { Registry } from 'vs/platform/registry/common/platform';
 import { IConfigurationRegistry, Extensions as ConfigurationExtensions, ConfigurationScope } from 'vs/platform/configuration/common/configurationRegistry';
-import { VIEW_CONTAINER } from 'vs/workbench/contrib/files/browser/explorerViewlet';
+// import { VIEW_CONTAINER } from 'vs/workbench/contrib/files/browser/explorerViewlet';
 import { SyncDescriptor } from 'vs/platform/instantiation/common/descriptors';
 import { Codicon } from 'vs/base/common/codicons';
 import { registerIcon } from 'vs/platform/theme/common/iconRegistry';
 import { OutlineConfigKeys } from 'vs/workbench/services/outline/browser/outline';
+// import { THIRD_PANEL_VIEWLET_ID } from 'vs/workbench/contrib/thirdPanel/browser/thirdPanel';
+import { thirdPanelViewRegistry } from 'vs/workbench/contrib/thirdPanel/browser/thirdPanel.contribution';
 
 
 const outlineViewIcon = registerIcon('outline-view-icon', Codicon.symbolClass, localize('outlineViewIcon', 'View icon of the outline view.'));
@@ -31,7 +33,7 @@ const _outlineDesc = <IViewDescriptor>{
 	focusCommand: { id: 'outline.focus' }
 };
 
-Registry.as<IViewsRegistry>(ViewExtensions.ViewsRegistry).registerViews([_outlineDesc], VIEW_CONTAINER);
+Registry.as<IViewsRegistry>(ViewExtensions.ViewsRegistry).registerViews([_outlineDesc], thirdPanelViewRegistry);
 
 Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration).registerConfiguration({
 	'id': 'outline',

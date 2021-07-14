@@ -11,6 +11,8 @@ import { IProgressIndicator } from 'vs/platform/progress/common/progress';
 
 export const IViewletService = createDecorator<IViewletService>('viewletService');
 
+export const ISecondViewletService = createDecorator<IViewletService>('secondViewletService');
+
 export interface IViewletService {
 
 	readonly _serviceBrand: undefined;

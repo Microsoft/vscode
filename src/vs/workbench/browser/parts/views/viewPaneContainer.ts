@@ -608,7 +608,8 @@ export class ViewPaneContainer extends Component implements IViewPaneContainer {
 	}
 
 	private get orientation(): Orientation {
-		if (this.viewDescriptorService.getViewContainerLocation(this.viewContainer) === ViewContainerLocation.Sidebar) {
+		const location = this.viewDescriptorService.getViewContainerLocation(this.viewContainer);
+		if (location === ViewContainerLocation.Sidebar || location === ViewContainerLocation.ThirdPanel) {
 			return Orientation.VERTICAL;
 		} else {
 			return this.layoutService.getPanelPosition() === Position.BOTTOM ? Orientation.HORIZONTAL : Orientation.VERTICAL;

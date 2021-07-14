@@ -48,6 +48,7 @@ import 'vs/workbench/browser/parts/banner/bannerPart';
 import 'vs/workbench/browser/parts/sidebar/sidebarPart';
 import 'vs/workbench/browser/parts/statusbar/statusbarPart';
 import 'vs/workbench/browser/parts/views/viewsService';
+import 'vs/workbench/browser/parts/thirdpanel/thirdpanelPart';
 
 //#endregion
 
@@ -196,6 +197,9 @@ import 'vs/workbench/contrib/sash/browser/sash.contribution';
 
 // SCM
 import 'vs/workbench/contrib/scm/browser/scm.contribution';
+
+// THIRD PANEL
+import 'vs/workbench/contrib/thirdPanel/browser/thirdPanel.contribution';
 
 // Debug
 import 'vs/workbench/contrib/debug/browser/debug.contribution';

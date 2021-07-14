@@ -15,9 +15,9 @@ import { IConfigurationService } from 'vs/platform/configuration/common/configur
 import { IWorkbenchEnvironmentService } from 'vs/workbench/services/environment/common/environmentService';
 import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
 import { WorkbenchState, IWorkspaceContextService } from 'vs/platform/workspace/common/workspace';
-import { SideBarVisibleContext } from 'vs/workbench/common/viewlet';
+import { SideBarVisibleContext, ThirdPanelVisibleContext } from 'vs/workbench/common/viewlet';
 import { IWorkbenchLayoutService, Parts, positionToString } from 'vs/workbench/services/layout/browser/layoutService';
-import { IViewletService } from 'vs/workbench/services/viewlet/browser/viewlet';
+import { ISecondViewletService, IViewletService } from 'vs/workbench/services/viewlet/browser/viewlet';
 import { PanelMaximizedContext, PanelPositionContext, PanelVisibleContext } from 'vs/workbench/common/panel';
 import { getRemoteName, getVirtualWorkspaceScheme } from 'vs/platform/remote/common/remoteHosts';
 import { IWorkingCopyService } from 'vs/workbench/services/workingCopy/common/workingCopyService';
@@ -69,6 +69,7 @@ export class WorkbenchContextKeysHandler extends Disposable {
 	private editorAreaVisibleContext: IContextKey<boolean>;
 	private panelPositionContext: IContextKey<string>;
 	private panelVisibleContext: IContextKey<boolean>;
+	private thirdPanelVisibleContext: IContextKey<boolean>;
 	private panelMaximizedContext: IContextKey<boolean>;
 
 	private vitualWorkspaceContext: IContextKey<string>;
@@ -83,6 +84,7 @@ export class WorkbenchContextKeysHandler extends Disposable {
 		@IEditorGroupsService private readonly editorGroupService: IEditorGroupsService,
 		@IWorkbenchLayoutService private readonly layoutService: IWorkbenchLayoutService,
 		@IViewletService private readonly viewletService: IViewletService,
+		@ISecondViewletService private readonly secondViewletService: IViewletService,
 		@IWorkingCopyService private readonly workingCopyService: IWorkingCopyService
 	) {
 		super();
@@ -160,6 +162,9 @@ export class WorkbenchContextKeysHandler extends Disposable {
 		// Sidebar
 		this.sideBarVisibleContext = SideBarVisibleContext.bindTo(this.contextKeyService);
 
+		// Third Panel
+		this.thirdPanelVisibleContext = ThirdPanelVisibleContext.bindTo(this.contextKeyService);
+
 		// Panel
 		this.panelPositionContext = PanelPositionContext.bindTo(this.contextKeyService);
 		this.panelPositionContext.set(positionToString(this.layoutService.getPanelPosition()));
@@ -203,10 +208,14 @@ export class WorkbenchContextKeysHandler extends Disposable {
 		this._register(this.viewletService.onDidViewletClose(() => this.updateSideBarContextKeys()));
 		this._register(this.viewletService.onDidViewletOpen(() => this.updateSideBarContextKeys()));
 
+		this._register(this.secondViewletService.onDidViewletClose(() => this.updateThirdPanelContextKeys()));
+		this._register(this.secondViewletService.onDidViewletOpen(() => this.updateThirdPanelContextKeys()));
+
 		this._register(this.layoutService.onDidChangePartVisibility(() => {
 			this.editorAreaVisibleContext.set(this.layoutService.isVisible(Parts.EDITOR_PART));
 			this.panelVisibleContext.set(this.layoutService.isVisible(Parts.PANEL_PART));
 			this.panelMaximizedContext.set(this.layoutService.isPanelMaximized());
+			this.thirdPanelVisibleContext.set(this.layoutService.isVisible(Parts.THIRD_PANEL_PART));
 		}));
 
 		this._register(this.workingCopyService.onDidChangeDirty(workingCopy => this.dirtyWorkingCopiesContext.set(workingCopy.isDirty() || this.workingCopyService.hasDirty)));
@@ -300,6 +309,10 @@ export class WorkbenchContextKeysHandler extends Disposable {
 
 	private updateSideBarContextKeys(): void {
 		this.sideBarVisibleContext.set(this.layoutService.isVisible(Parts.SIDEBAR_PART));
+	}
+
+	private updateThirdPanelContextKeys(): void {
+		this.thirdPanelVisibleContext.set(this.layoutService.isVisible(Parts.THIRD_PANEL_PART));
 	}
 
 	private updateVirtualWorkspaceContextKey(): void {

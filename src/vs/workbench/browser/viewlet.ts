@@ -67,7 +67,8 @@ export class ViewletDescriptor extends CompositeDescriptor<Viewlet> {
 }
 
 export const Extensions = {
-	Viewlets: 'workbench.contributions.viewlets'
+	Viewlets: 'workbench.contributions.viewlets',
+	ThirdPanelViewlets: 'workbench.contributions.thirdpanelviewlets'
 };
 
 export class ViewletRegistry extends CompositeRegistry<Viewlet> {
@@ -102,3 +103,5 @@ export class ViewletRegistry extends CompositeRegistry<Viewlet> {
 }
 
 Registry.add(Extensions.Viewlets, new ViewletRegistry());
+
+Registry.add(Extensions.ThirdPanelViewlets, new ViewletRegistry());

@@ -20,7 +20,8 @@ export const enum Parts {
 	SIDEBAR_PART = 'workbench.parts.sidebar',
 	PANEL_PART = 'workbench.parts.panel',
 	EDITOR_PART = 'workbench.parts.editor',
-	STATUSBAR_PART = 'workbench.parts.statusbar'
+	STATUSBAR_PART = 'workbench.parts.statusbar',
+	THIRD_PANEL_PART = 'workbench.parts.thirdpanel'
 }
 
 export const enum Position {
@@ -183,6 +184,11 @@ export interface IWorkbenchLayoutService extends ILayoutService {
 	 * Set panel part hidden or not
 	 */
 	setPanelHidden(hidden: boolean): void;
+
+	/**
+	 * Set third layout hidden or not
+	 */
+	setThirdLayoutHidden(hidden: boolean): void;
 
 	/**
 	 * Maximizes the panel height if the panel is not already maximized.

@@ -423,9 +423,9 @@ export abstract class AbstractTaskService extends Disposable implements ITaskSer
 			}
 		});
 
-		CommandsRegistry.registerCommand('workbench.action.tasks.configureDefaultBuildTask', async () => {
+		CommandsRegistry.registerCommand('workbench.action.tasks.configureDefaultBuildTask', async (accessor, arg) => {
 			if (await this.trust()) {
-				this.runConfigureDefaultBuildTask();
+				this.runConfigureDefaultBuildTask(arg);
 			}
 		});
 
@@ -2485,21 +2485,14 @@ export abstract class AbstractTaskService extends Disposable implements ITaskSer
 		let identifier = this.getTaskIdentifier(arg);
 		if (identifier !== undefined) {
 			this.getGroupedTasks().then(async (grouped) => {
-				let resolver = this.createResolver(grouped);
-				let folderURIs: (URI | string)[] = this.contextService.getWorkspace().folders.map(folder => folder.uri);
-				if (this.contextService.getWorkbenchState() === WorkbenchState.WORKSPACE) {
-					folderURIs.push(this.contextService.getWorkspace().configuration!);
+				let task = await this.resolveTask(grouped, identifier);
+				if (task) {
+					this.run(task).then(undefined, reason => {
+						// eat the error, it has already been surfaced to the user and we don't care about it here
+					});
+					return;
 				}
-				folderURIs.push(USER_TASKS_GROUP_KEY);
-				for (let uri of folderURIs) {
-					let task = await resolver.resolve(uri, identifier);
-					if (task) {
-						this.run(task).then(undefined, reason => {
-							// eat the error, it has already been surfaced to the user and we don't care about it here
-						});
-						return;
-					}
-				}
+
 				this.doRunTaskCommand(grouped.all());
 			}, () => {
 				this.doRunTaskCommand();
@@ -3070,55 +3063,95 @@ export abstract class AbstractTaskService extends Disposable implements ITaskSer
 			});
 	}
 
-	private runConfigureDefaultBuildTask(): void {
+	private runConfigureDefaultBuildTask(arg?: any): void {
 		if (!this.canRunCommand()) {
 			return;
 		}
-		if (this.schemaVersion === JsonSchemaVersion.V2_0_0) {
-			this.tasks().then((tasks => {
-				if (tasks.length === 0) {
-					this.runConfigureTasks();
+
+		let selectedTask: Task | undefined;
+
+		this.getGroupedTasks().then(async (grouped) => {
+			const allTasks: Task[] = grouped.all();
+			for (let task of allTasks) {
+				if (task.configurationProperties.group?._id === TaskGroup.Build._id && task.configurationProperties.groupType === GroupType.default) {
+					selectedTask = task;
+					break;
+				}
+			}
+
+			let identifier = this.getTaskIdentifier(arg);
+			if (identifier) {
+				const resolvedTask: Task | undefined = await this.resolveTask(grouped, identifier);
+				if (resolvedTask) {
+					this.doConfigureDefaultBuildTask(resolvedTask, selectedTask);
 					return;
 				}
-				let selectedTask: Task | undefined;
-				let selectedEntry: TaskQuickPickEntry;
-				for (let task of tasks) {
-					if (task.configurationProperties.group === TaskGroup.Build && task.configurationProperties.groupType === GroupType.default) {
-						selectedTask = task;
-						break;
-					}
+			}
+
+			this.showConfigureDefaultBuildTask(allTasks, selectedTask);
+		}, () => {
+			this.showConfigureDefaultBuildTask();
+		});
+	}
+
+	private doConfigureDefaultBuildTask(newDefaultTask: Task, existingDefaultTask?: Task): void {
+		if (!InMemoryTask.is(newDefaultTask)) {
+			this.customize(newDefaultTask, { group: { kind: 'build', isDefault: true } }, true).then(() => {
+				if (existingDefaultTask && (newDefaultTask !== existingDefaultTask) && !InMemoryTask.is(existingDefaultTask)) {
+					this.customize(existingDefaultTask, { group: 'build' }, false);
 				}
-				if (selectedTask) {
-					selectedEntry = {
-						label: nls.localize('TaskService.defaultBuildTaskExists', '{0} is already marked as the default build task', selectedTask.getQualifiedLabel()),
-						task: selectedTask,
-						detail: this.showDetail() ? selectedTask.configurationProperties.detail : undefined
-					};
-				}
-				this.showIgnoredFoldersMessage().then(() => {
-					this.showQuickPick(tasks,
-						nls.localize('TaskService.pickDefaultBuildTask', 'Select the task to be used as the default build task'), undefined, true, false, selectedEntry).
-						then((entry) => {
-							let task: Task | undefined | null = entry ? entry.task : undefined;
-							if ((task === undefined) || (task === null)) {
-								return;
-							}
-							if (task === selectedTask && CustomTask.is(task)) {
-								this.openConfig(task);
-							}
-							if (!InMemoryTask.is(task)) {
-								this.customize(task, { group: { kind: 'build', isDefault: true } }, true).then(() => {
-									if (selectedTask && (task !== selectedTask) && !InMemoryTask.is(selectedTask)) {
-										this.customize(selectedTask, { group: 'build' }, false);
-									}
-								});
-							}
-						});
-				});
-			}));
+			});
+		}
+	}
+
+	private showConfigureDefaultBuildTask(tasks?: Task[], selectedTask?: Task): void {
+		if (this.schemaVersion === JsonSchemaVersion.V2_0_0) {
+			if (!tasks || tasks.length === 0) {
+				this.runConfigureTasks();
+				return;
+			}
+
+			let selectedEntry: TaskQuickPickEntry;
+			if (selectedTask) {
+				selectedEntry = {
+					label: nls.localize('TaskService.defaultBuildTaskExists', '{0} is already marked as the default build task', selectedTask.getQualifiedLabel()),
+					task: selectedTask,
+					detail: this.showDetail() ? selectedTask.configurationProperties.detail : undefined
+				};
+			}
+			this.showIgnoredFoldersMessage().then(() => {
+				this.showQuickPick(tasks,
+					nls.localize('TaskService.pickDefaultBuildTask', 'Select the task to be used as the default build task'), undefined, true, false, selectedEntry).
+					then((entry) => {
+						let task: Task | undefined | null = entry ? entry.task : undefined;
+						if ((task === undefined) || (task === null)) {
+							return;
+						}
+						if (task === selectedTask && CustomTask.is(task)) {
+							this.openConfig(task);
+						}
+						this.doConfigureDefaultBuildTask(task, selectedTask);
+					});
+			});
 		} else {
 			this.runConfigureTasks();
 		}
+	}
+
+	private async resolveTask(grouped: TaskMap, identifier: string | KeyedTaskIdentifier | undefined): Promise<Task | undefined> {
+		let resolver = this.createResolver(grouped);
+		let folderURIs: (URI | string)[] = this.contextService.getWorkspace().folders.map(folder => folder.uri);
+		if (this.contextService.getWorkbenchState() === WorkbenchState.WORKSPACE) {
+			folderURIs.push(this.contextService.getWorkspace().configuration!);
+		}
+		folderURIs.push(USER_TASKS_GROUP_KEY);
+		for (let uri of folderURIs) {
+			let task = await resolver.resolve(uri, identifier);
+			if (task) {
+				return task;
+			}
+		}
+		return;
 	}
 
 	private runConfigureDefaultTestTask(): void {

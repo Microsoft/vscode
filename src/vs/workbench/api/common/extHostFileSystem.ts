@@ -300,6 +300,15 @@ export class ExtHostFileSystem implements ExtHostFileSystemShape {
 		return Promise.resolve(provider.write(fd, pos, data.buffer, 0, data.byteLength));
 	}
 
+	$getCanonicalUri(handle: number, resource: UriComponents): Promise<UriComponents> {
+		const provider = this._getFsProvider(handle);
+		if (!provider.getCanonicalUri) {
+			return Promise.resolve(resource);
+		}
+
+		return Promise.resolve(provider.getCanonicalUri(URI.revive(resource))).then(result => result ?? resource);
+	}
+
 	private _getFsProvider(handle: number): vscode.FileSystemProvider {
 		const provider = this._fsProvider.get(handle);
 		if (!provider) {

@@ -227,6 +227,19 @@ declare module 'vscode' {
 
 	//#endregion
 
+	//#region
+
+	export interface FileSystemProvider {
+		/**
+	 * Get the canonical URI (if applicable) for a file system provider URI.
+	 *
+	 * @returns The canonical URI or undefined if the uri is already canonical.
+	 */
+		getCanonicalUri?(uri: Uri): ProviderResult<Uri>;
+	}
+
+	//#endregion
+
 	//#region TextSearchProvider: https://github.com/microsoft/vscode/issues/59921
 
 	/**

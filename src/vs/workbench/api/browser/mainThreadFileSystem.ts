@@ -249,4 +249,8 @@ class RemoteFileSystemProvider implements IFileSystemProviderWithFileReadWriteCa
 	write(fd: number, pos: number, data: Uint8Array, offset: number, length: number): Promise<number> {
 		return this._proxy.$write(this._handle, fd, pos, VSBuffer.wrap(data).slice(offset, offset + length));
 	}
+
+	getCanonicalUri(resource: URI): Promise<URI> {
+		return this._proxy.$getCanonicalUri(this._handle, resource).then(uriComponents => URI.revive(uriComponents));
+	}
 }

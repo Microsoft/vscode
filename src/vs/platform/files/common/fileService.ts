@@ -634,6 +634,19 @@ export class FileService extends Disposable implements IFileService {
 
 	//#endregion
 
+	//#region Get Canonical URI
+
+	async getCanonicalUri(resource: URI): Promise<URI> {
+		const provider = await this.withProvider(resource);
+		if (!provider.getCanonicalUri) {
+			return resource;
+		}
+
+		return provider.getCanonicalUri(resource);
+	}
+
+	//#endregion
+
 	//#region Move/Copy/Delete/Create Folder
 
 	async canMove(source: URI, target: URI, overwrite?: boolean): Promise<Error | true> {

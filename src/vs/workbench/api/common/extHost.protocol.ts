@@ -1270,6 +1270,7 @@ export interface ExtHostFileSystemShape {
 	$close(handle: number, fd: number): Promise<void>;
 	$read(handle: number, fd: number, pos: number, length: number): Promise<VSBuffer>;
 	$write(handle: number, fd: number, pos: number, data: VSBuffer): Promise<number>;
+	$getCanonicalUri(handle: number, resource: UriComponents): Promise<UriComponents>;
 }
 
 export interface ExtHostLabelServiceShape {

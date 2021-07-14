@@ -136,6 +136,11 @@ export interface IFileService {
 	writeFile(resource: URI, bufferOrReadableOrStream: VSBuffer | VSBufferReadable | VSBufferReadableStream, options?: IWriteFileOptions): Promise<IFileStatWithMetadata>;
 
 	/**
+	 * Gets the canonical form of a resource if provided by a file system provider, otherwise, return unmodified.
+	 */
+	getCanonicalUri(resource: URI): Promise<URI>;
+
+	/**
 	 * Moves the file/folder to a new path identified by the resource.
 	 *
 	 * The optional parameter overwrite can be set to replace an existing file at the location.
@@ -444,6 +449,8 @@ export interface IFileSystemProvider {
 	close?(fd: number): Promise<void>;
 	read?(fd: number, pos: number, data: Uint8Array, offset: number, length: number): Promise<number>;
 	write?(fd: number, pos: number, data: Uint8Array, offset: number, length: number): Promise<number>;
+
+	getCanonicalUri?(resource: URI): Promise<URI>;
 }
 
 export interface IFileSystemProviderWithFileReadWriteCapability extends IFileSystemProvider {

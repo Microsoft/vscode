@@ -1019,6 +1019,8 @@ export class TestFileService implements IFileService {
 	async canMove(source: URI, target: URI, overwrite?: boolean | undefined): Promise<Error | true> { return true; }
 	async canCopy(source: URI, target: URI, overwrite?: boolean | undefined): Promise<Error | true> { return true; }
 	async canDelete(resource: URI, options?: { useTrash?: boolean | undefined; recursive?: boolean | undefined; } | undefined): Promise<Error | true> { return true; }
+
+	async getCanonicalUri(resource: URI): Promise<URI> { return resource; }
 }
 
 export class TestWorkingCopyBackupService extends InMemoryWorkingCopyBackupService {

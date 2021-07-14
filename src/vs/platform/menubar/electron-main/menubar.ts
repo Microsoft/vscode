@@ -24,6 +24,7 @@ import { ILifecycleMainService } from 'vs/platform/lifecycle/electron-main/lifec
 import { WorkbenchActionExecutedEvent, WorkbenchActionExecutedClassification } from 'vs/base/common/actions';
 import { INativeHostMainService } from 'vs/platform/native/electron-main/nativeHostMainService';
 import { CancellationToken } from 'vs/base/common/cancellation';
+import { buildMacDockRecentSubmenu } from 'vs/platform/menubar/electron-main/macDockMenu/buildMackDockRecentSubmenu';
 
 const telemetryFrom = 'menu';
 
@@ -47,6 +48,7 @@ export class Menubar {
 
 	private willShutdown: boolean | undefined;
 	private appMenuInstalled: boolean | undefined;
+	private recentItemsHaveChanged: boolean;
 	private closedLastWindow: boolean;
 	private noActiveWindow: boolean;
 
@@ -91,6 +93,7 @@ export class Menubar {
 
 		this.closedLastWindow = false;
 		this.noActiveWindow = false;
+		this.recentItemsHaveChanged = false;
 
 		this.oldMenus = [];
 
@@ -172,6 +175,12 @@ export class Menubar {
 		this.windowsMainService.onDidChangeWindowsCount(e => this.onDidChangeWindowsCount(e));
 		this.nativeHostMainService.onDidBlurWindow(() => this.onDidChangeWindowFocus());
 		this.nativeHostMainService.onDidFocusWindow(() => this.onDidChangeWindowFocus());
+
+		// Refresh Mac Dock Menu recent items when they have been changed
+		this.workspacesHistoryMainService.onDidChangeRecentlyOpened(() => this.recentItemsHaveChanged = true);
+
+		// TODO: Should this be listened to here? (seen in menubarControl.ts with comment 'Update recent menu items on formatter registration')
+		// this.labelService.onDidChangeFormatters(() => this.recentItemsHaveChanged = true);
 	}
 
 	private get currentEnableMenuBarMnemonics(): boolean {
@@ -275,13 +284,11 @@ export class Menubar {
 		}
 
 		// Mac: Dock
-		if (isMacintosh && !this.appMenuInstalled) {
+		if (isMacintosh && !this.appMenuInstalled || this.recentItemsHaveChanged) {
 			this.appMenuInstalled = true;
+			this.recentItemsHaveChanged = false;
 
-			const dockMenu = new Menu();
-			dockMenu.append(new MenuItem({ label: this.mnemonicLabel(nls.localize({ key: 'miNewWindow', comment: ['&& denotes a mnemonic'] }, "New &&Window")), click: () => this.windowsMainService.openEmptyWindow({ context: OpenContext.DOCK }) }));
-
-			app.dock.setMenu(dockMenu);
+			this.setMacDockMenu();
 		}
 
 		// File
@@ -368,6 +375,18 @@ export class Menubar {
 
 		// Dispose of older menus after some time
 		this.menuGC.schedule();
+	}
+
+	private setMacDockMenu(): void {
+		const dockMenu = new Menu();
+		dockMenu.append(new MenuItem({ label: this.mnemonicLabel(nls.localize({ key: 'miNewWindow', comment: ['&& denotes a mnemonic'] }, "New &&Window")), click: () => this.windowsMainService.openEmptyWindow({ context: OpenContext.DOCK }) }));
+
+		const dockRecentItemsMenuSetting = this.configurationService.getValue<string>('window.dockRecentItemsMenu');
+		if (dockRecentItemsMenuSetting === 'submenu') {
+			const openRecentMenu = buildMacDockRecentSubmenu(this.menubarMenus['File']);
+			this.setMenu(dockMenu, [openRecentMenu]);
+			app.dock.setMenu(dockMenu);
+		}
 	}
 
 	private setMacApplicationMenu(macApplicationMenu: Menu): void {

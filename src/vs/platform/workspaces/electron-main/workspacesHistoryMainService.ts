@@ -22,6 +22,7 @@ import { ILifecycleMainService, LifecycleMainPhase } from 'vs/platform/lifecycle
 import { createDecorator } from 'vs/platform/instantiation/common/instantiation';
 import { Disposable } from 'vs/base/common/lifecycle';
 import { ICodeWindow } from 'vs/platform/windows/electron-main/windows';
+import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 
 export const IWorkspacesHistoryMainService = createDecorator<IWorkspacesHistoryMainService>('workspacesHistoryMainService');
 
@@ -65,7 +66,8 @@ export class WorkspacesHistoryMainService extends Disposable implements IWorkspa
 		@IStateMainService private readonly stateMainService: IStateMainService,
 		@ILogService private readonly logService: ILogService,
 		@IWorkspacesManagementMainService private readonly workspacesManagementMainService: IWorkspacesManagementMainService,
-		@ILifecycleMainService private readonly lifecycleMainService: ILifecycleMainService
+		@ILifecycleMainService private readonly lifecycleMainService: ILifecycleMainService,
+		@IConfigurationService private readonly configurationService: IConfigurationService
 	) {
 		super();
 
@@ -177,6 +179,13 @@ export class WorkspacesHistoryMainService extends Disposable implements IWorkspa
 			return;
 		}
 
+		if (!this.usesDefaultMenuForMacOSRecentDocuments()) {
+			// If using an alternative recent documents menu,
+			// clear the default so that recent documents are no longer visible there.
+			app.clearRecentDocuments();
+			return;
+		}
+
 		// We clear all documents first to ensure an up-to-date view on the set. Since entries
 		// can get deleted on disk, this ensures that the list is always valid
 		app.clearRecentDocuments();
@@ -229,6 +238,11 @@ export class WorkspacesHistoryMainService extends Disposable implements IWorkspa
 		// N folders are always appearing, even if the limit is low (https://github.com/microsoft/vscode/issues/74788)
 		fileEntries.reverse().forEach(fileEntry => app.addRecentDocument(fileEntry));
 		workspaceEntries.reverse().forEach(workspaceEntry => app.addRecentDocument(workspaceEntry));
+	}
+
+	private usesDefaultMenuForMacOSRecentDocuments(): boolean {
+		const dockRecentItemsMenuSetting = this.configurationService.getValue<string>('window.dockRecentItemsMenu');
+		return dockRecentItemsMenuSetting === 'default';
 	}
 
 	clearRecentlyOpened(): void {

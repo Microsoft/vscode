@@ -218,6 +218,18 @@ import { EditorsVisibleContext, SingleEditorGroupsContext } from 'vs/workbench/c
 				'scope': ConfigurationScope.APPLICATION,
 				'description': localize('window.clickThroughInactive', "If enabled, clicking on an inactive window will both activate the window and trigger the element under the mouse if it is clickable. If disabled, clicking anywhere on an inactive window will activate it only and a second click is required on the element."),
 				'included': isMacintosh
+			},
+			'window.dockRecentItemsMenu': {
+				'type': 'string',
+				'enum': ['default', 'submenu'],
+				'enumDescriptions': [
+					localize('window.dockRecentItemsMenu.default', "Show recent items directly in the Dock menu."),
+					localize('window.dockRecentItemsMenu.submenu', "Use a submenu in the Dock for display of recent items.")
+				],
+				'default': 'default',
+				'scope': ConfigurationScope.APPLICATION,
+				'description': localize('window.openRecentFromDock', "Controls wheter recent items should be displayed directly in the Dock menu or as a submenu. Note that changes require a full restart to apply."),
+				'included': isMacintosh
 			}
 		}
 	});

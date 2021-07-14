@@ -103,6 +103,10 @@ export class ApiRepository implements Repository {
 		return this._repository.getCommit(ref);
 	}
 
+	add(resources: Uri[]): Promise<void> {
+		return this._repository.add(resources);
+	}
+
 	clean(paths: string[]) {
 		return this._repository.clean(paths.map(p => Uri.file(p)));
 	}

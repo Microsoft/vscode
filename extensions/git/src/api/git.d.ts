@@ -172,6 +172,7 @@ export interface Repository {
 	show(ref: string, path: string): Promise<string>;
 	getCommit(ref: string): Promise<Commit>;
 
+	add(resources: Uri[]): Promise<void>;
 	clean(paths: string[]): Promise<void>;
 
 	apply(patch: string, reverse?: boolean): Promise<void>;

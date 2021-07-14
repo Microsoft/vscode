@@ -12,7 +12,8 @@
 		["{", "}"],
 		["[", "]"],
 		["(", ")"],
-		{ "open": "\"", "close": "\"", "notIn": ["string"] }
+		{ "open": "\"", "close": "\"", "notIn": ["string"] },
+		{ "open": "/**", "close": " */", "notIn": ["string"] }
 	],
 	"surroundingPairs": [
 		["{", "}"],

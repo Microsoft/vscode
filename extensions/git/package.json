@@ -135,6 +135,11 @@
         "category": "Git"
       },
       {
+        "command": "git.stageSelectedHunk",
+        "title": "%command.stageSelectedHunk%",
+        "category": "Git"
+      },
+      {
         "command": "git.revertSelectedRanges",
         "title": "%command.revertSelectedRanges%",
         "category": "Git"
@@ -166,6 +171,11 @@
       {
         "command": "git.unstageSelectedRanges",
         "title": "%command.unstageSelectedRanges%",
+        "category": "Git"
+      },
+      {
+        "command": "git.unstageSelectedHunk",
+        "title": "%command.unstageSelectedHunk%",
         "category": "Git"
       },
       {
@@ -604,6 +614,10 @@
           "when": "config.git.enabled && !git.missing && gitOpenRepositoryCount != 0"
         },
         {
+          "command": "git.stageSelectedHunk",
+          "when": "config.git.enabled && !git.missing && gitOpenRepositoryCount != 0"
+        },
+        {
           "command": "git.stageChange",
           "when": "false"
         },
@@ -629,6 +643,10 @@
         },
         {
           "command": "git.unstageSelectedRanges",
+          "when": "config.git.enabled && !git.missing && gitOpenRepositoryCount != 0"
+        },
+        {
+          "command": "git.unstageSelectedHunk",
           "when": "config.git.enabled && !git.missing && gitOpenRepositoryCount != 0"
         },
         {
@@ -1332,7 +1350,17 @@
           "when": "config.git.enabled && !git.missing && gitOpenRepositoryCount != 0 && isInDiffEditor && resourceScheme =~ /^git$|^file$/"
         },
         {
+          "command": "git.stageSelectedHunk",
+          "group": "2_git@1",
+          "when": "config.git.enabled && !git.missing && gitOpenRepositoryCount != 0 && isInDiffEditor && resourceScheme =~ /^git$|^file$/"
+        },
+        {
           "command": "git.unstageSelectedRanges",
+          "group": "2_git@2",
+          "when": "config.git.enabled && !git.missing && gitOpenRepositoryCount != 0 && isInDiffEditor && resourceScheme =~ /^git$|^file$/"
+        },
+        {
+          "command": "git.unstageSelectedHunk",
           "group": "2_git@2",
           "when": "config.git.enabled && !git.missing && gitOpenRepositoryCount != 0 && isInDiffEditor && resourceScheme =~ /^git$|^file$/"
         },
@@ -1349,7 +1377,17 @@
           "when": "isInDiffRightEditor && !isInEmbeddedDiffEditor && config.git.enabled && !git.missing && gitOpenRepositoryCount != 0 && isInDiffEditor && resourceScheme =~ /^git$|^file$/"
         },
         {
+          "command": "git.stageSelectedHunk",
+          "group": "2_git@1",
+          "when": "isInDiffRightEditor && !isInEmbeddedDiffEditor && config.git.enabled && !git.missing && gitOpenRepositoryCount != 0 && isInDiffEditor && resourceScheme =~ /^git$|^file$/"
+        },
+        {
           "command": "git.unstageSelectedRanges",
+          "group": "2_git@2",
+          "when": "isInDiffRightEditor && !isInEmbeddedDiffEditor && config.git.enabled && !git.missing && gitOpenRepositoryCount != 0 && isInDiffEditor && resourceScheme =~ /^git$|^file$/"
+        },
+        {
+          "command": "git.unstageSelectedHunk",
           "group": "2_git@2",
           "when": "isInDiffRightEditor && !isInEmbeddedDiffEditor && config.git.enabled && !git.missing && gitOpenRepositoryCount != 0 && isInDiffEditor && resourceScheme =~ /^git$|^file$/"
         },

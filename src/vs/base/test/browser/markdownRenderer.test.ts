@@ -76,6 +76,14 @@ suite('MarkdownRenderer', () => {
 			assert.strictEqual(result.innerHTML, `<p>$(zap) $(not a theme icon) <span class="codicon codicon-add"></span></p>`);
 		});
 
+		test('render appendMarkdown with icon in list', () => {
+			const mds = new MarkdownString(undefined, { supportThemeIcons: true });
+			mds.appendMarkdown('* $(zap) $(not a theme icon) $(add)');
+
+			let result: HTMLElement = renderMarkdown(mds);
+			assert.strictEqual(result.innerHTML, `<ul>\n<li><span class="codicon codicon-zap"></span> $(not a theme icon) <span class="codicon codicon-add"></span></li></ul>\n`);
+		});
+
 	});
 
 	suite('ThemeIcons Support Off', () => {

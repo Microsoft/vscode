@@ -89,6 +89,11 @@ export function renderMarkdown(markdown: IMarkdownString, options: MarkdownRende
 		return uri.toString();
 	};
 
+	const _renderIcons = function (text: string): string {
+		const elements = renderLabelWithIcons(text);
+		return elements.map(e => typeof e === 'string' ? e : e.outerHTML).join('');
+	};
+
 	// signal to code-block render that the
 	// element has been created
 	let signalInnerHTML: () => void;
@@ -154,10 +159,15 @@ export function renderMarkdown(markdown: IMarkdownString, options: MarkdownRende
 			return `<a href="#" data-href="${href}" title="${title || href}">${text}</a>`;
 		}
 	};
+	renderer.listitem = (text): string => {
+		if (markdown.supportThemeIcons) {
+			text = _renderIcons(text);
+		}
+		return `<li>${text}</li>`;
+	};
 	renderer.paragraph = (text): string => {
 		if (markdown.supportThemeIcons) {
-			const elements = renderLabelWithIcons(text);
-			text = elements.map(e => typeof e === 'string' ? e : e.outerHTML).join('');
+			text = _renderIcons(text);
 		}
 		return `<p>${text}</p>`;
 	};

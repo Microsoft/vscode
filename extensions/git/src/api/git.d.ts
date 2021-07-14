@@ -198,6 +198,9 @@ export interface Repository {
 
 	getMergeBase(ref1: string, ref2: string): Promise<string>;
 
+	tag(name: string, upstream: string): Promise<void>;
+	deleteTag(name: string): Promise<void>;
+
 	status(): Promise<void>;
 	checkout(treeish: string): Promise<void>;
 

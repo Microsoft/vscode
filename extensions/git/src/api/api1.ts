@@ -173,6 +173,14 @@ export class ApiRepository implements Repository {
 		return this._repository.getMergeBase(ref1, ref2);
 	}
 
+	tag(name: string, upstream: string): Promise<void> {
+		return this._repository.tag(name, upstream);
+	}
+
+	deleteTag(name: string): Promise<void> {
+		return this._repository.deleteTag(name);
+	}
+
 	status(): Promise<void> {
 		return this._repository.status();
 	}

@@ -157,6 +157,28 @@ registerAction2(class extends Action2 {
 registerAction2(class extends Action2 {
 	constructor() {
 		super({
+			id: `workbench.output.action.clearAllOutput`,
+			title: { value: nls.localize('clearAllOutput.label', "Clear All Output"), original: 'Clear All Output' },
+			category: CATEGORIES.View,
+			menu: [{
+				id: MenuId.CommandPalette
+			}],
+			icon: Codicon.clearAll
+		});
+	}
+	async run(accessor: ServicesAccessor): Promise<void> {
+		const outputService = accessor.get(IOutputService);
+		const channelDescriptors = outputService.getChannelDescriptors();
+		channelDescriptors.forEach((channelDescriptor) => {
+			outputService.getChannel(channelDescriptor.id)?.clear();
+		});
+		aria.status(nls.localize('allOutputCleared', "All output was cleared"));
+
+	}
+});
+registerAction2(class extends Action2 {
+	constructor() {
+		super({
 			id: `workbench.output.action.toggleAutoScroll`,
 			title: { value: nls.localize('toggleAutoScroll', "Toggle Auto Scrolling"), original: 'Toggle Auto Scrolling' },
 			tooltip: nls.localize('outputScrollOff', "Turn Auto Scrolling Off"),

@@ -6,6 +6,11 @@
 .monaco-editor .rename-box {
 	z-index: 100;
 	color: inherit;
+	display: none;
+}
+
+.monaco-editor .rename-box[monaco-visible-content-widget="true"] {
+	display: block;
 }
 
 .monaco-editor .rename-box.preview {

@@ -1,0 +1,111 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+
+	<!-- Disable pinch zooming -->
+	<meta name="viewport"
+		content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+
+	<!-- Workbench Configuration -->
+	<meta id="vscode-workbench-web-configuration" data-settings="{{WORKBENCH_WEB_CONFIGURATION}}" />
+
+	<!-- Workarounds/Hacks (remote user data uri) -->
+	<meta id="vscode-remote-user-data-uri" data-settings="" />
+
+	<!-- Workbench Icon/Manifest/CSS -->
+	<link rel="icon" href="/favicon.ico" type="image/x-icon" />
+	<link rel="manifest" href="/manifest.json" />
+</head>
+
+<body aria-label=""></body>
+
+<!-- Startup (do not modify order of script tags!) -->
+<script>
+	// NOTE: Changes to inline scripts require update of content security policy
+	self.require = {
+		baseUrl: `${window.location.origin}/out`,
+		paths: {
+			'vscode-textmate': `${window.location.origin}/remote/vscode-textmate/release/main`,
+			'onigasm-umd': `${window.location.origin}/remote/onigasm-umd/release/main`,
+			xterm: `${window.location.origin}/remote/xterm/lib/xterm.js`,
+			'xterm-addon-search': `${window.location.origin}/remote/xterm-addon-search/lib/xterm-addon-search.js`,
+			'xterm-addon-web-links': `${window.location.origin}/remote/xterm-addon-web-links/lib/xterm-addon-web-links.js`,
+			'xterm-addon-webgl': `${window.location.origin}/remote/xterm-addon-webgl/lib/xterm-addon-webgl.js`,
+			'semver-umd': `${window.location.origin}/remote/semver-umd/lib/semver-umd.js`
+		}
+	};
+</script>
+<script src="/out/vs/loader.js"></script>
+<script>
+	async function injectExtensionSettings() {
+		const res = await fetch('/extensions.json');
+		const extensions = await res.json();
+
+		extensions.forEach(ext => {
+			ext.extensionLocation.scheme = location.protocol.replace(/\:$/, '');
+			ext.extensionLocation.authority = location.host;
+		});
+
+		const configElement = document.querySelector('#vscode-workbench-web-configuration');
+		configElement.setAttribute(
+			'data-settings',
+			JSON.stringify({
+				staticExtensions: extensions,
+				folderUri: {
+					scheme: 'webfs',
+					path: `/`
+				}
+			})
+		);
+	}
+
+	async function start() {
+		await injectExtensionSettings();
+		require(['vs/code/browser/workbench/workbench'], () => {});
+	}
+
+	if (location.hostname === 'localhost') {
+		start();
+	} else {
+		(async () => {
+			const loaderElement = document.createElement('div');
+			loaderElement.innerHTML = `
+				<div style="width:100vw;height:100vh;display:flex; background: #444; justify-content: center; align-items: center;">
+					<style>
+						html, body {
+							margin: 0;
+							padding: 0
+						}
+						.spinner {
+							pointer-events: none;
+							width: 2.5em;
+							height: 2.5em;
+							border: 0.4em solid transparent;
+							border-color: #eee;
+							border-top-color: #3E67EC;
+							border-radius: 50%;
+							animation: loadingspin 1s linear infinite;
+						}
+						@keyframes loadingspin {
+							100% { transform: rotate(360deg) }
+						}
+					</style>
+					<div >
+						<div class="spinner"></div>
+					</div>
+				</div>`;
+			document.body.appendChild(loaderElement);
+			const reg = await navigator.serviceWorker.register('/sw.js');
+			await navigator.serviceWorker.ready;
+			setInterval(() => reg.update(), 60 * 1000);
+			await injectExtensionSettings();
+			await start();
+			loaderElement.remove();
+		})();
+	}
+</script>
+
+</html>

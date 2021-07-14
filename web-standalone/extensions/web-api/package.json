@@ -1,0 +1,123 @@
+{
+  "name": "web-api",
+  "description": "Web backend for VS Code",
+  "version": "0.0.1",
+  "publisher": "vscode",
+  "license": "MIT",
+  "enableProposedApi": true,
+  "private": true,
+  "activationEvents": [
+    "onFileSystem:webfs",
+    "onDebug"
+  ],
+  "main": "./out/extension",
+  "engines": {
+    "vscode": "^1.25.0"
+  },
+  "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "Test Config",
+      "properties": {
+        "farboo.config0": {
+          "type": "boolean",
+          "default": true
+        },
+        "farboo.nested.config1": {
+          "type": "number",
+          "default": 42
+        },
+        "farboo.nested.config2": {
+          "type": "string",
+          "default": "Das Pferd frisst kein Reis."
+        },
+        "farboo.config4": {
+          "type": "string"
+        },
+        "farboo.get": {
+          "type": "string",
+          "default": "get-prop"
+        }
+      }
+    },
+    "configurationDefaults": {
+      "[abcLang]": {
+        "editor.lineNumbers": "off",
+        "editor.tabSize": 2
+      }
+    },
+    "taskDefinitions": [{
+      "type": "custombuildscript",
+      "required": [
+        "flavor"
+      ],
+      "properties": {
+        "flavor": {
+          "type": "string",
+          "description": "The build flavor. Should be either '32' or '64'."
+        },
+        "flags": {
+          "type": "array",
+          "description": "Additional build flags."
+        }
+      }
+    }],
+    "breakpoints": [{
+      "language": "markdown"
+    }],
+    "debuggers": [{
+      "type": "mock",
+      "label": "Mock Debug",
+      "languages": [
+        "markdown"
+      ],
+      "configurationAttributes": {
+        "launch": {
+          "required": [
+            "program"
+          ],
+          "properties": {
+            "program": {
+              "type": "string",
+              "description": "Absolute path to a text file.",
+              "default": "${workspaceFolder}/file.md"
+            },
+            "stopOnEntry": {
+              "type": "boolean",
+              "description": "Automatically stop after launch.",
+              "default": true
+            },
+            "trace": {
+              "type": "boolean",
+              "description": "Enable logging of the Debug Adapter Protocol.",
+              "default": true
+            }
+          }
+        }
+      },
+      "initialConfigurations": [{
+        "type": "mock",
+        "request": "launch",
+        "name": "Debug file.md",
+        "program": "${workspaceFolder}/file.md"
+      }]
+    }]
+  },
+  "scripts": {
+    "compile": "webpack --mode production",
+    "watch": "webpack --mode development --watch",
+    "vscode:prepublish": "node ../../node_modules/gulp/bin/gulp.js --gulpfile ../../build/gulpfile.extensions.js compile-extension:vscode-api-tests ./tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/mocha": "2.2.43",
+    "@types/node": "^12.11.7",
+    "kv-storage-polyfill": "^2.0.0",
+    "mocha-junit-reporter": "^1.17.0",
+    "mocha-multi-reporters": "^1.1.7",
+    "ts-loader": "^6.2.1",
+    "typescript": "^3.7.4",
+    "vscode": "^1.1.36",
+    "webpack": "^4.41.5",
+    "webpack-cli": "^3.3.10"
+  }
+}

@@ -1,0 +1,6 @@
+.vscode/**
+typings/**
+**/*.ts
+**/*.map
+.gitignore
+tsconfig.json

@@ -1,0 +1,15 @@
+{
+	"private": true,
+	"license": "MIT",
+	"scripts": {
+		"dev": "node scripts/dev-server.js",
+		"build": "node scripts/build-production.js",
+		"generate-extensions-json": "node scripts/generate-extensions-json.js",
+		"compile-extension:web-api": "cd extensions/web-api && yarn install && yarn compile"
+	},
+	"devDependencies": {
+		"express": "^4.17.1",
+		"fs-extra": "^8.1.0",
+		"rimraf": "^3.0.0"
+	}
+}

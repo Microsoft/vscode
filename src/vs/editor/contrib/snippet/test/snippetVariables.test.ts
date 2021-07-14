@@ -17,6 +17,7 @@ import { Workspace } from 'vs/platform/workspace/test/common/testWorkspace';
 import { extUriBiasedIgnorePathCase } from 'vs/base/common/resources';
 import { sep } from 'vs/base/common/path';
 import { toWorkspaceFolders } from 'vs/platform/workspaces/common/workspaces';
+import * as sinon from 'sinon';
 
 suite('Snippet Variables Resolver', function () {
 
@@ -289,6 +290,36 @@ suite('Snippet Variables Resolver', function () {
 		assertVariableResolve3(resolver, 'CURRENT_MONTH_NAME');
 		assertVariableResolve3(resolver, 'CURRENT_MONTH_NAME_SHORT');
 		assertVariableResolve3(resolver, 'CURRENT_SECONDS_UNIX');
+	});
+
+	test('Time-based snippet variables resolve to the same values even as time progresses', async function () {
+		const snippetText = `
+			$CURRENT_YEAR
+			$CURRENT_YEAR_SHORT
+			$CURRENT_MONTH
+			$CURRENT_DATE
+			$CURRENT_HOUR
+			$CURRENT_MINUTE
+			$CURRENT_SECOND
+			$CURRENT_DAY_NAME
+			$CURRENT_DAY_NAME_SHORT
+			$CURRENT_MONTH_NAME
+			$CURRENT_MONTH_NAME_SHORT
+			$CURRENT_SECONDS_UNIX
+		`;
+
+		const clock = sinon.useFakeTimers();
+		try {
+			const resolver = new TimeBasedVariableResolver;
+
+			const firstResolve = new SnippetParser().parse(snippetText).resolveVariables(resolver);
+			clock.tick((365 * 24 * 3600 * 1000) + (24 * 3600 * 1000) + (3661 * 1000));  // 1 year + 1 day + 1 hour + 1 minute + 1 second
+			const secondResolve = new SnippetParser().parse(snippetText).resolveVariables(resolver);
+
+			assert.strictEqual(firstResolve.toString(), secondResolve.toString(), `Time-based snippet variables resolved differently`);
+		} finally {
+			clock.restore();
+		}
 	});
 
 	test('creating snippet - format-condition doesn\'t work #53617', function () {

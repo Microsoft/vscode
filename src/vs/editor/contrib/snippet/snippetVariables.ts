@@ -255,33 +255,37 @@ export class TimeBasedVariableResolver implements VariableResolver {
 	private static readonly monthNames = [nls.localize('January', "January"), nls.localize('February', "February"), nls.localize('March', "March"), nls.localize('April', "April"), nls.localize('May', "May"), nls.localize('June', "June"), nls.localize('July', "July"), nls.localize('August', "August"), nls.localize('September', "September"), nls.localize('October', "October"), nls.localize('November', "November"), nls.localize('December', "December")];
 	private static readonly monthNamesShort = [nls.localize('JanuaryShort', "Jan"), nls.localize('FebruaryShort', "Feb"), nls.localize('MarchShort', "Mar"), nls.localize('AprilShort', "Apr"), nls.localize('MayShort', "May"), nls.localize('JuneShort', "Jun"), nls.localize('JulyShort', "Jul"), nls.localize('AugustShort', "Aug"), nls.localize('SeptemberShort', "Sep"), nls.localize('OctoberShort', "Oct"), nls.localize('NovemberShort', "Nov"), nls.localize('DecemberShort', "Dec")];
 
+	constructor(private readonly _date: Date = new Date()) {
+		//
+	}
+
 	resolve(variable: Variable): string | undefined {
 		const { name } = variable;
 
 		if (name === 'CURRENT_YEAR') {
-			return String(new Date().getFullYear());
+			return String(this._date.getFullYear());
 		} else if (name === 'CURRENT_YEAR_SHORT') {
-			return String(new Date().getFullYear()).slice(-2);
+			return String(this._date.getFullYear()).slice(-2);
 		} else if (name === 'CURRENT_MONTH') {
-			return String(new Date().getMonth().valueOf() + 1).padStart(2, '0');
+			return String(this._date.getMonth().valueOf() + 1).padStart(2, '0');
 		} else if (name === 'CURRENT_DATE') {
-			return String(new Date().getDate().valueOf()).padStart(2, '0');
+			return String(this._date.getDate().valueOf()).padStart(2, '0');
 		} else if (name === 'CURRENT_HOUR') {
-			return String(new Date().getHours().valueOf()).padStart(2, '0');
+			return String(this._date.getHours().valueOf()).padStart(2, '0');
 		} else if (name === 'CURRENT_MINUTE') {
-			return String(new Date().getMinutes().valueOf()).padStart(2, '0');
+			return String(this._date.getMinutes().valueOf()).padStart(2, '0');
 		} else if (name === 'CURRENT_SECOND') {
-			return String(new Date().getSeconds().valueOf()).padStart(2, '0');
+			return String(this._date.getSeconds().valueOf()).padStart(2, '0');
 		} else if (name === 'CURRENT_DAY_NAME') {
-			return TimeBasedVariableResolver.dayNames[new Date().getDay()];
+			return TimeBasedVariableResolver.dayNames[this._date.getDay()];
 		} else if (name === 'CURRENT_DAY_NAME_SHORT') {
-			return TimeBasedVariableResolver.dayNamesShort[new Date().getDay()];
+			return TimeBasedVariableResolver.dayNamesShort[this._date.getDay()];
 		} else if (name === 'CURRENT_MONTH_NAME') {
-			return TimeBasedVariableResolver.monthNames[new Date().getMonth()];
+			return TimeBasedVariableResolver.monthNames[this._date.getMonth()];
 		} else if (name === 'CURRENT_MONTH_NAME_SHORT') {
-			return TimeBasedVariableResolver.monthNamesShort[new Date().getMonth()];
+			return TimeBasedVariableResolver.monthNamesShort[this._date.getMonth()];
 		} else if (name === 'CURRENT_SECONDS_UNIX') {
-			return String(Math.floor(Date.now() / 1000));
+			return String(Math.floor(this._date.getTime() / 1000));
 		}
 
 		return undefined;

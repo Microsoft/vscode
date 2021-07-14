@@ -49,14 +49,14 @@ registerEditorAction(class FormatModifiedAction extends EditorAction {
 });
 
 
-export async function getModifiedRanges(accessor: ServicesAccessor, modified: ITextModel): Promise<Range[] | undefined> {
+export async function getModifiedRanges(accessor: ServicesAccessor, modified: ITextModel): Promise<Range[] | undefined | null> {
 	const scmService = accessor.get(ISCMService);
 	const workerService = accessor.get(IEditorWorkerService);
 	const modelService = accessor.get(ITextModelService);
 
 	const original = await getOriginalResource(scmService, modified.uri);
 	if (!original) {
-		return undefined;
+		return null; // let undefined signify no changes, null represents no source control (there's probably a better way, but I can't think of one rn)
 	}
 
 	const ranges: Range[] = [];

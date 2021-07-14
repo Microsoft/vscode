@@ -224,6 +224,28 @@ suite('Debug - Breakpoints', () => {
 		assert.strictEqual(exceptionBreakpoints[1].enabled, false);
 	});
 
+	test('instruction breakpoints', () => {
+		let eventCount = 0;
+		model.onDidChangeBreakpoints(() => eventCount++);
+		//address: string, offset: number, condition?: string, hitCondition?: string
+		model.addInstructionBreakpoint('0xCCCCFFFF', 0);
+
+		assert.strictEqual(eventCount, 1);
+		let instructionBreakpoints = model.getInstructionBreakpoints();
+		assert.strictEqual(instructionBreakpoints.length, 1);
+		assert.strictEqual(instructionBreakpoints[0].instructionReference, '0xCCCCFFFF');
+		assert.strictEqual(instructionBreakpoints[0].offset, 0);
+
+		model.addInstructionBreakpoint('0xCCCCEEEE', 1);
+		assert.strictEqual(eventCount, 2);
+		instructionBreakpoints = model.getInstructionBreakpoints();
+		assert.strictEqual(instructionBreakpoints.length, 2);
+		assert.strictEqual(instructionBreakpoints[0].instructionReference, '0xCCCCFFFF');
+		assert.strictEqual(instructionBreakpoints[0].offset, 0);
+		assert.strictEqual(instructionBreakpoints[1].instructionReference, '0xCCCCEEEE');
+		assert.strictEqual(instructionBreakpoints[1].offset, 1);
+	});
+
 	test('data breakpoints', () => {
 		let eventCount = 0;
 		model.onDidChangeBreakpoints(() => eventCount++);

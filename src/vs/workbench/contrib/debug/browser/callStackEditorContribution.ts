@@ -18,8 +18,8 @@ import { distinct } from 'vs/base/common/arrays';
 import { IUriIdentityService } from 'vs/workbench/services/uriIdentity/common/uriIdentity';
 import { debugStackframe, debugStackframeFocused } from 'vs/workbench/contrib/debug/browser/debugIcons';
 
-const topStackFrameColor = registerColor('editor.stackFrameHighlightBackground', { dark: '#ffff0033', light: '#ffff6673', hc: '#ffff0033' }, localize('topStackFrameLineHighlight', 'Background color for the highlight of line at the top stack frame position.'));
-const focusedStackFrameColor = registerColor('editor.focusedStackFrameHighlightBackground', { dark: '#7abd7a4d', light: '#cee7ce73', hc: '#7abd7a4d' }, localize('focusedStackFrameLineHighlight', 'Background color for the highlight of line at focused stack frame position.'));
+export const topStackFrameColor = registerColor('editor.stackFrameHighlightBackground', { dark: '#ffff0033', light: '#ffff6673', hc: '#ffff0033' }, localize('topStackFrameLineHighlight', 'Background color for the highlight of line at the top stack frame position.'));
+export const focusedStackFrameColor = registerColor('editor.focusedStackFrameHighlightBackground', { dark: '#7abd7a4d', light: '#cee7ce73', hc: '#7abd7a4d' }, localize('focusedStackFrameLineHighlight', 'Background color for the highlight of line at focused stack frame position.'));
 const stickiness = TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges;
 
 // we need a separate decoration for glyph margin, since we do not want it on each line of a multi line statement.

@@ -9,7 +9,7 @@ import { Range } from 'vs/editor/common/core/range';
 import { EditorContextKeys } from 'vs/editor/common/editorContextKeys';
 import { registerEditorAction, EditorAction, IActionOptions, EditorAction2 } from 'vs/editor/browser/editorExtensions';
 import { ContextKeyExpr } from 'vs/platform/contextkey/common/contextkey';
-import { IDebugService, CONTEXT_IN_DEBUG_MODE, CONTEXT_DEBUG_STATE, State, IDebugEditorContribution, EDITOR_CONTRIBUTION_ID, BreakpointWidgetContext, IBreakpoint, BREAKPOINT_EDITOR_CONTRIBUTION_ID, IBreakpointEditorContribution, REPL_VIEW_ID, CONTEXT_STEP_INTO_TARGETS_SUPPORTED, WATCH_VIEW_ID, CONTEXT_DEBUGGERS_AVAILABLE, CONTEXT_EXCEPTION_WIDGET_VISIBLE } from 'vs/workbench/contrib/debug/common/debug';
+import { IDebugService, CONTEXT_IN_DEBUG_MODE, CONTEXT_DEBUG_STATE, State, IDebugEditorContribution, EDITOR_CONTRIBUTION_ID, BreakpointWidgetContext, IBreakpoint, BREAKPOINT_EDITOR_CONTRIBUTION_ID, IBreakpointEditorContribution, REPL_VIEW_ID, CONTEXT_STEP_INTO_TARGETS_SUPPORTED, WATCH_VIEW_ID, CONTEXT_DEBUGGERS_AVAILABLE, CONTEXT_EXCEPTION_WIDGET_VISIBLE, CONTEXT_DISASSEMBLE_REQUEST_SUPPORTED, CONTEXT_LANGUAGE_SUPPORTS_DISASSEMBLE_REQUEST } from 'vs/workbench/contrib/debug/common/debug';
 import { ICodeEditor } from 'vs/editor/browser/editorBrowser';
 import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
 import { openBreakpointSource } from 'vs/workbench/contrib/debug/browser/breakpointsView';
@@ -26,6 +26,7 @@ import { IDisposable } from 'vs/base/common/lifecycle';
 import { raceTimeout } from 'vs/base/common/async';
 import { registerAction2, MenuId } from 'vs/platform/actions/common/actions';
 import { ServicesAccessor } from 'vs/platform/instantiation/common/instantiation';
+import { DisassemblyViewInput } from 'vs/workbench/contrib/debug/browser/disassemblyView';
 
 class ToggleBreakpointAction extends EditorAction2 {
 	constructor() {
@@ -53,6 +54,7 @@ class ToggleBreakpointAction extends EditorAction2 {
 	}
 
 	async runEditorCommand(accessor: ServicesAccessor, editor: ICodeEditor, ...args: any[]): Promise<void> {
+		// TODO: add disassembly F9
 		if (editor.hasModel()) {
 			const debugService = accessor.get(IDebugService);
 			const modelUri = editor.getModel().uri;
@@ -129,6 +131,32 @@ class LogPointAction extends EditorAction2 {
 		const position = editor.getPosition();
 		if (position && editor.hasModel() && debugService.canSetBreakpointsIn(editor.getModel())) {
 			editor.getContribution<IBreakpointEditorContribution>(BREAKPOINT_EDITOR_CONTRIBUTION_ID).showBreakpointWidget(position.lineNumber, position.column, BreakpointWidgetContext.LOG_MESSAGE);
+		}
+	}
+}
+
+class OpenDisassemblyViewAction extends EditorAction {
+
+	public static readonly ID = 'editor.debug.action.openDisassemblyView';
+	public static readonly LABEL = nls.localize('openDisassemblyView', "Open Disassembly View");
+
+	constructor() {
+		super({
+			id: OpenDisassemblyViewAction.ID,
+			label: OpenDisassemblyViewAction.LABEL,
+			alias: 'Debug: Go to Disassembly',
+			precondition: ContextKeyExpr.and(CONTEXT_IN_DEBUG_MODE, PanelFocusContext.toNegated(), CONTEXT_DEBUG_STATE.isEqualTo('stopped'), EditorContextKeys.editorTextFocus, CONTEXT_DISASSEMBLE_REQUEST_SUPPORTED, CONTEXT_LANGUAGE_SUPPORTS_DISASSEMBLE_REQUEST),
+			contextMenuOpts: {
+				group: 'debug',
+				order: 5
+			}
+		});
+	}
+
+	async run(accessor: ServicesAccessor, editor: ICodeEditor, ...args: any[]): Promise<void> {
+		if (editor.hasModel()) {
+			const editorService = accessor.get(IEditorService);
+			editorService.openEditor(DisassemblyViewInput.instance);
 		}
 	}
 }
@@ -504,6 +532,7 @@ class CloseExceptionWidgetAction extends EditorAction {
 registerAction2(ToggleBreakpointAction);
 registerAction2(ConditionalBreakpointAction);
 registerAction2(LogPointAction);
+registerEditorAction(OpenDisassemblyViewAction);
 registerEditorAction(RunToCursorAction);
 registerEditorAction(StepIntoTargetsAction);
 registerEditorAction(SelectionToReplAction);

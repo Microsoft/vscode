@@ -497,6 +497,22 @@ export class RawDebugSession implements IDisposable {
 		return Promise.reject(new Error('goto is not supported'));
 	}
 
+	async setInstructionBreakpoints(args: DebugProtocol.SetInstructionBreakpointsArguments): Promise<DebugProtocol.SetInstructionBreakpointsResponse | undefined> {
+		if (this.capabilities.supportsDisassembleRequest) {
+			return await this.send('setInstructionBreakpoints', args);
+		}
+
+		return Promise.reject(new Error('setInstructionBreakpoints is not supported'));
+	}
+
+	async disassemble(args: DebugProtocol.DisassembleArguments): Promise<DebugProtocol.DisassembleResponse | undefined> {
+		if (this.capabilities.supportsDisassembleRequest) {
+			return await this.send('disassemble', args);
+		}
+
+		return Promise.reject(new Error('disassemble is not supported'));
+	}
+
 	cancel(args: DebugProtocol.CancelArguments): Promise<DebugProtocol.CancelResponse | undefined> {
 		return this.send('cancel', args);
 	}

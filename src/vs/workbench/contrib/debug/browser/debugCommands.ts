@@ -8,7 +8,7 @@ import { KeyCode, KeyMod } from 'vs/base/common/keyCodes';
 import { List } from 'vs/base/browser/ui/list/listWidget';
 import { KeybindingsRegistry, KeybindingWeight } from 'vs/platform/keybinding/common/keybindingsRegistry';
 import { IListService } from 'vs/platform/list/browser/listService';
-import { IDebugService, IEnablement, CONTEXT_BREAKPOINTS_FOCUSED, CONTEXT_WATCH_EXPRESSIONS_FOCUSED, CONTEXT_VARIABLES_FOCUSED, EDITOR_CONTRIBUTION_ID, IDebugEditorContribution, CONTEXT_IN_DEBUG_MODE, CONTEXT_EXPRESSION_SELECTED, IConfig, IStackFrame, IThread, IDebugSession, CONTEXT_DEBUG_STATE, IDebugConfiguration, CONTEXT_JUMP_TO_CURSOR_SUPPORTED, REPL_VIEW_ID, CONTEXT_DEBUGGERS_AVAILABLE, State, getStateLabel, CONTEXT_BREAKPOINT_INPUT_FOCUSED, CONTEXT_FOCUSED_SESSION_IS_ATTACH, VIEWLET_ID } from 'vs/workbench/contrib/debug/common/debug';
+import { IDebugService, IEnablement, CONTEXT_BREAKPOINTS_FOCUSED, CONTEXT_WATCH_EXPRESSIONS_FOCUSED, CONTEXT_VARIABLES_FOCUSED, EDITOR_CONTRIBUTION_ID, IDebugEditorContribution, CONTEXT_IN_DEBUG_MODE, CONTEXT_EXPRESSION_SELECTED, IConfig, IStackFrame, IThread, IDebugSession, CONTEXT_DEBUG_STATE, IDebugConfiguration, CONTEXT_JUMP_TO_CURSOR_SUPPORTED, REPL_VIEW_ID, CONTEXT_DEBUGGERS_AVAILABLE, State, getStateLabel, CONTEXT_BREAKPOINT_INPUT_FOCUSED, CONTEXT_FOCUSED_SESSION_IS_ATTACH, VIEWLET_ID, CONTEXT_DISASSEMBLE_VIEW_FOCUS } from 'vs/workbench/contrib/debug/common/debug';
 import { Expression, Variable, Breakpoint, FunctionBreakpoint, DataBreakpoint } from 'vs/workbench/contrib/debug/common/debugModel';
 import { IExtensionsViewPaneContainer, VIEWLET_ID as EXTENSIONS_VIEWLET_ID } from 'vs/workbench/contrib/extensions/common/extensions';
 import { IViewletService } from 'vs/workbench/services/viewlet/browser/viewlet';
@@ -41,6 +41,9 @@ export const TERMINATE_THREAD_ID = 'workbench.action.debug.terminateThread';
 export const STEP_OVER_ID = 'workbench.action.debug.stepOver';
 export const STEP_INTO_ID = 'workbench.action.debug.stepInto';
 export const STEP_OUT_ID = 'workbench.action.debug.stepOut';
+export const INSTRUCTION_STEP_OVER_ID = 'workbench.action.debug.instructionStepOver';
+export const INSTRUCTION_STEP_INTO_ID = 'workbench.action.debug.instructionStepInto';
+export const INSTRUCTION_STEP_OUT_ID = 'workbench.action.debug.instructionStepOut';
 export const PAUSE_ID = 'workbench.action.debug.pause';
 export const DISCONNECT_ID = 'workbench.action.debug.disconnect';
 export const STOP_ID = 'workbench.action.debug.stop';
@@ -69,6 +72,8 @@ export const SELECT_AND_START_LABEL = nls.localize('selectAndStartDebugging', "S
 export const DEBUG_CONFIGURE_LABEL = nls.localize('openLaunchJson', "Open '{0}'", 'launch.json');
 export const DEBUG_START_LABEL = nls.localize('startDebug', "Start Debugging");
 export const DEBUG_RUN_LABEL = nls.localize('startWithoutDebugging', "Start Without Debugging");
+
+const INSTRUCTION_PRIORITY = 5;
 
 interface CallStackContext {
 	sessionId: string;
@@ -278,6 +283,37 @@ KeybindingsRegistry.registerCommandAndKeybindingRule({
 	when: CONTEXT_DEBUG_STATE.isEqualTo('stopped'),
 	handler: (accessor: ServicesAccessor, _: string, context: CallStackContext | unknown) => {
 		getThreadAndRun(accessor, context, (thread: IThread) => thread.stepOut());
+	}
+});
+
+KeybindingsRegistry.registerCommandAndKeybindingRule({
+	id: INSTRUCTION_STEP_OVER_ID,
+	weight: KeybindingWeight.WorkbenchContrib + INSTRUCTION_PRIORITY,
+	primary: isWeb ? (KeyMod.Alt | KeyCode.F10) : KeyCode.F10, // Browsers do not allow F10 to be binded so we have to bind an alternative
+	when: ContextKeyExpr.and(CONTEXT_DISASSEMBLE_VIEW_FOCUS, CONTEXT_DEBUG_STATE.isEqualTo('stopped')),
+	handler: (accessor: ServicesAccessor, _: string, context: CallStackContext | unknown) => {
+		getThreadAndRun(accessor, context, (thread: IThread) => thread.next('instruction'));
+	}
+});
+
+KeybindingsRegistry.registerCommandAndKeybindingRule({
+	id: INSTRUCTION_STEP_INTO_ID,
+	weight: KeybindingWeight.WorkbenchContrib + INSTRUCTION_PRIORITY + 10, // Have a stronger weight to have priority over full screen when debugging
+	primary: (isWeb && isWindows) ? (KeyMod.Alt | KeyCode.F11) : KeyCode.F11, // Windows browsers use F11 for full screen, thus use alt+F11 as the default shortcut
+	// Use a more flexible when clause to not allow full screen command to take over when F11 pressed a lot of times
+	when: ContextKeyExpr.and(CONTEXT_DISASSEMBLE_VIEW_FOCUS, CONTEXT_DEBUG_STATE.notEqualsTo('inactive')),
+	handler: (accessor: ServicesAccessor, _: string, context: CallStackContext | unknown) => {
+		getThreadAndRun(accessor, context, (thread: IThread) => thread.stepIn('instruction'));
+	}
+});
+
+KeybindingsRegistry.registerCommandAndKeybindingRule({
+	id: INSTRUCTION_STEP_OUT_ID,
+	weight: KeybindingWeight.WorkbenchContrib + INSTRUCTION_PRIORITY,
+	primary: KeyMod.Shift | KeyCode.F11,
+	when: ContextKeyExpr.and(CONTEXT_DISASSEMBLE_VIEW_FOCUS, CONTEXT_DEBUG_STATE.isEqualTo('stopped')),
+	handler: (accessor: ServicesAccessor, _: string, context: CallStackContext | unknown) => {
+		getThreadAndRun(accessor, context, (thread: IThread) => thread.stepOut('instruction'));
 	}
 });
 

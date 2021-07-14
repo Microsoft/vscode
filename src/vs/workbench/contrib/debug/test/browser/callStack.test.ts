@@ -38,7 +38,7 @@ export function createMockSession(model: DebugModel, name = 'mockSession', optio
 				}
 			};
 		}
-	} as IDebugService, undefined!, undefined!, new TestConfigurationService({ debug: { console: { collapseIdenticalLines: true } } }), undefined!, mockWorkspaceContextService, undefined!, undefined!, undefined!, mockUriIdentityService, new TestInstantiationService(), undefined!);
+	} as IDebugService, undefined!, undefined!, new TestConfigurationService({ debug: { console: { collapseIdenticalLines: true } } }), undefined!, mockWorkspaceContextService, undefined!, undefined!, undefined!, mockUriIdentityService, new TestInstantiationService(), undefined!, undefined!);
 }
 
 function createTwoStackFrames(session: DebugSession): { firstStackFrame: StackFrame, secondStackFrame: StackFrame } {
@@ -378,7 +378,7 @@ suite('Debug - CallStack', () => {
 			override get state(): State {
 				return State.Stopped;
 			}
-		}(generateUuid(), { resolved: { name: 'stoppedSession', type: 'node', request: 'launch' }, unresolved: undefined }, undefined!, model, undefined, undefined!, undefined!, undefined!, undefined!, undefined!, mockWorkspaceContextService, undefined!, undefined!, undefined!, mockUriIdentityService, new TestInstantiationService(), undefined!);
+		}(generateUuid(), { resolved: { name: 'stoppedSession', type: 'node', request: 'launch' }, unresolved: undefined }, undefined!, model, undefined, undefined!, undefined!, undefined!, undefined!, undefined!, mockWorkspaceContextService, undefined!, undefined!, undefined!, mockUriIdentityService, new TestInstantiationService(), undefined!, undefined!);
 
 		const runningSession = createMockSession(model);
 		model.addSession(runningSession);

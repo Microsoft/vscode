@@ -42,7 +42,7 @@ steps:
         x64) SNAPCRAFT_TARGET_ARGS="" ;;
         *) SNAPCRAFT_TARGET_ARGS="--target-arch $(VSCODE_ARCH)" ;;
       esac
-      (cd $SNAP_ROOT/code-* && sudo --preserve-env snapcraft prime $SNAPCRAFT_TARGET_ARGS && snap pack prime --compression=lzo --filename="$SNAP_PATH")
+      (cd $SNAP_ROOT/code-* && sudo --preserve-env snapcraft snap $SNAPCRAFT_TARGET_ARGS --output "$SNAP_PATH")
 
       # Export SNAP_PATH
       echo "##vso[task.setvariable variable=SNAP_PATH]$SNAP_PATH"

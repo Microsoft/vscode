@@ -134,7 +134,8 @@ resources:
       endpoint: VSCodeHub
       options: --user 0:0 --cap-add SYS_ADMIN
     - container: snapcraft
-      image: snapcore/snapcraft:stable
+      image: vscodehub.azurecr.io/vscode-linux-build-agent:snapcraft-x64
+      endpoint: VSCodeHub
 
 stages:
   - stage: Compile

@@ -9,22 +9,14 @@ description: |
 architectures:
   - build-on: amd64
     run-on: @@ARCHITECTURE@@
+compression: lzo
 
 grade: stable
 confinement: classic
+base: core18
 
 parts:
-  gnome:
-    plugin: nil
-    build-packages:
-      - software-properties-common
-    override-pull: |
-      add-apt-repository -y ppa:ubuntu-desktop/gnome-3-26
-      apt -y update
-
   code:
-    after:
-      - gnome
     plugin: dump
     source: .
     stage-packages:
@@ -57,12 +49,14 @@ apps:
   @@NAME@@:
     command: electron-launch $SNAP/usr/share/@@NAME@@/bin/@@NAME@@ --no-sandbox
     common-id: @@NAME@@.desktop
+    extensions: [gnome-3-34]
     environment:
       DISABLE_WAYLAND: 1
       GSETTINGS_SCHEMA_DIR: $SNAP/usr/share/glib-2.0/schemas
 
   url-handler:
     command: electron-launch $SNAP/usr/share/@@NAME@@/bin/@@NAME@@ --open-url --no-sandbox
+    extensions: [gnome-3-34]
     environment:
       DISABLE_WAYLAND: 1
       GSETTINGS_SCHEMA_DIR: $SNAP/usr/share/glib-2.0/schemas

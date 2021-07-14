@@ -566,6 +566,11 @@ const editorConfiguration: IConfigurationNode = {
 				nls.localize('wordWrap.on', "Lines will wrap at the viewport width."),
 				nls.localize('wordWrap.inherit', "Lines will wrap according to the `#editor.wordWrap#` setting."),
 			]
+		},
+		'diffEditor.findLoop': {
+			type: 'boolean',
+			default: true,
+			description: nls.localize('diffEditor.findLoop', "Controls whether the diff editor search automatically restarts from the beginning (or the end) when no further matches can be found.")
 		}
 	}
 };

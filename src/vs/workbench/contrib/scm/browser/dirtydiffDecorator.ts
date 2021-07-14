@@ -478,6 +478,15 @@ export class MoveToPreviousChangeAction extends EditorAction {
 		const index = model.findPreviousClosestChange(lineNumber, false);
 		const change = model.changes[index];
 
+		// lineNumber is the original current line number
+		// change.modifiedStartLineNumber is the start line number of the previous change
+		if (change.modifiedStartLineNumber > lineNumber) {
+			// findLoop option is stored in the model
+			if (model.findLoop === false) {
+				return;
+			}
+		}
+
 		const position = new Position(change.modifiedStartLineNumber, 1);
 		outerEditor.setPosition(position);
 		outerEditor.revealPositionInCenter(position);
@@ -519,6 +528,15 @@ export class MoveToNextChangeAction extends EditorAction {
 
 		const index = model.findNextClosestChange(lineNumber, false);
 		const change = model.changes[index];
+
+		// lineNumber is the original current line number
+		// change.modifiedStartLineNumber is the start line number of the next change
+		if (change.modifiedStartLineNumber < lineNumber) {
+			// findLoop option is stored in the model
+			if (model.findLoop === false) {
+				return;
+			}
+		}
 
 		const position = new Position(change.modifiedStartLineNumber, 1);
 		outerEditor.setPosition(position);
@@ -932,6 +950,7 @@ class DirtyDiffDecorator extends Disposable {
 		const gutter = decorations === 'all' || decorations === 'gutter';
 		const overview = decorations === 'all' || decorations === 'overview';
 		const minimap = decorations === 'all' || decorations === 'minimap';
+		const findLoop = configurationService.getValue<boolean>('diffEditor.findLoop');
 
 		this.modifiedOptions = DirtyDiffDecorator.createDecoration('dirty-diff-modified', {
 			gutter,
@@ -951,6 +970,7 @@ class DirtyDiffDecorator extends Disposable {
 			minimap: { active: minimap, color: minimapGutterDeletedBackground },
 			isWholeLine: false
 		});
+		this.model.findLoop = findLoop;
 
 		this._register(model.onDidChange(this.onDidChange, this));
 	}
@@ -1081,6 +1101,10 @@ export class DirtyDiffModel extends Disposable {
 
 	private _changes: IChange[] = [];
 	get changes(): IChange[] { return this._changes; }
+
+	private _findLoop: boolean = true;
+	get findLoop(): boolean { return this._findLoop; }
+	set findLoop(value: boolean) { this._findLoop = value; }
 
 	constructor(
 		textFileModel: IResolvedTextFileEditorModel,

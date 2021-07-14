@@ -2056,6 +2056,30 @@ export class Repository {
 			return branch;
 		}
 
+		// for-each-ref will fail for repositories without a commit (i.e. empty repositories)
+		const branchConfig = await this.exec(['config', '--get-regex', 'branch.' + name]);
+		if (branchConfig.stdout) {
+			let remote, remoteBranch;
+
+			let match = /^branch\..+\.remote\s(.+)$/m.exec(branchConfig.stdout);
+			if (match) {
+				remote = match[1];
+			}
+
+			match = /^branch\..+\.merge\srefs\/heads\/(.+)$/m.exec(branchConfig.stdout);
+			if (match) {
+				remoteBranch = match[1];
+			}
+
+			if (remote && remoteBranch) {
+				return {
+					name,
+					type: RefType.Head,
+					upstream: { remote: remote, name: remoteBranch }
+				};
+			}
+		}
+
 		return Promise.reject<Branch>(new Error('No such branch'));
 	}
 

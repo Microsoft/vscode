@@ -140,7 +140,7 @@ class SyncStatusBar {
 		let command = '';
 		let tooltip = '';
 
-		if (HEAD && HEAD.name && HEAD.commit) {
+		if (HEAD && HEAD.name) {
 			if (HEAD.upstream) {
 				if (HEAD.ahead || HEAD.behind) {
 					text += this.repository.syncLabel;
@@ -151,7 +151,7 @@ class SyncStatusBar {
 
 				command = rebaseWhenSync ? 'git.syncRebase' : 'git.sync';
 				tooltip = this.repository.syncTooltip;
-			} else {
+			} else if (HEAD.commit) {
 				icon = '$(cloud-upload)';
 				command = 'git.publish';
 				tooltip = localize('publish changes', "Publish Changes");

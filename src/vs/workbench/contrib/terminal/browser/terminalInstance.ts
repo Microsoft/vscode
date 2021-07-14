@@ -480,8 +480,8 @@ export class TerminalInstance extends Disposable implements ITerminalInstance {
 		const newCols = Math.max(Math.floor(scaledWidthAvailable / scaledCharWidth), 1);
 
 		const scaledHeightAvailable = dimension.height * window.devicePixelRatio;
-		const scaledCharHeight = Math.ceil(font.charHeight * window.devicePixelRatio);
-		const scaledLineHeight = Math.floor(scaledCharHeight * font.lineHeight);
+		const scaledCharHeight = font.charHeight * window.devicePixelRatio;
+		const scaledLineHeight = scaledCharHeight * font.lineHeight;
 		const newRows = Math.max(Math.floor(scaledHeightAvailable / scaledLineHeight), 1);
 
 		if (this._cols !== newCols || this._rows !== newRows) {
